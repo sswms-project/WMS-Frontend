@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ShieldOff } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,8 +27,10 @@ export function DisableTwoFactorDialog() {
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <ShieldOff className="size-4" aria-hidden="true" />
+        <Button
+          variant="outline"
+          className="border-destructive/30 text-destructive hover:bg-destructive/10 h-9 rounded-lg px-4.5 text-[13px] font-semibold"
+        >
           Tắt xác thực hai yếu tố
         </Button>
       </AlertDialogTrigger>

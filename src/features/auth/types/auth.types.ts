@@ -27,6 +27,11 @@ export interface Verify2FARequestDto {
   otp: string
 }
 
+export interface ChangePasswordRequestDto {
+  currentPassword: string
+  newPassword: string
+}
+
 export interface RegisterRequestDto {
   tenantName: string
   ownerName: string
