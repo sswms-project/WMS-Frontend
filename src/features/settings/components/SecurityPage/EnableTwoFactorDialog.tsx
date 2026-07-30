@@ -152,7 +152,7 @@ export function EnableTwoFactorDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="h-9 gap-2 rounded-lg px-4.5 text-[13px] font-semibold">
           <ShieldCheck className="size-4" aria-hidden="true" />
           Bật xác thực hai yếu tố
         </Button>

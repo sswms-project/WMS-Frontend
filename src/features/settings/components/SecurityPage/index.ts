@@ -1,3 +1,6 @@
+export * from './ChangePasswordCard'
 export * from './TwoFactorCard'
+export * from './SecurityOverviewCard'
+export * from './SectionIconBadge'
 export * from './EnableTwoFactorDialog'
 export * from './DisableTwoFactorDialog'

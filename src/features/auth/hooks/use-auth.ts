@@ -4,6 +4,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { authService } from '../services/auth.service'
 import type {
+  ChangePasswordRequestDto,
   ForgotPasswordRequestDto,
   ForgotPasswordResponseDto,
   LoginResponseDto,
@@ -128,6 +129,23 @@ export function useVerify2FAMutation() {
       // Không toast ở đây — VerifyTwoFactorPage classify (sessionExpired/invalidOtp/
       // accountUnavailable/network/unknown) và tự hiển thị lỗi, tránh trùng lặp
       // toast + inline cho cùng 1 lỗi.
+      console.error(error)
+    },
+  })
+}
+
+const CURRENT_PASSWORD_INCORRECT_MESSAGE = 'Current password is incorrect.'
+
+export function isCurrentPasswordIncorrectError(error: ApiErrorResponse): boolean {
+  return error.statusCode === 400 && error.message === CURRENT_PASSWORD_INCORRECT_MESSAGE
+}
+
+export function useChangePasswordMutation() {
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ChangePasswordRequestDto>({
+    mutationFn: authService.changePassword,
+    onError: (error) => {
+      // Không toast ở đây — ChangePasswordCard classify (sai mật khẩu hiện tại →
+      // lỗi inline tại field, còn lại → toast chung) tránh trùng lặp hiển thị.
       console.error(error)
     },
   })

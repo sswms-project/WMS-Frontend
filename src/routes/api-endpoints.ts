@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     resetPassword: '/auth/reset-password',
     me: '/auth/me',
     verify2fa: '/auth/verify-2fa',
+    changePassword: '/auth/change-password',
   },
   // Authenticated endpoints
   settings: {

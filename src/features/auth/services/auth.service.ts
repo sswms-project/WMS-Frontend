@@ -2,6 +2,7 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
+  ChangePasswordRequestDto,
   ForgotPasswordRequestDto,
   ForgotPasswordResponseDto,
   LoginRequestDto,
@@ -49,5 +50,10 @@ export const authService = {
   verify2FA: (body: Verify2FARequestDto) =>
     axiosClient
       .post<ApiResponse<LoginResponseDto>>(API_ENDPOINTS.auth.verify2fa, body)
+      .then((r) => r.data),
+
+  changePassword: (body: ChangePasswordRequestDto) =>
+    axiosClient
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.auth.changePassword, body)
       .then((r) => r.data),
 }
