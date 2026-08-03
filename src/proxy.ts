@@ -6,6 +6,7 @@ import { decodeJwtPayload } from '@/lib/jwt'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 const PUBLIC_PATHS = [
+  APP_ROUTES.pricing,
   APP_ROUTES.auth.login,
   APP_ROUTES.auth.register,
   APP_ROUTES.auth.verifyEmail,

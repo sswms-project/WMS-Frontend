@@ -18,4 +18,18 @@ export const API_ENDPOINTS = {
     confirm2fa: '/settings/2fa/confirm',
     disable2fa: '/settings/2fa',
   },
+  subscription: {
+    me: '/subscriptions/me',
+    plans: '/subscription-plans',
+    upgrade: '/subscriptions/upgrade',
+    renew: '/subscriptions/renew',
+    cancel: '/subscriptions/me',
+  },
+  public: {
+    subscriptionPlans: '/public/subscription-plans',
+  },
+  payments: {
+    history: '/payments',
+    invoice: (paymentId: string) => `/payments/${paymentId}/invoice`,
+  },
 } as const
