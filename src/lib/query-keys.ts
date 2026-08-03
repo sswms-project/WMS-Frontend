@@ -38,4 +38,7 @@ export const queryKeys = {
     all: ['notifications'] as const,
     list: (params?: QueryInfo) => ['notifications', 'list', params] as const,
   },
+  subscriptionPlans: {
+    all: ['subscription-plans'] as const,
+  },
 }
