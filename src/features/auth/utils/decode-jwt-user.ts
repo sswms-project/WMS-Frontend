@@ -23,6 +23,14 @@ function getRequiredStringClaim(payload: Record<string, unknown>, keys: string[]
   throw new Error(`Invalid JWT: missing required claim ${keys.join('/')}`)
 }
 
+function getOptionalStringClaim(payload: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = payload[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return null
+}
+
 function isUserRole(value: unknown): value is UserRole {
   return typeof value === 'string' && USER_ROLE_VALUES.includes(value)
 }
@@ -45,7 +53,7 @@ export function decodeJwtUser(token: string): AuthUser {
   }
 
   const id = getRequiredStringClaim(payload, ['user_id', 'sub'])
-  const tenantId = getRequiredStringClaim(payload, ['tenant_id'])
+  const tenantId = getOptionalStringClaim(payload, ['tenant_id'])
   const email = getRequiredStringClaim(payload, ['email'])
 
   const roleClaim = payload.role

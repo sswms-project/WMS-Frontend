@@ -4,6 +4,16 @@ export const queryKeys = {
   auth: {
     me: ['auth', 'me'] as const,
   },
+  subscription: {
+    all: ['subscription'] as const,
+    me: ['subscription', 'me'] as const,
+    plans: ['subscription', 'plans'] as const,
+    publicPlans: ['subscription', 'public-plans'] as const,
+  },
+  payments: {
+    all: ['payments'] as const,
+    list: (params?: QueryInfo) => ['payments', 'list', params] as const,
+  },
   warehouses: {
     all: ['warehouses'] as const,
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
@@ -37,8 +47,5 @@ export const queryKeys = {
   notifications: {
     all: ['notifications'] as const,
     list: (params?: QueryInfo) => ['notifications', 'list', params] as const,
-  },
-  subscriptionPlans: {
-    all: ['subscription-plans'] as const,
   },
 }

@@ -50,9 +50,11 @@ export interface UpdateSubscriptionPlanVariables {
   body: UpdateSubscriptionPlanRequest
 }
 
-export function useSubscriptionPlansQuery() {
+// Dùng chung query key với feature subscription vì cùng gọi GET /subscription-plans;
+// tách key riêng sẽ khiến danh sách gói phía tenant giữ dữ liệu cũ sau khi admin sửa.
+export function useAdminSubscriptionPlansQuery() {
   return useQuery<SubscriptionPlanResponse[], ApiErrorResponse>({
-    queryKey: queryKeys.subscriptionPlans.all,
+    queryKey: queryKeys.subscription.plans,
     queryFn: () => adminService.getSubscriptionPlans().then((r) => r.data),
   })
 }
@@ -69,7 +71,9 @@ export function useCreateSubscriptionPlanMutation() {
   >({
     mutationFn: adminService.createSubscriptionPlan,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionPlans.all })
+      // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
+      // bảng giá công khai cũng lấy lại dữ liệu mới.
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
     onError: (error) => console.error(error),
   })
@@ -84,7 +88,9 @@ export function useUpdateSubscriptionPlanMutation() {
   >({
     mutationFn: ({ id, body }) => adminService.updateSubscriptionPlan(id, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionPlans.all })
+      // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
+      // bảng giá công khai cũng lấy lại dữ liệu mới.
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
     onError: (error) => console.error(error),
   })
@@ -96,7 +102,9 @@ export function useDeactivateSubscriptionPlanMutation() {
     mutationFn: adminService.deactivateSubscriptionPlan,
     onSuccess: () => {
       toast.success('Đã vô hiệu hóa gói đăng ký.')
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionPlans.all })
+      // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
+      // bảng giá công khai cũng lấy lại dữ liệu mới.
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
     onError: (error) => console.error(error),
   })

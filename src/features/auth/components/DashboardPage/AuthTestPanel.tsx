@@ -74,7 +74,7 @@ export function AuthTestPanel() {
           {user ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="ID" value={user.id} />
-              <Field label="Tenant ID" value={user.tenantId} />
+              <Field label="Tenant ID" value={user.tenantId ?? 'N/A'} />
               <Field label="Full Name" value={user.fullName} />
               <Field label="Email" value={user.email} />
               <Field label="Role" value={user.role} />

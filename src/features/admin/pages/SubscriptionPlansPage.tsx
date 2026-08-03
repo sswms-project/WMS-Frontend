@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { PackageOpen, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSubscriptionPlansQuery } from '../hooks/use-admin'
+import { useAdminSubscriptionPlansQuery } from '../hooks/use-admin'
 import {
   SubscriptionPlanCard,
   SubscriptionPlanFormDialog,
@@ -12,7 +12,7 @@ import {
 
 export function SubscriptionPlansPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const { data: plans, isLoading, isError } = useSubscriptionPlansQuery()
+  const { data: plans, isLoading, isError } = useAdminSubscriptionPlansQuery()
 
   return (
     <div className="space-y-4">

@@ -20,7 +20,11 @@ const trustPoints = [
   },
 ]
 
-export function BenefitsPanel() {
+interface BenefitsPanelProps {
+  readonly logoHref?: string
+}
+
+export function BenefitsPanel({ logoHref = APP_ROUTES.auth.login }: BenefitsPanelProps) {
   return (
     <div className="bg-inverse-surface relative flex h-full flex-col overflow-hidden">
       {/* Brand 3D warehouse visual as backdrop */}
@@ -37,7 +41,7 @@ export function BenefitsPanel() {
 
       <div className="relative flex h-full flex-col p-8 xl:p-12">
         {/* Logo */}
-        <Logo href={APP_ROUTES.auth.login} tone="inverse" />
+        <Logo href={logoHref} tone="inverse" />
 
         {/* Hero text */}
         <div className="flex flex-1 flex-col justify-center">
