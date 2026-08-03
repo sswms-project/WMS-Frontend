@@ -37,7 +37,7 @@ export function RegisterPage() {
     <div className="flex min-h-dvh min-w-0">
       {/* Left brand panel — sticky, full viewport height */}
       <aside className="sticky top-0 hidden h-dvh flex-shrink-0 lg:block lg:w-[42%] xl:w-[45%]">
-        <BenefitsPanel />
+        <BenefitsPanel logoHref={APP_ROUTES.home} />
       </aside>
 
       {/* Right scrollable form area */}
