@@ -2,7 +2,7 @@ import type { UserRole } from '@/config/roles'
 
 export interface AuthUser {
   id: string
-  tenantId: string
+  tenantId: string | null
   fullName: string
   email: string
   role: UserRole
@@ -62,7 +62,7 @@ export type ResetPasswordResponseDto = unknown
 
 export interface UserProfileResponse {
   id: string
-  tenantId: string
+  tenantId: string | null
   fullName: string
   email: string
   phone: string | null

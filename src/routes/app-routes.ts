@@ -1,5 +1,6 @@
 export const APP_ROUTES = {
   home: '/',
+  pricing: '/pricing',
   auth: {
     login: '/auth/login',
     register: '/auth/register',
@@ -9,6 +10,7 @@ export const APP_ROUTES = {
     verify2fa: '/auth/verify-2fa',
   },
   dashboard: '/dashboard',
+  subscription: '/subscription',
   dashboardByRole: {
     tenant: '/dashboard/tenant',
     manager: '/dashboard/manager',

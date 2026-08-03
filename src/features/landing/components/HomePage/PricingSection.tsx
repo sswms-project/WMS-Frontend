@@ -1,131 +1,148 @@
 'use client'
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Building2, Check, Rocket, TrendingUp, type LucideIcon } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Check, CircleAlert, Minus, PackageCheck, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
+import { usePublicSubscriptionPlansQuery } from '@/features/subscription/hooks/use-subscription'
+import type { SubscriptionPlanResponse } from '@/features/subscription/types/subscription.types'
 import { APP_ROUTES } from '@/routes/app-routes'
 
-type BillingCycle = 'monthly' | 'yearly'
-
-const ANNUAL_DISCOUNT_PERCENT = 20
-
-type PricingPlan = {
-  icon: LucideIcon
-  name: string
-  monthlyPrice: number | null
-  priceLabel?: string
-  priceNote: string
-  description: string
-  features: string[]
-  callToAction: string
-  highlighted?: boolean
+const billingCycleLabels: Record<string, string> = {
+  monthly: 'tháng',
+  yearly: 'năm',
 }
-
-const pricingPlans: PricingPlan[] = [
-  {
-    icon: Rocket,
-    name: 'Khởi nghiệp',
-    monthlyPrice: 0,
-    priceNote: 'không giới hạn thời gian',
-    description: 'Cho đội nhỏ bắt đầu số hóa kho.',
-    features: [
-      '1 kho, tối đa 500 SKU',
-      '3 tài khoản thành viên',
-      'Quản lý tồn kho & xuất nhập cơ bản',
-      'Báo cáo tuần qua email',
-    ],
-    callToAction: 'Tạo tài khoản',
-  },
-  {
-    icon: TrendingUp,
-    name: 'Tăng trưởng',
-    monthlyPrice: 1990000,
-    priceNote: 'mỗi kho / tháng',
-    description: 'Cho doanh nghiệp vận hành nhiều kho.',
-    features: [
-      'Không giới hạn SKU và thành viên',
-      'Bảng điều khiển thời gian thực',
-      'AI dự báo nhu cầu nhập hàng',
-      'Điều phối vận chuyển & phân ca',
-      'Hỗ trợ ưu tiên trong giờ hành chính',
-    ],
-    callToAction: 'Dùng thử 14 ngày',
-    highlighted: true,
-  },
-  {
-    icon: Building2,
-    name: 'Doanh nghiệp',
-    monthlyPrice: null,
-    priceLabel: 'Liên hệ',
-    priceNote: 'báo giá theo quy mô',
-    description: 'Cho chuỗi kho cần tùy chỉnh sâu.',
-    features: [
-      'Tất cả tính năng gói Tăng trưởng',
-      'SLA 99,95% có cam kết hợp đồng',
-      'SSO / SAML và phân quyền nâng cao',
-      'Tích hợp ERP, TMS qua API riêng',
-      'Quản lý khách hàng chuyên trách',
-    ],
-    callToAction: 'Liên hệ kinh doanh',
-  },
-]
 
 function formatVnd(amount: number) {
-  return new Intl.NumberFormat('vi-VN').format(amount) + '₫'
+  return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`
 }
 
-function getEffectiveMonthlyPrice(monthlyPrice: number, billingCycle: BillingCycle) {
-  return billingCycle === 'yearly'
-    ? Math.round((monthlyPrice * (100 - ANNUAL_DISCOUNT_PERCENT)) / 100)
-    : monthlyPrice
+function formatBillingCycle(billingCycle: string) {
+  return billingCycleLabels[billingCycle.toLowerCase()] ?? billingCycle
 }
 
-function toggleButtonClass(isActive: boolean) {
-  return isActive
-    ? 'bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-sm font-semibold transition-colors'
-    : 'text-muted-foreground hover:text-foreground rounded-full px-4 py-1.5 text-sm font-semibold transition-colors'
+function formatLimit(limit: number, unit: string) {
+  return `Tối đa ${limit} ${unit}`
 }
 
-function PriceDisplay({ plan, billingCycle }: { plan: PricingPlan; billingCycle: BillingCycle }) {
-  if (plan.monthlyPrice === null) {
-    return <span className="text-3xl font-bold tracking-tight">{plan.priceLabel}</span>
-  }
-  if (plan.monthlyPrice === 0) {
+function formatPlanDescription(plan: SubscriptionPlanResponse) {
+  return `Vận hành tối đa ${plan.maxWarehouses} kho với ${plan.maxUsers} người dùng.`
+}
+
+function PlanPrice({ plan }: { readonly plan: SubscriptionPlanResponse }) {
+  if (plan.price === 0) {
     return <span className="text-3xl font-bold tracking-tight">Miễn phí</span>
   }
 
-  const effectiveMonthly = getEffectiveMonthlyPrice(plan.monthlyPrice, billingCycle)
+  return (
+    <span className="text-3xl font-bold tracking-tight tabular-nums">{formatVnd(plan.price)}</span>
+  )
+}
+
+function PricingPlanCard({
+  plan,
+  index,
+}: {
+  readonly plan: SubscriptionPlanResponse
+  readonly index: number
+}) {
+  const prefersReducedMotion = useReducedMotion()
+  const capabilities = [
+    { enabled: true, label: formatLimit(plan.maxWarehouses, 'kho') },
+    { enabled: true, label: formatLimit(plan.maxUsers, 'người dùng') },
+    { enabled: plan.enableForecasting, label: 'Dự báo nhu cầu nhập hàng' },
+    { enabled: plan.enableBarcode, label: 'Quét mã vạch' },
+    { enabled: plan.enableLayoutDesigner, label: 'Thiết kế sơ đồ kho' },
+  ]
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.span
-        key={billingCycle}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.18 }}
-        className="text-3xl font-bold tracking-tight tabular-nums"
-      >
-        {formatVnd(effectiveMonthly)}
-      </motion.span>
-    </AnimatePresence>
+    <motion.div
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-48px' }}
+      transition={{ duration: 0.35, delay: index * 0.08, ease: 'easeOut' }}
+      className="h-full"
+    >
+      <Card className="border-border/70 flex h-full flex-col rounded-lg">
+        <CardHeader>
+          <div className="bg-muted text-muted-foreground mb-2 flex size-9 items-center justify-center rounded-lg">
+            <PackageCheck className="size-4" aria-hidden="true" />
+          </div>
+          <CardTitle className="text-lg">{plan.planName}</CardTitle>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            {formatPlanDescription(plan)}
+          </p>
+          <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <PlanPrice plan={plan} />
+            {plan.price > 0 && (
+              <span className="text-muted-foreground text-xs">
+                mỗi {formatBillingCycle(plan.billingCycle)}
+              </span>
+            )}
+          </p>
+        </CardHeader>
+        <CardContent className="flex-1">
+          <ul className="space-y-2.5">
+            {capabilities.map((capability) => (
+              <li
+                key={capability.label}
+                className="text-foreground flex items-start gap-2.5 text-sm"
+              >
+                {capability.enabled ? (
+                  <Check className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                ) : (
+                  <Minus
+                    className="text-muted-foreground mt-0.5 size-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                )}
+                <span className={capability.enabled ? undefined : 'text-muted-foreground'}>
+                  {capability.enabled
+                    ? capability.label
+                    : `Chưa bao gồm ${capability.label.toLowerCase()}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full rounded-full" variant="outline" asChild>
+            <Link href={APP_ROUTES.auth.register}>Đăng ký sử dụng</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
+  )
+}
+
+function PricingSkeleton() {
+  return (
+    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" aria-label="Đang tải bảng giá">
+      {Array.from({ length: 3 }, (_, index) => (
+        <Card key={index} className="border-border/70 rounded-lg">
+          <CardHeader className="space-y-4">
+            <Skeleton className="size-9 rounded-lg" />
+            <Skeleton className="h-6 w-2/5" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-9 w-1/2" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-4 w-3/5" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   )
 }
 
 export function PricingSection() {
-  const prefersReducedMotion = useReducedMotion()
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
+  const { data: plans, isError, isLoading, refetch } = usePublicSubscriptionPlansQuery()
 
   return (
     <section
@@ -143,112 +160,41 @@ export function PricingSection() {
           </h2>
         </div>
 
-        {/* Billing cycle toggle */}
-        <div
-          className="border-border bg-card mb-10 inline-flex max-w-full flex-wrap items-center gap-1 rounded-full border p-1"
-          role="group"
-          aria-label="Chọn chu kỳ thanh toán"
-        >
-          <button
-            type="button"
-            onClick={() => setBillingCycle('monthly')}
-            aria-pressed={billingCycle === 'monthly'}
-            className={toggleButtonClass(billingCycle === 'monthly')}
-          >
-            Theo tháng
-          </button>
-          <button
-            type="button"
-            onClick={() => setBillingCycle('yearly')}
-            aria-pressed={billingCycle === 'yearly'}
-            className={toggleButtonClass(billingCycle === 'yearly')}
-          >
-            Theo năm
-          </button>
-          <Badge className="bg-primary-container text-on-primary-container mx-1 max-w-full border-transparent">
-            Tiết kiệm {ANNUAL_DISCOUNT_PERCENT}%
-          </Badge>
-        </div>
+        {isLoading && <PricingSkeleton />}
 
-        <div className="grid items-stretch gap-5 lg:grid-cols-3">
-          {pricingPlans.map((plan, index) => {
-            const PlanIcon = plan.icon
-            return (
-              <motion.div
-                key={plan.name}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.45, delay: index * 0.1, ease: 'easeOut' }}
-                className="relative h-full"
-              >
-                {plan.highlighted && (
-                  <Badge className="bg-primary text-primary-foreground absolute -top-3 left-1/2 z-10 -translate-x-1/2 border-transparent">
-                    Phổ biến nhất
-                  </Badge>
-                )}
-                <Card
-                  className={
-                    plan.highlighted
-                      ? 'border-primary bg-card h-full border-2 shadow-lg lg:scale-[1.04]'
-                      : 'border-border/70 h-full'
-                  }
-                >
-                  <CardHeader>
-                    <div
-                      className={
-                        plan.highlighted
-                          ? 'bg-primary text-primary-foreground mb-2 flex size-9 items-center justify-center rounded-lg'
-                          : 'bg-muted text-muted-foreground mb-2 flex size-9 items-center justify-center rounded-lg'
-                      }
-                    >
-                      <PlanIcon className="size-4.5" aria-hidden="true" />
-                    </div>
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                    <p className="mt-3 flex flex-wrap items-baseline gap-2">
-                      <PriceDisplay plan={plan} billingCycle={billingCycle} />
-                      <span className="text-muted-foreground text-xs">{plan.priceNote}</span>
-                    </p>
-                    {plan.highlighted && billingCycle === 'yearly' && plan.monthlyPrice && (
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        Thanh toán{' '}
-                        {formatVnd(getEffectiveMonthlyPrice(plan.monthlyPrice, 'yearly') * 12)} /
-                        năm
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <ul className="space-y-2.5">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2.5 text-sm">
-                          <Check
-                            className="text-primary mt-0.5 size-4 shrink-0"
-                            aria-hidden="true"
-                          />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      className="w-full rounded-full"
-                      variant={plan.highlighted ? 'default' : 'outline'}
-                      asChild
-                    >
-                      <Link href={APP_ROUTES.auth.register}>{plan.callToAction}</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            )
-          })}
-        </div>
+        {isError && (
+          <Alert variant="destructive" className="max-w-2xl rounded-lg">
+            <CircleAlert aria-hidden="true" />
+            <AlertTitle>Không thể tải bảng giá</AlertTitle>
+            <AlertDescription>
+              Vui lòng kiểm tra kết nối và thử lại để xem các gói dịch vụ hiện có.
+            </AlertDescription>
+            <Button variant="outline" size="sm" className="mt-3 w-fit" onClick={() => refetch()}>
+              <RefreshCw className="size-4" aria-hidden="true" />
+              Thử lại
+            </Button>
+          </Alert>
+        )}
 
-        <p className="text-muted-foreground mt-8 text-center text-xs">
-          Giá chưa gồm VAT. Hủy bất kỳ lúc nào — dữ liệu kho của bạn luôn có thể xuất ra đầy đủ.
-        </p>
+        {!isLoading && !isError && plans?.length === 0 && (
+          <Empty className="border-border bg-card rounded-lg">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <PackageCheck aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có gói dịch vụ</EmptyTitle>
+              <EmptyDescription>Thông tin bảng giá sẽ được cập nhật sớm.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+
+        {!isLoading && !isError && plans && plans.length > 0 && (
+          <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {plans.map((plan, index) => (
+              <PricingPlanCard key={plan.id} plan={plan} index={index} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
