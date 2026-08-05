@@ -51,6 +51,18 @@ export function formatPaymentStatus(value: string): string {
   return value || 'Không xác định'
 }
 
+export function isCompletedPayment(status: string): boolean {
+  return status.toLowerCase() === 'completed'
+}
+
+export function formatHistoricalPlanName(planName: string | null): string {
+  return planName?.trim() || 'Không xác định'
+}
+
+export function formatInvoiceSnapshotValue(value: string | null): string {
+  return value?.trim() || 'Không có dữ liệu lịch sử'
+}
+
 export function isActivePlan(plan: SubscriptionPlanResponse): boolean {
   return plan.status.toLowerCase() === 'active'
 }

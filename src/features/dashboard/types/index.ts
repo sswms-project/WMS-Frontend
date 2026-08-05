@@ -30,6 +30,7 @@ export interface QuickAction {
   icon: string
   href: string
   description: string
+  readOnlyWrite?: boolean
 }
 
 export interface StaffTask {

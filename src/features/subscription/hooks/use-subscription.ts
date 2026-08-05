@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse } from '@/types/api'
 import { subscriptionService } from '../services/subscription.service'
 import type {
-  DownloadInvoiceRequestDto,
+  InvoiceDataResponse,
   PaymentHistoryQuery,
   UpgradeSubscriptionRequestDto,
 } from '../types/subscription.types'
@@ -37,6 +37,14 @@ export function usePaymentHistoryQuery(params: PaymentHistoryQuery, enabled = tr
   return useQuery({
     queryKey: queryKeys.payments.list(params),
     queryFn: () => subscriptionService.getPaymentHistory(params).then((response) => response.data),
+    enabled,
+  })
+}
+
+export function useInvoiceDataQuery(paymentId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.payments.invoiceData(paymentId),
+    queryFn: () => subscriptionService.getInvoiceData(paymentId).then((response) => response.data),
     enabled,
   })
 }
@@ -92,9 +100,10 @@ export function useCancelSubscriptionMutation() {
   })
 }
 
-export function useDownloadInvoiceMutation() {
-  return useMutation({
-    mutationFn: (body: DownloadInvoiceRequestDto) => subscriptionService.downloadInvoice(body),
+export function useInvoiceDataMutation() {
+  return useMutation<InvoiceDataResponse, ApiErrorResponse, string>({
+    mutationFn: (paymentId) =>
+      subscriptionService.getInvoiceData(paymentId).then((response) => response.data),
     onError: (error: ApiErrorResponse) => {
       console.error(error)
       toast.error(error.message ?? 'Không thể tải hóa đơn. Vui lòng thử lại.')

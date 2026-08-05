@@ -9,23 +9,25 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import type { SubscriptionPlanResponse } from '../../types/subscription.types'
+import type { PlanActionState, SubscriptionPlanResponse } from '../../types/subscription.types'
 import { formatBillingCycle, formatCurrency, getFeatureRows } from '../../utils/format-subscription'
 
 interface PlanCardProps {
   readonly plan: SubscriptionPlanResponse
-  readonly current: boolean
-  readonly disabled: boolean
+  readonly actionState: PlanActionState
   readonly onUpgrade: (plan: SubscriptionPlanResponse) => void
 }
 
-export function PlanCard({ plan, current, disabled, onUpgrade }: PlanCardProps) {
+export function PlanCard({ plan, actionState, onUpgrade }: PlanCardProps) {
+  const isCurrentPlan = actionState.label === 'Đang sử dụng'
+
   return (
     <Card
       className={cn(
         'border-border min-w-0 transition-colors',
-        current && 'border-primary bg-primary/5'
+        isCurrentPlan && 'border-primary bg-primary/5'
       )}
     >
       <CardHeader className="border-b">
@@ -37,7 +39,7 @@ export function PlanCard({ plan, current, disabled, onUpgrade }: PlanCardProps) 
             <CardTitle className="truncate text-base font-semibold">{plan.planName}</CardTitle>
             <CardDescription>{formatBillingCycle(plan.billingCycle)}</CardDescription>
           </div>
-          {current && <Badge>Hiện tại</Badge>}
+          {isCurrentPlan && <Badge>Hiện tại</Badge>}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -47,7 +49,6 @@ export function PlanCard({ plan, current, disabled, onUpgrade }: PlanCardProps) 
             Giá theo {formatBillingCycle(plan.billingCycle).toLowerCase()}
           </p>
         </div>
-
         <div className="grid gap-2">
           {getFeatureRows(plan).map((row) => (
             <div key={row.label} className="flex items-center justify-between gap-3">
@@ -61,15 +62,22 @@ export function PlanCard({ plan, current, disabled, onUpgrade }: PlanCardProps) 
         </div>
       </CardContent>
       <CardFooter>
-        <Button
-          type="button"
-          variant={current ? 'outline' : 'default'}
-          className="w-full"
-          disabled={current || disabled}
-          onClick={() => onUpgrade(plan)}
-        >
-          {current ? 'Đang sử dụng' : 'Nâng cấp'}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="w-full">
+              <Button
+                type="button"
+                variant={isCurrentPlan ? 'outline' : 'default'}
+                className="w-full"
+                disabled={actionState.disabled}
+                onClick={() => onUpgrade(plan)}
+              >
+                {actionState.label}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {actionState.tooltip && <TooltipContent>{actionState.tooltip}</TooltipContent>}
+        </Tooltip>
       </CardFooter>
     </Card>
   )

@@ -1,9 +1,8 @@
-import { ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Printer } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -13,41 +12,62 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { PaymentResponse } from '../../types/subscription.types'
-import { formatCurrency, formatDate, formatPaymentStatus } from '../../utils/format-subscription'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import type {
+  InvoiceActionState,
+  PaymentHistoryFilterState,
+  PaymentResponse,
+  SubscriptionPlanResponse,
+} from '../../types/subscription.types'
+import {
+  formatCurrency,
+  formatDate,
+  formatHistoricalPlanName,
+  formatPaymentStatus,
+  isCompletedPayment,
+} from '../../utils/format-subscription'
+import { PaymentHistoryFilters } from './PaymentHistoryFilters'
 
 interface PaymentHistoryTableProps {
   readonly payments: readonly PaymentResponse[]
+  readonly plans: readonly SubscriptionPlanResponse[]
   readonly totalCount: number
   readonly pageIndex: number
   readonly pageSize: number
-  readonly searchText: string
+  readonly filters: PaymentHistoryFilterState
+  readonly dateRangeError?: string
   readonly isLoading: boolean
   readonly isError: boolean
-  readonly isDownloading: boolean
-  readonly onSearchTextChange: (value: string) => void
-  readonly onSearchSubmit: () => void
+  readonly invoiceActionState: InvoiceActionState | null
+  readonly onFiltersChange: (filters: PaymentHistoryFilterState) => void
+  readonly onFiltersSubmit: () => void
+  readonly onFiltersReset: () => void
   readonly onPreviousPage: () => void
   readonly onNextPage: () => void
   readonly onRetry: () => void
   readonly onDownloadInvoice: (payment: PaymentResponse) => void
+  readonly onPrintInvoice: (payment: PaymentResponse) => void
 }
 
 export function PaymentHistoryTable({
   payments,
+  plans,
   totalCount,
   pageIndex,
   pageSize,
-  searchText,
+  filters,
+  dateRangeError,
   isLoading,
   isError,
-  isDownloading,
-  onSearchTextChange,
-  onSearchSubmit,
+  invoiceActionState,
+  onFiltersChange,
+  onFiltersSubmit,
+  onFiltersReset,
   onPreviousPage,
   onNextPage,
   onRetry,
   onDownloadInvoice,
+  onPrintInvoice,
 }: PaymentHistoryTableProps) {
   const hasPrevious = pageIndex > 0
   const hasNext = (pageIndex + 1) * pageSize < totalCount
@@ -59,24 +79,14 @@ export function PaymentHistoryTable({
           <CardTitle className="text-base font-semibold">Lịch sử thanh toán</CardTitle>
           <CardDescription>Tra cứu hóa đơn và tải PDF khi cần đối soát.</CardDescription>
         </div>
-        <form
-          className="flex min-w-0 flex-col gap-2 sm:w-72 sm:flex-row"
-          onSubmit={(event) => {
-            event.preventDefault()
-            onSearchSubmit()
-          }}
-        >
-          <Input
-            value={searchText}
-            placeholder="Tìm mã hóa đơn"
-            aria-label="Tìm mã hóa đơn"
-            onChange={(event) => onSearchTextChange(event.target.value)}
-          />
-          <Button type="submit" variant="outline">
-            <Search className="size-4" aria-hidden="true" />
-            Tìm
-          </Button>
-        </form>
+        <PaymentHistoryFilters
+          plans={plans}
+          value={filters}
+          dateRangeError={dateRangeError}
+          onChange={onFiltersChange}
+          onSubmit={onFiltersSubmit}
+          onReset={onFiltersReset}
+        />
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
@@ -109,21 +119,23 @@ export function PaymentHistoryTable({
           </Empty>
         ) : (
           <div className="min-w-0 overflow-x-auto">
-            <Table className="min-w-[720px]">
+            <Table className="min-w-[820px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Mã hóa đơn</TableHead>
+                  <TableHead>Gói dịch vụ</TableHead>
                   <TableHead className="text-right">Số tiền</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Ngày thanh toán</TableHead>
                   <TableHead>Ngày tạo</TableHead>
-                  <TableHead className="text-right">Tải PDF</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payments.map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell className="font-mono">{payment.invoiceNumber}</TableCell>
+                    <TableCell>{formatHistoricalPlanName(payment.planName)}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(payment.amount)}
                     </TableCell>
@@ -133,16 +145,38 @@ export function PaymentHistoryTable({
                     </TableCell>
                     <TableCell>{formatDate(payment.createdAt)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isDownloading}
-                        onClick={() => onDownloadInvoice(payment)}
-                      >
-                        <Download className="size-3.5" aria-hidden="true" />
-                        PDF
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <InvoiceActionButton
+                          label="PDF"
+                          icon="download"
+                          disabled={!isCompletedPayment(payment.status)}
+                          pending={
+                            invoiceActionState?.paymentId === payment.id &&
+                            invoiceActionState.kind === 'download'
+                          }
+                          tooltip={
+                            !isCompletedPayment(payment.status)
+                              ? 'Chỉ có hóa đơn khi thanh toán hoàn tất'
+                              : undefined
+                          }
+                          onClick={() => onDownloadInvoice(payment)}
+                        />
+                        <InvoiceActionButton
+                          label="In"
+                          icon="print"
+                          disabled={!isCompletedPayment(payment.status)}
+                          pending={
+                            invoiceActionState?.paymentId === payment.id &&
+                            invoiceActionState.kind === 'print'
+                          }
+                          tooltip={
+                            !isCompletedPayment(payment.status)
+                              ? 'Chỉ có hóa đơn khi thanh toán hoàn tất'
+                              : undefined
+                          }
+                          onClick={() => onPrintInvoice(payment)}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -150,7 +184,6 @@ export function PaymentHistoryTable({
             </Table>
           </div>
         )}
-
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-muted-foreground text-xs">
             {totalCount > 0
@@ -182,5 +215,46 @@ export function PaymentHistoryTable({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+interface InvoiceActionButtonProps {
+  readonly label: string
+  readonly icon: 'download' | 'print'
+  readonly disabled: boolean
+  readonly pending: boolean
+  readonly tooltip?: string
+  readonly onClick: () => void
+}
+
+function InvoiceActionButton({
+  label,
+  icon,
+  disabled,
+  pending,
+  tooltip,
+  onClick,
+}: InvoiceActionButtonProps) {
+  const Icon = icon === 'download' ? Download : Printer
+  const button = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={disabled || pending}
+      onClick={onClick}
+    >
+      <Icon className="size-3.5" aria-hidden="true" />
+      {pending ? 'Đang xử lý...' : label}
+    </Button>
+  )
+  if (!tooltip) return button
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>{button}</span>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   )
 }
