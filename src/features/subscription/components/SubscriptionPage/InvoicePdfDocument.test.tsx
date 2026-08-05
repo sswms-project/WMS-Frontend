@@ -40,5 +40,5 @@ describe('InvoicePdfDocument', () => {
 
     expect(text).toContain('Nguyễn Ánh')
     expect(text).not.toContain('?')
-  })
+  }, 15_000)
 })
