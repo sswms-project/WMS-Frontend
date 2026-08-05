@@ -1,3 +1,6 @@
-export { SubscriptionPlanCard } from './SubscriptionPlanCard'
-export { SubscriptionPlanFormDialog } from './SubscriptionPlanFormDialog'
+export { SubscriptionPlanTable } from './SubscriptionPlanTable'
+export {
+  SubscriptionPlanFormDialog,
+  type SubscriptionPlanFormSubmitContext,
+} from './SubscriptionPlanFormDialog'
 export { DeactivatePlanDialog } from './DeactivatePlanDialog'

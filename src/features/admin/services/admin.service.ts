@@ -2,12 +2,14 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
-  AssignPermissionsRequest,
   CreateSubscriptionPlanRequest,
+  UpdateSubscriptionPlanRequest,
+} from '../schemas/subscription-plan.schema'
+import type {
+  AssignPermissionsRequest,
   PermissionResponse,
   RoleResponse,
   SubscriptionPlanResponse,
-  UpdateSubscriptionPlanRequest,
 } from '../types/admin.types'
 
 export const adminService = {

@@ -31,15 +31,17 @@ const planNameSchema = z
   .min(1, 'Tên gói là bắt buộc')
   .max(100, 'Tên gói không được vượt quá 100 ký tự')
 
-const priceSchema = z
+const existingPriceSchema = z
   .preprocess(toOptionalNumber, z.number({ error: numberIssueMessage('Giá') }))
   .pipe(
     z
       .number()
-      .gt(0, 'Giá phải lớn hơn 0')
+      .min(0, 'Giá không được nhỏ hơn 0')
       .max(MAX_PRICE, 'Giá vượt quá giới hạn cho phép')
       .refine(hasAtMostTwoDecimalPlaces, 'Giá chỉ được tối đa 2 chữ số thập phân')
   )
+
+const positivePriceSchema = existingPriceSchema.refine((price) => price > 0, 'Giá phải lớn hơn 0')
 
 function positiveIntSchema(label: string) {
   return z
@@ -49,7 +51,6 @@ function positiveIntSchema(label: string) {
 
 const planLimitsShape = {
   planName: planNameSchema,
-  price: priceSchema,
   maxWarehouses: positiveIntSchema('Số kho tối đa'),
   maxUsers: positiveIntSchema('Số người dùng tối đa'),
   enableForecasting: z.boolean(),
@@ -57,18 +58,51 @@ const planLimitsShape = {
   enableLayoutDesigner: z.boolean(),
 }
 
-export const createSubscriptionPlanSchema = z.object({
-  ...planLimitsShape,
-  billingCycle: z.enum(['Monthly', 'Yearly'], { error: 'Vui lòng chọn chu kỳ thanh toán' }),
+export const billingCycleSchema = z.enum(['Monthly', 'Yearly'], {
+  error: 'Vui lòng chọn chu kỳ thanh toán',
 })
 
-// Backend UpdateSubscriptionPlanCommand không nhận billingCycle nên field này không
-// nằm trong schema sửa — ô chọn chu kỳ bị khoá ở chế độ sửa thay vì cho đổi rồi âm
-// thầm bỏ qua.
-export const editSubscriptionPlanSchema = z.object(planLimitsShape)
+export const BILLING_CYCLE_API_VALUES = {
+  Monthly: 0,
+  Yearly: 1,
+} as const
+
+export const createSubscriptionPlanSchema = z.object({
+  ...planLimitsShape,
+  price: positivePriceSchema,
+  billingCycle: billingCycleSchema,
+})
+
+// Plan mặc định của môi trường development có giá 0. Form edit cần chấp nhận giá trị
+// hiện hữu này để admin sửa field khác; schema payload bên dưới vẫn từ chối gửi giá 0.
+export const editSubscriptionPlanSchema = z.object({
+  ...planLimitsShape,
+  price: existingPriceSchema,
+  billingCycle: billingCycleSchema,
+})
+
+export const createSubscriptionPlanRequestSchema = z.object({
+  ...planLimitsShape,
+  price: positivePriceSchema,
+  billingCycle: z.union([z.literal(0), z.literal(1)]),
+})
+
+export const updateSubscriptionPlanRequestSchema = z.object({
+  planName: planNameSchema.optional(),
+  price: positivePriceSchema.optional(),
+  maxWarehouses: positiveIntSchema('Số kho tối đa').optional(),
+  maxUsers: positiveIntSchema('Số người dùng tối đa').optional(),
+  enableForecasting: z.boolean().optional(),
+  enableBarcode: z.boolean().optional(),
+  enableLayoutDesigner: z.boolean().optional(),
+})
 
 // Các ô nhập số giữ giá trị dạng chuỗi trước khi preprocess đổi sang number, nên kiểu
 // giá trị form (input) khác kiểu dữ liệu sau khi validate (output).
 export type SubscriptionPlanFormInput = z.input<typeof createSubscriptionPlanSchema>
 
 export type SubscriptionPlanFormOutput = z.output<typeof createSubscriptionPlanSchema>
+
+export type CreateSubscriptionPlanRequest = z.output<typeof createSubscriptionPlanRequestSchema>
+
+export type UpdateSubscriptionPlanRequest = z.output<typeof updateSubscriptionPlanRequestSchema>

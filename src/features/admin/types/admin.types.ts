@@ -1,4 +1,5 @@
 import type { SubscriptionPlanResponse as SubscriptionPlanApiResponse } from '@/features/subscription/types/subscription.types'
+import type { SubscriptionPlanFormOutput } from '../schemas/subscription-plan.schema'
 
 export interface RoleResponse {
   id: string
@@ -18,8 +19,6 @@ export interface AssignPermissionsRequest {
   permissionIds: string[]
 }
 
-export type BillingCycle = 'Monthly' | 'Yearly'
-
 export type SubscriptionPlanStatus = 'Active' | 'Inactive'
 
 // Dẫn xuất từ DTO dùng chung của feature subscription để không có hai kiểu cùng mô tả
@@ -29,30 +28,6 @@ export interface SubscriptionPlanResponse extends Omit<
   SubscriptionPlanApiResponse,
   'billingCycle' | 'status'
 > {
-  billingCycle: BillingCycle
+  billingCycle: SubscriptionPlanFormOutput['billingCycle']
   status: SubscriptionPlanStatus
-}
-
-export interface CreateSubscriptionPlanRequest {
-  planName: string
-  price: number
-  billingCycle: BillingCycle
-  maxWarehouses: number
-  maxUsers: number
-  enableForecasting: boolean
-  enableBarcode: boolean
-  enableLayoutDesigner: boolean
-}
-
-// Không dùng Partial<CreateSubscriptionPlanRequest>: backend UpdateSubscriptionPlanCommand
-// không nhận billingCycle, nên Partial<> sẽ âm thầm cho phép gửi field bị bỏ qua.
-export interface UpdateSubscriptionPlanRequest {
-  planName?: string
-  price?: number
-  maxWarehouses?: number
-  maxUsers?: number
-  enableForecasting?: boolean
-  enableBarcode?: boolean
-  enableLayoutDesigner?: boolean
-  status?: SubscriptionPlanStatus
 }

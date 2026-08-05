@@ -2,13 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
-import { adminService } from '../services/admin.service'
 import type {
-  AssignPermissionsRequest,
   CreateSubscriptionPlanRequest,
-  SubscriptionPlanResponse,
   UpdateSubscriptionPlanRequest,
-} from '../types/admin.types'
+} from '../schemas/subscription-plan.schema'
+import { adminService } from '../services/admin.service'
+import type { AssignPermissionsRequest, SubscriptionPlanResponse } from '../types/admin.types'
 
 const KEYS = {
   roles: ['admin', 'roles'] as const,
@@ -59,9 +58,8 @@ export function useAdminSubscriptionPlansQuery() {
   })
 }
 
-// Create/Update chỉ log lỗi ở hook — dialog tự phân loại (trùng tên → lỗi inline tại
-// field, lỗi validation → inline theo từng field, còn lại → toast) và cần giữ dialog
-// mở khi lỗi, nên toast ở đây sẽ gây hiển thị trùng.
+// Create/Update chỉ log lỗi ở hook — page orchestrator phân loại lỗi field và toast,
+// nên hiển thị toast thêm tại đây sẽ gây trùng thông báo.
 export function useCreateSubscriptionPlanMutation() {
   const queryClient = useQueryClient()
   return useMutation<
@@ -101,7 +99,6 @@ export function useDeactivateSubscriptionPlanMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: adminService.deactivateSubscriptionPlan,
     onSuccess: () => {
-      toast.success('Đã vô hiệu hóa gói đăng ký.')
       // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
       // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
