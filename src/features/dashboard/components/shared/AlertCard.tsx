@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Zap, AlertTriangle, CheckCircle } from 'lucide-react'
 
 interface AlertCardProps {
@@ -10,27 +11,37 @@ interface AlertCardProps {
   description: string
   actionLabel: string
   onAction?: () => void
+  disabled?: boolean
+  disabledReason?: string
 }
 
 const alertConfig = {
   warning: {
     icon: AlertTriangle,
-    bg: 'bg-yellow-50 border-yellow-200',
-    iconColor: 'text-yellow-600',
+    bg: 'bg-muted border-border',
+    iconColor: 'text-destructive',
   },
   info: {
     icon: Zap,
-    bg: 'bg-purple-50 border-purple-200',
-    iconColor: 'text-purple-600',
+    bg: 'bg-muted border-border',
+    iconColor: 'text-tertiary',
   },
   success: {
     icon: CheckCircle,
-    bg: 'bg-green-50 border-green-200',
-    iconColor: 'text-green-600',
+    bg: 'bg-muted border-border',
+    iconColor: 'text-primary',
   },
 }
 
-export function AlertCard({ type, title, description, actionLabel, onAction }: AlertCardProps) {
+export function AlertCard({
+  type,
+  title,
+  description,
+  actionLabel,
+  onAction,
+  disabled = false,
+  disabledReason,
+}: AlertCardProps) {
   const config = alertConfig[type]
   const Icon = config.icon
 
@@ -44,12 +55,46 @@ export function AlertCard({ type, title, description, actionLabel, onAction }: A
           <p className="text-foreground/80 mt-2 text-sm leading-relaxed">{description}</p>
 
           {actionLabel && (
-            <Button size="sm" variant="default" className="mt-4" onClick={onAction}>
-              {actionLabel}
-            </Button>
+            <AlertCardAction
+              actionLabel={actionLabel}
+              disabled={disabled}
+              disabledReason={disabledReason}
+              onAction={onAction}
+            />
           )}
         </div>
       </div>
     </Card>
+  )
+}
+
+interface AlertCardActionProps {
+  readonly actionLabel: string
+  readonly disabled: boolean
+  readonly disabledReason?: string
+  readonly onAction?: () => void
+}
+
+function AlertCardAction({
+  actionLabel,
+  disabled,
+  disabledReason,
+  onAction,
+}: AlertCardActionProps) {
+  const actionButton = (
+    <Button size="sm" variant="default" className="mt-4" disabled={disabled} onClick={onAction}>
+      {actionLabel}
+    </Button>
+  )
+
+  if (!disabled || !disabledReason) return actionButton
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{actionButton}</span>
+      </TooltipTrigger>
+      <TooltipContent>{disabledReason}</TooltipContent>
+    </Tooltip>
   )
 }
