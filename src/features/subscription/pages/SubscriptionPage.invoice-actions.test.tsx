@@ -149,7 +149,9 @@ describe('SubscriptionPage invoice actions', () => {
       createObjectURL: vi.fn(() => 'blob:receipt'),
       revokeObjectURL: vi.fn(),
     })
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement
+    ) {
       downloadFileName = this.download
     })
     vi.spyOn(console, 'error').mockImplementation(() => undefined)

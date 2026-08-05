@@ -23,6 +23,7 @@ export const APP_ROUTES = {
   unauthorized: '/unauthorized',
   admin: {
     roles: '/admin/roles',
+    subscriptionPlans: '/admin/subscription-plans',
   },
   settings: {
     security: '/settings/security',

@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
   subscription: {
     me: '/subscriptions/me',
     plans: '/subscription-plans',
+    planById: (id: string) => `/subscription-plans/${id}`,
     upgrade: '/subscriptions/upgrade',
     renew: '/subscriptions/renew',
     cancel: '/subscriptions/me',

@@ -27,6 +27,7 @@ export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { href: APP_ROUTES.delivery, label: 'Delivery', icon: Truck },
     { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
     { href: APP_ROUTES.admin.roles, label: 'Phân quyền', icon: Shield },
+    { href: APP_ROUTES.admin.subscriptionPlans, label: 'Gói đăng ký', icon: CreditCard },
   ],
   [USER_ROLES.TenantOwner]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
