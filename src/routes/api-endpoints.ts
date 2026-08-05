@@ -31,5 +31,6 @@ export const API_ENDPOINTS = {
   payments: {
     history: '/payments',
     invoice: (paymentId: string) => `/payments/${paymentId}/invoice`,
+    invoiceData: (paymentId: string) => `/payments/${paymentId}/invoice-data`,
   },
 } as const

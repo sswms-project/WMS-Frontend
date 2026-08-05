@@ -1,4 +1,6 @@
 export { CurrentPlanCard } from './CurrentPlanCard'
+export { InvoicePdfDocument } from './InvoicePdfDocument'
+export { InvoicePrintView } from './InvoicePrintView'
 export { PaymentHistoryFilters } from './PaymentHistoryFilters'
 export { PaymentHistoryTable } from './PaymentHistoryTable'
 export { PlanCard } from './PlanCard'

@@ -103,14 +103,4 @@ export interface PaymentResponse {
   createdAt: string
 }
 
-export interface DownloadInvoiceRequestDto {
-  paymentId: string
-  fallbackFileName: string
-}
-
-export interface DownloadInvoiceResponseDto {
-  blob: Blob
-  fileName: string
-}
-
 export type PaymentHistoryResponse = QueryResult<PaymentResponse>
