@@ -347,6 +347,7 @@ export const tenantOwnerQuickActions: QuickAction[] = [
     icon: 'package',
     href: '/orders/create',
     description: 'Tạo đơn hàng mới',
+    readOnlyWrite: true,
   },
   {
     id: '2',

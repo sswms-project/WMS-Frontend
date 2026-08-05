@@ -26,4 +26,15 @@ When merging feature branches or PRs, prefer squash merge to keep `main` history
 
 Before using frontend design skills or implementing screens from Stitch, read `docs/AI_WORKFLOW.md` and follow its skill selection rules.
 
+## Frontend Agent Skills
+
+Use the applicable skill before implementing or reviewing frontend work:
+
+- `shadcn`: check existing components and official shadcn documentation before adding or composing UI primitives.
+- `vercel-react-best-practices`: apply when writing, refactoring, or reviewing React and Next.js code.
+- `vercel-composition-patterns`: apply when designing reusable component APIs or refactoring components with proliferating boolean props.
+- `web-design-guidelines`: apply before completing UI work to review UX, accessibility, and responsive behavior.
+
+These skills supplement, but never replace, `.rules`, `docs/CODING_GUIDELINES.md`, `docs/DESIGN_SYSTEM.md`, the feature-first architecture, Tailwind design tokens, and the `pnpm` package-manager rule.
+
 <!-- END:nextjs-agent-rules -->

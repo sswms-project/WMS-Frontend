@@ -13,6 +13,7 @@ import { RecentOperationsTable } from '../shared/RecentOperationsTable'
 import { AlertCard } from '../shared/AlertCard'
 import { LowStockTable } from '../shared/LowStockTable'
 import { FadeIn } from '../shared/FadeIn'
+import { useSubscriptionReadOnly } from '@/features/subscription/components/SubscriptionReadOnlyProvider'
 import {
   tenantOwnerMetrics,
   tenantOwnerQuickActions,
@@ -25,6 +26,7 @@ import { getDefaultMetricsDateRange, filterMetricsByDateRange } from '../../util
 
 export function TenantOwnerDashboard() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(getDefaultMetricsDateRange())
+  const { isReadOnly, reason: readOnlyReason } = useSubscriptionReadOnly()
 
   const filteredMetrics = useMemo(
     () => filterMetricsByDateRange(tenantOwnerMetrics, dateRange),
@@ -42,7 +44,11 @@ export function TenantOwnerDashboard() {
       </FadeIn>
 
       <FadeIn delay={0.05}>
-        <QuickActionsBar actions={tenantOwnerQuickActions} />
+        <QuickActionsBar
+          actions={tenantOwnerQuickActions}
+          readOnly={isReadOnly}
+          readOnlyReason={readOnlyReason}
+        />
       </FadeIn>
 
       <MetricCardGrid metrics={filteredMetrics} />
@@ -53,6 +59,8 @@ export function TenantOwnerDashboard() {
           title="Đề xuất thông minh"
           description="Đề xuất nhập thêm SKU-182 tại Zone A — dự báo nhu cầu cao cho ca làm việc tiếp theo."
           actionLabel="Thực hiện nhập kho"
+          disabled={isReadOnly}
+          disabledReason={readOnlyReason}
         />
       </FadeIn>
 

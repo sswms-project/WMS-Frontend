@@ -2,21 +2,13 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
-  DownloadInvoiceRequestDto,
-  DownloadInvoiceResponseDto,
+  InvoiceDataResponse,
   PaymentHistoryQuery,
   PaymentHistoryResponse,
   SubscriptionPlanResponse,
   SubscriptionStatusResponse,
   UpgradeSubscriptionRequestDto,
 } from '../types/subscription.types'
-
-function getFileNameFromDisposition(disposition?: string): string | null {
-  if (!disposition) return null
-
-  const fileNameMatch = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(disposition)
-  return fileNameMatch?.[1] ? decodeURIComponent(fileNameMatch[1]) : null
-}
 
 export const subscriptionService = {
   getCurrentSubscription: () =>
@@ -54,15 +46,8 @@ export const subscriptionService = {
       .get<ApiResponse<PaymentHistoryResponse>>(API_ENDPOINTS.payments.history, { params })
       .then((response) => response.data),
 
-  downloadInvoice: async ({
-    paymentId,
-    fallbackFileName,
-  }: DownloadInvoiceRequestDto): Promise<DownloadInvoiceResponseDto> => {
-    const response = await axiosClient.get<Blob>(API_ENDPOINTS.payments.invoice(paymentId), {
-      responseType: 'blob',
-    })
-    const fileName =
-      getFileNameFromDisposition(response.headers['content-disposition']) ?? fallbackFileName
-    return { blob: response.data, fileName }
-  },
+  getInvoiceData: (paymentId: string) =>
+    axiosClient
+      .get<ApiResponse<InvoiceDataResponse>>(API_ENDPOINTS.payments.invoiceData(paymentId))
+      .then((response) => response.data),
 }

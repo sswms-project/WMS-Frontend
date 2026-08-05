@@ -1,8 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { pdf } from '@react-pdf/renderer'
 import Link from 'next/link'
 import { CreditCard, ShieldAlert } from 'lucide-react'
+import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,9 +13,9 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { USER_ROLES } from '@/config/roles'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
-import { OrderType, type QueryInfo } from '@/types/api'
 import {
   CurrentPlanCard,
+  InvoicePdfDocument,
   PaymentHistoryTable,
   PlanCard,
   SubscriptionActionDialog,
@@ -24,13 +26,19 @@ import {
 import {
   useCancelSubscriptionMutation,
   useCurrentSubscriptionQuery,
-  useDownloadInvoiceMutation,
+  useInvoiceDataMutation,
   usePaymentHistoryQuery,
   useRenewSubscriptionMutation,
   useSubscriptionPlansQuery,
   useUpgradeSubscriptionMutation,
 } from '../hooks/use-subscription'
-import type { PaymentResponse, SubscriptionPlanResponse } from '../types/subscription.types'
+import type {
+  InvoiceActionState,
+  InvoiceDataResponse,
+  PaymentHistoryFilterState,
+  PaymentResponse,
+  SubscriptionPlanResponse,
+} from '../types/subscription.types'
 import {
   buildInvoiceFileName,
   findCurrentPlan,
@@ -38,10 +46,19 @@ import {
   formatCurrency,
   formatSubscriptionStatus,
   isActivePlan,
+  isCompletedPayment,
   shouldShowRenewAction,
 } from '../utils/format-subscription'
+import { buildPaymentHistoryQuery, isInvalidPaymentDateRange } from '../utils/payment-history-query'
+import { getPlanActionState } from '../utils/subscription-eligibility'
 
 const PAYMENT_PAGE_SIZE = 10
+
+const defaultPaymentFilters: PaymentHistoryFilterState = {
+  searchText: '',
+  planId: 'all',
+  status: 'all',
+}
 
 type DialogState =
   | { readonly type: 'upgrade'; readonly plan: SubscriptionPlanResponse }
@@ -53,19 +70,16 @@ export function SubscriptionPage() {
   const isTenantOwner = user?.role === USER_ROLES.TenantOwner
   const [dialogState, setDialogState] = useState<DialogState | null>(null)
   const [paymentPageIndex, setPaymentPageIndex] = useState(0)
-  const [searchText, setSearchText] = useState('')
-  const [appliedSearchText, setAppliedSearchText] = useState('')
+  const [paymentFilters, setPaymentFilters] =
+    useState<PaymentHistoryFilterState>(defaultPaymentFilters)
+  const [appliedPaymentFilters, setAppliedPaymentFilters] =
+    useState<PaymentHistoryFilterState>(defaultPaymentFilters)
+  const [dateRangeError, setDateRangeError] = useState<string>()
+  const [invoiceActionState, setInvoiceActionState] = useState<InvoiceActionState | null>(null)
 
-  const paymentQuery = useMemo<QueryInfo>(
-    () => ({
-      top: PAYMENT_PAGE_SIZE,
-      skip: paymentPageIndex * PAYMENT_PAGE_SIZE,
-      searchText: appliedSearchText || undefined,
-      needTotalCount: true,
-      orderBy: 'createdAt',
-      orderType: OrderType.Descending,
-    }),
-    [appliedSearchText, paymentPageIndex]
+  const paymentQuery = useMemo(
+    () => buildPaymentHistoryQuery(appliedPaymentFilters, paymentPageIndex, PAYMENT_PAGE_SIZE),
+    [appliedPaymentFilters, paymentPageIndex]
   )
 
   const subscriptionQuery = useCurrentSubscriptionQuery(isTenantOwner)
@@ -74,7 +88,11 @@ export function SubscriptionPage() {
   const upgradeMutation = useUpgradeSubscriptionMutation()
   const renewMutation = useRenewSubscriptionMutation()
   const cancelMutation = useCancelSubscriptionMutation()
-  const downloadInvoiceMutation = useDownloadInvoiceMutation()
+  const invoiceDataMutation = useInvoiceDataMutation()
+  const invoiceCustomer = useMemo(
+    () => ({ displayName: user?.fullName ?? user?.email, email: user?.email }),
+    [user?.email, user?.fullName]
+  )
 
   if (!isTenantOwner) {
     return <TenantOwnerOnlyState />
@@ -129,21 +147,69 @@ export function SubscriptionPage() {
     }
   }
 
-  const handleSearchSubmit = () => {
+  const handleFiltersSubmit = () => {
+    if (isInvalidPaymentDateRange(paymentFilters)) {
+      setDateRangeError('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.')
+      return
+    }
+
+    setDateRangeError(undefined)
     setPaymentPageIndex(0)
-    setAppliedSearchText(searchText.trim())
+    setAppliedPaymentFilters(paymentFilters)
+  }
+
+  const handleFiltersReset = () => {
+    setDateRangeError(undefined)
+    setPaymentPageIndex(0)
+    setPaymentFilters(defaultPaymentFilters)
+    setAppliedPaymentFilters(defaultPaymentFilters)
   }
 
   const handleDownloadInvoice = async (payment: PaymentResponse) => {
+    if (!isCompletedPayment(payment.status)) return
+
+    setInvoiceActionState({ paymentId: payment.id, kind: 'download' })
     try {
-      const invoice = await downloadInvoiceMutation.mutateAsync({
-        paymentId: payment.id,
-        fallbackFileName: buildInvoiceFileName(payment.invoiceNumber),
-      })
-      downloadBlob(invoice.blob, invoice.fileName)
-    } catch {
-      // Mutation hook already logs and shows a toast.
+      let invoice: InvoiceDataResponse
+      try {
+        invoice = await invoiceDataMutation.mutateAsync(payment.id)
+      } catch {
+        // The mutation handles fetch failures with a user-facing toast.
+        return
+      }
+
+      try {
+        const blob = await pdf(
+          <InvoicePdfDocument invoice={invoice} customer={invoiceCustomer} />
+        ).toBlob()
+        downloadBlob(blob, buildInvoiceFileName(invoice.invoiceNumber))
+      } catch (error) {
+        console.error(error)
+        toast.error('Unable to generate the payment receipt. Please try again.')
+      }
+    } finally {
+      setInvoiceActionState(null)
     }
+  }
+
+  const handlePrintInvoice = (payment: PaymentResponse) => {
+    if (!isCompletedPayment(payment.status)) return
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      const error = new Error('Popup blocked')
+      console.error(error)
+      toast.error('The print window was blocked. Please allow popups and try again.')
+      return
+    }
+
+    try {
+      printWindow.opener = null
+    } catch (error) {
+      console.warn('Unable to clear print window opener.', error)
+    }
+
+    printWindow.location.replace(`/subscription/invoices/${payment.id}/print`)
   }
 
   const dialogCopy = getDialogCopy(dialogState, subscription?.planName)
@@ -211,17 +277,21 @@ export function SubscriptionPage() {
               </Empty>
             ) : (
               <div className="grid min-w-0 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-                {activePlans.map((plan) => (
-                  <PlanCard
-                    key={plan.id}
-                    plan={plan}
-                    current={plan.planName === subscription.planName}
-                    disabled={isActionPending}
-                    onUpgrade={(selectedPlan) =>
-                      setDialogState({ type: 'upgrade', plan: selectedPlan })
-                    }
-                  />
-                ))}
+                {activePlans.map((plan) => {
+                  const planActionState = getPlanActionState(plan, currentPlan, isActionPending)
+
+                  return (
+                    <PlanCard
+                      key={plan.id}
+                      plan={plan}
+                      actionState={planActionState}
+                      onUpgrade={(selectedPlan) => {
+                        if (planActionState.disabled) return
+                        setDialogState({ type: 'upgrade', plan: selectedPlan })
+                      }}
+                    />
+                  )
+                })}
               </div>
             )}
           </section>
@@ -241,19 +311,23 @@ export function SubscriptionPage() {
 
       <PaymentHistoryTable
         payments={payments}
+        plans={activePlans}
         totalCount={totalPayments}
         pageIndex={paymentPageIndex}
         pageSize={PAYMENT_PAGE_SIZE}
-        searchText={searchText}
+        filters={paymentFilters}
+        dateRangeError={dateRangeError}
         isLoading={paymentsQuery.isLoading || paymentsQuery.isFetching}
         isError={paymentsQuery.isError}
-        isDownloading={downloadInvoiceMutation.isPending}
-        onSearchTextChange={setSearchText}
-        onSearchSubmit={handleSearchSubmit}
+        invoiceActionState={invoiceActionState}
+        onFiltersChange={setPaymentFilters}
+        onFiltersSubmit={handleFiltersSubmit}
+        onFiltersReset={handleFiltersReset}
         onPreviousPage={() => setPaymentPageIndex((page) => Math.max(0, page - 1))}
         onNextPage={() => setPaymentPageIndex((page) => page + 1)}
         onRetry={() => paymentsQuery.refetch()}
         onDownloadInvoice={handleDownloadInvoice}
+        onPrintInvoice={handlePrintInvoice}
       />
 
       <SubscriptionActionDialog
