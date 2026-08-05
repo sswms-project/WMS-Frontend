@@ -195,16 +195,21 @@ export function SubscriptionPage() {
   const handlePrintInvoice = (payment: PaymentResponse) => {
     if (!isCompletedPayment(payment.status)) return
 
-    const printWindow = window.open(
-      `/subscription/invoices/${payment.id}/print`,
-      '_blank',
-      'noopener,noreferrer'
-    )
+    const printWindow = window.open('', '_blank')
     if (!printWindow) {
       const error = new Error('Popup blocked')
       console.error(error)
       toast.error('The print window was blocked. Please allow popups and try again.')
+      return
     }
+
+    try {
+      printWindow.opener = null
+    } catch (error) {
+      console.warn('Unable to clear print window opener.', error)
+    }
+
+    printWindow.location.replace(`/subscription/invoices/${payment.id}/print`)
   }
 
   const dialogCopy = getDialogCopy(dialogState, subscription?.planName)

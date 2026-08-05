@@ -1,4 +1,4 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Font, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { InvoiceCustomerSnapshot, InvoiceDataResponse } from '../../types/subscription.types'
 import {
   formatCurrency,
@@ -13,12 +13,29 @@ interface InvoicePdfDocumentProps {
   readonly customer: InvoiceCustomerSnapshot
 }
 
+const invoicePdfFontUrl = new URL(
+  '../../../../assets/fonts/NotoSans-VariableFont_wdth,wght.ttf',
+  import.meta.url
+)
+const invoicePdfFontSource =
+  typeof window === 'undefined'
+    ? decodeURIComponent(invoicePdfFontUrl.pathname).replace(/^\/([A-Z]:)/i, '$1')
+    : invoicePdfFontUrl.href
+
+Font.register({
+  family: 'Noto Sans',
+  fonts: [
+    { src: invoicePdfFontSource, fontWeight: 400 },
+    { src: invoicePdfFontSource, fontWeight: 700 },
+  ],
+})
+
 const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 11,
     color: '#18232f',
-    fontFamily: 'Helvetica',
+    fontFamily: 'Noto Sans',
   },
   header: {
     flexDirection: 'row',

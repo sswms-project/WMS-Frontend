@@ -1,9 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { pdf } from '@react-pdf/renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { toast } from 'sonner'
 import { SubscriptionPage } from './SubscriptionPage'
 import type { PaymentResponse } from '../types/subscription.types'
 
-const payment: PaymentResponse = {
+const completedPayment: PaymentResponse = {
   id: 'completed-payment',
   subscriptionId: 'subscription-1',
   planId: 'plan-1',
@@ -15,20 +17,32 @@ const payment: PaymentResponse = {
   createdAt: '2026-08-01T09:00:00+07:00',
 }
 
+const pendingPayment: PaymentResponse = {
+  ...completedPayment,
+  id: 'pending-payment',
+  status: 'Pending',
+}
+
 const invoice = {
-  ...payment,
-  paymentId: payment.id,
+  ...completedPayment,
+  paymentId: completedPayment.id,
   subscriptionStartDate: '2026-08-01T10:00:00+07:00',
   subscriptionEndDate: '2026-09-01T10:00:00+07:00',
 }
 
 const invoiceDataMutation = {
-  mutateAsync: vi.fn().mockResolvedValue(invoice),
+  mutateAsync: vi.fn(),
   isPending: false,
 }
 
+const toBlob = vi.fn()
+
 vi.mock('@react-pdf/renderer', () => ({
-  pdf: vi.fn(() => ({ toBlob: vi.fn().mockResolvedValue(new Blob(['receipt'])) })),
+  pdf: vi.fn(() => ({ toBlob })),
+}))
+
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn() },
 }))
 
 vi.mock('@/stores/auth.store', () => ({
@@ -47,15 +61,21 @@ vi.mock('../components/SubscriptionPage', () => ({
     onDownloadInvoice,
     onPrintInvoice,
   }: {
-    onDownloadInvoice: (selectedPayment: PaymentResponse) => void
-    onPrintInvoice: (selectedPayment: PaymentResponse) => void
+    onDownloadInvoice: (payment: PaymentResponse) => void
+    onPrintInvoice: (payment: PaymentResponse) => void
   }) => (
     <div>
-      <button type="button" onClick={() => onDownloadInvoice(payment)}>
-        Download receipt
+      <button type="button" onClick={() => onDownloadInvoice(completedPayment)}>
+        Download completed receipt
       </button>
-      <button type="button" onClick={() => onPrintInvoice(payment)}>
-        Print receipt
+      <button type="button" onClick={() => onDownloadInvoice(pendingPayment)}>
+        Download pending receipt
+      </button>
+      <button type="button" onClick={() => onPrintInvoice(completedPayment)}>
+        Print completed receipt
+      </button>
+      <button type="button" onClick={() => onPrintInvoice(pendingPayment)}>
+        Print pending receipt
       </button>
     </div>
   ),
@@ -74,8 +94,8 @@ vi.mock('../hooks/use-subscription', () => ({
       planName: 'Professional',
       planPrice: 200000,
       billingCycle: 'Monthly',
-      startDate: '2026-08-01T10:00:00+07:00',
-      endDate: '2026-09-01T10:00:00+07:00',
+      startDate: '2025-01-01T10:00:00+07:00',
+      endDate: '2025-02-01T10:00:00+07:00',
       status: 'Active',
       autoRenew: true,
       isExpired: false,
@@ -87,7 +107,7 @@ vi.mock('../hooks/use-subscription', () => ({
   }),
   useInvoiceDataMutation: () => invoiceDataMutation,
   usePaymentHistoryQuery: () => ({
-    data: { items: [payment], totalCount: 1 },
+    data: { items: [completedPayment, pendingPayment], totalCount: 2 },
     isLoading: false,
     isFetching: false,
     isError: false,
@@ -104,32 +124,117 @@ vi.mock('../hooks/use-subscription', () => ({
 }))
 
 describe('SubscriptionPage invoice actions', () => {
+  const receiptBlob = new Blob(['receipt'])
+  const printWindow = {
+    opener: window,
+    location: { replace: vi.fn() },
+  }
+  let downloadFileName = ''
+
   beforeEach(() => {
-    invoiceDataMutation.mutateAsync.mockClear()
+    downloadFileName = ''
+    invoiceDataMutation.mutateAsync.mockReset()
+    invoiceDataMutation.mutateAsync.mockResolvedValue(invoice)
+    toBlob.mockReset()
+    toBlob.mockResolvedValue(receiptBlob)
+    vi.mocked(pdf).mockClear()
+    vi.mocked(toast.error).mockClear()
+    printWindow.opener = window
+    printWindow.location.replace.mockClear()
     vi.stubGlobal(
       'open',
-      vi.fn(() => ({}))
+      vi.fn(() => printWindow)
+    )
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:receipt'),
+      revokeObjectURL: vi.fn(),
+    })
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+      downloadFileName = this.download
+    })
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  })
+
+  it('renders and downloads a PDF from immutable invoice snapshots', async () => {
+    const historicalInvoice = {
+      ...invoice,
+      planName: null,
+      subscriptionStartDate: null,
+      subscriptionEndDate: null,
+    }
+    invoiceDataMutation.mutateAsync.mockResolvedValueOnce(historicalInvoice)
+
+    render(<SubscriptionPage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Download completed receipt' }))
+
+    await waitFor(() => expect(toBlob).toHaveBeenCalledOnce())
+
+    expect(invoiceDataMutation.mutateAsync).toHaveBeenCalledWith(completedPayment.id)
+    expect(pdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        props: expect.objectContaining({
+          invoice: expect.objectContaining({
+            planName: null,
+            subscriptionStartDate: null,
+            subscriptionEndDate: null,
+          }),
+          customer: { displayName: 'Tenant Owner', email: 'owner@example.com' },
+        }),
+      })
+    )
+    expect(URL.createObjectURL).toHaveBeenCalledWith(receiptBlob)
+    expect(downloadFileName).toBe('INV-2026-001.pdf')
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:receipt')
+  })
+
+  it('reports PDF generation failures without attempting a download', async () => {
+    toBlob.mockRejectedValueOnce(new Error('PDF generation failed'))
+
+    render(<SubscriptionPage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Download completed receipt' }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledOnce())
+
+    expect(URL.createObjectURL).not.toHaveBeenCalled()
+    expect(toast.error).toHaveBeenCalledWith(
+      'Unable to generate the payment receipt. Please try again.'
     )
   })
 
-  it('opens the print route synchronously for a completed payment', () => {
+  it('rejects invoice actions for non-completed payments', () => {
     render(<SubscriptionPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Print receipt' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Download pending receipt' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Print pending receipt' }))
 
-    expect(window.open).toHaveBeenCalledWith(
-      '/subscription/invoices/completed-payment/print',
-      '_blank',
-      'noopener,noreferrer'
+    expect(invoiceDataMutation.mutateAsync).not.toHaveBeenCalled()
+    expect(window.open).not.toHaveBeenCalled()
+  })
+
+  it('opens a usable print window synchronously, clears its opener, and navigates it', () => {
+    render(<SubscriptionPage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Print completed receipt' }))
+
+    expect(window.open).toHaveBeenCalledWith('', '_blank')
+    expect(printWindow.opener).toBeNull()
+    expect(printWindow.location.replace).toHaveBeenCalledWith(
+      '/subscription/invoices/completed-payment/print'
     )
     expect(invoiceDataMutation.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('uses invoice data to generate a completed payment PDF receipt', async () => {
+  it('reports an actual blocked print popup', () => {
+    vi.stubGlobal(
+      'open',
+      vi.fn(() => null)
+    )
     render(<SubscriptionPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Download receipt' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Print completed receipt' }))
 
-    expect(invoiceDataMutation.mutateAsync).toHaveBeenCalledWith('completed-payment')
+    expect(toast.error).toHaveBeenCalledWith(
+      'The print window was blocked. Please allow popups and try again.'
+    )
   })
 })
