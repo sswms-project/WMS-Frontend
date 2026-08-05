@@ -1,4 +1,5 @@
 import type { QueryInfo } from '@/types/api'
+import type { PaymentHistoryQuery } from '@/features/subscription/types/subscription.types'
 
 export const queryKeys = {
   auth: {
@@ -12,7 +13,8 @@ export const queryKeys = {
   },
   payments: {
     all: ['payments'] as const,
-    list: (params?: QueryInfo) => ['payments', 'list', params] as const,
+    list: (params?: PaymentHistoryQuery) => ['payments', 'list', params] as const,
+    invoiceData: (paymentId: string) => ['payments', 'invoice-data', paymentId] as const,
   },
   warehouses: {
     all: ['warehouses'] as const,

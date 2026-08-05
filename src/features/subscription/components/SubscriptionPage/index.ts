@@ -1,4 +1,5 @@
 export { CurrentPlanCard } from './CurrentPlanCard'
+export { PaymentHistoryFilters } from './PaymentHistoryFilters'
 export { PaymentHistoryTable } from './PaymentHistoryTable'
 export { PlanCard } from './PlanCard'
 export { SubscriptionActionDialog } from './SubscriptionActionDialog'

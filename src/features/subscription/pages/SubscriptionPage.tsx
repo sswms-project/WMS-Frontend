@@ -11,7 +11,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { USER_ROLES } from '@/config/roles'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
-import { OrderType, type QueryInfo } from '@/types/api'
 import {
   CurrentPlanCard,
   PaymentHistoryTable,
@@ -30,7 +29,11 @@ import {
   useSubscriptionPlansQuery,
   useUpgradeSubscriptionMutation,
 } from '../hooks/use-subscription'
-import type { PaymentResponse, SubscriptionPlanResponse } from '../types/subscription.types'
+import type {
+  PaymentHistoryFilterState,
+  PaymentResponse,
+  SubscriptionPlanResponse,
+} from '../types/subscription.types'
 import {
   buildInvoiceFileName,
   findCurrentPlan,
@@ -40,8 +43,16 @@ import {
   isActivePlan,
   shouldShowRenewAction,
 } from '../utils/format-subscription'
+import { buildPaymentHistoryQuery, isInvalidPaymentDateRange } from '../utils/payment-history-query'
+import { getPlanActionState } from '../utils/subscription-eligibility'
 
 const PAYMENT_PAGE_SIZE = 10
+
+const defaultPaymentFilters: PaymentHistoryFilterState = {
+  searchText: '',
+  planId: 'all',
+  status: 'all',
+}
 
 type DialogState =
   | { readonly type: 'upgrade'; readonly plan: SubscriptionPlanResponse }
@@ -53,19 +64,15 @@ export function SubscriptionPage() {
   const isTenantOwner = user?.role === USER_ROLES.TenantOwner
   const [dialogState, setDialogState] = useState<DialogState | null>(null)
   const [paymentPageIndex, setPaymentPageIndex] = useState(0)
-  const [searchText, setSearchText] = useState('')
-  const [appliedSearchText, setAppliedSearchText] = useState('')
+  const [paymentFilters, setPaymentFilters] =
+    useState<PaymentHistoryFilterState>(defaultPaymentFilters)
+  const [appliedPaymentFilters, setAppliedPaymentFilters] =
+    useState<PaymentHistoryFilterState>(defaultPaymentFilters)
+  const [dateRangeError, setDateRangeError] = useState<string>()
 
-  const paymentQuery = useMemo<QueryInfo>(
-    () => ({
-      top: PAYMENT_PAGE_SIZE,
-      skip: paymentPageIndex * PAYMENT_PAGE_SIZE,
-      searchText: appliedSearchText || undefined,
-      needTotalCount: true,
-      orderBy: 'createdAt',
-      orderType: OrderType.Descending,
-    }),
-    [appliedSearchText, paymentPageIndex]
+  const paymentQuery = useMemo(
+    () => buildPaymentHistoryQuery(appliedPaymentFilters, paymentPageIndex, PAYMENT_PAGE_SIZE),
+    [appliedPaymentFilters, paymentPageIndex]
   )
 
   const subscriptionQuery = useCurrentSubscriptionQuery(isTenantOwner)
@@ -129,9 +136,22 @@ export function SubscriptionPage() {
     }
   }
 
-  const handleSearchSubmit = () => {
+  const handleFiltersSubmit = () => {
+    if (isInvalidPaymentDateRange(paymentFilters)) {
+      setDateRangeError('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.')
+      return
+    }
+
+    setDateRangeError(undefined)
     setPaymentPageIndex(0)
-    setAppliedSearchText(searchText.trim())
+    setAppliedPaymentFilters(paymentFilters)
+  }
+
+  const handleFiltersReset = () => {
+    setDateRangeError(undefined)
+    setPaymentPageIndex(0)
+    setPaymentFilters(defaultPaymentFilters)
+    setAppliedPaymentFilters(defaultPaymentFilters)
   }
 
   const handleDownloadInvoice = async (payment: PaymentResponse) => {
@@ -211,17 +231,21 @@ export function SubscriptionPage() {
               </Empty>
             ) : (
               <div className="grid min-w-0 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-                {activePlans.map((plan) => (
-                  <PlanCard
-                    key={plan.id}
-                    plan={plan}
-                    current={plan.planName === subscription.planName}
-                    disabled={isActionPending}
-                    onUpgrade={(selectedPlan) =>
-                      setDialogState({ type: 'upgrade', plan: selectedPlan })
-                    }
-                  />
-                ))}
+                {activePlans.map((plan) => {
+                  const planActionState = getPlanActionState(plan, currentPlan, isActionPending)
+
+                  return (
+                    <PlanCard
+                      key={plan.id}
+                      plan={plan}
+                      actionState={planActionState}
+                      onUpgrade={(selectedPlan) => {
+                        if (planActionState.disabled) return
+                        setDialogState({ type: 'upgrade', plan: selectedPlan })
+                      }}
+                    />
+                  )
+                })}
               </div>
             )}
           </section>
@@ -241,19 +265,23 @@ export function SubscriptionPage() {
 
       <PaymentHistoryTable
         payments={payments}
+        plans={activePlans}
         totalCount={totalPayments}
         pageIndex={paymentPageIndex}
         pageSize={PAYMENT_PAGE_SIZE}
-        searchText={searchText}
+        filters={paymentFilters}
+        dateRangeError={dateRangeError}
         isLoading={paymentsQuery.isLoading || paymentsQuery.isFetching}
         isError={paymentsQuery.isError}
-        isDownloading={downloadInvoiceMutation.isPending}
-        onSearchTextChange={setSearchText}
-        onSearchSubmit={handleSearchSubmit}
+        invoiceActionState={null}
+        onFiltersChange={setPaymentFilters}
+        onFiltersSubmit={handleFiltersSubmit}
+        onFiltersReset={handleFiltersReset}
         onPreviousPage={() => setPaymentPageIndex((page) => Math.max(0, page - 1))}
         onNextPage={() => setPaymentPageIndex((page) => page + 1)}
         onRetry={() => paymentsQuery.refetch()}
         onDownloadInvoice={handleDownloadInvoice}
+        onPrintInvoice={() => undefined}
       />
 
       <SubscriptionActionDialog
