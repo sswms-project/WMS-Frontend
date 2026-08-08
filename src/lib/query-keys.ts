@@ -1,6 +1,7 @@
 import type { QueryInfo } from '@/types/api'
 import type { PaymentHistoryQuery } from '@/features/subscription/types/subscription.types'
 import type { StaffDirectoryKind, StaffQuery } from '@/features/staff/types/staff.types'
+import type { InvitationQuery } from '@/features/staff/types/invitation.types'
 
 export const queryKeys = {
   organization: {
@@ -11,6 +12,10 @@ export const queryKeys = {
     all: ['staff'] as const,
     list: (kind: StaffDirectoryKind, params: StaffQuery) => ['staff', kind, params] as const,
     detail: (userId: string) => ['staff', 'detail', userId] as const,
+  },
+  invitations: {
+    all: ['invitations'] as const,
+    list: (params: InvitationQuery) => ['invitations', 'list', params] as const,
   },
   auth: {
     me: ['auth', 'me'] as const,
