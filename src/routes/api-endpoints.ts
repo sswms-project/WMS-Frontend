@@ -27,6 +27,10 @@ export const API_ENDPOINTS = {
     detail: (userId: string) => `/staff/${userId}`,
     deactivate: (userId: string) => `/staff/${userId}/deactivate`,
     reactivate: (userId: string) => `/staff/${userId}/reactivate`,
+    assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
+  },
+  warehouses: {
+    list: '/warehouses',
   },
   invitations: {
     send: '/invitations',
