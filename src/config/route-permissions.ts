@@ -9,6 +9,7 @@ interface RoutePermission {
 const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
   { pathPrefix: '/admin', allowedRoles: [USER_ROLES.SystemAdmin] },
   { pathPrefix: APP_ROUTES.subscription, allowedRoles: [USER_ROLES.TenantOwner] },
+  { pathPrefix: APP_ROUTES.organization, allowedRoles: [USER_ROLES.TenantOwner] },
   { pathPrefix: APP_ROUTES.dashboardByRole.tenant, allowedRoles: [USER_ROLES.TenantOwner] },
   { pathPrefix: APP_ROUTES.dashboardByRole.manager, allowedRoles: [USER_ROLES.WarehouseManager] },
   { pathPrefix: APP_ROUTES.dashboardByRole.staff, allowedRoles: [USER_ROLES.WarehouseStaff] },

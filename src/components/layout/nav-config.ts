@@ -1,4 +1,5 @@
 import {
+  Building2,
   Boxes,
   CreditCard,
   LayoutDashboard,
@@ -31,6 +32,7 @@ export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
   ],
   [USER_ROLES.TenantOwner]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
+    { href: APP_ROUTES.organization, label: 'Tổ chức', icon: Building2 },
     { href: APP_ROUTES.subscription, label: 'Gói dịch vụ', icon: CreditCard },
     { href: APP_ROUTES.warehouses, label: 'Warehouses', icon: Warehouse },
     { href: APP_ROUTES.inventory, label: 'Inventory', icon: Boxes },
