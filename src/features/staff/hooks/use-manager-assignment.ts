@@ -18,6 +18,7 @@ export function useAssignmentWarehousesQuery(params: WarehouseAssignmentQuery, e
     queryKey: queryKeys.warehouses.list(params),
     queryFn: () => managerAssignmentService.getWarehouses(params).then((response) => response.data),
     enabled,
+    staleTime: 5 * 60 * 1000,
     placeholderData: (previousData) => previousData,
   })
 }

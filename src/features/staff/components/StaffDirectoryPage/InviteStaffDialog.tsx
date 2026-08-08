@@ -1,8 +1,9 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircle, MailPlus, ShieldCheck, UserRound } from 'lucide-react'
-import { Controller, useForm } from 'react-hook-form'
+import { LoaderCircle, MailPlus, RefreshCw, ShieldCheck, UserRound } from 'lucide-react'
+import { useMemo } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -19,11 +20,14 @@ import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { USER_ROLES } from '@/config/roles'
 import { useSendInvitationMutation } from '../../hooks/use-invitations'
+import { useAssignmentWarehousesQuery } from '../../hooks/use-manager-assignment'
 import {
-  sendInvitationSchema,
-  type SendInvitationFormValues,
-} from '../../schemas/invitation.schema'
+  inviteWithWarehouseSchema,
+  type InviteWithWarehouseFormValues,
+} from '../../schemas/invite-with-warehouse.schema'
 import type { InvitableRole } from '../../types/invitation.types'
+import type { WarehouseAssignmentQuery } from '../../types/manager-assignment.types'
+import { WarehousePicker } from './WarehousePicker'
 
 interface InviteStaffDialogProps {
   readonly open: boolean
@@ -48,6 +52,12 @@ const roleOptions = [
   },
 ] as const
 
+const invitationWarehouseQuery: WarehouseAssignmentQuery = {
+  top: 1000,
+  skip: 0,
+  needTotalCount: true,
+}
+
 function isInvitableRole(value: string): value is InvitableRole {
   return value === USER_ROLES.WarehouseManager || value === USER_ROLES.WarehouseStaff
 }
@@ -64,26 +74,39 @@ export function InviteStaffDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
-  } = useForm<SendInvitationFormValues>({
-    resolver: zodResolver(sendInvitationSchema),
-    defaultValues: { email: '', role: defaultRole },
+  } = useForm<InviteWithWarehouseFormValues>({
+    resolver: zodResolver(inviteWithWarehouseSchema),
+    defaultValues: { email: '', role: defaultRole, warehouseId: undefined },
   })
+  const selectedRole = useWatch({ control, name: 'role' })
+  const warehousesQuery = useAssignmentWarehousesQuery(
+    invitationWarehouseQuery,
+    open && selectedRole === USER_ROLES.WarehouseStaff
+  )
+  const activeWarehouses = useMemo(
+    () =>
+      (warehousesQuery.data?.items ?? []).filter(
+        (warehouse) => warehouse.status.toLowerCase() === 'active'
+      ),
+    [warehousesQuery.data?.items]
+  )
 
   function handleOpenChange(nextOpen: boolean) {
     if (invitationMutation.isPending) return
     if (!nextOpen) {
-      reset({ email: '', role: defaultRole })
+      reset({ email: '', role: defaultRole, warehouseId: undefined })
       invitationMutation.reset()
     }
     onOpenChange(nextOpen)
   }
 
-  async function submit(values: SendInvitationFormValues) {
+  async function submit(values: InviteWithWarehouseFormValues) {
     try {
       await invitationMutation.mutateAsync(values)
       toast.success(`Đã gửi lời mời đến ${values.email}.`)
-      reset({ email: '', role: defaultRole })
+      reset({ email: '', role: defaultRole, warehouseId: undefined })
       onOpenChange(false)
     } catch {
       // The mutation error is rendered inline so the user can correct the form in place.
@@ -139,7 +162,13 @@ export function InviteStaffDialog({
                     value={field.value}
                     aria-labelledby="invitation-role-label"
                     className="grid gap-2 sm:grid-cols-2"
-                    onValueChange={(value) => isInvitableRole(value) && field.onChange(value)}
+                    onValueChange={(value) => {
+                      if (!isInvitableRole(value)) return
+                      field.onChange(value)
+                      if (value === USER_ROLES.WarehouseManager) {
+                        setValue('warehouseId', undefined, { shouldValidate: true })
+                      }
+                    }}
                   >
                     {roleOptions.map(({ id, value, label, description, icon: Icon }) => (
                       <label
@@ -178,6 +207,65 @@ export function InviteStaffDialog({
                 </p>
               </div>
             </div>
+          )}
+
+          {selectedRole === USER_ROLES.WarehouseStaff && (
+            <Controller
+              control={control}
+              name="warehouseId"
+              render={({ field }) => {
+                const pickerPlaceholder = warehousesQuery.isLoading
+                  ? 'Đang tải danh sách kho'
+                  : warehousesQuery.isError
+                    ? 'Không thể tải danh sách kho'
+                    : activeWarehouses.length === 0
+                      ? 'Không có kho đang hoạt động'
+                      : 'Chọn kho khi cần'
+
+                return (
+                  <Field data-invalid={Boolean(errors.warehouseId)}>
+                    <div className="flex items-center justify-between gap-3">
+                      <FieldLabel htmlFor="invitation-warehouse">Kho làm việc</FieldLabel>
+                      <span className="text-muted-foreground text-xs">Không bắt buộc</span>
+                    </div>
+                    <WarehousePicker
+                      id="invitation-warehouse"
+                      warehouses={activeWarehouses}
+                      value={field.value}
+                      invalid={Boolean(errors.warehouseId)}
+                      disabled={
+                        warehousesQuery.isLoading ||
+                        warehousesQuery.isError ||
+                        activeWarehouses.length === 0
+                      }
+                      placeholder={pickerPlaceholder}
+                      onValueChange={field.onChange}
+                    />
+                    {warehousesQuery.isError ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-destructive text-xs" role="alert">
+                          Danh sách kho chưa sẵn sàng.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void warehousesQuery.refetch()}
+                        >
+                          <RefreshCw className="size-3.5" aria-hidden="true" />
+                          Thử lại
+                        </Button>
+                      </div>
+                    ) : (
+                      <FieldDescription>
+                        Nhân viên được gán vào kho sau khi chấp nhận lời mời.
+                      </FieldDescription>
+                    )}
+                    <FieldError>{errors.warehouseId?.message}</FieldError>
+                  </Field>
+                )
+              }}
+            />
           )}
         </form>
 

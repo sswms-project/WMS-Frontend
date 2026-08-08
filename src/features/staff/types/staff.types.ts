@@ -15,6 +15,7 @@ export interface StaffResponse {
   role: string | null
   status: string
   lastLoginAt: string | null
+  assignedWarehouseIds: string[]
 }
 
 export interface StaffQuery extends QueryInfo {
