@@ -2,6 +2,10 @@ import type { QueryInfo } from '@/types/api'
 import type { PaymentHistoryQuery } from '@/features/subscription/types/subscription.types'
 
 export const queryKeys = {
+  organization: {
+    all: ['organization'] as const,
+    me: ['organization', 'me'] as const,
+  },
   auth: {
     me: ['auth', 'me'] as const,
   },
