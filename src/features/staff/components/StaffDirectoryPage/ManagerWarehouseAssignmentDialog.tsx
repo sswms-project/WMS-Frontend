@@ -1,7 +1,15 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, LoaderCircle, RefreshCw, Search, Warehouse, X } from 'lucide-react'
+import {
+  Building2,
+  LoaderCircle,
+  RefreshCw,
+  Search,
+  TriangleAlert,
+  Warehouse,
+  X,
+} from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -106,7 +114,7 @@ export function ManagerWarehouseAssignmentDialog({
             Gán quản lý vào kho
           </DialogTitle>
           <DialogDescription>
-            Chọn kho sẽ được bổ sung vào phạm vi làm việc của {manager.fullName}.
+            Chọn kho để {manager.fullName} phụ trách. Mỗi kho chỉ có một quản lý đang hoạt động.
           </DialogDescription>
         </DialogHeader>
 
@@ -131,6 +139,15 @@ export function ManagerWarehouseAssignmentDialog({
                 <AlertDescription>{assignMutation.error.message}</AlertDescription>
               </Alert>
             )}
+
+            <Alert>
+              <TriangleAlert className="size-4" aria-hidden="true" />
+              <AlertTitle>Quản lý hiện tại có thể bị thay thế</AlertTitle>
+              <AlertDescription>
+                Nếu kho đã có quản lý, hệ thống sẽ kết thúc phân công hiện tại và chuyển quyền phụ
+                trách sang {manager.fullName}.
+              </AlertDescription>
+            </Alert>
 
             <Field data-invalid={Boolean(errors.warehouseId)}>
               <div className="flex items-end justify-between gap-3">
@@ -256,7 +273,10 @@ export function ManagerWarehouseAssignmentDialog({
             disabled={assignMutation.isPending || warehousesQuery.isLoading}
           >
             {assignMutation.isPending ? (
-              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              <LoaderCircle
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
             ) : (
               <Warehouse className="size-4" aria-hidden="true" />
             )}
