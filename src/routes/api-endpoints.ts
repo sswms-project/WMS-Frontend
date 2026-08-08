@@ -21,6 +21,13 @@ export const API_ENDPOINTS = {
   organization: {
     me: '/organization',
   },
+  staff: {
+    managers: '/managers',
+    list: '/staff',
+    detail: (userId: string) => `/staff/${userId}`,
+    deactivate: (userId: string) => `/staff/${userId}/deactivate`,
+    reactivate: (userId: string) => `/staff/${userId}/reactivate`,
+  },
   subscription: {
     me: '/subscriptions/me',
     plans: '/subscription-plans',

@@ -12,6 +12,7 @@ export const APP_ROUTES = {
   dashboard: '/dashboard',
   subscription: '/subscription',
   organization: '/organization',
+  staff: '/staff',
   dashboardByRole: {
     tenant: '/dashboard/tenant',
     manager: '/dashboard/manager',
