@@ -28,6 +28,10 @@ export const API_ENDPOINTS = {
     deactivate: (userId: string) => `/staff/${userId}/deactivate`,
     reactivate: (userId: string) => `/staff/${userId}/reactivate`,
   },
+  invitations: {
+    send: '/invitations',
+    accept: (token: string) => `/invitations/${token}/accept`,
+  },
   subscription: {
     me: '/subscriptions/me',
     plans: '/subscription-plans',

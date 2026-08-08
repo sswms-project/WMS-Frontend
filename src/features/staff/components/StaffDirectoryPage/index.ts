@@ -1,3 +1,4 @@
+export { InviteStaffDialog } from './InviteStaffDialog'
 export { StaffDetailsSheet } from './StaffDetailsSheet'
 export { StaffDirectoryPagination } from './StaffDirectoryPagination'
 export { StaffDirectoryTable } from './StaffDirectoryTable'

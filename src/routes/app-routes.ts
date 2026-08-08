@@ -13,6 +13,9 @@ export const APP_ROUTES = {
   subscription: '/subscription',
   organization: '/organization',
   staff: '/staff',
+  invitations: {
+    accept: '/invitations/accept',
+  },
   dashboardByRole: {
     tenant: '/dashboard/tenant',
     manager: '/dashboard/manager',
