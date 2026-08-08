@@ -56,4 +56,7 @@ export const authService = {
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.auth.changePassword, body)
       .then((r) => r.data),
+
+  logout: () =>
+    axiosClient.post<ApiResponse<unknown>>(API_ENDPOINTS.auth.logout).then((r) => r.data),
 }

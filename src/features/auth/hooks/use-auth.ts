@@ -35,6 +35,16 @@ export function useLoginMutation() {
   })
 }
 
+export function useLogoutMutation() {
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, void>({
+    mutationFn: authService.logout,
+    onError: (error) => {
+      logAuthError('logout', error)
+      toast.error('Không thể đóng phiên trên máy chủ. Phiên trên thiết bị đã được xóa.')
+    },
+  })
+}
+
 export function useRegisterMutation() {
   return useMutation<ApiResponse<RegisterResponseDto>, ApiErrorResponse, RegisterRequestDto>({
     mutationFn: authService.registerTenant,
