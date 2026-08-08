@@ -119,6 +119,7 @@ export function InviteStaffDialog({
               type="email"
               autoComplete="email"
               autoFocus
+              maxLength={255}
               aria-invalid={Boolean(errors.email)}
               placeholder="ten@doanhnghiep.vn"
               {...register('email')}
@@ -191,7 +192,10 @@ export function InviteStaffDialog({
           </Button>
           <Button type="submit" form="invite-staff-form" disabled={invitationMutation.isPending}>
             {invitationMutation.isPending ? (
-              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              <LoaderCircle
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
             ) : (
               <MailPlus className="size-4" aria-hidden="true" />
             )}

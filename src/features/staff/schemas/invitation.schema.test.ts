@@ -27,19 +27,52 @@ describe('invitation schemas', () => {
     ).toBe(false)
   })
 
-  it('requires matching passwords with at least eight characters', () => {
+  it('requires a password that matches the invitation password policy', () => {
     expect(
       acceptInvitationSchema.safeParse({
         fullName: 'Nguyen Van A',
-        password: '12345678',
-        confirmPassword: '12345678',
+        password: 'Strong1!',
+        confirmPassword: 'Strong1!',
       }).success
     ).toBe(true)
+
+    const invalidPasswords = ['Short1!', 'lowercase1!', 'UPPERCASE1!', 'NoNumber!', 'NoSpecial1']
+
+    invalidPasswords.forEach((password) => {
+      expect(
+        acceptInvitationSchema.safeParse({
+          fullName: 'Nguyen Van A',
+          password,
+          confirmPassword: password,
+        }).success
+      ).toBe(false)
+    })
+  })
+
+  it('requires matching passwords', () => {
     expect(
       acceptInvitationSchema.safeParse({
         fullName: 'Nguyen Van A',
-        password: '12345678',
-        confirmPassword: '87654321',
+        password: 'Strong1!',
+        confirmPassword: 'Different1!',
+      }).success
+    ).toBe(false)
+  })
+
+  it('enforces backend-aligned email and full name lengths', () => {
+    const overlongEmail = `${'a'.repeat(244)}@example.com`
+
+    expect(
+      sendInvitationSchema.safeParse({
+        email: overlongEmail,
+        role: USER_ROLES.WarehouseStaff,
+      }).success
+    ).toBe(false)
+    expect(
+      acceptInvitationSchema.safeParse({
+        fullName: 'a'.repeat(256),
+        password: 'Strong1!',
+        confirmPassword: 'Strong1!',
       }).success
     ).toBe(false)
   })

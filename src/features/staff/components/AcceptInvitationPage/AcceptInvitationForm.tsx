@@ -4,25 +4,28 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ArrowLeft,
   CheckCircle2,
+  Circle,
   Eye,
   EyeOff,
   KeyRound,
   LoaderCircle,
   UserRoundPlus,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Logo } from '@/components/Logo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { BenefitsPanel } from '@/features/auth/components/RegisterPage'
+import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
   acceptInvitationSchema,
+  acceptInvitationPasswordRequirements,
   type AcceptInvitationFormValues,
 } from '../../schemas/invitation.schema'
 
@@ -42,14 +45,18 @@ export function AcceptInvitationForm({
   onSubmit,
 }: AcceptInvitationFormProps) {
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const shouldReduceMotion = useReducedMotion()
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<AcceptInvitationFormValues>({
     resolver: zodResolver(acceptInvitationSchema),
     defaultValues: { fullName: '', password: '', confirmPassword: '' },
   })
+  const passwordValue = useWatch({ control, name: 'password' }) ?? ''
 
   return (
     <div className="flex min-h-dvh min-w-0">
@@ -59,7 +66,7 @@ export function AcceptInvitationForm({
 
       <motion.main
         className="bg-background flex min-w-0 flex-1 flex-col"
-        initial={{ opacity: 0 }}
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
@@ -75,7 +82,7 @@ export function AcceptInvitationForm({
         </header>
 
         <div className="flex min-w-0 flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:px-12 xl:px-16">
-          <div className="animate-in fade-in slide-in-from-bottom-3 w-full max-w-md duration-500">
+          <div className="animate-in fade-in slide-in-from-bottom-3 w-full max-w-md duration-300 motion-reduce:animate-none">
             <header className="mb-8">
               <p className="text-primary mb-2 text-xs font-medium">Lời mời tham gia KOVIA</p>
               <h1 className="text-foreground text-2xl leading-tight font-semibold">
@@ -126,7 +133,9 @@ export function AcceptInvitationForm({
                     id="invitation-full-name"
                     autoComplete="name"
                     autoFocus
+                    maxLength={255}
                     aria-invalid={Boolean(errors.fullName)}
+                    className="h-11"
                     {...register('fullName')}
                   />
                   <FieldError>{errors.fullName?.message}</FieldError>
@@ -140,12 +149,12 @@ export function AcceptInvitationForm({
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       aria-invalid={Boolean(errors.password)}
-                      className="pr-10"
+                      className="h-11 pr-11"
                       {...register('password')}
                     />
                     <button
                       type="button"
-                      className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+                      className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center transition-colors focus-visible:ring-2 focus-visible:outline-none"
                       aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       onClick={() => setShowPassword((value) => !value)}
                     >
@@ -156,25 +165,67 @@ export function AcceptInvitationForm({
                       )}
                     </button>
                   </div>
-                  <FieldDescription>Sử dụng ít nhất 8 ký tự.</FieldDescription>
                   <FieldError>{errors.password?.message}</FieldError>
                 </Field>
 
+                <div
+                  className="text-muted-foreground border-border bg-card rounded-md border p-3 text-xs"
+                  aria-live="polite"
+                >
+                  <p className="text-foreground mb-2 font-semibold">Mật khẩu cần đáp ứng:</p>
+                  <ul className="grid gap-1 sm:grid-cols-2">
+                    {acceptInvitationPasswordRequirements.map((requirement) => {
+                      const isMet = requirement.validate(passwordValue)
+                      const RequirementIcon = isMet ? CheckCircle2 : Circle
+
+                      return (
+                        <li
+                          key={requirement.id}
+                          className={cn('flex items-center gap-2', isMet && 'text-primary')}
+                        >
+                          <RequirementIcon className="size-3.5 shrink-0" aria-hidden="true" />
+                          <span>{requirement.label}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+
                 <Field data-invalid={Boolean(errors.confirmPassword)}>
                   <FieldLabel htmlFor="invitation-confirm-password">Xác nhận mật khẩu</FieldLabel>
-                  <Input
-                    id="invitation-confirm-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    aria-invalid={Boolean(errors.confirmPassword)}
-                    {...register('confirmPassword')}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="invitation-confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      aria-invalid={Boolean(errors.confirmPassword)}
+                      className="h-11 pr-11"
+                      {...register('confirmPassword')}
+                    />
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                      aria-label={
+                        showConfirmPassword ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'
+                      }
+                      onClick={() => setShowConfirmPassword((value) => !value)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="size-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="size-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
                   <FieldError>{errors.confirmPassword?.message}</FieldError>
                 </Field>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="h-11 w-full" disabled={isLoading}>
                   {isLoading ? (
-                    <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                    <LoaderCircle
+                      className="size-4 animate-spin motion-reduce:animate-none"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <UserRoundPlus className="size-4" aria-hidden="true" />
                   )}
