@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { RefreshCw, UserRoundSearch, Users } from 'lucide-react'
+import { MailPlus, RefreshCw, UserRoundSearch, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { USER_ROLES } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
 import {
+  InviteStaffDialog,
   StaffDetailsSheet,
   StaffDirectoryPagination,
   StaffDirectoryTable,
@@ -52,6 +53,7 @@ export function StaffDirectoryPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [pendingLifecycleAction, setPendingLifecycleAction] =
     useState<PendingLifecycleAction | null>(null)
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
   const debouncedSearchText = useDebouncedValue(searchText.trim(), 300)
   const params: StaffQuery = {
     top: pageSize,
@@ -106,17 +108,27 @@ export function StaffDirectoryPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-5">
-      <header className="flex items-start gap-3 border-b pb-4">
-        <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
-          <Users className="size-5" aria-hidden="true" />
+      <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
+            <Users className="size-5" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-primary text-xs font-medium">Tổ chức và nhân sự</p>
+            <h1 className="mt-0.5 text-xl font-semibold">Danh bạ nhân sự</h1>
+            <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
+              Tra cứu hồ sơ và quản lý trạng thái tài khoản theo quyền được cấp.
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-primary text-xs font-medium">Tổ chức và nhân sự</p>
-          <h1 className="mt-0.5 text-xl font-semibold">Danh bạ nhân sự</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-            Tra cứu hồ sơ và quản lý trạng thái tài khoản theo quyền được cấp.
-          </p>
-        </div>
+        <Button
+          type="button"
+          className="w-full sm:w-auto"
+          onClick={() => setIsInviteDialogOpen(true)}
+        >
+          <MailPlus className="size-4" aria-hidden="true" />
+          Mời nhân sự
+        </Button>
       </header>
 
       <section className="bg-card border" aria-labelledby="staff-directory-title">
@@ -240,6 +252,12 @@ export function StaffDirectoryPage() {
           onConfirm={() => void confirmLifecycleAction()}
         />
       )}
+
+      <InviteStaffDialog
+        open={isInviteDialogOpen}
+        canInviteManagers={isTenantOwner}
+        onOpenChange={setIsInviteDialogOpen}
+      />
     </div>
   )
 }
