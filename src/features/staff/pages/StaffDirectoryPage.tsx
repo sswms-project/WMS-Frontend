@@ -10,6 +10,7 @@ import { USER_ROLES } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
 import {
   InviteStaffDialog,
+  ManagerWarehouseAssignmentDialog,
   StaffDetailsSheet,
   StaffDirectoryPagination,
   StaffDirectoryTable,
@@ -51,6 +52,7 @@ export function StaffDirectoryPage() {
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [managerToAssign, setManagerToAssign] = useState<StaffResponse | null>(null)
   const [pendingLifecycleAction, setPendingLifecycleAction] =
     useState<PendingLifecycleAction | null>(null)
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
@@ -223,6 +225,7 @@ export function StaffDirectoryPage() {
               kind={kind}
               people={people}
               onView={(person) => setSelectedUserId(person.id)}
+              onAssignWarehouse={setManagerToAssign}
               onLifecycleAction={(person, action) => setPendingLifecycleAction({ person, action })}
             />
             <StaffDirectoryPagination
@@ -258,6 +261,13 @@ export function StaffDirectoryPage() {
         canInviteManagers={isTenantOwner}
         onOpenChange={setIsInviteDialogOpen}
       />
+
+      {managerToAssign && (
+        <ManagerWarehouseAssignmentDialog
+          manager={managerToAssign}
+          onOpenChange={(open) => !open && setManagerToAssign(null)}
+        />
+      )}
     </div>
   )
 }

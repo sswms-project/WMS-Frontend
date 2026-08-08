@@ -1,4 +1,11 @@
-import { Eye, MoreHorizontal, ShieldCheck, UserRoundCheck, UserRoundX } from 'lucide-react'
+import {
+  Eye,
+  MoreHorizontal,
+  ShieldCheck,
+  UserRoundCheck,
+  UserRoundX,
+  Warehouse,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -27,6 +34,7 @@ interface StaffDirectoryTableProps {
   readonly kind: StaffDirectoryKind
   readonly people: readonly StaffResponse[]
   readonly onView: (person: StaffResponse) => void
+  readonly onAssignWarehouse: (person: StaffResponse) => void
   readonly onLifecycleAction: (person: StaffResponse, action: StaffLifecycleAction) => void
 }
 
@@ -50,6 +58,7 @@ export function StaffDirectoryTable({
   kind,
   people,
   onView,
+  onAssignWarehouse,
   onLifecycleAction,
 }: StaffDirectoryTableProps) {
   function actionFor(person: StaffResponse) {
@@ -89,6 +98,12 @@ export function StaffDirectoryTable({
             <Eye className="size-4" aria-hidden="true" />
             Xem chi tiết
           </DropdownMenuItem>
+          {kind === STAFF_DIRECTORY_KINDS.managers && (
+            <DropdownMenuItem onSelect={() => onAssignWarehouse(person)}>
+              <Warehouse className="size-4" aria-hidden="true" />
+              Gán vào kho
+            </DropdownMenuItem>
+          )}
           {action && actionItem(person, action)}
         </DropdownMenuContent>
       </DropdownMenu>
