@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { ApiErrorResponse } from '@/types/api'
 import {
@@ -15,7 +16,6 @@ import {
   WarehousePagination,
   WarehouseToolbar,
 } from '../components/WarehousePage'
-import { useDebouncedValue } from '@/features/staff/hooks/use-debounced-value'
 import { useCreateWarehouseMutation, useWarehousesQuery } from '../hooks/use-warehouse'
 import type { CreateWarehouseFormValues } from '../schemas/warehouse.schema'
 
@@ -35,6 +35,7 @@ function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
 export function WarehousePage() {
   const router = useRouter()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [warehouseCodeError, setWarehouseCodeError] = useState<string>()
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
@@ -52,8 +53,14 @@ export function WarehousePage() {
     setPage(1)
   }
 
+  function handleCreateDialogOpenChange(open: boolean) {
+    if (!open) setWarehouseCodeError(undefined)
+    setIsCreateDialogOpen(open)
+  }
+
   async function handleCreate(values: CreateWarehouseFormValues): Promise<boolean> {
     try {
+      setWarehouseCodeError(undefined)
       await createMutation.mutateAsync({
         ...values,
         address: values.address || null,
@@ -64,6 +71,7 @@ export function WarehousePage() {
     } catch (error) {
       console.error(error)
       if (isApiErrorResponse(error) && error.statusCode === 409) {
+        setWarehouseCodeError('Mã kho đã tồn tại. Vui lòng chọn mã khác.')
         toast.error('Mã kho đã tồn tại. Vui lòng chọn mã khác.')
       } else {
         toast.error(
@@ -198,7 +206,8 @@ export function WarehousePage() {
       <WarehouseCreateDialog
         open={isCreateDialogOpen}
         isPending={createMutation.isPending}
-        onOpenChange={setIsCreateDialogOpen}
+        warehouseCodeError={warehouseCodeError}
+        onOpenChange={handleCreateDialogOpenChange}
         onSubmit={handleCreate}
       />
     </div>

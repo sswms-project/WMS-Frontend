@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircle, Plus } from 'lucide-react'
+import { LoaderCircle, Save } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,92 +15,79 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import type { WarehouseDetailResponse } from '@/types/warehouse'
 import {
-  createWarehouseSchema,
-  type CreateWarehouseFormValues,
+  updateWarehouseSchema,
+  type UpdateWarehouseFormValues,
 } from '../../schemas/warehouse.schema'
 
-interface WarehouseCreateDialogProps {
+interface WarehouseEditDialogProps {
+  readonly warehouse: WarehouseDetailResponse
   readonly open: boolean
   readonly isPending: boolean
-  readonly warehouseCodeError?: string
   readonly onOpenChange: (open: boolean) => void
-  readonly onSubmit: (values: CreateWarehouseFormValues) => Promise<boolean>
+  readonly onSubmit: (values: UpdateWarehouseFormValues) => Promise<boolean>
 }
 
-const defaultValues: CreateWarehouseFormValues = {
-  warehouseCode: '',
-  warehouseName: '',
-  address: '',
+function formValuesFromWarehouse(warehouse: WarehouseDetailResponse): UpdateWarehouseFormValues {
+  return {
+    warehouseName: warehouse.warehouseName,
+    address: warehouse.address ?? '',
+  }
 }
 
-export function WarehouseCreateDialog({
+export function WarehouseEditDialog({
+  warehouse,
   open,
   isPending,
-  warehouseCodeError,
   onOpenChange,
   onSubmit,
-}: WarehouseCreateDialogProps) {
-  const form = useForm<CreateWarehouseFormValues>({
-    resolver: zodResolver(createWarehouseSchema),
-    defaultValues,
+}: WarehouseEditDialogProps) {
+  const form = useForm<UpdateWarehouseFormValues>({
+    resolver: zodResolver(updateWarehouseSchema),
+    defaultValues: formValuesFromWarehouse(warehouse),
   })
   const { errors } = form.formState
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
+    if (!nextOpen && !isPending) form.reset(formValuesFromWarehouse(warehouse))
     onOpenChange(nextOpen)
   }
 
-  async function handleSubmit(values: CreateWarehouseFormValues) {
+  async function handleSubmit(values: UpdateWarehouseFormValues) {
     const isSuccessful = await onSubmit(values)
-    if (isSuccessful) form.reset(defaultValues)
+    if (isSuccessful) form.reset(values)
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tạo kho</DialogTitle>
+          <DialogTitle>Chỉnh sửa kho</DialogTitle>
           <DialogDescription>
-            Thêm một kho mới vào không gian vận hành của tổ chức.
+            Mã kho <span className="font-mono">{warehouse.warehouseCode}</span> được cố định sau khi
+            tạo.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <FieldGroup>
-            <Field data-invalid={Boolean(errors.warehouseCode)}>
-              <FieldLabel htmlFor="warehouse-code">Mã kho</FieldLabel>
-              <Input
-                id="warehouse-code"
-                autoComplete="off"
-                aria-invalid={Boolean(errors.warehouseCode)}
-                placeholder="VD: HCM-01"
-                {...form.register('warehouseCode')}
-              />
-              <FieldError errors={[errors.warehouseCode]} />
-              {warehouseCodeError && <FieldError>{warehouseCodeError}</FieldError>}
-            </Field>
-
             <Field data-invalid={Boolean(errors.warehouseName)}>
-              <FieldLabel htmlFor="warehouse-name">Tên kho</FieldLabel>
+              <FieldLabel htmlFor="edit-warehouse-name">Tên kho</FieldLabel>
               <Input
-                id="warehouse-name"
-                autoComplete="off"
+                id="edit-warehouse-name"
                 aria-invalid={Boolean(errors.warehouseName)}
-                placeholder="VD: Kho Thủ Đức"
                 {...form.register('warehouseName')}
               />
               <FieldError errors={[errors.warehouseName]} />
             </Field>
 
             <Field data-invalid={Boolean(errors.address)}>
-              <FieldLabel htmlFor="warehouse-address">Địa chỉ</FieldLabel>
+              <FieldLabel htmlFor="edit-warehouse-address">Địa chỉ</FieldLabel>
               <Textarea
-                id="warehouse-address"
+                id="edit-warehouse-address"
                 rows={3}
                 aria-invalid={Boolean(errors.address)}
-                placeholder="Địa chỉ kho (không bắt buộc)"
                 {...form.register('address')}
               />
               <FieldError errors={[errors.address]} />
@@ -124,9 +111,9 @@ export function WarehouseCreateDialog({
                   aria-hidden="true"
                 />
               ) : (
-                <Plus data-icon="inline-start" aria-hidden="true" />
+                <Save data-icon="inline-start" aria-hidden="true" />
               )}
-              Tạo kho
+              Lưu thay đổi
             </Button>
           </DialogFooter>
         </form>

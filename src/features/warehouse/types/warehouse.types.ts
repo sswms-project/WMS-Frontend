@@ -14,5 +14,5 @@ export interface CreateWarehouseRequest {
 
 export interface UpdateWarehouseRequest {
   warehouseName: string
-  address: string | null
+  address: string
 }
