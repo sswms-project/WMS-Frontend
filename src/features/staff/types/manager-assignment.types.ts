@@ -1,13 +1,7 @@
 import type { QueryInfo } from '@/types/api'
+import type { WarehouseResponse } from '@/types/warehouse'
 
-export interface WarehouseSummaryResponse {
-  id: string
-  warehouseCode: string
-  warehouseName: string
-  address: string | null
-  status: string
-  createdAt: string
-}
+export type WarehouseSummaryResponse = WarehouseResponse
 
 export interface WarehouseAssignmentQuery extends QueryInfo {
   top: number
