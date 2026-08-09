@@ -17,6 +17,10 @@ function formatOccupancy(currentOccupancy: number, capacity: number) {
   return `${currentOccupancy}/${capacity}`
 }
 
+function formatStatus(status: string) {
+  return status === 'Active' ? 'Hoạt động' : status
+}
+
 function RackRow({ rack }: { readonly rack: RackResponse }) {
   return (
     <div className="border-border min-w-0 border px-3 py-2.5">
@@ -25,7 +29,9 @@ function RackRow({ rack }: { readonly rack: RackResponse }) {
           <p className="truncate text-xs font-medium">{rack.rackName}</p>
           <p className="text-muted-foreground mt-0.5 truncate font-mono text-xs">{rack.rackCode}</p>
         </div>
-        <Badge variant={rack.status === 'Active' ? 'outline' : 'destructive'}>{rack.status}</Badge>
+        <Badge variant={rack.status === 'Active' ? 'outline' : 'destructive'}>
+          {formatStatus(rack.status)}
+        </Badge>
       </div>
       {rack.slots.length > 0 ? (
         <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -78,7 +84,7 @@ export function WarehouseLayoutView({ zones }: WarehouseLayoutViewProps) {
                 </span>
               </span>
               <Badge variant={zone.status === 'Active' ? 'outline' : 'destructive'}>
-                {zone.status}
+                {formatStatus(zone.status)}
               </Badge>
             </span>
           </AccordionTrigger>

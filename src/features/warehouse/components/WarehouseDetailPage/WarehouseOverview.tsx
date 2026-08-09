@@ -20,6 +20,7 @@ export function WarehouseOverview({ warehouse }: WarehouseOverviewProps) {
     { label: 'Mã kho', value: warehouse.warehouseCode, mono: true },
     { label: 'Địa chỉ', value: warehouse.address || 'Chưa cập nhật', icon: MapPin },
     { label: 'Số khu vực', value: `${warehouse.zoneCount} khu vực`, icon: Warehouse },
+    { label: 'Ngày tạo', value: formatDateTime(warehouse.createdAt), icon: CalendarDays },
     { label: 'Cập nhật gần nhất', value: formatDateTime(warehouse.modifiedAt), icon: CalendarDays },
   ]
 

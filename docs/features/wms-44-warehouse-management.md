@@ -158,11 +158,12 @@ interface ZoneResponse {
 - [x] Confirm role decision: Tenant Owner only.
 - [x] Create feature branch.
 - [x] Create implementation spec.
-- [ ] Add route, endpoint constants, permissions, and navigation visibility.
-- [ ] Add warehouse types, schemas, service, and React Query hooks.
-- [ ] Implement list, search, pagination, and create dialog.
-- [ ] Implement detail route and update dialog.
-- [ ] Implement lazy read-only layout hierarchy.
-- [ ] Add automated tests.
-- [ ] Run lint, test, build, browser checks, and UI guideline review.
-- [ ] Commit task-scoped files with `feat(wms-44): add warehouse management screen`.
+- [x] Add route, endpoint constants, permissions, and navigation visibility.
+- [x] Add warehouse types, schemas, service, and React Query hooks.
+- [x] Implement list, search, pagination, and create dialog.
+- [x] Implement detail route and update dialog.
+- [x] Implement lazy read-only layout hierarchy.
+- [x] Add automated tests.
+- [x] Run lint, test, build, and UI guideline review.
+- [~] Run browser checks. Blocked locally because the backend dev seed does not grant the Tenant Owner role `warehouses:view`, `warehouses:create`, or `warehouses:update`; login succeeds but warehouse API calls return 403.
+- [x] Commit task-scoped files in incremental `feat(wms-44): ...` commits.

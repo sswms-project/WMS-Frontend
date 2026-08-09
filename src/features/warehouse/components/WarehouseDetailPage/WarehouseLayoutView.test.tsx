@@ -39,5 +39,6 @@ describe('WarehouseLayoutView', () => {
     expect(screen.getByText('Khu A')).toBeInTheDocument()
     expect(screen.getByText('Kệ A-01')).toBeInTheDocument()
     expect(screen.getByText('A-01-01')).toBeInTheDocument()
+    expect(screen.getAllByText('Hoạt động')).toHaveLength(2)
   })
 })

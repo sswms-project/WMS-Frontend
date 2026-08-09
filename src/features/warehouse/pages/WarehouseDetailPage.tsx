@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ArrowLeft, Edit3, LayoutPanelTop, RefreshCw, TriangleAlert, Warehouse } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
@@ -42,7 +42,6 @@ function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
 }
 
 export function WarehouseDetailPage({ warehouseId }: WarehouseDetailPageProps) {
-  const router = useRouter()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<WarehouseDetailTab>('overview')
   const warehouseQuery = useWarehouseQuery(warehouseId)
@@ -90,13 +89,11 @@ export function WarehouseDetailPage({ warehouseId }: WarehouseDetailPageProps) {
             </EmptyDescription>
           </EmptyHeader>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(APP_ROUTES.warehouses)}
-            >
-              <ArrowLeft data-icon="inline-start" aria-hidden="true" />
-              Quay lại danh sách
+            <Button asChild variant="outline">
+              <Link href={APP_ROUTES.warehouses}>
+                <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+                Quay lại danh sách
+              </Link>
             </Button>
             <Button type="button" onClick={() => void warehouseQuery.refetch()}>
               <RefreshCw data-icon="inline-start" aria-hidden="true" />
@@ -114,14 +111,10 @@ export function WarehouseDetailPage({ warehouseId }: WarehouseDetailPageProps) {
     <div className="mx-auto w-full max-w-[1180px] space-y-5">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            aria-label="Quay lại danh sách kho"
-            onClick={() => router.push(APP_ROUTES.warehouses)}
-          >
-            <ArrowLeft aria-hidden="true" />
+          <Button asChild variant="outline" size="icon-sm">
+            <Link href={APP_ROUTES.warehouses} aria-label="Quay lại danh sách kho">
+              <ArrowLeft aria-hidden="true" />
+            </Link>
           </Button>
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Kho hàng</p>

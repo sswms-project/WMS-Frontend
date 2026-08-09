@@ -1,6 +1,8 @@
 import { ArrowUpRight, Warehouse } from 'lucide-react'
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { APP_ROUTES } from '@/routes/app-routes'
 import {
   Table,
   TableBody,
@@ -13,7 +15,6 @@ import type { WarehouseResponse } from '@/types/warehouse'
 
 interface WarehouseListProps {
   readonly warehouses: readonly WarehouseResponse[]
-  readonly onView: (warehouseId: string) => void
 }
 
 function formatDate(value: string) {
@@ -27,7 +28,7 @@ function WarehouseStatusBadge({ status }: { readonly status: string }) {
   )
 }
 
-export function WarehouseList({ warehouses, onView }: WarehouseListProps) {
+export function WarehouseList({ warehouses }: WarehouseListProps) {
   return (
     <>
       <div className="hidden min-w-0 md:block">
@@ -63,14 +64,13 @@ export function WarehouseList({ warehouses, onView }: WarehouseListProps) {
                   {formatDate(warehouse.createdAt)}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Xem chi tiết ${warehouse.warehouseName}`}
-                    onClick={() => onView(warehouse.id)}
-                  >
-                    <ArrowUpRight aria-hidden="true" />
+                  <Button asChild variant="ghost" size="icon-sm">
+                    <Link
+                      href={`${APP_ROUTES.warehouses}/${warehouse.id}`}
+                      aria-label={`Xem chi tiết ${warehouse.warehouseName}`}
+                    >
+                      <ArrowUpRight aria-hidden="true" />
+                    </Link>
                   </Button>
                 </TableCell>
               </TableRow>
@@ -102,14 +102,14 @@ export function WarehouseList({ warehouses, onView }: WarehouseListProps) {
                 <span className="text-muted-foreground text-xs">
                   {formatDate(warehouse.createdAt)}
                 </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onView(warehouse.id)}
-                >
-                  Xem chi tiết
-                  <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+                <Button asChild variant="ghost" size="sm">
+                  <Link
+                    href={`${APP_ROUTES.warehouses}/${warehouse.id}`}
+                    aria-label={`Xem chi tiết ${warehouse.warehouseName}`}
+                  >
+                    Xem chi tiết
+                    <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+                  </Link>
                 </Button>
               </div>
             </div>

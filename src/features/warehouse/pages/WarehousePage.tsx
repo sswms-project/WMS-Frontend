@@ -2,13 +2,11 @@
 
 import { useState } from 'react'
 import { Building2, Plus, RefreshCw, TriangleAlert, Warehouse } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { APP_ROUTES } from '@/routes/app-routes'
 import type { ApiErrorResponse } from '@/types/api'
 import {
   WarehouseCreateDialog,
@@ -33,7 +31,6 @@ function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
 }
 
 export function WarehousePage() {
-  const router = useRouter()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [warehouseCodeError, setWarehouseCodeError] = useState<string>()
   const [searchText, setSearchText] = useState('')
@@ -189,10 +186,7 @@ export function WarehousePage() {
 
         {!warehousesQuery.isLoading && !warehousesQuery.isError && warehouses.length > 0 && (
           <>
-            <WarehouseList
-              warehouses={warehouses}
-              onView={(warehouseId) => router.push(`${APP_ROUTES.warehouses}/${warehouseId}`)}
-            />
+            <WarehouseList warehouses={warehouses} />
             <WarehousePagination
               page={page}
               pageSize={PAGE_SIZE}
