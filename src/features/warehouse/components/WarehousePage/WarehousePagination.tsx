@@ -1,0 +1,53 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+interface WarehousePaginationProps {
+  readonly page: number
+  readonly pageSize: number
+  readonly totalCount: number
+  readonly onPageChange: (page: number) => void
+}
+
+export function WarehousePagination({
+  page,
+  pageSize,
+  totalCount,
+  onPageChange,
+}: WarehousePaginationProps) {
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize))
+  const start = totalCount === 0 ? 0 : (page - 1) * pageSize + 1
+  const end = Math.min(page * pageSize, totalCount)
+
+  return (
+    <div className="flex min-h-12 items-center justify-between gap-3 border-t px-3 sm:px-4">
+      <p className="text-muted-foreground text-xs">
+        {start}-{end} trên {totalCount}
+      </p>
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          disabled={page <= 1}
+          aria-label="Trang trước"
+          onClick={() => onPageChange(page - 1)}
+        >
+          <ChevronLeft aria-hidden="true" />
+        </Button>
+        <span className="min-w-16 text-center text-xs tabular-nums">
+          {page}/{pageCount}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          disabled={page >= pageCount}
+          aria-label="Trang sau"
+          onClick={() => onPageChange(page + 1)}
+        >
+          <ChevronRight aria-hidden="true" />
+        </Button>
+      </div>
+    </div>
+  )
+}
