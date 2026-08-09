@@ -3,10 +3,8 @@
 import { useMemo, useState } from 'react'
 import { pdf } from '@react-pdf/renderer'
 import Link from 'next/link'
-import { CreditCard, ShieldAlert } from 'lucide-react'
+import { CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
@@ -44,7 +42,6 @@ import {
   findCurrentPlan,
   formatBillingCycle,
   formatCurrency,
-  formatSubscriptionStatus,
   isActivePlan,
   isCompletedPayment,
   shouldShowRenewAction,
@@ -215,19 +212,14 @@ export function SubscriptionPage() {
   const dialogCopy = getDialogCopy(dialogState, subscription?.planName)
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <Badge variant="outline">Tenant billing</Badge>
-          <h2 className="text-foreground text-2xl font-semibold tracking-tight">Gói dịch vụ</h2>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="min-w-0">
+          <h1 className="text-foreground text-xl font-semibold">Gói dịch vụ</h1>
           <p className="text-muted-foreground max-w-2xl text-sm">
             Theo dõi gói hiện tại, nâng cấp khi cần thêm giới hạn và tải hóa đơn PDF cho đối soát.
           </p>
         </div>
-
-        {subscription && (
-          <Badge className="w-fit shrink-0">{formatSubscriptionStatus(subscription.status)}</Badge>
-        )}
       </div>
 
       {!subscription ? (
@@ -236,10 +228,9 @@ export function SubscriptionPage() {
           description="Tenant hiện chưa có subscription active trong hệ thống."
         />
       ) : (
-        <div className="grid min-w-0 gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
           <CurrentPlanCard
             subscription={subscription}
-            plan={currentPlan}
             showRenewAction={showRenewAction}
             isRenewPending={renewMutation.isPending}
             isCancelPending={cancelMutation.isPending}
@@ -247,20 +238,16 @@ export function SubscriptionPage() {
             onCancel={() => setDialogState({ type: 'cancel' })}
           />
 
-          <section className="min-w-0 space-y-3">
+          <section className="flex min-w-0 flex-col gap-3" aria-labelledby="available-plans-title">
             <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
-                <h3 className="text-foreground text-base font-semibold">Các gói có thể chọn</h3>
+                <h2 id="available-plans-title" className="text-foreground text-base font-semibold">
+                  Các gói có thể chọn
+                </h2>
                 <p className="text-muted-foreground text-sm">
                   Chỉ hiển thị plan đang active để tránh chọn nhầm gói đã ngưng kinh doanh.
                 </p>
               </div>
-              {currentPlan && (
-                <p className="text-muted-foreground text-xs">
-                  Gói hiện tại:{' '}
-                  <span className="text-foreground font-medium">{currentPlan.planName}</span>
-                </p>
-              )}
             </div>
 
             {activePlans.length === 0 ? (
@@ -296,17 +283,6 @@ export function SubscriptionPage() {
             )}
           </section>
         </div>
-      )}
-
-      {subscription?.isExpired && (
-        <Alert variant="destructive">
-          <ShieldAlert className="size-4" aria-hidden="true" />
-          <AlertTitle>Subscription đã hết hạn</AlertTitle>
-          <AlertDescription>
-            Một số thao tác ghi dữ liệu có thể bị backend chặn cho đến khi tenant gia hạn thành
-            công.
-          </AlertDescription>
-        </Alert>
       )}
 
       <PaymentHistoryTable

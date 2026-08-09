@@ -3,12 +3,13 @@ import { vi } from 'date-fns/locale'
 import { CalendarIcon, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -46,108 +47,131 @@ export function PaymentHistoryFilters({
 }: PaymentHistoryFiltersProps) {
   return (
     <form
-      className="grid min-w-0 gap-3 lg:grid-cols-[minmax(180px,1fr)_180px_180px_180px_auto_auto]"
+      className="flex flex-col gap-5"
       onSubmit={(event) => {
         event.preventDefault()
         onSubmit()
       }}
     >
-      <div className="min-w-0 space-y-1.5">
-        <Label htmlFor="payment-search">Mã hóa đơn</Label>
-        <Input
-          id="payment-search"
-          value={value.searchText}
-          placeholder="Tìm mã hóa đơn"
-          onChange={(event) => onChange({ ...value, searchText: event.target.value })}
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="payment-search">Mã hóa đơn</FieldLabel>
+          <Input
+            id="payment-search"
+            name="paymentSearch"
+            autoComplete="off"
+            placeholder="Tìm mã hóa đơn…"
+            value={value.searchText}
+            onChange={(event) => onChange({ ...value, searchText: event.target.value })}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="payment-plan">Gói dịch vụ</FieldLabel>
+          <Select value={value.planId} onValueChange={(planId) => onChange({ ...value, planId })}>
+            <SelectTrigger id="payment-plan" className="w-full">
+              <SelectValue placeholder="Tất cả gói" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">Tất cả gói</SelectItem>
+                {plans.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.planName}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="payment-status">Trạng thái</FieldLabel>
+          <Select
+            value={value.status}
+            onValueChange={(status) => {
+              if (isPaymentStatusFilter(status)) onChange({ ...value, status })
+            }}
+          >
+            <SelectTrigger id="payment-status" className="w-full">
+              <SelectValue placeholder="Tất cả trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {statusOptions.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <DatePickerField
+          id="payment-date-from"
+          label="Từ ngày"
+          value={value.dateFrom}
+          invalid={Boolean(dateRangeError)}
+          onChange={(dateFrom) => onChange({ ...value, dateFrom })}
         />
-      </div>
-      <div className="min-w-0 space-y-1.5">
-        <Label>Gói dịch vụ</Label>
-        <Select value={value.planId} onValueChange={(planId) => onChange({ ...value, planId })}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Tất cả gói" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả gói</SelectItem>
-            {plans.map((plan) => (
-              <SelectItem key={plan.id} value={plan.id}>
-                {plan.planName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="min-w-0 space-y-1.5">
-        <Label>Trạng thái</Label>
-        <Select
-          value={value.status}
-          onValueChange={(status) => {
-            if (isPaymentStatusFilter(status)) onChange({ ...value, status })
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Tất cả trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            {statusOptions.map((status) => (
-              <SelectItem key={status.value} value={status.value}>
-                {status.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <DatePickerField
-        label="Từ ngày"
-        value={value.dateFrom}
-        invalid={Boolean(dateRangeError)}
-        onChange={(dateFrom) => onChange({ ...value, dateFrom })}
-      />
-      <DatePickerField
-        label="Đến ngày"
-        value={value.dateTo}
-        invalid={Boolean(dateRangeError)}
-        onChange={(dateTo) => onChange({ ...value, dateTo })}
-      />
-      <div className="flex items-end gap-2">
-        <Button type="submit" className="min-w-24">
-          <Search className="size-4" aria-hidden="true" />
+        <DatePickerField
+          id="payment-date-to"
+          label="Đến ngày"
+          value={value.dateTo}
+          invalid={Boolean(dateRangeError)}
+          onChange={(dateTo) => onChange({ ...value, dateTo })}
+        />
+      </FieldGroup>
+
+      {dateRangeError && <FieldError>{dateRangeError}</FieldError>}
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <Button type="submit" className="w-full sm:w-auto">
+          <Search data-icon="inline-start" aria-hidden="true" />
           Lọc
         </Button>
-        <Button type="button" variant="outline" aria-label="Đặt lại bộ lọc" onClick={onReset}>
-          <RotateCcw className="size-4" aria-hidden="true" />
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full sm:w-auto"
+          aria-label="Đặt lại bộ lọc"
+          onClick={onReset}
+        >
+          <RotateCcw data-icon="inline-start" aria-hidden="true" />
+          Đặt lại
         </Button>
       </div>
-      {dateRangeError && (
-        <p className="text-destructive text-sm lg:col-span-full">{dateRangeError}</p>
-      )}
     </form>
   )
 }
 
 interface DatePickerFieldProps {
+  readonly id: string
   readonly label: string
   readonly value?: Date
   readonly invalid: boolean
   readonly onChange: (value?: Date) => void
 }
 
-function DatePickerField({ label, value, invalid, onChange }: DatePickerFieldProps) {
+function DatePickerField({ id, label, value, invalid, onChange }: DatePickerFieldProps) {
   return (
-    <div className="min-w-0 space-y-1.5">
-      <Label>{label}</Label>
+    <Field data-invalid={invalid || undefined}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Popover>
         <PopoverTrigger asChild>
           <Button
+            id={id}
             type="button"
             variant="outline"
             className={cn(
               'w-full justify-start gap-2 font-normal',
-              invalid && 'border-destructive text-destructive'
+              invalid && 'border-destructive'
             )}
+            aria-label={label}
             aria-invalid={invalid}
           >
-            <CalendarIcon className="size-4" aria-hidden="true" />
+            <CalendarIcon data-icon="inline-start" aria-hidden="true" />
             {value ? format(value, 'dd/MM/yyyy', { locale: vi }) : 'Chọn ngày'}
           </Button>
         </PopoverTrigger>
@@ -155,7 +179,7 @@ function DatePickerField({ label, value, invalid, onChange }: DatePickerFieldPro
           <Calendar mode="single" selected={value} onSelect={onChange} locale={vi} />
         </PopoverContent>
       </Popover>
-    </div>
+    </Field>
   )
 }
 
