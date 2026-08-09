@@ -7,28 +7,22 @@ import {
   CardAction,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import type {
-  SubscriptionPlanResponse,
-  SubscriptionStatusResponse,
-} from '../../types/subscription.types'
+import type { SubscriptionStatusResponse } from '../../types/subscription.types'
 import {
   formatBillingCycle,
   formatCurrency,
   formatDate,
-  formatSubscriptionStatus,
-  getFeatureRows,
   isCancelledSubscription,
 } from '../../utils/format-subscription'
 
 interface CurrentPlanCardProps {
   readonly subscription: SubscriptionStatusResponse
-  readonly plan?: SubscriptionPlanResponse
   readonly showRenewAction: boolean
   readonly isRenewPending: boolean
   readonly isCancelPending: boolean
@@ -66,7 +60,6 @@ function CurrentStatusBadge({
 
 export function CurrentPlanCard({
   subscription,
-  plan,
   showRenewAction,
   isRenewPending,
   isCancelPending,
@@ -74,12 +67,11 @@ export function CurrentPlanCard({
   onCancel,
 }: CurrentPlanCardProps) {
   const progressValue = getProgressValue(subscription)
-  const featureRows = getFeatureRows(plan)
   const cancelled = isCancelledSubscription(subscription)
 
   return (
-    <Card className="border-border min-w-0">
-      <CardHeader className="border-b">
+    <Card className="border-primary/20 min-w-0">
+      <CardHeader className="border-border/70 border-b">
         <div className="flex items-start gap-3">
           <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-md">
             <CreditCard className="size-5" aria-hidden="true" />
@@ -96,7 +88,7 @@ export function CurrentPlanCard({
         </CardAction>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-5">
         {subscription.isExpired && (
           <Alert variant="destructive">
             <CalendarClock className="size-4" aria-hidden="true" />
@@ -118,43 +110,31 @@ export function CurrentPlanCard({
           </Alert>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <Metric label="Chi phí" value={formatCurrency(subscription.planPrice)} />
           <Metric label="Chu kỳ" value={formatBillingCycle(subscription.billingCycle)} />
-          <Metric label="Bắt đầu" value={formatDate(subscription.startDate)} />
-          <Metric label="Kết thúc" value={formatDate(subscription.endDate)} />
+          <Metric
+            className="col-span-2 lg:col-span-1"
+            label="Kết thúc"
+            value={formatDate(subscription.endDate)}
+          />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-medium">Thời hạn còn lại</p>
             <p
               className={cn('text-xs font-semibold', subscription.isExpired && 'text-destructive')}
             >
-              {subscription.isExpired ? '0 ngày' : `${subscription.daysRemaining} ngày`}
+              {subscription.isExpired ? 'Đã hết hạn' : `Còn ${subscription.daysRemaining} ngày`}
             </p>
           </div>
           <Progress value={progressValue} aria-label="Thời hạn còn lại của gói dịch vụ" />
-          <p className="text-muted-foreground text-xs">
-            Trạng thái backend: {formatSubscriptionStatus(subscription.status)}
-          </p>
         </div>
+      </CardContent>
 
-        {featureRows.length > 0 && (
-          <>
-            <Separator />
-            <div className="grid gap-2">
-              {featureRows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground text-xs">{row.label}</span>
-                  <span className="text-xs font-medium">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        <div className="flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row">
+      {!cancelled && (
+        <CardFooter className="flex flex-col gap-2 border-t sm:flex-row sm:justify-end">
           {showRenewAction && (
             <Button
               type="button"
@@ -162,32 +142,36 @@ export function CurrentPlanCard({
               disabled={isRenewPending}
               onClick={onRenew}
             >
-              <RotateCcw className="size-4" aria-hidden="true" />
+              <RotateCcw data-icon="inline-start" aria-hidden="true" />
               {isRenewPending ? 'Đang gia hạn...' : 'Gia hạn'}
             </Button>
           )}
-          {!cancelled && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto"
-              disabled={isCancelPending}
-              onClick={onCancel}
-            >
-              Hủy gói
-            </Button>
-          )}
-        </div>
-      </CardContent>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={isCancelPending}
+            onClick={onCancel}
+          >
+            Hủy gói
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   )
 }
 
-function Metric({ label, value }: { readonly label: string; readonly value: string }) {
+interface MetricProps {
+  readonly className?: string
+  readonly label: string
+  readonly value: string
+}
+
+function Metric({ className, label, value }: MetricProps) {
   return (
-    <div className="border-border bg-muted/40 min-w-0 rounded-md border p-3">
+    <div className={cn('border-border bg-muted/40 min-w-0 rounded-md border p-3', className)}>
       <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
+      <p className="mt-1 truncate text-sm font-semibold tabular-nums">{value}</p>
     </div>
   )
 }

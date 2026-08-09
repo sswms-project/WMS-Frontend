@@ -1,5 +1,4 @@
 import { Check, PackageCheck } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -26,11 +25,11 @@ export function PlanCard({ plan, actionState, onUpgrade }: PlanCardProps) {
   return (
     <Card
       className={cn(
-        'border-border min-w-0 transition-colors',
-        isCurrentPlan && 'border-primary bg-primary/5'
+        'border-border min-w-0 transition-[border-color,background-color]',
+        isCurrentPlan && 'border-primary/40 bg-primary/5'
       )}
     >
-      <CardHeader className="border-b">
+      <CardHeader>
         <div className="flex items-start gap-3">
           <div className="bg-muted text-primary flex size-9 shrink-0 items-center justify-center rounded-md">
             <PackageCheck className="size-4" aria-hidden="true" />
@@ -39,17 +38,18 @@ export function PlanCard({ plan, actionState, onUpgrade }: PlanCardProps) {
             <CardTitle className="truncate text-base font-semibold">{plan.planName}</CardTitle>
             <CardDescription>{formatBillingCycle(plan.billingCycle)}</CardDescription>
           </div>
-          {isCurrentPlan && <Badge>Hiện tại</Badge>}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <p className="text-2xl font-semibold tracking-tight">{formatCurrency(plan.price)}</p>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex items-end justify-between gap-3">
+          <p className="text-xl font-semibold tracking-tight tabular-nums">
+            {formatCurrency(plan.price)}
+          </p>
           <p className="text-muted-foreground text-xs">
             Giá theo {formatBillingCycle(plan.billingCycle).toLowerCase()}
           </p>
         </div>
-        <div className="grid gap-2">
+        <div className="flex flex-col gap-2">
           {getFeatureRows(plan).map((row) => (
             <div key={row.label} className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground flex min-w-0 items-center gap-2 text-xs">
