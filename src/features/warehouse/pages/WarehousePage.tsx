@@ -16,6 +16,7 @@ import {
 } from '../components/WarehousePage'
 import { useCreateWarehouseMutation, useWarehousesQuery } from '../hooks/use-warehouse'
 import type { CreateWarehouseFormValues } from '../schemas/warehouse.schema'
+import { getWarehouseCodeError } from '../utils/get-warehouse-code-error'
 
 const PAGE_SIZE = 10
 
@@ -67,9 +68,10 @@ export function WarehousePage() {
       return true
     } catch (error) {
       console.error(error)
-      if (isApiErrorResponse(error) && error.statusCode === 409) {
-        setWarehouseCodeError('Mã kho đã tồn tại. Vui lòng chọn mã khác.')
-        toast.error('Mã kho đã tồn tại. Vui lòng chọn mã khác.')
+      const codeError = isApiErrorResponse(error) ? getWarehouseCodeError(error) : undefined
+      if (codeError) {
+        setWarehouseCodeError(codeError)
+        toast.error(codeError)
       } else {
         toast.error(
           isApiErrorResponse(error) && error.message
