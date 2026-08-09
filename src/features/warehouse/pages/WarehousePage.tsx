@@ -17,6 +17,7 @@ import {
 import { useCreateWarehouseMutation, useWarehousesQuery } from '../hooks/use-warehouse'
 import type { CreateWarehouseFormValues } from '../schemas/warehouse.schema'
 import { getWarehouseCodeError } from '../utils/get-warehouse-code-error'
+import { buildWarehouseQuery } from '../utils/warehouse-query'
 
 const PAGE_SIZE = 10
 
@@ -38,12 +39,9 @@ export function WarehousePage() {
   const [page, setPage] = useState(1)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const createMutation = useCreateWarehouseMutation()
-  const warehousesQuery = useWarehousesQuery({
-    top: PAGE_SIZE,
-    skip: (page - 1) * PAGE_SIZE,
-    needTotalCount: true,
-    ...(debouncedSearchText ? { searchText: debouncedSearchText } : {}),
-  })
+  const warehousesQuery = useWarehousesQuery(
+    buildWarehouseQuery(debouncedSearchText, page, PAGE_SIZE)
+  )
   const warehouses = warehousesQuery.data?.items ?? []
 
   function handleSearchChange(value: string) {

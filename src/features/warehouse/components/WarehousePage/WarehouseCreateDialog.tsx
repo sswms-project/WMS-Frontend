@@ -1,8 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Plus } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -19,6 +20,11 @@ import {
   createWarehouseSchema,
   type CreateWarehouseFormValues,
 } from '../../schemas/warehouse.schema'
+import {
+  clearWarehouseCreateDraft,
+  getWarehouseCreateDraft,
+  saveWarehouseCreateDraft,
+} from '../../utils/warehouse-create-draft'
 
 interface WarehouseCreateDialogProps {
   readonly open: boolean
@@ -41,20 +47,29 @@ export function WarehouseCreateDialog({
   onOpenChange,
   onSubmit,
 }: WarehouseCreateDialogProps) {
+  const [initialDraft] = useState(getWarehouseCreateDraft)
   const form = useForm<CreateWarehouseFormValues>({
     resolver: zodResolver(createWarehouseSchema),
-    defaultValues,
+    defaultValues: initialDraft,
   })
+  const draftValues = useWatch({ control: form.control })
   const { errors } = form.formState
+  const hasWarehouseCodeError = Boolean(errors.warehouseCode || warehouseCodeError)
+
+  useEffect(() => {
+    saveWarehouseCreateDraft(form.getValues())
+  }, [draftValues, form])
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
     onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: CreateWarehouseFormValues) {
     const isSuccessful = await onSubmit(values)
-    if (isSuccessful) form.reset(defaultValues)
+    if (isSuccessful) {
+      clearWarehouseCreateDraft()
+      form.reset(defaultValues)
+    }
   }
 
   return (
@@ -69,12 +84,13 @@ export function WarehouseCreateDialog({
 
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <FieldGroup>
-            <Field data-invalid={Boolean(errors.warehouseCode)}>
+            <Field data-invalid={hasWarehouseCodeError}>
               <FieldLabel htmlFor="warehouse-code">Mã kho</FieldLabel>
               <Input
                 id="warehouse-code"
                 autoComplete="off"
-                aria-invalid={Boolean(errors.warehouseCode)}
+                aria-invalid={hasWarehouseCodeError}
+                spellCheck={false}
                 placeholder="VD: HCM-01"
                 {...form.register('warehouseCode')}
               />
@@ -99,6 +115,7 @@ export function WarehouseCreateDialog({
               <Textarea
                 id="warehouse-address"
                 rows={3}
+                autoComplete="street-address"
                 aria-invalid={Boolean(errors.address)}
                 placeholder="Địa chỉ kho (không bắt buộc)"
                 {...form.register('address')}

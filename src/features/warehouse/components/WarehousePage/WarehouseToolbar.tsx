@@ -1,5 +1,6 @@
 import { RefreshCw, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   InputGroup,
   InputGroupAddon,
@@ -23,15 +24,15 @@ export function WarehouseToolbar({
   return (
     <div className="flex flex-col gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
       <InputGroup className="h-10 w-full sm:h-8 sm:max-w-sm">
-        <InputGroupAddon>
-          <Search aria-hidden="true" />
-        </InputGroupAddon>
         <InputGroupInput
           value={searchText}
           aria-label="Tìm theo mã hoặc tên kho"
           placeholder="Tìm mã hoặc tên kho"
           onChange={(event) => onSearchChange(event.target.value)}
         />
+        <InputGroupAddon>
+          <Search aria-hidden="true" />
+        </InputGroupAddon>
         {searchText && (
           <InputGroupAddon align="inline-end">
             <InputGroupButton
@@ -49,16 +50,21 @@ export function WarehouseToolbar({
         <p className="text-muted-foreground text-xs" aria-live="polite">
           {isFetching ? 'Đang cập nhật' : 'Đã cập nhật'}
         </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          disabled={isFetching}
-          aria-label="Làm mới danh sách kho"
-          onClick={onRefresh}
-        >
-          <RefreshCw className={isFetching ? 'animate-spin' : undefined} aria-hidden="true" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              disabled={isFetching}
+              aria-label="Làm mới danh sách kho"
+              onClick={onRefresh}
+            >
+              <RefreshCw className={isFetching ? 'animate-spin' : undefined} aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent sideOffset={4}>Làm mới danh sách kho</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   )

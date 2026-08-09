@@ -35,6 +35,34 @@ describe('createWarehouseSchema', () => {
       }).success
     ).toBe(false)
   })
+
+  it('rejects warehouse codes longer than 50 characters', () => {
+    expect(
+      createWarehouseSchema.safeParse({
+        warehouseCode: 'W'.repeat(51),
+        warehouseName: 'Kho Thu Duc',
+        address: '',
+      }).success
+    ).toBe(false)
+  })
+
+  it('allows an empty optional address and rejects an address longer than 500 characters', () => {
+    expect(
+      createWarehouseSchema.safeParse({
+        warehouseCode: 'HCM-01',
+        warehouseName: 'Kho Thu Duc',
+        address: '   ',
+      }).success
+    ).toBe(true)
+
+    expect(
+      createWarehouseSchema.safeParse({
+        warehouseCode: 'HCM-01',
+        warehouseName: 'Kho Thu Duc',
+        address: 'A'.repeat(501),
+      }).success
+    ).toBe(false)
+  })
 })
 
 describe('updateWarehouseSchema', () => {
@@ -48,5 +76,21 @@ describe('updateWarehouseSchema', () => {
       warehouseName: 'Kho Thu Duc',
       address: 'Thu Duc, Ho Chi Minh City',
     })
+  })
+
+  it('trims the editable fields and rejects whitespace-only warehouse names', () => {
+    expect(
+      updateWarehouseSchema.parse({
+        warehouseName: '  Kho Thu Duc  ',
+        address: '  Thu Duc  ',
+      })
+    ).toEqual({
+      warehouseName: 'Kho Thu Duc',
+      address: 'Thu Duc',
+    })
+
+    expect(updateWarehouseSchema.safeParse({ warehouseName: '   ', address: '' }).success).toBe(
+      false
+    )
   })
 })
