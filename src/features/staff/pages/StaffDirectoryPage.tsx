@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { USER_ROLES } from '@/config/roles'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAuthStore } from '@/stores/auth.store'
 import {
   InviteStaffDialog,
@@ -19,7 +20,6 @@ import {
   StaffDirectoryToolbar,
   StaffLifecycleDialog,
 } from '../components/StaffDirectoryPage'
-import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   useInvitationsQuery,
   useResendInvitationMutation,

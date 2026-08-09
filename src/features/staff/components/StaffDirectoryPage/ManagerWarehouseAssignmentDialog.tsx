@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/input-group'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDebouncedValue } from '../../hooks/use-debounced-value'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import {
   useAssignmentWarehousesQuery,
   useAssignManagerMutation,

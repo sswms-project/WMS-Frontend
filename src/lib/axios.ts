@@ -99,6 +99,9 @@ const AUTH_401_PASSTHROUGH_ENDPOINTS: string[] = [
   API_ENDPOINTS.auth.logout,
 ]
 
+export const shouldRedirectToUnauthorized = (url?: string): boolean =>
+  url !== API_ENDPOINTS.subscription.me
+
 // ── Token refresh with queuing ─────────────────────────────────
 
 let isRefreshing = false
@@ -179,7 +182,11 @@ axiosClient.interceptors.response.use(
       }
     }
 
-    if (error.response?.status === 403 && isClient) {
+    if (
+      error.response?.status === 403 &&
+      isClient &&
+      shouldRedirectToUnauthorized(originalRequest?.url)
+    ) {
       window.location.href = APP_ROUTES.unauthorized
     }
 

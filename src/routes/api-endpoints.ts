@@ -31,6 +31,10 @@ export const API_ENDPOINTS = {
   },
   warehouses: {
     list: '/warehouses',
+    create: '/warehouses',
+    detail: (warehouseId: string) => `/warehouses/${warehouseId}`,
+    update: (warehouseId: string) => `/warehouses/${warehouseId}`,
+    layout: (warehouseId: string) => `/warehouses/${warehouseId}/layout`,
   },
   invitations: {
     list: '/invitations',
