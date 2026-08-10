@@ -11,6 +11,7 @@ import {
   TriangleAlert,
   Warehouse,
 } from 'lucide-react'
+import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
@@ -153,7 +154,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
               </Badge>
             </div>
             <h1 className="mt-0.5 truncate text-xl font-semibold">{warehouse.warehouseName}</h1>
-            <p className="text-muted-foreground mt-1 truncate font-mono text-xs">
+            <p translate="no" className="text-muted-foreground mt-1 truncate font-mono text-xs">
               {warehouse.warehouseCode}
             </p>
           </div>
@@ -200,13 +201,13 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
 
       <nav aria-label="Điều hướng kho" className="flex min-w-0 gap-1 border-b pb-2">
         <Button asChild variant={isOverviewActive ? 'secondary' : 'ghost'} size="sm">
-          <Link href={overviewHref} aria-current={isOverviewActive ? 'page' : undefined}>
+          <Link href={overviewHref as Route} aria-current={isOverviewActive ? 'page' : undefined}>
             <Warehouse data-icon="inline-start" aria-hidden="true" />
             Thông tin
           </Link>
         </Button>
         <Button asChild variant={isLayoutActive ? 'secondary' : 'ghost'} size="sm">
-          <Link href={layoutHref} aria-current={isLayoutActive ? 'page' : undefined}>
+          <Link href={layoutHref as Route} aria-current={isLayoutActive ? 'page' : undefined}>
             <LayoutPanelTop data-icon="inline-start" aria-hidden="true" />
             Bố cục kho
           </Link>

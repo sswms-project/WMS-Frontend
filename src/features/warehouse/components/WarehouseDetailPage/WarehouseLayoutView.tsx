@@ -21,7 +21,10 @@ function formatStatus(status: string) {
   const labels: Record<string, string> = {
     Active: 'Hoạt động',
     Inactive: 'Ngừng hoạt động',
+    Vacant: 'Còn trống',
     Occupied: 'Đang chứa hàng',
+    Reserved: 'Đã giữ chỗ',
+    Full: 'Đầy',
     Empty: 'Trống',
   }
 
@@ -40,7 +43,9 @@ function PaneHeader({ title, count }: { readonly title: string; readonly count: 
   return (
     <div className="flex h-12 shrink-0 items-center justify-between border-b px-3">
       <h2 className="text-sm font-semibold">{title}</h2>
-      <Badge variant="secondary">{count}</Badge>
+      <Badge variant="secondary" className="tabular-nums">
+        {count}
+      </Badge>
     </div>
   )
 }
@@ -66,7 +71,9 @@ function ZoneList({
               >
                 <ItemContent className="min-w-0">
                   <ItemTitle className="max-w-full truncate">{zone.zoneName}</ItemTitle>
-                  <ItemDescription className="font-mono">{zone.zoneCode}</ItemDescription>
+                  <ItemDescription translate="no" className="font-mono">
+                    {zone.zoneCode}
+                  </ItemDescription>
                 </ItemContent>
                 <StatusBadge status={zone.status} />
               </button>
@@ -113,7 +120,9 @@ function RackList({
               >
                 <ItemContent className="min-w-0">
                   <ItemTitle className="max-w-full truncate">{rack.rackName}</ItemTitle>
-                  <ItemDescription className="font-mono">{rack.rackCode}</ItemDescription>
+                  <ItemDescription translate="no" className="font-mono">
+                    {rack.rackCode}
+                  </ItemDescription>
                 </ItemContent>
                 <StatusBadge status={rack.status} />
               </button>
@@ -129,15 +138,19 @@ function SlotItem({ slot }: { readonly slot: SlotResponse }) {
   return (
     <Item variant="outline" className="items-start">
       <ItemContent className="min-w-0">
-        <ItemTitle className="font-mono">{slot.slotCode}</ItemTitle>
+        <ItemTitle translate="no" className="font-mono">
+          {slot.slotCode}
+        </ItemTitle>
         <ItemDescription className="flex justify-between gap-3">
           <span>Sức chứa</span>
-          <span className="text-foreground font-medium">
+          <span className="text-foreground font-medium tabular-nums">
             {slot.currentOccupancy} / {slot.capacity}
           </span>
         </ItemDescription>
         {slot.barcodeValue && slot.barcodeValue !== slot.slotCode && (
-          <ItemDescription className="font-mono break-all">{slot.barcodeValue}</ItemDescription>
+          <ItemDescription translate="no" className="font-mono break-all">
+            {slot.barcodeValue}
+          </ItemDescription>
         )}
       </ItemContent>
       <StatusBadge status={slot.status} />

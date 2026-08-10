@@ -23,7 +23,7 @@ describe('WarehouseDeactivateDialog', () => {
     expect(screen.getByRole('alertdialog')).toHaveAccessibleName(
       'Ngừng hoạt động kho “Kho Thủ Đức”?'
     )
-    expect(screen.getByText('HCM-01')).toBeInTheDocument()
+    expect(screen.getByText('HCM-01')).toHaveAttribute('translate', 'no')
 
     await user.click(screen.getByRole('button', { name: 'Xác nhận ngừng hoạt động' }))
     expect(onConfirm).toHaveBeenCalledOnce()
@@ -33,7 +33,7 @@ describe('WarehouseDeactivateDialog', () => {
     render(<WarehouseDeactivateDialog {...defaultProps} isPending />)
 
     expect(screen.getByRole('button', { name: 'Hủy' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Đang xử lý' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Đang xử lý…' })).toBeDisabled()
   })
 
   it('renders a backend failure in the dialog context', () => {

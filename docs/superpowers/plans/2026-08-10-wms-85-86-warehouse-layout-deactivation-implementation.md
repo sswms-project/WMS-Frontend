@@ -437,7 +437,7 @@ git commit -m "feat(wms-85): add warehouse deactivation flow"
 - Consumes: completed WMS-85/WMS-86 code and test evidence.
 - Produces: an accurate progress tracker with WMS-87 through WMS-89 still unchecked.
 
-- [ ] **Step 1: Run focused warehouse tests**
+- [x] **Step 1: Run focused warehouse tests**
 
 ```bash
 pnpm test -- src/features/warehouse src/config/route-permissions.test.ts
@@ -445,7 +445,7 @@ pnpm test -- src/features/warehouse src/config/route-permissions.test.ts
 
 Expected: all focused tests pass with zero failures.
 
-- [ ] **Step 2: Run full static and test verification**
+- [x] **Step 2: Run full static and test verification**
 
 ```bash
 pnpm lint
@@ -456,17 +456,25 @@ git diff --check
 
 Expected: every command exits 0. Record any unrelated pre-existing warnings separately; do not hide or broaden the change to fix unrelated code.
 
-- [ ] **Step 3: Run the web UI guideline review**
+- [x] **Step 3: Run the web UI guideline review**
 
 Use `web-design-guidelines` against the changed workspace, layout explorer, and deactivation dialog. Resolve actionable accessibility, focus, semantic, responsive, overflow, and interaction findings within WMS-85/WMS-86 scope.
 
-- [ ] **Step 4: Run browser QA**
+- [x] **Step 4: Run browser QA**
 
 Start the FE/BE only when needed and test with supplied accounts at 1366x768, 768x1024, 390x844, and 360x800. Verify light/dark mode, keyboard focus, Owner/Manager/Staff visibility, route refresh, mobile Back behavior, deactivation error/success, and no horizontal page overflow.
 
-- [ ] **Step 5: Update progress documentation with evidence**
+- [x] **Step 5: Update progress documentation with evidence**
 
 Mark only completed WMS-85/WMS-86 items. Keep the BR-13 tracker blocked and WMS-87/WMS-88/WMS-89 unchecked. Append dated work-log rows for test, build, UI audit, and browser QA evidence.
+
+Checkpoint evidence recorded on 2026-08-10:
+
+- Focused warehouse suite: 18 files and 51 tests passed.
+- Full suite: 44 files and 121 tests passed; the existing Vite native-config warning is unrelated to this scope.
+- `pnpm lint`, `pnpm build`, and `git diff --check` passed.
+- Browser QA covered Owner, Manager, and Staff at desktop/mobile breakpoints in light and dark modes. The deactivation confirmation was inspected but not submitted because shared test data has no reactivation API.
+- Final verification fixed typed-route build safety; the UI review covered identifier translation protection, slot status localization, and numeric alignment. No actionable WMS-85/WMS-86 finding remains.
 
 - [ ] **Step 6: Commit verification documentation**
 

@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { ZoneResponse } from '@/types/warehouse'
 
@@ -5,7 +6,7 @@ export function buildWarehouseLayoutHref(
   warehouseId: string,
   zoneId: string | null,
   rackId: string | null
-) {
+): Route {
   const params = new URLSearchParams()
 
   if (zoneId) {
@@ -15,7 +16,7 @@ export function buildWarehouseLayoutHref(
 
   const query = params.toString()
   const pathname = APP_ROUTES.warehouseLayout(warehouseId)
-  return query ? `${pathname}?${query}` : pathname
+  return (query ? `${pathname}?${query}` : pathname) as Route
 }
 
 export function getWarehouseLayoutSelection(

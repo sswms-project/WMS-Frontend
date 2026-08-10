@@ -2,16 +2,16 @@
 
 ## Document Control
 
-| Item                    | Value                                                                  |
-| ----------------------- | ---------------------------------------------------------------------- |
-| Scope                   | Frontend implementation for WMS-85, WMS-86, WMS-87, WMS-88, and WMS-89 |
-| Branch                  | `feat/wms-85-89-warehouse-structure`                                   |
-| Base branch             | `dev` at `62cd000c367fab79bb47b9ed8fa6e5aedf726e10`                    |
-| Related backend tasks   | WMS-71 through WMS-75                                                  |
-| Related use cases       | UC-WS-05 through UC-WS-09                                              |
-| Previous frontend scope | WMS-44 Warehouse Management UI                                         |
-| Status                  | Design approved; implementation not started                            |
-| Last updated            | 2026-08-10                                                             |
+| Item                    | Value                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| Scope                   | Frontend implementation for WMS-85, WMS-86, WMS-87, WMS-88, and WMS-89            |
+| Branch                  | `feat/wms-85-89-warehouse-structure`                                              |
+| Base branch             | `dev` at `62cd000c367fab79bb47b9ed8fa6e5aedf726e10`                               |
+| Related backend tasks   | WMS-71 through WMS-75                                                             |
+| Related use cases       | UC-WS-05 through UC-WS-09                                                         |
+| Previous frontend scope | WMS-44 Warehouse Management UI                                                    |
+| Status                  | WMS-85/WMS-86 implemented and locally verified; WMS-87 through WMS-89 not started |
+| Last updated            | 2026-08-10                                                                        |
 
 ## 1. Objective
 
@@ -642,33 +642,33 @@ Legend: `[ ]` not started, `[~]` in progress, `[x]` completed, `[!]` blocked or 
 - [x] Confirm shared routes and role-based actor model.
 - [x] Approve route-backed desktop workspace and mobile drill-down design.
 - [x] Write this design spec.
-- [ ] User review of written spec.
-- [ ] Produce file-by-file implementation plan with `superpowers:writing-plans`.
+- [x] User review of written spec.
+- [x] Produce file-by-file implementation plan with `superpowers:writing-plans`.
 
 ### Shared foundation
 
-- [ ] Add endpoint builders and DTOs.
-- [ ] Add query keys and React Query hooks/mutations.
-- [ ] Add role capability helper and tests.
-- [ ] Update route permissions and navigation tests.
-- [ ] Add route-backed warehouse workspace shell.
-- [ ] Confirm WMS-44 list/create/detail/edit regression coverage.
+- [x] Add endpoint builders and DTOs.
+- [x] Add query keys and React Query hooks/mutations.
+- [x] Add role capability helper and tests.
+- [x] Update route permissions and navigation tests.
+- [x] Add route-backed warehouse workspace shell.
+- [x] Confirm WMS-44 list/create/detail/edit regression coverage.
 
 ### WMS-85
 
-- [ ] Add deactivate service and mutation.
-- [ ] Add accessible confirmation dialog.
-- [ ] Add inactive-state action restrictions.
-- [ ] Add automated tests.
+- [x] Add deactivate service and mutation.
+- [x] Add accessible confirmation dialog.
+- [x] Add inactive-state action restrictions.
+- [x] Add automated tests.
 - [!] Verify BR-13 after backend enforcement is available.
 
 ### WMS-86
 
-- [ ] Add layout route.
-- [ ] Build adaptive zone/rack/slot explorer.
-- [ ] Add URL-backed mobile drill-down state.
-- [ ] Handle loading/error/empty/permission states.
-- [ ] Add automated tests.
+- [x] Add layout route.
+- [x] Build adaptive zone/rack/slot explorer.
+- [x] Add URL-backed mobile drill-down state.
+- [x] Handle loading/error/empty/permission states.
+- [x] Add automated tests.
 
 ### WMS-87
 
@@ -696,29 +696,35 @@ Legend: `[ ]` not started, `[~]` in progress, `[x]` completed, `[!]` blocked or 
 
 ### Verification and delivery
 
-- [ ] Run focused tests after each task.
-- [ ] Run full `pnpm lint`.
-- [ ] Run full `pnpm test`.
-- [ ] Run full `pnpm build`.
-- [ ] Run `git diff --check`.
-- [ ] Complete browser QA matrix.
-- [ ] Run web-design-guidelines review.
-- [ ] Run code review and resolve findings.
-- [ ] Update this progress tracker and work log.
-- [ ] Commit implementation in task-scoped increments.
+- [x] Run focused tests after each task.
+- [x] Run full `pnpm lint`.
+- [x] Run full `pnpm test`.
+- [x] Run full `pnpm build`.
+- [x] Run `git diff --check`.
+- [x] Complete browser QA matrix.
+- [x] Run web-design-guidelines review.
+- [x] Run code review and resolve findings.
+- [x] Update this progress tracker and work log.
+- [x] Commit implementation in task-scoped increments.
 - [ ] Push branch and prepare PR description.
 
 ## 18. Work Log
 
 Update this table after each implementation checkpoint. Record evidence and blockers, not general status statements.
 
-| Date       | Scope                 | Evidence/result                                                                                                         | Status    |
-| ---------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------- |
-| 2026-08-10 | Branch setup          | Branch created from frontend `origin/dev` commit `62cd000`; worktree clean                                              | Completed |
-| 2026-08-10 | Contract audit        | Verified controller endpoints, request validators, response DTOs, role permission model, and warehouse tenant filtering | Completed |
-| 2026-08-10 | Architecture decision | Approved shared route-backed workspace with desktop tabs and mobile drill-down                                          | Completed |
-| 2026-08-10 | Risk review           | Recorded missing BR-13 enforcement, missing assignment scope, and missing FE permission list                            | Completed |
-| 2026-08-10 | Design spec           | Created this document with API, UI, architecture, skills, tests, and progress tracking                                  | Completed |
+| Date       | Scope                 | Evidence/result                                                                                                                                                                                                                                                  | Status    |
+| ---------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 2026-08-10 | Branch setup          | Branch created from frontend `origin/dev` commit `62cd000`; worktree clean                                                                                                                                                                                       | Completed |
+| 2026-08-10 | Contract audit        | Verified controller endpoints, request validators, response DTOs, role permission model, and warehouse tenant filtering                                                                                                                                          | Completed |
+| 2026-08-10 | Architecture decision | Approved shared route-backed workspace with desktop tabs and mobile drill-down                                                                                                                                                                                   | Completed |
+| 2026-08-10 | Risk review           | Recorded missing BR-13 enforcement, missing assignment scope, and missing FE permission list                                                                                                                                                                     | Completed |
+| 2026-08-10 | Design spec           | Created this document with API, UI, architecture, skills, tests, and progress tracking                                                                                                                                                                           | Completed |
+| 2026-08-10 | WMS-86 implementation | Added role capabilities, shared warehouse workspace navigation, responsive layout explorer, and URL-backed mobile drill-down in commits `1f5d1c5`, `d373448`, and `ec01289`                                                                                      | Completed |
+| 2026-08-10 | WMS-85 implementation | Added owner-only deactivation mutation, confirmation dialog, inactive-state restrictions, and tests in commit `e338dfb`                                                                                                                                          | Completed |
+| 2026-08-10 | Browser QA            | Verified Owner/Manager/Staff behavior, desktop and mobile viewports, dark mode, route refresh, no horizontal overflow, and the non-destructive deactivation confirmation; no safe reactivation endpoint was available to submit the mutation against shared data | Completed |
+| 2026-08-10 | UI audit              | Applied `web-design-guidelines`: protected warehouse identifiers from translation, localized all supported slot statuses, stabilized numeric capacity display, and verified focus/semantic patterns                                                              | Completed |
+| 2026-08-10 | Regression checks     | Focused warehouse tests: 18 files/51 tests; full suite: 44 files/121 tests; `pnpm lint`, `pnpm build`, and `git diff --check` passed. Existing Vite native-config warning remains unrelated                                                                      | Completed |
+| 2026-08-10 | Backend dependency    | BR-13 stock, transfer, and open-order validation is still absent from the deactivation handler; frontend intentionally does not claim those checks ran                                                                                                           | Blocked   |
 
 ## 19. Open Backend Follow-Ups
 

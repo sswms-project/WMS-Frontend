@@ -26,6 +26,30 @@ const zones: ZoneResponse[] = [
             currentOccupancy: 20,
             barcodeValue: 'A-01-01',
           },
+          {
+            id: 'slot-2',
+            slotCode: 'A-01-02',
+            status: 'Vacant',
+            capacity: 100,
+            currentOccupancy: 0,
+            barcodeValue: 'A-01-02',
+          },
+          {
+            id: 'slot-3',
+            slotCode: 'A-01-03',
+            status: 'Reserved',
+            capacity: 100,
+            currentOccupancy: 0,
+            barcodeValue: 'A-01-03',
+          },
+          {
+            id: 'slot-4',
+            slotCode: 'A-01-04',
+            status: 'Full',
+            capacity: 100,
+            currentOccupancy: 100,
+            barcodeValue: 'A-01-04',
+          },
         ],
       },
       {
@@ -80,7 +104,17 @@ describe('WarehouseLayoutView', () => {
     expect(screen.getByRole('button', { name: /Khu A/ })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: /Kệ A-01/ })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('A-01-01')).toBeInTheDocument()
+    expect(screen.getByText('A-01-01')).toHaveAttribute('translate', 'no')
     expect(screen.getByText('20 / 100')).toBeInTheDocument()
+    expect(screen.getByText('Đang chứa hàng')).toBeInTheDocument()
+  })
+
+  it('localizes all supported slot availability statuses', () => {
+    renderLayout()
+
+    expect(screen.getByText('Còn trống')).toBeInTheDocument()
+    expect(screen.getByText('Đã giữ chỗ')).toBeInTheDocument()
+    expect(screen.getByText('Đầy')).toBeInTheDocument()
   })
 
   it('reports zone and rack selection through explicit callbacks', async () => {

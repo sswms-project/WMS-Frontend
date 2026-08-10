@@ -45,8 +45,11 @@ export function WarehouseDeactivateDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Ngừng hoạt động kho “{warehouseName}”?</AlertDialogTitle>
           <AlertDialogDescription>
-            Kho <span className="text-foreground font-mono">{warehouseCode}</span> sẽ không còn nhận
-            các thay đổi cấu hình sau khi thao tác hoàn tất.
+            Kho{' '}
+            <span translate="no" className="text-foreground font-mono">
+              {warehouseCode}
+            </span>{' '}
+            sẽ không còn nhận các thay đổi cấu hình sau khi thao tác hoàn tất.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -72,7 +75,7 @@ export function WarehouseDeactivateDialog({
             {isPending ? (
               <>
                 <Loader2 className="animate-spin" aria-hidden="true" />
-                Đang xử lý
+                Đang xử lý…
               </>
             ) : (
               'Xác nhận ngừng hoạt động'
