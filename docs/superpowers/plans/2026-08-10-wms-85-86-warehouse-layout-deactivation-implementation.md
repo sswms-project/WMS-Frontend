@@ -175,7 +175,7 @@ git commit -m "feat(wms-86): add warehouse role capabilities"
 - Consumes: `useWarehouseQuery`, `useUpdateWarehouseMutation`, `getWarehouseCapabilities`, `WarehouseEditDialog`, `WarehouseOverview`, and `APP_ROUTES` builders.
 - Produces: `WarehouseWorkspaceLayout({ warehouseId, children })` and an overview-only `WarehouseDetailPage({ warehouseId })`.
 
-- [ ] **Step 1: Write failing workspace tests**
+- [x] **Step 1: Write failing workspace tests**
 
 Mock the warehouse query, auth store role, current pathname, and update mutation. Assert:
 
@@ -193,7 +193,7 @@ expect(screen.getByRole('button', { name: 'Chỉnh sửa' })).toBeInTheDocument(
 
 Re-render with Warehouse Manager and assert `Chỉnh sửa` is absent while both route links remain.
 
-- [ ] **Step 2: Run the workspace test and verify it fails**
+- [x] **Step 2: Run the workspace test and verify it fails**
 
 Run:
 
@@ -203,7 +203,7 @@ pnpm test -- src/features/warehouse/components/WarehouseWorkspace/WarehouseWorks
 
 Expected: FAIL because the workspace component does not exist.
 
-- [ ] **Step 3: Implement the shared workspace shell and thin route layout**
+- [x] **Step 3: Implement the shared workspace shell and thin route layout**
 
 The dynamic Next route layout must only resolve `warehouseId` and render:
 
@@ -213,11 +213,11 @@ return <WarehouseWorkspaceLayout warehouseId={warehouseId}>{children}</Warehouse
 
 The feature workspace owns shared loading/error/header/navigation/edit behavior. Navigation uses semantic links with `aria-current="page"`; it must not use local tab state.
 
-- [ ] **Step 4: Reduce the detail page to overview content and protect owner-only create UI**
+- [x] **Step 4: Reduce the detail page to overview content and protect owner-only create UI**
 
 `WarehouseDetailPage` queries the cached detail and renders `WarehouseOverview`. `WarehousePage` derives capabilities from the auth role and conditionally renders both create entry points, including the empty-state button.
 
-- [ ] **Step 5: Run workspace and WMS-44 regression tests**
+- [x] **Step 5: Run workspace and WMS-44 regression tests**
 
 Run:
 
@@ -227,7 +227,7 @@ pnpm test -- src/features/warehouse/components/WarehouseWorkspace/WarehouseWorks
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the route-backed workspace**
+- [x] **Step 6: Commit the route-backed workspace**
 
 ```bash
 git add "src/app/(private)/warehouses/[warehouseId]/layout.tsx" "src/app/(private)/warehouses/[warehouseId]/page.tsx" src/features/warehouse/components/WarehouseWorkspace src/features/warehouse/pages/WarehouseDetailPage.tsx src/features/warehouse/pages/WarehousePage.tsx
