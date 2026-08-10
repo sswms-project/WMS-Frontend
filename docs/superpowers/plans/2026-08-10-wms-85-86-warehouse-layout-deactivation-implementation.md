@@ -368,7 +368,7 @@ interface WarehouseDeactivateDialogProps {
 }
 ```
 
-- [ ] **Step 1: Write failing dialog and workspace capability tests**
+- [x] **Step 1: Write failing dialog and workspace capability tests**
 
 Assert the dialog names the target warehouse, requires the destructive confirmation action, calls `onConfirm` once, disables actions while pending, and renders `errorMessage` with an alert role.
 
@@ -380,7 +380,7 @@ expect(screen.getByRole('button', { name: 'Ngừng hoạt động kho' })).toBeI
 
 Assert the action is absent for Manager, Staff, and inactive warehouses.
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -390,7 +390,7 @@ pnpm test -- src/features/warehouse/components/WarehouseDetailPage/WarehouseDeac
 
 Expected: FAIL because the deactivation UI and API workflow do not exist.
 
-- [ ] **Step 3: Implement endpoint, service, and mutation**
+- [x] **Step 3: Implement endpoint, service, and mutation**
 
 ```ts
 deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`
@@ -398,15 +398,15 @@ deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`
 
 The mutation calls `PATCH` without a request body. On success, invalidate `queryKeys.warehouses.all`. On error, log through the mutation `onError` handler.
 
-- [ ] **Step 4: Implement the controlled AlertDialog**
+- [x] **Step 4: Implement the controlled AlertDialog**
 
 Use `AlertDialog`, `AlertDialogContent`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogCancel`, and destructive `AlertDialogAction`. Copy must identify the warehouse and say the operation stops active warehouse operation; it must not claim BR-13 checks have occurred.
 
-- [ ] **Step 5: Wire deactivation into the workspace**
+- [x] **Step 5: Wire deactivation into the workspace**
 
 The workspace owns dialog state and mutation submission. On success, close the dialog and show `Đã ngừng hoạt động kho.`. On failure, keep the dialog open and map the backend message or fallback `Không thể ngừng hoạt động kho. Vui lòng thử lại.`. Hide edit/deactivate controls once status is `Inactive`.
 
-- [ ] **Step 6: Run focused WMS-85 and workspace tests**
+- [x] **Step 6: Run focused WMS-85 and workspace tests**
 
 Run:
 
@@ -416,7 +416,7 @@ pnpm test -- src/features/warehouse/components/WarehouseDetailPage/WarehouseDeac
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit WMS-85**
+- [x] **Step 7: Commit WMS-85**
 
 ```bash
 git add src/routes/api-endpoints.ts src/features/warehouse/services/warehouse.service.ts src/features/warehouse/hooks/use-warehouse.ts src/features/warehouse/components/WarehouseDetailPage/WarehouseDeactivateDialog.tsx src/features/warehouse/components/WarehouseDetailPage/WarehouseDeactivateDialog.test.tsx src/features/warehouse/components/WarehouseDetailPage/index.ts src/features/warehouse/components/WarehouseWorkspace/WarehouseWorkspaceLayout.tsx src/features/warehouse/components/WarehouseWorkspace/WarehouseWorkspaceLayout.test.tsx

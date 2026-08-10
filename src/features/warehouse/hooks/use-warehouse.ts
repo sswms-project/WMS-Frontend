@@ -71,3 +71,15 @@ export function useUpdateWarehouseMutation() {
     onError: (error) => console.error(error),
   })
 }
+
+export function useDeactivateWarehouseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
+    mutationFn: warehouseService.deactivateWarehouse,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all })
+    },
+    onError: (error) => console.error(error),
+  })
+}

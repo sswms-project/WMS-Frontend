@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { USER_ROLES, type UserRole } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
@@ -24,6 +25,11 @@ const updateMutation = {
   mutateAsync: vi.fn(),
 }
 
+const deactivateMutation = {
+  isPending: false,
+  mutateAsync: vi.fn(),
+}
+
 vi.mock('next/navigation', () => ({
   usePathname: () => currentPathname,
 }))
@@ -36,6 +42,7 @@ vi.mock('../../hooks/use-warehouse', () => ({
     refetch: vi.fn(),
   }),
   useUpdateWarehouseMutation: () => updateMutation,
+  useDeactivateWarehouseMutation: () => deactivateMutation,
 }))
 
 function setRole(role: UserRole) {
@@ -56,10 +63,13 @@ describe('WarehouseWorkspaceLayout', () => {
     currentPathname = `/warehouses/${warehouse.id}`
     warehouseData = warehouse
     updateMutation.mutateAsync.mockReset()
+    deactivateMutation.mutateAsync.mockReset()
     setRole(USER_ROLES.TenantOwner)
   })
 
-  it('renders route-backed workspace navigation and owner edit action', () => {
+  it('renders route-backed workspace navigation and owner actions', async () => {
+    const user = userEvent.setup()
+
     render(
       <WarehouseWorkspaceLayout warehouseId={warehouse.id}>
         <p>Nội dung kho</p>
@@ -78,6 +88,9 @@ describe('WarehouseWorkspaceLayout', () => {
     expect(screen.getByRole('link', { name: 'Thông tin' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: 'Chỉnh sửa' })).toBeInTheDocument()
     expect(screen.getByText('Nội dung kho')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Tác vụ kho' }))
+    expect(await screen.findByRole('menuitem', { name: 'Ngừng hoạt động kho' })).toBeInTheDocument()
   })
 
   it('keeps the workspace readable without owner edit controls for managers', () => {
@@ -92,10 +105,11 @@ describe('WarehouseWorkspaceLayout', () => {
 
     expect(screen.getByRole('link', { name: 'Bố cục kho' })).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Tác vụ kho' })).not.toBeInTheDocument()
     expect(screen.getByText('Bố cục')).toBeInTheDocument()
   })
 
-  it('hides edit controls for an inactive warehouse', () => {
+  it('hides owner actions for an inactive warehouse', () => {
     warehouseData = { ...warehouse, status: 'Inactive' }
 
     render(
@@ -105,5 +119,58 @@ describe('WarehouseWorkspaceLayout', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Tác vụ kho' })).not.toBeInTheDocument()
+  })
+
+  it('hides owner-only actions for warehouse staff', () => {
+    setRole(USER_ROLES.WarehouseStaff)
+
+    render(
+      <WarehouseWorkspaceLayout warehouseId={warehouse.id}>
+        <p>Nội dung kho</p>
+      </WarehouseWorkspaceLayout>
+    )
+
+    expect(screen.queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Tác vụ kho' })).not.toBeInTheDocument()
+  })
+
+  it('deactivates the warehouse after explicit confirmation', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <WarehouseWorkspaceLayout warehouseId={warehouse.id}>
+        <p>Nội dung kho</p>
+      </WarehouseWorkspaceLayout>
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Tác vụ kho' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Ngừng hoạt động kho' }))
+    await user.click(screen.getByRole('button', { name: 'Xác nhận ngừng hoạt động' }))
+
+    expect(deactivateMutation.mutateAsync).toHaveBeenCalledWith(warehouse.id)
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+  })
+
+  it('keeps the dialog open and shows a backend deactivation failure', async () => {
+    const user = userEvent.setup()
+    deactivateMutation.mutateAsync.mockRejectedValueOnce({
+      message: 'Kho vẫn còn tồn kho và chưa thể ngừng hoạt động.',
+    })
+
+    render(
+      <WarehouseWorkspaceLayout warehouseId={warehouse.id}>
+        <p>Nội dung kho</p>
+      </WarehouseWorkspaceLayout>
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Tác vụ kho' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Ngừng hoạt động kho' }))
+    await user.click(screen.getByRole('button', { name: 'Xác nhận ngừng hoạt động' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Kho vẫn còn tồn kho và chưa thể ngừng hoạt động.'
+    )
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
   })
 })

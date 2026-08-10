@@ -1,18 +1,37 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { ArrowLeft, Edit3, LayoutPanelTop, RefreshCw, TriangleAlert, Warehouse } from 'lucide-react'
+import {
+  ArrowLeft,
+  CircleOff,
+  Edit3,
+  Ellipsis,
+  LayoutPanelTop,
+  RefreshCw,
+  TriangleAlert,
+  Warehouse,
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
-import { WarehouseEditDialog } from '../WarehouseDetailPage'
-import { useUpdateWarehouseMutation, useWarehouseQuery } from '../../hooks/use-warehouse'
+import { WarehouseDeactivateDialog, WarehouseEditDialog } from '../WarehouseDetailPage'
+import {
+  useDeactivateWarehouseMutation,
+  useUpdateWarehouseMutation,
+  useWarehouseQuery,
+} from '../../hooks/use-warehouse'
 import type { UpdateWarehouseFormValues } from '../../schemas/warehouse.schema'
 import { getWarehouseCapabilities } from '../../utils/warehouse-capabilities'
 
@@ -30,8 +49,11 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const pathname = usePathname()
   const role = useAuthStore((state) => state.user?.role ?? null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false)
+  const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
   const warehouseQuery = useWarehouseQuery(warehouseId)
   const updateMutation = useUpdateWarehouseMutation()
+  const deactivateMutation = useDeactivateWarehouseMutation()
   const capabilities = getWarehouseCapabilities(role)
 
   async function handleUpdate(values: UpdateWarehouseFormValues): Promise<boolean> {
@@ -44,6 +66,24 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
       console.error(error)
       toast.error(getErrorMessage(error) || 'Không thể cập nhật thông tin kho. Vui lòng thử lại.')
       return false
+    }
+  }
+
+  function handleDeactivateDialogOpenChange(open: boolean) {
+    setIsDeactivateDialogOpen(open)
+    if (!open) setDeactivateErrorMessage(null)
+  }
+
+  async function handleDeactivate() {
+    try {
+      await deactivateMutation.mutateAsync(warehouseId)
+      toast.success('Đã ngừng hoạt động kho.')
+      setDeactivateErrorMessage(null)
+      setIsDeactivateDialogOpen(false)
+    } catch (error) {
+      setDeactivateErrorMessage(
+        getErrorMessage(error) || 'Không thể ngừng hoạt động kho. Vui lòng thử lại.'
+      )
     }
   }
 
@@ -93,6 +133,8 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const layoutHref = APP_ROUTES.warehouseLayout(warehouseId)
   const isOverviewActive = pathname === overviewHref
   const isLayoutActive = pathname === layoutHref
+  const canDeactivate = capabilities.canDeactivateWarehouse && isActive && isOverviewActive
+  const hasHeaderActions = isActive && (capabilities.canEditWarehouse || canDeactivate)
 
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
@@ -117,15 +159,42 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
           </div>
         </div>
 
-        {capabilities.canEditWarehouse && isActive ? (
-          <Button
-            type="button"
-            className="w-full sm:w-auto"
-            onClick={() => setIsEditDialogOpen(true)}
-          >
-            <Edit3 data-icon="inline-start" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
+        {hasHeaderActions ? (
+          <div className="flex w-full gap-2 sm:w-auto">
+            {capabilities.canEditWarehouse ? (
+              <Button
+                type="button"
+                className="min-w-0 flex-1 sm:flex-none"
+                onClick={() => setIsEditDialogOpen(true)}
+              >
+                <Edit3 data-icon="inline-start" aria-hidden="true" />
+                Chỉnh sửa
+              </Button>
+            ) : null}
+
+            {canDeactivate ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" className="min-w-0 flex-1 sm:flex-none">
+                    <Ellipsis data-icon="inline-start" aria-hidden="true" />
+                    Tác vụ kho
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      setDeactivateErrorMessage(null)
+                      setIsDeactivateDialogOpen(true)
+                    }}
+                  >
+                    <CircleOff aria-hidden="true" />
+                    Ngừng hoạt động kho
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
         ) : null}
       </header>
 
@@ -152,6 +221,16 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
         isPending={updateMutation.isPending}
         onOpenChange={setIsEditDialogOpen}
         onSubmit={handleUpdate}
+      />
+
+      <WarehouseDeactivateDialog
+        warehouseName={warehouse.warehouseName}
+        warehouseCode={warehouse.warehouseCode}
+        open={isDeactivateDialogOpen}
+        isPending={deactivateMutation.isPending}
+        errorMessage={deactivateErrorMessage}
+        onOpenChange={handleDeactivateDialogOpenChange}
+        onConfirm={() => void handleDeactivate()}
       />
     </div>
   )

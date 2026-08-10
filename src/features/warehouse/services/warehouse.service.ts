@@ -35,4 +35,9 @@ export const warehouseService = {
     axiosClient
       .get<ApiResponse<ZoneResponse[]>>(API_ENDPOINTS.warehouses.layout(warehouseId))
       .then((response) => response.data),
+
+  deactivateWarehouse: (warehouseId: string) =>
+    axiosClient
+      .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.deactivate(warehouseId))
+      .then((response) => response.data),
 }
