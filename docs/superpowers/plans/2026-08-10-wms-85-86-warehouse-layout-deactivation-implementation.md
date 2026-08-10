@@ -76,7 +76,7 @@
 - Produces: `getWarehouseCapabilities(role: UserRole | null): WarehouseCapabilities` with readonly `canCreateWarehouse`, `canEditWarehouse`, `canDeactivateWarehouse`, and `canConfigureLayout` booleans.
 - Produces: `APP_ROUTES.warehouseDetail(warehouseId)` and `APP_ROUTES.warehouseLayout(warehouseId)`.
 
-- [ ] **Step 1: Write failing role capability and route permission tests**
+- [x] **Step 1: Write failing role capability and route permission tests**
 
 ```ts
 expect(getWarehouseCapabilities(USER_ROLES.TenantOwner)).toEqual({
@@ -104,7 +104,7 @@ expect(getAllowedRolesForPath('/warehouses/example/layout')).toEqual([
 ])
 ```
 
-- [ ] **Step 2: Run tests and verify the new imports/expectations fail**
+- [x] **Step 2: Run tests and verify the new imports/expectations fail**
 
 Run:
 
@@ -114,7 +114,7 @@ pnpm test -- src/features/warehouse/utils/warehouse-capabilities.test.ts src/con
 
 Expected: FAIL because `getWarehouseCapabilities` and the expanded route role list do not exist.
 
-- [ ] **Step 3: Implement the minimal role capability helper and route builders**
+- [x] **Step 3: Implement the minimal role capability helper and route builders**
 
 ```ts
 export interface WarehouseCapabilities {
@@ -139,7 +139,7 @@ export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabi
 
 Add warehouse navigation to Manager and Staff, and update the shared warehouse route permission entry to the confirmed three-role list.
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
 Run:
 
@@ -149,7 +149,7 @@ pnpm test -- src/features/warehouse/utils/warehouse-capabilities.test.ts src/con
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the capability foundation**
+- [x] **Step 5: Commit the capability foundation**
 
 ```bash
 git add src/features/warehouse/utils/warehouse-capabilities.ts src/features/warehouse/utils/warehouse-capabilities.test.ts src/routes/app-routes.ts src/config/route-permissions.ts src/config/route-permissions.test.ts src/components/layout/nav-config.ts

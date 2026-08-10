@@ -22,6 +22,8 @@ export const APP_ROUTES = {
     staff: '/dashboard/staff',
   },
   warehouses: '/warehouses',
+  warehouseDetail: (warehouseId: string) => `/warehouses/${warehouseId}`,
+  warehouseLayout: (warehouseId: string) => `/warehouses/${warehouseId}/layout`,
   inventory: '/inventory',
   orders: '/orders',
   delivery: '/delivery',
