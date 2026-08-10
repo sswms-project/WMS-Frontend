@@ -32,7 +32,7 @@ export function useWarehouseQuery(warehouseId: string) {
 
 export function useWarehouseLayoutQuery(warehouseId: string, enabled: boolean) {
   return useQuery<ZoneResponse[], ApiErrorResponse>({
-    queryKey: [...queryKeys.warehouses.detail(warehouseId), 'layout'] as const,
+    queryKey: queryKeys.warehouses.layout(warehouseId),
     queryFn: () => warehouseService.getLayout(warehouseId).then((response) => response.data),
     enabled: Boolean(warehouseId) && enabled,
   })

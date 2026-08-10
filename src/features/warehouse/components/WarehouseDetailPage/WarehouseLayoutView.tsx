@@ -1,110 +1,293 @@
-import { Boxes, Layers3, Warehouse } from 'lucide-react'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
+import { ArrowLeft, Boxes, Layers3, MapPin, Warehouse } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import type { RackResponse, ZoneResponse } from '@/types/warehouse'
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@/lib/utils'
+import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
 
 interface WarehouseLayoutViewProps {
   readonly zones: readonly ZoneResponse[]
-}
-
-function formatOccupancy(currentOccupancy: number, capacity: number) {
-  return `${currentOccupancy}/${capacity}`
+  readonly selectedZoneId: string | null
+  readonly selectedRackId: string | null
+  readonly onSelectZone: (zoneId: string) => void
+  readonly onSelectRack: (rackId: string) => void
+  readonly onBackToZones: () => void
+  readonly onBackToRacks: () => void
 }
 
 function formatStatus(status: string) {
-  return status === 'Active' ? 'Hoạt động' : status
+  const labels: Record<string, string> = {
+    Active: 'Hoạt động',
+    Inactive: 'Ngừng hoạt động',
+    Occupied: 'Đang chứa hàng',
+    Empty: 'Trống',
+  }
+
+  return labels[status] ?? status
 }
 
-function RackRow({ rack }: { readonly rack: RackResponse }) {
+function StatusBadge({ status }: { readonly status: string }) {
   return (
-    <div className="border-border min-w-0 border px-3 py-2.5">
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-xs font-medium">{rack.rackName}</p>
-          <p className="text-muted-foreground mt-0.5 truncate font-mono text-xs">{rack.rackCode}</p>
-        </div>
-        <Badge variant={rack.status === 'Active' ? 'outline' : 'destructive'}>
-          {formatStatus(rack.status)}
-        </Badge>
-      </div>
-      {rack.slots.length > 0 ? (
-        <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {rack.slots.map((slot) => (
-            <li key={slot.id} className="bg-muted min-w-0 px-2.5 py-2">
-              <p className="truncate font-mono text-xs font-medium">{slot.slotCode}</p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Sức chứa: {formatOccupancy(slot.currentOccupancy, slot.capacity)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground mt-3 text-xs">Chưa có vị trí lưu trữ.</p>
-      )}
+    <Badge variant={status === 'Inactive' ? 'destructive' : 'outline'}>
+      {formatStatus(status)}
+    </Badge>
+  )
+}
+
+function PaneHeader({ title, count }: { readonly title: string; readonly count: number }) {
+  return (
+    <div className="flex h-12 shrink-0 items-center justify-between border-b px-3">
+      <h2 className="text-sm font-semibold">{title}</h2>
+      <Badge variant="secondary">{count}</Badge>
     </div>
   )
 }
 
-export function WarehouseLayoutView({ zones }: WarehouseLayoutViewProps) {
+function ZoneList({
+  zones,
+  selectedZoneId,
+  onSelectZone,
+}: Pick<WarehouseLayoutViewProps, 'zones' | 'selectedZoneId' | 'onSelectZone'>) {
+  return (
+    <ScrollArea className="min-h-0 flex-1">
+      <ItemGroup className="gap-1 p-2">
+        {zones.map((zone) => {
+          const isSelected = zone.id === selectedZoneId
+
+          return (
+            <Item key={zone.id} asChild variant={isSelected ? 'muted' : 'default'}>
+              <button
+                type="button"
+                aria-pressed={isSelected}
+                className="hover:bg-muted cursor-pointer text-left"
+                onClick={() => onSelectZone(zone.id)}
+              >
+                <ItemContent className="min-w-0">
+                  <ItemTitle className="max-w-full truncate">{zone.zoneName}</ItemTitle>
+                  <ItemDescription className="font-mono">{zone.zoneCode}</ItemDescription>
+                </ItemContent>
+                <StatusBadge status={zone.status} />
+              </button>
+            </Item>
+          )
+        })}
+      </ItemGroup>
+    </ScrollArea>
+  )
+}
+
+function RackList({
+  racks,
+  selectedRackId,
+  onSelectRack,
+}: {
+  readonly racks: readonly RackResponse[]
+  readonly selectedRackId: string | null
+  readonly onSelectRack: (rackId: string) => void
+}) {
+  if (racks.length === 0) {
+    return (
+      <PaneEmpty
+        icon={Boxes}
+        title="Chưa có kệ hàng"
+        description="Khu vực này chưa được cấu hình kệ hàng."
+      />
+    )
+  }
+
+  return (
+    <ScrollArea className="min-h-0 flex-1">
+      <ItemGroup className="gap-1 p-2">
+        {racks.map((rack) => {
+          const isSelected = rack.id === selectedRackId
+
+          return (
+            <Item key={rack.id} asChild variant={isSelected ? 'muted' : 'default'}>
+              <button
+                type="button"
+                aria-pressed={isSelected}
+                className="hover:bg-muted cursor-pointer text-left"
+                onClick={() => onSelectRack(rack.id)}
+              >
+                <ItemContent className="min-w-0">
+                  <ItemTitle className="max-w-full truncate">{rack.rackName}</ItemTitle>
+                  <ItemDescription className="font-mono">{rack.rackCode}</ItemDescription>
+                </ItemContent>
+                <StatusBadge status={rack.status} />
+              </button>
+            </Item>
+          )
+        })}
+      </ItemGroup>
+    </ScrollArea>
+  )
+}
+
+function SlotItem({ slot }: { readonly slot: SlotResponse }) {
+  return (
+    <Item variant="outline" className="items-start">
+      <ItemContent className="min-w-0">
+        <ItemTitle className="font-mono">{slot.slotCode}</ItemTitle>
+        <ItemDescription className="flex justify-between gap-3">
+          <span>Sức chứa</span>
+          <span className="text-foreground font-medium">
+            {slot.currentOccupancy} / {slot.capacity}
+          </span>
+        </ItemDescription>
+        {slot.barcodeValue && slot.barcodeValue !== slot.slotCode && (
+          <ItemDescription className="font-mono break-all">{slot.barcodeValue}</ItemDescription>
+        )}
+      </ItemContent>
+      <StatusBadge status={slot.status} />
+    </Item>
+  )
+}
+
+function SlotList({ slots }: { readonly slots: readonly SlotResponse[] }) {
+  if (slots.length === 0) {
+    return (
+      <PaneEmpty
+        icon={MapPin}
+        title="Chưa có vị trí lưu trữ"
+        description="Kệ này chưa được cấu hình vị trí lưu trữ."
+      />
+    )
+  }
+
+  return (
+    <ScrollArea className="min-h-0 flex-1">
+      <ItemGroup className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+        {slots.map((slot) => (
+          <SlotItem key={slot.id} slot={slot} />
+        ))}
+      </ItemGroup>
+    </ScrollArea>
+  )
+}
+
+function PaneEmpty({
+  icon: Icon,
+  title,
+  description,
+}: {
+  readonly icon: typeof Boxes
+  readonly title: string
+  readonly description: string
+}) {
+  return (
+    <Empty className="min-h-0 flex-1 border-0">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon aria-hidden="true" />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  )
+}
+
+export function WarehouseLayoutView({
+  zones,
+  selectedZoneId,
+  selectedRackId,
+  onSelectZone,
+  onSelectRack,
+  onBackToZones,
+  onBackToRacks,
+}: WarehouseLayoutViewProps) {
   if (zones.length === 0) {
     return (
-      <Empty className="min-h-52">
+      <Empty className="min-h-72 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <Warehouse className="text-muted-foreground" aria-hidden="true" />
+            <Warehouse aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>Chưa có bố cục kho</EmptyTitle>
           <EmptyDescription>
-            Bố cục zone, kệ và vị trí sẽ hiển thị tại đây sau khi được cấu hình.
+            Khu vực, kệ và vị trí sẽ hiển thị tại đây sau khi được cấu hình.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
     )
   }
 
+  const selectedZone = zones.find((zone) => zone.id === selectedZoneId) ?? null
+  const selectedRack = selectedZone?.racks.find((rack) => rack.id === selectedRackId) ?? null
+
   return (
-    <Accordion type="multiple" defaultValue={zones.map((zone) => zone.id)} className="border">
-      {zones.map((zone) => (
-        <AccordionItem key={zone.id} value={zone.id} className="px-3 sm:px-4">
-          <AccordionTrigger>
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center">
-                <Layers3 aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm">{zone.zoneName}</span>
-                <span className="text-muted-foreground mt-0.5 block truncate font-mono text-xs">
-                  {zone.zoneCode}
-                </span>
-              </span>
-              <Badge variant={zone.status === 'Active' ? 'outline' : 'destructive'}>
-                {formatStatus(zone.status)}
-              </Badge>
-            </span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="flex flex-col gap-3 pt-1">
-              {zone.description && (
-                <p className="text-muted-foreground text-xs">{zone.description}</p>
-              )}
-              {zone.racks.length > 0 ? (
-                zone.racks.map((rack) => <RackRow key={rack.id} rack={rack} />)
-              ) : (
-                <div className="bg-muted text-muted-foreground flex items-center gap-2 px-3 py-2.5 text-xs">
-                  <Boxes aria-hidden="true" />
-                  Chưa có kệ trong khu vực này.
-                </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <div className="grid min-h-[32rem] min-w-0 overflow-hidden border lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
+      <section className={cn('min-w-0 flex-col', selectedZone ? 'hidden lg:flex' : 'flex')}>
+        <PaneHeader title="Khu vực" count={zones.length} />
+        <ZoneList zones={zones} selectedZoneId={selectedZoneId} onSelectZone={onSelectZone} />
+      </section>
+
+      <section
+        className={cn(
+          'min-w-0 flex-col border-l',
+          selectedZone && !selectedRack ? 'flex' : 'hidden lg:flex'
+        )}
+      >
+        <div className="flex h-12 shrink-0 items-center gap-1 border-b px-2 lg:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Quay lại danh sách khu vực"
+            onClick={onBackToZones}
+          >
+            <ArrowLeft aria-hidden="true" />
+          </Button>
+          <span className="min-w-0 truncate text-xs font-medium">{selectedZone?.zoneName}</span>
+        </div>
+        <div className="hidden lg:block">
+          <PaneHeader title="Kệ hàng" count={selectedZone?.racks.length ?? 0} />
+        </div>
+        {selectedZone ? (
+          <RackList
+            racks={selectedZone.racks}
+            selectedRackId={selectedRackId}
+            onSelectRack={onSelectRack}
+          />
+        ) : (
+          <PaneEmpty
+            icon={Layers3}
+            title="Chọn khu vực"
+            description="Chọn một khu vực để xem danh sách kệ hàng."
+          />
+        )}
+      </section>
+
+      <section
+        className={cn('min-w-0 flex-col border-l', selectedRack ? 'flex' : 'hidden lg:flex')}
+      >
+        <div className="flex h-12 shrink-0 items-center gap-1 border-b px-2 lg:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Quay lại danh sách kệ"
+            onClick={onBackToRacks}
+          >
+            <ArrowLeft aria-hidden="true" />
+          </Button>
+          <span className="min-w-0 truncate text-xs font-medium">{selectedRack?.rackName}</span>
+        </div>
+        <div className="hidden lg:block">
+          <PaneHeader title="Vị trí lưu trữ" count={selectedRack?.slots.length ?? 0} />
+        </div>
+        {selectedRack ? (
+          <SlotList slots={selectedRack.slots} />
+        ) : (
+          <PaneEmpty
+            icon={MapPin}
+            title="Chọn kệ hàng"
+            description="Chọn một kệ để xem các vị trí lưu trữ."
+          />
+        )}
+      </section>
+    </div>
   )
 }

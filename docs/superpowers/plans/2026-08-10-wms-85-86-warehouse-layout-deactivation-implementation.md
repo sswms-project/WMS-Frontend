@@ -265,7 +265,7 @@ interface WarehouseLayoutViewProps {
 }
 ```
 
-- [ ] **Step 1: Replace the accordion test with failing explorer behavior tests**
+- [x] **Step 1: Replace the accordion test with failing explorer behavior tests**
 
 Cover:
 
@@ -279,7 +279,7 @@ expect(onBackToZones).toHaveBeenCalledOnce()
 
 Also retain empty hierarchy coverage and exact slot capacity/occupancy rendering.
 
-- [ ] **Step 2: Run explorer tests and verify they fail**
+- [x] **Step 2: Run explorer tests and verify they fail**
 
 Run:
 
@@ -289,7 +289,7 @@ pnpm test -- src/features/warehouse/components/WarehouseDetailPage/WarehouseLayo
 
 Expected: FAIL because the existing accordion does not expose selection callbacks or pane navigation.
 
-- [ ] **Step 3: Implement the adaptive presentational explorer**
+- [x] **Step 3: Implement the adaptive presentational explorer**
 
 Use one grid surface with stable desktop tracks:
 
@@ -299,7 +299,7 @@ Use one grid surface with stable desktop tracks:
 
 Use semantic buttons for selectable zone/rack rows, `aria-pressed` for selection, `Badge` for status, mono codes, and separate empty prompts for no zones, no racks, and no slots. CSS visibility turns the three desktop panes into a single mobile pane based on selected IDs.
 
-- [ ] **Step 4: Implement URL-backed layout page orchestration**
+- [x] **Step 4: Implement URL-backed layout page orchestration**
 
 Read `zoneId` and `rackId` from `useSearchParams`. Validate them against query data; an unknown ID behaves as unselected. Selection updates URL state through `router.push` with `scroll: false`:
 
@@ -317,7 +317,7 @@ function buildLayoutHref(zoneId?: string, rackId?: string) {
 
 The page handles layout loading, inline permission/error retry, and success/empty states. The route file remains a thin default export.
 
-- [ ] **Step 5: Run explorer, hook, and route-related tests**
+- [x] **Step 5: Run explorer, hook, and route-related tests**
 
 Run:
 
@@ -327,7 +327,7 @@ pnpm test -- src/features/warehouse/components/WarehouseDetailPage/WarehouseLayo
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the complete WMS-86 explorer**
+- [x] **Step 6: Commit the complete WMS-86 explorer**
 
 ```bash
 git add "src/app/(private)/warehouses/[warehouseId]/layout/page.tsx" src/features/warehouse/pages/WarehouseLayoutPage.tsx src/features/warehouse/pages/index.ts src/features/warehouse/components/WarehouseDetailPage/WarehouseLayoutView.tsx src/features/warehouse/components/WarehouseDetailPage/WarehouseLayoutView.test.tsx src/lib/query-keys.ts src/features/warehouse/hooks/use-warehouse.ts

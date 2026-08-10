@@ -35,6 +35,7 @@ export const queryKeys = {
     all: ['warehouses'] as const,
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
     detail: (id: string) => ['warehouses', 'detail', id] as const,
+    layout: (id: string) => ['warehouses', 'detail', id, 'layout'] as const,
   },
   inventory: {
     all: ['inventory'] as const,
