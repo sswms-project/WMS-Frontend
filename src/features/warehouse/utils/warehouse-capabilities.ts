@@ -5,6 +5,7 @@ export interface WarehouseCapabilities {
   readonly canEditWarehouse: boolean
   readonly canDeactivateWarehouse: boolean
   readonly canConfigureLayout: boolean
+  readonly canGenerateLocationBarcode: boolean
 }
 
 export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabilities {
@@ -13,8 +14,9 @@ export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabi
 
   return {
     canCreateWarehouse: isTenantOwner,
-    canEditWarehouse: isTenantOwner,
+    canEditWarehouse: isTenantOwner || isWarehouseManager,
     canDeactivateWarehouse: isTenantOwner,
     canConfigureLayout: isTenantOwner || isWarehouseManager,
+    canGenerateLocationBarcode: isTenantOwner || isWarehouseManager,
   }
 }

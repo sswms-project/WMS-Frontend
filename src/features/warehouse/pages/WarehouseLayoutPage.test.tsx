@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { USER_ROLES } from '@/config/roles'
+import { useAuthStore } from '@/stores/auth.store'
 import type { ZoneResponse } from '@/types/warehouse'
 import { WarehouseLayoutPage } from './WarehouseLayoutPage'
 
@@ -10,11 +13,21 @@ const navigation = vi.hoisted(() => ({
 }))
 
 const warehouseHooks = vi.hoisted(() => ({
+  warehouseQuery: {
+    data: { status: 'Active' },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  },
   layoutQuery: {
     data: undefined as ZoneResponse[] | undefined,
     isLoading: false,
     isError: false,
     refetch: vi.fn(),
+  },
+  mutation: {
+    isPending: false,
+    mutateAsync: vi.fn(),
   },
 }))
 
@@ -24,7 +37,17 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('../hooks/use-warehouse', () => ({
+  useWarehouseQuery: () => warehouseHooks.warehouseQuery,
   useWarehouseLayoutQuery: () => warehouseHooks.layoutQuery,
+  useCreateZoneMutation: () => warehouseHooks.mutation,
+  useUpdateZoneMutation: () => warehouseHooks.mutation,
+  useDeactivateZoneMutation: () => warehouseHooks.mutation,
+  useCreateRackMutation: () => warehouseHooks.mutation,
+  useUpdateRackMutation: () => warehouseHooks.mutation,
+  useDeactivateRackMutation: () => warehouseHooks.mutation,
+  useCreateSlotMutation: () => warehouseHooks.mutation,
+  useUpdateSlotMutation: () => warehouseHooks.mutation,
+  useDeactivateSlotMutation: () => warehouseHooks.mutation,
 }))
 
 const zones: ZoneResponse[] = [
@@ -58,14 +81,37 @@ describe('WarehouseLayoutPage', () => {
   beforeEach(() => {
     navigation.push.mockReset()
     warehouseHooks.layoutQuery.refetch.mockReset()
+    warehouseHooks.warehouseQuery.refetch.mockReset()
     warehouseHooks.layoutQuery.data = zones
     warehouseHooks.layoutQuery.isLoading = false
     warehouseHooks.layoutQuery.isError = false
+    warehouseHooks.warehouseQuery.isLoading = false
+    warehouseHooks.warehouseQuery.isError = false
+    warehouseHooks.mutation.mutateAsync.mockReset()
+    warehouseHooks.mutation.mutateAsync.mockResolvedValue({ data: 'created-id' })
+    useAuthStore.setState({
+      user: {
+        id: 'owner-1',
+        tenantId: 'tenant-1',
+        fullName: 'Tenant Owner',
+        email: 'tenant.owner@sswms.local',
+        role: USER_ROLES.TenantOwner,
+        isActive: true,
+      },
+    })
   })
+
+  function renderPage() {
+    return render(
+      <TooltipProvider>
+        <WarehouseLayoutPage warehouseId="warehouse-1" />
+      </TooltipProvider>
+    )
+  }
 
   it('writes explorer selections back to the route', async () => {
     const user = userEvent.setup()
-    render(<WarehouseLayoutPage warehouseId="warehouse-1" />)
+    renderPage()
 
     await user.click(screen.getByRole('button', { name: /Khu B/ }))
     await user.click(screen.getByRole('button', { name: 'Quay lại danh sách kệ' }))
@@ -87,10 +133,29 @@ describe('WarehouseLayoutPage', () => {
     warehouseHooks.layoutQuery.data = undefined
     warehouseHooks.layoutQuery.isError = true
 
-    render(<WarehouseLayoutPage warehouseId="warehouse-1" />)
+    renderPage()
     await user.click(screen.getByRole('button', { name: 'Thử lại' }))
 
     expect(screen.getByText('Không thể tải bố cục kho')).toBeInTheDocument()
     expect(warehouseHooks.layoutQuery.refetch).toHaveBeenCalledOnce()
+  })
+
+  it('submits a validated zone create payload from the contextual sheet', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: 'Thêm khu vực' }))
+    await user.type(screen.getByLabelText('Mã khu vực'), 'Z-01')
+    await user.type(screen.getByLabelText('Tên khu vực'), 'Khu nhận hàng')
+    await user.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+
+    expect(warehouseHooks.mutation.mutateAsync).toHaveBeenCalledWith({
+      warehouseId: 'warehouse-1',
+      request: {
+        zoneCode: 'Z-01',
+        zoneName: 'Khu nhận hàng',
+        description: '',
+      },
+    })
   })
 })

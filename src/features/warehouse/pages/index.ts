@@ -1,3 +1,5 @@
 export { WarehousePage } from './WarehousePage'
 export { WarehouseDetailPage } from './WarehouseDetailPage'
 export { WarehouseLayoutPage } from './WarehouseLayoutPage'
+export { WarehouseLocationsPage } from './WarehouseLocationsPage'
+export { WarehouseLocationBarcodePage } from './WarehouseLocationBarcodePage'

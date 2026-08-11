@@ -293,3 +293,32 @@ body {
     scroll-behavior: smooth;
   }
 }
+
+@media print {
+  body:has([data-barcode-print-page]) * {
+    visibility: hidden;
+  }
+
+  [data-barcode-print-page],
+  [data-barcode-print-page] * {
+    visibility: visible;
+  }
+
+  [data-barcode-print-page] {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: white;
+    color: black;
+  }
+
+  [data-barcode-print-page] > :not(:has(svg)),
+  [data-barcode-print-actions] {
+    display: none;
+  }
+}

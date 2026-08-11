@@ -93,7 +93,7 @@ describe('WarehouseWorkspaceLayout', () => {
     expect(await screen.findByRole('menuitem', { name: 'Ngừng hoạt động kho' })).toBeInTheDocument()
   })
 
-  it('keeps the workspace readable without owner edit controls for managers', () => {
+  it('allows managers to edit assigned warehouses without owner-only deactivation', () => {
     currentPathname = `/warehouses/${warehouse.id}/layout`
     setRole(USER_ROLES.WarehouseManager)
 
@@ -104,7 +104,7 @@ describe('WarehouseWorkspaceLayout', () => {
     )
 
     expect(screen.getByRole('link', { name: 'Bố cục kho' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Chỉnh sửa' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Tác vụ kho' })).not.toBeInTheDocument()
     expect(screen.getByText('Bố cục')).toBeInTheDocument()
   })

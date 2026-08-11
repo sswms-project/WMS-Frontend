@@ -9,15 +9,17 @@ describe('getWarehouseCapabilities', () => {
       canEditWarehouse: true,
       canDeactivateWarehouse: true,
       canConfigureLayout: true,
+      canGenerateLocationBarcode: true,
     })
   })
 
   it('allows a warehouse manager to configure layout without owner actions', () => {
     expect(getWarehouseCapabilities(USER_ROLES.WarehouseManager)).toEqual({
       canCreateWarehouse: false,
-      canEditWarehouse: false,
+      canEditWarehouse: true,
       canDeactivateWarehouse: false,
       canConfigureLayout: true,
+      canGenerateLocationBarcode: true,
     })
   })
 
@@ -27,6 +29,7 @@ describe('getWarehouseCapabilities', () => {
       canEditWarehouse: false,
       canDeactivateWarehouse: false,
       canConfigureLayout: false,
+      canGenerateLocationBarcode: false,
     }
 
     expect(getWarehouseCapabilities(USER_ROLES.WarehouseStaff)).toEqual(readOnlyCapabilities)

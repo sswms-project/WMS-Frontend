@@ -16,6 +16,7 @@ export interface SlotResponse {
   id: string
   slotCode: string
   status: string
+  isActive: boolean
   capacity: number
   currentOccupancy: number
   barcodeValue: string | null

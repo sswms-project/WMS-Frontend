@@ -7,6 +7,7 @@ import {
   Edit3,
   Ellipsis,
   LayoutPanelTop,
+  MapPinned,
   RefreshCw,
   TriangleAlert,
   Warehouse,
@@ -132,8 +133,10 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const isActive = warehouse.status === 'Active'
   const overviewHref = APP_ROUTES.warehouseDetail(warehouseId)
   const layoutHref = APP_ROUTES.warehouseLayout(warehouseId)
+  const locationsHref = APP_ROUTES.warehouseLocations(warehouseId)
   const isOverviewActive = pathname === overviewHref
   const isLayoutActive = pathname === layoutHref
+  const isLocationsActive = pathname === locationsHref || pathname.startsWith(`${locationsHref}/`)
   const canDeactivate = capabilities.canDeactivateWarehouse && isActive && isOverviewActive
   const hasHeaderActions = isActive && (capabilities.canEditWarehouse || canDeactivate)
 
@@ -199,7 +202,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
         ) : null}
       </header>
 
-      <nav aria-label="Điều hướng kho" className="flex min-w-0 gap-1 border-b pb-2">
+      <nav aria-label="Điều hướng kho" className="flex min-w-0 gap-1 overflow-x-auto border-b pb-2">
         <Button asChild variant={isOverviewActive ? 'secondary' : 'ghost'} size="sm">
           <Link href={overviewHref as Route} aria-current={isOverviewActive ? 'page' : undefined}>
             <Warehouse data-icon="inline-start" aria-hidden="true" />
@@ -210,6 +213,12 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
           <Link href={layoutHref as Route} aria-current={isLayoutActive ? 'page' : undefined}>
             <LayoutPanelTop data-icon="inline-start" aria-hidden="true" />
             Bố cục kho
+          </Link>
+        </Button>
+        <Button asChild variant={isLocationsActive ? 'secondary' : 'ghost'} size="sm">
+          <Link href={locationsHref as Route} aria-current={isLocationsActive ? 'page' : undefined}>
+            <MapPinned data-icon="inline-start" aria-hidden="true" />
+            Vị trí
           </Link>
         </Button>
       </nav>

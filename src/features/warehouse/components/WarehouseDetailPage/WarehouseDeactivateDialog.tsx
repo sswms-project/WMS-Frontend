@@ -1,6 +1,7 @@
 'use client'
 
 import { CircleOff, Loader2 } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,17 +50,16 @@ export function WarehouseDeactivateDialog({
             <span translate="no" className="text-foreground font-mono">
               {warehouseCode}
             </span>{' '}
-            sẽ không còn nhận các thay đổi cấu hình sau khi thao tác hoàn tất.
+            sẽ không còn nhận các thay đổi cấu hình sau khi thao tác hoàn tất. Hệ thống sẽ kiểm tra
+            tồn kho, lượng giữ chỗ, điều chuyển và đơn xuất đang mở trước khi xác nhận.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {errorMessage ? (
-          <p
-            role="alert"
-            className="border-destructive/30 bg-destructive/5 text-destructive border px-3 py-2 text-xs"
-          >
-            {errorMessage}
-          </p>
+          <Alert variant="destructive">
+            <AlertTitle>Chưa thể ngừng hoạt động kho</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
 
         <AlertDialogFooter>
@@ -74,7 +74,7 @@ export function WarehouseDeactivateDialog({
           >
             {isPending ? (
               <>
-                <Loader2 className="animate-spin" aria-hidden="true" />
+                <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
                 Đang xử lý…
               </>
             ) : (

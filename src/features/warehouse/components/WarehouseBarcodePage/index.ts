@@ -1,0 +1,1 @@
+export { WarehouseLocationBarcodeView } from './WarehouseLocationBarcodeView'
