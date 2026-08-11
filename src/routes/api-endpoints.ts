@@ -35,6 +35,28 @@ export const API_ENDPOINTS = {
     detail: (warehouseId: string) => `/warehouses/${warehouseId}`,
     update: (warehouseId: string) => `/warehouses/${warehouseId}`,
     layout: (warehouseId: string) => `/warehouses/${warehouseId}/layout`,
+    layoutScene: (warehouseId: string) => `/warehouses/${warehouseId}/layout/scene`,
+    locations: (warehouseId: string) => `/warehouses/${warehouseId}/locations`,
+    createZone: (warehouseId: string) => `/warehouses/${warehouseId}/zones`,
+    updateZone: (warehouseId: string, zoneId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}`,
+    deactivateZone: (warehouseId: string, zoneId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/deactivate`,
+    createRack: (warehouseId: string, zoneId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/racks`,
+    updateRack: (warehouseId: string, zoneId: string, rackId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}`,
+    deactivateRack: (warehouseId: string, zoneId: string, rackId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}/deactivate`,
+    createSlot: (warehouseId: string, rackId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots`,
+    updateSlot: (warehouseId: string, rackId: string, slotId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}`,
+    deactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/deactivate`,
+    locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
+      `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
+    deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
   },
   invitations: {
     list: '/invitations',

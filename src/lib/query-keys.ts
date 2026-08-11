@@ -2,6 +2,10 @@ import type { QueryInfo } from '@/types/api'
 import type { PaymentHistoryQuery } from '@/features/subscription/types/subscription.types'
 import type { StaffDirectoryKind, StaffQuery } from '@/features/staff/types/staff.types'
 import type { InvitationQuery } from '@/features/staff/types/invitation.types'
+import type {
+  WarehouseLocationQuery,
+  WarehouseLocationType,
+} from '@/features/warehouse/types/warehouse.types'
 
 export const queryKeys = {
   organization: {
@@ -35,6 +39,13 @@ export const queryKeys = {
     all: ['warehouses'] as const,
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
     detail: (id: string) => ['warehouses', 'detail', id] as const,
+    layout: (id: string) => ['warehouses', 'detail', id, 'layout'] as const,
+    layoutScene: (id: string) => ['warehouses', 'detail', id, 'layout', 'scene'] as const,
+    locationsAll: (id: string) => ['warehouses', 'detail', id, 'locations'] as const,
+    locations: (id: string, params: WarehouseLocationQuery) =>
+      ['warehouses', 'detail', id, 'locations', params] as const,
+    barcode: (id: string, type: WarehouseLocationType, locationId: string) =>
+      ['warehouses', 'detail', id, 'barcode', type, locationId] as const,
   },
   inventory: {
     all: ['inventory'] as const,

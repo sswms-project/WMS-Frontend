@@ -72,4 +72,5 @@ export interface UserProfileResponse {
   emailVerified: boolean
   phoneVerified: boolean
   isTwoFactorEnabled: boolean
+  permissions: string[]
 }

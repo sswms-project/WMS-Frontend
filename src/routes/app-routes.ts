@@ -22,6 +22,12 @@ export const APP_ROUTES = {
     staff: '/dashboard/staff',
   },
   warehouses: '/warehouses',
+  warehouseDetail: (warehouseId: string) => `/warehouses/${warehouseId}`,
+  warehouseLayout: (warehouseId: string) => `/warehouses/${warehouseId}/layout`,
+  warehouseLayoutDesigner: (warehouseId: string) => `/warehouses/${warehouseId}/layout/designer`,
+  warehouseLocations: (warehouseId: string) => `/warehouses/${warehouseId}/locations`,
+  warehouseLocationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
+    `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
   inventory: '/inventory',
   orders: '/orders',
   delivery: '/delivery',

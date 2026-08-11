@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createWarehouseSchema, updateWarehouseSchema } from './warehouse.schema'
+import {
+  createWarehouseSchema,
+  rackSchema,
+  slotSchema,
+  updateWarehouseSchema,
+  zoneSchema,
+} from './warehouse.schema'
 
 describe('createWarehouseSchema', () => {
   it('trims a valid warehouse payload supported by the API', () => {
@@ -92,5 +98,26 @@ describe('updateWarehouseSchema', () => {
     expect(updateWarehouseSchema.safeParse({ warehouseName: '   ', address: '' }).success).toBe(
       false
     )
+  })
+})
+
+describe('warehouse structure schemas', () => {
+  it('trims valid zone and rack values', () => {
+    expect(
+      zoneSchema.parse({ zoneCode: ' Z-01 ', zoneName: ' Khu nhận ', description: ' Mô tả ' })
+    ).toEqual({
+      zoneCode: 'Z-01',
+      zoneName: 'Khu nhận',
+      description: 'Mô tả',
+    })
+    expect(rackSchema.parse({ rackCode: ' R-01 ', rackName: ' Kệ 01 ' })).toEqual({
+      rackCode: 'R-01',
+      rackName: 'Kệ 01',
+    })
+  })
+
+  it('rejects an empty slot code and non-positive capacity', () => {
+    expect(slotSchema.safeParse({ slotCode: ' ', capacity: 10 }).success).toBe(false)
+    expect(slotSchema.safeParse({ slotCode: 'S-01', capacity: 0 }).success).toBe(false)
   })
 })

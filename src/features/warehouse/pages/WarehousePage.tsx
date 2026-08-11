@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useAuthStore } from '@/stores/auth.store'
 import type { ApiErrorResponse } from '@/types/api'
 import {
   WarehouseCreateDialog,
@@ -18,6 +19,7 @@ import { useCreateWarehouseMutation, useWarehousesQuery } from '../hooks/use-war
 import type { CreateWarehouseFormValues } from '../schemas/warehouse.schema'
 import { getWarehouseCodeError } from '../utils/get-warehouse-code-error'
 import { buildWarehouseQuery } from '../utils/warehouse-query'
+import { getWarehouseCapabilities } from '../utils/warehouse-capabilities'
 
 const PAGE_SIZE = 10
 
@@ -33,6 +35,7 @@ function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
 }
 
 export function WarehousePage() {
+  const role = useAuthStore((state) => state.user?.role ?? null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [warehouseCodeError, setWarehouseCodeError] = useState<string>()
   const [searchText, setSearchText] = useState('')
@@ -43,6 +46,7 @@ export function WarehousePage() {
     buildWarehouseQuery(debouncedSearchText, page, PAGE_SIZE)
   )
   const warehouses = warehousesQuery.data?.items ?? []
+  const capabilities = getWarehouseCapabilities(role)
 
   function handleSearchChange(value: string) {
     setSearchText(value)
@@ -96,14 +100,16 @@ export function WarehousePage() {
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          className="w-full sm:w-auto"
-          onClick={() => setIsCreateDialogOpen(true)}
-        >
-          <Plus data-icon="inline-start" aria-hidden="true" />
-          Tạo kho
-        </Button>
+        {capabilities.canCreateWarehouse ? (
+          <Button
+            type="button"
+            className="w-full sm:w-auto"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            <Plus data-icon="inline-start" aria-hidden="true" />
+            Tạo kho
+          </Button>
+        ) : null}
       </header>
 
       <section className="bg-card min-w-0 border" aria-labelledby="warehouse-list-title">
@@ -175,12 +181,12 @@ export function WarehousePage() {
                   : 'Tạo kho đầu tiên để bắt đầu vận hành.'}
               </EmptyDescription>
             </EmptyHeader>
-            {!debouncedSearchText && (
+            {!debouncedSearchText && capabilities.canCreateWarehouse ? (
               <Button type="button" onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus data-icon="inline-start" aria-hidden="true" />
                 Tạo kho
               </Button>
-            )}
+            ) : null}
           </Empty>
         )}
 
@@ -197,13 +203,15 @@ export function WarehousePage() {
         )}
       </section>
 
-      <WarehouseCreateDialog
-        open={isCreateDialogOpen}
-        isPending={createMutation.isPending}
-        warehouseCodeError={warehouseCodeError}
-        onOpenChange={handleCreateDialogOpenChange}
-        onSubmit={handleCreate}
-      />
+      {capabilities.canCreateWarehouse ? (
+        <WarehouseCreateDialog
+          open={isCreateDialogOpen}
+          isPending={createMutation.isPending}
+          warehouseCodeError={warehouseCodeError}
+          onOpenChange={handleCreateDialogOpenChange}
+          onSubmit={handleCreate}
+        />
+      ) : null}
     </div>
   )
 }

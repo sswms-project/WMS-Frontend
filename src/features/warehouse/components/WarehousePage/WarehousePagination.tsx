@@ -11,6 +11,7 @@ interface WarehousePaginationProps {
   readonly page: number
   readonly pageSize: number
   readonly totalCount: number
+  readonly isPending?: boolean
   readonly onPageChange: (page: number) => void
 }
 
@@ -18,14 +19,17 @@ export function WarehousePagination({
   page,
   pageSize,
   totalCount,
+  isPending = false,
   onPageChange,
 }: WarehousePaginationProps) {
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize))
   const start = totalCount === 0 ? 0 : (page - 1) * pageSize + 1
   const end = Math.min(page * pageSize, totalCount)
+  const cannotGoPrevious = page <= 1 || isPending
+  const cannotGoNext = page >= pageCount || isPending
 
   function handlePageChange(nextPage: number) {
-    if (nextPage < 1 || nextPage > pageCount || nextPage === page) return
+    if (isPending || nextPage < 1 || nextPage > pageCount || nextPage === page) return
     onPageChange(nextPage)
   }
 
@@ -34,13 +38,15 @@ export function WarehousePagination({
       <p className="text-muted-foreground text-xs">
         {start}-{end} trên {totalCount}
       </p>
-      <Pagination className="mx-0 w-auto">
+      <Pagination className="mx-0 w-auto" aria-busy={isPending}>
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
               href="#"
               text="Trước"
-              aria-disabled={page <= 1}
+              aria-disabled={cannotGoPrevious}
+              tabIndex={cannotGoPrevious ? -1 : undefined}
+              className={cannotGoPrevious ? 'pointer-events-none opacity-50' : undefined}
               onClick={(event) => {
                 event.preventDefault()
                 handlePageChange(page - 1)
@@ -57,7 +63,9 @@ export function WarehousePagination({
             <PaginationNext
               href="#"
               text="Sau"
-              aria-disabled={page >= pageCount}
+              aria-disabled={cannotGoNext}
+              tabIndex={cannotGoNext ? -1 : undefined}
+              className={cannotGoNext ? 'pointer-events-none opacity-50' : undefined}
               onClick={(event) => {
                 event.preventDefault()
                 handlePageChange(page + 1)
