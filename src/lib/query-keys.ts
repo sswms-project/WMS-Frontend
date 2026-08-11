@@ -40,6 +40,7 @@ export const queryKeys = {
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
     detail: (id: string) => ['warehouses', 'detail', id] as const,
     layout: (id: string) => ['warehouses', 'detail', id, 'layout'] as const,
+    layoutScene: (id: string) => ['warehouses', 'detail', id, 'layout', 'scene'] as const,
     locationsAll: (id: string) => ['warehouses', 'detail', id, 'locations'] as const,
     locations: (id: string, params: WarehouseLocationQuery) =>
       ['warehouses', 'detail', id, 'locations', params] as const,

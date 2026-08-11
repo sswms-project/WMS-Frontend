@@ -60,7 +60,14 @@ export function WarehouseLocationDeactivateDialog({
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" disabled={isPending} onClick={onConfirm}>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={isPending}
+            onClick={(event) => {
+              event.preventDefault()
+              onConfirm()
+            }}
+          >
             {isPending ? (
               <LoaderCircle data-icon="inline-start" className="animate-spin" aria-hidden="true" />
             ) : (

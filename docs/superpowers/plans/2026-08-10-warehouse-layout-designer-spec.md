@@ -9,7 +9,7 @@
 | Backend repository     | `SSWMS-Backend`                                                     |
 | Existing related work  | WMS-85 and WMS-86 warehouse workspace and layout explorer           |
 | Planned backend branch | `feat/wms-85-89-warehouse-structure` from current `origin/dev`      |
-| Status                 | Proposed. No implementation in this specification.                  |
+| Status                 | Phase 1 and Phase 2 implemented; Phase 3 mobile path is partial     |
 | Last updated           | 2026-08-11                                                          |
 
 ## 2. Objective
@@ -401,9 +401,218 @@ Legend: `[ ]` not started, `[~]` in progress, `[x]` completed, `[!]` blocked or 
 - [x] Define conditional Properties panel interaction.
 - [x] Write this design specification.
 - [x] Inspect backend branch naming and record the planned API branch.
-- [ ] Approve the scene data contract with backend owner.
-- [ ] Create implementation plan and task breakdown.
-- [ ] Implement Phase 1 backend scene persistence.
-- [ ] Implement Phase 2 desktop designer.
-- [ ] Implement Phase 3 mobile and rack structure workflows.
+- [x] Approve the scene data contract with backend owner.
+- [x] Create implementation plan and task breakdown.
+- [x] Implement Phase 1 backend scene persistence.
+- [x] Implement Phase 2 desktop designer.
+- [~] Implement Phase 3 mobile and rack structure workflows.
 - [ ] Implement Phase 4 operational overlays.
+
+### 15.1 Implementation work log - 2026-08-11
+
+Backend Phase 1 was completed on `feat/wms-85-89-warehouse-structure` in commit
+`1fac719 feat(warehouse): add layout designer scene API`:
+
+- Added versioned scene GET/PUT endpoints, canvas settings, decorations, Zone/Rack geometry,
+  validation, optimistic conflict handling, migration, and relational tests.
+
+Frontend Phase 2 was implemented on the matching branch:
+
+- Added `/warehouses/{warehouseId}/layout/designer` as a distinct workspace mode without
+  changing the WMS-86 explorer.
+- Added `react-konva` and `konva` as an isolated client bundle.
+- Added select, drag, resize, rotate, grid, snap, pan, wheel/pinch zoom, fit, undo, redo,
+  local dirty state, `beforeunload` protection, and one explicit batch save.
+- Added conditional Properties, canvas settings, a keyboard-accessible object outline, Slot
+  read-only inspection, Zone/Rack domain creation flows, and decoration create/duplicate/delete.
+- Added read-only behavior for unauthorized or inactive warehouses and explicit `409 Conflict`
+  reload handling.
+- Added responsive behavior below `lg`: compact canvas toolbar, toolbox Drawer, Properties
+  Drawer, numeric geometry editing, and grid-step nudge actions. Rack levels/columns and Slot
+  generation remain unimplemented because their backend domain contract belongs to the rest of
+  Phase 3.
+
+Verification completed:
+
+- `pnpm test`: 54 files and 155 tests passed.
+- `pnpm lint`: passed with no warnings.
+- `pnpm build`: passed; the designer route is included in the production route manifest.
+- `git diff --check`: passed.
+- Authenticated Tenant Owner smoke: login `200`, warehouse list `200`, scene GET `200`; scene
+  version 2 returned 1 Zone, 1 Rack, 1 Slot, and a `2000 x 1200` canvas.
+- Browser screenshot QA remains blocked by the Browser runtime `os error 3`. No desktop/mobile
+  screenshot completion is claimed; automated responsive/component tests and authenticated API
+  smoke are the current evidence.
+
+### 15.2 Review remediation - 2026-08-11
+
+The backend and frontend review findings were remediated before commit:
+
+- Inactive Zone/Rack geometry no longer blocks unrelated scene saves. The API accepts unchanged
+  inactive geometry but still rejects repositioning, while the frontend omits inactive objects
+  from the update batch and keeps them inspectable but read-only.
+- Canvas constraints now account for snapped dimensions and rotated bounds on both FE and BE.
+- Unsaved drafts survive successful Zone/Rack creation and server structure refetches. The editor
+  keeps its original base version so an external scene update still produces an intentional
+  conflict instead of silently overwriting newer data.
+- Warehouse workspace navigation asks for confirmation before discarding a dirty designer draft.
+- `/api/auth/me` now returns effective permissions; the designer combines the assigned
+  `warehouses:configure-layout` permission with warehouse role/access constraints.
+- Database constraint failures are no longer all presented as stale-version conflicts, decoration
+  duplication respects the label limit, and reviewed shadcn composition issues were corrected.
+
+Verification after remediation:
+
+- `dotnet test Application.Tests/Application.Tests.csproj`: 36 tests passed.
+- `dotnet build API/API.csproj --no-restore` with an isolated output directory: passed with the
+  three existing unused-mapper warnings and no errors.
+- `pnpm test`: 54 files and 162 tests passed.
+- `pnpm lint` and `pnpm build`: passed with no lint warnings or build errors.
+
+### 15.3 Canvas render and Properties remediation - 2026-08-11
+
+- Fixed the blank designer canvas caused by the initial palette placeholder mounting without the
+  measured container ref. The canvas container now exists from the first render, is measured
+  immediately, and remains observed while resizable panels change its dimensions.
+- Added a shared accessible close action to Properties on desktop and mobile. Closing Properties
+  preserves the selected object and expands the canvas; selecting the object again reopens the
+  panel, while Escape or clicking the canvas background still clears selection.
+- Added direct canvas lifecycle coverage so the Konva Stage and scene objects cannot silently stay
+  at a `0 x 0` render size after a hard reload.
+
+Verification after canvas remediation:
+
+- `pnpm test`: 55 files and 165 tests passed.
+- `pnpm lint`: passed with no warnings.
+- `pnpm build`: passed; the designer route remains in the production route manifest.
+- Prettier and `git diff --check`: passed.
+- Browser screenshot QA remains blocked by the Browser runtime `os error 3`; no visual QA
+  completion is claimed.
+
+### 15.4 Visual symbols and canvas interaction - 2026-08-11
+
+- Replaced the functional-area text list with a compact accessible icon toolbox using the
+  existing Lucide icon set, labels, tooltips, and permission-disabled states.
+- Added scalable canvas symbols for Door, Aisle, Receiving, Packing, Picking, Damaged, Office,
+  and Other decorations while retaining concise labels when the object is large enough.
+- Expanded Rack visualization to show Slot tiles whenever their available geometry remains
+  legible. Vacant, occupied, reserved, inactive, and selected Slots now use distinct semantic
+  surfaces, and the canvas includes a compact status legend.
+- Added temporary pan behavior: holding Control switches the effective canvas tool to Pan and
+  releasing it always returns to Select. This prevents accidental object movement while
+  navigating a large floor plan.
+
+Verification after visual interaction update:
+
+- `pnpm test`: 55 files and 167 tests passed.
+- `pnpm lint`, `pnpm build`, Prettier, and `git diff --check`: passed.
+
+### 15.5 Viewport stability remediation - 2026-08-11
+
+- Object `dragEnd` events no longer bubble into the Stage pan handler. The Stage also verifies that
+  it is the actual drag target before updating viewport coordinates, preventing an object's
+  geometry from being mistaken for the canvas position.
+- Resizing the canvas panel when Properties opens or closes now preserves the same world-space
+  center instead of visually shifting the floor plan toward a corner.
+- Added regression coverage for object drag isolation and viewport preservation across container
+  resize events.
+
+Verification after viewport remediation:
+
+- `pnpm test`: 55 files and 169 tests passed.
+- `pnpm build`, Prettier, and `git diff --check`: passed.
+
+### 15.6 Component color customization - 2026-08-11
+
+- Added optional persisted layout colors for active Zones, Racks, and functional-area decorations.
+  The backend validates the `#RRGGBB` wire format, normalizes values to uppercase, and stores the
+  values in nullable `nvarchar(7)` columns introduced by migration
+  `20260811063853_AddWarehouseLayoutColors`.
+- Added an accessible Properties color control with curated swatches, a native custom color
+  picker, selected-state feedback, and a reset-to-default action. Read-only and inactive objects
+  keep the control disabled.
+- Color changes participate in the existing scene history, undo/redo, dirty-state, conflict, and
+  batch-save workflows. Server reconciliation preserves unsaved Zone/Rack color edits.
+- Zone, Rack, and decoration fills update immediately on the Konva canvas. Labels and symbols
+  choose the more readable theme foreground/background color by contrast. Slot fills remain
+  semantic and continue to represent vacant, occupied, reserved, inactive, and selected states.
+- Older scene responses without `color` remain compatible and map to the existing default visual
+  tokens.
+
+Verification after color customization:
+
+- Backend warehouse scene tests: 6 passed; all Application tests: 37 passed.
+- Backend API build and EF pending-model check: passed with no pending model changes.
+- Authenticated Tenant Owner smoke: login, warehouse list, and scene GET returned `200`; the
+  response exposes the optional color fields after the migration was applied locally.
+- Frontend `pnpm test`: 55 files and 172 tests passed.
+- Frontend `pnpm lint` and `pnpm build`: passed.
+- Browser screenshot QA remains blocked by the Browser runtime `os error 3`; no visual QA
+  completion is claimed.
+
+### 15.7 Dynamic grid and Rack quick actions - 2026-08-11
+
+- Reinterpreted the configured canvas width and height as the minimum floor-plan bounds. Zone,
+  Rack, and functional-area geometry may now use negative coordinates or extend beyond the base
+  right/bottom edges without being clamped back into the configured canvas.
+- Added rotated effective-bounds calculation with grid-aligned padding on all four sides. The
+  canvas background, visible grid segment, deselection surface, and Fit action use these derived
+  bounds and automatically shrink to the configured minimum when objects return inside it.
+- Drag and transform previews update effective bounds through one animation-frame-throttled
+  transient geometry value. Only drag/transform completion writes scene history, and viewport
+  coordinates remain independent from dynamic bound changes.
+- Backend scene validation now accepts negative and outside-base coordinates while limiting the
+  combined rotated extent of the base canvas and every object to `MaxCanvasSize`. Existing size,
+  rotation, z-index, authorization, versioning, DTO, endpoint, and persistence contracts remain
+  unchanged; no migration was added for dynamic bounds.
+- Added Rack name editing in Properties using the existing update endpoint while preserving the
+  Rack code. Added safe deactivation from Properties and the `Delete`/`Backspace` keys through the
+  existing deactivate endpoint and shared confirmation dialog.
+- Deactivation never hard-deletes a Rack. Backend inventory/reservation rejection remains visible
+  in the open dialog while preserving selection. Successful deactivation clears selection and
+  removes the Rack from the active canvas; inactive Racks remain inspectable as read-only entries
+  in the object list.
+- View-only users, inactive warehouses, inactive Rack/Zone objects, and users without
+  `warehouses:configure-layout` do not receive rename or deactivate controls.
+
+Verification after dynamic-grid and Rack-action update:
+
+- Backend `dotnet test SSWMS-API.slnx --no-restore`: 38 tests passed.
+- Backend `dotnet build SSWMS-API.slnx --no-restore`: passed with 0 warnings and 0 errors after
+  stopping the running API process that held the output DLLs.
+- EF pending-model verification could not run because `dotnet-ef` is not installed in the local
+  environment. The dynamic-grid change contains no entity/configuration/snapshot/migration edits.
+- Frontend `pnpm test`: 55 files and 180 tests passed.
+- Frontend `pnpm lint` and `pnpm build`: passed; the production manifest includes the designer
+  route.
+- Backend runtime smoke: port `7070` listened successfully and Swagger returned `200` using the
+  newly built API binary.
+- Browser desktop/mobile/light/dark screenshot QA remains blocked during browser connection by
+  runtime `os error 3`; no screenshot QA completion is claimed.
+
+### 15.8 Hierarchical bounded scene outline - 2026-08-11
+
+- Split the toolbox into a fixed creation area and a dedicated scene-outline region so a large
+  object collection no longer lengthens the sidebar or makes the whole page feel like one long
+  list.
+- The “Danh sách sơ đồ” heading and object count remain visible while only the outline items use
+  the remaining height and scroll independently. The same structure is reused inside the mobile
+  toolbox Drawer.
+- Selecting an object from the canvas or another control automatically scrolls its outline item
+  to the nearest visible position without moving the page or canvas viewport.
+- Replaced the flat outline with a collapsible `Zone -> Rack -> Slot` hierarchy. Multiple branches
+  may stay open, while the complete ancestor path of the selected canvas object opens
+  automatically and a fixed-header action collapses all manually expanded branches.
+- Functional decorations use a separate collapsible group because their persisted scene contract
+  has no Zone relationship. Rack/Slot records with missing parents remain discoverable in a
+  dedicated “Chưa phân loại” group, and inactive Racks retain their read-only status treatment.
+- Child nodes are only mounted while their parent branch is open, reducing visual and DOM length
+  for warehouses with many Racks or Slots. Added coverage for hierarchy, selection expansion,
+  multi-branch state, collapse-all, inactive/orphan records, and a 120-Rack bounded outline.
+
+Verification after hierarchical outline update:
+
+- Focused toolbox/workspace tests: 20 passed; full `pnpm test`: 56 files and 185 tests passed.
+- `pnpm lint`, `pnpm build`, Prettier, and `git diff --check`: passed.
+- Browser desktop/mobile screenshot QA remains blocked during connection by runtime `os error 3`;
+  no screenshot QA completion is claimed.

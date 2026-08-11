@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
     detail: (warehouseId: string) => `/warehouses/${warehouseId}`,
     update: (warehouseId: string) => `/warehouses/${warehouseId}`,
     layout: (warehouseId: string) => `/warehouses/${warehouseId}/layout`,
+    layoutScene: (warehouseId: string) => `/warehouses/${warehouseId}/layout/scene`,
     locations: (warehouseId: string) => `/warehouses/${warehouseId}/locations`,
     createZone: (warehouseId: string) => `/warehouses/${warehouseId}/zones`,
     updateZone: (warehouseId: string, zoneId: string) =>

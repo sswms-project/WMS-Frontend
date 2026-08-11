@@ -43,6 +43,8 @@ export const rackSchema = z.object({
   rackName: z.string().trim().min(1, 'Tên kệ là bắt buộc.').max(255, 'Tên kệ tối đa 255 ký tự.'),
 })
 
+export const rackNameSchema = rackSchema.pick({ rackName: true })
+
 export const slotSchema = z.object({
   slotCode: z
     .string()

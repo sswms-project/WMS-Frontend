@@ -1,0 +1,135 @@
+export type WarehouseLayoutDecorationType =
+  | 'Door'
+  | 'Aisle'
+  | 'Receiving'
+  | 'Packing'
+  | 'Picking'
+  | 'Damaged'
+  | 'Office'
+  | 'Other'
+
+export interface WarehouseLayoutCanvas {
+  width: number
+  height: number
+  gridSize: number
+}
+
+export interface WarehouseLayoutGeometry {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  zIndex: number
+}
+
+export interface WarehouseLayoutZoneSceneResponse {
+  id: string
+  zoneCode: string
+  zoneName: string
+  status: string
+  x: number | null
+  y: number | null
+  width: number | null
+  height: number | null
+  rotation: number
+  zIndex: number
+  color?: string | null
+}
+
+export interface WarehouseLayoutRackSceneResponse {
+  id: string
+  zoneId: string
+  zoneCode: string
+  rackCode: string
+  rackName: string
+  status: string
+  x: number | null
+  y: number | null
+  width: number | null
+  height: number | null
+  rotation: number
+  zIndex: number
+  color?: string | null
+}
+
+export interface WarehouseLayoutSlotSceneResponse {
+  id: string
+  zoneId: string
+  rackId: string
+  slotCode: string
+  occupancyStatus: string
+  isActive: boolean
+  capacity: number
+  currentOccupancy: number
+}
+
+export interface WarehouseLayoutDecorationResponse extends WarehouseLayoutGeometry {
+  id: string
+  type: WarehouseLayoutDecorationType
+  label: string
+  color?: string | null
+}
+
+export interface WarehouseLayoutSceneResponse {
+  warehouseId: string
+  version: number
+  canvas: WarehouseLayoutCanvas
+  zones: WarehouseLayoutZoneSceneResponse[]
+  racks: WarehouseLayoutRackSceneResponse[]
+  slots: WarehouseLayoutSlotSceneResponse[]
+  decorations: WarehouseLayoutDecorationResponse[]
+}
+
+export interface WarehouseLayoutGeometryRequest extends WarehouseLayoutGeometry {
+  entityId: string
+  color?: string | null
+}
+
+export interface WarehouseLayoutDecorationRequest extends WarehouseLayoutGeometry {
+  id: string | null
+  type: WarehouseLayoutDecorationType
+  label: string
+  color?: string | null
+}
+
+export interface SaveWarehouseLayoutSceneRequest {
+  warehouseId: string
+  version: number
+  canvas: WarehouseLayoutCanvas
+  zones: WarehouseLayoutGeometryRequest[]
+  racks: WarehouseLayoutGeometryRequest[]
+  decorations: WarehouseLayoutDecorationRequest[]
+}
+
+export interface WarehouseLayoutEditorZone
+  extends
+    Omit<WarehouseLayoutZoneSceneResponse, keyof WarehouseLayoutGeometry>,
+    WarehouseLayoutGeometry {}
+
+export interface WarehouseLayoutEditorRack
+  extends
+    Omit<WarehouseLayoutRackSceneResponse, keyof WarehouseLayoutGeometry>,
+    WarehouseLayoutGeometry {}
+
+export interface WarehouseLayoutEditorDecoration extends WarehouseLayoutDecorationResponse {
+  clientKey: string
+}
+
+export interface WarehouseLayoutEditorScene {
+  canvas: WarehouseLayoutCanvas
+  zones: WarehouseLayoutEditorZone[]
+  racks: WarehouseLayoutEditorRack[]
+  slots: WarehouseLayoutSlotSceneResponse[]
+  decorations: WarehouseLayoutEditorDecoration[]
+}
+
+export type WarehouseLayoutSelection =
+  | { kind: 'zone'; id: string }
+  | { kind: 'rack'; id: string }
+  | { kind: 'slot'; id: string }
+  | { kind: 'decoration'; id: string }
+
+export type WarehouseLayoutTool = 'select' | 'pan'
+
+export type WarehouseLayoutGeometryTarget = 'zone' | 'rack' | 'decoration'

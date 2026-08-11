@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { USER_ROLES, type UserRole } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
+import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.store'
 import type { WarehouseDetailResponse } from '@/types/warehouse'
 import { WarehouseWorkspaceLayout } from './WarehouseWorkspaceLayout'
 
@@ -19,6 +20,7 @@ const warehouse: WarehouseDetailResponse = {
 
 let currentPathname = `/warehouses/${warehouse.id}`
 let warehouseData = warehouse
+const routerPush = vi.fn()
 
 const updateMutation = {
   isPending: false,
@@ -32,6 +34,7 @@ const deactivateMutation = {
 
 vi.mock('next/navigation', () => ({
   usePathname: () => currentPathname,
+  useRouter: () => ({ push: routerPush }),
 }))
 
 vi.mock('../../hooks/use-warehouse', () => ({
@@ -64,6 +67,8 @@ describe('WarehouseWorkspaceLayout', () => {
     warehouseData = warehouse
     updateMutation.mutateAsync.mockReset()
     deactivateMutation.mutateAsync.mockReset()
+    routerPush.mockReset()
+    useWarehouseLayoutEditorStore.setState({ dirtyWarehouseIds: new Set() })
     setRole(USER_ROLES.TenantOwner)
   })
 
@@ -172,5 +177,23 @@ describe('WarehouseWorkspaceLayout', () => {
       'Kho vẫn còn tồn kho và chưa thể ngừng hoạt động.'
     )
     expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+  })
+
+  it('confirms route navigation when the designer has an unsaved draft', async () => {
+    const user = userEvent.setup()
+    currentPathname = `/warehouses/${warehouse.id}/layout/designer`
+    useWarehouseLayoutEditorStore.getState().setWarehouseDirty(warehouse.id, true)
+    render(
+      <WarehouseWorkspaceLayout warehouseId={warehouse.id}>
+        <p>Trình thiết kế</p>
+      </WarehouseWorkspaceLayout>
+    )
+
+    await user.click(screen.getByRole('link', { name: 'Vị trí' }))
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Rời trình thiết kế?')
+    expect(routerPush).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Rời trang' }))
+    expect(routerPush).toHaveBeenCalledWith(`/warehouses/${warehouse.id}/locations`)
   })
 })

@@ -172,6 +172,7 @@ function useInvalidateWarehouseStructure() {
   return async (warehouseId: string) => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.layout(warehouseId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.layoutScene(warehouseId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.locationsAll(warehouseId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.detail(warehouseId) }),
     ])
