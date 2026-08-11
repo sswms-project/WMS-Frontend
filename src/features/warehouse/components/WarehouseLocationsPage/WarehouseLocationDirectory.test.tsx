@@ -97,6 +97,7 @@ function renderDirectory(overrides?: DirectoryOverrides) {
         filters={filters}
         activeFilterCount={0}
         isLoading={overrides?.isLoading ?? false}
+        isFetching={false}
         isError={overrides?.isError ?? false}
         isFilterMetadataLoading={overrides?.isFilterMetadataLoading ?? false}
         isFilterMetadataError={overrides?.isFilterMetadataError ?? false}

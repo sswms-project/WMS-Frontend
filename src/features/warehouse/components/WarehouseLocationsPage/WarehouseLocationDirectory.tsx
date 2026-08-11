@@ -55,6 +55,7 @@ interface WarehouseLocationDirectoryProps {
   readonly filters: LocationFilterState
   readonly activeFilterCount: number
   readonly isLoading: boolean
+  readonly isFetching: boolean
   readonly isError: boolean
   readonly isFilterMetadataLoading: boolean
   readonly isFilterMetadataError: boolean
@@ -102,6 +103,7 @@ export function WarehouseLocationDirectory({
   filters,
   activeFilterCount,
   isLoading,
+  isFetching,
   isError,
   isFilterMetadataLoading,
   isFilterMetadataError,
@@ -222,6 +224,7 @@ export function WarehouseLocationDirectory({
             page={page}
             pageSize={pageSize}
             totalCount={totalCount}
+            isPending={isFetching}
             onPageChange={onPageChange}
           />
         </>

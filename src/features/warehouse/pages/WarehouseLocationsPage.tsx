@@ -12,7 +12,7 @@ interface WarehouseLocationsPageProps {
   readonly warehouseId: string
 }
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 const EMPTY_FILTERS: LocationFilterState = {
   type: '',
   lifecycleStatus: '',
@@ -69,6 +69,7 @@ export function WarehouseLocationsPage({ warehouseId }: WarehouseLocationsPagePr
       filters={filters}
       activeFilterCount={activeFilterCount}
       isLoading={locationsQuery.isLoading}
+      isFetching={locationsQuery.isFetching}
       isError={locationsQuery.isError}
       isFilterMetadataLoading={layoutQuery.isLoading}
       isFilterMetadataError={layoutQuery.isError}
