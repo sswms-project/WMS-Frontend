@@ -1,36 +1,43 @@
 'use client'
-
-import { useRouter } from 'next/navigation'
 import { useEffect, useSyncExternalStore } from 'react'
+import { useRouter } from 'next/navigation'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 
-function subscribeToHydration() {
-  return () => {}
+function subscribeToHydration(onStoreChange: () => void) {
+  if (useAuthStore.persist.hasHydrated()) return () => undefined
+  return useAuthStore.persist.onFinishHydration(onStoreChange)
+}
+
+function getHydrationSnapshot() {
+  return useAuthStore.persist.hasHydrated()
+}
+
+function getServerHydrationSnapshot() {
+  return false
 }
 
 export function ProtectedRoute({ children }: { readonly children: React.ReactNode }) {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
-  const hydrated = useSyncExternalStore(
+  const hasHydrated = useSyncExternalStore(
     subscribeToHydration,
-    () => true,
-    () => false
+    getHydrationSnapshot,
+    getServerHydrationSnapshot
   )
 
   useEffect(() => {
-    if (hydrated && !user) router.replace(APP_ROUTES.auth.login)
-  }, [hydrated, user, router])
+    if (hasHydrated && !user) router.replace(APP_ROUTES.auth.login)
+  }, [hasHydrated, user, router])
 
-  if (!hydrated) {
+  if (!hasHydrated) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
       </div>
     )
   }
 
   if (!user) return null
-
   return <>{children}</>
 }

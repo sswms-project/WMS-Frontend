@@ -1,343 +1,515 @@
-<!DOCTYPE html><html class="light" lang="vi"><head>
-<meta charset="utf-8">
-<meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Đăng ký Chủ sở hữu - SSWMS</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<script id="tailwind-config">
+<!doctype html>
+<html class="light" lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Đăng ký Chủ sở hữu - SSWMS</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
       tailwind.config = {
-        darkMode: "class",
+        darkMode: 'class',
         theme: {
           extend: {
-            "colors": {
-                    "tertiary": "#794d8f",
-                    "on-secondary-fixed-variant": "#2a4b56",
-                    "on-primary-container": "#003f4d",
-                    "on-primary-fixed-variant": "#004e5f",
-                    "inverse-on-surface": "#edf1f3",
-                    "error": "#ba1a1a",
-                    "on-error-container": "#93000a",
-                    "surface-container-highest": "#dfe3e5",
-                    "surface-bright": "#f6fafc",
-                    "on-tertiary-fixed-variant": "#5f3575",
-                    "outline": "#6e797d",
-                    "outline-variant": "#bdc8cd",
-                    "secondary-container": "#c5e8f6",
-                    "surface": "#f6fafc",
-                    "inverse-surface": "#2c3133",
-                    "tertiary-fixed": "#f6d9ff",
-                    "secondary-fixed": "#c5e8f6",
-                    "secondary-fixed-dim": "#aaccd9",
-                    "error-container": "#ffdad6",
-                    "background": "#f6fafc",
-                    "on-error": "#ffffff",
-                    "primary-fixed-dim": "#72d3f1",
-                    "surface-container-lowest": "#ffffff",
-                    "surface-container-low": "#f0f4f6",
-                    "on-surface": "#171c1e",
-                    "surface-dim": "#d6dbdd",
-                    "secondary": "#42636f",
-                    "surface-container-high": "#e4e9eb",
-                    "on-secondary-container": "#486975",
-                    "tertiary-container": "#c190d8",
-                    "on-primary-fixed": "#001f27",
-                    "on-surface-variant": "#3e484c",
-                    "on-primary": "#ffffff",
-                    "on-secondary-fixed": "#001f28",
-                    "surface-tint": "#00677d",
-                    "primary": "#00677d",
-                    "on-tertiary": "#ffffff",
-                    "inverse-primary": "#72d3f1",
-                    "surface-variant": "#dfe3e5",
-                    "surface-container": "#eaeef1",
-                    "primary-fixed": "#b3ebff",
-                    "primary-container": "#49afcc",
-                    "on-tertiary-container": "#502666",
-                    "on-background": "#171c1e",
-                    "on-secondary": "#ffffff",
-                    "tertiary-fixed-dim": "#e7b4fe",
-                    "on-tertiary-fixed": "#300347"
+            colors: {
+              tertiary: '#794d8f',
+              'on-secondary-fixed-variant': '#2c4a2e',
+              'on-primary-container': '#123312',
+              'on-primary-fixed-variant': '#1f4a1c',
+              'inverse-on-surface': '#eaf8e2',
+              error: '#ba1a1a',
+              'on-error-container': '#93000a',
+              'surface-container-highest': '#c9e4ba',
+              'surface-bright': '#f6fef2',
+              'on-tertiary-fixed-variant': '#5f3575',
+              outline: '#5f7a62',
+              'outline-variant': '#b5d8ab',
+              'secondary-container': '#c0f0c0',
+              surface: '#f1fbec',
+              'inverse-surface': '#1c2b20',
+              'tertiary-fixed': '#f6d9ff',
+              'secondary-fixed': '#c0f0c0',
+              'secondary-fixed-dim': '#a5d8a3',
+              'error-container': '#ffdad6',
+              background: '#f1fbec',
+              'on-error': '#ffffff',
+              'primary-fixed-dim': '#8fe580',
+              'surface-container-lowest': '#ffffff',
+              'surface-container-low': '#eaf7e2',
+              'on-surface': '#18232f',
+              'surface-dim': '#d2e8c8',
+              secondary: '#436441',
+              'surface-container-high': '#d5ecc8',
+              'on-secondary-container': '#234626',
+              'tertiary-container': '#c190d8',
+              'on-primary-fixed': '#0c2408',
+              'on-surface-variant': '#3f5442',
+              'on-primary': '#f9fff6',
+              'on-secondary-fixed': '#0f2611',
+              'surface-tint': '#2e5a2a',
+              primary: '#2e5a2a',
+              'on-tertiary': '#ffffff',
+              'inverse-primary': '#8df06c',
+              'surface-variant': '#d5ecc8',
+              'surface-container': '#e0f2d6',
+              'primary-fixed': '#b0f0b0',
+              'primary-container': '#60f040',
+              'on-tertiary-container': '#502666',
+              'on-background': '#18232f',
+              'on-secondary': '#ffffff',
+              'tertiary-fixed-dim': '#e7b4fe',
+              'on-tertiary-fixed': '#300347',
             },
-            "borderRadius": {
-                    "DEFAULT": "0.125rem",
-                    "lg": "0.25rem",
-                    "xl": "0.5rem",
-                    "full": "0.75rem"
+            borderRadius: {
+              DEFAULT: '0.125rem',
+              lg: '0.25rem',
+              xl: '0.5rem',
+              full: '0.75rem',
             },
-            "spacing": {
-                    "stack-compact": "4px",
-                    "margin-desktop": "24px",
-                    "stack-default": "12px",
-                    "sidebar-collapsed": "64px",
-                    "sidebar-width": "240px",
-                    "margin-mobile": "16px",
-                    "gutter": "16px",
-                    "container-max": "1440px"
+            spacing: {
+              'stack-compact': '4px',
+              'margin-desktop': '24px',
+              'stack-default': '12px',
+              'sidebar-collapsed': '64px',
+              'sidebar-width': '240px',
+              'margin-mobile': '16px',
+              gutter: '16px',
+              'container-max': '1440px',
             },
-            "fontFamily": {
-                    "body-md": ["Inter"],
-                    "title-lg": ["Inter"],
-                    "display-lg": ["Inter"],
-                    "headline-sm": ["Inter"],
-                    "mono-data": ["JetBrains Mono"],
-                    "label-md": ["Inter"],
-                    "body-sm": ["Inter"],
-                    "label-xs": ["Inter"],
-                    "headline-md": ["Inter"]
-            }
+            fontFamily: {
+              'body-md': ['Inter'],
+              'title-lg': ['Inter'],
+              'display-lg': ['Inter'],
+              'headline-sm': ['Inter'],
+              'mono-data': ['JetBrains Mono'],
+              'label-md': ['Inter'],
+              'body-sm': ['Inter'],
+              'label-xs': ['Inter'],
+              'headline-md': ['Inter'],
+            },
           },
         },
       }
     </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .step-transition {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+      }
+      .step-transition {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+      }
     </style>
-</head>
-<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col items-center justify-center overflow-x-hidden">
-<!-- Top Branding Anchor -->
-<header class="fixed top-0 w-full bg-surface/80 backdrop-blur-md flex justify-between items-center px-margin-desktop h-16 z-50 border-b border-outline-variant">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary text-3xl" data-icon="warehouse">warehouse</span>
-<span class="font-display-lg text-primary font-bold tracking-tight">SSWMS</span>
-</div>
-<div class="hidden md:flex gap-6 items-center">
-<span class="font-label-md text-on-surface-variant">Hỗ trợ trực tuyến: 1800-SSWMS</span>
-<div class="h-6 w-[1px] bg-outline-variant"></div>
-<a class="font-label-md text-primary hover:underline" href="#">Đăng nhập</a>
-</div>
-</header>
-<!-- Main Registration Canvas -->
-<main class="w-full max-w-[1100px] grid grid-cols-1 md:grid-cols-12 gap-gutter px-margin-mobile md:px-margin-desktop py-24 min-h-[800px]">
-<!-- Left: Branding & Visuals (Bento Style) -->
-<div class="hidden md:flex md:col-span-5 flex-col gap-gutter">
-<div class="glass-card p-8 rounded-xl flex-1 flex flex-col justify-end relative overflow-hidden group">
-<div class="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-105" data-alt="A sophisticated digital rendering of a modern automated warehouse at dusk. Cool cyan and blue lighting highlights rows of high-density racking systems and robotic lifters. The atmosphere is professional, clean, and technologically advanced, reflecting the core identity of an enterprise SaaS logistics platform. Cinematic lighting creates a sense of reliability and scale." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDNB9ii5e04oPKxDw8BflJrd37LtYxdqM5OLE-ECfVe7LAcIVfoUS7yHRGX_9auGqNY_tPSZjH-zi3T-NDTWo7kQkYGS-zV_5-MZD-IXkyeQ-pkzOXIEUfvfgXBeNl2L9B6r0S3jbYDwrtfwyXPYc7gXTGBv28HgsQGmAGYVEYh5euVNUaemcHcNDNJY7nwvp8mcOCJawFWF7GnP2igfWDmC7Glr4v9AsWP5MEMynD_dio68r_r4TJ31TaKgqb0a81psIFwzzsaLNY')">
-</div>
-<div class="absolute inset-0 bg-gradient-to-t from-on-primary-container via-transparent to-transparent opacity-80"></div>
-<div class="relative z-10 text-white">
-<h1 class="font-headline-md text-white mb-2">Quản trị kho bãi thế hệ mới</h1>
-<p class="font-body-md opacity-90 leading-relaxed">Nền tảng vận hành tập trung giúp bạn kiểm soát hàng tồn kho, vận chuyển và nhân sự chỉ trên một giao diện duy nhất.</p>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-gutter h-48">
-<div class="glass-card p-6 rounded-xl flex flex-col justify-center items-center text-center">
-<span class="material-symbols-outlined text-primary mb-2" data-icon="security" style="font-variation-settings: 'FILL' 1;">security</span>
-<span class="font-label-md text-on-surface">Bảo mật đa tầng</span>
-</div>
-<div class="glass-card p-6 rounded-xl flex flex-col justify-center items-center text-center">
-<span class="material-symbols-outlined text-tertiary mb-2" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
-<span class="font-label-md text-on-surface">Triển khai nhanh</span>
-</div>
-</div>
-</div>
-<!-- Right: Registration Flow -->
-<div class="col-span-1 md:col-span-7 flex flex-col gap-stack-default">
-<!-- Step Indicator -->
-<div class="flex items-center gap-4 mb-4 px-2">
-<div class="flex-1 h-1.5 rounded-full bg-primary transition-all duration-300" id="step-1-indicator"></div>
-<div class="flex-1 h-1.5 rounded-full bg-outline-variant transition-all duration-300" id="step-2-indicator"></div>
-</div>
-<div class="glass-card p-8 md:p-10 rounded-xl shadow-sm relative min-h-[600px] flex flex-col">
-<!-- Step 1: Account Info -->
-<div class="step-transition opacity-100 block" id="registration-step-1">
-<div class="mb-8">
-<h2 class="font-headline-sm text-on-surface mb-1">Đăng ký tài khoản hệ thống</h2>
-<p class="font-body-md text-on-surface-variant">Vui lòng cung cấp thông tin doanh nghiệp và người đại diện.</p>
-</div>
-<form class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-6">
-<!-- Tenant Name -->
-<div class="md:col-span-2">
-<label class="block font-label-md text-on-surface-variant mb-2">Tên doanh nghiệp / Kho hàng</label>
-<input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest" placeholder="VD: Warehouse Solution Vietnam" type="text">
-</div>
-<!-- Owner Name -->
-<div>
-<label class="block font-label-md text-on-surface-variant mb-2">Tên chủ sở hữu</label>
-<input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest" placeholder="Nguyễn Văn A" type="text">
-</div>
-<!-- Phone Number -->
-<div>
-<label class="block font-label-md text-on-surface-variant mb-2">Số điện thoại</label>
-<input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest" placeholder="0901 234 567" type="tel">
-</div>
-<!-- Email -->
-<div class="md:col-span-2">
-<label class="block font-label-md text-on-surface-variant mb-2">Địa chỉ Email công việc</label>
-<input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest" placeholder="admin@domain.com" type="email">
-</div>
-<!-- Region -->
-<div class="md:col-span-2">
-<label class="block font-label-md text-on-surface-variant mb-2">Khu vực / Tỉnh thành</label>
-<select class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest appearance-none">
-<option value="">Chọn tỉnh thành</option>
-<option value="hcm">TP. Hồ Chí Minh</option>
-<option value="hn">Hà Nội</option>
-<option value="dn">Đà Nẵng</option>
-<option value="bd">Bình Dương</option>
-</select>
-</div>
-<!-- Passwords -->
-<div>
-<label class="block font-label-md text-on-surface-variant mb-2">Mật khẩu</label>
-<input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest" placeholder="••••••••" type="password">
-</div>
-<div>
-<label class="block font-label-md text-on-surface-variant mb-2">Xác nhận mật khẩu</label>
-<input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md bg-surface-container-lowest" placeholder="••••••••" type="password">
-</div>
-<!-- Terms -->
-<div class="md:col-span-2 flex items-start gap-3 mt-2">
-<input class="mt-1 w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary" id="terms" type="checkbox">
-<label class="font-body-sm text-on-surface-variant leading-tight" for="terms">
-                                Tôi đồng ý với các <a class="text-primary font-semibold" href="#">Điều khoản Dịch vụ</a> và <a class="text-primary font-semibold" href="#">Chính sách Bảo mật</a> của SSWMS.
-                            </label>
-</div>
-</form>
-<div class="mt-10 flex justify-end">
-<button class="bg-primary-container text-on-primary-container hover:opacity-90 px-8 py-3 rounded-xl font-label-md flex items-center gap-2 transition-all active:scale-95" onclick="goToStep(2)">
-                            Tiếp tục xác thực
-                            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
-</button>
-</div>
-</div>
-<!-- Step 2: Verification (OTP) -->
-<div class="step-transition opacity-0 hidden" id="registration-step-2">
-<div class="mb-8">
-<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary mb-4 transition-colors" onclick="goToStep(1)">
-<span class="material-symbols-outlined text-[18px]" data-icon="arrow_back">arrow_back</span>
-<span class="font-label-md">Quay lại</span>
-</button>
-<h2 class="font-headline-sm text-on-surface mb-1">Xác thực số điện thoại</h2>
-<p class="font-body-md text-on-surface-variant">Chúng tôi đã gửi mã OTP gồm 6 chữ số đến <span class="font-bold text-on-surface">+84 901 *** 567</span>.</p>
-</div>
-<div class="flex-1 flex flex-col items-center justify-center py-10">
-<div class="flex gap-3 mb-8" id="otp-container">
-<input class="w-12 h-14 md:w-16 md:h-20 text-center text-headline-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-mono-data bg-surface-container-lowest otp-input" maxlength="1" type="text">
-<input class="w-12 h-14 md:w-16 md:h-20 text-center text-headline-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-mono-data bg-surface-container-lowest otp-input" maxlength="1" type="text">
-<input class="w-12 h-14 md:w-16 md:h-20 text-center text-headline-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-mono-data bg-surface-container-lowest otp-input" maxlength="1" type="text">
-<input class="w-12 h-14 md:w-16 md:h-20 text-center text-headline-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-mono-data bg-surface-container-lowest otp-input" maxlength="1" type="text">
-<input class="w-12 h-14 md:w-16 md:h-20 text-center text-headline-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-mono-data bg-surface-container-lowest otp-input" maxlength="1" type="text">
-<input class="w-12 h-14 md:w-16 md:h-20 text-center text-headline-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-mono-data bg-surface-container-lowest otp-input" maxlength="1" type="text">
-</div>
-<div class="text-center mb-8">
-<p class="font-body-md text-on-surface-variant mb-2" id="countdown-text">Bạn có thể gửi lại mã sau <span class="font-bold text-primary" id="timer">59s</span></p>
-<button class="font-label-md text-outline cursor-not-allowed hover:text-primary transition-colors" disabled="" id="resend-btn">
-                                Gửi lại mã OTP
-                            </button>
-</div>
-<button class="w-full bg-primary text-on-primary hover:opacity-90 px-8 py-4 rounded-xl font-label-md flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20" onclick="finishRegistration()">
-<span class="material-symbols-outlined" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-                            Hoàn tất đăng ký
-                        </button>
-</div>
-<div class="mt-auto pt-8 border-t border-outline-variant flex justify-center">
-<p class="font-body-sm text-on-surface-variant flex items-center gap-2">
-<span class="material-symbols-outlined text-[16px]" data-icon="info">info</span>
-                            Gặp sự cố? Liên hệ bộ phận kỹ thuật ngay.
-                        </p>
-</div>
-</div>
-<!-- Success State (Hidden by Default) -->
-<div class="hidden flex-1 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500" id="success-state">
-<div class="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
-<span class="material-symbols-outlined text-green-600 text-5xl" data-icon="check">check</span>
-</div>
-<h2 class="font-headline-md text-on-surface mb-2">Đăng ký thành công!</h2>
-<p class="font-body-md text-on-surface-variant mb-8 max-w-sm">Tài khoản của bạn đang được xét duyệt. Chúng tôi sẽ thông báo cho bạn qua email trong vòng 24 giờ tới.</p>
-<a class="bg-primary text-on-primary px-10 py-3 rounded-xl font-label-md" href="#">Đi tới Dashboard</a>
-</div>
-</div>
-</div>
-</main>
-<!-- Footer Meta -->
-<footer class="w-full py-8 px-margin-desktop text-center border-t border-outline-variant mt-auto">
-<p class="font-label-md text-on-surface-variant opacity-60">© 2024 SSWMS Vietnam. All rights reserved. Enterprise Logistics Solutions.</p>
-</footer>
-<script>
-        function goToStep(step) {
-            const step1 = document.getElementById('registration-step-1');
-            const step2 = document.getElementById('registration-step-2');
-            const ind1 = document.getElementById('step-1-indicator');
-            const ind2 = document.getElementById('step-2-indicator');
+  </head>
+  <body
+    class="bg-background text-on-background font-body-md flex min-h-screen flex-col items-center justify-center overflow-x-hidden"
+  >
+    <!-- Top Branding Anchor -->
+    <header
+      class="bg-surface/80 px-margin-desktop border-outline-variant fixed top-0 z-50 flex h-16 w-full items-center justify-between border-b backdrop-blur-md"
+    >
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-3xl" data-icon="warehouse"
+          >warehouse</span
+        >
+        <span class="font-display-lg text-primary font-bold tracking-tight">SSWMS</span>
+      </div>
+      <div class="hidden items-center gap-6 md:flex">
+        <span class="font-label-md text-on-surface-variant">Hỗ trợ trực tuyến: 1800-SSWMS</span>
+        <div class="bg-outline-variant h-6 w-[1px]"></div>
+        <a class="font-label-md text-primary hover:underline" href="#">Đăng nhập</a>
+      </div>
+    </header>
+    <!-- Main Registration Canvas -->
+    <main
+      class="gap-gutter px-margin-mobile md:px-margin-desktop grid min-h-[800px] w-full max-w-[1100px] grid-cols-1 py-24 md:grid-cols-12"
+    >
+      <!-- Left: Branding & Visuals (Bento Style) -->
+      <div class="gap-gutter hidden flex-col md:col-span-5 md:flex">
+        <div
+          class="glass-card group relative flex flex-1 flex-col justify-end overflow-hidden rounded-xl p-8"
+        >
+          <div
+            class="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-105"
+            data-alt="A sophisticated digital rendering of a modern automated warehouse at dusk. Fresh green and lime lighting highlights rows of high-density racking systems and robotic lifters. The atmosphere is professional, clean, and technologically advanced, reflecting the core identity of an enterprise SaaS logistics platform. Cinematic lighting creates a sense of reliability and scale."
+            style="
+              background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDNB9ii5e04oPKxDw8BflJrd37LtYxdqM5OLE-ECfVe7LAcIVfoUS7yHRGX_9auGqNY_tPSZjH-zi3T-NDTWo7kQkYGS-zV_5-MZD-IXkyeQ-pkzOXIEUfvfgXBeNl2L9B6r0S3jbYDwrtfwyXPYc7gXTGBv28HgsQGmAGYVEYh5euVNUaemcHcNDNJY7nwvp8mcOCJawFWF7GnP2igfWDmC7Glr4v9AsWP5MEMynD_dio68r_r4TJ31TaKgqb0a81psIFwzzsaLNY');
+            "
+          ></div>
+          <div
+            class="from-on-primary-container absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-80"
+          ></div>
+          <div class="relative z-10 text-white">
+            <h1 class="font-headline-md mb-2 text-white">Quản trị kho bãi thế hệ mới</h1>
+            <p class="font-body-md leading-relaxed opacity-90">
+              Nền tảng vận hành tập trung giúp bạn kiểm soát hàng tồn kho, vận chuyển và nhân sự chỉ
+              trên một giao diện duy nhất.
+            </p>
+          </div>
+        </div>
+        <div class="gap-gutter grid h-48 grid-cols-2">
+          <div
+            class="glass-card flex flex-col items-center justify-center rounded-xl p-6 text-center"
+          >
+            <span
+              class="material-symbols-outlined text-primary mb-2"
+              data-icon="security"
+              style="font-variation-settings: 'FILL' 1"
+              >security</span
+            >
+            <span class="font-label-md text-on-surface">Bảo mật đa tầng</span>
+          </div>
+          <div
+            class="glass-card flex flex-col items-center justify-center rounded-xl p-6 text-center"
+          >
+            <span
+              class="material-symbols-outlined text-tertiary mb-2"
+              data-icon="bolt"
+              style="font-variation-settings: 'FILL' 1"
+              >bolt</span
+            >
+            <span class="font-label-md text-on-surface">Triển khai nhanh</span>
+          </div>
+        </div>
+      </div>
+      <!-- Right: Registration Flow -->
+      <div class="gap-stack-default col-span-1 flex flex-col md:col-span-7">
+        <!-- Step Indicator -->
+        <div class="mb-4 flex items-center gap-4 px-2">
+          <div
+            class="bg-primary h-1.5 flex-1 rounded-full transition-all duration-300"
+            id="step-1-indicator"
+          ></div>
+          <div
+            class="bg-outline-variant h-1.5 flex-1 rounded-full transition-all duration-300"
+            id="step-2-indicator"
+          ></div>
+        </div>
+        <div
+          class="glass-card relative flex min-h-[600px] flex-col rounded-xl p-8 shadow-sm md:p-10"
+        >
+          <!-- Step 1: Account Info -->
+          <div class="step-transition block opacity-100" id="registration-step-1">
+            <div class="mb-8">
+              <h2 class="font-headline-sm text-on-surface mb-1">Đăng ký tài khoản hệ thống</h2>
+              <p class="font-body-md text-on-surface-variant">
+                Vui lòng cung cấp thông tin doanh nghiệp và người đại diện.
+              </p>
+            </div>
+            <form class="gap-x-gutter grid grid-cols-1 gap-y-6 md:grid-cols-2">
+              <!-- Tenant Name -->
+              <div class="md:col-span-2">
+                <label class="font-label-md text-on-surface-variant mb-2 block"
+                  >Tên doanh nghiệp / Kho hàng</label
+                >
+                <input
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                  placeholder="VD: Warehouse Solution Vietnam"
+                  type="text"
+                />
+              </div>
+              <!-- Owner Name -->
+              <div>
+                <label class="font-label-md text-on-surface-variant mb-2 block"
+                  >Tên chủ sở hữu</label
+                >
+                <input
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                  placeholder="Nguyễn Văn A"
+                  type="text"
+                />
+              </div>
+              <!-- Phone Number -->
+              <div>
+                <label class="font-label-md text-on-surface-variant mb-2 block"
+                  >Số điện thoại</label
+                >
+                <input
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                  placeholder="0901 234 567"
+                  type="tel"
+                />
+              </div>
+              <!-- Email -->
+              <div class="md:col-span-2">
+                <label class="font-label-md text-on-surface-variant mb-2 block"
+                  >Địa chỉ Email công việc</label
+                >
+                <input
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                  placeholder="admin@domain.com"
+                  type="email"
+                />
+              </div>
+              <!-- Region -->
+              <div class="md:col-span-2">
+                <label class="font-label-md text-on-surface-variant mb-2 block"
+                  >Khu vực / Tỉnh thành</label
+                >
+                <select
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full appearance-none rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                >
+                  <option value="">Chọn tỉnh thành</option>
+                  <option value="hcm">TP. Hồ Chí Minh</option>
+                  <option value="hn">Hà Nội</option>
+                  <option value="dn">Đà Nẵng</option>
+                  <option value="bd">Bình Dương</option>
+                </select>
+              </div>
+              <!-- Passwords -->
+              <div>
+                <label class="font-label-md text-on-surface-variant mb-2 block">Mật khẩu</label>
+                <input
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                  placeholder="••••••••"
+                  type="password"
+                />
+              </div>
+              <div>
+                <label class="font-label-md text-on-surface-variant mb-2 block"
+                  >Xác nhận mật khẩu</label
+                >
+                <input
+                  class="border-outline-variant focus:ring-primary focus:border-primary font-body-md bg-surface-container-lowest w-full rounded-lg border px-4 py-3 transition-all outline-none focus:ring-2"
+                  placeholder="••••••••"
+                  type="password"
+                />
+              </div>
+              <!-- Terms -->
+              <div class="mt-2 flex items-start gap-3 md:col-span-2">
+                <input
+                  class="text-primary border-outline-variant focus:ring-primary mt-1 h-4 w-4 rounded"
+                  id="terms"
+                  type="checkbox"
+                />
+                <label class="font-body-sm text-on-surface-variant leading-tight" for="terms">
+                  Tôi đồng ý với các
+                  <a class="text-primary font-semibold" href="#">Điều khoản Dịch vụ</a> và
+                  <a class="text-primary font-semibold" href="#">Chính sách Bảo mật</a> của SSWMS.
+                </label>
+              </div>
+            </form>
+            <div class="mt-10 flex justify-end">
+              <button
+                class="bg-primary-container text-on-primary-container font-label-md flex items-center gap-2 rounded-xl px-8 py-3 transition-all hover:opacity-90 active:scale-95"
+                onclick="goToStep(2)"
+              >
+                Tiếp tục xác thực
+                <span class="material-symbols-outlined" data-icon="arrow_forward"
+                  >arrow_forward</span
+                >
+              </button>
+            </div>
+          </div>
+          <!-- Step 2: Verification (OTP) -->
+          <div class="step-transition hidden opacity-0" id="registration-step-2">
+            <div class="mb-8">
+              <button
+                class="text-on-surface-variant hover:text-primary mb-4 flex items-center gap-1 transition-colors"
+                onclick="goToStep(1)"
+              >
+                <span class="material-symbols-outlined text-[18px]" data-icon="arrow_back"
+                  >arrow_back</span
+                >
+                <span class="font-label-md">Quay lại</span>
+              </button>
+              <h2 class="font-headline-sm text-on-surface mb-1">Xác thực số điện thoại</h2>
+              <p class="font-body-md text-on-surface-variant">
+                Chúng tôi đã gửi mã OTP gồm 6 chữ số đến
+                <span class="text-on-surface font-bold">+84 901 *** 567</span>.
+              </p>
+            </div>
+            <div class="flex flex-1 flex-col items-center justify-center py-10">
+              <div class="mb-8 flex gap-3" id="otp-container">
+                <input
+                  class="text-headline-md border-outline-variant focus:ring-primary focus:border-primary font-mono-data bg-surface-container-lowest otp-input h-14 w-12 rounded-xl border text-center transition-all outline-none focus:ring-2 md:h-20 md:w-16"
+                  maxlength="1"
+                  type="text"
+                />
+                <input
+                  class="text-headline-md border-outline-variant focus:ring-primary focus:border-primary font-mono-data bg-surface-container-lowest otp-input h-14 w-12 rounded-xl border text-center transition-all outline-none focus:ring-2 md:h-20 md:w-16"
+                  maxlength="1"
+                  type="text"
+                />
+                <input
+                  class="text-headline-md border-outline-variant focus:ring-primary focus:border-primary font-mono-data bg-surface-container-lowest otp-input h-14 w-12 rounded-xl border text-center transition-all outline-none focus:ring-2 md:h-20 md:w-16"
+                  maxlength="1"
+                  type="text"
+                />
+                <input
+                  class="text-headline-md border-outline-variant focus:ring-primary focus:border-primary font-mono-data bg-surface-container-lowest otp-input h-14 w-12 rounded-xl border text-center transition-all outline-none focus:ring-2 md:h-20 md:w-16"
+                  maxlength="1"
+                  type="text"
+                />
+                <input
+                  class="text-headline-md border-outline-variant focus:ring-primary focus:border-primary font-mono-data bg-surface-container-lowest otp-input h-14 w-12 rounded-xl border text-center transition-all outline-none focus:ring-2 md:h-20 md:w-16"
+                  maxlength="1"
+                  type="text"
+                />
+                <input
+                  class="text-headline-md border-outline-variant focus:ring-primary focus:border-primary font-mono-data bg-surface-container-lowest otp-input h-14 w-12 rounded-xl border text-center transition-all outline-none focus:ring-2 md:h-20 md:w-16"
+                  maxlength="1"
+                  type="text"
+                />
+              </div>
+              <div class="mb-8 text-center">
+                <p class="font-body-md text-on-surface-variant mb-2" id="countdown-text">
+                  Bạn có thể gửi lại mã sau
+                  <span class="text-primary font-bold" id="timer">59s</span>
+                </p>
+                <button
+                  class="font-label-md text-outline hover:text-primary cursor-not-allowed transition-colors"
+                  disabled=""
+                  id="resend-btn"
+                >
+                  Gửi lại mã OTP
+                </button>
+              </div>
+              <button
+                class="bg-primary text-on-primary font-label-md shadow-primary/20 flex w-full items-center justify-center gap-2 rounded-xl px-8 py-4 shadow-lg transition-all hover:opacity-90 active:scale-95"
+                onclick="finishRegistration()"
+              >
+                <span
+                  class="material-symbols-outlined"
+                  data-icon="check_circle"
+                  style="font-variation-settings: 'FILL' 1"
+                  >check_circle</span
+                >
+                Hoàn tất đăng ký
+              </button>
+            </div>
+            <div class="border-outline-variant mt-auto flex justify-center border-t pt-8">
+              <p class="font-body-sm text-on-surface-variant flex items-center gap-2">
+                <span class="material-symbols-outlined text-[16px]" data-icon="info">info</span>
+                Gặp sự cố? Liên hệ bộ phận kỹ thuật ngay.
+              </p>
+            </div>
+          </div>
+          <!-- Success State (Hidden by Default) -->
+          <div
+            class="animate-in fade-in zoom-in flex hidden flex-1 flex-col items-center justify-center text-center duration-500"
+            id="success-state"
+          >
+            <div
+              class="bg-primary-container mb-6 flex h-24 w-24 items-center justify-center rounded-full"
+            >
+              <span class="material-symbols-outlined text-primary text-5xl" data-icon="check"
+                >check</span
+              >
+            </div>
+            <h2 class="font-headline-md text-on-surface mb-2">Đăng ký thành công!</h2>
+            <p class="font-body-md text-on-surface-variant mb-8 max-w-sm">
+              Tài khoản của bạn đang được xét duyệt. Chúng tôi sẽ thông báo cho bạn qua email trong
+              vòng 24 giờ tới.
+            </p>
+            <a class="bg-primary text-on-primary font-label-md rounded-xl px-10 py-3" href="#"
+              >Đi tới Dashboard</a
+            >
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Footer Meta -->
+    <footer
+      class="px-margin-desktop border-outline-variant mt-auto w-full border-t py-8 text-center"
+    >
+      <p class="font-label-md text-on-surface-variant opacity-60">
+        © 2024 SSWMS Vietnam. All rights reserved. Enterprise Logistics Solutions.
+      </p>
+    </footer>
+    <script>
+      function goToStep(step) {
+        const step1 = document.getElementById('registration-step-1')
+        const step2 = document.getElementById('registration-step-2')
+        const ind1 = document.getElementById('step-1-indicator')
+        const ind2 = document.getElementById('step-2-indicator')
 
-            if (step === 2) {
-                step1.classList.add('opacity-0');
-                setTimeout(() => {
-                    step1.classList.add('hidden');
-                    step2.classList.remove('hidden');
-                    setTimeout(() => step2.classList.remove('opacity-0'), 50);
-                    ind2.classList.replace('bg-outline-variant', 'bg-primary');
-                    startTimer();
-                }, 400);
-            } else {
-                step2.classList.add('opacity-0');
-                setTimeout(() => {
-                    step2.classList.add('hidden');
-                    step1.classList.remove('hidden');
-                    setTimeout(() => step1.classList.remove('opacity-0'), 50);
-                    ind2.classList.replace('bg-primary', 'bg-outline-variant');
-                }, 400);
-            }
+        if (step === 2) {
+          step1.classList.add('opacity-0')
+          setTimeout(() => {
+            step1.classList.add('hidden')
+            step2.classList.remove('hidden')
+            setTimeout(() => step2.classList.remove('opacity-0'), 50)
+            ind2.classList.replace('bg-outline-variant', 'bg-primary')
+            startTimer()
+          }, 400)
+        } else {
+          step2.classList.add('opacity-0')
+          setTimeout(() => {
+            step2.classList.add('hidden')
+            step1.classList.remove('hidden')
+            setTimeout(() => step1.classList.remove('opacity-0'), 50)
+            ind2.classList.replace('bg-primary', 'bg-outline-variant')
+          }, 400)
         }
+      }
 
-        function startTimer() {
-            let timeLeft = 59;
-            const timerDisplay = document.getElementById('timer');
-            const resendBtn = document.getElementById('resend-btn');
-            const countdownText = document.getElementById('countdown-text');
+      function startTimer() {
+        let timeLeft = 59
+        const timerDisplay = document.getElementById('timer')
+        const resendBtn = document.getElementById('resend-btn')
+        const countdownText = document.getElementById('countdown-text')
 
-            const countdown = setInterval(() => {
-                if (timeLeft <= 0) {
-                    clearInterval(countdown);
-                    timerDisplay.textContent = '0s';
-                    resendBtn.disabled = false;
-                    resendBtn.classList.remove('text-outline', 'cursor-not-allowed');
-                    resendBtn.classList.add('text-primary', 'cursor-pointer');
-                    countdownText.classList.add('opacity-0');
-                } else {
-                    timerDisplay.textContent = timeLeft + 's';
-                    timeLeft--;
-                }
-            }, 1000);
-        }
+        const countdown = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(countdown)
+            timerDisplay.textContent = '0s'
+            resendBtn.disabled = false
+            resendBtn.classList.remove('text-outline', 'cursor-not-allowed')
+            resendBtn.classList.add('text-primary', 'cursor-pointer')
+            countdownText.classList.add('opacity-0')
+          } else {
+            timerDisplay.textContent = timeLeft + 's'
+            timeLeft--
+          }
+        }, 1000)
+      }
 
-        function finishRegistration() {
-            const step2 = document.getElementById('registration-step-2');
-            const success = document.getElementById('success-state');
-            
-            step2.classList.add('opacity-0');
-            setTimeout(() => {
-                step2.classList.add('hidden');
-                success.classList.remove('hidden');
-                success.classList.add('flex');
-            }, 400);
-        }
+      function finishRegistration() {
+        const step2 = document.getElementById('registration-step-2')
+        const success = document.getElementById('success-state')
 
-        // OTP Input Auto-focus logic
-        const otpInputs = document.querySelectorAll('.otp-input');
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                if (e.target.value.length === 1 && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus();
-                }
-            });
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                    otpInputs[index - 1].focus();
-                }
-            });
-        });
+        step2.classList.add('opacity-0')
+        setTimeout(() => {
+          step2.classList.add('hidden')
+          success.classList.remove('hidden')
+          success.classList.add('flex')
+        }, 400)
+      }
+
+      // OTP Input Auto-focus logic
+      const otpInputs = document.querySelectorAll('.otp-input')
+      otpInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          if (e.target.value.length === 1 && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus()
+          }
+        })
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            otpInputs[index - 1].focus()
+          }
+        })
+      })
     </script>
-</body></html>
+  </body>
+</html>

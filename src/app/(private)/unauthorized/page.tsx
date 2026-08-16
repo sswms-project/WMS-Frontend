@@ -5,7 +5,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 
 export default function UnauthorizedPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center">
       <div className="bg-destructive/10 flex size-16 items-center justify-center rounded-full">
         <TriangleAlert className="text-destructive size-8" aria-hidden="true" />
       </div>

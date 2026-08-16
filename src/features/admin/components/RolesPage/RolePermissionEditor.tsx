@@ -104,9 +104,9 @@ export function RolePermissionEditor({ role }: RolePermissionEditorProps) {
                 {permissions.filter((p) => selected.has(p.id)).length}/{permissions.length}
               </Badge>
             </div>
-            <div className="mt-2 ml-6 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:ml-6 sm:grid-cols-2">
               {permissions.map((permission) => (
-                <div key={permission.id} className="flex items-center gap-2">
+                <div key={permission.id} className="flex min-w-0 items-center gap-2">
                   <Checkbox
                     id={permission.id}
                     checked={selected.has(permission.id)}
@@ -114,7 +114,7 @@ export function RolePermissionEditor({ role }: RolePermissionEditorProps) {
                   />
                   <Label
                     htmlFor={permission.id}
-                    className="text-muted-foreground cursor-pointer text-xs"
+                    className="text-muted-foreground min-w-0 cursor-pointer text-xs break-words"
                   >
                     {permission.permissionKey.split(':')[1] ?? permission.permissionKey}
                   </Label>
@@ -126,17 +126,17 @@ export function RolePermissionEditor({ role }: RolePermissionEditorProps) {
         )
       })}
 
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
         <Button
           size="sm"
           onClick={handleSave}
           disabled={!isDirty || assignMutation.isPending}
-          className="gap-2"
+          className="w-full gap-2 sm:w-auto"
         >
           <Shield className="size-3.5" aria-hidden="true" />
           {assignMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
         </Button>
-        {isDirty && <p className="text-xs text-amber-600">Có thay đổi chưa được lưu</p>}
+        {isDirty && <p className="text-on-primary-container text-xs">Có thay đổi chưa được lưu</p>}
       </div>
     </div>
   )

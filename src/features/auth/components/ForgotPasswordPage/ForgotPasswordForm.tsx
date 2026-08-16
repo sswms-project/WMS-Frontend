@@ -52,18 +52,18 @@ export function ForgotPasswordForm({
   }, [submitCount, hasErrors])
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh min-w-0">
       <aside className="sticky top-0 hidden h-dvh flex-shrink-0 lg:block lg:w-[42%] xl:w-[45%]">
         <BenefitsPanel />
       </aside>
 
       <motion.div
-        className="bg-background flex flex-1 flex-col"
+        className="bg-background flex min-w-0 flex-1 flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
       >
-        <header className="flex items-center justify-between px-8 py-5 lg:px-12">
+        <header className="flex items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-12">
           <Logo className="lg:hidden" />
           <Link
             href={APP_ROUTES.auth.login}
@@ -74,7 +74,7 @@ export function ForgotPasswordForm({
           </Link>
         </header>
 
-        <div className="flex flex-1 items-center justify-center px-8 py-12 lg:px-12 xl:px-16">
+        <div className="flex min-w-0 flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:px-12 xl:px-16">
           <div className="animate-in fade-in slide-in-from-bottom-3 w-full max-w-md duration-500">
             <header className="mb-8">
               <p className="text-muted-foreground mb-2 text-[11px] font-semibold tracking-[0.1em] uppercase">

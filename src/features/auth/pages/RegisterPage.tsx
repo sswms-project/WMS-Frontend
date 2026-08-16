@@ -34,20 +34,20 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh min-w-0">
       {/* Left brand panel — sticky, full viewport height */}
       <aside className="sticky top-0 hidden h-dvh flex-shrink-0 lg:block lg:w-[42%] xl:w-[45%]">
-        <BenefitsPanel />
+        <BenefitsPanel logoHref={APP_ROUTES.home} />
       </aside>
 
       {/* Right scrollable form area */}
       <motion.div
-        className="bg-background flex flex-1 flex-col"
+        className="bg-background flex min-w-0 flex-1 flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
       >
-        <header className="flex items-center justify-between px-8 py-5 lg:px-12">
+        <header className="flex items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-12">
           <Logo className="lg:hidden" />
           <div className="hidden lg:block" aria-hidden="true" />
           <div className="flex items-center gap-4">
@@ -63,8 +63,8 @@ export function RegisterPage() {
           </div>
         </header>
 
-        <div className="flex-1 px-8 py-8 lg:px-12 xl:px-16">
-          <div className="max-w-xl">
+        <div className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-12 xl:px-16">
+          <div className="w-full max-w-xl">
             {successMessage ? (
               <RegisterSuccess
                 message={successMessage}

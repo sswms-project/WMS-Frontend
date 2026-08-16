@@ -1,5 +1,6 @@
 import { Toaster } from '@/components/ui/sonner'
 import { QueryProvider } from '@/providers/query-provider'
+import { ThemeProvider } from '@/providers/theme-provider'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { Baloo_2, Inter, JetBrains_Mono } from 'next/font/google'
@@ -39,7 +40,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        <QueryProvider>{children}</QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeProvider>
         <Toaster richColors position="top-right" />
         <SpeedInsights />
       </body>

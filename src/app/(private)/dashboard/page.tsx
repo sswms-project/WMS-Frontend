@@ -1,5 +1,5 @@
-import { AuthTestPanel } from '@/features/auth/components/DashboardPage'
+import { DashboardRedirect } from '@/features/dashboard/pages/DashboardRedirect'
 
 export default function DashboardPage() {
-  return <AuthTestPanel />
+  return <DashboardRedirect />
 }

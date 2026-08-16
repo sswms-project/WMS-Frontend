@@ -1,29 +1,15 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
-import type { AuthUser } from '../types/auth.types'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { LoginForm } from '../components/LoginPage'
 import { useLoginMutation } from '../hooks/use-auth'
 import type { LoginFormValues } from '../schemas/login.schema'
-import { LoginForm } from '../components/LoginPage'
-
-function decodeJwtUser(token: string): AuthUser {
-  const part = token.split('.')[1]
-  if (!part) throw new Error('Invalid JWT: missing payload segment')
-  const base64 = part.replace(/-/g, '+').replace(/_/g, '/')
-  const json = new TextDecoder().decode(Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)))
-  const payload = JSON.parse(json)
-  return {
-    id: payload.user_id ?? payload.sub,
-    tenantId: payload.tenant_id,
-    fullName: payload.name,
-    email: payload.email,
-    role: payload.role,
-    isActive: true,
-  }
-}
+import type { AuthUser } from '../types/auth.types'
+import { decodeJwtUser } from '../utils/decode-jwt-user'
+import { clearTwoFactorTempToken, saveTwoFactorTempToken } from '../utils/two-factor-temp-token'
 
 export function LoginPage() {
   const router = useRouter()
@@ -31,16 +17,44 @@ export function LoginPage() {
   const loginMutation = useLoginMutation()
 
   async function handleLogin(values: LoginFormValues) {
+    clearTwoFactorTempToken()
+
     try {
       const response = await loginMutation.mutateAsync(values)
-      const { accessToken, refreshToken, requires2FA } = response.data
+      const data = response.data
 
-      if (requires2FA) {
-        toast.error('2FA chưa được hỗ trợ trong phiên bản này.')
+      if (data.requires2FA) {
+        const tempToken = data.tempToken?.trim()
+
+        if (!tempToken) {
+          clearTwoFactorTempToken()
+          toast.error('Không thể bắt đầu phiên xác thực hai yếu tố. Vui lòng thử lại.')
+          return
+        }
+
+        saveTwoFactorTempToken(tempToken)
+        router.replace(APP_ROUTES.auth.verify2fa)
         return
       }
 
-      const user = decodeJwtUser(accessToken)
+      const accessToken = data.accessToken?.trim()
+      const refreshToken = data.refreshToken?.trim()
+
+      if (!accessToken || !refreshToken) {
+        toast.error('Phản hồi đăng nhập không hợp lệ. Vui lòng thử lại.')
+        return
+      }
+
+      let user: AuthUser
+      try {
+        user = decodeJwtUser(accessToken)
+      } catch (error) {
+        console.error('Failed to decode access token', error)
+        toast.error('Không thể hoàn tất đăng nhập.')
+        return
+      }
+
+      clearTwoFactorTempToken()
       setAuth(user, accessToken, refreshToken)
       router.replace(APP_ROUTES.dashboard)
     } catch {

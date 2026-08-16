@@ -168,13 +168,13 @@ utils
 - Prefer semantic Tailwind token classes such as `bg-background`, `text-foreground`, `border-border`, `bg-primary`, `text-primary-foreground`, `text-muted-foreground`, `ring-ring`, and `text-destructive` when those tokens exist.
 - Do not hard-code hex, RGB, HSL, OKLCH, or named color values inside component class names when the color belongs to the design system.
 - If a design-system color is needed but no Tailwind token exists yet, add a semantic token in `src/app/index.css` first, then use that token from the component.
-- Do not scatter one-off arbitrary color classes such as `bg-[#00677d]`, `text-[#171c1e]`, or `border-[#bdc8cd]` across feature code.
+- Do not scatter one-off arbitrary color classes such as `bg-[#2e5a2a]`, `text-[#18232f]`, or `border-[#b5d8ab]` across feature code.
 - Raw color values are allowed only for truly one-off visuals, and the reason must be obvious from the context.
 
 Avoid:
 
 ```tsx
-className = 'bg-[#00677d] text-[#171c1e] border-[#bdc8cd]'
+className = 'bg-[#2e5a2a] text-[#18232f] border-[#b5d8ab]'
 ```
 
 Prefer:

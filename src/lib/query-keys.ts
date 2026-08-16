@@ -1,10 +1,51 @@
 import type { QueryInfo } from '@/types/api'
+import type { PaymentHistoryQuery } from '@/features/subscription/types/subscription.types'
+import type { StaffDirectoryKind, StaffQuery } from '@/features/staff/types/staff.types'
+import type { InvitationQuery } from '@/features/staff/types/invitation.types'
+import type {
+  WarehouseLocationQuery,
+  WarehouseLocationType,
+} from '@/features/warehouse/types/warehouse.types'
 
 export const queryKeys = {
+  organization: {
+    all: ['organization'] as const,
+    me: ['organization', 'me'] as const,
+  },
+  staff: {
+    all: ['staff'] as const,
+    list: (kind: StaffDirectoryKind, params: StaffQuery) => ['staff', kind, params] as const,
+    detail: (userId: string) => ['staff', 'detail', userId] as const,
+  },
+  invitations: {
+    all: ['invitations'] as const,
+    list: (params: InvitationQuery) => ['invitations', 'list', params] as const,
+  },
+  auth: {
+    me: ['auth', 'me'] as const,
+  },
+  subscription: {
+    all: ['subscription'] as const,
+    me: ['subscription', 'me'] as const,
+    plans: ['subscription', 'plans'] as const,
+    publicPlans: ['subscription', 'public-plans'] as const,
+  },
+  payments: {
+    all: ['payments'] as const,
+    list: (params?: PaymentHistoryQuery) => ['payments', 'list', params] as const,
+    invoiceData: (paymentId: string) => ['payments', 'invoice-data', paymentId] as const,
+  },
   warehouses: {
     all: ['warehouses'] as const,
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
     detail: (id: string) => ['warehouses', 'detail', id] as const,
+    layout: (id: string) => ['warehouses', 'detail', id, 'layout'] as const,
+    layoutScene: (id: string) => ['warehouses', 'detail', id, 'layout', 'scene'] as const,
+    locationsAll: (id: string) => ['warehouses', 'detail', id, 'locations'] as const,
+    locations: (id: string, params: WarehouseLocationQuery) =>
+      ['warehouses', 'detail', id, 'locations', params] as const,
+    barcode: (id: string, type: WarehouseLocationType, locationId: string) =>
+      ['warehouses', 'detail', id, 'barcode', type, locationId] as const,
   },
   inventory: {
     all: ['inventory'] as const,
