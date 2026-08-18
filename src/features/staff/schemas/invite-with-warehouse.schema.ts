@@ -1,10 +1,11 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 import { USER_ROLES } from '@/config/roles'
+import { dotNetGuidSchema } from './dotnet-guid.schema'
 import { sendInvitationSchema } from './invitation.schema'
 
 export const inviteWithWarehouseSchema = sendInvitationSchema
   .extend({
-    warehouseId: z.string().uuid('Kho được chọn không hợp lệ').optional(),
+    warehouseId: dotNetGuidSchema('Kho được chọn không hợp lệ').optional(),
   })
   .superRefine((values, context) => {
     if (values.role === USER_ROLES.WarehouseManager && values.warehouseId) {
