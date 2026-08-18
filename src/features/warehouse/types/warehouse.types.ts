@@ -45,6 +45,7 @@ export interface LocationSearchResponse {
   rackCode: string | null
   capacity: number | null
   currentOccupancy: number | null
+  barcodeValue: string | null
 }
 
 export interface LocationFilterState {

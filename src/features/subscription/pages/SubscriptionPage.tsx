@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { pdf } from '@react-pdf/renderer'
 import Link from 'next/link'
 import { CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
@@ -13,7 +12,6 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import {
   CurrentPlanCard,
-  InvoicePdfDocument,
   PaymentHistoryTable,
   PlanCard,
   SubscriptionActionDialog,
@@ -24,7 +22,7 @@ import {
 import {
   useCancelSubscriptionMutation,
   useCurrentSubscriptionQuery,
-  useInvoiceDataMutation,
+  useInvoiceDownloadMutation,
   usePaymentHistoryQuery,
   useRenewSubscriptionMutation,
   useSubscriptionPlansQuery,
@@ -32,7 +30,6 @@ import {
 } from '../hooks/use-subscription'
 import type {
   InvoiceActionState,
-  InvoiceDataResponse,
   PaymentHistoryFilterState,
   PaymentResponse,
   SubscriptionPlanResponse,
@@ -85,11 +82,7 @@ export function SubscriptionPage() {
   const upgradeMutation = useUpgradeSubscriptionMutation()
   const renewMutation = useRenewSubscriptionMutation()
   const cancelMutation = useCancelSubscriptionMutation()
-  const invoiceDataMutation = useInvoiceDataMutation()
-  const invoiceCustomer = useMemo(
-    () => ({ displayName: user?.fullName ?? user?.email, email: user?.email }),
-    [user?.email, user?.fullName]
-  )
+  const invoiceDownloadMutation = useInvoiceDownloadMutation()
 
   if (!isTenantOwner) {
     return <TenantOwnerOnlyState />
@@ -167,23 +160,10 @@ export function SubscriptionPage() {
 
     setInvoiceActionState({ paymentId: payment.id, kind: 'download' })
     try {
-      let invoice: InvoiceDataResponse
-      try {
-        invoice = await invoiceDataMutation.mutateAsync(payment.id)
-      } catch {
-        // The mutation handles fetch failures with a user-facing toast.
-        return
-      }
-
-      try {
-        const blob = await pdf(
-          <InvoicePdfDocument invoice={invoice} customer={invoiceCustomer} />
-        ).toBlob()
-        downloadBlob(blob, buildInvoiceFileName(invoice.invoiceNumber))
-      } catch (error) {
-        console.error(error)
-        toast.error('Unable to generate the payment receipt. Please try again.')
-      }
+      const blob = await invoiceDownloadMutation.mutateAsync(payment.id)
+      downloadBlob(blob, buildInvoiceFileName(payment.invoiceNumber))
+    } catch {
+      // The mutation handles fetch failures with a user-facing toast.
     } finally {
       setInvoiceActionState(null)
     }
