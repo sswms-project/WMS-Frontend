@@ -7,6 +7,7 @@ export interface WarehouseAssignmentQuery extends QueryInfo {
   top: number
   skip: number
   needTotalCount: true
+  status?: 'Active' | 'Inactive'
 }
 
 export interface AssignManagerRequest {

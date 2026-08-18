@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, MailPlus, RefreshCw, ShieldCheck, UserRound } from 'lucide-react'
-import { useMemo } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -27,6 +26,7 @@ import {
 } from '../../schemas/invite-with-warehouse.schema'
 import type { InvitableRole } from '../../types/invitation.types'
 import type { WarehouseAssignmentQuery } from '../../types/manager-assignment.types'
+import { getActiveWarehouses } from '../../utils/active-warehouses'
 import { WarehousePicker } from './WarehousePicker'
 
 interface InviteStaffDialogProps {
@@ -56,6 +56,7 @@ const invitationWarehouseQuery: WarehouseAssignmentQuery = {
   top: 1000,
   skip: 0,
   needTotalCount: true,
+  status: 'Active',
 }
 
 function isInvitableRole(value: string): value is InvitableRole {
@@ -85,13 +86,7 @@ export function InviteStaffDialog({
     invitationWarehouseQuery,
     open && selectedRole === USER_ROLES.WarehouseStaff
   )
-  const activeWarehouses = useMemo(
-    () =>
-      (warehousesQuery.data?.items ?? []).filter(
-        (warehouse) => warehouse.status.toLowerCase() === 'active'
-      ),
-    [warehousesQuery.data?.items]
-  )
+  const activeWarehouses = getActiveWarehouses(warehousesQuery.data?.items ?? [])
 
   function handleOpenChange(nextOpen: boolean) {
     if (invitationMutation.isPending) return
