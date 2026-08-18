@@ -50,4 +50,9 @@ export const subscriptionService = {
     axiosClient
       .get<ApiResponse<InvoiceDataResponse>>(API_ENDPOINTS.payments.invoiceData(paymentId))
       .then((response) => response.data),
+
+  downloadInvoice: (paymentId: string) =>
+    axiosClient
+      .get<Blob>(API_ENDPOINTS.payments.invoice(paymentId), { responseType: 'blob' })
+      .then((response) => response.data),
 }

@@ -20,6 +20,7 @@ const locations: LocationSearchResponse[] = [
     rackCode: null,
     capacity: null,
     currentOccupancy: null,
+    barcodeValue: 'Z-01',
   },
   {
     id: 'slot-1',
@@ -34,6 +35,7 @@ const locations: LocationSearchResponse[] = [
     rackCode: 'R-01',
     capacity: 100,
     currentOccupancy: 25,
+    barcodeValue: 'S-01',
   },
 ]
 

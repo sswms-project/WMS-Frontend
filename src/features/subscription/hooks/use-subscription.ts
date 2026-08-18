@@ -110,3 +110,13 @@ export function useInvoiceDataMutation() {
     },
   })
 }
+
+export function useInvoiceDownloadMutation() {
+  return useMutation<Blob, ApiErrorResponse, string>({
+    mutationFn: subscriptionService.downloadInvoice,
+    onError: (error: ApiErrorResponse) => {
+      console.error(error)
+      toast.error(error.message ?? 'Không thể tải hóa đơn. Vui lòng thử lại.')
+    },
+  })
+}

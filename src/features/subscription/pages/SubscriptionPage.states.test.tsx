@@ -39,7 +39,7 @@ vi.mock('../components/SubscriptionPage', () => ({
 vi.mock('../hooks/use-subscription', () => ({
   useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useCurrentSubscriptionQuery: () => pageState.subscriptionQuery,
-  useInvoiceDataMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useInvoiceDownloadMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   usePaymentHistoryQuery: () => ({
     data: { items: [], totalCount: 0 },
     isLoading: false,

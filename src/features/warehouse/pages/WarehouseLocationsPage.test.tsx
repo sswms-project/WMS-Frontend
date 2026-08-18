@@ -43,6 +43,7 @@ const slot: LocationSearchResponse = {
   rackCode: 'R-01',
   capacity: 10,
   currentOccupancy: 0,
+  barcodeValue: 'S-01',
 }
 
 describe('WarehouseLocationsPage', () => {
