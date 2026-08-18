@@ -27,7 +27,6 @@ import {
   type StaffLifecycleAction,
   type StaffResponse,
 } from '../../types/staff.types'
-import { getAssignedWarehouseIds, staffWarehouseScopeLabel } from '../../utils/staff-warehouse'
 import { getStaffLifecycleAction } from '../../utils/staff-status'
 import { StaffStatusBadge } from './StaffStatusBadge'
 
@@ -121,7 +120,6 @@ export function StaffDirectoryTable({
               <TableHead>Liên hệ</TableHead>
               <TableHead>Vai trò</TableHead>
               <TableHead>Trạng thái</TableHead>
-              {kind === STAFF_DIRECTORY_KINDS.staff && <TableHead>Phạm vi kho</TableHead>}
               <TableHead>Lần đăng nhập cuối</TableHead>
               <TableHead className="w-12">
                 <span className="sr-only">Thao tác</span>
@@ -156,14 +154,6 @@ export function StaffDirectoryTable({
                 <TableCell>
                   <StaffStatusBadge status={person.status} />
                 </TableCell>
-                {kind === STAFF_DIRECTORY_KINDS.staff && (
-                  <TableCell>
-                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
-                      <Warehouse className="size-3.5" aria-hidden="true" />
-                      {staffWarehouseScopeLabel(getAssignedWarehouseIds(person).length)}
-                    </span>
-                  </TableCell>
-                )}
                 <TableCell className="text-muted-foreground">
                   {formatLastLogin(person.lastLoginAt)}
                 </TableCell>
@@ -192,12 +182,6 @@ export function StaffDirectoryTable({
               <span className="mt-1 block">
                 <StaffStatusBadge status={person.status} />
               </span>
-              {kind === STAFF_DIRECTORY_KINDS.staff && (
-                <span className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
-                  <Warehouse className="size-3.5" aria-hidden="true" />
-                  {staffWarehouseScopeLabel(getAssignedWarehouseIds(person).length)}
-                </span>
-              )}
             </button>
             {rowActions(person)}
           </div>
