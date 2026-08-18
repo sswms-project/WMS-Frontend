@@ -44,6 +44,7 @@ import {
 } from '../../schemas/manager-assignment.schema'
 import type { WarehouseAssignmentQuery } from '../../types/manager-assignment.types'
 import type { StaffResponse } from '../../types/staff.types'
+import { getActiveWarehouses } from '../../utils/active-warehouses'
 
 interface ManagerWarehouseAssignmentDialogProps {
   readonly manager: StaffResponse
@@ -66,6 +67,7 @@ export function ManagerWarehouseAssignmentDialog({
     top: 20,
     skip: 0,
     needTotalCount: true,
+    status: 'Active',
     ...(debouncedSearchText ? { searchText: debouncedSearchText } : {}),
   }
   const warehousesQuery = useAssignmentWarehousesQuery(params, true)
@@ -103,7 +105,12 @@ export function ManagerWarehouseAssignmentDialog({
     }
   }
 
-  const warehouses = warehousesQuery.data?.items ?? []
+  const warehouseItems = warehousesQuery.data?.items ?? []
+  const warehouses = getActiveWarehouses(warehouseItems)
+  const warehouseTotalCount =
+    warehouses.length === warehouseItems.length
+      ? (warehousesQuery.data?.totalCount ?? warehouses.length)
+      : warehouses.length
 
   return (
     <Dialog open onOpenChange={handleOpenChange}>
@@ -152,9 +159,7 @@ export function ManagerWarehouseAssignmentDialog({
             <Field data-invalid={Boolean(errors.warehouseId)}>
               <div className="flex items-end justify-between gap-3">
                 <FieldLabel id="assignment-warehouse-label">Kho</FieldLabel>
-                <span className="text-muted-foreground text-xs">
-                  {warehousesQuery.data?.totalCount ?? 0} kết quả
-                </span>
+                <span className="text-muted-foreground text-xs">{warehouseTotalCount} kết quả</span>
               </div>
 
               <InputGroup>
