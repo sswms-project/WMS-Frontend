@@ -3,10 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Building2,
+  Info,
   LoaderCircle,
   RefreshCw,
   Search,
-  TriangleAlert,
   Warehouse,
   X,
 } from 'lucide-react'
@@ -114,7 +114,7 @@ export function ManagerWarehouseAssignmentDialog({
             Gán quản lý vào kho
           </DialogTitle>
           <DialogDescription>
-            Chọn kho để {manager.fullName} phụ trách. Mỗi kho chỉ có một quản lý đang hoạt động.
+            Chọn kho để {manager.fullName} phụ trách. Một quản lý có thể phụ trách nhiều kho.
           </DialogDescription>
         </DialogHeader>
 
@@ -141,11 +141,11 @@ export function ManagerWarehouseAssignmentDialog({
             )}
 
             <Alert>
-              <TriangleAlert className="size-4" aria-hidden="true" />
-              <AlertTitle>Quản lý hiện tại có thể bị thay thế</AlertTitle>
+              <Info className="size-4" aria-hidden="true" />
+              <AlertTitle>Phân công bổ sung</AlertTitle>
               <AlertDescription>
-                Nếu kho đã có quản lý, hệ thống sẽ kết thúc phân công hiện tại và chuyển quyền phụ
-                trách sang {manager.fullName}.
+                Phân công này không ảnh hưởng đến các kho {manager.fullName} đang phụ trách. Hệ
+                thống sẽ báo nếu quản lý đã được gán vào kho đã chọn.
               </AlertDescription>
             </Alert>
 
