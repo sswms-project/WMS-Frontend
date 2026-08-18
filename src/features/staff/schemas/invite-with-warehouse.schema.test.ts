@@ -24,6 +24,16 @@ describe('invite with warehouse schema', () => {
     ).toBe(true)
   })
 
+  it('accepts a staff invitation with a SQL Server sequential GUID warehouse id', () => {
+    expect(
+      inviteWithWarehouseSchema.safeParse({
+        email: 'staff@example.com',
+        role: USER_ROLES.WarehouseStaff,
+        warehouseId: '327e070f-f2e8-4070-4163-08def752f423',
+      }).success
+    ).toBe(true)
+  })
+
   it('rejects malformed warehouse ids', () => {
     expect(
       inviteWithWarehouseSchema.safeParse({
