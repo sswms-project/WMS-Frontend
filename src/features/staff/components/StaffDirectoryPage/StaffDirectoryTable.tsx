@@ -21,19 +21,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import type { WarehouseSummaryResponse } from '../../types/manager-assignment.types'
 import {
   STAFF_DIRECTORY_KINDS,
   type StaffDirectoryKind,
   type StaffLifecycleAction,
   type StaffResponse,
 } from '../../types/staff.types'
-import { getAssignedWarehouseIds, staffWarehouseScopeLabel } from '../../utils/staff-warehouse'
+import { getAssignedWarehouseIds, staffWarehouseScopeSummary } from '../../utils/staff-warehouse'
 import { getStaffLifecycleAction } from '../../utils/staff-status'
 import { StaffStatusBadge } from './StaffStatusBadge'
 
 interface StaffDirectoryTableProps {
   readonly kind: StaffDirectoryKind
   readonly people: readonly StaffResponse[]
+  readonly warehouses: readonly WarehouseSummaryResponse[]
+  readonly isWarehouseScopeLoading: boolean
   readonly onView: (person: StaffResponse) => void
   readonly onAssignWarehouse: (person: StaffResponse) => void
   readonly onLifecycleAction: (person: StaffResponse, action: StaffLifecycleAction) => void
@@ -58,10 +61,21 @@ function initials(fullName: string) {
 export function StaffDirectoryTable({
   kind,
   people,
+  warehouses,
+  isWarehouseScopeLoading,
   onView,
   onAssignWarehouse,
   onLifecycleAction,
 }: StaffDirectoryTableProps) {
+  function warehouseScopeLabel(person: StaffResponse) {
+    const assignedWarehouseIds = getAssignedWarehouseIds(person)
+    if (isWarehouseScopeLoading && assignedWarehouseIds.length > 0) {
+      return 'Đang tải thông tin kho…'
+    }
+
+    return staffWarehouseScopeSummary(assignedWarehouseIds, warehouses)
+  }
+
   function actionFor(person: StaffResponse) {
     return kind === STAFF_DIRECTORY_KINDS.staff ? getStaffLifecycleAction(person.status) : null
   }
@@ -113,16 +127,16 @@ export function StaffDirectoryTable({
 
   return (
     <>
-      <div className="hidden md:block">
-        <Table>
+      <div className="hidden min-w-0 xl:block">
+        <Table className="min-w-[960px] table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Nhân sự</TableHead>
-              <TableHead>Liên hệ</TableHead>
-              <TableHead>Vai trò</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              {kind === STAFF_DIRECTORY_KINDS.staff && <TableHead>Phạm vi kho</TableHead>}
-              <TableHead>Lần đăng nhập cuối</TableHead>
+              <TableHead className="w-40 pl-4">Nhân sự</TableHead>
+              <TableHead className="w-48">Liên hệ</TableHead>
+              <TableHead className="w-36">Vai trò</TableHead>
+              <TableHead className="w-28">Trạng thái</TableHead>
+              <TableHead className="w-44">Phạm vi kho</TableHead>
+              <TableHead className="w-32">Lần đăng nhập cuối</TableHead>
               <TableHead className="w-12">
                 <span className="sr-only">Thao tác</span>
               </TableHead>
@@ -132,38 +146,51 @@ export function StaffDirectoryTable({
             {people.map((person) => (
               <TableRow key={person.id}>
                 <TableCell className="pl-4">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <span className="bg-muted text-foreground flex size-8 items-center justify-center text-[11px] font-semibold">
                       {initials(person.fullName)}
                     </span>
-                    <span className="font-medium">{person.fullName}</span>
+                    <span className="truncate font-medium" title={person.fullName}>
+                      {person.fullName}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="max-w-56">
-                    <p className="truncate">{person.email}</p>
-                    <p className="text-muted-foreground mt-0.5 truncate">
+                  <div className="min-w-0">
+                    <p className="truncate" title={person.email}>
+                      {person.email}
+                    </p>
+                    <p
+                      className="text-muted-foreground mt-0.5 truncate"
+                      title={person.phone || 'Chưa có số điện thoại'}
+                    >
                       {person.phone || 'Chưa có số điện thoại'}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="inline-flex items-center gap-1.5">
-                    <ShieldCheck className="text-muted-foreground size-3.5" aria-hidden="true" />
-                    {person.role || 'Chưa gán'}
+                  <span className="inline-flex max-w-full items-center gap-1.5">
+                    <ShieldCheck
+                      className="text-muted-foreground size-3.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate" title={person.role || 'Chưa gán'}>
+                      {person.role || 'Chưa gán'}
+                    </span>
                   </span>
                 </TableCell>
                 <TableCell>
                   <StaffStatusBadge status={person.status} />
                 </TableCell>
-                {kind === STAFF_DIRECTORY_KINDS.staff && (
-                  <TableCell>
-                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
-                      <Warehouse className="size-3.5" aria-hidden="true" />
-                      {staffWarehouseScopeLabel(getAssignedWarehouseIds(person).length)}
-                    </span>
-                  </TableCell>
-                )}
+                <TableCell>
+                  <span
+                    className="text-muted-foreground inline-flex max-w-full items-center gap-1.5"
+                    title={warehouseScopeLabel(person)}
+                  >
+                    <Warehouse className="size-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{warehouseScopeLabel(person)}</span>
+                  </span>
+                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatLastLogin(person.lastLoginAt)}
                 </TableCell>
@@ -174,7 +201,7 @@ export function StaffDirectoryTable({
         </Table>
       </div>
 
-      <div className="divide-y md:hidden">
+      <div className="divide-y xl:hidden">
         {people.map((person) => (
           <div key={person.id} className="flex min-h-20 items-center gap-3 px-3 py-3">
             <span className="bg-muted flex size-9 shrink-0 items-center justify-center text-xs font-semibold">
@@ -192,12 +219,10 @@ export function StaffDirectoryTable({
               <span className="mt-1 block">
                 <StaffStatusBadge status={person.status} />
               </span>
-              {kind === STAFF_DIRECTORY_KINDS.staff && (
-                <span className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
-                  <Warehouse className="size-3.5" aria-hidden="true" />
-                  {staffWarehouseScopeLabel(getAssignedWarehouseIds(person).length)}
-                </span>
-              )}
+              <span className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
+                <Warehouse className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{warehouseScopeLabel(person)}</span>
+              </span>
             </button>
             {rowActions(person)}
           </div>

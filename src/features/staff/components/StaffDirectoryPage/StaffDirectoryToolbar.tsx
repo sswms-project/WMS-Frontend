@@ -18,7 +18,7 @@ export function StaffDirectoryToolbar({
   onSearchChange,
 }: StaffDirectoryToolbarProps) {
   return (
-    <div className="flex min-h-12 flex-col gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-12 min-w-0 flex-col gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
       <InputGroup className="h-10 w-full sm:h-8 sm:max-w-sm">
         <InputGroupAddon>
           <Search className="size-4" aria-hidden="true" />
@@ -41,7 +41,10 @@ export function StaffDirectoryToolbar({
           </InputGroupAddon>
         )}
       </InputGroup>
-      <div className="text-muted-foreground flex items-center gap-2 text-xs" aria-live="polite">
+      <div
+        className="text-muted-foreground flex shrink-0 items-center gap-2 text-xs"
+        aria-live="polite"
+      >
         {isFetching && <span className="bg-primary size-1.5 animate-pulse" aria-hidden="true" />}
         {isFetching ? 'Đang cập nhật danh sách' : 'Danh sách đã cập nhật'}
       </div>
