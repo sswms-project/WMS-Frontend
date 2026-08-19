@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
 import { managerAssignmentService } from '../services/manager-assignment.service'
@@ -24,9 +24,12 @@ export function useAssignmentWarehousesQuery(params: WarehouseAssignmentQuery, e
 }
 
 export function useAssignManagerMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, AssignManagerVariables>({
     mutationFn: ({ warehouseId, request }) =>
       managerAssignmentService.assignManager(warehouseId, request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
     onError: (error) => console.error(error),
   })
 }

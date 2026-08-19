@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, MailPlus, RefreshCw, UserRoundSearch, Users } from 'lucide-react'
+import { Mail, MailPlus, RefreshCw, UserRoundSearch, Users, Warehouse } from 'lucide-react'
 import { toast } from 'sonner'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -25,6 +26,7 @@ import {
   useResendInvitationMutation,
   useRevokeInvitationMutation,
 } from '../hooks/use-invitations'
+import { useAssignmentWarehousesQuery } from '../hooks/use-manager-assignment'
 import {
   useDeactivateStaffMutation,
   useReactivateStaffMutation,
@@ -32,6 +34,7 @@ import {
   useStaffListQuery,
 } from '../hooks/use-staff'
 import type { InvitationQuery, InvitationResponse } from '../types/invitation.types'
+import type { WarehouseAssignmentQuery } from '../types/manager-assignment.types'
 import {
   STAFF_DIRECTORY_KINDS,
   type StaffDirectoryKind,
@@ -41,6 +44,11 @@ import {
 } from '../types/staff.types'
 
 const pageSize = 10
+const warehouseScopeQuery: WarehouseAssignmentQuery = {
+  top: 1000,
+  skip: 0,
+  needTotalCount: true,
+}
 
 const STAFF_PAGE_VIEWS = {
   directory: 'directory',
@@ -91,6 +99,11 @@ export function StaffDirectoryPage() {
     needTotalCount: true,
   }
   const listQuery = useStaffListQuery(kind, params)
+  const people = listQuery.data?.items ?? []
+  const warehousesQuery = useAssignmentWarehousesQuery(
+    warehouseScopeQuery,
+    people.some((person) => person.assignedWarehouseIds.length > 0)
+  )
   const invitationsQuery = useInvitationsQuery(
     invitationParams,
     activeView === STAFF_PAGE_VIEWS.invitations
@@ -177,13 +190,12 @@ export function StaffDirectoryPage() {
     }
   }
 
-  const people = listQuery.data?.items ?? []
   const invitations = invitationsQuery.data?.items ?? []
   const directoryLabel = kind === STAFF_DIRECTORY_KINDS.managers ? 'quản lý kho' : 'nhân viên kho'
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] space-y-5">
-      <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-col gap-4">
+      <header className="flex flex-col gap-3 pb-1 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
             <Users className="size-5" aria-hidden="true" />
@@ -208,22 +220,25 @@ export function StaffDirectoryPage() {
 
       <Tabs
         value={activeView}
-        className="gap-4"
+        className="min-w-0 flex-col gap-4"
         onValueChange={(value) => isStaffPageView(value) && setActiveView(value)}
       >
-        <TabsList variant="line" className="h-10 w-full justify-start border-b p-0 sm:w-fit">
-          <TabsTrigger value={STAFF_PAGE_VIEWS.directory} className="h-10 px-3 sm:flex-none">
+        <TabsList variant="line" className="h-10 w-full justify-start border-b p-0">
+          <TabsTrigger value={STAFF_PAGE_VIEWS.directory} className="h-10 flex-none px-3">
             <Users className="size-4" aria-hidden="true" />
             Nhân sự
           </TabsTrigger>
-          <TabsTrigger value={STAFF_PAGE_VIEWS.invitations} className="h-10 px-3 sm:flex-none">
+          <TabsTrigger value={STAFF_PAGE_VIEWS.invitations} className="h-10 flex-none px-3">
             <Mail className="size-4" aria-hidden="true" />
             Lời mời
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={STAFF_PAGE_VIEWS.directory}>
-          <section className="bg-card border" aria-labelledby="staff-directory-title">
+        <TabsContent value={STAFF_PAGE_VIEWS.directory} className="min-w-0">
+          <section
+            className="bg-card min-w-0 overflow-hidden border"
+            aria-labelledby="staff-directory-title"
+          >
             <div className="flex min-h-12 flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div>
                 <h2 id="staff-directory-title" className="text-sm font-semibold">
@@ -251,6 +266,31 @@ export function StaffDirectoryPage() {
               isFetching={listQuery.isFetching}
               onSearchChange={changeSearch}
             />
+
+            {people.length > 0 && warehousesQuery.isError && (
+              <Alert variant="destructive" className="mx-3 mb-3 sm:mx-4">
+                <Warehouse aria-hidden="true" />
+                <AlertTitle>Không thể tải phạm vi kho</AlertTitle>
+                <AlertDescription className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>Danh sách nhân sự vẫn khả dụng, nhưng tên kho chưa thể hiển thị.</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    disabled={warehousesQuery.isFetching}
+                    onClick={() => void warehousesQuery.refetch()}
+                  >
+                    <RefreshCw
+                      data-icon="inline-start"
+                      className={warehousesQuery.isFetching ? 'animate-spin' : undefined}
+                      aria-hidden="true"
+                    />
+                    Thử lại
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {listQuery.isLoading && (
               <div className="divide-y">
@@ -314,6 +354,8 @@ export function StaffDirectoryPage() {
                 <StaffDirectoryTable
                   kind={kind}
                   people={people}
+                  warehouses={warehousesQuery.data?.items ?? []}
+                  isWarehouseScopeLoading={warehousesQuery.isLoading}
                   onView={(person) => setSelectedUserId(person.id)}
                   onAssignWarehouse={setManagerToAssign}
                   onLifecycleAction={(person, action) =>
@@ -331,7 +373,7 @@ export function StaffDirectoryPage() {
           </section>
         </TabsContent>
 
-        <TabsContent value={STAFF_PAGE_VIEWS.invitations}>
+        <TabsContent value={STAFF_PAGE_VIEWS.invitations} className="min-w-0">
           <InvitationManagementPanel
             invitations={invitations}
             totalCount={invitationsQuery.data?.totalCount ?? 0}

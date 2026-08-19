@@ -18,6 +18,21 @@ export function staffWarehouseScopeLabel(count: number) {
   return `${count} kho được gán`
 }
 
+export function staffWarehouseScopeSummary(
+  assignedIds: readonly string[],
+  warehouses: readonly WarehouseSummaryResponse[]
+) {
+  if (assignedIds.length === 0) return staffWarehouseScopeLabel(0)
+
+  const scope = resolveStaffWarehouseScope(assignedIds, warehouses)
+  const firstWarehouse = scope.warehouses[0]
+  if (!firstWarehouse) return staffWarehouseScopeLabel(assignedIds.length)
+
+  const remainingCount = assignedIds.length - 1
+  const firstWarehouseLabel = `${firstWarehouse.warehouseCode} · ${firstWarehouse.warehouseName}`
+  return remainingCount > 0 ? `${firstWarehouseLabel} +${remainingCount}` : firstWarehouseLabel
+}
+
 export function resolveStaffWarehouseScope(
   assignedIds: readonly string[],
   warehouses: readonly WarehouseSummaryResponse[]

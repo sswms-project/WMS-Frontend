@@ -48,7 +48,9 @@ export function StaffDetailsSheet({
   onOpenChange,
 }: StaffDetailsSheetProps) {
   const isWarehouseStaff = person?.role === USER_ROLES.WarehouseStaff
-  const assignedWarehouseIds = person && isWarehouseStaff ? getAssignedWarehouseIds(person) : []
+  const isWarehouseManager = person?.role === USER_ROLES.WarehouseManager
+  const hasWarehouseRole = isWarehouseStaff || isWarehouseManager
+  const assignedWarehouseIds = person && hasWarehouseRole ? getAssignedWarehouseIds(person) : []
   const warehousesQuery = useAssignmentWarehousesQuery(
     staffWarehouseQuery,
     open && assignedWarehouseIds.length > 0
@@ -120,13 +122,13 @@ export function StaffDetailsSheet({
               ))}
             </dl>
 
-            {isWarehouseStaff && (
+            {hasWarehouseRole && (
               <section className="border-t" aria-labelledby="staff-warehouse-scope-title">
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Warehouse className="text-muted-foreground size-4" aria-hidden="true" />
                     <h3 id="staff-warehouse-scope-title" className="text-sm font-semibold">
-                      Kho được phân công
+                      {isWarehouseManager ? 'Kho đang phụ trách' : 'Kho được phân công'}
                     </h3>
                   </div>
                   <Badge variant="outline">{assignedWarehouseIds.length}</Badge>
@@ -134,7 +136,9 @@ export function StaffDetailsSheet({
 
                 {assignedWarehouseIds.length === 0 && (
                   <p className="text-muted-foreground border-t px-4 py-5 text-sm">
-                    Nhân sự chưa được gán kho.
+                    {isWarehouseManager
+                      ? 'Quản lý chưa được gán kho.'
+                      : 'Nhân sự chưa được gán kho.'}
                   </p>
                 )}
 

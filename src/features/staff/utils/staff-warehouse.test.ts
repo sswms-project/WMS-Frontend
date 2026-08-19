@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { WarehouseSummaryResponse } from '../types/manager-assignment.types'
-import { resolveStaffWarehouseScope, staffWarehouseScopeLabel } from './staff-warehouse'
+import {
+  resolveStaffWarehouseScope,
+  staffWarehouseScopeLabel,
+  staffWarehouseScopeSummary,
+} from './staff-warehouse'
 
 const warehouses: WarehouseSummaryResponse[] = [
   {
@@ -38,5 +42,14 @@ describe('staff warehouse scope', () => {
   it('formats compact assignment counts', () => {
     expect(staffWarehouseScopeLabel(0)).toBe('Chưa gán kho')
     expect(staffWarehouseScopeLabel(2)).toBe('2 kho được gán')
+  })
+
+  it('summarizes the assigned warehouse with a stable overflow count', () => {
+    expect(staffWarehouseScopeSummary([], warehouses)).toBe('Chưa gán kho')
+    expect(staffWarehouseScopeSummary(['warehouse-a'], warehouses)).toBe('HCM-01 · Kho trung tâm')
+    expect(staffWarehouseScopeSummary(['warehouse-b', 'warehouse-a'], warehouses)).toBe(
+      'HN-01 · Kho miền Bắc +1'
+    )
+    expect(staffWarehouseScopeSummary(['missing-warehouse'], warehouses)).toBe('1 kho được gán')
   })
 })
