@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { VerifyTwoFactorForm, type VerifyStep } from '../components/VerifyTwoFactorPage'
@@ -94,7 +95,7 @@ export function VerifyTwoFactorPage() {
           try {
             user = decodeJwtUser(accessToken)
           } catch (error) {
-            console.error('Failed to decode verified access token', error)
+            logger.error('Failed to decode verified access token', error)
             toast.error('Không thể hoàn tất đăng nhập.')
             return
           }

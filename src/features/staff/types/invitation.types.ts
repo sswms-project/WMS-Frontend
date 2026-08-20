@@ -12,3 +12,19 @@ export interface AcceptInvitationRequest {
   fullName: string
   password: string
 }
+
+export interface InvitationResponse {
+  id: string
+  email: string
+  role: string
+  warehouseId?: string
+  status: string
+  expiresAt: string
+  createdAt: string
+}
+
+export interface InvitationQuery {
+  top: number
+  skip: number
+  needTotalCount: true
+}

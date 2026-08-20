@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
@@ -83,7 +84,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
       setIsEditDialogOpen(false)
       return true
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       toast.error(getErrorMessage(error) || 'Không thể cập nhật thông tin kho. Vui lòng thử lại.')
       return false
     }

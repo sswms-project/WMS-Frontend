@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
 import type { WarehouseDetailResponse, WarehouseResponse, ZoneResponse } from '@/types/warehouse'
@@ -128,7 +129,7 @@ export function useCreateWarehouseMutation() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all })
     },
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -150,7 +151,7 @@ export function useUpdateWarehouseMutation() {
         }),
       ])
     },
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -162,7 +163,7 @@ export function useDeactivateWarehouseMutation() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all })
     },
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -184,7 +185,7 @@ export function useCreateZoneMutation() {
   return useMutation<ApiResponse<string>, ApiErrorResponse, CreateZoneVariables>({
     mutationFn: ({ warehouseId, request }) => warehouseService.createZone(warehouseId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -194,7 +195,7 @@ export function useUpdateZoneMutation() {
     mutationFn: ({ warehouseId, zoneId, request }) =>
       warehouseService.updateZone(warehouseId, zoneId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -203,7 +204,7 @@ export function useDeactivateZoneMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateZoneVariables>({
     mutationFn: ({ warehouseId, zoneId }) => warehouseService.deactivateZone(warehouseId, zoneId),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -213,7 +214,7 @@ export function useCreateRackMutation() {
     mutationFn: ({ warehouseId, zoneId, request }) =>
       warehouseService.createRack(warehouseId, zoneId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -223,7 +224,7 @@ export function useUpdateRackMutation() {
     mutationFn: ({ warehouseId, zoneId, rackId, request }) =>
       warehouseService.updateRack(warehouseId, zoneId, rackId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -233,7 +234,7 @@ export function useDeactivateRackMutation() {
     mutationFn: ({ warehouseId, zoneId, rackId }) =>
       warehouseService.deactivateRack(warehouseId, zoneId, rackId),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -243,7 +244,7 @@ export function useCreateSlotMutation() {
     mutationFn: ({ warehouseId, rackId, request }) =>
       warehouseService.createSlot(warehouseId, rackId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -253,7 +254,7 @@ export function useUpdateSlotMutation() {
     mutationFn: ({ warehouseId, rackId, slotId, request }) =>
       warehouseService.updateSlot(warehouseId, rackId, slotId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -263,6 +264,6 @@ export function useDeactivateSlotMutation() {
     mutationFn: ({ warehouseId, rackId, slotId }) =>
       warehouseService.deactivateSlot(warehouseId, rackId, slotId),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }

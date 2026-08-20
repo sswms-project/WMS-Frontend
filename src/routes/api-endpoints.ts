@@ -61,6 +61,9 @@ export const API_ENDPOINTS = {
   invitations: {
     send: '/invitations',
     accept: (token: string) => `/invitations/${token}/accept`,
+    list: '/invitations',
+    resend: (id: string) => `/invitations/${id}/resend`,
+    revoke: (id: string) => `/invitations/${id}`,
   },
   subscription: {
     me: '/subscriptions/me',

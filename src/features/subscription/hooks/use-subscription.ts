@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse } from '@/types/api'
 import { subscriptionService } from '../services/subscription.service'
@@ -61,7 +62,7 @@ export function useUpgradeSubscriptionMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
     },
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Không thể cập nhật gói dịch vụ. Vui lòng thử lại.')
     },
   })
@@ -78,7 +79,7 @@ export function useRenewSubscriptionMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
     },
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Không thể gia hạn gói dịch vụ. Vui lòng thử lại.')
     },
   })
@@ -94,7 +95,7 @@ export function useCancelSubscriptionMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.me })
     },
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Không thể hủy gói dịch vụ. Vui lòng thử lại.')
     },
   })
@@ -105,7 +106,7 @@ export function useInvoiceDataMutation() {
     mutationFn: (paymentId) =>
       subscriptionService.getInvoiceData(paymentId).then((response) => response.data),
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Không thể tải hóa đơn. Vui lòng thử lại.')
     },
   })
@@ -115,7 +116,7 @@ export function useInvoiceDownloadMutation() {
   return useMutation<Blob, ApiErrorResponse, string>({
     mutationFn: subscriptionService.downloadInvoice,
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Không thể tải hóa đơn. Vui lòng thử lại.')
     },
   })
