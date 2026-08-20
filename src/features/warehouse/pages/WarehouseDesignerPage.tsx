@@ -3,6 +3,7 @@
 import { RefreshCw, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -134,7 +135,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
       setIsZoneFormOpen(false)
       return true
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       toast.error('Không thể thêm khu vực. Vui lòng thử lại.')
       return false
     }
@@ -148,7 +149,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
       setRackZoneId(null)
       return true
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       toast.error('Không thể thêm kệ hàng. Vui lòng thử lại.')
       return false
     }

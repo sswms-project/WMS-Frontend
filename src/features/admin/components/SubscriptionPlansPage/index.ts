@@ -1,3 +1,4 @@
+export { PlanCatalogSummary } from './PlanCatalogSummary'
 export { SubscriptionPlanTable } from './SubscriptionPlanTable'
 export {
   SubscriptionPlanFormDialog,

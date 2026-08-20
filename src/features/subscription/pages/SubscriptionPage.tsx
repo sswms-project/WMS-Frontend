@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { logger } from '@/lib/logger'
 import { CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import {
   SubscriptionEmptyState,
   SubscriptionErrorState,
   SubscriptionPageSkeleton,
+  TenantOwnerOnlyState,
 } from '../components/SubscriptionPage'
 import {
   useCancelSubscriptionMutation,
@@ -175,7 +177,7 @@ export function SubscriptionPage() {
     const printWindow = window.open('', '_blank')
     if (!printWindow) {
       const error = new Error('Popup blocked')
-      console.error(error)
+      logger.error(error)
       toast.error('The print window was blocked. Please allow popups and try again.')
       return
     }
@@ -183,7 +185,7 @@ export function SubscriptionPage() {
     try {
       printWindow.opener = null
     } catch (error) {
-      console.warn('Unable to clear print window opener.', error)
+      logger.warn('Unable to clear print window opener.', error)
     }
 
     printWindow.location.replace(`/subscription/invoices/${payment.id}/print`)
@@ -311,24 +313,6 @@ function downloadBlob(blob: Blob, fileName: string): void {
   anchor.click()
   anchor.remove()
   URL.revokeObjectURL(url)
-}
-
-function TenantOwnerOnlyState() {
-  return (
-    <Card className="border-border mx-auto max-w-3xl">
-      <CardHeader>
-        <CardTitle>Chỉ TenantOwner được truy cập</CardTitle>
-        <CardDescription>
-          Trang gói dịch vụ chứa thông tin billing của tenant nên không mở cho role hiện tại.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button asChild variant="outline">
-          <Link href={APP_ROUTES.dashboard}>Quay lại dashboard</Link>
-        </Button>
-      </CardContent>
-    </Card>
-  )
 }
 
 function getDialogCopy(dialogState: DialogState | null, currentPlanName?: string) {
