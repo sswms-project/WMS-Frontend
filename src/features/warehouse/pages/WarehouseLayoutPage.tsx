@@ -8,7 +8,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
-import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
@@ -146,7 +145,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setZoneFormTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(getErrorMessage(error, 'Không thể lưu khu vực. Vui lòng thử lại.'))
       return false
     }
@@ -174,7 +173,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setRackFormTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(getErrorMessage(error, 'Không thể lưu kệ hàng. Vui lòng thử lại.'))
       return false
     }
@@ -202,7 +201,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setSlotFormTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(getErrorMessage(error, 'Không thể lưu vị trí. Vui lòng thử lại.'))
       return false
     }
@@ -230,7 +229,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setDeactivateTarget(null)
       setDeactivateErrorMessage(null)
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       setDeactivateErrorMessage(
         getErrorMessage(error, 'Không thể ngừng hoạt động vị trí. Vui lòng thử lại.')
       )

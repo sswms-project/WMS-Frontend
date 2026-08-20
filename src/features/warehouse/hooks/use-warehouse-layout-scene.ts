@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { warehouseLayoutSceneService } from '../services/warehouse-layout-scene.service'
@@ -38,6 +37,6 @@ export function useSaveWarehouseLayoutSceneMutation() {
         }),
       ])
     },
-    onError: (error) => logger.error(error),
+    onError: (error) => console.error(error),
   })
 }

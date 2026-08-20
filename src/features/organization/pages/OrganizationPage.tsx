@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Building2, RefreshCw, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ApiErrorResponse } from '@/types/api'
@@ -84,7 +83,7 @@ export function OrganizationPage() {
       setIsEditing(false)
       return true
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       if (!isApiErrorResponse(error)) {
         toast.error('Không thể cập nhật tổ chức. Vui lòng thử lại.')
         return false

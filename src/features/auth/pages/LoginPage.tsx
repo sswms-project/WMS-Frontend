@@ -1,6 +1,5 @@
 'use client'
 
-import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'next/navigation'
@@ -50,7 +49,7 @@ export function LoginPage() {
       try {
         user = decodeJwtUser(accessToken)
       } catch (error) {
-        logger.error('Failed to decode access token', error)
+        console.error('Failed to decode access token', error)
         toast.error('Không thể hoàn tất đăng nhập.')
         return
       }

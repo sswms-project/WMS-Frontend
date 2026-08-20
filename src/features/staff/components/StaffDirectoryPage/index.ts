@@ -1,5 +1,3 @@
-export { InvitationManagementPanel } from './InvitationManagementPanel'
-export { InvitationRevokeDialog } from './InvitationRevokeDialog'
 export { InviteStaffDialog } from './InviteStaffDialog'
 export { ManagerWarehouseAssignmentDialog } from './ManagerWarehouseAssignmentDialog'
 export { StaffDetailsSheet } from './StaffDetailsSheet'

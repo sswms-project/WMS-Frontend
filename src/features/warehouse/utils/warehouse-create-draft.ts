@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger'
 import type { CreateWarehouseFormValues } from '../schemas/warehouse.schema'
 
 const WAREHOUSE_CREATE_DRAFT_STORAGE_KEY = 'warehouse-create-draft:v1'
@@ -28,7 +27,7 @@ export const getWarehouseCreateDraft = (): CreateWarehouseFormValues => {
       address: typeof parsedDraft.address === 'string' ? parsedDraft.address : '',
     }
   } catch (error) {
-    logger.error('Unable to restore the warehouse draft.', error)
+    console.error('Unable to restore the warehouse draft.', error)
     return emptyDraft()
   }
 }
@@ -44,7 +43,7 @@ export const saveWarehouseCreateDraft = (draft: CreateWarehouseFormValues): void
 
     localStorage.setItem(WAREHOUSE_CREATE_DRAFT_STORAGE_KEY, JSON.stringify(draft))
   } catch (error) {
-    logger.error('Unable to save the warehouse draft.', error)
+    console.error('Unable to save the warehouse draft.', error)
   }
 }
 
@@ -54,6 +53,6 @@ export const clearWarehouseCreateDraft = (): void => {
   try {
     localStorage.removeItem(WAREHOUSE_CREATE_DRAFT_STORAGE_KEY)
   } catch (error) {
-    logger.error('Unable to clear the warehouse draft.', error)
+    console.error('Unable to clear the warehouse draft.', error)
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCountUp } from '../../hooks/use-count-up'
+import { useCountUp } from '../../hooks/useCountUp'
 import { parseMetricValue } from '../../utils/format-metric-value'
 
 interface AnimatedMetricValueProps {

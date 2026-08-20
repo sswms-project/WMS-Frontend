@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { LocationBarcodeResponse } from '../../types/warehouse.types'
 
@@ -42,7 +41,7 @@ export function WarehouseLocationBarcodeView({
         lineColor: '#111111',
       })
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       queueMicrotask(() => {
         if (!isCancelled) {
           setRenderError('Giá trị barcode không thể hiển thị bằng chuẩn Code 128.')

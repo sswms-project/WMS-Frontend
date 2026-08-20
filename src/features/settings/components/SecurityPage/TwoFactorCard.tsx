@@ -5,7 +5,6 @@ import { Shield, ShieldQuestion } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { DisableTwoFactorDialog } from './DisableTwoFactorDialog'
@@ -18,7 +17,7 @@ export function TwoFactorCard() {
 
   useEffect(() => {
     if (!meQuery.error) return
-    logger.error(meQuery.error)
+    console.error(meQuery.error)
     toast.error(meQuery.error.message ?? 'Không thể tải thông tin tài khoản. Vui lòng thử lại.')
   }, [meQuery.error])
 

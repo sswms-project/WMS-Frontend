@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -34,7 +33,7 @@ export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
 
   React.useEffect(() => {
     if (!verifyEmailQuery.error) return
-    logger.error(verifyEmailQuery.error)
+    console.error(verifyEmailQuery.error)
     toast.error(getApiErrorMessage(verifyEmailQuery.error))
   }, [verifyEmailQuery.error])
 

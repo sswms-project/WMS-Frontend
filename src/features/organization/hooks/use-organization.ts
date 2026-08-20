@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import type { UpdateOrganizationRequest } from '../schemas/organization.schema'
@@ -25,6 +24,6 @@ export function useUpdateOrganizationMutation() {
     onSuccess: (response) => {
       queryClient.setQueryData(queryKeys.organization.me, response.data)
     },
-    onError: (error) => logger.error(error),
+    onError: (error) => console.error(error),
   })
 }

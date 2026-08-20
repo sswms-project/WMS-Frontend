@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import { logger } from '@/lib/logger'
 import { AlertCircle, Boxes, Info, RefreshCw, X } from 'lucide-react'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -277,7 +276,7 @@ export function WarehouseDesignerWorkspace({
       toast.success('Đã cập nhật tên kệ hàng.')
       return true
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(getActionError(error, 'Không thể cập nhật tên kệ. Vui lòng thử lại.'))
       return false
     }
@@ -293,7 +292,7 @@ export function WarehouseDesignerWorkspace({
       setSelection(null)
       setIsInspectorOpen(false)
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       setRackDeactivateError(
         getActionError(error, 'Không thể ngừng hoạt động kệ. Vui lòng thử lại.')
       )

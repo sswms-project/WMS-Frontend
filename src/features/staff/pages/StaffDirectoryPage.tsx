@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Mail, MailPlus, RefreshCw, UserRoundSearch, Users, Warehouse } from 'lucide-react'
 import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -140,7 +139,7 @@ export function StaffDirectoryPage() {
       )
       setPendingLifecycleAction(null)
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(
         typeof error === 'object' &&
           error !== null &&
@@ -157,7 +156,7 @@ export function StaffDirectoryPage() {
       await resendInvitationMutation.mutateAsync(invitation.id)
       toast.success(`Đã gửi lại lời mời tới ${invitation.email}.`)
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(
         typeof error === 'object' &&
           error !== null &&
@@ -179,7 +178,7 @@ export function StaffDirectoryPage() {
       setInvitationToRevoke(null)
       if (shouldReturnToPreviousPage) setInvitationPage((currentPage) => currentPage - 1)
     } catch (error) {
-      logger.error(error)
+      console.error(error)
       toast.error(
         typeof error === 'object' &&
           error !== null &&
