@@ -59,11 +59,8 @@ export const API_ENDPOINTS = {
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
   },
   invitations: {
-    list: '/invitations',
     send: '/invitations',
     accept: (token: string) => `/invitations/${token}/accept`,
-    revoke: (invitationId: string) => `/invitations/${invitationId}`,
-    resend: (invitationId: string) => `/invitations/${invitationId}/resend`,
   },
   subscription: {
     me: '/subscriptions/me',
