@@ -1,21 +1,9 @@
 import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
-import type { ApiResponse, QueryResult } from '@/types/api'
-import type {
-  AcceptInvitationRequest,
-  InvitationQuery,
-  InvitationResponse,
-  SendInvitationRequest,
-} from '../types/invitation.types'
+import type { ApiResponse } from '@/types/api'
+import type { AcceptInvitationRequest, SendInvitationRequest } from '../types/invitation.types'
 
 export const invitationService = {
-  getInvitations: (params: InvitationQuery) =>
-    axiosClient
-      .get<ApiResponse<QueryResult<InvitationResponse>>>(API_ENDPOINTS.invitations.list, {
-        params,
-      })
-      .then((response) => response.data),
-
   send: (request: SendInvitationRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.send, request)
@@ -24,15 +12,5 @@ export const invitationService = {
   accept: (token: string, request: AcceptInvitationRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.accept(token), request)
-      .then((response) => response.data),
-
-  revoke: (invitationId: string) =>
-    axiosClient
-      .delete<ApiResponse<unknown>>(API_ENDPOINTS.invitations.revoke(invitationId))
-      .then((response) => response.data),
-
-  resend: (invitationId: string) =>
-    axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.resend(invitationId))
       .then((response) => response.data),
 }
