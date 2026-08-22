@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse } from '@/types/api'
 import { settingsService } from '../services/settings.service'
@@ -26,7 +27,7 @@ export function useTwoFactorSetupMutation() {
     onError: (error: ApiErrorResponse) => {
       // Không toast ở đây — EnableTwoFactorDialog hiển thị lỗi qua step 'setupError'
       // (đã có UI inline riêng), tránh trùng lặp toast + inline cho cùng 1 lỗi.
-      console.error(error)
+      logger.error(error)
     },
   })
 }
@@ -41,7 +42,7 @@ export function useTwoFactorConfirmMutation() {
     onError: (error: ApiErrorResponse) => {
       // Không toast ở đây — EnableTwoFactorDialog classify (setupExpired/invalidOtp/
       // network/unknown) và tự hiển thị lỗi, tránh trùng lặp toast + inline.
-      console.error(error)
+      logger.error(error)
     },
   })
 }
@@ -55,7 +56,7 @@ export function useTwoFactorDisableMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Không thể tắt xác thực hai yếu tố. Vui lòng thử lại.')
     },
   })

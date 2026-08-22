@@ -133,7 +133,7 @@ export function AcceptInvitationForm({
                     id="invitation-full-name"
                     autoComplete="name"
                     autoFocus
-                    maxLength={255}
+                    maxLength={300}
                     aria-invalid={Boolean(errors.fullName)}
                     className="h-11"
                     {...register('fullName')}

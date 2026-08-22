@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { authService } from '../services/auth.service'
@@ -18,7 +19,7 @@ import type {
 } from '../types/auth.types'
 
 function logAuthError(action: string, error: ApiErrorResponse) {
-  console.warn(`[auth] ${action} failed`, {
+  logger.warn(`[auth] ${action} failed`, {
     statusCode: error.statusCode,
     message: error.message,
     errors: error.errors,
@@ -139,7 +140,7 @@ export function useVerify2FAMutation() {
       // Không toast ở đây — VerifyTwoFactorPage classify (sessionExpired/invalidOtp/
       // accountUnavailable/network/unknown) và tự hiển thị lỗi, tránh trùng lặp
       // toast + inline cho cùng 1 lỗi.
-      console.error(error)
+      logger.error(error)
     },
   })
 }
@@ -156,7 +157,7 @@ export function useChangePasswordMutation() {
     onError: (error) => {
       // Không toast ở đây — ChangePasswordCard classify (sai mật khẩu hiện tại →
       // lỗi inline tại field, còn lại → toast chung) tránh trùng lặp hiển thị.
-      console.error(error)
+      logger.error(error)
     },
   })
 }

@@ -1,12 +1,9 @@
 import {
   Building2,
-  Boxes,
   CreditCard,
   LayoutDashboard,
-  Package,
   Settings,
   Shield,
-  Truck,
   Users,
   Warehouse,
 } from 'lucide-react'
@@ -23,9 +20,6 @@ export type NavItem = {
 export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
   [USER_ROLES.SystemAdmin]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
-    { href: APP_ROUTES.inventory, label: 'Inventory', icon: Boxes },
-    { href: APP_ROUTES.orders, label: 'Orders', icon: Package },
-    { href: APP_ROUTES.delivery, label: 'Delivery', icon: Truck },
     { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
     { href: APP_ROUTES.admin.roles, label: 'Phân quyền', icon: Shield },
     { href: APP_ROUTES.admin.subscriptionPlans, label: 'Gói đăng ký', icon: CreditCard },
@@ -36,23 +30,15 @@ export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { href: APP_ROUTES.staff, label: 'Nhân sự', icon: Users },
     { href: APP_ROUTES.subscription, label: 'Gói dịch vụ', icon: CreditCard },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
-    { href: APP_ROUTES.inventory, label: 'Inventory', icon: Boxes },
-    { href: APP_ROUTES.orders, label: 'Orders', icon: Package },
-    { href: APP_ROUTES.delivery, label: 'Delivery', icon: Truck },
     { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
   ],
   [USER_ROLES.WarehouseManager]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
     { href: APP_ROUTES.staff, label: 'Nhân sự', icon: Users },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
-    { href: APP_ROUTES.inventory, label: 'Inventory', icon: Boxes },
-    { href: APP_ROUTES.orders, label: 'Orders', icon: Package },
-    { href: APP_ROUTES.delivery, label: 'Delivery', icon: Truck },
   ],
   [USER_ROLES.WarehouseStaff]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
-    { href: APP_ROUTES.orders, label: 'Orders', icon: Package },
-    { href: APP_ROUTES.delivery, label: 'Delivery', icon: Truck },
   ],
 }

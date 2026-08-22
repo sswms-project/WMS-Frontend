@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { logger } from '@/lib/logger'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAuthStore } from '@/stores/auth.store'
 import type { ApiErrorResponse } from '@/types/api'
@@ -69,7 +70,7 @@ export function WarehousePage() {
       setIsCreateDialogOpen(false)
       return true
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       const codeError = isApiErrorResponse(error) ? getWarehouseCodeError(error) : undefined
       if (codeError) {
         setWarehouseCodeError(codeError)

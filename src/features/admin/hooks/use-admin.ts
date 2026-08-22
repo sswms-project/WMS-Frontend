@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import type {
@@ -38,7 +39,7 @@ export function useAssignPermissionsMutation() {
       queryClient.invalidateQueries({ queryKey: KEYS.roles })
     },
     onError: (error: ApiErrorResponse) => {
-      console.error(error)
+      logger.error(error)
       toast.error(error.message ?? 'Cập nhật quyền thất bại')
     },
   })
@@ -73,7 +74,7 @@ export function useCreateSubscriptionPlanMutation() {
       // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -90,7 +91,7 @@ export function useUpdateSubscriptionPlanMutation() {
       // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
 
@@ -103,6 +104,6 @@ export function useDeactivateSubscriptionPlanMutation() {
       // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }

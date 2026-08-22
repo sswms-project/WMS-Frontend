@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
 import { managerAssignmentService } from '../services/manager-assignment.service'
@@ -30,6 +31,6 @@ export function useAssignManagerMutation() {
     mutationFn: ({ warehouseId, request }) =>
       managerAssignmentService.assignManager(warehouseId, request),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
-    onError: (error) => console.error(error),
+    onError: (error) => logger.error(error),
   })
 }
