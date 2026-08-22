@@ -1,7 +1,6 @@
 'use client'
 
 import { createContext, useContext, type ReactNode } from 'react'
-import { USER_ROLES } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCurrentSubscriptionQuery } from '../hooks/use-subscription'
 
@@ -22,9 +21,8 @@ interface SubscriptionReadOnlyProviderProps {
 
 export function SubscriptionReadOnlyProvider({ children }: SubscriptionReadOnlyProviderProps) {
   const user = useAuthStore((state) => state.user)
-  const isTenantOwner = user?.role === USER_ROLES.TenantOwner
-  const subscriptionQuery = useCurrentSubscriptionQuery(isTenantOwner)
-  const isReadOnly = isTenantOwner && Boolean(subscriptionQuery.data?.isExpired)
+  const subscriptionQuery = useCurrentSubscriptionQuery(!!user)
+  const isReadOnly = Boolean(subscriptionQuery.data?.isExpired)
 
   return (
     <SubscriptionReadOnlyContext.Provider
