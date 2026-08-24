@@ -60,6 +60,12 @@ export interface ResetPasswordRequestDto {
 
 export type ResetPasswordResponseDto = unknown
 
+export interface UpdateProfileRequest {
+  fullName?: string
+  email?: string
+  phone?: string
+}
+
 export interface UserProfileResponse {
   id: string
   tenantId: string | null
