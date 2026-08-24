@@ -32,6 +32,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { InventoryBalance, InventoryFilterOption } from '../../types/inventory.types'
 import { formatInventoryDate, formatInventoryQuantity } from '../../utils/inventory-format'
+import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryDirectoryProps {
   readonly items: readonly InventoryBalance[]
@@ -104,6 +105,8 @@ export function InventoryDirectory({
           <span className="text-xs font-medium tabular-nums">{totalCount} vị trí tồn kho</span>
         </div>
       </header>
+
+      <InventoryWorkspaceNavigation currentView="availability" />
 
       <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="inventory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
