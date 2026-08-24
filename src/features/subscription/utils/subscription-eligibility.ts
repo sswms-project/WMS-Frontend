@@ -5,7 +5,7 @@ export function isDowngradePlan(
   candidatePlan: SubscriptionPlanResponse
 ): boolean {
   if (currentPlanPrice === undefined) return false
-  return candidatePlan.price < currentPlanPrice
+  return candidatePlan.monthlyPrice < currentPlanPrice
 }
 
 export function getPlanActionState(
@@ -17,7 +17,7 @@ export function getPlanActionState(
     return { disabled: true, label: 'Đang sử dụng' }
   }
 
-  if (isDowngradePlan(currentPlan?.price, plan)) {
+  if (isDowngradePlan(currentPlan?.monthlyPrice, plan)) {
     return {
       disabled: true,
       label: 'Không hỗ trợ hạ gói',

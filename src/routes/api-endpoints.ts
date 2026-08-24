@@ -108,6 +108,7 @@ export const API_ENDPOINTS = {
   },
   public: {
     subscriptionPlans: '/public/subscription-plans',
+    subscriptionFeatures: '/public/subscription-features',
   },
   payments: {
     history: '/payments',

@@ -13,16 +13,30 @@ export interface SubscriptionStatusResponse {
   daysRemaining: number
 }
 
+export type PlanFeatureType = 'Boolean' | 'Limit'
+
+export interface PlanFeatureResponse {
+  featureCode: string
+  displayName: string
+  featureType: PlanFeatureType
+  limitValue?: number
+}
+
+export interface SubscriptionFeatureMetaResponse {
+  code: string
+  name: string
+  type: PlanFeatureType
+  description: string
+}
+
 export interface SubscriptionPlanResponse {
   id: string
   planName: string
-  price: number
-  billingCycle: string
-  maxWarehouses: number
-  maxUsers: number
-  enableForecasting: boolean
-  enableBarcode: boolean
-  enableLayoutDesigner: boolean
+  monthlyPrice: number
+  yearlyPrice: number
+  yearlyDiscountPercent: number
+  displayOrder: number
+  features: PlanFeatureResponse[]
   status: string
 }
 

@@ -35,7 +35,6 @@ import type {
 import {
   buildInvoiceFileName,
   findCurrentPlan,
-  formatBillingCycle,
   formatCurrency,
   isActivePlan,
   isCompletedPayment,
@@ -323,7 +322,7 @@ function getDialogCopy(dialogState: DialogState | null, currentPlanName?: string
   if (dialogState.type === 'upgrade') {
     return {
       title: 'Xác nhận nâng cấp gói',
-      description: `Chuyển từ ${currentPlanName ?? 'gói hiện tại'} sang ${dialogState.plan.planName} với giá ${formatCurrency(dialogState.plan.price)} theo ${formatBillingCycle(dialogState.plan.billingCycle).toLowerCase()}.`,
+      description: `Chuyển từ ${currentPlanName ?? 'gói hiện tại'} sang ${dialogState.plan.planName} với giá ${formatCurrency(dialogState.plan.monthlyPrice)}/tháng.`,
       confirmLabel: 'Nâng cấp',
     }
   }

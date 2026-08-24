@@ -12,31 +12,16 @@ export interface SendInvitationRequest {
 export interface InvitationResponse {
   id: string
   email: string
-  role: string
+  role: InvitableRole
   warehouseId?: string
   status: string
-  expiresAt: string
   createdAt: string
-}
-
-export interface InvitationQuery {
-  top: number
-  skip: number
-  needTotalCount: true
-}
-
-export interface AcceptInvitationRequest {
-  fullName: string
-  password: string
+  expiresAt: string
 }
 
 export interface InvitationQuery extends QueryInfo {}
 
-export interface InvitationResponse {
-  id: string
-  email: string
-  role: InvitableRole
-  status: string
-  createdAt: string
-  expiresAt: string
+export interface AcceptInvitationRequest {
+  fullName: string
+  password: string
 }
