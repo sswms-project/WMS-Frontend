@@ -10,6 +10,8 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.admin.roles, label: 'Phân quyền vai trò' },
   { prefix: APP_ROUTES.dashboard, label: 'Bảng điều khiển' },
   { prefix: APP_ROUTES.warehouses, label: 'Kho hàng' },
+  { prefix: APP_ROUTES.purchaseOrders, label: 'Mua hàng' },
+  { prefix: APP_ROUTES.inbound, label: 'Nhập kho' },
   { prefix: APP_ROUTES.inventory, label: 'Tồn kho' },
   { prefix: APP_ROUTES.orders, label: 'Đơn hàng' },
   { prefix: APP_ROUTES.delivery, label: 'Vận chuyển' },

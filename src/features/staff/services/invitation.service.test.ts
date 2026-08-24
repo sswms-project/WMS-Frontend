@@ -37,9 +37,9 @@ describe('invitationService', () => {
     )
   })
 
-  it('does not expose invitation operations missing from the backend controller', () => {
-    expect(invitationService).not.toHaveProperty('getInvitations')
-    expect(invitationService).not.toHaveProperty('resend')
-    expect(invitationService).not.toHaveProperty('revoke')
+  it('exposes the invitation management operations provided by the backend controller', () => {
+    expect(invitationService).toHaveProperty('list')
+    expect(invitationService).toHaveProperty('resend')
+    expect(invitationService).toHaveProperty('revoke')
   })
 })
