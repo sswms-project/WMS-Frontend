@@ -58,9 +58,45 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
   },
+  products: {
+    list: '/products',
+  },
+  inventory: {
+    list: '/inventory',
+  },
+  suppliers: {
+    list: '/suppliers',
+  },
+  purchaseOrders: {
+    list: '/purchase-orders',
+    create: '/purchase-orders',
+    detail: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
+    update: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
+    submit: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/submit`,
+    approve: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/approve`,
+    reject: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/reject`,
+    allowedActions: (purchaseOrderId: string) =>
+      `/purchase-orders/${purchaseOrderId}/allowed-actions`,
+  },
+  inboundReceipts: {
+    list: '/inbound-receipts',
+    create: '/inbound-receipts',
+    detail: (receiptId: string) => `/inbound-receipts/${receiptId}`,
+    update: (receiptId: string) => `/inbound-receipts/${receiptId}`,
+    receivingTasks: '/inbound-receipts/receiving-tasks',
+    putawayTasks: '/inbound-receipts/putaway-tasks',
+    submit: (receiptId: string) => `/inbound-receipts/${receiptId}/submit`,
+    approve: (receiptId: string) => `/inbound-receipts/${receiptId}/approve`,
+    reject: (receiptId: string) => `/inbound-receipts/${receiptId}/reject`,
+    allowedActions: (receiptId: string) => `/inbound-receipts/${receiptId}/allowed-actions`,
+    putaway: (receiptId: string) => `/inbound-receipts/${receiptId}/putaway`,
+  },
   invitations: {
     send: '/invitations',
     accept: (token: string) => `/invitations/${token}/accept`,
+    list: '/invitations',
+    resend: (id: string) => `/invitations/${id}/resend`,
+    revoke: (id: string) => `/invitations/${id}`,
   },
   subscription: {
     me: '/subscriptions/me',
