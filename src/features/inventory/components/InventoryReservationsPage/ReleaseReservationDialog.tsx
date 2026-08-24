@@ -69,7 +69,7 @@ export function ReleaseReservationDialog({
                 max={item.reservedQuantity}
                 aria-invalid={Boolean(quantityError)}
                 disabled={isPending}
-                {...form.register('quantity')}
+                {...form.register('quantity', { valueAsNumber: true })}
               />
               <FieldError errors={quantityError ? [quantityError] : undefined} />
             </Field>
