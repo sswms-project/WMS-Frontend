@@ -74,3 +74,8 @@ export interface StockMovementListResponse {
   pageNumber: number
   pageSize: number
 }
+
+export interface InventoryReservationQuery {
+  warehouseId?: string
+  productId?: string
+}
