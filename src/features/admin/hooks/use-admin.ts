@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
+import type { SubscriptionFeatureMetaResponse } from '@/features/subscription/types/subscription.types'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import type {
   CreateSubscriptionPlanRequest,
@@ -13,6 +14,7 @@ import type { AssignPermissionsRequest, SubscriptionPlanResponse } from '../type
 const KEYS = {
   roles: ['admin', 'roles'] as const,
   permissions: ['admin', 'permissions'] as const,
+  subscriptionFeatures: ['admin', 'subscription-features'] as const,
 }
 
 export function useRolesQuery() {
@@ -59,6 +61,14 @@ export function useAdminSubscriptionPlansQuery() {
   })
 }
 
+export function useSubscriptionFeaturesQuery() {
+  return useQuery<SubscriptionFeatureMetaResponse[], ApiErrorResponse>({
+    queryKey: KEYS.subscriptionFeatures,
+    queryFn: () => adminService.getSubscriptionFeatures().then((r) => r.data),
+    staleTime: 10 * 60 * 1000, // feature list thay đổi rất ít
+  })
+}
+
 // Create/Update chỉ log lỗi ở hook — page orchestrator phân loại lỗi field và toast,
 // nên hiển thị toast thêm tại đây sẽ gây trùng thông báo.
 export function useCreateSubscriptionPlanMutation() {
@@ -70,8 +80,6 @@ export function useCreateSubscriptionPlanMutation() {
   >({
     mutationFn: adminService.createSubscriptionPlan,
     onSuccess: () => {
-      // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
-      // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
     onError: (error) => logger.error(error),
@@ -87,8 +95,6 @@ export function useUpdateSubscriptionPlanMutation() {
   >({
     mutationFn: ({ id, body }) => adminService.updateSubscriptionPlan(id, body),
     onSuccess: () => {
-      // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
-      // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
     onError: (error) => logger.error(error),
@@ -100,8 +106,6 @@ export function useDeactivateSubscriptionPlanMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: adminService.deactivateSubscriptionPlan,
     onSuccess: () => {
-      // Invalidate cả nhánh 'subscription' để danh sách gói phía tenant và trang
-      // bảng giá công khai cũng lấy lại dữ liệu mới.
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
     },
     onError: (error) => logger.error(error),
