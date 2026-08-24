@@ -36,6 +36,13 @@ describe('warehouse navigation visibility', () => {
       USER_ROLES.WarehouseStaff,
     ]) {
       expect(NAV_CONFIG[role].some((item) => item.href === APP_ROUTES.inbound)).toBe(true)
+      expect(NAV_CONFIG[role].some((item) => item.href === APP_ROUTES.inventory)).toBe(true)
     }
+  })
+
+  it('keeps tenant inventory hidden from the system admin', () => {
+    expect(
+      NAV_CONFIG[USER_ROLES.SystemAdmin].some((item) => item.href === APP_ROUTES.inventory)
+    ).toBe(false)
   })
 })

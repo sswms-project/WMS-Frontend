@@ -3,6 +3,7 @@ import {
   CreditCard,
   ClipboardList,
   PackageCheck,
+  PackageSearch,
   LayoutDashboard,
   Settings,
   Shield,
@@ -34,6 +35,7 @@ export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
     { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
     { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
+    { href: APP_ROUTES.inventory, label: 'Tồn kho', icon: PackageSearch },
     { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
   ],
   [USER_ROLES.WarehouseManager]: [
@@ -42,10 +44,12 @@ export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
     { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
     { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
+    { href: APP_ROUTES.inventory, label: 'Tồn kho', icon: PackageSearch },
   ],
   [USER_ROLES.WarehouseStaff]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
     { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
+    { href: APP_ROUTES.inventory, label: 'Tồn kho', icon: PackageSearch },
   ],
 }
