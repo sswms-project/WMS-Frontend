@@ -83,4 +83,19 @@ describe('inventoryService', () => {
       { data: 2.5 }
     )
   })
+
+  it('sends the exact damaged stock command', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: 'adjustment-1' }
+    vi.mocked(axiosClient.post).mockResolvedValue({ data: response })
+    const request = {
+      productId: 'product-1',
+      warehouseId: 'warehouse-1',
+      slotId: 'slot-1',
+      quantity: 2,
+      reason: 'Bao bì thấm nước',
+    }
+
+    await expect(inventoryService.reportDamagedStock(request)).resolves.toEqual(response)
+    expect(axiosClient.post).toHaveBeenCalledWith(API_ENDPOINTS.inventory.damaged, request)
+  })
 })
