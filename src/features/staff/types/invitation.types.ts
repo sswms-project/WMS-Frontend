@@ -1,3 +1,4 @@
+import type { QueryInfo } from '@/types/api'
 import type { USER_ROLES } from '@/config/roles'
 
 export type InvitableRole = typeof USER_ROLES.WarehouseManager | typeof USER_ROLES.WarehouseStaff
@@ -27,4 +28,15 @@ export interface InvitationQuery {
 export interface AcceptInvitationRequest {
   fullName: string
   password: string
+}
+
+export interface InvitationQuery extends QueryInfo {}
+
+export interface InvitationResponse {
+  id: string
+  email: string
+  role: InvitableRole
+  status: string
+  createdAt: string
+  expiresAt: string
 }
