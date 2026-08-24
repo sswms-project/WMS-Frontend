@@ -1,4 +1,5 @@
-import { Check, PackageCheck } from 'lucide-react'
+import { PackageCheck } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -10,60 +11,69 @@ import {
 } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import type { PlanActionState, SubscriptionPlanResponse } from '../../types/subscription.types'
-import { formatCurrency, getFeatureRows } from '../../utils/format-subscription'
+import { PlanFeatureSummary } from '../PlanFeatureSummary'
+import type {
+  BillingCycle,
+  PlanActionState,
+  SubscriptionPlanResponse,
+} from '../../types/subscription.types'
+import {
+  formatCurrency,
+  getBillingPeriodLabel,
+  getMonthlyEquivalent,
+  getPlanPrice,
+} from '../../utils/format-subscription'
 
 interface PlanCardProps {
   readonly plan: SubscriptionPlanResponse
+  readonly billingCycle: BillingCycle
   readonly actionState: PlanActionState
   readonly onUpgrade: (plan: SubscriptionPlanResponse) => void
 }
 
-export function PlanCard({ plan, actionState, onUpgrade }: PlanCardProps) {
+export function PlanCard({ plan, billingCycle, actionState, onUpgrade }: PlanCardProps) {
   const isCurrentPlan = actionState.label === 'Đang sử dụng'
+  const planPrice = getPlanPrice(plan, billingCycle)
+  const monthlyEquivalent = getMonthlyEquivalent(plan, billingCycle)
 
   return (
     <Card
       className={cn(
-        'border-border min-w-0 transition-[border-color,background-color]',
+        'border-border flex h-full min-w-0 flex-col gap-0 py-0 transition-[border-color,background-color]',
         isCurrentPlan && 'border-primary/40 bg-primary/5'
       )}
     >
-      <CardHeader>
+      <CardHeader className="gap-3 p-4">
         <div className="flex items-start gap-3">
           <div className="bg-muted text-primary flex size-9 shrink-0 items-center justify-center rounded-md">
             <PackageCheck className="size-4" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="truncate text-base font-semibold">{plan.planName}</CardTitle>
-            <CardDescription>
-              {plan.yearlyDiscountPercent > 0
-                ? `Tiết kiệm ${plan.yearlyDiscountPercent}% theo năm`
-                : 'Thanh toán hàng tháng'}
-            </CardDescription>
+            <CardDescription>{plan.features.length} quyền lợi được cấu hình</CardDescription>
           </div>
+          {billingCycle === 'Yearly' && plan.yearlyDiscountPercent > 0 && (
+            <Badge variant="secondary">Tiết kiệm {plan.yearlyDiscountPercent}%</Badge>
+          )}
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-end justify-between gap-3">
-          <p className="text-xl font-semibold tracking-tight tabular-nums">
-            {plan.monthlyPrice === 0 ? 'Miễn phí' : formatCurrency(plan.monthlyPrice)}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="min-w-0 text-xl font-semibold [overflow-wrap:anywhere] tabular-nums">
+            {planPrice === 0 ? 'Miễn phí' : formatCurrency(planPrice)}
           </p>
-          <p className="text-muted-foreground text-xs">mỗi tháng</p>
+          {planPrice > 0 && (
+            <p className="text-muted-foreground text-xs">{getBillingPeriodLabel(billingCycle)}</p>
+          )}
         </div>
-        <div className="flex flex-col gap-2">
-          {getFeatureRows(plan).map((row) => (
-            <div key={row.label} className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground flex min-w-0 items-center gap-2 text-xs">
-                <Check className="text-primary size-3.5 shrink-0" aria-hidden="true" />
-                <span className="truncate">{row.label}</span>
-              </span>
-              <span className="text-xs font-medium">{row.value}</span>
-            </div>
-          ))}
-        </div>
+        {billingCycle === 'Yearly' && planPrice > 0 && (
+          <p className="text-muted-foreground text-xs tabular-nums">
+            Tương đương {formatCurrency(monthlyEquivalent)}/tháng
+          </p>
+        )}
+      </CardHeader>
+      <CardContent className="border-border/70 flex-1 border-t p-4">
+        <PlanFeatureSummary plan={plan} />
       </CardContent>
-      <CardFooter>
+      <CardFooter className="p-4 pt-3">
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="w-full">

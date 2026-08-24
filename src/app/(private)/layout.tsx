@@ -11,7 +11,7 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
     <ProtectedRoute>
       <TooltipProvider>
         <SubscriptionReadOnlyProvider>
-          <SidebarProvider>
+          <SidebarProvider style={{ '--sidebar-width': '17.5rem' } as React.CSSProperties}>
             <div className="print:hidden">
               <AppSidebar />
             </div>

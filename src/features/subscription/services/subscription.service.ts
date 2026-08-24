@@ -28,12 +28,12 @@ export const subscriptionService = {
 
   upgradeSubscription: (body: UpgradeSubscriptionRequestDto) =>
     axiosClient
-      .post<ApiResponse<SubscriptionStatusResponse>>(API_ENDPOINTS.subscription.upgrade, body)
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.upgrade, body)
       .then((response) => response.data),
 
   renewSubscription: () =>
     axiosClient
-      .post<ApiResponse<SubscriptionStatusResponse>>(API_ENDPOINTS.subscription.renew)
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.renew)
       .then((response) => response.data),
 
   cancelSubscription: () =>

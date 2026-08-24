@@ -1,4 +1,5 @@
 import type {
+  BillingCycle,
   SubscriptionPlanResponse,
   SubscriptionStatusResponse,
 } from '../types/subscription.types'
@@ -28,11 +29,32 @@ export function formatDate(value: string | null): string {
   return dateFormatter.format(date)
 }
 
-export function formatBillingCycle(value: string): string {
+export function formatBillingCycle(value: string | null | undefined): string {
+  if (!value) return 'Không xác định'
   const normalizedValue = value.toLowerCase()
   if (normalizedValue === 'monthly') return 'Hàng tháng'
   if (normalizedValue === 'yearly') return 'Hàng năm'
   return value || 'Không xác định'
+}
+
+export function normalizeBillingCycle(value: string | null | undefined): BillingCycle {
+  return value?.toLowerCase() === 'yearly' ? 'Yearly' : 'Monthly'
+}
+
+export function getPlanPrice(plan: SubscriptionPlanResponse, billingCycle: BillingCycle): number {
+  return billingCycle === 'Yearly' ? plan.yearlyPrice : plan.monthlyPrice
+}
+
+export function getMonthlyEquivalent(
+  plan: SubscriptionPlanResponse,
+  billingCycle: BillingCycle
+): number {
+  const price = getPlanPrice(plan, billingCycle)
+  return billingCycle === 'Yearly' ? price / 12 : price
+}
+
+export function getBillingPeriodLabel(billingCycle: BillingCycle): string {
+  return billingCycle === 'Yearly' ? 'mỗi năm' : 'mỗi tháng'
 }
 
 export function formatSubscriptionStatus(value: string): string {
@@ -95,7 +117,9 @@ export function getFeatureRows(plan?: SubscriptionPlanResponse) {
   if (!plan) return []
 
   return plan.features.map((feature) => ({
+    code: feature.featureCode,
     label: feature.displayName,
     value: feature.featureType === 'Limit' ? `${feature.limitValue ?? '—'}` : 'Có',
+    description: feature.description,
   }))
 }
