@@ -5,6 +5,7 @@ import type {
   InventoryBalanceListResponse,
   InventoryListQuery,
   InventoryReservationQuery,
+  ReserveStockRequest,
   StockMovementListQuery,
   StockMovementListResponse,
 } from '../types/inventory.types'
@@ -26,5 +27,9 @@ export const inventoryService = {
           params,
         }
       )
+      .then((response) => response.data),
+  reserveStock: (request: ReserveStockRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.inventory.reservations, request)
       .then((response) => response.data),
 }
