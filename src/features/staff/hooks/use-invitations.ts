@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
-import type { ApiErrorResponse, ApiResponse } from '@/types/api'
+import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
 import { invitationService } from '../services/invitation.service'
 import type {
   AcceptInvitationRequest,
   InvitationQuery,
+  InvitationResponse,
   SendInvitationRequest,
 } from '../types/invitation.types'
 
@@ -19,7 +20,7 @@ export function useSendInvitationMutation() {
 
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, SendInvitationRequest>({
     mutationFn: invitationService.send,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.staff.allInvitations }),
     onError: (error) => logger.error(error),
   })
 }
@@ -36,7 +37,7 @@ export function useInvitationsQuery(params: InvitationQuery, enabled = true) {
     queryKey: queryKeys.staff.invitations(params),
     queryFn: () => invitationService.list(params),
     enabled,
-    select: (data) => data.data,
+    select: (data) => data.data as unknown as QueryResult<InvitationResponse>,
   })
 }
 

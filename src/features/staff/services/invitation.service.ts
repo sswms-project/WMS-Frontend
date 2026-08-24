@@ -24,13 +24,13 @@ export const invitationService = {
       .get<ApiResponse<QueryResult<InvitationResponse>>>(API_ENDPOINTS.invitations.list, { params })
       .then((response) => response.data),
 
-  resend: (invitationId: string) =>
+  resend: (id: string) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.resend(invitationId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.resend(id))
       .then((response) => response.data),
 
-  revoke: (invitationId: string) =>
+  revoke: (id: string) =>
     axiosClient
-      .delete<ApiResponse<unknown>>(API_ENDPOINTS.invitations.revoke(invitationId))
+      .delete<ApiResponse<unknown>>(API_ENDPOINTS.invitations.revoke(id))
       .then((response) => response.data),
 }

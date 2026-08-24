@@ -61,6 +61,9 @@ export const API_ENDPOINTS = {
   products: {
     list: '/products',
   },
+  inventory: {
+    list: '/inventory',
+  },
   suppliers: {
     list: '/suppliers',
   },
@@ -105,6 +108,7 @@ export const API_ENDPOINTS = {
   },
   public: {
     subscriptionPlans: '/public/subscription-plans',
+    subscriptionFeatures: '/public/subscription-features',
   },
   payments: {
     history: '/payments',

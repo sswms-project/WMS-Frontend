@@ -37,5 +37,10 @@ describe('warehouse route permission', () => {
       USER_ROLES.WarehouseManager,
       USER_ROLES.WarehouseStaff,
     ])
+    expect(getAllowedRolesForPath(APP_ROUTES.inventory)).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
   })
 })
