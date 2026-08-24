@@ -1,62 +1,58 @@
 'use client'
 
+import { useState, type CSSProperties } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Check, CircleAlert, Minus, PackageCheck, RefreshCw } from 'lucide-react'
+import { CircleAlert, PackageCheck, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { BillingCycleToggle } from '@/features/subscription/components/BillingCycleToggle'
+import { PlanFeatureSummary } from '@/features/subscription/components/PlanFeatureSummary'
 import { usePublicSubscriptionPlansQuery } from '@/features/subscription/hooks/use-subscription'
-import type { SubscriptionPlanResponse } from '@/features/subscription/types/subscription.types'
+import type {
+  BillingCycle,
+  SubscriptionPlanResponse,
+} from '@/features/subscription/types/subscription.types'
+import {
+  formatCurrency,
+  getBillingPeriodLabel,
+  getMonthlyEquivalent,
+  getPlanPrice,
+} from '@/features/subscription/utils/format-subscription'
 import { APP_ROUTES } from '@/routes/app-routes'
 
-function formatVnd(amount: number) {
-  return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`
-}
+function PlanPrice({
+  plan,
+  billingCycle,
+}: {
+  readonly plan: SubscriptionPlanResponse
+  readonly billingCycle: BillingCycle
+}) {
+  const price = getPlanPrice(plan, billingCycle)
 
-function formatLimit(limit: number, unit: string) {
-  return `Tối đa ${limit} ${unit}`
-}
-
-function formatPlanDescription(plan: SubscriptionPlanResponse) {
-  const limitFeatures = plan.features.filter((f) => f.featureType === 'Limit')
-  if (limitFeatures.length === 0) return plan.planName
-  return (
-    limitFeatures
-      .map((f) => `Tối đa ${f.limitValue ?? '?'} ${f.displayName.toLowerCase()}`)
-      .join(', ') + '.'
-  )
-}
-
-function PlanPrice({ plan }: { readonly plan: SubscriptionPlanResponse }) {
-  if (plan.monthlyPrice === 0) {
-    return <span className="text-3xl font-bold tracking-tight">Miễn phí</span>
+  if (price === 0) {
+    return <span className="text-2xl font-bold">Miễn phí</span>
   }
 
-  return (
-    <span className="text-3xl font-bold tracking-tight tabular-nums">
-      {formatVnd(plan.monthlyPrice)}
-    </span>
-  )
+  return <span className="min-w-0 text-2xl font-bold tabular-nums">{formatCurrency(price)}</span>
 }
 
 function PricingPlanCard({
   plan,
   index,
+  billingCycle,
 }: {
   readonly plan: SubscriptionPlanResponse
   readonly index: number
+  readonly billingCycle: BillingCycle
 }) {
   const prefersReducedMotion = useReducedMotion()
-  const capabilities = plan.features.map((feature) => ({
-    enabled: true,
-    label:
-      feature.featureType === 'Limit'
-        ? formatLimit(feature.limitValue ?? 0, feature.displayName.toLowerCase())
-        : feature.displayName,
-  }))
+  const price = getPlanPrice(plan, billingCycle)
+  const monthlyEquivalent = getMonthlyEquivalent(plan, billingCycle)
 
   return (
     <motion.div
@@ -66,48 +62,45 @@ function PricingPlanCard({
       transition={{ duration: 0.35, delay: index * 0.08, ease: 'easeOut' }}
       className="h-full"
     >
-      <Card className="border-border/70 flex h-full flex-col rounded-lg">
-        <CardHeader>
-          <div className="bg-muted text-muted-foreground mb-2 flex size-9 items-center justify-center rounded-lg">
-            <PackageCheck className="size-4" aria-hidden="true" />
-          </div>
-          <CardTitle className="text-lg">{plan.planName}</CardTitle>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            {formatPlanDescription(plan)}
-          </p>
-          <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <PlanPrice plan={plan} />
-            {plan.monthlyPrice > 0 && (
-              <span className="text-muted-foreground text-xs">mỗi tháng</span>
+      <Card className="border-border/70 flex h-full flex-col gap-0 rounded-lg py-0">
+        <CardHeader className="gap-2.5 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-md">
+              <PackageCheck className="size-4" aria-hidden="true" />
+            </div>
+            {billingCycle === 'Yearly' && plan.yearlyDiscountPercent > 0 && (
+              <Badge variant="secondary">Tiết kiệm {plan.yearlyDiscountPercent}%</Badge>
             )}
-          </p>
+          </div>
+          <div className="min-w-0">
+            <CardTitle className="truncate text-lg" title={plan.planName}>
+              {plan.planName}
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">
+              {plan.features.length} quyền lợi được cấu hình
+            </p>
+          </div>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <div className="min-w-0 [overflow-wrap:anywhere]">
+              <PlanPrice plan={plan} billingCycle={billingCycle} />
+            </div>
+            {price > 0 && (
+              <span className="text-muted-foreground text-xs">
+                {getBillingPeriodLabel(billingCycle)}
+              </span>
+            )}
+          </div>
+          {billingCycle === 'Yearly' && price > 0 && (
+            <p className="text-muted-foreground text-xs tabular-nums">
+              Tương đương {formatCurrency(monthlyEquivalent)}/tháng
+            </p>
+          )}
         </CardHeader>
-        <CardContent className="flex-1">
-          <ul className="space-y-2.5">
-            {capabilities.map((capability) => (
-              <li
-                key={capability.label}
-                className="text-foreground flex items-start gap-2.5 text-sm"
-              >
-                {capability.enabled ? (
-                  <Check className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                ) : (
-                  <Minus
-                    className="text-muted-foreground mt-0.5 size-4 shrink-0"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className={capability.enabled ? undefined : 'text-muted-foreground'}>
-                  {capability.enabled
-                    ? capability.label
-                    : `Chưa bao gồm ${capability.label.toLowerCase()}`}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <CardContent className="border-border/70 flex-1 border-t p-4">
+          <PlanFeatureSummary plan={plan} />
         </CardContent>
-        <CardFooter>
-          <Button className="w-full rounded-full" variant="outline" asChild>
+        <CardFooter className="p-4 pt-3">
+          <Button className="w-full" variant="outline" asChild>
             <Link href={APP_ROUTES.auth.register}>Đăng ký sử dụng</Link>
           </Button>
         </CardFooter>
@@ -140,6 +133,20 @@ function PricingSkeleton() {
 
 export function PricingSection() {
   const { data: plans, isError, isLoading, refetch } = usePublicSubscriptionPlansQuery()
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('Monthly')
+  const activePlans = (plans ?? []).toSorted((firstPlan, secondPlan) => {
+    if (firstPlan.displayOrder !== secondPlan.displayOrder) {
+      return firstPlan.displayOrder - secondPlan.displayOrder
+    }
+    return firstPlan.monthlyPrice - secondPlan.monthlyPrice
+  })
+  const maximumYearlySaving = activePlans.reduce(
+    (maximum, plan) => Math.max(maximum, plan.yearlyDiscountPercent),
+    0
+  )
+  const pricingGridStyle = {
+    '--pricing-plan-columns': `repeat(${Math.min(activePlans.length, 4)}, minmax(0, 1fr))`,
+  } as CSSProperties
 
   return (
     <section
@@ -147,14 +154,21 @@ export function PricingSection() {
       className="border-border/60 bg-surface-container-low/60 scroll-mt-14 border-y"
       aria-labelledby="pricing-heading"
     >
-      <div className="mx-auto w-full max-w-(--container-landing) px-4 py-16 md:px-6 lg:py-24">
-        <div className="mb-8 max-w-2xl">
-          <p className="text-primary text-xs font-semibold tracking-[0.12em] uppercase">
-            Bảng giá minh bạch
-          </p>
-          <h2 id="pricing-heading" className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">
-            Trả đúng theo quy mô kho của bạn
-          </h2>
+      <div className="mx-auto w-full max-w-(--container-landing) px-4 py-12 md:px-6 lg:py-16">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-primary text-xs font-semibold tracking-[0.12em] uppercase">
+              Bảng giá minh bạch
+            </p>
+            <h2 id="pricing-heading" className="mt-2 text-2xl font-bold md:text-3xl">
+              Trả đúng theo quy mô kho của bạn
+            </h2>
+          </div>
+          <BillingCycleToggle
+            value={billingCycle}
+            yearlySavingPercent={maximumYearlySaving}
+            onValueChange={setBillingCycle}
+          />
         </div>
 
         {isLoading && <PricingSkeleton />}
@@ -173,7 +187,7 @@ export function PricingSection() {
           </Alert>
         )}
 
-        {!isLoading && !isError && plans?.length === 0 && (
+        {!isLoading && !isError && activePlans.length === 0 && (
           <Empty className="border-border bg-card rounded-lg">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -185,10 +199,18 @@ export function PricingSection() {
           </Empty>
         )}
 
-        {!isLoading && !isError && plans && plans.length > 0 && (
-          <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {plans.map((plan, index) => (
-              <PricingPlanCard key={plan.id} plan={plan} index={index} />
+        {!isLoading && !isError && activePlans.length > 0 && (
+          <div
+            className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-(--pricing-plan-columns)"
+            style={pricingGridStyle}
+          >
+            {activePlans.map((plan, index) => (
+              <PricingPlanCard
+                key={plan.id}
+                plan={plan}
+                index={index}
+                billingCycle={billingCycle}
+              />
             ))}
           </div>
         )}
