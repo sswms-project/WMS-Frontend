@@ -79,3 +79,10 @@ export interface InventoryReservationQuery {
   warehouseId?: string
   productId?: string
 }
+
+export interface ReserveStockRequest {
+  productId: string
+  warehouseId: string
+  slotId: string
+  quantity: number
+}

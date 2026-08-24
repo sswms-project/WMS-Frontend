@@ -5,7 +5,7 @@ import type { StockMovementListQuery } from '../types/inventory.types'
 import { inventoryService } from './inventory.service'
 
 vi.mock('@/lib/axios', () => ({
-  axiosClient: { get: vi.fn() },
+  axiosClient: { get: vi.fn(), post: vi.fn() },
 }))
 
 describe('inventoryService', () => {
@@ -54,5 +54,20 @@ describe('inventoryService', () => {
     await expect(inventoryService.getReservations(params)).resolves.toEqual(response)
     expect(axiosClient.get).toHaveBeenCalledTimes(1)
     expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.reservations, { params })
+  })
+
+  it('sends the exact reserve stock command', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: null }
+    vi.mocked(axiosClient.post).mockResolvedValue({ data: response })
+    const request = {
+      productId: 'product-1',
+      warehouseId: 'warehouse-1',
+      slotId: 'slot-1',
+      quantity: 4,
+    }
+
+    await expect(inventoryService.reserveStock(request)).resolves.toEqual(response)
+    expect(axiosClient.post).toHaveBeenCalledOnce()
+    expect(axiosClient.post).toHaveBeenCalledWith(API_ENDPOINTS.inventory.reservations, request)
   })
 })

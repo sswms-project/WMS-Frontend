@@ -38,6 +38,7 @@ function createProps(
     areFiltersLoading: false,
     areFiltersError: false,
     activeFilterCount: 0,
+    canReserve: false,
     onSearchChange: vi.fn(),
     onWarehouseChange: vi.fn(),
     onProductChange: vi.fn(),
@@ -45,6 +46,7 @@ function createProps(
     onRetryFilters: vi.fn(),
     onPageChange: vi.fn(),
     onRetry: vi.fn(),
+    onReserve: vi.fn(),
     ...overrides,
   }
 }
@@ -105,5 +107,18 @@ describe('InventoryDirectory states', () => {
     expect(onProductChange).toHaveBeenCalledWith('product-1')
     expect(onRetry).toHaveBeenCalledTimes(1)
     expect(onPageChange).toHaveBeenCalledWith(2)
+  })
+
+  it('only exposes reserve action when permission and available stock allow it', () => {
+    const onReserve = vi.fn()
+    renderDirectory(
+      createProps({ items: [inventoryItem], totalCount: 1, canReserve: true, onReserve })
+    )
+
+    const [reserveButton] = screen.getAllByRole('button', { name: 'Giữ tồn' })
+    expect(reserveButton).toBeDefined()
+    if (!reserveButton) return
+    fireEvent.click(reserveButton)
+    expect(onReserve).toHaveBeenCalledWith(inventoryItem)
   })
 })
