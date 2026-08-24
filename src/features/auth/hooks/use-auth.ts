@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
@@ -13,6 +13,7 @@ import type {
   RegisterResponseDto,
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
+  UpdateProfileRequest,
   UserProfileResponse,
   Verify2FARequestDto,
   VerifyEmailResponseDto,
@@ -97,6 +98,17 @@ export function useMeQuery() {
   return useQuery<UserProfileResponse, ApiErrorResponse>({
     queryKey: queryKeys.auth.me,
     queryFn: () => authService.getMe().then((r) => r.data),
+  })
+}
+
+export function useUpdateProfileMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<UserProfileResponse>, ApiErrorResponse, UpdateProfileRequest>({
+    mutationFn: authService.updateMe,
+    onSuccess: (response) => {
+      queryClient.setQueryData(queryKeys.auth.me, response.data)
+    },
+    onError: (error) => logger.error(error),
   })
 }
 
