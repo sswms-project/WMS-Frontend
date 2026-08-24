@@ -303,6 +303,44 @@ body {
   }
 }
 
+/* ── Sonner toast animations ─────────────────────────────────────────── */
+@keyframes toast-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 1rem));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(100% + 1rem));
+  }
+}
+
+[data-sonner-toast][data-mounted='true'] {
+  animation: toast-slide-in-right 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-sonner-toast][data-removed='true'] {
+  animation: toast-slide-out-right 0.22s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast][data-mounted='true'],
+  [data-sonner-toast][data-removed='true'] {
+    animation: none;
+  }
+}
+
 @media print {
   body:has([data-barcode-print-page]) * {
     visibility: hidden;

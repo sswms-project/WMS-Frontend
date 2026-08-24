@@ -20,58 +20,33 @@ import {
   useAdminSubscriptionPlansQuery,
   useCreateSubscriptionPlanMutation,
   useDeactivateSubscriptionPlanMutation,
+  useSubscriptionFeaturesQuery,
   useUpdateSubscriptionPlanMutation,
 } from '../hooks/use-admin'
 import {
-  BILLING_CYCLE_API_VALUES,
-  createSubscriptionPlanRequestSchema,
-  updateSubscriptionPlanRequestSchema,
+  featureItemsToPayload,
   type SubscriptionPlanFormOutput,
   type UpdateSubscriptionPlanRequest,
 } from '../schemas/subscription-plan.schema'
 import type { SubscriptionPlanResponse } from '../types/admin.types'
 
-const CREATE_FIELDS: readonly SubscriptionPlanFormField[] = [
-  'planName',
-  'price',
-  'billingCycle',
-  'maxWarehouses',
-  'maxUsers',
-  'enableForecasting',
-  'enableBarcode',
-  'enableLayoutDesigner',
-]
-
-const UPDATE_FIELDS = [
-  'planName',
-  'price',
-  'maxWarehouses',
-  'maxUsers',
-  'enableForecasting',
-  'enableBarcode',
-  'enableLayoutDesigner',
-] as const
-
 const SERVER_FIELD_MAP = {
   PlanName: 'planName',
-  Price: 'price',
-  BillingCycle: 'billingCycle',
-  MaxWarehouses: 'maxWarehouses',
-  MaxUsers: 'maxUsers',
-  EnableForecasting: 'enableForecasting',
-  EnableBarcode: 'enableBarcode',
-  EnableLayoutDesigner: 'enableLayoutDesigner',
+  MonthlyPrice: 'monthlyPrice',
+  YearlyDiscountPercent: 'yearlyDiscountPercent',
+  DisplayOrder: 'displayOrder',
 } as const
 
 const DUPLICATE_PLAN_NAME_PREFIX = "SubscriptionPlan with value '"
 const DUPLICATE_PLAN_NAME_SUFFIX = "' already exists"
 const ACTIVE_SUBSCRIBERS_MESSAGE = 'Cannot delete a plan with active subscribers'
-type SubscriptionPlanFormField = keyof SubscriptionPlanFormOutput
+
+type ServerField = keyof typeof SERVER_FIELD_MAP
+type MappedField = (typeof SERVER_FIELD_MAP)[ServerField]
 
 function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
   if (typeof error !== 'object' || error === null) return false
   if (!('statusCode' in error) || !('message' in error)) return false
-
   if (typeof error.statusCode !== 'number' || typeof error.message !== 'string') return false
   if (!('errors' in error) || error.errors === undefined) return true
   if (typeof error.errors !== 'object' || error.errors === null) return false
@@ -82,8 +57,8 @@ function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
   )
 }
 
-function isServerField(serverField: string): serverField is keyof typeof SERVER_FIELD_MAP {
-  return Object.hasOwn(SERVER_FIELD_MAP, serverField)
+function isServerField(field: string): field is ServerField {
+  return Object.hasOwn(SERVER_FIELD_MAP, field)
 }
 
 function isDuplicatePlanNameError(error: ApiErrorResponse): boolean {
@@ -100,7 +75,6 @@ function isActiveSubscribersError(error: ApiErrorResponse): boolean {
 
 function applyServerFieldErrors(
   error: ApiErrorResponse,
-  allowedFields: readonly SubscriptionPlanFormField[],
   setError: SubscriptionPlanFormSubmitContext['setError']
 ): boolean {
   if (!error.errors) return false
@@ -109,9 +83,9 @@ function applyServerFieldErrors(
   for (const [serverField, messages] of Object.entries(error.errors)) {
     if (!isServerField(serverField)) continue
 
-    const field = SERVER_FIELD_MAP[serverField]
+    const field: MappedField = SERVER_FIELD_MAP[serverField]
     const message = messages[0]
-    if (!message || !allowedFields.includes(field)) continue
+    if (!message) continue
 
     setError(field, { type: 'server', message })
     hasFieldError = true
@@ -126,7 +100,9 @@ export function SubscriptionPlansPage() {
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlanResponse | null>(null)
   const [deactivatingPlan, setDeactivatingPlan] = useState<SubscriptionPlanResponse | null>(null)
   const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
+
   const { data: plans, isLoading, isError, isFetching, refetch } = useAdminSubscriptionPlansQuery()
+  const { data: featureMeta = [] } = useSubscriptionFeaturesQuery()
   const createMutation = useCreateSubscriptionPlanMutation()
   const updateMutation = useUpdateSubscriptionPlanMutation()
   const deactivateMutation = useDeactivateSubscriptionPlanMutation()
@@ -148,7 +124,6 @@ export function SubscriptionPlansPage() {
 
   function handleFormApiError(
     error: unknown,
-    allowedFields: readonly SubscriptionPlanFormField[],
     setError: SubscriptionPlanFormSubmitContext['setError'],
     checkDuplicateName: boolean
   ) {
@@ -164,7 +139,7 @@ export function SubscriptionPlansPage() {
       return
     }
 
-    if (applyServerFieldErrors(error, allowedFields, setError)) {
+    if (applyServerFieldErrors(error, setError)) {
       toast.error('Vui lòng kiểm tra lại thông tin gói đăng ký.')
       return
     }
@@ -178,14 +153,12 @@ export function SubscriptionPlansPage() {
   ): UpdateSubscriptionPlanRequest {
     return {
       ...(dirtyFields.planName ? { planName: values.planName } : {}),
-      ...(dirtyFields.price ? { price: values.price } : {}),
-      ...(dirtyFields.maxWarehouses ? { maxWarehouses: values.maxWarehouses } : {}),
-      ...(dirtyFields.maxUsers ? { maxUsers: values.maxUsers } : {}),
-      ...(dirtyFields.enableForecasting ? { enableForecasting: values.enableForecasting } : {}),
-      ...(dirtyFields.enableBarcode ? { enableBarcode: values.enableBarcode } : {}),
-      ...(dirtyFields.enableLayoutDesigner
-        ? { enableLayoutDesigner: values.enableLayoutDesigner }
+      ...(dirtyFields.monthlyPrice ? { monthlyPrice: values.monthlyPrice } : {}),
+      ...(dirtyFields.yearlyDiscountPercent
+        ? { yearlyDiscountPercent: values.yearlyDiscountPercent }
         : {}),
+      ...(dirtyFields.displayOrder ? { displayOrder: values.displayOrder } : {}),
+      ...(dirtyFields.featureItems ? { features: featureItemsToPayload(values.featureItems) } : {}),
     }
   }
 
@@ -194,43 +167,31 @@ export function SubscriptionPlansPage() {
     { dirtyFields, setError }: SubscriptionPlanFormSubmitContext
   ): Promise<boolean> {
     if (!editingPlan) {
-      const request = createSubscriptionPlanRequestSchema.parse({
-        ...values,
-        billingCycle: BILLING_CYCLE_API_VALUES[values.billingCycle],
-      })
-
       try {
-        await createMutation.mutateAsync(request)
+        await createMutation.mutateAsync({
+          planName: values.planName,
+          monthlyPrice: values.monthlyPrice,
+          yearlyDiscountPercent: values.yearlyDiscountPercent,
+          displayOrder: values.displayOrder,
+          features: featureItemsToPayload(values.featureItems),
+        })
         toast.success('Đã tạo gói đăng ký.')
         return true
       } catch (error) {
-        handleFormApiError(error, CREATE_FIELDS, setError, true)
+        handleFormApiError(error, setError, true)
         return false
       }
     }
 
-    const parsedRequest = updateSubscriptionPlanRequestSchema.safeParse(
-      buildUpdatePayload(values, dirtyFields)
-    )
-
-    if (!parsedRequest.success) {
-      const fieldErrors = parsedRequest.error.flatten().fieldErrors
-      for (const field of UPDATE_FIELDS) {
-        const message = fieldErrors[field]?.[0]
-        if (message) setError(field, { type: 'schema', message })
-      }
-      toast.error('Vui lòng kiểm tra lại thông tin gói đăng ký.')
-      return false
-    }
-
-    if (Object.keys(parsedRequest.data).length === 0) return true
+    const payload = buildUpdatePayload(values, dirtyFields)
+    if (Object.keys(payload).length === 0) return true
 
     try {
-      await updateMutation.mutateAsync({ id: editingPlan.id, body: parsedRequest.data })
+      await updateMutation.mutateAsync({ id: editingPlan.id, body: payload })
       toast.success('Đã lưu thay đổi.')
       return true
     } catch (error) {
-      handleFormApiError(error, UPDATE_FIELDS, setError, false)
+      handleFormApiError(error, setError, false)
       return false
     }
   }
@@ -424,6 +385,7 @@ export function SubscriptionPlansPage() {
         onOpenChange={handleFormOpenChange}
         onSubmit={handlePlanSubmit}
         isPending={isFormPending}
+        featureMeta={featureMeta}
         plan={editingPlan ?? undefined}
       />
 

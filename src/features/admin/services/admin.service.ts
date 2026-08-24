@@ -1,5 +1,6 @@
 import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
+import type { SubscriptionFeatureMetaResponse } from '@/features/subscription/types/subscription.types'
 import type { ApiResponse } from '@/types/api'
 import type {
   CreateSubscriptionPlanRequest,
@@ -24,6 +25,13 @@ export const adminService = {
   getSubscriptionPlans: () =>
     axiosClient
       .get<ApiResponse<SubscriptionPlanResponse[]>>(API_ENDPOINTS.subscription.plans)
+      .then((r) => r.data),
+
+  getSubscriptionFeatures: () =>
+    axiosClient
+      .get<
+        ApiResponse<SubscriptionFeatureMetaResponse[]>
+      >(API_ENDPOINTS.public.subscriptionFeatures)
       .then((r) => r.data),
 
   createSubscriptionPlan: (body: CreateSubscriptionPlanRequest) =>
