@@ -32,6 +32,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { InventoryBalance, InventoryFilterOption } from '../../types/inventory.types'
 import { formatInventoryDate, formatInventoryQuantity } from '../../utils/inventory-format'
+import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryDirectoryProps {
   readonly items: readonly InventoryBalance[]
@@ -49,6 +50,8 @@ interface InventoryDirectoryProps {
   readonly areFiltersLoading: boolean
   readonly areFiltersError: boolean
   readonly activeFilterCount: number
+  readonly canReserve: boolean
+  readonly canReportDamaged: boolean
   readonly onSearchChange: (value: string) => void
   readonly onWarehouseChange: (value: string) => void
   readonly onProductChange: (value: string) => void
@@ -56,6 +59,8 @@ interface InventoryDirectoryProps {
   readonly onRetryFilters: () => void
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
+  readonly onReserve: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryBalance) => void
 }
 
 export function InventoryDirectory({
@@ -74,6 +79,8 @@ export function InventoryDirectory({
   areFiltersLoading,
   areFiltersError,
   activeFilterCount,
+  canReserve,
+  canReportDamaged,
   onSearchChange,
   onWarehouseChange,
   onProductChange,
@@ -81,6 +88,8 @@ export function InventoryDirectory({
   onRetryFilters,
   onPageChange,
   onRetry,
+  onReserve,
+  onReportDamaged,
 }: InventoryDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -104,6 +113,8 @@ export function InventoryDirectory({
           <span className="text-xs font-medium tabular-nums">{totalCount} vị trí tồn kho</span>
         </div>
       </header>
+
+      <InventoryWorkspaceNavigation currentView="availability" />
 
       <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="inventory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -188,8 +199,20 @@ export function InventoryDirectory({
           />
         ) : (
           <>
-            <InventoryMobileList items={items} />
-            <InventoryDesktopTable items={items} />
+            <InventoryMobileList
+              items={items}
+              canReserve={canReserve}
+              canReportDamaged={canReportDamaged}
+              onReserve={onReserve}
+              onReportDamaged={onReportDamaged}
+            />
+            <InventoryDesktopTable
+              items={items}
+              canReserve={canReserve}
+              canReportDamaged={canReportDamaged}
+              onReserve={onReserve}
+              onReportDamaged={onReportDamaged}
+            />
             <OperationalPagination
               page={page}
               pageSize={pageSize}
@@ -281,7 +304,19 @@ export function InventoryDirectory({
   )
 }
 
-function InventoryMobileList({ items }: { readonly items: readonly InventoryBalance[] }) {
+function InventoryMobileList({
+  items,
+  canReserve,
+  canReportDamaged,
+  onReserve,
+  onReportDamaged,
+}: {
+  readonly items: readonly InventoryBalance[]
+  readonly canReserve: boolean
+  readonly canReportDamaged: boolean
+  readonly onReserve: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryBalance) => void
+}) {
   return (
     <ItemGroup className="gap-0 md:hidden">
       {items.map((item) => (
@@ -299,6 +334,28 @@ function InventoryMobileList({ items }: { readonly items: readonly InventoryBala
               </span>{' '}
               · {item.warehouseName} / {item.slotCode}
             </ItemDescription>
+            {canReserve && item.availableQuantity > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1 w-fit"
+                onClick={() => onReserve(item)}
+              >
+                Giữ tồn
+              </Button>
+            ) : null}
+            {canReportDamaged && item.availableQuantity > 0 ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="mt-1 w-fit"
+                onClick={() => onReportDamaged(item)}
+              >
+                Báo hỏng
+              </Button>
+            ) : null}
             <ItemDescription>
               Thực tế {formatInventoryQuantity(item.quantityOnHand)} · Đã giữ{' '}
               {formatInventoryQuantity(item.reservedQuantity)}
@@ -310,7 +367,19 @@ function InventoryMobileList({ items }: { readonly items: readonly InventoryBala
   )
 }
 
-function InventoryDesktopTable({ items }: { readonly items: readonly InventoryBalance[] }) {
+function InventoryDesktopTable({
+  items,
+  canReserve,
+  canReportDamaged,
+  onReserve,
+  onReportDamaged,
+}: {
+  readonly items: readonly InventoryBalance[]
+  readonly canReserve: boolean
+  readonly canReportDamaged: boolean
+  readonly onReserve: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryBalance) => void
+}) {
   return (
     <div className="hidden min-h-0 flex-1 overflow-auto md:block">
       <Table className="min-w-[980px] table-fixed">
@@ -322,6 +391,9 @@ function InventoryDesktopTable({ items }: { readonly items: readonly InventoryBa
             <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Đã giữ</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Khả dụng</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-40">Cập nhật</TableHead>
+            {canReserve || canReportDamaged ? (
+              <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">Thao tác</TableHead>
+            ) : null}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -351,6 +423,32 @@ function InventoryDesktopTable({ items }: { readonly items: readonly InventoryBa
               <TableCell className="text-muted-foreground text-xs">
                 {formatInventoryDate(item.updatedAt)}
               </TableCell>
+              {canReserve || canReportDamaged ? (
+                <TableCell className="space-x-1 text-right">
+                  {canReportDamaged ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={item.availableQuantity <= 0}
+                      onClick={() => onReportDamaged(item)}
+                    >
+                      Báo hỏng
+                    </Button>
+                  ) : null}
+                  {canReserve ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={item.availableQuantity <= 0}
+                      onClick={() => onReserve(item)}
+                    >
+                      Giữ tồn
+                    </Button>
+                  ) : null}
+                </TableCell>
+              ) : null}
             </TableRow>
           ))}
         </TableBody>

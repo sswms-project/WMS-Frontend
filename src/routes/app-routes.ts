@@ -40,6 +40,9 @@ export const APP_ROUTES = {
   warehouseLocationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
     `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
   inventory: '/inventory',
+  inventoryMovements: '/inventory/movements',
+  inventoryReservations: '/inventory/reservations',
+  inventoryAbcClassification: '/inventory/abc-classification',
   orders: '/orders',
   delivery: '/delivery',
   unauthorized: '/unauthorized',
