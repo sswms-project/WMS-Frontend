@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { Boxes, History } from 'lucide-react'
+import { Boxes, History, LockKeyhole } from 'lucide-react'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
 
-type InventoryWorkspaceView = 'availability' | 'movements'
+type InventoryWorkspaceView = 'availability' | 'movements' | 'reservations'
 
 interface InventoryWorkspaceNavigationProps {
   readonly currentView: InventoryWorkspaceView
@@ -38,6 +38,14 @@ export function InventoryWorkspaceNavigation({ currentView }: InventoryWorkspace
       >
         <History className="size-4" aria-hidden="true" />
         Lịch sử biến động
+      </Link>
+      <Link
+        href={APP_ROUTES.inventoryReservations}
+        aria-current={currentView === 'reservations' ? 'page' : undefined}
+        className={linkClassName('reservations')}
+      >
+        <LockKeyhole className="size-4" aria-hidden="true" />
+        Tồn đang giữ
       </Link>
     </nav>
   )

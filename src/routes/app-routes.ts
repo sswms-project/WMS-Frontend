@@ -39,6 +39,7 @@ export const APP_ROUTES = {
     `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
   inventory: '/inventory',
   inventoryMovements: '/inventory/movements',
+  inventoryReservations: '/inventory/reservations',
   orders: '/orders',
   delivery: '/delivery',
   unauthorized: '/unauthorized',

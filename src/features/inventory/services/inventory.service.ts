@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/types/api'
 import type {
   InventoryBalanceListResponse,
   InventoryListQuery,
+  InventoryReservationQuery,
   StockMovementListQuery,
   StockMovementListResponse,
 } from '../types/inventory.types'
@@ -16,5 +17,14 @@ export const inventoryService = {
   getStockMovements: (params: StockMovementListQuery) =>
     axiosClient
       .get<ApiResponse<StockMovementListResponse>>(API_ENDPOINTS.inventory.movements, { params })
+      .then((response) => response.data),
+  getReservations: (params: InventoryReservationQuery) =>
+    axiosClient
+      .get<ApiResponse<InventoryBalanceListResponse['items']>>(
+        API_ENDPOINTS.inventory.reservations,
+        {
+          params,
+        }
+      )
       .then((response) => response.data),
 }
