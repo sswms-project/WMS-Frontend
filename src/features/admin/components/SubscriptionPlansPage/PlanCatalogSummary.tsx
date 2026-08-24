@@ -1,8 +1,6 @@
-import { Blocks, CalendarDays, CalendarRange, Layers3 } from 'lucide-react'
+import { Blocks, Layers3, PercentCircle, Zap } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { SubscriptionPlanResponse } from '../../types/admin.types'
-
-const PLAN_FEATURE_KEYS = ['enableForecasting', 'enableBarcode', 'enableLayoutDesigner'] as const
 
 interface PlanCatalogSummaryProps {
   readonly plans?: readonly SubscriptionPlanResponse[]
@@ -10,15 +8,16 @@ interface PlanCatalogSummaryProps {
 }
 
 export function PlanCatalogSummary({ plans, isLoading }: PlanCatalogSummaryProps) {
-  const monthlyPlanCount = plans?.filter((plan) => plan.billingCycle === 'Monthly').length ?? 0
-  const yearlyPlanCount = plans?.filter((plan) => plan.billingCycle === 'Yearly').length ?? 0
-  const enabledFeatureCount = PLAN_FEATURE_KEYS.filter((feature) =>
-    plans?.some((plan) => plan[feature])
-  ).length
+  const activePlanCount = plans?.filter((p) => p.status === 'Active').length ?? 0
+  const discountedPlanCount = plans?.filter((p) => p.yearlyDiscountPercent > 0).length ?? 0
+  const enabledFeatureCount = new Set(
+    plans?.flatMap((plan) => plan.features.map((f) => f.featureCode)) ?? []
+  ).size
+
   const summaryItems = [
     { label: 'Gói đang mở', value: plans?.length ?? 0, icon: Layers3 },
-    { label: 'Hàng tháng', value: monthlyPlanCount, icon: CalendarDays },
-    { label: 'Hàng năm', value: yearlyPlanCount, icon: CalendarRange },
+    { label: 'Đang hoạt động', value: activePlanCount, icon: Zap },
+    { label: 'Có chiết khấu năm', value: discountedPlanCount, icon: PercentCircle },
     { label: 'Nhóm tính năng', value: enabledFeatureCount, icon: Blocks },
   ]
 

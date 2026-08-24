@@ -1,11 +1,7 @@
 import { z } from 'zod'
 
-// Backend lưu Price dạng decimal(18,2). Giới hạn ở 13 chữ số phần nguyên để giá trị
-// quy đổi ra đơn vị nhỏ nhất (x100) vẫn nằm trong Number.MAX_SAFE_INTEGER.
 const MAX_PRICE = 9_999_999_999_999.99
 
-// Input number của HTML trả về chuỗi. Đưa chuỗi rỗng về undefined để Zod phân biệt
-// được "bỏ trống" với "nhập sai kiểu", thay vì coerce thành 0.
 function toOptionalNumber(value: unknown): unknown {
   if (value === '' || value === null || value === undefined) return undefined
   return Number(value)
@@ -16,8 +12,6 @@ function numberIssueMessage(label: string) {
     issue.input === undefined ? `${label} là bắt buộc` : `${label} phải là số`
 }
 
-// So sánh trên biểu diễn chuỗi thay vì phép nhân float: value * 100 làm tròn sai
-// với các giá trị như 10.55 hoặc 10.555.
 function hasAtMostTwoDecimalPlaces(value: number): boolean {
   const text = String(value)
   if (text.includes('e') || text.includes('E')) return false
@@ -31,17 +25,30 @@ const planNameSchema = z
   .min(1, 'Tên gói là bắt buộc')
   .max(100, 'Tên gói không được vượt quá 100 ký tự')
 
-const existingPriceSchema = z
-  .preprocess(toOptionalNumber, z.number({ error: numberIssueMessage('Giá') }))
+const monthlyPriceSchema = z
+  .preprocess(toOptionalNumber, z.number({ error: numberIssueMessage('Giá tháng') }))
   .pipe(
     z
       .number()
-      .min(0, 'Giá không được nhỏ hơn 0')
+      .gt(0, 'Giá tháng phải lớn hơn 0')
       .max(MAX_PRICE, 'Giá vượt quá giới hạn cho phép')
       .refine(hasAtMostTwoDecimalPlaces, 'Giá chỉ được tối đa 2 chữ số thập phân')
   )
 
-const positivePriceSchema = existingPriceSchema.refine((price) => price > 0, 'Giá phải lớn hơn 0')
+const optionalMonthlyPriceSchema = z
+  .preprocess(toOptionalNumber, z.number({ error: numberIssueMessage('Giá tháng') }).optional())
+  .pipe(
+    z
+      .number()
+      .gt(0, 'Giá tháng phải lớn hơn 0')
+      .max(MAX_PRICE, 'Giá vượt quá giới hạn cho phép')
+      .refine(hasAtMostTwoDecimalPlaces, 'Giá chỉ được tối đa 2 chữ số thập phân')
+      .optional()
+  )
+
+const yearlyDiscountSchema = z
+  .preprocess(toOptionalNumber, z.number({ error: numberIssueMessage('Chiết khấu năm') }))
+  .pipe(z.number().min(0, 'Chiết khấu không được âm').max(100, 'Chiết khấu tối đa 100%'))
 
 function positiveIntSchema(label: string) {
   return z
@@ -49,60 +56,85 @@ function positiveIntSchema(label: string) {
     .pipe(z.number().int(`${label} phải là số nguyên`).gt(0, `${label} phải lớn hơn 0`))
 }
 
-const planLimitsShape = {
-  planName: planNameSchema,
-  maxWarehouses: positiveIntSchema('Số kho tối đa'),
-  maxUsers: positiveIntSchema('Số người dùng tối đa'),
-  enableForecasting: z.boolean(),
-  enableBarcode: z.boolean(),
-  enableLayoutDesigner: z.boolean(),
-}
+// Mỗi item tương ứng một FeatureMeta từ API. enabled=false → không gửi lên BE.
+// limitValue chỉ validate khi featureType === 'Limit' và enabled === true.
+export const featureItemSchema = z
+  .object({
+    featureCode: z.string(),
+    featureType: z.enum(['Boolean', 'Limit']),
+    displayName: z.string(),
+    description: z.string(),
+    enabled: z.boolean(),
+    limitValue: z.preprocess(
+      toOptionalNumber,
+      z.number({ error: numberIssueMessage('Giới hạn') }).optional()
+    ),
+  })
+  .refine(
+    (item) =>
+      !item.enabled ||
+      item.featureType !== 'Limit' ||
+      (item.limitValue !== undefined && item.limitValue > 0),
+    { message: 'Giới hạn phải lớn hơn 0', path: ['limitValue'] }
+  )
 
-export const billingCycleSchema = z.enum(['Monthly', 'Yearly'], {
-  error: 'Vui lòng chọn chu kỳ thanh toán',
-})
-
-export const BILLING_CYCLE_API_VALUES = {
-  Monthly: 0,
-  Yearly: 1,
-} as const
+export type FeatureItemInput = z.input<typeof featureItemSchema>
+export type FeatureItemOutput = z.output<typeof featureItemSchema>
 
 export const createSubscriptionPlanSchema = z.object({
-  ...planLimitsShape,
-  price: positivePriceSchema,
-  billingCycle: billingCycleSchema,
+  planName: planNameSchema,
+  monthlyPrice: monthlyPriceSchema,
+  yearlyDiscountPercent: yearlyDiscountSchema,
+  displayOrder: positiveIntSchema('Thứ tự hiển thị'),
+  featureItems: z.array(featureItemSchema),
 })
 
-// Plan mặc định của môi trường development có giá 0. Form edit cần chấp nhận giá trị
-// hiện hữu này để admin sửa field khác; schema payload bên dưới vẫn từ chối gửi giá 0.
 export const editSubscriptionPlanSchema = z.object({
-  ...planLimitsShape,
-  price: existingPriceSchema,
-  billingCycle: billingCycleSchema,
-})
-
-export const createSubscriptionPlanRequestSchema = z.object({
-  ...planLimitsShape,
-  price: positivePriceSchema,
-  billingCycle: z.union([z.literal(0), z.literal(1)]),
-})
-
-export const updateSubscriptionPlanRequestSchema = z.object({
   planName: planNameSchema.optional(),
-  price: positivePriceSchema.optional(),
-  maxWarehouses: positiveIntSchema('Số kho tối đa').optional(),
-  maxUsers: positiveIntSchema('Số người dùng tối đa').optional(),
-  enableForecasting: z.boolean().optional(),
-  enableBarcode: z.boolean().optional(),
-  enableLayoutDesigner: z.boolean().optional(),
+  monthlyPrice: optionalMonthlyPriceSchema,
+  yearlyDiscountPercent: z
+    .preprocess(
+      toOptionalNumber,
+      z.number({ error: numberIssueMessage('Chiết khấu năm') }).optional()
+    )
+    .pipe(z.number().min(0).max(100).optional()),
+  displayOrder: positiveIntSchema('Thứ tự hiển thị').optional(),
+  featureItems: z.array(featureItemSchema).optional(),
 })
 
-// Các ô nhập số giữ giá trị dạng chuỗi trước khi preprocess đổi sang number, nên kiểu
-// giá trị form (input) khác kiểu dữ liệu sau khi validate (output).
 export type SubscriptionPlanFormInput = z.input<typeof createSubscriptionPlanSchema>
-
 export type SubscriptionPlanFormOutput = z.output<typeof createSubscriptionPlanSchema>
 
-export type CreateSubscriptionPlanRequest = z.output<typeof createSubscriptionPlanRequestSchema>
+export type EditSubscriptionPlanFormInput = z.input<typeof editSubscriptionPlanSchema>
+export type EditSubscriptionPlanFormOutput = z.output<typeof editSubscriptionPlanSchema>
 
-export type UpdateSubscriptionPlanRequest = z.output<typeof updateSubscriptionPlanRequestSchema>
+export interface PlanFeatureInput {
+  featureCode: string
+  limitValue?: number
+}
+
+export interface CreateSubscriptionPlanRequest {
+  planName: string
+  monthlyPrice: number
+  yearlyDiscountPercent: number
+  displayOrder: number
+  features: PlanFeatureInput[]
+}
+
+export interface UpdateSubscriptionPlanRequest {
+  planName?: string
+  monthlyPrice?: number
+  yearlyDiscountPercent?: number
+  displayOrder?: number
+  features?: PlanFeatureInput[]
+  status?: string
+}
+
+export function featureItemsToPayload(items: FeatureItemOutput[]): PlanFeatureInput[] {
+  return items
+    .filter((item) => item.enabled)
+    .map((item) => ({
+      featureCode: item.featureCode,
+      ...(item.featureType === 'Limit' ? { limitValue: item.limitValue } : {}),
+    }))
+}
