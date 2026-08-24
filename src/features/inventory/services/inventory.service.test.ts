@@ -45,4 +45,14 @@ describe('inventoryService', () => {
     expect(axiosClient.get).toHaveBeenCalledTimes(1)
     expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.movements, { params })
   })
+
+  it('calls reservations once with supported filters only', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: [] }
+    vi.mocked(axiosClient.get).mockResolvedValue({ data: response })
+    const params = { warehouseId: 'warehouse-1', productId: 'product-1' }
+
+    await expect(inventoryService.getReservations(params)).resolves.toEqual(response)
+    expect(axiosClient.get).toHaveBeenCalledTimes(1)
+    expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.reservations, { params })
+  })
 })

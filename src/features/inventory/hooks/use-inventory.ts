@@ -5,6 +5,7 @@ import { inventoryService } from '../services/inventory.service'
 import type {
   InventoryBalanceListResponse,
   InventoryListQuery,
+  InventoryReservationQuery,
   StockMovementListQuery,
   StockMovementListResponse,
 } from '../types/inventory.types'
@@ -23,5 +24,13 @@ export function useStockMovementsQuery(params: StockMovementListQuery, enabled =
     queryFn: () => inventoryService.getStockMovements(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
     enabled,
+  })
+}
+
+export function useInventoryReservationsQuery(params: InventoryReservationQuery) {
+  return useQuery<InventoryBalanceListResponse['items'], ApiErrorResponse>({
+    queryKey: queryKeys.inventory.reservations(params),
+    queryFn: () => inventoryService.getReservations(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
   })
 }
