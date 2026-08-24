@@ -39,6 +39,7 @@ function createProps(
     areFiltersError: false,
     activeFilterCount: 0,
     canReserve: false,
+    canReportDamaged: false,
     onSearchChange: vi.fn(),
     onWarehouseChange: vi.fn(),
     onProductChange: vi.fn(),
@@ -47,6 +48,7 @@ function createProps(
     onPageChange: vi.fn(),
     onRetry: vi.fn(),
     onReserve: vi.fn(),
+    onReportDamaged: vi.fn(),
     ...overrides,
   }
 }
@@ -120,5 +122,22 @@ describe('InventoryDirectory states', () => {
     if (!reserveButton) return
     fireEvent.click(reserveButton)
     expect(onReserve).toHaveBeenCalledWith(inventoryItem)
+  })
+
+  it('only exposes damaged action with its dedicated permission', () => {
+    const onReportDamaged = vi.fn()
+    renderDirectory(
+      createProps({
+        items: [inventoryItem],
+        totalCount: 1,
+        canReportDamaged: true,
+        onReportDamaged,
+      })
+    )
+    const [damagedButton] = screen.getAllByRole('button', { name: 'Báo hỏng' })
+    expect(damagedButton).toBeDefined()
+    if (!damagedButton) return
+    fireEvent.click(damagedButton)
+    expect(onReportDamaged).toHaveBeenCalledWith(inventoryItem)
   })
 })

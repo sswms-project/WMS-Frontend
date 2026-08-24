@@ -51,6 +51,7 @@ interface InventoryDirectoryProps {
   readonly areFiltersError: boolean
   readonly activeFilterCount: number
   readonly canReserve: boolean
+  readonly canReportDamaged: boolean
   readonly onSearchChange: (value: string) => void
   readonly onWarehouseChange: (value: string) => void
   readonly onProductChange: (value: string) => void
@@ -59,6 +60,7 @@ interface InventoryDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onReserve: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryBalance) => void
 }
 
 export function InventoryDirectory({
@@ -78,6 +80,7 @@ export function InventoryDirectory({
   areFiltersError,
   activeFilterCount,
   canReserve,
+  canReportDamaged,
   onSearchChange,
   onWarehouseChange,
   onProductChange,
@@ -86,6 +89,7 @@ export function InventoryDirectory({
   onPageChange,
   onRetry,
   onReserve,
+  onReportDamaged,
 }: InventoryDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -195,8 +199,20 @@ export function InventoryDirectory({
           />
         ) : (
           <>
-            <InventoryMobileList items={items} canReserve={canReserve} onReserve={onReserve} />
-            <InventoryDesktopTable items={items} canReserve={canReserve} onReserve={onReserve} />
+            <InventoryMobileList
+              items={items}
+              canReserve={canReserve}
+              canReportDamaged={canReportDamaged}
+              onReserve={onReserve}
+              onReportDamaged={onReportDamaged}
+            />
+            <InventoryDesktopTable
+              items={items}
+              canReserve={canReserve}
+              canReportDamaged={canReportDamaged}
+              onReserve={onReserve}
+              onReportDamaged={onReportDamaged}
+            />
             <OperationalPagination
               page={page}
               pageSize={pageSize}
@@ -291,11 +307,15 @@ export function InventoryDirectory({
 function InventoryMobileList({
   items,
   canReserve,
+  canReportDamaged,
   onReserve,
+  onReportDamaged,
 }: {
   readonly items: readonly InventoryBalance[]
   readonly canReserve: boolean
+  readonly canReportDamaged: boolean
   readonly onReserve: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryBalance) => void
 }) {
   return (
     <ItemGroup className="gap-0 md:hidden">
@@ -325,6 +345,17 @@ function InventoryMobileList({
                 Giữ tồn
               </Button>
             ) : null}
+            {canReportDamaged && item.availableQuantity > 0 ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="mt-1 w-fit"
+                onClick={() => onReportDamaged(item)}
+              >
+                Báo hỏng
+              </Button>
+            ) : null}
             <ItemDescription>
               Thực tế {formatInventoryQuantity(item.quantityOnHand)} · Đã giữ{' '}
               {formatInventoryQuantity(item.reservedQuantity)}
@@ -339,11 +370,15 @@ function InventoryMobileList({
 function InventoryDesktopTable({
   items,
   canReserve,
+  canReportDamaged,
   onReserve,
+  onReportDamaged,
 }: {
   readonly items: readonly InventoryBalance[]
   readonly canReserve: boolean
+  readonly canReportDamaged: boolean
   readonly onReserve: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryBalance) => void
 }) {
   return (
     <div className="hidden min-h-0 flex-1 overflow-auto md:block">
@@ -356,7 +391,7 @@ function InventoryDesktopTable({
             <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Đã giữ</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Khả dụng</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-40">Cập nhật</TableHead>
-            {canReserve ? (
+            {canReserve || canReportDamaged ? (
               <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">Thao tác</TableHead>
             ) : null}
           </TableRow>
@@ -388,17 +423,30 @@ function InventoryDesktopTable({
               <TableCell className="text-muted-foreground text-xs">
                 {formatInventoryDate(item.updatedAt)}
               </TableCell>
-              {canReserve ? (
-                <TableCell className="text-right">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={item.availableQuantity <= 0}
-                    onClick={() => onReserve(item)}
-                  >
-                    Giữ tồn
-                  </Button>
+              {canReserve || canReportDamaged ? (
+                <TableCell className="space-x-1 text-right">
+                  {canReportDamaged ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={item.availableQuantity <= 0}
+                      onClick={() => onReportDamaged(item)}
+                    >
+                      Báo hỏng
+                    </Button>
+                  ) : null}
+                  {canReserve ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={item.availableQuantity <= 0}
+                      onClick={() => onReserve(item)}
+                    >
+                      Giữ tồn
+                    </Button>
+                  ) : null}
                 </TableCell>
               ) : null}
             </TableRow>

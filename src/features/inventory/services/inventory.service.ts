@@ -7,6 +7,7 @@ import type {
   InventoryReservationQuery,
   ReserveStockRequest,
   ReleaseReservationRequest,
+  ReportDamagedStockRequest,
   StockMovementListQuery,
   StockMovementListResponse,
 } from '../types/inventory.types'
@@ -41,5 +42,9 @@ export const inventoryService = {
           data: quantity,
         }
       )
+      .then((response) => response.data),
+  reportDamagedStock: (request: ReportDamagedStockRequest) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.inventory.damaged, request)
       .then((response) => response.data),
 }

@@ -91,3 +91,11 @@ export interface ReleaseReservationRequest {
   inventoryBalanceId: string
   quantity: number
 }
+
+export interface ReportDamagedStockRequest {
+  productId: string
+  warehouseId: string
+  slotId: string
+  quantity: number
+  reason: string
+}
