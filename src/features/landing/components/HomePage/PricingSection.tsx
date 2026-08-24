@@ -12,17 +12,8 @@ import { usePublicSubscriptionPlansQuery } from '@/features/subscription/hooks/u
 import type { SubscriptionPlanResponse } from '@/features/subscription/types/subscription.types'
 import { APP_ROUTES } from '@/routes/app-routes'
 
-const billingCycleLabels: Record<string, string> = {
-  monthly: 'tháng',
-  yearly: 'năm',
-}
-
 function formatVnd(amount: number) {
   return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`
-}
-
-function formatBillingCycle(billingCycle: string) {
-  return billingCycleLabels[billingCycle.toLowerCase()] ?? billingCycle
 }
 
 function formatLimit(limit: number, unit: string) {
@@ -30,16 +21,24 @@ function formatLimit(limit: number, unit: string) {
 }
 
 function formatPlanDescription(plan: SubscriptionPlanResponse) {
-  return `Vận hành tối đa ${plan.maxWarehouses} kho với ${plan.maxUsers} người dùng.`
+  const limitFeatures = plan.features.filter((f) => f.featureType === 'Limit')
+  if (limitFeatures.length === 0) return plan.planName
+  return (
+    limitFeatures
+      .map((f) => `Tối đa ${f.limitValue ?? '?'} ${f.displayName.toLowerCase()}`)
+      .join(', ') + '.'
+  )
 }
 
 function PlanPrice({ plan }: { readonly plan: SubscriptionPlanResponse }) {
-  if (plan.price === 0) {
+  if (plan.monthlyPrice === 0) {
     return <span className="text-3xl font-bold tracking-tight">Miễn phí</span>
   }
 
   return (
-    <span className="text-3xl font-bold tracking-tight tabular-nums">{formatVnd(plan.price)}</span>
+    <span className="text-3xl font-bold tracking-tight tabular-nums">
+      {formatVnd(plan.monthlyPrice)}
+    </span>
   )
 }
 
@@ -51,13 +50,13 @@ function PricingPlanCard({
   readonly index: number
 }) {
   const prefersReducedMotion = useReducedMotion()
-  const capabilities = [
-    { enabled: true, label: formatLimit(plan.maxWarehouses, 'kho') },
-    { enabled: true, label: formatLimit(plan.maxUsers, 'người dùng') },
-    { enabled: plan.enableForecasting, label: 'Dự báo nhu cầu nhập hàng' },
-    { enabled: plan.enableBarcode, label: 'Quét mã vạch' },
-    { enabled: plan.enableLayoutDesigner, label: 'Thiết kế sơ đồ kho' },
-  ]
+  const capabilities = plan.features.map((feature) => ({
+    enabled: true,
+    label:
+      feature.featureType === 'Limit'
+        ? formatLimit(feature.limitValue ?? 0, feature.displayName.toLowerCase())
+        : feature.displayName,
+  }))
 
   return (
     <motion.div
@@ -78,10 +77,8 @@ function PricingPlanCard({
           </p>
           <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <PlanPrice plan={plan} />
-            {plan.price > 0 && (
-              <span className="text-muted-foreground text-xs">
-                mỗi {formatBillingCycle(plan.billingCycle)}
-              </span>
+            {plan.monthlyPrice > 0 && (
+              <span className="text-muted-foreground text-xs">mỗi tháng</span>
             )}
           </p>
         </CardHeader>

@@ -4,14 +4,9 @@ import {
   CircleCheck,
   CircleMinus,
   CircleOff,
-  LayoutGrid,
   MoreHorizontal,
   PackageCheck,
   Pencil,
-  ScanBarcode,
-  TrendingUp,
-  Users,
-  Warehouse,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,17 +29,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatCurrency } from '@/features/subscription/utils/format-subscription'
 import { cn } from '@/lib/utils'
 import type { SubscriptionPlanResponse } from '../../types/admin.types'
-
-const BILLING_CYCLE_LABELS = {
-  Monthly: 'Hàng tháng',
-  Yearly: 'Hàng năm',
-} as const
-
-const FEATURE_LABELS = [
-  { key: 'enableForecasting', label: 'Dự báo', icon: TrendingUp },
-  { key: 'enableBarcode', label: 'Mã vạch', icon: ScanBarcode },
-  { key: 'enableLayoutDesigner', label: 'Layout', icon: LayoutGrid },
-] as const
 
 interface SubscriptionPlanTableProps {
   readonly plans: readonly SubscriptionPlanResponse[]
@@ -73,24 +57,24 @@ function PlanStatus({ status }: { readonly status: SubscriptionPlanResponse['sta
 }
 
 function PlanFeatures({ plan }: { readonly plan: SubscriptionPlanResponse }) {
-  const enabledFeatures = FEATURE_LABELS.filter((feature) => plan[feature.key])
-
-  if (enabledFeatures.length === 0) {
+  if (plan.features.length === 0) {
     return <span className="text-muted-foreground">Không có</span>
   }
 
   return (
     <ul className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 whitespace-normal">
-      {enabledFeatures.map((feature) => {
-        const Icon = feature.icon
-
-        return (
-          <li key={feature.key} className="flex items-center gap-1">
-            <Icon className="text-primary size-3" aria-hidden="true" />
-            {feature.label}
-          </li>
-        )
-      })}
+      {plan.features.map((feature) => (
+        <li key={feature.featureCode} className="flex items-center gap-1">
+          {feature.featureType === 'Limit' ? (
+            <>
+              <span className="text-foreground tabular-nums">{feature.limitValue}</span>{' '}
+              {feature.displayName}
+            </>
+          ) : (
+            feature.displayName
+          )}
+        </li>
+      ))}
     </ul>
   )
 }
@@ -150,9 +134,15 @@ function PlanPrice({ plan }: { readonly plan: SubscriptionPlanResponse }) {
   return (
     <div>
       <p className="text-foreground text-sm font-semibold tabular-nums">
-        {plan.price === 0 ? 'Miễn phí' : formatCurrency(plan.price)}
+        {plan.monthlyPrice === 0 ? 'Miễn phí' : formatCurrency(plan.monthlyPrice)}
+        <span className="text-muted-foreground text-xs font-normal">/tháng</span>
       </p>
-      <p className="text-muted-foreground mt-0.5">{BILLING_CYCLE_LABELS[plan.billingCycle]}</p>
+      {plan.yearlyDiscountPercent > 0 && (
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          {formatCurrency(plan.yearlyPrice)}/năm
+          <span className="text-primary ml-1">−{plan.yearlyDiscountPercent}%</span>
+        </p>
+      )}
     </div>
   )
 }
@@ -182,21 +172,6 @@ function PlanIdentity({ plan }: { readonly plan: SubscriptionPlanResponse }) {
   )
 }
 
-function PlanLimits({ plan }: { readonly plan: SubscriptionPlanResponse }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-foreground flex items-center gap-1.5">
-        <Warehouse className="text-muted-foreground size-3.5" aria-hidden="true" />
-        <span className="tabular-nums">{plan.maxWarehouses}</span> kho
-      </p>
-      <p className="text-muted-foreground flex items-center gap-1.5">
-        <Users className="size-3.5" aria-hidden="true" />
-        <span className="tabular-nums">{plan.maxUsers}</span> người dùng
-      </p>
-    </div>
-  )
-}
-
 export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: SubscriptionPlanTableProps) {
   return (
     <>
@@ -205,8 +180,7 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[25%] pl-4">Gói dịch vụ</TableHead>
-              <TableHead className="w-[16%]">Giá</TableHead>
-              <TableHead className="w-[18%]">Giới hạn</TableHead>
+              <TableHead className="w-[18%]">Giá</TableHead>
               <TableHead>Tính năng</TableHead>
               <TableHead className="w-[15%]">Trạng thái</TableHead>
               <TableHead className="w-12 pr-3">
@@ -226,10 +200,7 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
                 <TableCell className="py-3">
                   <PlanPrice plan={plan} />
                 </TableCell>
-                <TableCell className="py-3">
-                  <PlanLimits plan={plan} />
-                </TableCell>
-                <TableCell className="max-w-56 py-3">
+                <TableCell className="max-w-72 py-3">
                   <PlanFeatures plan={plan} />
                 </TableCell>
                 <TableCell className="py-3">
@@ -258,19 +229,8 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
               </div>
             </div>
 
-            <div className="bg-muted/20 mt-3 grid grid-cols-2 border-y text-xs">
-              <div className="py-3 pr-3">
-                <p className="text-muted-foreground">Giá</p>
-                <div className="mt-1">
-                  <PlanPrice plan={plan} />
-                </div>
-              </div>
-              <div className="border-l py-3 pl-3">
-                <p className="text-muted-foreground">Giới hạn</p>
-                <div className="mt-1">
-                  <PlanLimits plan={plan} />
-                </div>
-              </div>
+            <div className="bg-muted/20 mt-3 border-y py-3 text-xs">
+              <PlanPrice plan={plan} />
             </div>
             <div className="mt-3 text-xs">
               <p className="text-muted-foreground mb-1.5">Tính năng</p>

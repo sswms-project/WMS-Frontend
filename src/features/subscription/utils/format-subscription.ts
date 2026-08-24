@@ -94,11 +94,8 @@ export function buildInvoiceFileName(invoiceNumber: string): string {
 export function getFeatureRows(plan?: SubscriptionPlanResponse) {
   if (!plan) return []
 
-  return [
-    { label: 'Kho hàng', value: `${plan.maxWarehouses}` },
-    { label: 'Người dùng', value: `${plan.maxUsers}` },
-    { label: 'Barcode', value: plan.enableBarcode ? 'Có' : 'Không' },
-    { label: 'Dự báo', value: plan.enableForecasting ? 'Có' : 'Không' },
-    { label: 'Thiết kế layout', value: plan.enableLayoutDesigner ? 'Có' : 'Không' },
-  ]
+  return plan.features.map((feature) => ({
+    label: feature.displayName,
+    value: feature.featureType === 'Limit' ? `${feature.limitValue ?? '—'}` : 'Có',
+  }))
 }
