@@ -11,7 +11,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { PlanActionState, SubscriptionPlanResponse } from '../../types/subscription.types'
-import { formatBillingCycle, formatCurrency, getFeatureRows } from '../../utils/format-subscription'
+import { formatCurrency, getFeatureRows } from '../../utils/format-subscription'
 
 interface PlanCardProps {
   readonly plan: SubscriptionPlanResponse
@@ -36,18 +36,20 @@ export function PlanCard({ plan, actionState, onUpgrade }: PlanCardProps) {
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="truncate text-base font-semibold">{plan.planName}</CardTitle>
-            <CardDescription>{formatBillingCycle(plan.billingCycle)}</CardDescription>
+            <CardDescription>
+              {plan.yearlyDiscountPercent > 0
+                ? `Tiết kiệm ${plan.yearlyDiscountPercent}% theo năm`
+                : 'Thanh toán hàng tháng'}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-end justify-between gap-3">
           <p className="text-xl font-semibold tracking-tight tabular-nums">
-            {formatCurrency(plan.price)}
+            {plan.monthlyPrice === 0 ? 'Miễn phí' : formatCurrency(plan.monthlyPrice)}
           </p>
-          <p className="text-muted-foreground text-xs">
-            Giá theo {formatBillingCycle(plan.billingCycle).toLowerCase()}
-          </p>
+          <p className="text-muted-foreground text-xs">mỗi tháng</p>
         </div>
         <div className="flex flex-col gap-2">
           {getFeatureRows(plan).map((row) => (
