@@ -45,6 +45,7 @@ export const APP_ROUTES = {
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
   },
+  profile: '/profile',
   settings: {
     security: '/settings/security',
   },

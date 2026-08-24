@@ -11,6 +11,7 @@ import type {
   RegisterResponseDto,
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
+  UpdateProfileRequest,
   UserProfileResponse,
   Verify2FARequestDto,
   VerifyEmailResponseDto,
@@ -46,6 +47,11 @@ export const authService = {
 
   getMe: () =>
     axiosClient.get<ApiResponse<UserProfileResponse>>(API_ENDPOINTS.auth.me).then((r) => r.data),
+
+  updateMe: (body: UpdateProfileRequest) =>
+    axiosClient
+      .put<ApiResponse<UserProfileResponse>>(API_ENDPOINTS.auth.me, body)
+      .then((r) => r.data),
 
   verify2FA: (body: Verify2FARequestDto) =>
     axiosClient
