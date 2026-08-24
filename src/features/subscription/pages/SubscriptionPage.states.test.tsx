@@ -27,8 +27,6 @@ vi.mock('@/stores/auth.store', () => ({
 
 vi.mock('../components/SubscriptionPage', () => ({
   CurrentPlanCard: () => <div>Current plan</div>,
-  InvoicePdfDocument: () => null,
-  PaymentHistoryTable: () => <div>Payment history</div>,
   PlanCard: () => <div>Available plan</div>,
   SubscriptionActionDialog: () => null,
   SubscriptionEmptyState: ({ title }: { readonly title: string }) => <div>{title}</div>,
@@ -39,14 +37,6 @@ vi.mock('../components/SubscriptionPage', () => ({
 vi.mock('../hooks/use-subscription', () => ({
   useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useCurrentSubscriptionQuery: () => pageState.subscriptionQuery,
-  useInvoiceDownloadMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  usePaymentHistoryQuery: () => ({
-    data: { items: [], totalCount: 0 },
-    isLoading: false,
-    isFetching: false,
-    isError: false,
-    refetch: vi.fn(),
-  }),
   useRenewSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useSubscriptionPlansQuery: () => pageState.plansQuery,
   useUpgradeSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
@@ -96,5 +86,11 @@ describe('SubscriptionPage states', () => {
     render(<SubscriptionPage />)
 
     expect(screen.getByText('Chưa có plan active')).toBeInTheDocument()
+  })
+
+  it('keeps payment history out of the plan management page', () => {
+    render(<SubscriptionPage />)
+
+    expect(screen.queryByText('Lịch sử thanh toán')).not.toBeInTheDocument()
   })
 })

@@ -19,7 +19,7 @@ export interface InvitationResponse {
   expiresAt: string
 }
 
-export interface InvitationQuery extends QueryInfo {}
+export type InvitationQuery = QueryInfo
 
 export interface AcceptInvitationRequest {
   fullName: string

@@ -11,15 +11,20 @@ export interface SubscriptionStatusResponse {
   autoRenew: boolean
   isExpired: boolean
   daysRemaining: number
+  pendingPlanName?: string | null
+  pendingBillingCycle?: BillingCycle | null
+  cancelledAt?: string | null
 }
 
 export type PlanFeatureType = 'Boolean' | 'Limit'
+export type BillingCycle = 'Monthly' | 'Yearly'
 
 export interface PlanFeatureResponse {
   featureCode: string
   displayName: string
   featureType: PlanFeatureType
   limitValue?: number
+  description?: string | null
 }
 
 export interface SubscriptionFeatureMetaResponse {
@@ -42,6 +47,7 @@ export interface SubscriptionPlanResponse {
 
 export interface UpgradeSubscriptionRequestDto {
   newPlanId: string
+  billingCycle: BillingCycle
 }
 
 export const PAYMENT_STATUS_VALUES = ['Completed', 'Pending', 'Failed'] as const

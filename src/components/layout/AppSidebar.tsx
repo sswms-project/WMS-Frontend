@@ -15,93 +15,63 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth.store'
-import { NAV_CONFIG } from './nav-config'
+import { isNavItemActive, NAV_CONFIG } from './nav-config'
 
 export function AppSidebar() {
   const user = useAuthStore((state) => state.user)
   const pathname = usePathname()
-  const nav = user?.role ? (NAV_CONFIG[user.role] ?? []) : []
-
-  const mainNav = nav.filter((i) => i.href !== '/admin/roles' && i.href !== '/settings/security')
-  const systemNav = nav.filter((i) => i.href === '/admin/roles' || i.href === '/settings/security')
-
-  const isActive = (href: string) =>
-    pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+  const { isMobile, setOpenMobile } = useSidebar()
+  const sections = user?.role ? (NAV_CONFIG[user.role] ?? []) : []
 
   return (
-    <Sidebar collapsible="offcanvas">
-      {/* Brand header */}
-      <SidebarHeader
-        className="px-4 py-3"
-        style={{ borderBottom: '1px solid var(--sidebar-border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="bg-sidebar-accent flex size-8 shrink-0 items-center justify-center rounded-lg">
-            <Boxes className="text-sidebar-accent-foreground size-[18px]" aria-hidden="true" />
+    <Sidebar collapsible="offcanvas" className="border-sidebar-border">
+      <SidebarHeader className="border-sidebar-border border-b px-4 py-4">
+        <div className="flex min-h-10 items-center gap-3">
+          <span className="bg-sidebar-accent flex size-9 shrink-0 items-center justify-center rounded-md">
+            <Boxes className="text-sidebar-accent-foreground size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="text-sidebar-foreground text-[13px] leading-tight font-bold tracking-widest">
-              KOVIA
-            </p>
-            <p className="text-sidebar-foreground/50 text-[11px] leading-tight">
+            <p className="text-sidebar-foreground truncate text-sm leading-5 font-bold">KOVIA</p>
+            <p className="text-sidebar-foreground/65 truncate text-xs leading-4">
               Hệ thống vận hành kho
             </p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        {/* Main nav */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainNav.map((item) => {
-                const active = isActive(item.href)
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      tooltip={item.label}
-                      className="rounded-md"
-                    >
-                      <Link href={item.href as Route} aria-current={active ? 'page' : undefined}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* System nav (Settings, Admin) — flows normally like Ba Hưng "Quản trị" section */}
-        {systemNav.length > 0 && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup>
-              <SidebarGroupLabel>Hệ thống</SidebarGroupLabel>
+      <SidebarContent className="py-2">
+        {sections.map((section, sectionIndex) => (
+          <div key={section.id}>
+            {sectionIndex > 0 && <SidebarSeparator className="mx-3" />}
+            <SidebarGroup className="px-3 py-2">
+              {section.label && (
+                <SidebarGroupLabel className="h-8 px-2 text-[11px] font-semibold uppercase">
+                  {section.label}
+                </SidebarGroupLabel>
+              )}
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {systemNav.map((item) => {
-                    const active = isActive(item.href)
+                <SidebarMenu className="gap-1">
+                  {section.items.map((item) => {
+                    const active = isNavItemActive(pathname, item)
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                           asChild
                           isActive={active}
                           tooltip={item.label}
-                          className="rounded-md"
+                          className="h-10 gap-3 rounded-md px-3 text-sm font-medium data-[active=true]:shadow-[inset_3px_0_0_var(--color-sidebar-primary)] [&_svg]:size-[18px]"
                         >
                           <Link
                             href={item.href as Route}
                             aria-current={active ? 'page' : undefined}
+                            onClick={() => {
+                              if (isMobile) setOpenMobile(false)
+                            }}
                           >
-                            <item.icon />
+                            <item.icon aria-hidden="true" />
                             <span>{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -111,8 +81,8 @@ export function AppSidebar() {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-          </>
-        )}
+          </div>
+        ))}
       </SidebarContent>
     </Sidebar>
   )

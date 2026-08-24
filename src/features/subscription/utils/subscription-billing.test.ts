@@ -7,6 +7,8 @@ import {
   buildInvoiceFileName,
   formatHistoricalPlanName,
   formatInvoiceSnapshotValue,
+  getMonthlyEquivalent,
+  getPlanPrice,
   isCompletedPayment,
 } from './format-subscription'
 import { buildPaymentHistoryQuery, isInvalidPaymentDateRange } from './payment-history-query'
@@ -16,13 +18,11 @@ function createPlan(overrides: Partial<SubscriptionPlanResponse>): SubscriptionP
   return {
     id: 'plan-id',
     planName: 'Standard',
-    price: 100000,
-    billingCycle: 'Monthly',
-    maxWarehouses: 1,
-    maxUsers: 5,
-    enableForecasting: false,
-    enableBarcode: true,
-    enableLayoutDesigner: false,
+    monthlyPrice: 100000,
+    yearlyPrice: 1080000,
+    yearlyDiscountPercent: 10,
+    displayOrder: 1,
+    features: [],
     status: 'Active',
     ...overrides,
   }
@@ -82,34 +82,74 @@ describe('subscription billing helpers', () => {
   })
 
   it('blocks only lower-price plan changes', () => {
-    expect(isDowngradePlan(200000, createPlan({ price: 100000 }))).toBe(true)
-    expect(isDowngradePlan(100000, createPlan({ price: 100000, id: 'same-price' }))).toBe(false)
-    expect(isDowngradePlan(undefined, createPlan({ price: 100000 }))).toBe(false)
+    expect(isDowngradePlan(200000, createPlan({ monthlyPrice: 100000 }), 'Monthly')).toBe(true)
+    expect(
+      isDowngradePlan(100000, createPlan({ monthlyPrice: 100000, id: 'same-price' }), 'Monthly')
+    ).toBe(false)
+    expect(isDowngradePlan(undefined, createPlan({ monthlyPrice: 100000 }), 'Monthly')).toBe(false)
   })
 
   it('returns accessible action copy for current, downgrade, and pending plans', () => {
-    const currentPlan = createPlan({ id: 'current', planName: 'Current', price: 200000 })
+    const currentPlan = createPlan({ id: 'current', planName: 'Current', monthlyPrice: 200000 })
+    const subscription = {
+      id: 'subscription-id',
+      planName: 'Current',
+      planPrice: 200000,
+      billingCycle: 'Monthly',
+      startDate: '2026-08-01T00:00:00Z',
+      endDate: '2026-09-01T00:00:00Z',
+      status: 'Active',
+      autoRenew: true,
+      isExpired: false,
+      daysRemaining: 8,
+    }
 
     expect(
-      getPlanActionState(createPlan({ id: 'current', price: 200000 }), currentPlan, false)
+      getPlanActionState(
+        createPlan({ id: 'current', monthlyPrice: 200000 }),
+        currentPlan,
+        subscription,
+        'Monthly',
+        false
+      )
     ).toEqual({
       disabled: true,
       label: 'Đang sử dụng',
     })
 
     expect(
-      getPlanActionState(createPlan({ id: 'lower', price: 100000 }), currentPlan, false)
+      getPlanActionState(
+        createPlan({ id: 'lower', monthlyPrice: 100000 }),
+        currentPlan,
+        subscription,
+        'Monthly',
+        false
+      )
     ).toEqual({
-      disabled: true,
-      label: 'Không hỗ trợ hạ gói',
-      tooltip: 'Không hỗ trợ hạ gói',
+      disabled: false,
+      label: 'Chuyển vào kỳ sau',
+      tooltip: 'Gói có giá thấp hơn sẽ được áp dụng từ kỳ thanh toán kế tiếp.',
     })
 
     expect(
-      getPlanActionState(createPlan({ id: 'higher', price: 300000 }), currentPlan, true)
+      getPlanActionState(
+        createPlan({ id: 'higher', monthlyPrice: 300000 }),
+        currentPlan,
+        subscription,
+        'Monthly',
+        true
+      )
     ).toEqual({
       disabled: true,
-      label: 'Đang xử lý...',
+      label: 'Đang xử lý…',
     })
+  })
+
+  it('selects prices and monthly equivalents for both billing cycles', () => {
+    const plan = createPlan({ monthlyPrice: 100000, yearlyPrice: 960000 })
+
+    expect(getPlanPrice(plan, 'Monthly')).toBe(100000)
+    expect(getPlanPrice(plan, 'Yearly')).toBe(960000)
+    expect(getMonthlyEquivalent(plan, 'Yearly')).toBe(80000)
   })
 })

@@ -15,7 +15,12 @@ import type {
   LookupQuery,
   PurchaseOrderListQuery,
 } from '@/features/purchase-order/types/purchase-order.types'
-import type { InventoryListQuery } from '@/features/inventory/types/inventory.types'
+import type {
+  InventoryListQuery,
+  InventoryAbcQuery,
+  InventoryReservationQuery,
+  StockMovementListQuery,
+} from '@/features/inventory/types/inventory.types'
 
 export const queryKeys = {
   organization: {
@@ -58,6 +63,10 @@ export const queryKeys = {
   inventory: {
     all: ['inventory'] as const,
     list: (params: InventoryListQuery) => ['inventory', 'list', params] as const,
+    movements: (params: StockMovementListQuery) => ['inventory', 'movements', params] as const,
+    reservations: (params: InventoryReservationQuery) =>
+      ['inventory', 'reservations', params] as const,
+    abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
   },
   products: {
