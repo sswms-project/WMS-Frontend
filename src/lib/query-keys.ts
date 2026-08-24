@@ -1,10 +1,20 @@
 import type { QueryInfo } from '@/types/api'
 import type { PaymentHistoryQuery } from '@/features/subscription/types/subscription.types'
 import type { StaffDirectoryKind, StaffQuery } from '@/features/staff/types/staff.types'
+import type { InvitationQuery } from '@/features/staff/types/invitation.types'
 import type {
   WarehouseLocationQuery,
   WarehouseLocationType,
 } from '@/features/warehouse/types/warehouse.types'
+import type {
+  InboundListQuery,
+  PutawayTaskQuery,
+  ReceivingTaskQuery,
+} from '@/features/inbound/types/inbound.types'
+import type {
+  LookupQuery,
+  PurchaseOrderListQuery,
+} from '@/features/purchase-order/types/purchase-order.types'
 
 export const queryKeys = {
   organization: {
@@ -54,10 +64,28 @@ export const queryKeys = {
     list: (params?: QueryInfo) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
   },
+  suppliers: {
+    all: ['suppliers'] as const,
+    list: (params: LookupQuery) => ['suppliers', 'list', params] as const,
+  },
   purchaseOrders: {
     all: ['purchase-orders'] as const,
-    list: (params?: QueryInfo) => ['purchase-orders', 'list', params] as const,
+    lists: ['purchase-orders', 'list'] as const,
+    list: (params: PurchaseOrderListQuery) => ['purchase-orders', 'list', params] as const,
     detail: (id: string) => ['purchase-orders', 'detail', id] as const,
+    allowedActions: (id: string) => ['purchase-orders', 'detail', id, 'allowed-actions'] as const,
+    products: (params: LookupQuery) => ['products', 'purchase-order-options', params] as const,
+  },
+  inboundReceipts: {
+    all: ['inbound-receipts'] as const,
+    lists: ['inbound-receipts', 'list'] as const,
+    list: (params: InboundListQuery) => ['inbound-receipts', 'list', params] as const,
+    detail: (id: string) => ['inbound-receipts', 'detail', id] as const,
+    allowedActions: (id: string) => ['inbound-receipts', 'detail', id, 'allowed-actions'] as const,
+    receivingTasks: (params: ReceivingTaskQuery) =>
+      ['inbound-receipts', 'receiving-tasks', params] as const,
+    putawayTasks: (params: PutawayTaskQuery) =>
+      ['inbound-receipts', 'putaway-tasks', params] as const,
   },
   outboundOrders: {
     all: ['outbound-orders'] as const,

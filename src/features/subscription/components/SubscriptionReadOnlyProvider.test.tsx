@@ -53,7 +53,7 @@ describe('SubscriptionReadOnlyProvider', () => {
     )
   })
 
-  it('keeps non-tenant users unrestricted even when the query response is expired', () => {
+  it('keeps warehouse users read-only when their tenant subscription is expired', () => {
     currentUser.value = { role: 'Warehouse Manager' }
 
     render(
@@ -63,8 +63,9 @@ describe('SubscriptionReadOnlyProvider', () => {
       </SubscriptionReadOnlyProvider>
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('false-false-')
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('true-false-Subscription đã hết hạn')
+    expect(screen.getByRole('alert')).toHaveTextContent('Tenant đang ở chế độ chỉ đọc')
+    expect(screen.queryByRole('link', { name: 'Gia hạn ngay' })).not.toBeInTheDocument()
   })
 
   it('defaults to unrestricted outside the provider', () => {

@@ -26,4 +26,16 @@ describe('warehouse route permission', () => {
     expect(APP_ROUTES.warehouseDetail(warehouseId)).toBe(`/warehouses/${warehouseId}`)
     expect(APP_ROUTES.warehouseLayout(warehouseId)).toBe(`/warehouses/${warehouseId}/layout`)
   })
+
+  it('applies purchasing and inbound role boundaries', () => {
+    expect(getAllowedRolesForPath(APP_ROUTES.purchaseOrders)).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+    ])
+    expect(getAllowedRolesForPath(APP_ROUTES.inbound)).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
+  })
 })

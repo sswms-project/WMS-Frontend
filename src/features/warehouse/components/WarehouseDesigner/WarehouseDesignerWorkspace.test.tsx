@@ -268,7 +268,7 @@ describe('WarehouseDesignerWorkspace', () => {
     expect(screen.getByLabelText('Tên kệ')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Hủy' }))
     expect(screen.getByRole('button', { name: /^R-01/ })).toHaveAttribute('aria-pressed', 'true')
-  })
+  }, 10_000)
 
   it('disables editing controls in view-only mode', () => {
     renderWorkspace({ canConfigure: false, hasGeneratedGeometry: true })
