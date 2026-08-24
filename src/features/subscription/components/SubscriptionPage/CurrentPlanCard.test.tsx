@@ -69,7 +69,7 @@ describe('CurrentPlanCard', () => {
       />
     )
 
-    expect(screen.getAllByText('Đã hết hạn')).toHaveLength(2)
+    expect(screen.getByText('Đã hết hạn')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Gia hạn' })).toBeEnabled()
   })
 

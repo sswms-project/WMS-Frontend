@@ -88,8 +88,8 @@ export function PaymentHistoryTable({
     <Card className="border-border min-w-0">
       <CardHeader className="flex flex-col gap-3 border-b sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <CardTitle className="text-base font-semibold">Lịch sử thanh toán</CardTitle>
-          <CardDescription>Tra cứu hóa đơn và tải PDF khi cần đối soát.</CardDescription>
+          <CardTitle className="text-base font-semibold">Danh sách giao dịch</CardTitle>
+          <CardDescription>Tra cứu trạng thái và tải hóa đơn PDF khi cần đối soát.</CardDescription>
         </div>
 
         <form

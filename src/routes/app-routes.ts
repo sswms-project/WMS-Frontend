@@ -11,6 +11,8 @@ export const APP_ROUTES = {
   },
   dashboard: '/dashboard',
   subscription: '/subscription',
+  subscriptionPayments: '/subscription/payments',
+  subscriptionInvoices: '/subscription/invoices',
   organization: '/organization',
   staff: '/staff',
   invitations: {
