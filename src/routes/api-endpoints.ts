@@ -65,6 +65,7 @@ export const API_ENDPOINTS = {
     list: '/inventory',
     movements: '/inventory/movements',
     reservations: '/inventory/reservations',
+    damaged: '/inventory/damaged',
   },
   suppliers: {
     list: '/suppliers',
