@@ -50,6 +50,9 @@ export const APP_ROUTES = {
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
   },
+  products: '/products',
+  productDetail: (id: string) => `/products/${id}`,
+  productCreate: '/products/create',
   profile: '/profile',
   settings: {
     security: '/settings/security',

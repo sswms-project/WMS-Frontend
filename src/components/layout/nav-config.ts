@@ -3,6 +3,7 @@ import {
   ClipboardList,
   CreditCard,
   LayoutDashboard,
+  Package,
   PackageCheck,
   PackageSearch,
   ReceiptText,
@@ -64,6 +65,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
         { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
         { href: APP_ROUTES.inventory, label: 'Tồn kho', icon: PackageSearch },
+        { href: APP_ROUTES.products, label: 'Sản phẩm', icon: Package },
       ],
     },
     {
