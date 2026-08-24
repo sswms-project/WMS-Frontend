@@ -99,3 +99,16 @@ export interface ReportDamagedStockRequest {
   quantity: number
   reason: string
 }
+
+export interface InventoryAbcQuery {
+  warehouseId?: string
+}
+
+export interface InventoryAbcItem {
+  productId: string
+  sku: string
+  productName: string
+  totalQuantity: number
+  cumulativePercentage: number
+  class: string
+}

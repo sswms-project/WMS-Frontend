@@ -5,6 +5,8 @@ import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inventoryService } from '../services/inventory.service'
 import type {
   InventoryBalanceListResponse,
+  InventoryAbcItem,
+  InventoryAbcQuery,
   InventoryListQuery,
   InventoryReservationQuery,
   ReserveStockRequest,
@@ -63,5 +65,13 @@ export function useReportDamagedStockMutation() {
     mutationFn: inventoryService.reportDamagedStock,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
     onError: (error) => logger.error(error),
+  })
+}
+
+export function useInventoryAbcQuery(params: InventoryAbcQuery) {
+  return useQuery<InventoryAbcItem[], ApiErrorResponse>({
+    queryKey: queryKeys.inventory.abc(params),
+    queryFn: () => inventoryService.getAbcClassification(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
   })
 }

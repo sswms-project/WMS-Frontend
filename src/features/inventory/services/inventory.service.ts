@@ -3,6 +3,8 @@ import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
   InventoryBalanceListResponse,
+  InventoryAbcItem,
+  InventoryAbcQuery,
   InventoryListQuery,
   InventoryReservationQuery,
   ReserveStockRequest,
@@ -46,5 +48,9 @@ export const inventoryService = {
   reportDamagedStock: (request: ReportDamagedStockRequest) =>
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.inventory.damaged, request)
+      .then((response) => response.data),
+  getAbcClassification: (params: InventoryAbcQuery) =>
+    axiosClient
+      .get<ApiResponse<InventoryAbcItem[]>>(API_ENDPOINTS.inventory.abcClassification, { params })
       .then((response) => response.data),
 }

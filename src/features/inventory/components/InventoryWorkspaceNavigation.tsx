@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { Boxes, History, LockKeyhole } from 'lucide-react'
+import { Boxes, ChartNoAxesColumnIncreasing, History, LockKeyhole } from 'lucide-react'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
 
-type InventoryWorkspaceView = 'availability' | 'movements' | 'reservations'
+type InventoryWorkspaceView = 'availability' | 'movements' | 'reservations' | 'abc'
 
 interface InventoryWorkspaceNavigationProps {
   readonly currentView: InventoryWorkspaceView
@@ -46,6 +46,14 @@ export function InventoryWorkspaceNavigation({ currentView }: InventoryWorkspace
       >
         <LockKeyhole className="size-4" aria-hidden="true" />
         Tồn đang giữ
+      </Link>
+      <Link
+        href={APP_ROUTES.inventoryAbcClassification}
+        aria-current={currentView === 'abc' ? 'page' : undefined}
+        className={linkClassName('abc')}
+      >
+        <ChartNoAxesColumnIncreasing className="size-4" aria-hidden="true" />
+        Phân loại ABC
       </Link>
     </nav>
   )
