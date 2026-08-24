@@ -1,6 +1,8 @@
 import {
   Building2,
   CreditCard,
+  ClipboardList,
+  PackageCheck,
   LayoutDashboard,
   Settings,
   Shield,
@@ -30,15 +32,20 @@ export const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { href: APP_ROUTES.staff, label: 'Nhân sự', icon: Users },
     { href: APP_ROUTES.subscription, label: 'Gói dịch vụ', icon: CreditCard },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
+    { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
+    { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
     { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
   ],
   [USER_ROLES.WarehouseManager]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
     { href: APP_ROUTES.staff, label: 'Nhân sự', icon: Users },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
+    { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
+    { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
   ],
   [USER_ROLES.WarehouseStaff]: [
     { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
     { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
+    { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
   ],
 }
