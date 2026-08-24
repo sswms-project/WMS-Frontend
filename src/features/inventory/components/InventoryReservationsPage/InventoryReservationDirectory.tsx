@@ -44,16 +44,27 @@ interface InventoryReservationDirectoryProps {
   readonly areFiltersLoading: boolean
   readonly areFiltersError: boolean
   readonly activeFilterCount: number
+  readonly canRelease: boolean
   readonly onWarehouseChange: (value: string) => void
   readonly onProductChange: (value: string) => void
   readonly onResetFilters: () => void
   readonly onRetryFilters: () => void
   readonly onRetry: () => void
+  readonly onRelease: (item: InventoryBalance) => void
 }
 
 export function InventoryReservationDirectory(props: InventoryReservationDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const { items, isLoading, isFetching, isError, activeFilterCount, onRetry } = props
+  const {
+    items,
+    isLoading,
+    isFetching,
+    isError,
+    activeFilterCount,
+    canRelease,
+    onRetry,
+    onRelease,
+  } = props
   const totalReserved = items.reduce((total, item) => total + item.reservedQuantity, 0)
 
   return (
@@ -137,7 +148,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
             }
           />
         ) : (
-          <ReservationResults items={items} />
+          <ReservationResults items={items} canRelease={canRelease} onRelease={onRelease} />
         )}
       </section>
       <ReservationFilters {...props} open={isFilterOpen} onOpenChange={setIsFilterOpen} />
@@ -145,7 +156,15 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
   )
 }
 
-function ReservationResults({ items }: { readonly items: readonly InventoryBalance[] }) {
+function ReservationResults({
+  items,
+  canRelease,
+  onRelease,
+}: {
+  readonly items: readonly InventoryBalance[]
+  readonly canRelease: boolean
+  readonly onRelease: (item: InventoryBalance) => void
+}) {
   return (
     <>
       <ItemGroup className="gap-0 md:hidden">
@@ -162,6 +181,17 @@ function ReservationResults({ items }: { readonly items: readonly InventoryBalan
                 <span className="font-mono">{item.sku || item.productId}</span> ·{' '}
                 {item.warehouseName || item.warehouseId} / {item.slotCode || item.slotId}
               </ItemDescription>
+              {canRelease ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 w-fit"
+                  onClick={() => onRelease(item)}
+                >
+                  Giải phóng
+                </Button>
+              ) : null}
               <ItemDescription>
                 Khả dụng {formatInventoryQuantity(item.availableQuantity)} · Cập nhật{' '}
                 {formatInventoryDate(item.updatedAt)}
@@ -179,6 +209,11 @@ function ReservationResults({ items }: { readonly items: readonly InventoryBalan
               <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Đang giữ</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Khả dụng</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 w-40">Cập nhật</TableHead>
+              {canRelease ? (
+                <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">
+                  Thao tác
+                </TableHead>
+              ) : null}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -207,6 +242,18 @@ function ReservationResults({ items }: { readonly items: readonly InventoryBalan
                 <TableCell className="text-muted-foreground text-xs">
                   {formatInventoryDate(item.updatedAt)}
                 </TableCell>
+                {canRelease ? (
+                  <TableCell className="text-right">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onRelease(item)}
+                    >
+                      Giải phóng
+                    </Button>
+                  </TableCell>
+                ) : null}
               </TableRow>
             ))}
           </TableBody>

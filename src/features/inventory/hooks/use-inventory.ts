@@ -8,6 +8,7 @@ import type {
   InventoryListQuery,
   InventoryReservationQuery,
   ReserveStockRequest,
+  ReleaseReservationRequest,
   StockMovementListQuery,
   StockMovementListResponse,
 } from '../types/inventory.types'
@@ -41,6 +42,15 @@ export function useReserveStockMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReserveStockRequest>({
     mutationFn: inventoryService.reserveStock,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReleaseReservationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReleaseReservationRequest>({
+    mutationFn: inventoryService.releaseReservation,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
     onError: (error) => logger.error(error),
   })
