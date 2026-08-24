@@ -73,7 +73,7 @@ export function ReportDamagedStockDialog({
                 max={item.availableQuantity}
                 aria-invalid={Boolean(quantityError)}
                 disabled={isPending}
-                {...form.register('quantity')}
+                {...form.register('quantity', { valueAsNumber: true })}
               />
               <FieldError errors={quantityError ? [quantityError] : undefined} />
             </Field>
