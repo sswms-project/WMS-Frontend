@@ -5,7 +5,7 @@ import type { StockMovementListQuery } from '../types/inventory.types'
 import { inventoryService } from './inventory.service'
 
 vi.mock('@/lib/axios', () => ({
-  axiosClient: { get: vi.fn(), post: vi.fn() },
+  axiosClient: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }))
 
 describe('inventoryService', () => {
@@ -69,5 +69,18 @@ describe('inventoryService', () => {
     await expect(inventoryService.reserveStock(request)).resolves.toEqual(response)
     expect(axiosClient.post).toHaveBeenCalledOnce()
     expect(axiosClient.post).toHaveBeenCalledWith(API_ENDPOINTS.inventory.reservations, request)
+  })
+
+  it('sends release quantity as the primitive delete body required by backend', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: null }
+    vi.mocked(axiosClient.delete).mockResolvedValue({ data: response })
+
+    await expect(
+      inventoryService.releaseReservation({ inventoryBalanceId: 'balance-1', quantity: 2.5 })
+    ).resolves.toEqual(response)
+    expect(axiosClient.delete).toHaveBeenCalledWith(
+      `${API_ENDPOINTS.inventory.reservations}/balance-1`,
+      { data: 2.5 }
+    )
   })
 })

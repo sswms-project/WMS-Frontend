@@ -86,3 +86,8 @@ export interface ReserveStockRequest {
   slotId: string
   quantity: number
 }
+
+export interface ReleaseReservationRequest {
+  inventoryBalanceId: string
+  quantity: number
+}

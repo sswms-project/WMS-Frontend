@@ -34,11 +34,13 @@ function createProps(
     areFiltersLoading: false,
     areFiltersError: false,
     activeFilterCount: 0,
+    canRelease: false,
     onWarehouseChange: vi.fn(),
     onProductChange: vi.fn(),
     onResetFilters: vi.fn(),
     onRetryFilters: vi.fn(),
     onRetry: vi.fn(),
+    onRelease: vi.fn(),
     ...overrides,
   }
 }
@@ -80,5 +82,15 @@ describe('InventoryReservationDirectory', () => {
     fireEvent.change(screen.getByLabelText('Kho'), { target: { value: 'warehouse-1' } })
     expect(onRetry).toHaveBeenCalledOnce()
     expect(onWarehouseChange).toHaveBeenCalledWith('warehouse-1')
+  })
+
+  it('only exposes release action with inventory reserve permission', () => {
+    const onRelease = vi.fn()
+    renderDirectory(createProps({ items: [reservation], canRelease: true, onRelease }))
+    const [releaseButton] = screen.getAllByRole('button', { name: 'Giải phóng' })
+    expect(releaseButton).toBeDefined()
+    if (!releaseButton) return
+    fireEvent.click(releaseButton)
+    expect(onRelease).toHaveBeenCalledWith(reservation)
   })
 })
