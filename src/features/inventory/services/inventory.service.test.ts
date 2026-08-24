@@ -98,4 +98,15 @@ describe('inventoryService', () => {
     await expect(inventoryService.reportDamagedStock(request)).resolves.toEqual(response)
     expect(axiosClient.post).toHaveBeenCalledWith(API_ENDPOINTS.inventory.damaged, request)
   })
+
+  it('calls ABC classification once with the warehouse filter', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: [] }
+    vi.mocked(axiosClient.get).mockResolvedValue({ data: response })
+    const params = { warehouseId: 'warehouse-1' }
+
+    await expect(inventoryService.getAbcClassification(params)).resolves.toEqual(response)
+    expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.abcClassification, {
+      params,
+    })
+  })
 })
