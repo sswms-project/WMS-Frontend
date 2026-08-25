@@ -67,6 +67,11 @@ export const API_ENDPOINTS = {
   },
   suppliers: {
     list: '/suppliers',
+    create: '/suppliers',
+    detail: (supplierId: string) => `/suppliers/${supplierId}`,
+    update: (supplierId: string) => `/suppliers/${supplierId}`,
+    deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
+    reactivate: (supplierId: string) => `/suppliers/${supplierId}/reactivate`,
   },
   purchaseOrders: {
     list: '/purchase-orders',

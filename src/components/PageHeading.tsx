@@ -13,6 +13,7 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.subscriptionPayments, label: 'Lịch sử thanh toán' },
   { prefix: APP_ROUTES.subscription, label: 'Gói dịch vụ' },
   { prefix: APP_ROUTES.warehouses, label: 'Kho hàng' },
+  { prefix: APP_ROUTES.suppliers, label: 'Nhà cung cấp' },
   { prefix: APP_ROUTES.purchaseOrders, label: 'Mua hàng' },
   { prefix: APP_ROUTES.inbound, label: 'Nhập kho' },
   { prefix: APP_ROUTES.inventory, label: 'Tồn kho' },

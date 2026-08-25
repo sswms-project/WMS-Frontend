@@ -9,6 +9,7 @@ import {
   ReceiptText,
   Settings,
   Shield,
+  Truck,
   Users,
   Warehouse,
 } from 'lucide-react'
@@ -62,6 +63,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         { href: APP_ROUTES.organization, label: 'Tổ chức', icon: Building2 },
         { href: APP_ROUTES.staff, label: 'Nhân sự', icon: Users },
         { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
+        { href: APP_ROUTES.suppliers, label: 'Nhà cung cấp', icon: Truck },
         { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
         { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
         { href: APP_ROUTES.inventory, label: 'Tồn kho', icon: PackageSearch },
@@ -99,6 +101,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         { href: APP_ROUTES.dashboard, label: 'Dashboard', icon: LayoutDashboard },
         { href: APP_ROUTES.staff, label: 'Nhân sự', icon: Users },
         { href: APP_ROUTES.warehouses, label: 'Kho hàng', icon: Warehouse },
+        { href: APP_ROUTES.suppliers, label: 'Nhà cung cấp', icon: Truck },
         { href: APP_ROUTES.purchaseOrders, label: 'Mua hàng', icon: ClipboardList },
         { href: APP_ROUTES.inbound, label: 'Nhập kho', icon: PackageCheck },
         { href: APP_ROUTES.inventory, label: 'Tồn kho', icon: PackageSearch },
