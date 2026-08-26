@@ -15,6 +15,7 @@ import type {
   LookupQuery,
   PurchaseOrderListQuery,
 } from '@/features/purchase-order/types/purchase-order.types'
+import type { SupplierListQuery } from '@/features/supplier/types/supplier.types'
 import type {
   InventoryListQuery,
   InventoryAbcQuery,
@@ -85,7 +86,9 @@ export const queryKeys = {
   },
   suppliers: {
     all: ['suppliers'] as const,
-    list: (params: LookupQuery) => ['suppliers', 'list', params] as const,
+    lists: ['suppliers', 'list'] as const,
+    list: (params: LookupQuery | SupplierListQuery) => ['suppliers', 'list', params] as const,
+    detail: (id: string) => ['suppliers', 'detail', id] as const,
   },
   purchaseOrders: {
     all: ['purchase-orders'] as const,

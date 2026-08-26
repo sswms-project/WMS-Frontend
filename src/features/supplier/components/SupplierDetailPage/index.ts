@@ -1,0 +1,1 @@
+export { SupplierDetail } from './SupplierDetail'

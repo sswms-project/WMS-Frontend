@@ -24,6 +24,8 @@ export const APP_ROUTES = {
     staff: '/dashboard/staff',
   },
   warehouses: '/warehouses',
+  suppliers: '/suppliers',
+  supplierDetail: (supplierId: string) => `/suppliers/${supplierId}`,
   purchaseOrders: '/purchase-orders',
   purchaseOrderCreate: '/purchase-orders/new',
   purchaseOrderDetail: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
