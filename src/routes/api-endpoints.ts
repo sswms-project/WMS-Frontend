@@ -58,9 +58,6 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
   },
-  products: {
-    list: '/products',
-  },
   inventory: {
     list: '/inventory',
     movements: '/inventory/movements',
@@ -113,6 +110,21 @@ export const API_ENDPOINTS = {
   public: {
     subscriptionPlans: '/public/subscription-plans',
     subscriptionFeatures: '/public/subscription-features',
+  },
+  units: {
+    list: '/units',
+  },
+  categories: {
+    list: '/categories',
+  },
+  products: {
+    list: '/products',
+    create: '/products',
+    detail: (id: string) => `/products/${id}`,
+    update: (id: string) => `/products/${id}`,
+    stockPolicy: (id: string) => `/products/${id}/stock-policy`,
+    barcode: (id: string) => `/products/${id}/barcode`,
+    import: '/products/import',
   },
   payments: {
     history: '/payments',
