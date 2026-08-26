@@ -15,12 +15,14 @@ import type {
   LookupQuery,
   PurchaseOrderListQuery,
 } from '@/features/purchase-order/types/purchase-order.types'
+import type { SupplierListQuery } from '@/features/supplier/types/supplier.types'
 import type {
   InventoryListQuery,
   InventoryAbcQuery,
   InventoryReservationQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
+import type { ProductListQuery } from '@/features/product/types/product.types'
 
 export const queryKeys = {
   organization: {
@@ -69,14 +71,24 @@ export const queryKeys = {
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
   },
+  units: {
+    all: ['units'] as const,
+    list: ['units', 'list'] as const,
+  },
+  categories: {
+    all: ['categories'] as const,
+    list: ['categories', 'list'] as const,
+  },
   products: {
     all: ['products'] as const,
-    list: (params?: QueryInfo) => ['products', 'list', params] as const,
+    list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,
-    list: (params: LookupQuery) => ['suppliers', 'list', params] as const,
+    lists: ['suppliers', 'list'] as const,
+    list: (params: LookupQuery | SupplierListQuery) => ['suppliers', 'list', params] as const,
+    detail: (id: string) => ['suppliers', 'detail', id] as const,
   },
   purchaseOrders: {
     all: ['purchase-orders'] as const,
