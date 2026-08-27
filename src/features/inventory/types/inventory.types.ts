@@ -2,6 +2,7 @@ export interface InventoryListQuery {
   pageNumber: number
   pageSize: number
   warehouseId?: string
+  zoneId?: string
   productId?: string
   searchTerm?: string
 }

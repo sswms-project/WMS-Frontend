@@ -35,6 +35,7 @@ import { formatInventoryDate, formatInventoryQuantity } from '../../utils/invent
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryDirectoryProps {
+  readonly permissions: readonly string[]
   readonly items: readonly InventoryBalance[]
   readonly totalCount: number
   readonly page: number
@@ -64,6 +65,7 @@ interface InventoryDirectoryProps {
 }
 
 export function InventoryDirectory({
+  permissions,
   items,
   totalCount,
   page,
@@ -114,7 +116,7 @@ export function InventoryDirectory({
         </div>
       </header>
 
-      <InventoryWorkspaceNavigation currentView="availability" />
+      <InventoryWorkspaceNavigation currentView="availability" permissions={permissions} />
 
       <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="inventory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">

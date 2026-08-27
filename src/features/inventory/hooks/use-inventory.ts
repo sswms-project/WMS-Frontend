@@ -16,11 +16,12 @@ import type {
   StockMovementListResponse,
 } from '../types/inventory.types'
 
-export function useInventoryQuery(params: InventoryListQuery) {
+export function useInventoryQuery(params: InventoryListQuery, enabled = true) {
   return useQuery<InventoryBalanceListResponse, ApiErrorResponse>({
     queryKey: queryKeys.inventory.list(params),
     queryFn: () => inventoryService.getInventory(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
+    enabled,
   })
 }
 

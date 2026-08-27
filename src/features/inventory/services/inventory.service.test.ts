@@ -19,7 +19,13 @@ describe('inventoryService', () => {
       data: { items: [], totalCount: 0, pageNumber: 1, pageSize: 20 },
     }
     vi.mocked(axiosClient.get).mockResolvedValue({ data: response })
-    const params = { pageNumber: 1, pageSize: 20, searchTerm: 'SKU-01' }
+    const params = {
+      pageNumber: 1,
+      pageSize: 20,
+      warehouseId: 'warehouse-1',
+      zoneId: 'zone-1',
+      searchTerm: 'SKU-01',
+    }
 
     await expect(inventoryService.getInventory(params)).resolves.toEqual(response)
     expect(axiosClient.get).toHaveBeenCalledTimes(1)

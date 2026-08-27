@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useProductOptionsQuery } from '@/features/purchase-order/hooks/use-purchase-orders'
 import { StockMovementHistory } from '../components/StockMovementsPage'
 import { useStockMovementsQuery } from '../hooks/use-inventory'
@@ -13,6 +14,7 @@ import {
 const PAGE_SIZE = 20
 
 export default function StockMovementsPage() {
+  const meQuery = useMeQuery()
   const [productId, setProductId] = useState('')
   const [movementType, setMovementType] = useState<StockMovementType | ''>('')
   const [dateFrom, setDateFrom] = useState('')
@@ -41,6 +43,7 @@ export default function StockMovementsPage() {
 
   return (
     <StockMovementHistory
+      permissions={meQuery.data?.permissions ?? []}
       items={movementsQuery.data?.items ?? []}
       totalCount={movementsQuery.data?.totalCount ?? 0}
       page={page}

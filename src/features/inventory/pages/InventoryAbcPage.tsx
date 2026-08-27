@@ -1,11 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { InventoryAbcDirectory } from '../components/InventoryAbcPage'
 import { useInventoryAbcQuery } from '../hooks/use-inventory'
 
 export default function InventoryAbcPage() {
+  const meQuery = useMeQuery()
   const [warehouseId, setWarehouseId] = useState('')
   const params = useMemo(() => (warehouseId ? { warehouseId } : {}), [warehouseId])
   const abcQuery = useInventoryAbcQuery(params)
@@ -26,6 +28,7 @@ export default function InventoryAbcPage() {
 
   return (
     <InventoryAbcDirectory
+      permissions={meQuery.data?.permissions ?? []}
       items={abcQuery.data ?? []}
       warehouseId={warehouseId}
       warehouseOptions={warehouseOptions}
