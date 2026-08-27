@@ -162,6 +162,7 @@ export default function InventoryPage() {
   return (
     <>
       <InventoryDirectory
+        permissions={meQuery.data?.permissions ?? []}
         items={inventoryQuery.data?.items ?? []}
         totalCount={inventoryQuery.data?.totalCount ?? 0}
         page={page}

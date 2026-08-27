@@ -23,6 +23,7 @@ function createProps(
   overrides: Partial<ComponentProps<typeof InventoryReservationDirectory>> = {}
 ): ComponentProps<typeof InventoryReservationDirectory> {
   return {
+    permissions: [],
     items: [],
     warehouseId: '',
     productId: '',

@@ -22,6 +22,7 @@ import { formatInventoryQuantity } from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryAbcDirectoryProps {
+  readonly permissions: readonly string[]
   readonly items: readonly InventoryAbcItem[]
   readonly warehouseId: string
   readonly warehouseOptions: readonly InventoryFilterOption[]
@@ -42,6 +43,7 @@ const classStyles: Record<string, string> = {
 }
 
 export function InventoryAbcDirectory({
+  permissions,
   items,
   warehouseId,
   warehouseOptions,
@@ -79,7 +81,7 @@ export function InventoryAbcDirectory({
           <span className="text-xs font-medium tabular-nums">{items.length} sản phẩm</span>
         </div>
       </header>
-      <InventoryWorkspaceNavigation currentView="abc" />
+      <InventoryWorkspaceNavigation currentView="abc" permissions={permissions} />
       <section className="grid shrink-0 grid-cols-3 border" aria-label="Phân bố nhóm ABC">
         {['A', 'B', 'C'].map((className) => (
           <div
