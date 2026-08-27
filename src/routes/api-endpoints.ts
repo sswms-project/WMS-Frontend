@@ -18,6 +18,10 @@ export const API_ENDPOINTS = {
     confirm2fa: '/settings/2fa/confirm',
     disable2fa: '/settings/2fa',
   },
+  tenantRolePermissions: {
+    workspace: '/tenant-role-permissions',
+    assign: (roleId: string) => `/tenant-role-permissions/${roleId}`,
+  },
   organization: {
     me: '/organization',
   },

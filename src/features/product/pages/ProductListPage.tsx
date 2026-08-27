@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
   ProductListTable,
@@ -28,7 +29,7 @@ import type { ProductResponse } from '../types/product.types'
 
 const PAGE_SIZE = 10
 
-export function ProductListPage() {
+export default function ProductListPage() {
   const router = useRouter()
   const [page, setPage] = useState(1)
   const [searchText, setSearchText] = useState('')
@@ -41,11 +42,16 @@ export function ProductListPage() {
     pageSize: PAGE_SIZE,
     ...(debouncedSearch ? { searchTerm: debouncedSearch } : {}),
   })
+  const meQuery = useMeQuery()
 
   const createMutation = useCreateProductMutation()
   const importMutation = useImportProductsMutation()
 
   const products = listQuery.data?.items ?? []
+  const permissions = new Set(meQuery.data?.permissions ?? [])
+  const canCreate = permissions.has('products:create')
+  const canEdit = permissions.has('products:update')
+  const canImport = permissions.has('products:import')
 
   function handleSearchChange(value: string) {
     setSearchText(value)
@@ -103,21 +109,31 @@ export function ProductListPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => setIsImportOpen(true)}
-          >
-            <Upload className="size-4" aria-hidden="true" />
-            Nhập Excel
-          </Button>
-          <Button type="button" className="w-full sm:w-auto" onClick={() => setIsCreateOpen(true)}>
-            <PackagePlus className="size-4" aria-hidden="true" />
-            Thêm sản phẩm
-          </Button>
-        </div>
+        {(canImport || canCreate) && (
+          <div className="flex items-center gap-2">
+            {canImport && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => setIsImportOpen(true)}
+              >
+                <Upload className="size-4" aria-hidden="true" />
+                Nhập Excel
+              </Button>
+            )}
+            {canCreate && (
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={() => setIsCreateOpen(true)}
+              >
+                <PackagePlus className="size-4" aria-hidden="true" />
+                Thêm sản phẩm
+              </Button>
+            )}
+          </div>
+        )}
       </header>
 
       <section className="bg-card min-w-0 overflow-hidden border" aria-label="Danh sách sản phẩm">
@@ -187,7 +203,12 @@ export function ProductListPage() {
 
         {products.length > 0 && (
           <>
-            <ProductListTable products={products} onView={handleView} onEdit={handleEdit} />
+            <ProductListTable
+              products={products}
+              canEdit={canEdit}
+              onView={handleView}
+              onEdit={handleEdit}
+            />
             <ProductListPagination
               page={page}
               pageSize={PAGE_SIZE}
@@ -198,19 +219,23 @@ export function ProductListPage() {
         )}
       </section>
 
-      <CreateProductDialog
-        open={isCreateOpen}
-        isPending={createMutation.isPending}
-        onOpenChange={setIsCreateOpen}
-        onSubmit={(values) => void handleCreate(values)}
-      />
+      {canCreate && (
+        <CreateProductDialog
+          open={isCreateOpen}
+          isPending={createMutation.isPending}
+          onOpenChange={setIsCreateOpen}
+          onSubmit={(values) => void handleCreate(values)}
+        />
+      )}
 
-      <ProductImportDialog
-        open={isImportOpen}
-        isPending={importMutation.isPending}
-        onOpenChange={setIsImportOpen}
-        onImport={handleImport}
-      />
+      {canImport && (
+        <ProductImportDialog
+          open={isImportOpen}
+          isPending={importMutation.isPending}
+          onOpenChange={setIsImportOpen}
+          onImport={handleImport}
+        />
+      )}
     </div>
   )
 }

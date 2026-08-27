@@ -31,6 +31,17 @@ describe('warehouse route permission', () => {
     expect(getAllowedRolesForPath(APP_ROUTES.purchaseOrders)).toEqual([
       USER_ROLES.TenantOwner,
       USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
+    expect(getAllowedRolesForPath(APP_ROUTES.suppliers)).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
+    expect(getAllowedRolesForPath(APP_ROUTES.products)).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
     ])
     expect(getAllowedRolesForPath(APP_ROUTES.inbound)).toEqual([
       USER_ROLES.TenantOwner,
@@ -41,6 +52,15 @@ describe('warehouse route permission', () => {
       USER_ROLES.TenantOwner,
       USER_ROLES.WarehouseManager,
       USER_ROLES.WarehouseStaff,
+    ])
+  })
+
+  it('allows only the tenant owner to open tenant access control', () => {
+    expect(getAllowedRolesForPath(APP_ROUTES.settings.accessControl)).toEqual([
+      USER_ROLES.TenantOwner,
+    ])
+    expect(getAllowedRolesForPath(`${APP_ROUTES.settings.accessControl}/review`)).toEqual([
+      USER_ROLES.TenantOwner,
     ])
   })
 })

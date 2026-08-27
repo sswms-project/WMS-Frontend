@@ -17,19 +17,22 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useAuthStore } from '@/stores/auth.store'
-import { isNavItemActive, NAV_CONFIG } from './nav-config'
+import { getVisibleNavSections, isNavItemActive } from './nav-config'
 
 export function AppSidebar() {
   const user = useAuthStore((state) => state.user)
+  const meQuery = useMeQuery()
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
-  const sections = user?.role ? (NAV_CONFIG[user.role] ?? []) : []
+  const permissions = new Set(meQuery.data?.permissions ?? [])
+  const sections = user?.role ? getVisibleNavSections(user.role, permissions) : []
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-sidebar-border">
-      <SidebarHeader className="border-sidebar-border border-b px-4 py-4">
-        <div className="flex min-h-10 items-center gap-3">
+    <Sidebar collapsible="offcanvas" className="border-sidebar-border min-w-0 overflow-hidden">
+      <SidebarHeader className="border-sidebar-border min-w-0 shrink-0 overflow-hidden border-b px-4 py-4">
+        <div className="flex min-h-10 min-w-0 items-center gap-3">
           <span className="bg-sidebar-accent flex size-9 shrink-0 items-center justify-center rounded-md">
             <Boxes className="text-sidebar-accent-foreground size-5" aria-hidden="true" />
           </span>
@@ -42,9 +45,9 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="py-2">
+      <SidebarContent className="min-w-0 py-2">
         {sections.map((section, sectionIndex) => (
-          <div key={section.id}>
+          <div key={section.id} className="min-w-0">
             {sectionIndex > 0 && <SidebarSeparator className="mx-3" />}
             <SidebarGroup className="px-3 py-2">
               {section.label && (
@@ -52,7 +55,7 @@ export function AppSidebar() {
                   {section.label}
                 </SidebarGroupLabel>
               )}
-              <SidebarGroupContent>
+              <SidebarGroupContent className="min-w-0">
                 <SidebarMenu className="gap-1">
                   {section.items.map((item) => {
                     const active = isNavItemActive(pathname, item)
@@ -62,7 +65,7 @@ export function AppSidebar() {
                           asChild
                           isActive={active}
                           tooltip={item.label}
-                          className="h-10 gap-3 rounded-md px-3 text-sm font-medium data-[active=true]:shadow-[inset_3px_0_0_var(--color-sidebar-primary)] [&_svg]:size-[18px]"
+                          className="h-10 min-w-0 gap-3 rounded-md px-3 text-sm font-medium data-[active=true]:shadow-[inset_3px_0_0_var(--color-sidebar-primary)] [&_svg]:size-[18px]"
                         >
                           <Link
                             href={item.href as Route}
