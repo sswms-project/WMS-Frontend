@@ -25,6 +25,10 @@ import type {
 import type { ProductListQuery } from '@/features/product/types/product.types'
 
 export const queryKeys = {
+  tenantRolePermissions: {
+    all: ['tenant-role-permissions'] as const,
+    workspace: ['tenant-role-permissions', 'workspace'] as const,
+  },
   organization: {
     all: ['organization'] as const,
     me: ['organization', 'me'] as const,

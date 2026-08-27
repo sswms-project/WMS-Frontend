@@ -100,7 +100,8 @@ const AUTH_401_PASSTHROUGH_ENDPOINTS: string[] = [
 ]
 
 export const shouldRedirectToUnauthorized = (url?: string): boolean =>
-  url !== API_ENDPOINTS.subscription.me
+  url !== API_ENDPOINTS.subscription.me &&
+  !url?.startsWith(API_ENDPOINTS.tenantRolePermissions.workspace)
 
 // ── Token refresh with queuing ─────────────────────────────────
 

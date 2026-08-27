@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { APP_ROUTES } from '@/routes/app-routes'
@@ -26,18 +27,23 @@ interface ProductDetailPageProps {
   readonly productId: string
 }
 
-export function ProductDetailPage({ productId }: ProductDetailPageProps) {
+export default function ProductDetailPage({ productId }: ProductDetailPageProps) {
   const router = useRouter()
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [isStockPolicyOpen, setIsStockPolicyOpen] = useState(false)
 
   const detailQuery = useProductDetailQuery(productId)
+  const meQuery = useMeQuery()
   const updateMutation = useUpdateProductMutation(productId)
   const stockPolicyMutation = useConfigureStockPolicyMutation(productId)
   const barcodeMutation = useGenerateBarcodeMutation(productId)
 
   const product = detailQuery.data
+  const permissions = new Set(meQuery.data?.permissions ?? [])
+  const canUpdate = permissions.has('products:update')
+  const canConfigureStockPolicy = permissions.has('products:configure-policy')
+  const canGenerateBarcode = permissions.has('products:generate-barcode')
 
   async function handleUpdate(values: UpdateProductFormValues) {
     try {
@@ -127,16 +133,23 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
           </Button>
           <h1 className="text-lg font-semibold">Chi tiết sản phẩm</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => setIsArchiveOpen(true)}>
-            <Archive className="size-4" aria-hidden="true" />
-            Lưu trữ
-          </Button>
-          <Button type="button" size="sm" onClick={() => setIsEditOpen(true)}>
-            <Pencil className="size-4" aria-hidden="true" />
-            Chỉnh sửa
-          </Button>
-        </div>
+        {canUpdate && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsArchiveOpen(true)}
+            >
+              <Archive className="size-4" aria-hidden="true" />
+              Lưu trữ
+            </Button>
+            <Button type="button" size="sm" onClick={() => setIsEditOpen(true)}>
+              <Pencil className="size-4" aria-hidden="true" />
+              Chỉnh sửa
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Two-column layout */}
@@ -205,15 +218,17 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                   </p>
                   <p className="text-muted-foreground mt-0.5 text-xs">đơn vị</p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsStockPolicyOpen(true)}
-                >
-                  <Settings2 className="size-4" aria-hidden="true" />
-                  Cấu hình
-                </Button>
+                {canConfigureStockPolicy && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsStockPolicyOpen(true)}
+                  >
+                    <Settings2 className="size-4" aria-hidden="true" />
+                    Cấu hình
+                  </Button>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -223,6 +238,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
               <ProductBarcodePanel
                 sku={product.sku}
                 barcodeValue={product.barcodeValue}
+                canGenerate={canGenerateBarcode}
                 isGenerating={barcodeMutation.isPending}
                 onGenerate={() => void handleGenerateBarcode()}
               />
@@ -231,7 +247,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
         </Tabs>
       </div>
 
-      {isEditOpen && (
+      {canUpdate && isEditOpen && (
         <UpdateProductDialog
           open={isEditOpen}
           product={product}
@@ -241,7 +257,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
         />
       )}
 
-      {isArchiveOpen && (
+      {canUpdate && isArchiveOpen && (
         <ProductArchiveDialog
           product={product}
           isPending={false}
@@ -250,7 +266,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
         />
       )}
 
-      {isStockPolicyOpen && (
+      {canConfigureStockPolicy && isStockPolicyOpen && (
         <ProductStockPolicyDialog
           open={isStockPolicyOpen}
           product={product}

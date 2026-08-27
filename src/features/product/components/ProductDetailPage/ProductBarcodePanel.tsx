@@ -10,6 +10,7 @@ import { logger } from '@/lib/logger'
 interface ProductBarcodePanelProps {
   readonly sku: string
   readonly barcodeValue: string | null
+  readonly canGenerate: boolean
   readonly isGenerating: boolean
   readonly onGenerate: () => void
 }
@@ -17,6 +18,7 @@ interface ProductBarcodePanelProps {
 export function ProductBarcodePanel({
   sku,
   barcodeValue,
+  canGenerate,
   isGenerating,
   onGenerate,
 }: ProductBarcodePanelProps) {
@@ -80,14 +82,16 @@ export function ProductBarcodePanel({
             Nhấn nút bên dưới để tạo mã vạch cho sản phẩm này.
           </p>
         </div>
-        <Button type="button" onClick={onGenerate} disabled={isGenerating}>
-          {isGenerating ? (
-            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <QrCode className="size-4" aria-hidden="true" />
-          )}
-          Tạo mã vạch
-        </Button>
+        {canGenerate && (
+          <Button type="button" onClick={onGenerate} disabled={isGenerating}>
+            {isGenerating ? (
+              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <QrCode className="size-4" aria-hidden="true" />
+            )}
+            Tạo mã vạch
+          </Button>
+        )}
       </div>
     )
   }
@@ -124,16 +128,18 @@ export function ProductBarcodePanel({
             <Printer className="size-4" aria-hidden="true" />
             In nhãn
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="flex-1 sm:flex-none"
-            disabled={isGenerating}
-            onClick={onGenerate}
-          >
-            {isGenerating && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
-            Tạo lại
-          </Button>
+          {canGenerate && (
+            <Button
+              type="button"
+              size="sm"
+              className="flex-1 sm:flex-none"
+              disabled={isGenerating}
+              onClick={onGenerate}
+            >
+              {isGenerating && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
+              Tạo lại
+            </Button>
+          )}
         </div>
       </header>
 

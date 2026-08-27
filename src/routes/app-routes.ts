@@ -58,5 +58,6 @@ export const APP_ROUTES = {
   profile: '/profile',
   settings: {
     security: '/settings/security',
+    accessControl: '/settings/access-control',
   },
 } as const
