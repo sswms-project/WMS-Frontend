@@ -18,6 +18,10 @@ export const API_ENDPOINTS = {
     confirm2fa: '/settings/2fa/confirm',
     disable2fa: '/settings/2fa',
   },
+  tenantRolePermissions: {
+    workspace: '/tenant-role-permissions',
+    assign: (roleId: string) => `/tenant-role-permissions/${roleId}`,
+  },
   organization: {
     me: '/organization',
   },
@@ -64,6 +68,25 @@ export const API_ENDPOINTS = {
     reservations: '/inventory/reservations',
     damaged: '/inventory/damaged',
     abcClassification: '/inventory/abc-classification',
+  },
+  cycleCounts: {
+    list: '/cycle-counts',
+    create: '/cycle-counts',
+    detail: (cycleCountId: string) => `/cycle-counts/${cycleCountId}`,
+    allowedActions: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/allowed-actions`,
+    recordItem: (cycleCountId: string, itemId: string) =>
+      `/cycle-counts/${cycleCountId}/items/${itemId}`,
+    submit: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/submit`,
+    recount: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/recount`,
+    finalize: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/finalize`,
+  },
+  stockAdjustments: {
+    list: '/stock-adjustments',
+    create: '/stock-adjustments',
+    detail: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}`,
+    allowedActions: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/allowed-actions`,
+    approve: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/approve`,
+    reject: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/reject`,
   },
   suppliers: {
     list: '/suppliers',

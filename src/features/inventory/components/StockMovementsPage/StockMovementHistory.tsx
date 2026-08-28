@@ -20,6 +20,7 @@ import { StockMovementFilters } from './StockMovementFilters'
 import { StockMovementDesktopTable, StockMovementMobileList } from './StockMovementResults'
 
 interface StockMovementHistoryProps {
+  readonly permissions: readonly string[]
   readonly items: readonly StockMovement[]
   readonly totalCount: number
   readonly page: number
@@ -82,7 +83,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
           <span className="text-xs font-medium tabular-nums">{totalCount} biến động</span>
         </div>
       </header>
-      <InventoryWorkspaceNavigation currentView="movements" />
+      <InventoryWorkspaceNavigation currentView="movements" permissions={props.permissions} />
       <section
         className="bg-card flex min-h-0 flex-col border"
         aria-labelledby="movement-history-title"

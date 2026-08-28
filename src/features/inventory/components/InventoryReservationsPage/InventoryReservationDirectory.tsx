@@ -33,6 +33,7 @@ import { formatInventoryDate, formatInventoryQuantity } from '../../utils/invent
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryReservationDirectoryProps {
+  readonly permissions: readonly string[]
   readonly items: readonly InventoryBalance[]
   readonly warehouseId: string
   readonly productId: string
@@ -89,7 +90,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
           </span>
         </div>
       </header>
-      <InventoryWorkspaceNavigation currentView="reservations" />
+      <InventoryWorkspaceNavigation currentView="reservations" permissions={props.permissions} />
       <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="reservation-title">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b p-3">
           <div>

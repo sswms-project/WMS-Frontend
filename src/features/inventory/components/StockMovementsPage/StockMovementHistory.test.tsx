@@ -24,6 +24,7 @@ function createProps(
   overrides: Partial<ComponentProps<typeof StockMovementHistory>> = {}
 ): ComponentProps<typeof StockMovementHistory> {
   return {
+    permissions: [],
     items: [],
     totalCount: 0,
     page: 1,

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { USER_ROLES } from '@/config/roles'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { getNavItems, isNavItemActive, NAV_CONFIG } from './nav-config'
+import { getNavItems, getVisibleNavSections, isNavItemActive, NAV_CONFIG } from './nav-config'
+
+function getVisibleNavItems(
+  role: Parameters<typeof getVisibleNavSections>[0],
+  permissions: string[]
+) {
+  return getVisibleNavSections(role, new Set(permissions)).flatMap((section) => section.items)
+}
 
 describe('application navigation visibility', () => {
   it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
@@ -17,27 +24,38 @@ describe('application navigation visibility', () => {
     ).toBe(false)
   })
 
-  it('shows purchasing to owner and manager, and inbound to every tenant warehouse role', () => {
+  it('shows permission-gated workspaces only when the current user has access', () => {
     expect(
-      getNavItems(USER_ROLES.TenantOwner).some((item) => item.href === APP_ROUTES.purchaseOrders)
-    ).toBe(true)
-    expect(
-      getNavItems(USER_ROLES.WarehouseManager).some(
+      getVisibleNavItems(USER_ROLES.TenantOwner, ['purchase-orders:view']).some(
         (item) => item.href === APP_ROUTES.purchaseOrders
       )
     ).toBe(true)
     expect(
-      getNavItems(USER_ROLES.WarehouseStaff).some((item) => item.href === APP_ROUTES.purchaseOrders)
+      getVisibleNavItems(USER_ROLES.WarehouseManager, ['purchase-orders:view']).some(
+        (item) => item.href === APP_ROUTES.purchaseOrders
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['purchase-orders:view']).some(
+        (item) => item.href === APP_ROUTES.purchaseOrders
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, []).some(
+        (item) => item.href === APP_ROUTES.purchaseOrders
+      )
     ).toBe(false)
 
-    for (const role of [
-      USER_ROLES.TenantOwner,
-      USER_ROLES.WarehouseManager,
-      USER_ROLES.WarehouseStaff,
-    ]) {
-      expect(getNavItems(role).some((item) => item.href === APP_ROUTES.inbound)).toBe(true)
-      expect(getNavItems(role).some((item) => item.href === APP_ROUTES.inventory)).toBe(true)
-    }
+    const staffItems = getVisibleNavItems(USER_ROLES.WarehouseStaff, [
+      'suppliers:view',
+      'products:view',
+      'inbound-receipts:view',
+      'inventory:view',
+    ])
+    expect(staffItems.some((item) => item.href === APP_ROUTES.suppliers)).toBe(true)
+    expect(staffItems.some((item) => item.href === APP_ROUTES.products)).toBe(true)
+    expect(staffItems.some((item) => item.href === APP_ROUTES.inbound)).toBe(true)
+    expect(staffItems.some((item) => item.href === APP_ROUTES.inventory)).toBe(true)
   })
 
   it('groups subscription management without duplicate payment entries', () => {
@@ -71,5 +89,23 @@ describe('application navigation visibility', () => {
     expect(
       getNavItems(USER_ROLES.SystemAdmin).some((item) => item.href === APP_ROUTES.inventory)
     ).toBe(false)
+  })
+
+  it('shows tenant access control only to the tenant owner', () => {
+    expect(
+      getNavItems(USER_ROLES.TenantOwner).some(
+        (item) => item.href === APP_ROUTES.settings.accessControl
+      )
+    ).toBe(true)
+
+    for (const role of [
+      USER_ROLES.SystemAdmin,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ]) {
+      expect(
+        getNavItems(role).some((item) => item.href === APP_ROUTES.settings.accessControl)
+      ).toBe(false)
+    }
   })
 })

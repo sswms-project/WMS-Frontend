@@ -98,6 +98,7 @@ export default function InventoryReservationsPage() {
   return (
     <>
       <InventoryReservationDirectory
+        permissions={meQuery.data?.permissions ?? []}
         items={reservationsQuery.data ?? []}
         warehouseId={warehouseId}
         productId={productId}

@@ -1,3 +1,5 @@
+import type { Route } from 'next'
+
 export const APP_ROUTES = {
   home: '/',
   pricing: '/pricing',
@@ -45,6 +47,13 @@ export const APP_ROUTES = {
   inventoryMovements: '/inventory/movements',
   inventoryReservations: '/inventory/reservations',
   inventoryAbcClassification: '/inventory/abc-classification',
+  cycleCounts: '/inventory/cycle-counts',
+  cycleCountCreate: '/inventory/cycle-counts/new',
+  cycleCountDetail: (cycleCountId: string): Route =>
+    `/inventory/cycle-counts/${cycleCountId}` as Route,
+  stockAdjustments: '/inventory/stock-adjustments',
+  stockAdjustmentDetail: (adjustmentId: string): Route =>
+    `/inventory/stock-adjustments/${adjustmentId}` as Route,
   orders: '/orders',
   delivery: '/delivery',
   unauthorized: '/unauthorized',
@@ -58,5 +67,6 @@ export const APP_ROUTES = {
   profile: '/profile',
   settings: {
     security: '/settings/security',
+    accessControl: '/settings/access-control',
   },
 } as const

@@ -23,8 +23,16 @@ import type {
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery } from '@/features/product/types/product.types'
+import type {
+  CycleCountListQuery,
+  StockAdjustmentListQuery,
+} from '@/features/cycle-count/types/cycle-count.types'
 
 export const queryKeys = {
+  tenantRolePermissions: {
+    all: ['tenant-role-permissions'] as const,
+    workspace: ['tenant-role-permissions', 'workspace'] as const,
+  },
   organization: {
     all: ['organization'] as const,
     me: ['organization', 'me'] as const,
@@ -78,6 +86,18 @@ export const queryKeys = {
   categories: {
     all: ['categories'] as const,
     list: ['categories', 'list'] as const,
+  },
+  cycleCounts: {
+    all: ['cycle-counts'] as const,
+    list: (params: CycleCountListQuery) => ['cycle-counts', 'list', params] as const,
+    detail: (id: string) => ['cycle-counts', 'detail', id] as const,
+    allowedActions: (id: string) => ['cycle-counts', 'detail', id, 'allowed-actions'] as const,
+  },
+  stockAdjustments: {
+    all: ['stock-adjustments'] as const,
+    list: (params: StockAdjustmentListQuery) => ['stock-adjustments', 'list', params] as const,
+    detail: (id: string) => ['stock-adjustments', 'detail', id] as const,
+    allowedActions: (id: string) => ['stock-adjustments', 'detail', id, 'allowed-actions'] as const,
   },
   products: {
     all: ['products'] as const,

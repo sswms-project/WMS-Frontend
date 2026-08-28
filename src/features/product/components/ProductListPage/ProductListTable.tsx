@@ -13,11 +13,12 @@ import type { ProductResponse } from '../../types/product.types'
 
 interface ProductListTableProps {
   readonly products: readonly ProductResponse[]
+  readonly canEdit: boolean
   readonly onView: (product: ProductResponse) => void
   readonly onEdit: (product: ProductResponse) => void
 }
 
-export function ProductListTable({ products, onView, onEdit }: ProductListTableProps) {
+export function ProductListTable({ products, canEdit, onView, onEdit }: ProductListTableProps) {
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -63,15 +64,17 @@ export function ProductListTable({ products, onView, onEdit }: ProductListTableP
                   >
                     <Eye className="size-4" aria-hidden="true" />
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Chỉnh sửa"
-                    onClick={() => onEdit(product)}
-                  >
-                    <Pencil className="size-4" aria-hidden="true" />
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Chỉnh sửa"
+                      onClick={() => onEdit(product)}
+                    >
+                      <Pencil className="size-4" aria-hidden="true" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
