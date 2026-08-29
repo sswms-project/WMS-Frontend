@@ -85,9 +85,9 @@ describe('StaffDirectoryPage warehouse scope states', () => {
     render(<StaffDirectoryPage />)
 
     expect(screen.getAllByText('Danh sách quản lý kho')).not.toHaveLength(0)
-    expect(screen.getAllByRole('tablist')[0]!).toHaveClass('w-full', 'border-b')
-    expect(screen.getAllByRole('tablist')[0]!.parentElement).toHaveClass('flex-col')
-    expect(screen.getAllByRole('tablist')[0]!.parentElement).not.toHaveClass('xl:flex-row')
+    expect(screen.getAllByRole('tablist')[0]).toHaveClass('w-full', 'border-b')
+    expect(screen.getAllByRole('tablist')[0].parentElement).toHaveClass('flex-col')
+    expect(screen.getAllByRole('tablist')[0].parentElement).not.toHaveClass('xl:flex-row')
     expect(screen.getByRole('tabpanel')).toHaveClass('min-w-0')
     expect(screen.getByRole('region', { name: 'Danh sách quản lý kho' })).toHaveClass(
       'min-w-0',

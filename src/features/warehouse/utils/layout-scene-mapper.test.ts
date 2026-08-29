@@ -67,7 +67,7 @@ describe('warehouse layout scene mapper', () => {
       y: 160,
       rotation: 90,
     })
-    expect(result.editorScene.decorations[0]!.clientKey).toBe('decoration-1')
+    expect(result.editorScene.decorations[0].clientKey).toBe('decoration-1')
   })
 
   it('maps the editor draft to one versioned batch request', () => {
@@ -89,14 +89,14 @@ describe('warehouse layout scene mapper', () => {
     const request = mapEditorSceneToSaveRequest('warehouse-1', 3, editorScene)
 
     expect(request.version).toBe(3)
-    expect(request.zones[0]!.entityId).toBe('zone-1')
-    expect(request.zones[0]!.color).toBe('#C7E8C0')
+    expect(request.zones[0].entityId).toBe('zone-1')
+    expect(request.zones[0].color).toBe('#C7E8C0')
     expect(request.racks[0]).toMatchObject({
       entityId: 'rack-1',
       rotation: 90,
       color: '#B9DDF2',
     })
-    expect(request.decorations[0]!.color).toBe('#FFE0A8')
+    expect(request.decorations[0].color).toBe('#FFE0A8')
     expect(request.decorations[1]).toMatchObject({ id: null, type: 'Door', label: 'Cửa phụ' })
   })
 

@@ -2,11 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function AccessControlSkeleton() {
   return (
-    <div
-      className="flex min-h-0 flex-1 flex-col gap-4"
-      aria-label="Đang tải phân quyền"
-      aria-busy="true"
-    >
+    <div className="flex flex-col gap-4" aria-label="Đang tải phân quyền" aria-busy="true">
       <div className="flex items-center gap-3 border-b pb-4">
         <Skeleton className="size-9 rounded-md" />
         <div className="flex flex-col gap-2">
@@ -14,7 +10,7 @@ export function AccessControlSkeleton() {
           <Skeleton className="h-3 w-72 max-w-[70vw]" />
         </div>
       </div>
-      <div className="border-border flex min-h-0 flex-1 overflow-hidden rounded-md border">
+      <div className="border-border flex h-[calc(100svh-9.5rem)] min-h-[36rem] overflow-hidden rounded-md border">
         <div className="border-border hidden w-[18rem] flex-col gap-2 border-r p-3 md:flex">
           <Skeleton className="h-24 w-full rounded-md" />
           <Skeleton className="h-24 w-full rounded-md" />

@@ -20,7 +20,6 @@ function getServerHydrationSnapshot() {
 export function ProtectedRoute({ children }: { readonly children: React.ReactNode }) {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
-  const clearAuth = useAuthStore((state) => state.clearAuth)
   const hasHydrated = useSyncExternalStore(
     subscribeToHydration,
     getHydrationSnapshot,
@@ -28,11 +27,8 @@ export function ProtectedRoute({ children }: { readonly children: React.ReactNod
   )
 
   useEffect(() => {
-    if (hasHydrated && !user) {
-      clearAuth()
-      router.replace(APP_ROUTES.auth.login)
-    }
-  }, [clearAuth, hasHydrated, user, router])
+    if (hasHydrated && !user) router.replace(APP_ROUTES.auth.login)
+  }, [hasHydrated, user, router])
 
   if (!hasHydrated) {
     return (
