@@ -389,7 +389,7 @@ describe('WarehouseDesignerWorkspace', () => {
       zones: [
         ...scene.zones,
         {
-          ...scene.zones[0]!,
+          ...scene.zones[0],
           id: 'zone-2',
           zoneCode: 'B',
           zoneName: 'Khu B',
