@@ -243,7 +243,7 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
 
   return (
     <>
-      <div className="border-border bg-card flex h-[calc(100svh-9.5rem)] max-h-[54rem] min-h-[36rem] flex-col overflow-hidden rounded-md border md:flex-row">
+      <div className="border-border bg-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border md:flex-row">
         <RoleSelector
           roles={workspace.roles}
           selectedRoleId={selectedRole.roleId}

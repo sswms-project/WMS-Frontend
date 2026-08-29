@@ -11,16 +11,19 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
     <ProtectedRoute>
       <TooltipProvider>
         <SubscriptionReadOnlyProvider>
-          <SidebarProvider style={{ '--sidebar-width': '17.5rem' } as React.CSSProperties}>
+          <SidebarProvider
+            className="h-svh min-h-0 overflow-hidden print:h-auto print:overflow-visible"
+            style={{ '--sidebar-width': '17.5rem' } as React.CSSProperties}
+          >
             <div className="print:hidden">
               <AppSidebar />
             </div>
-            <SidebarInset className="min-w-0 overflow-x-hidden print:m-0 print:block">
+            <SidebarInset className="h-svh min-h-0 min-w-0 overflow-hidden print:m-0 print:block print:h-auto print:overflow-visible">
               <div className="print:hidden">
                 <AppHeader />
               </div>
-              <div className="min-w-0 flex-1 p-3 sm:p-4 lg:p-5 print:p-0">
-                <div className="print:hidden">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4 lg:p-5 print:overflow-visible print:p-0">
+                <div className="shrink-0 print:hidden">
                   <SubscriptionReadOnlyBanner />
                 </div>
                 <PageTransition>{children}</PageTransition>
