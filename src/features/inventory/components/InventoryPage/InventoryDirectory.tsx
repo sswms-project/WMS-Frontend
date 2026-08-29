@@ -118,7 +118,10 @@ export function InventoryDirectory({
 
       <InventoryWorkspaceNavigation currentView="availability" permissions={permissions} />
 
-      <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="inventory-title">
+      <section
+        className="bg-card @container flex min-h-0 flex-col border"
+        aria-labelledby="inventory-title"
+      >
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="inventory-title" className="text-sm font-semibold">
@@ -320,7 +323,7 @@ function InventoryMobileList({
   readonly onReportDamaged: (item: InventoryBalance) => void
 }) {
   return (
-    <ItemGroup className="gap-0 md:hidden">
+    <ItemGroup className="gap-0 @min-[980px]:hidden">
       {items.map((item) => (
         <Item key={item.id} className="border-b last:border-b-0">
           <ItemContent className="min-w-0">
@@ -383,18 +386,18 @@ function InventoryDesktopTable({
   readonly onReportDamaged: (item: InventoryBalance) => void
 }) {
   return (
-    <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-      <Table className="min-w-[980px] table-fixed">
+    <div className="hidden min-h-0 flex-1 overflow-y-auto @min-[980px]:block">
+      <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-72">Sản phẩm</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-48">Kho / Slot</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Tồn thực tế</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Đã giữ</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Khả dụng</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Cập nhật</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-56">Sản phẩm</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-40">Kho / Slot</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đã giữ</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Khả dụng</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-32">Cập nhật</TableHead>
             {canReserve || canReportDamaged ? (
-              <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">Thao tác</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-44 text-right">Thao tác</TableHead>
             ) : null}
           </TableRow>
         </TableHeader>

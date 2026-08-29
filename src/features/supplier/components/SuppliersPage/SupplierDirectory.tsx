@@ -120,7 +120,7 @@ export function SupplierDirectory({
       </header>
 
       <section
-        className="bg-card flex min-h-0 flex-col border"
+        className="bg-card @container flex min-h-0 flex-col border"
         aria-labelledby="supplier-directory-title"
       >
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -238,7 +238,7 @@ export function SupplierDirectory({
 
 function SupplierMobileList({ items }: { readonly items: readonly Supplier[] }) {
   return (
-    <ItemGroup className="gap-0 md:hidden">
+    <ItemGroup className="gap-0 @min-[1040px]:hidden">
       {items.map((item) => (
         <Item key={item.id} className="border-b last:border-b-0">
           <ItemContent className="min-w-0">
@@ -282,16 +282,16 @@ function SupplierDesktopTable({
   onReactivate,
 }: SupplierDesktopTableProps) {
   return (
-    <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-      <Table className="min-w-[1040px] table-fixed">
+    <div className="hidden min-h-0 flex-1 overflow-y-auto @min-[1040px]:block">
+      <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-72">Nhà cung cấp</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Số điện thoại</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-56">Email</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-72">Địa chỉ</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36">Trạng thái</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">
+            <TableHead className="bg-card sticky top-0 z-10 w-60">Nhà cung cấp</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-32">Số điện thoại</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-48">Email</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-60">Địa chỉ</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-28">Trạng thái</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-28">
               <span className="sr-only">Thao tác</span>
             </TableHead>
           </TableRow>
