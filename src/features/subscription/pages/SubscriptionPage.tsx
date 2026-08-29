@@ -127,7 +127,7 @@ export function SubscriptionPage() {
   const dialogCopy = getDialogCopy(dialogState, subscription)
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-4 lg:gap-5">
       <div className="flex min-w-0 flex-col gap-1">
         <div className="min-w-0">
           <h1 className="text-foreground text-xl font-semibold">Gói dịch vụ</h1>
@@ -143,7 +143,7 @@ export function SubscriptionPage() {
           description="Tenant hiện chưa có subscription active trong hệ thống."
         />
       ) : (
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
           <CurrentPlanCard
             subscription={subscription}
             showRenewAction={showRenewAction}

@@ -54,7 +54,6 @@ export const axiosClient = axios.create({
   timeout: 30_000,
   headers: {
     'Content-Type': 'application/json',
-    'x-tenant-id': 'demo-tenant',
   },
 })
 
