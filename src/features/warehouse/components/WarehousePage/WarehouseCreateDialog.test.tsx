@@ -91,11 +91,13 @@ describe('WarehouseCreateDialog', () => {
       />
     )
 
-    const [warehouseCode, warehouseName, warehouseAddress] = screen.getAllByRole('textbox')
+    const warehouseCode = screen.getByLabelText('Mã kho')
+    const warehouseName = screen.getByLabelText('Tên kho')
+    const warehouseAddress = screen.getByLabelText('Địa chỉ')
     await user.type(warehouseCode, 'HCM-01')
     await user.type(warehouseName, 'Kho Thá»§ Äá»©c')
     await user.type(warehouseAddress, 'Thá»§ Äá»©c, Há»“ ChÃ­ Minh')
-    const [cancelButton] = screen.getAllByRole('button')
+    const cancelButton = screen.getByRole('button', { name: 'Hủy' })
     await user.click(cancelButton)
 
     rerender(
@@ -115,8 +117,9 @@ describe('WarehouseCreateDialog', () => {
       />
     )
 
-    const [restoredWarehouseCode, restoredWarehouseName, restoredWarehouseAddress] =
-      screen.getAllByRole('textbox')
+    const restoredWarehouseCode = screen.getByLabelText('Mã kho')
+    const restoredWarehouseName = screen.getByLabelText('Tên kho')
+    const restoredWarehouseAddress = screen.getByLabelText('Địa chỉ')
     expect(restoredWarehouseCode).toHaveValue('HCM-01')
     expect(restoredWarehouseName).toHaveValue('Kho Thá»§ Äá»©c')
     expect(restoredWarehouseAddress).toHaveValue('Thá»§ Äá»©c, Há»“ ChÃ­ Minh')
@@ -132,14 +135,16 @@ describe('WarehouseCreateDialog', () => {
     }
     const firstRender = render(<WarehouseCreateDialog {...props} />)
 
-    const [warehouseCode, warehouseName] = screen.getAllByRole('textbox')
+    const warehouseCode = screen.getByLabelText('Mã kho')
+    const warehouseName = screen.getByLabelText('Tên kho')
     await user.type(warehouseCode, 'HCM-01')
     await user.type(warehouseName, 'Kho Thá»§ Äá»©c')
     firstRender.unmount()
 
     render(<WarehouseCreateDialog {...props} />)
 
-    const [restoredWarehouseCode, restoredWarehouseName] = screen.getAllByRole('textbox')
+    const restoredWarehouseCode = screen.getByLabelText('Mã kho')
+    const restoredWarehouseName = screen.getByLabelText('Tên kho')
     expect(restoredWarehouseCode).toHaveValue('HCM-01')
     expect(restoredWarehouseName).toHaveValue('Kho Thá»§ Äá»©c')
   })
