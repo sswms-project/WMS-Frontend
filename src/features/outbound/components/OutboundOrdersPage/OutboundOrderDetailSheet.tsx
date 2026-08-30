@@ -2,6 +2,10 @@
 
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  OperationalErrorState,
+  OperationalLoadingState,
+} from '@/components/operations/OperationalState'
 import type { OutboundOrderSummary } from '../../types/outbound.types'
 import { formatOutboundDate, formatOutboundQuantity } from '../../utils/outbound-format'
 import { OutboundOrderStatusBadge } from './OutboundOrderStatusBadge'
@@ -9,13 +13,26 @@ import { OutboundOrderStatusBadge } from './OutboundOrderStatusBadge'
 interface OutboundOrderDetailSheetProps {
   readonly order: OutboundOrderSummary | null
   readonly onOpenChange: (open: boolean) => void
+  readonly isLoading: boolean
+  readonly isError: boolean
+  readonly onRetry: () => void
 }
 
-export function OutboundOrderDetailSheet({ order, onOpenChange }: OutboundOrderDetailSheetProps) {
+export function OutboundOrderDetailSheet({
+  order,
+  isLoading,
+  isError,
+  onRetry,
+  onOpenChange,
+}: OutboundOrderDetailSheetProps) {
   return (
-    <Sheet open={Boolean(order)} onOpenChange={onOpenChange}>
+    <Sheet open={Boolean(order) || isLoading || isError} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        {order ? (
+        {isLoading ? (
+          <OperationalLoadingState />
+        ) : isError ? (
+          <OperationalErrorState title="Không thể tải chi tiết đơn xuất" onRetry={onRetry} />
+        ) : order ? (
           <>
             <SheetHeader>
               <SheetTitle className="font-mono" translate="no">
@@ -37,6 +54,24 @@ export function OutboundOrderDetailSheet({ order, onOpenChange }: OutboundOrderD
                 <div>
                   <dt className="text-muted-foreground text-xs">Kho xuất</dt>
                   <dd className="text-sm font-medium">{order.warehouseName}</dd>
+                </div>
+              </dl>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted-foreground text-xs">Người nhận</dt>
+                  <dd className="text-sm font-medium">{order.recipientName}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Điện thoại</dt>
+                  <dd className="text-sm font-medium">{order.recipientPhone}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-muted-foreground text-xs">Địa chỉ nhận</dt>
+                  <dd className="text-sm font-medium">{order.recipientAddress}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-muted-foreground text-xs">Mục đích</dt>
+                  <dd className="text-sm font-medium">{order.purpose ?? '—'}</dd>
                 </div>
               </dl>
               <section className="space-y-2">

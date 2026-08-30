@@ -4,11 +4,11 @@ import { TRANSFER_STATUS_LABELS } from '../../utils/transfer-format'
 
 export function TransferStatusBadge({ status }: { readonly status: TransferStatus }) {
   const variant =
-    status === 'Cancelled'
+    status === 'Cancelled' || status === 'Rejected'
       ? 'destructive'
-      : status === 'Draft'
+      : status === 'PendingSourceApproval'
         ? 'outline'
-        : status === 'InTransit'
+        : status === 'Approved' || status === 'InTransit'
           ? 'secondary'
           : 'default'
 

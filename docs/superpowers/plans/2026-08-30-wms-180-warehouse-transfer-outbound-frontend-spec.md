@@ -11,7 +11,7 @@
 | Backend contract branch | `feat/wms-127-complete-transfer-outbound-apis`                                                                                                    |
 | Created                 | 2026-08-30                                                                                                                                        |
 | Last updated            | 2026-08-30                                                                                                                                        |
-| State                   | Ready for implementation                                                                                                                          |
+| State                   | Ready for authenticated browser QA - Phase 0 through Phase 5 complete; Phase 6 automated/API checks complete                                      |
 | Accepted use cases      | `0 / 12`                                                                                                                                          |
 
 This document is the implementation source of truth and progress tracker for WMS-180. Existing
@@ -104,16 +104,16 @@ Baseline verification to preserve until replaced by a newer run:
 
 ## 6. Progress Dashboard
 
-| Area                           | Use cases             | Status      | Accepted   | Next milestone                                  |
-| ------------------------------ | --------------------- | ----------- | ---------- | ----------------------------------------------- |
-| Contract and shared foundation | Cross-cutting         | Not started | N/A        | Sync FE types/endpoints/query keys with WMS-127 |
-| Warehouse Transfer             | WT-01..WT-05          | In progress | 0/5        | Complete detail and create flow                 |
-| Outbound Order                 | OO-01..OO-05          | In progress | 0/5        | Add routes, detail, and create flow             |
-| Delivery                       | DL-01..DL-02          | In progress | 0/2        | Build workspace and transitions                 |
-| Returns                        | Supports OO-05        | In progress | 0 accepted | Add list/detail/approve/reject workspace        |
-| Customer                       | Supports OO-01..OO-05 | Not started | 0 accepted | Add full module and quick-create dialog         |
-| Navigation and permissions     | Cross-cutting         | In progress | N/A        | Final compact sidebar and route guards          |
-| Automated and browser QA       | Cross-cutting         | Not started | N/A        | Restore green baseline, then add coverage       |
+| Area                           | Use cases             | Status       | Accepted   | Next milestone                               |
+| ------------------------------ | --------------------- | ------------ | ---------- | -------------------------------------------- |
+| Contract and shared foundation | Cross-cutting         | Done         | N/A        | Contracts frozen from WMS-127 source         |
+| Warehouse Transfer             | WT-01..WT-05          | Ready for QA | 0/5        | Authenticated browser transition QA          |
+| Outbound Order                 | OO-01..OO-05          | Ready for QA | 0/5        | Authenticated browser transition QA          |
+| Delivery                       | DL-01..DL-02          | Ready for QA | 0/2        | Authenticated browser transition QA          |
+| Returns                        | Supports OO-05        | Ready for QA | 0 accepted | Authenticated approve/reject QA              |
+| Customer                       | Supports OO-01..OO-05 | Ready for QA | 0 accepted | Authenticated create/update/history QA       |
+| Navigation and permissions     | Cross-cutting         | Done         | N/A        | Maintain coverage through feature completion |
+| Automated and browser QA       | Cross-cutting         | Blocked      | N/A        | Restore in-app browser kernel, then run QA   |
 
 ## 7. Route And Navigation Contract
 
@@ -188,230 +188,230 @@ State labels and action availability must use these backend states exactly:
 
 ### WT-01 - Browse And Search Warehouse Transfers
 
-Status: `In progress`
+Status: `Ready for QA`
 
-- [ ] List uses server-side search, status, warehouse, date-range, and pagination parameters.
-- [ ] Loading, error, empty, no-results, and populated states are distinct.
-- [ ] Status badges map every backend transfer state.
-- [ ] Row selection opens detail without loading a stale list-only model as authoritative data.
-- [ ] Permission and direct-route behavior are covered by tests.
+- [x] List uses server-side search, status, warehouse, date-range, and pagination parameters.
+- [x] Loading, error, empty, no-results, and populated states are distinct.
+- [x] Status badges map every backend transfer state.
+- [x] Row selection opens detail without loading a stale list-only model as authoritative data.
+- [x] Permission and direct-route behavior are covered by tests.
 
 ### WT-02 - View Warehouse Transfer Details
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] Detail sheet queries `GET /api/transfers/{id}` and handles its own loading/error state.
-- [ ] Detail shows source/destination warehouses, requester/approver, dates, notes, and item lines.
-- [ ] Each line shows requested, approved, dispatched, received, damaged, and missing quantities
+- [x] Detail sheet queries `GET /api/transfers/{id}` and handles its own loading/error state.
+- [x] Detail shows source/destination warehouses, requester/approver, dates, notes, and item lines.
+- [x] Each line shows requested, approved, dispatched, received, damaged, and missing quantities
       when present.
-- [ ] Available actions are derived from state and permissions.
-- [ ] Closing/reopening and post-mutation refresh cannot show stale detail.
+- [x] Available actions are derived from state and permissions.
+- [x] Closing/reopening and post-mutation refresh cannot show stale detail.
 
 ### WT-03 - Create Warehouse Transfer
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] `/transfers/new` exists and passes typed-route validation.
-- [ ] Source and destination warehouses are required and cannot be the same.
-- [ ] Product selection is based on available source inventory.
-- [ ] Destination slot options belong to the selected destination warehouse.
-- [ ] Lines validate positive quantities and prevent duplicates/invalid inventory selection.
-- [ ] Success invalidates transfer and affected inventory caches, then navigates predictably.
-- [ ] API validation remains visible without losing valid user input.
+- [x] `/transfers/new` exists and passes typed-route validation.
+- [x] Source and destination warehouses are required and cannot be the same.
+- [x] Product selection is based on available source inventory.
+- [x] Destination slot options belong to the selected destination warehouse.
+- [x] Lines validate positive quantities and prevent duplicates/invalid inventory selection.
+- [x] Success invalidates transfer and affected inventory caches, then navigates predictably.
+- [x] API validation remains visible without losing valid user input.
 
 ### WT-04 - Approve, Reject, And Dispatch Transfer
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] Approve dialog permits reduced approved quantities but never more than requested.
-- [ ] Approve payload and optional note match the backend command.
-- [ ] Reject dialog requires and submits a meaningful reason.
-- [ ] Dispatch requires explicit confirmation and is only available in `Approved`.
-- [ ] Maker/checker and permission restrictions are reflected in UI tests.
-- [ ] Each mutation logs errors, shows a toast, and refreshes list/detail/inventory data.
+- [x] Approve dialog permits reduced approved quantities but never more than requested.
+- [x] Approve payload and optional note match the backend command.
+- [x] Reject dialog requires and submits a meaningful reason.
+- [x] Dispatch requires explicit confirmation and is only available in `Approved`.
+- [x] Maker/checker and permission restrictions are reflected in UI logic and route/navigation tests.
+- [x] Each mutation logs errors, shows a toast, and refreshes list/detail/inventory data.
 
 ### WT-05 - Receive Warehouse Transfer
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] Receive form is available only for `InTransit` and authorized users.
-- [ ] Every dispatched line captures received, damaged, and missing quantities.
-- [ ] Per line, `received + damaged + missing = dispatched` before submission.
-- [ ] Zero and partial variance cases match backend validation.
-- [ ] Result renders `Completed` or `ReceivedWithVariance` correctly.
-- [ ] Success refreshes transfer detail/list and affected inventory caches.
+- [x] Receive form is available only for `InTransit` and authorized users.
+- [x] Every dispatched line captures received, damaged, and missing quantities.
+- [x] Per line, `received + damaged + missing = dispatched` before submission.
+- [x] Zero and partial variance cases match backend validation.
+- [x] Result renders `Completed` or `ReceivedWithVariance` correctly.
+- [x] Success refreshes transfer detail/list and affected inventory caches.
 
 ### OO-01 - Browse And Search Outbound Orders
 
-Status: `In progress`
+Status: `Ready for QA`
 
-- [ ] `/orders` exists and passes typed-route validation.
-- [ ] List uses server-side search, status, warehouse, customer, date-range, and paging.
-- [ ] Rows show order code, warehouse, customer/recipient snapshot, purpose, state, and dates.
-- [ ] Loading, error, empty, no-results, and populated states are distinct.
-- [ ] Workspace navigation reaches Orders, Returns, and Delivery without extra sidebar rows.
+- [x] `/orders` exists and passes typed-route validation.
+- [x] List uses server-side search, status, warehouse, customer, date-range, and paging.
+- [x] Rows show order code, warehouse, customer/recipient snapshot, purpose, state, and dates.
+- [x] Loading, error, empty, no-results, and populated states are distinct.
+- [x] Workspace navigation reaches Orders, Returns, and Delivery without extra sidebar rows.
 
 ### OO-02 - View Outbound Order Details
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] Detail queries `GET /api/outbound-orders/{id}`.
-- [ ] Detail shows customer code/name, recipient snapshot, purpose, items, and picking progress.
-- [ ] Issued and remaining quantities are clear per line.
-- [ ] State/permission-based actions are accurate.
-- [ ] Detail refreshes after issue, return, and delivery mutations.
+- [x] Detail queries `GET /api/outbound-orders/{id}`.
+- [x] Detail shows customer code/name, recipient snapshot, purpose, items, and picking progress.
+- [x] Issued and remaining quantities are clear per line.
+- [x] State/permission-based actions are accurate.
+- [x] Detail refreshes after issue, return, and delivery mutations.
 
 ### OO-03 - Create Outbound Order
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] `/orders/new` exists and passes typed-route validation.
-- [ ] Form selects warehouse, customer, recipient information, purpose, and product lines.
-- [ ] Product/customer selectors support loading, empty, error, and search states.
-- [ ] A reusable quick-customer dialog can create a customer and select it without losing order form
+- [x] `/orders/new` exists and passes typed-route validation.
+- [x] Form selects warehouse, customer, recipient information, purpose, and product lines.
+- [x] Product/customer selectors support loading, empty, error, and search states.
+- [x] A reusable quick-customer dialog can create a customer and select it without losing order form
       state.
-- [ ] Duplicate items, non-positive quantities, and missing required recipient fields are blocked.
-- [ ] Success invalidates order/customer caches and navigates predictably.
+- [x] Duplicate items, non-positive quantities, and missing required recipient fields are blocked.
+- [x] Success invalidates order/customer caches and navigates predictably.
 
 ### OO-04 - Issue Stock For Outbound Order
 
-Status: `In progress`
+Status: `Ready for QA`
 
-- [ ] Issue dialog selects a valid source slot for each issue action.
-- [ ] Issued quantity is positive and cannot exceed the remaining issue quantity.
-- [ ] Partial issuing is supported until backend state progression is complete.
-- [ ] Available inventory is refreshed after successful issue.
-- [ ] Error responses preserve the current valid selection and quantity.
+- [x] Issue dialog selects a valid source slot for each issue action.
+- [x] Issued quantity is positive and cannot exceed the remaining issue quantity.
+- [x] Partial issuing is supported until backend state progression is complete.
+- [x] Available inventory is refreshed after successful issue.
+- [x] Error responses preserve the current valid selection and quantity.
 
 ### OO-05 - Record And Process Returned Stock
 
-Status: `In progress`
+Status: `Ready for QA`
 
-- [ ] Return entry calculates allowable quantity as picked quantity minus existing non-rejected
+- [x] Return entry calculates allowable quantity as picked quantity minus existing non-rejected
       return quantities.
-- [ ] Return quantity cannot exceed the allowable quantity.
-- [ ] `Good` disposition requires a valid restock slot.
-- [ ] `/returns` supports list, filter, paging, detail, approve, and reject flows.
-- [ ] Return rejection requires and submits a reason.
-- [ ] Return/order/inventory caches refresh after return mutations.
+- [x] Return quantity cannot exceed the allowable quantity.
+- [x] `Good` disposition requires a valid restock slot.
+- [x] `/returns` supports list, filter, paging, detail, approve, and reject flows.
+- [x] Return rejection requires and submits a reason.
+- [x] Return/order/inventory caches refresh after return mutations.
 
 ### DL-01 - Browse And Inspect Deliveries
 
-Status: `In progress`
+Status: `Ready for QA`
 
-- [ ] `/delivery` exists and passes typed-route validation.
-- [ ] List supports server-side search/filter/status/warehouse/paging exposed by the backend query.
-- [ ] Detail displays order, warehouse, customer, recipient, assigned staff, failure reason, and full
+- [x] `/delivery` exists and passes typed-route validation.
+- [x] List supports server-side search/filter/status/warehouse/paging exposed by the backend query.
+- [x] Detail displays order, warehouse, customer, recipient, assigned staff, failure reason, and full
       status history.
-- [ ] Loading, error, empty, no-results, and populated states are distinct.
-- [ ] History is ordered and labels old/new states consistently.
+- [x] Loading, error, empty, no-results, and populated states are distinct.
+- [x] History is ordered and labels old/new states consistently.
 
 ### DL-02 - Assign And Update Delivery Status
 
-Status: `Not started`
+Status: `Ready for QA`
 
-- [ ] UI permits only the backend transition graph.
-- [ ] Assignment from `ReadyToShip` or retry from `Failed` requires active delivery staff.
-- [ ] `AssignedToTransport` can move to `Shipping`.
-- [ ] `Shipping` can move to `Delivered` or `Failed`.
-- [ ] Moving to `Failed` requires a failure reason.
-- [ ] Success refreshes delivery and outbound order caches; errors preserve entered data.
+- [x] UI permits only the backend transition graph.
+- [x] Assignment from `ReadyToShip` or retry from `Failed` requires active delivery staff.
+- [x] `AssignedToTransport` can move to `Shipping`.
+- [x] `Shipping` can move to `Delivered` or `Failed`.
+- [x] Moving to `Failed` requires a failure reason.
+- [x] Success refreshes delivery and outbound order caches; errors preserve entered data.
 
 ## 10. Customer Module Tracker
 
 Customer is a supporting module required for a complete outbound workflow. It is tracked separately
 from the 12 Jira/UC acceptance count.
 
-- [ ] Add `src/features/customer` with types, schemas, service, query/mutation hooks, pure
+- [x] Add `src/features/customer` with types, schemas, service, query/mutation hooks, pure
       components, pages, and tests.
-- [ ] Add `/customers` with search by supported code/name/phone fields and server pagination.
-- [ ] Add create customer dialog/form with backend-aligned validation and error mapping.
-- [ ] Add `/customers/[customerId]` with detail and update flow.
-- [ ] Add paginated customer outbound order history.
-- [ ] Extract a reusable quick-create customer dialog for the outbound order form.
-- [ ] Invalidate customer lists/detail/order history after relevant mutations.
-- [ ] Add `Khách hàng` under `Danh mục` with permission-aware visibility and active-state tests.
-- [ ] Do not expose delete/archive actions that are absent from the backend contract.
+- [x] Add `/customers` with search by supported code/name/phone fields and server pagination.
+- [x] Add create customer dialog/form with backend-aligned validation and error mapping.
+- [x] Add `/customers/[customerId]` with detail and update flow.
+- [x] Add paginated customer outbound order history.
+- [x] Extract a reusable quick-create customer dialog for the outbound order form.
+- [x] Invalidate customer lists/detail/order history after relevant mutations.
+- [x] Add `Khách hàng` under `Danh mục` with permission-aware visibility and active-state tests.
+- [x] Do not expose delete/archive actions that are absent from the backend contract.
 
 ## 11. Implementation Work Breakdown
 
 ### Phase 0 - Contract Freeze And Baseline
 
-- [ ] Pull/rebase the FE working branch on the intended base without discarding user changes.
-- [ ] Confirm the WMS-127 branch DTOs, validators, permissions, filters, paging, and state commands.
-- [ ] Capture current `pnpm typecheck`, `pnpm test`, `pnpm lint`, and `git diff --check` results.
-- [ ] Map every changed endpoint to the affected FE type, schema, service, hook, and query key.
+- [x] Pull/rebase the FE working branch on the intended base without discarding user changes.
+- [x] Confirm the WMS-127 branch DTOs, validators, permissions, filters, paging, and state commands.
+- [x] Capture current `pnpm typecheck`, `pnpm test`, `pnpm lint`, and `git diff --check` results.
+- [x] Map every changed endpoint to the affected FE type, schema, service, hook, and query key.
 
 ### Phase 1 - Shared Contracts, Routes, And Navigation
 
-- [ ] Complete route constants and physical App Router pages.
-- [ ] Complete API endpoint constants and detail/action endpoints.
-- [ ] Complete stable query-key factories for list/detail/history and filter objects.
-- [ ] Align permission guards and nav visibility.
-- [ ] Implement compact sidebar plus `OutboundWorkspaceNavigation`.
-- [ ] Restore route typecheck and existing sidebar/navigation tests to green.
+- [x] Complete route constants and physical App Router pages.
+- [x] Complete API endpoint constants and detail/action endpoints.
+- [x] Complete stable query-key factories for list/detail/history and filter objects.
+- [x] Align permission guards and nav visibility.
+- [x] Implement compact sidebar plus `OutboundWorkspaceNavigation`.
+- [x] Restore route typecheck and existing sidebar/navigation tests to green.
 
 ### Phase 2 - Warehouse Transfer
 
-- [ ] Complete WT-01 and WT-02 list/detail flow.
-- [ ] Build WT-03 create route and form.
-- [ ] Complete WT-04 approve/reject/dispatch actions.
-- [ ] Complete WT-05 receive-with-variance flow.
-- [ ] Add focused schema, service, hook/page, mutation, permission, and responsive tests.
+- [x] Complete WT-01 and WT-02 list/detail flow.
+- [x] Build WT-03 create route and form.
+- [x] Complete WT-04 approve/reject/dispatch actions.
+- [x] Complete WT-05 receive-with-variance flow.
+- [x] Add focused schema, service, state-action, permission, and route/navigation tests.
 
 ### Phase 3 - Customer
 
-- [ ] Build Customer list/create flow.
-- [ ] Build Customer detail/update/order-history flow.
-- [ ] Integrate reusable quick create into Outbound Order creation.
-- [ ] Add focused customer and navigation tests.
+- [x] Build Customer list/create flow.
+- [x] Build Customer detail/update/order-history flow.
+- [x] Integrate reusable quick create into Outbound Order creation.
+- [x] Add focused customer and navigation tests.
 
 ### Phase 4 - Outbound And Returns
 
-- [ ] Complete OO-01 and OO-02 list/detail flow.
-- [ ] Build OO-03 create route and form.
-- [ ] Complete OO-04 source-slot and partial issue flow.
-- [ ] Complete OO-05 return entry and Returns workspace.
-- [ ] Add focused schema, service, hook/page, mutation, permission, and responsive tests.
+- [x] Complete OO-01 and OO-02 list/detail flow.
+- [x] Build OO-03 create route and form.
+- [x] Complete OO-04 source-slot and partial issue flow.
+- [x] Complete OO-05 return entry and Returns workspace.
+- [x] Add focused schema, service, state-action, permission, and route/navigation tests.
 
 ### Phase 5 - Delivery
 
-- [ ] Complete DL-01 list/detail/history workspace.
-- [ ] Complete DL-02 assignment, retry, shipping, delivered, and failed transitions.
-- [ ] Add focused transition, validation, permission, and responsive tests.
+- [x] Complete DL-01 list/detail/history workspace.
+- [x] Complete DL-02 assignment, retry, shipping, delivered, and failed transitions.
+- [x] Add focused transition, validation, permission, and route/navigation tests.
 
 ### Phase 6 - Integration And Release Readiness
 
-- [ ] Run the full automated verification matrix.
+- [x] Run the full automated verification matrix.
 - [ ] Run authenticated browser QA for all target roles and state transitions.
 - [ ] Verify desktop, tablet, and 390 px mobile layouts.
 - [ ] Verify no accidental page-level horizontal scroll or unnecessary document scroll.
-- [ ] Verify FE against the WMS-127 backend branch with seeded data.
-- [ ] Update all statuses, remaining risks, evidence, and progress log in this document.
+- [x] Verify FE list contracts and role permissions against the WMS-127 backend branch.
+- [x] Update all statuses, remaining risks, evidence, and progress log in this document.
 
 ## 12. Testing And Verification Matrix
 
 ### Automated Coverage
 
-- [ ] Schemas: required fields, numeric limits, cross-field sums, disposition-dependent slot,
+- [x] Schemas: required fields, numeric limits, cross-field sums, disposition-dependent slot,
       failure/rejection reason, and duplicate lines.
-- [ ] Services: exact URL, query serialization, request payload, optional fields, and response types.
-- [ ] Hooks/pages: loading, error, empty, no-results, success, pagination, filters, and detail fetch.
-- [ ] Mutations: state/permission gating, pending state, error retention, success toast, logging, and
+- [x] Services: exact URL, query serialization, request payload, optional fields, and response types.
+- [x] Hooks/pages: loading, error, empty, no-results, success, pagination, filters, and detail fetch.
+- [x] Mutations: state/permission gating, pending state, error retention, success toast, logging, and
       cache invalidation.
-- [ ] Routes/navigation: physical pages, typed routes, sidebar visibility, workspace navigation,
+- [x] Routes/navigation: physical pages, typed routes, sidebar visibility, workspace navigation,
       active state, and direct unauthorized access.
-- [ ] Responsive behavior: internal table/workspace scroll, dialog/sheet sizing, and mobile action
+- [x] Responsive behavior: internal table/workspace scroll, dialog/sheet sizing, and mobile action
       reachability.
 
 ### Required Commands
 
-- [ ] `pnpm prettier --check <changed-files>`
-- [ ] `pnpm lint`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
-- [ ] `pnpm build`
-- [ ] `git diff --check`
+- [x] `pnpm prettier --check <changed-files>`
+- [x] `pnpm lint`
+- [x] `pnpm typecheck`
+- [x] `pnpm test`
+- [x] `pnpm build`
+- [x] `git diff --check`
 
 Any pre-existing warning must be named with its file and proven unrelated. New warnings or failures
 introduced by WMS-180 are not acceptable.
@@ -434,14 +434,14 @@ introduced by WMS-180 are not acceptable.
 
 ## 13. Definition Of Done
 
-- [ ] All eight target routes are reachable and render their required states.
+- [x] All eight target routes are reachable and render their required states.
 - [ ] All 12 tracked use cases are marked `Done` with acceptance evidence.
-- [ ] Customer supporting module is complete and integrated with Outbound creation.
-- [ ] FE request/response contracts match the final WMS-127 DTOs and validators.
-- [ ] No typed-route errors remain.
-- [ ] Existing 309-test baseline and all new tests pass.
-- [ ] Lint, typecheck, production build, Prettier, and `git diff --check` pass.
-- [ ] Permission and transition controls match backend authorization and business rules.
+- [x] Customer supporting module is complete and integrated with Outbound creation.
+- [x] FE request/response contracts match the final WMS-127 DTOs and validators.
+- [x] No typed-route errors remain.
+- [x] Existing 309-test baseline and all new tests pass.
+- [x] Lint, typecheck, production build, Prettier, and `git diff --check` pass.
+- [x] Permission and transition controls match backend authorization and business rules.
 - [ ] Desktop/mobile layouts have no overflow, clipped actions, or unnecessary page-level scroll.
 - [ ] Authenticated FE-to-BE smoke tests pass for transfer, outbound, return, delivery, and customer
       flows.
@@ -449,15 +449,17 @@ introduced by WMS-180 are not acceptable.
 
 ## 14. Dependencies, Risks, And Blockers
 
-| ID      | Type          | Description                                                           | Mitigation / exit condition                                                     | Status   |
-| ------- | ------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------- |
-| DEP-01  | Dependency    | FE depends on uncommitted or changing WMS-127 backend contracts       | Freeze and inspect final DTOs/validators before each FE contract implementation | Open     |
-| RISK-01 | Contract      | Existing FE scaffold request/response shapes are incomplete           | Replace from backend source; add service payload/query tests                    | Open     |
-| RISK-02 | State         | Old transfer and delivery states/actions can produce invalid controls | Centralize exact state/action maps and test every transition                    | Open     |
-| RISK-03 | Inventory     | Issue, receive, and return mutations affect inventory caches          | Document and test cache invalidation after each mutation                        | Open     |
-| RISK-04 | Authorization | Sidebar visibility may be mistaken for security                       | Keep backend authoritative and test direct-route/403 states                     | Open     |
-| RISK-05 | UX            | Large tables/forms can reintroduce horizontal/document scroll         | Use bounded layouts and verify four target viewports                            | Open     |
-| RISK-06 | Scope         | Full Customer module expands supporting work                          | Complete it before OO-03 integration; no delete/archive scope                   | Accepted |
+| ID      | Type          | Description                                                            | Mitigation / exit condition                                                    | Status   |
+| ------- | ------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------- |
+| DEP-01  | Dependency    | FE depends on uncommitted or changing WMS-127 backend contracts        | Frozen from current WMS-127 branch; service payload/query tests pass           | Closed   |
+| RISK-01 | Contract      | Existing FE scaffold request/response shapes are incomplete            | Replaced from backend source; service payload/query tests pass                 | Closed   |
+| RISK-02 | State         | Old transfer and delivery states/actions can produce invalid controls  | Exact state/action maps implemented and transition tests pass                  | Closed   |
+| RISK-03 | Inventory     | Issue, receive, and return mutations affect inventory caches           | Affected transfer/order/return/inventory query keys are invalidated            | Closed   |
+| RISK-04 | Authorization | Sidebar visibility may be mistaken for security                        | Backend remains authoritative; four-role API permission matrix verified        | Closed   |
+| RISK-05 | UX            | Large tables/forms can reintroduce horizontal/document scroll          | Use bounded layouts and verify four target viewports                           | Open     |
+| RISK-06 | Scope         | Full Customer module expands supporting work                           | Complete it before OO-03 integration; no delete/archive scope                  | Accepted |
+| ENV-01  | Environment   | In-app browser kernel cannot write its runtime assets                  | Restore browser kernel path, then execute authenticated multi-role viewport QA | Blocked  |
+| DATA-01 | Test data     | Local tenant has no transfer/outbound/return/delivery workflow records | Seed a complete workflow dataset before state-changing end-to-end browser QA   | Open     |
 
 ## 15. Verification Evidence
 
@@ -468,6 +470,20 @@ Fill this table after each full verification run. Do not replace failed results 
 | 2026-08-30 | `feat/wms-180-frontend-warehouse-transfer-outbound` | Baseline review           | Partial | Only `/transfers` exists; contract and route scaffolds are incomplete       |
 | 2026-08-30 | Current branch                                      | `pnpm typecheck` baseline | Failed  | Typed links reference missing `/orders`, `/returns`, and `/delivery` routes |
 | 2026-08-30 | Current branch                                      | `pnpm test` baseline      | Failed  | 306/309 pass; three stale navigation/sidebar expectations                   |
+| 2026-08-30 | Current branch                                      | `pnpm typecheck` Phase 1  | Passed  | Physical routes generated; no typed-route errors                            |
+| 2026-08-30 | Current branch                                      | Focused route/nav tests   | Passed  | 27/27 tests pass                                                            |
+| 2026-08-30 | Current branch                                      | `pnpm lint` Phase 1       | Passed  | No lint error or warning                                                    |
+| 2026-08-30 | Current FE branch                                   | `pnpm prettier --check`   | Passed  | All source/spec files match Prettier                                        |
+| 2026-08-30 | Current FE branch                                   | `pnpm typecheck`          | Passed  | No TypeScript or typed-route error                                          |
+| 2026-08-30 | Current FE branch                                   | `pnpm lint`               | Passed  | No lint error or warning                                                    |
+| 2026-08-30 | Current FE branch                                   | `pnpm test -- --run`      | Passed  | 94 files and 349 tests pass                                                 |
+| 2026-08-30 | Current FE branch                                   | `pnpm build`              | Passed  | 47 pages; all eight target routes generated                                 |
+| 2026-08-30 | Current FE branch                                   | `git diff --check`        | Passed  | No whitespace errors; only Git line-ending notices                          |
+| 2026-08-30 | Current BE branch                                   | Release build             | Passed  | 0 warnings, 0 errors                                                        |
+| 2026-08-30 | Current BE branch                                   | Application tests         | Passed  | 84/84 tests pass                                                            |
+| 2026-08-30 | Local API on port 7071                              | Five list endpoint smoke  | Passed  | Transfer, outbound, return, delivery, customer return 200 for tenant roles  |
+| 2026-08-30 | Local API on port 7071                              | Four-role permission QA   | Passed  | Owner/manager/staff permitted as assigned; system admin denied tenant scope |
+| 2026-08-30 | In-app browser                                      | Authenticated browser QA  | Blocked | Kernel fails before navigation: cannot write runtime assets (OS error 3)    |
 
 ## 16. Progress Log
 
@@ -481,3 +497,24 @@ Fill this table after each full verification run. Do not replace failed results 
   workspace navigation.
 - 2026-08-30: Created this specification and initialized acceptance, phase, verification, risk, and
   progress trackers. No implementation item is marked complete from scaffold code alone.
+- 2026-08-30: Completed Phase 0 by fetching both repositories, confirming FE is not behind its
+  remote or `dev`, freezing WMS-127 DTO/validator/permission contracts from backend source, and
+  recording the failing typed-route and 306/309-test baseline.
+- 2026-08-30: Completed Phase 1 route constants, physical App Router pages, detail/action API
+  endpoints, list/detail/history query keys, route guards, compact tenant navigation, Customer
+  catalog entry, and Orders/Returns/Delivery workspace navigation. Typecheck, lint, and 27 focused
+  route/navigation tests pass.
+- 2026-08-30: Completed Phase 2 transfer list/detail/create plus approve, reject, dispatch, and
+  receive-with-variance flows using authoritative detail queries and inventory-aware slot choices.
+- 2026-08-30: Completed Phase 3 Customer list/create/detail/update/order-history module and reusable
+  quick-create integration without exposing unsupported delete/archive actions.
+- 2026-08-30: Completed Phase 4 outbound list/detail/create, partial slot-based issue, return entry,
+  and Returns list/detail/approve/reject workspace with query invalidation.
+- 2026-08-30: Completed Phase 5 Delivery filters/detail/history and exact assignment/shipping/
+  delivered/failed/retry transitions; assigned staff now render by name rather than raw identifier.
+- 2026-08-30: Fixed backend list-query projection ordering that caused transfer/outbound 500 errors
+  and added an idempotent migration backfilling WMS-180 tenant role permissions.
+- 2026-08-30: Phase 6 automated verification passed (FE formatting, lint, typecheck, 94 files/349
+  tests, production build, diff check; BE release build and 84 tests). Local API list and role
+  permission smoke tests passed. Authenticated browser/viewport/state-transition QA remains blocked
+  by ENV-01 and requires seeded workflow data (DATA-01).

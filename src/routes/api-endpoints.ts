@@ -162,6 +162,9 @@ export const API_ENDPOINTS = {
   transfers: {
     list: '/transfers',
     create: '/transfers',
+    sourceWarehouses: '/transfers/source-warehouses',
+    sourceInventory: '/transfers/source-inventory',
+    detail: (transferId: string) => `/transfers/${transferId}`,
     approve: (transferId: string) => `/transfers/${transferId}/approve`,
     reject: (transferId: string) => `/transfers/${transferId}/reject`,
     dispatch: (transferId: string) => `/transfers/${transferId}/dispatch`,
@@ -170,12 +173,15 @@ export const API_ENDPOINTS = {
   outboundOrders: {
     list: '/outbound-orders',
     create: '/outbound-orders',
+    detail: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}`,
     issue: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/issue`,
     returns: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/returns`,
   },
   returns: {
     list: '/returns',
+    detail: (returnId: string) => `/returns/${returnId}`,
     approve: (returnId: string) => `/returns/${returnId}/approve`,
+    reject: (returnId: string) => `/returns/${returnId}/reject`,
   },
   deliveries: {
     list: '/deliveries',
@@ -183,5 +189,9 @@ export const API_ENDPOINTS = {
   },
   customers: {
     list: '/customers',
+    create: '/customers',
+    detail: (customerId: string) => `/customers/${customerId}`,
+    update: (customerId: string) => `/customers/${customerId}`,
+    orderHistory: (customerId: string) => `/customers/${customerId}/orders`,
   },
 } as const

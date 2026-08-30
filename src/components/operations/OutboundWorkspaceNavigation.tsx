@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { ArrowLeftRight, PackageMinus, Route, Undo2 } from 'lucide-react'
+import { PackageMinus, Route, Undo2 } from 'lucide-react'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
 
-type OutboundWorkspaceView = 'transfers' | 'orders' | 'returns' | 'delivery'
+type OutboundWorkspaceView = 'orders' | 'returns' | 'delivery'
 
 interface OutboundWorkspaceNavigationProps {
   readonly currentView: OutboundWorkspaceView
@@ -27,16 +27,6 @@ export function OutboundWorkspaceNavigation({
       className="flex shrink-0 overflow-x-auto border-b"
       aria-label="Không gian điều chuyển và xuất kho"
     >
-      {permissions.includes('transfers:view') ? (
-        <Link
-          href={APP_ROUTES.transfers}
-          aria-current={currentView === 'transfers' ? 'page' : undefined}
-          className={linkClassName('transfers')}
-        >
-          <ArrowLeftRight className="size-4" aria-hidden="true" />
-          Điều chuyển
-        </Link>
-      ) : null}
       {permissions.includes('outbound-orders:view') ? (
         <Link
           href={APP_ROUTES.orders}
@@ -47,7 +37,7 @@ export function OutboundWorkspaceNavigation({
           Xuất kho
         </Link>
       ) : null}
-      {permissions.includes('returns:approve') ? (
+      {permissions.includes('returns:view') ? (
         <Link
           href={APP_ROUTES.returns}
           aria-current={currentView === 'returns' ? 'page' : undefined}

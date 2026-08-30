@@ -10,6 +10,10 @@ import {
 } from '@/components/ui/sheet'
 import type { TransferSummary } from '../../types/transfer.types'
 import {
+  OperationalErrorState,
+  OperationalLoadingState,
+} from '@/components/operations/OperationalState'
+import {
   formatTransferDate,
   formatTransferQuantity,
   TRANSFER_STATUS_DESCRIPTIONS,
@@ -18,14 +22,27 @@ import { TransferStatusBadge } from './TransferStatusBadge'
 
 interface TransferDetailSheetProps {
   readonly transfer: TransferSummary | null
+  readonly isLoading: boolean
+  readonly isError: boolean
+  readonly onRetry: () => void
   readonly onOpenChange: (open: boolean) => void
 }
 
-export function TransferDetailSheet({ transfer, onOpenChange }: TransferDetailSheetProps) {
+export function TransferDetailSheet({
+  transfer,
+  isLoading,
+  isError,
+  onRetry,
+  onOpenChange,
+}: TransferDetailSheetProps) {
   return (
-    <Sheet open={Boolean(transfer)} onOpenChange={onOpenChange}>
+    <Sheet open={Boolean(transfer) || isLoading || isError} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        {transfer ? (
+        {isLoading ? (
+          <OperationalLoadingState />
+        ) : isError ? (
+          <OperationalErrorState title="Không thể tải chi tiết phiếu" onRetry={onRetry} />
+        ) : transfer ? (
           <>
             <SheetHeader>
               <SheetTitle className="font-mono" translate="no">
@@ -49,7 +66,26 @@ export function TransferDetailSheet({ transfer, onOpenChange }: TransferDetailSh
                   <dt className="text-muted-foreground text-xs">Kho nhận</dt>
                   <dd className="text-sm font-medium">{transfer.destinationWarehouseName}</dd>
                 </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Người tạo</dt>
+                  <dd className="text-sm font-medium">{transfer.createdBy}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Người duyệt</dt>
+                  <dd className="text-sm font-medium">{transfer.approvedBy ?? '—'}</dd>
+                </div>
               </dl>
+              {transfer.approvalNote ? (
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Ghi chú duyệt:</span>{' '}
+                  {transfer.approvalNote}
+                </p>
+              ) : null}
+              {transfer.rejectionReason ? (
+                <p className="text-destructive text-sm">
+                  Lý do từ chối: {transfer.rejectionReason}
+                </p>
+              ) : null}
               <section className="space-y-2">
                 <h3 className="text-sm font-medium">
                   Sản phẩm điều chuyển{' '}
@@ -69,8 +105,15 @@ export function TransferDetailSheet({ transfer, onOpenChange }: TransferDetailSh
                           · {item.sourceSlotCode} → {item.destinationSlotCode}
                         </ItemDescription>
                       </ItemContent>
-                      <span className="text-sm font-medium tabular-nums">
-                        {formatTransferQuantity(item.quantity)}
+                      <span className="text-right text-xs tabular-nums">
+                        YC {formatTransferQuantity(item.quantity)}
+                        <br />
+                        Duyệt {formatTransferQuantity(item.approvedQuantity)} · Xuất{' '}
+                        {formatTransferQuantity(item.dispatchedQuantity)}
+                        <br />
+                        Nhận {formatTransferQuantity(item.receivedQuantity)} · Hỏng{' '}
+                        {formatTransferQuantity(item.damagedQuantity)} · Thiếu{' '}
+                        {formatTransferQuantity(item.missingQuantity)}
                       </span>
                     </Item>
                   ))}

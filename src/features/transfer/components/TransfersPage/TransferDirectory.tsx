@@ -14,7 +14,6 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import type { Route } from 'next'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import {
@@ -32,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { Input } from '@/components/ui/input'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
@@ -77,8 +77,11 @@ interface TransferDirectoryProps {
   readonly status: TransferStatus | ''
   readonly sourceWarehouseId: string
   readonly destinationWarehouseId: string
+  readonly dateFrom: string
+  readonly dateTo: string
   readonly warehouseOptions: readonly WarehouseOption[]
   readonly permissions: readonly string[]
+  readonly currentUserId: string | null
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
@@ -86,6 +89,8 @@ interface TransferDirectoryProps {
   readonly onStatusChange: (value: TransferStatus | '') => void
   readonly onSourceWarehouseChange: (value: string) => void
   readonly onDestinationWarehouseChange: (value: string) => void
+  readonly onDateFromChange: (value: string) => void
+  readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onInspect: (transfer: TransferSummary) => void
@@ -104,8 +109,11 @@ export function TransferDirectory({
   status,
   sourceWarehouseId,
   destinationWarehouseId,
+  dateFrom,
+  dateTo,
   warehouseOptions,
   permissions,
+  currentUserId,
   isLoading,
   isFetching,
   isError,
@@ -113,6 +121,8 @@ export function TransferDirectory({
   onStatusChange,
   onSourceWarehouseChange,
   onDestinationWarehouseChange,
+  onDateFromChange,
+  onDateToChange,
   onPageChange,
   onRetry,
   onInspect,
@@ -123,7 +133,11 @@ export function TransferDirectory({
 }: TransferDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const activeFilterCount =
-    (status ? 1 : 0) + (sourceWarehouseId ? 1 : 0) + (destinationWarehouseId ? 1 : 0)
+    (status ? 1 : 0) +
+    (sourceWarehouseId ? 1 : 0) +
+    (destinationWarehouseId ? 1 : 0) +
+    (dateFrom ? 1 : 0) +
+    (dateTo ? 1 : 0)
 
   const canApprove = permissions.includes('transfers:approve')
   const canDispatch = permissions.includes('transfers:dispatch')
@@ -146,13 +160,17 @@ export function TransferDirectory({
           <Eye className="size-4" aria-hidden="true" />
           Xem chi tiết
         </DropdownMenuItem>
-        {canApprove && canApproveTransfer(transfer.status) ? (
+        {canApprove &&
+        transfer.createdBy !== currentUserId &&
+        canApproveTransfer(transfer.status) ? (
           <DropdownMenuItem onSelect={() => onApprove(transfer)}>
             <Check className="size-4" aria-hidden="true" />
             Duyệt phiếu
           </DropdownMenuItem>
         ) : null}
-        {canApprove && canApproveTransfer(transfer.status) ? (
+        {canApprove &&
+        transfer.createdBy !== currentUserId &&
+        canApproveTransfer(transfer.status) ? (
           <DropdownMenuItem variant="destructive" onSelect={() => onReject(transfer)}>
             <X className="size-4" aria-hidden="true" />
             Từ chối phiếu
@@ -191,7 +209,7 @@ export function TransferDirectory({
         </div>
         {permissions.includes('transfers:create') ? (
           <Button asChild className="w-full sm:w-auto">
-            <Link href={APP_ROUTES.transferCreate as Route}>
+            <Link href={APP_ROUTES.transferCreate}>
               <Plus aria-hidden="true" />
               Tạo phiếu điều chuyển
             </Link>
@@ -325,6 +343,28 @@ export function TransferDirectory({
                 ))}
               </NativeSelect>
             </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel htmlFor="transfer-date-from">Từ ngày</FieldLabel>
+                <Input
+                  id="transfer-date-from"
+                  type="date"
+                  value={dateFrom}
+                  max={dateTo || undefined}
+                  onChange={(event) => onDateFromChange(event.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="transfer-date-to">Đến ngày</FieldLabel>
+                <Input
+                  id="transfer-date-to"
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(event) => onDateToChange(event.target.value)}
+                />
+              </Field>
+            </div>
           </FieldGroup>
           <SheetFooter>
             <Button type="button" onClick={() => setIsFilterOpen(false)}>
@@ -337,6 +377,8 @@ export function TransferDirectory({
                 onStatusChange('')
                 onSourceWarehouseChange('')
                 onDestinationWarehouseChange('')
+                onDateFromChange('')
+                onDateToChange('')
               }}
             >
               Đặt lại

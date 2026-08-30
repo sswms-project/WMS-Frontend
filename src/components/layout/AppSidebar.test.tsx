@@ -21,6 +21,11 @@ const mocks = vi.hoisted(() => ({
     'purchase-orders:view',
     'inbound-receipts:view',
     'inventory:view',
+    'transfers:view',
+    'outbound-orders:view',
+    'returns:view',
+    'deliveries:view',
+    'customers:view',
     'subscriptions:view',
     'subscription-plans:view',
   ],
@@ -152,26 +157,19 @@ describe('AppSidebar tenant navigation', () => {
     expect(screen.getByRole('link', { name: 'Tồn kho' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('renders unfinished destinations as disabled controls with a usable tooltip', async () => {
+  it('renders completed operation destinations as links', async () => {
     const user = userEvent.setup()
     renderSidebar()
     await user.click(screen.getByRole('button', { name: 'Vận hành kho' }))
 
-    const transferItem = screen.getByRole('button', {
-      name: 'Điều chuyển kho - Chức năng đang phát triển',
-    })
-
-    expect(transferItem).toBeDisabled()
-    expect(transferItem).not.toHaveAttribute('title')
-    expect(screen.queryByRole('link', { name: 'Điều chuyển kho' })).not.toBeInTheDocument()
-
-    const tooltipTrigger = transferItem.parentElement
-    if (!(tooltipTrigger instanceof HTMLElement)) {
-      throw new Error('Expected the planned navigation item to have a tooltip trigger')
-    }
-
-    await user.hover(tooltipTrigger)
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Chức năng đang phát triển')
+    expect(screen.getByRole('link', { name: 'Điều chuyển kho' })).toHaveAttribute(
+      'href',
+      '/transfers'
+    )
+    expect(screen.getByRole('link', { name: 'Xuất kho & Giao hàng' })).toHaveAttribute(
+      'href',
+      '/orders'
+    )
   })
 
   it('shows a stable loading state until navigation permissions are ready', () => {

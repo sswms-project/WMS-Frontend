@@ -11,7 +11,6 @@ import {
   Undo2,
 } from 'lucide-react'
 import Link from 'next/link'
-import type { Route } from 'next'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import {
@@ -29,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { Input } from '@/components/ui/input'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
@@ -71,6 +71,10 @@ interface OutboundOrderDirectoryProps {
   readonly searchText: string
   readonly status: OutboundOrderStatus | ''
   readonly warehouseId: string
+  readonly customerId: string
+  readonly dateFrom: string
+  readonly dateTo: string
+  readonly customerOptions: readonly { id: string; name: string }[]
   readonly warehouseOptions: readonly WarehouseOption[]
   readonly permissions: readonly string[]
   readonly isLoading: boolean
@@ -79,10 +83,14 @@ interface OutboundOrderDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: OutboundOrderStatus | '') => void
   readonly onWarehouseChange: (value: string) => void
+  readonly onCustomerChange: (value: string) => void
+  readonly onDateFromChange: (value: string) => void
+  readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onInspect: (order: OutboundOrderSummary) => void
   readonly onIssueStock: (order: OutboundOrderSummary) => void
+  readonly onRecordReturn: (order: OutboundOrderSummary) => void
 }
 
 export function OutboundOrderDirectory({
@@ -93,6 +101,10 @@ export function OutboundOrderDirectory({
   searchText,
   status,
   warehouseId,
+  customerId,
+  dateFrom,
+  dateTo,
+  customerOptions,
   warehouseOptions,
   permissions,
   isLoading,
@@ -101,15 +113,25 @@ export function OutboundOrderDirectory({
   onSearchChange,
   onStatusChange,
   onWarehouseChange,
+  onCustomerChange,
+  onDateFromChange,
+  onDateToChange,
   onPageChange,
   onRetry,
   onInspect,
   onIssueStock,
+  onRecordReturn,
 }: OutboundOrderDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const activeFilterCount = (status ? 1 : 0) + (warehouseId ? 1 : 0)
+  const activeFilterCount =
+    (status ? 1 : 0) +
+    (warehouseId ? 1 : 0) +
+    (customerId ? 1 : 0) +
+    (dateFrom ? 1 : 0) +
+    (dateTo ? 1 : 0)
 
   const canIssue = permissions.includes('outbound-orders:issue')
+  const canReturn = permissions.includes('outbound-orders:return')
 
   const renderRowActions = (order: OutboundOrderSummary) => (
     <DropdownMenu>
@@ -134,6 +156,12 @@ export function OutboundOrderDirectory({
             Lấy hàng &amp; xuất kho
           </DropdownMenuItem>
         ) : null}
+        {canReturn && (order.status === 'Delivered' || order.status === 'Failed') ? (
+          <DropdownMenuItem onSelect={() => onRecordReturn(order)}>
+            <Undo2 className="size-4" aria-hidden="true" />
+            Ghi nhận hoàn hàng
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -155,7 +183,7 @@ export function OutboundOrderDirectory({
         </div>
         {permissions.includes('outbound-orders:create') ? (
           <Button asChild className="w-full sm:w-auto">
-            <Link href={APP_ROUTES.orderCreate as Route}>
+            <Link href={APP_ROUTES.orderCreate}>
               <Plus aria-hidden="true" />
               Tạo đơn xuất kho
             </Link>
@@ -273,6 +301,43 @@ export function OutboundOrderDirectory({
                 ))}
               </NativeSelect>
             </Field>
+            <Field>
+              <FieldLabel htmlFor="outbound-order-filter-customer">Khách hàng</FieldLabel>
+              <NativeSelect
+                id="outbound-order-filter-customer"
+                value={customerId}
+                onChange={(event) => onCustomerChange(event.target.value)}
+              >
+                <NativeSelectOption value="">Tất cả khách hàng</NativeSelectOption>
+                {customerOptions.map((customer) => (
+                  <NativeSelectOption key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel htmlFor="outbound-date-from">Từ ngày</FieldLabel>
+                <Input
+                  id="outbound-date-from"
+                  type="date"
+                  value={dateFrom}
+                  max={dateTo || undefined}
+                  onChange={(event) => onDateFromChange(event.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="outbound-date-to">Đến ngày</FieldLabel>
+                <Input
+                  id="outbound-date-to"
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(event) => onDateToChange(event.target.value)}
+                />
+              </Field>
+            </div>
           </FieldGroup>
           <SheetFooter>
             <Button type="button" onClick={() => setIsFilterOpen(false)}>
@@ -284,6 +349,9 @@ export function OutboundOrderDirectory({
               onClick={() => {
                 onStatusChange('')
                 onWarehouseChange('')
+                onCustomerChange('')
+                onDateFromChange('')
+                onDateToChange('')
               }}
             >
               Đặt lại
@@ -375,8 +443,16 @@ function OutboundOrderDesktopTable({
                     {item.orderCode}
                   </TooltipContent>
                 </Tooltip>
+                <span className="text-muted-foreground block truncate text-xs">
+                  {item.purpose ?? 'Không có mục đích'}
+                </span>
               </TableCell>
-              <TableCell className="truncate">{item.customerName}</TableCell>
+              <TableCell className="min-w-0">
+                <span className="block truncate">{item.customerName}</span>
+                <span className="text-muted-foreground block truncate text-xs">
+                  Nhận: {item.recipientName}
+                </span>
+              </TableCell>
               <TableCell className="truncate">{item.warehouseName}</TableCell>
               <TableCell>
                 <OutboundOrderStatusBadge status={item.status} />

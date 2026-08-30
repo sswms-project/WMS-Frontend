@@ -11,6 +11,7 @@ export const createOutboundOrderSchema = z
   .object({
     customerId: dotNetGuidSchema('Vui lòng chọn khách hàng.'),
     warehouseId: dotNetGuidSchema('Vui lòng chọn kho xuất hàng.'),
+    purpose: z.string().trim().max(500, 'Mục đích không được vượt quá 500 ký tự.'),
     lines: z.array(outboundOrderLineSchema).min(1, 'Đơn xuất kho phải có ít nhất một sản phẩm.'),
   })
   .superRefine((values, context) => {
@@ -29,9 +30,10 @@ export const createOutboundOrderSchema = z
 
 export const issueStockLineSchema = z.object({
   outboundOrderItemId: z.string(),
+  productId: z.string(),
   productName: z.string(),
   sku: z.string(),
-  orderedQuantity: z.number(),
+  remainingQuantity: z.number(),
   sourceSlotId: z.string(),
   pickedQuantity: z.number().min(0, 'Số lượng lấy hàng không được âm.'),
 })
@@ -59,7 +61,7 @@ export const issueStockSchema = z
         })
       }
 
-      if (line.pickedQuantity > line.orderedQuantity) {
+      if (line.pickedQuantity > line.remainingQuantity) {
         context.addIssue({
           code: 'custom',
           path: ['lines', index, 'pickedQuantity'],
@@ -71,7 +73,7 @@ export const issueStockSchema = z
 
 export const returnLineSchema = z.object({
   productId: dotNetGuidSchema('Vui lòng chọn sản phẩm.'),
-  quantity: z.number().positive('Số lượng phải lớn hơn 0.'),
+  quantity: z.number().min(0, 'Số lượng không được âm.'),
   condition: z.enum(RETURN_ITEM_CONDITIONS),
   restockSlotId: z.string(),
 })
@@ -86,6 +88,13 @@ export const recordReturnSchema = z
     lines: z.array(returnLineSchema).min(1, 'Phiếu trả hàng phải có ít nhất một sản phẩm.'),
   })
   .superRefine((values, context) => {
+    if (!values.lines.some((line) => line.quantity > 0)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['lines'],
+        message: 'Vui lòng chọn ít nhất một sản phẩm hoàn.',
+      })
+    }
     const productIds = new Set<string>()
     values.lines.forEach((line, index) => {
       if (line.productId && productIds.has(line.productId)) {
@@ -97,7 +106,7 @@ export const recordReturnSchema = z
       }
       productIds.add(line.productId)
 
-      if (line.condition === 'Good' && !line.restockSlotId) {
+      if (line.quantity > 0 && line.condition === 'Good' && !line.restockSlotId) {
         context.addIssue({
           code: 'custom',
           path: ['lines', index, 'restockSlotId'],

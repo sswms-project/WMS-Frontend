@@ -60,6 +60,8 @@ export const APP_ROUTES = {
   orderCreate: '/orders/new',
   returns: '/returns',
   delivery: '/delivery',
+  customers: '/customers',
+  customerDetail: (customerId: string): Route => `/customers/${customerId}` as Route,
   unauthorized: '/unauthorized',
   admin: {
     roles: '/admin/roles',

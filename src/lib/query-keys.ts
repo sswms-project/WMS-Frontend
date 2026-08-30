@@ -23,13 +23,20 @@ import type {
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery } from '@/features/product/types/product.types'
-import type { TransferListQuery } from '@/features/transfer/types/transfer.types'
 import type {
-  CustomerListQuery,
+  TransferListQuery,
+  TransferSourceInventoryQuery,
+  TransferSourceWarehouseQuery,
+} from '@/features/transfer/types/transfer.types'
+import type {
   OutboundOrderListQuery,
   ReturnListQuery,
 } from '@/features/outbound/types/outbound.types'
 import type { DeliveryListQuery } from '@/features/delivery/types/delivery.types'
+import type {
+  CustomerListQuery,
+  CustomerOrderHistoryQuery,
+} from '@/features/customer/types/customer.types'
 import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
@@ -140,6 +147,11 @@ export const queryKeys = {
     all: ['transfers'] as const,
     lists: ['transfers', 'list'] as const,
     list: (params: TransferListQuery) => ['transfers', 'list', params] as const,
+    detail: (id: string) => ['transfers', 'detail', id] as const,
+    sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
+      ['transfers', 'source-warehouses', params] as const,
+    sourceInventory: (params: TransferSourceInventoryQuery) =>
+      ['transfers', 'source-inventory', params] as const,
   },
   outboundOrders: {
     all: ['outbound-orders'] as const,
@@ -151,6 +163,7 @@ export const queryKeys = {
     all: ['returns'] as const,
     lists: ['returns', 'list'] as const,
     list: (params: ReturnListQuery) => ['returns', 'list', params] as const,
+    detail: (id: string) => ['returns', 'detail', id] as const,
   },
   deliveries: {
     all: ['deliveries'] as const,
@@ -159,8 +172,11 @@ export const queryKeys = {
   },
   customers: {
     all: ['customers'] as const,
+    lists: ['customers', 'list'] as const,
     list: (params: CustomerListQuery) => ['customers', 'list', params] as const,
     detail: (id: string) => ['customers', 'detail', id] as const,
+    orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
+      ['customers', 'detail', id, 'orders', params] as const,
   },
   notifications: {
     all: ['notifications'] as const,

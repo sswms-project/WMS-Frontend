@@ -53,5 +53,59 @@ export const rejectTransferSchema = z.object({
     .max(500, 'Lý do không được vượt quá 500 ký tự.'),
 })
 
+export const approveTransferSchema = z
+  .object({
+    note: z.string().trim().max(500, 'Ghi chú không được vượt quá 500 ký tự.'),
+    lines: z.array(
+      z.object({
+        stockTransferItemId: dotNetGuidSchema('Dòng điều chuyển không hợp lệ.'),
+        productName: z.string(),
+        requestedQuantity: z.number().positive(),
+        approvedQuantity: z.number().positive('Số lượng duyệt phải lớn hơn 0.'),
+      })
+    ),
+  })
+  .superRefine((values, context) => {
+    values.lines.forEach((line, index) => {
+      if (line.approvedQuantity > line.requestedQuantity) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'approvedQuantity'],
+          message: 'Số lượng duyệt không được vượt quá số lượng yêu cầu.',
+        })
+      }
+    })
+  })
+
+export const receiveTransferSchema = z
+  .object({
+    lines: z.array(
+      z.object({
+        stockTransferItemId: dotNetGuidSchema('Dòng điều chuyển không hợp lệ.'),
+        productName: z.string(),
+        dispatchedQuantity: z.number().min(0),
+        receivedQuantity: z.number().min(0, 'Số lượng nhận không được âm.'),
+        damagedQuantity: z.number().min(0, 'Số lượng hỏng không được âm.'),
+        missingQuantity: z.number().min(0, 'Số lượng thiếu không được âm.'),
+      })
+    ),
+  })
+  .superRefine((values, context) => {
+    values.lines.forEach((line, index) => {
+      if (
+        line.receivedQuantity + line.damagedQuantity + line.missingQuantity !==
+        line.dispatchedQuantity
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'receivedQuantity'],
+          message: 'Tổng số nhận, hỏng và thiếu phải bằng số lượng đã xuất.',
+        })
+      }
+    })
+  })
+
 export type CreateTransferFormValues = z.infer<typeof createTransferSchema>
 export type RejectTransferFormValues = z.infer<typeof rejectTransferSchema>
+export type ApproveTransferFormValues = z.infer<typeof approveTransferSchema>
+export type ReceiveTransferFormValues = z.infer<typeof receiveTransferSchema>

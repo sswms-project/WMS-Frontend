@@ -22,9 +22,12 @@ export type ReturnItemCondition = (typeof RETURN_ITEM_CONDITIONS)[number]
 export interface OutboundOrderListQuery {
   pageNumber: number
   pageSize: number
+  searchTerm?: string
   status?: OutboundOrderStatus
   warehouseId?: string
   customerId?: string
+  dateFrom?: string
+  dateTo?: string
 }
 
 export interface OutboundOrderItem {
@@ -34,6 +37,8 @@ export interface OutboundOrderItem {
   sku: string
   quantity: number
   pickedQuantity: number
+  returnedQuantity: number
+  returnableQuantity: number
   sourceSlotId: string | null
   sourceSlotCode: string | null
 }
@@ -43,10 +48,18 @@ export interface OutboundOrderSummary {
   orderCode: string
   customerId: string
   customerName: string
+  customerCode: string
   warehouseId: string
   warehouseName: string
+  purpose: string | null
+  recipientName: string
+  recipientPhone: string
+  recipientEmail: string | null
+  recipientAddress: string
   status: OutboundOrderStatus
   createdAt: string
+  deliveredAt: string | null
+  failedReason: string | null
   items: OutboundOrderItem[]
 }
 
@@ -66,6 +79,7 @@ export interface CreateOutboundOrderRequest {
   customerId: string
   warehouseId: string
   items: CreateOutboundOrderItemRequest[]
+  purpose?: string | null
 }
 
 export interface IssueStockItemRequest {
@@ -108,13 +122,22 @@ export interface ReturnSummary {
   reason: string
   status: ReturnStatus
   createdAt: string
+  createdBy: string
+  approvedBy: string | null
+  approvedAt: string | null
+  rejectionReason: string | null
   items: ReturnItem[]
 }
 
 export interface ReturnListQuery {
   pageNumber: number
   pageSize: number
+  searchTerm?: string
   status?: ReturnStatus
+  outboundOrderId?: string
+  warehouseId?: string
+  dateFrom?: string
+  dateTo?: string
 }
 
 export interface ReturnListResponse {
@@ -124,25 +147,8 @@ export interface ReturnListResponse {
   pageSize: number
 }
 
-export interface CustomerListQuery {
-  pageNumber: number
-  pageSize: number
-  searchTerm?: string
-}
-
-export interface CustomerOption {
-  id: string
-  customerName: string
-  phone: string
-  email: string | null
-  address: string
-}
-
-export interface CustomerListResponse {
-  items: CustomerOption[]
-  totalCount: number
-  pageNumber: number
-  pageSize: number
+export interface RejectReturnRequest {
+  reason: string
 }
 
 export interface OutboundOrderFilters {

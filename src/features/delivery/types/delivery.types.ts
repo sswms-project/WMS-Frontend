@@ -16,8 +16,13 @@ export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number]
 export interface DeliveryListQuery {
   pageNumber: number
   pageSize: number
+  searchTerm?: string
   outboundOrderId?: string
+  warehouseId?: string
+  customerId?: string
   status?: DeliveryStatus
+  dateFrom?: string
+  dateTo?: string
 }
 
 export interface DeliveryStatusHistory {
@@ -32,7 +37,17 @@ export interface DeliveryStatusHistory {
 export interface DeliveryTracking {
   outboundOrderId: string
   orderCode: string
+  warehouseId: string
+  warehouseName: string
+  customerId: string
+  customerName: string
+  recipientName: string
+  assignedDeliveryStaffId: string | null
+  assignedDeliveryStaffName: string | null
   currentStatus: OutboundOrderStatus
+  createdAt: string
+  deliveredAt: string | null
+  failedReason: string | null
   history: DeliveryStatusHistory[]
 }
 
@@ -46,6 +61,7 @@ export interface DeliveryListResponse {
 export interface UpdateDeliveryStatusRequest {
   newStatus: DeliveryStatus
   note: string | null
+  assignedDeliveryStaffId?: string | null
 }
 
 export interface DeliveryFilters {

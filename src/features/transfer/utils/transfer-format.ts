@@ -1,17 +1,23 @@
 import type { TransferStatus } from '../types/transfer.types'
 
 export const TRANSFER_STATUS_LABELS: Record<TransferStatus, string> = {
-  Draft: 'Chờ duyệt',
+  PendingSourceApproval: 'Chờ kho nguồn duyệt',
+  Approved: 'Đã duyệt',
   InTransit: 'Đang điều chuyển',
   Completed: 'Hoàn tất',
+  ReceivedWithVariance: 'Đã nhận có chênh lệch',
+  Rejected: 'Bị từ chối',
   Cancelled: 'Đã hủy',
 }
 
 export const TRANSFER_STATUS_DESCRIPTIONS: Record<TransferStatus, string> = {
-  Draft: 'Phiếu vừa tạo, đang chờ quản lý duyệt hoặc từ chối.',
-  InTransit: 'Phiếu đã duyệt. Kho xuất chuẩn bị hàng rồi kho nhận xác nhận.',
+  PendingSourceApproval: 'Phiếu vừa tạo, đang chờ kho nguồn duyệt hoặc từ chối.',
+  Approved: 'Phiếu đã được duyệt và đang chờ kho nguồn xuất hàng.',
+  InTransit: 'Hàng đã rời kho nguồn và đang chờ kho đích xác nhận.',
   Completed: 'Kho nhận đã xác nhận, tồn kho đã được cập nhật.',
-  Cancelled: 'Phiếu bị từ chối hoặc đã hủy.',
+  ReceivedWithVariance: 'Kho nhận đã xác nhận và ghi nhận hàng hỏng hoặc thiếu.',
+  Rejected: 'Kho nguồn đã từ chối yêu cầu điều chuyển.',
+  Cancelled: 'Phiếu đã bị hủy.',
 }
 
 export function formatTransferQuantity(value: number): string {
@@ -29,11 +35,11 @@ export function formatTransferDate(value: string): string {
 }
 
 export function canApproveTransfer(status: TransferStatus): boolean {
-  return status === 'Draft'
+  return status === 'PendingSourceApproval'
 }
 
 export function canDispatchTransfer(status: TransferStatus): boolean {
-  return status === 'InTransit'
+  return status === 'Approved'
 }
 
 export function canReceiveTransfer(status: TransferStatus): boolean {

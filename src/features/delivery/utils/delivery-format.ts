@@ -12,14 +12,14 @@ export const DELIVERY_STATUS_LABELS: Record<DeliveryStatus, string> = {
 }
 
 const DELIVERY_STATUS_TRANSITIONS: Record<DeliveryStatus, readonly DeliveryStatus[]> = {
-  Pending: ['Picking', 'Failed'],
-  Picking: ['Packing', 'Failed'],
-  Packing: ['ReadyToShip', 'Failed'],
-  ReadyToShip: ['AssignedToTransport', 'Failed'],
+  Pending: [],
+  Picking: [],
+  Packing: [],
+  ReadyToShip: ['AssignedToTransport'],
   AssignedToTransport: ['Shipping', 'Failed'],
   Shipping: ['Delivered', 'Failed'],
   Delivered: [],
-  Failed: ['Shipping'],
+  Failed: ['AssignedToTransport'],
 }
 
 export function getNextDeliveryStatuses(current: DeliveryStatus): readonly DeliveryStatus[] {
