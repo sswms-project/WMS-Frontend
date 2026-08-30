@@ -159,4 +159,29 @@ export const API_ENDPOINTS = {
     invoice: (paymentId: string) => `/payments/${paymentId}/invoice`,
     invoiceData: (paymentId: string) => `/payments/${paymentId}/invoice-data`,
   },
+  transfers: {
+    list: '/transfers',
+    create: '/transfers',
+    approve: (transferId: string) => `/transfers/${transferId}/approve`,
+    reject: (transferId: string) => `/transfers/${transferId}/reject`,
+    dispatch: (transferId: string) => `/transfers/${transferId}/dispatch`,
+    receive: (transferId: string) => `/transfers/${transferId}/receive`,
+  },
+  outboundOrders: {
+    list: '/outbound-orders',
+    create: '/outbound-orders',
+    issue: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/issue`,
+    returns: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/returns`,
+  },
+  returns: {
+    list: '/returns',
+    approve: (returnId: string) => `/returns/${returnId}/approve`,
+  },
+  deliveries: {
+    list: '/deliveries',
+    updateStatus: (outboundOrderId: string) => `/deliveries/${outboundOrderId}/status`,
+  },
+  customers: {
+    list: '/customers',
+  },
 } as const
