@@ -88,4 +88,42 @@ describe('CurrentPlanCard', () => {
     expect(screen.getByText('Đã hủy')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Hủy gói' })).not.toBeInTheDocument()
   })
+
+  it('treats a subscription with a cancellation timestamp as cancelled even while the backend status still reads Active', () => {
+    render(
+      <CurrentPlanCard
+        subscription={{ ...subscription, status: 'Active', cancelledAt: '2026-08-30T11:17:03Z' }}
+        showRenewAction={false}
+        isRenewPending={false}
+        isCancelPending={false}
+        onRenew={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Đã hủy')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Hủy gói' })).not.toBeInTheDocument()
+    expect(screen.getByText('Gói đã bị hủy')).toBeInTheDocument()
+  })
+
+  it('announces a pending billing-cycle change even when the plan itself is not changing', () => {
+    render(
+      <CurrentPlanCard
+        subscription={{
+          ...subscription,
+          billingCycle: 'Yearly',
+          pendingPlanName: null,
+          pendingBillingCycle: 'Monthly',
+        }}
+        showRenewAction={false}
+        isRenewPending={false}
+        isCancelPending={false}
+        onRenew={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Đã lên lịch chuyển gói')).toBeInTheDocument()
+    expect(screen.getByText(/Free \(Hàng tháng\) sẽ được áp dụng/)).toBeInTheDocument()
+  })
 })

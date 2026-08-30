@@ -6,7 +6,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 import {
   Sheet,
   SheetContent,
@@ -101,7 +106,9 @@ export function PaymentHistoryTable({
         >
           <InputGroup className="sm:w-64">
             <InputGroupAddon>
-              <Search aria-hidden="true" />
+              <InputGroupButton type="submit" size="icon-xs" aria-label="Tìm kiếm">
+                <Search aria-hidden="true" />
+              </InputGroupButton>
             </InputGroupAddon>
             <InputGroupInput
               id="payment-toolbar-search"

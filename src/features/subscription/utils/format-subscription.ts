@@ -92,7 +92,11 @@ export function isActivePlan(plan: SubscriptionPlanResponse): boolean {
 export function isCancelledSubscription(subscription?: SubscriptionStatusResponse): boolean {
   if (!subscription) return false
   const normalizedStatus = subscription.status.toLowerCase()
-  return normalizedStatus === 'cancelled' || normalizedStatus === 'canceled'
+  return (
+    normalizedStatus === 'cancelled' ||
+    normalizedStatus === 'canceled' ||
+    Boolean(subscription.cancelledAt)
+  )
 }
 
 export function shouldShowRenewAction(subscription?: SubscriptionStatusResponse): boolean {

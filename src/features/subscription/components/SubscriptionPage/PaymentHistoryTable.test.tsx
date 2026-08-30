@@ -37,6 +37,73 @@ const payments: readonly PaymentResponse[] = [
 ]
 
 describe('PaymentHistoryTable', () => {
+  it('submits the current search text from the compact toolbar when pressing Enter', async () => {
+    const user = userEvent.setup()
+    const onFiltersSubmit = vi.fn()
+    const onFiltersChange = vi.fn()
+
+    render(
+      <TooltipProvider>
+        <PaymentHistoryTable
+          payments={payments}
+          plans={[]}
+          totalCount={2}
+          pageIndex={0}
+          pageSize={10}
+          filters={{ ...filters, searchText: 'INV-001' }}
+          isLoading={false}
+          isError={false}
+          invoiceActionState={null}
+          onFiltersChange={onFiltersChange}
+          onFiltersSubmit={onFiltersSubmit}
+          onFiltersReset={vi.fn()}
+          onPreviousPage={vi.fn()}
+          onNextPage={vi.fn()}
+          onRetry={vi.fn()}
+          onDownloadInvoice={vi.fn()}
+          onPrintInvoice={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+
+    await user.type(screen.getByLabelText('Tìm theo mã hóa đơn'), '{Enter}')
+
+    expect(onFiltersSubmit).toHaveBeenCalledOnce()
+  })
+
+  it('submits the compact toolbar search when clicking the search button', async () => {
+    const user = userEvent.setup()
+    const onFiltersSubmit = vi.fn()
+
+    render(
+      <TooltipProvider>
+        <PaymentHistoryTable
+          payments={payments}
+          plans={[]}
+          totalCount={2}
+          pageIndex={0}
+          pageSize={10}
+          filters={{ ...filters, searchText: 'INV-001' }}
+          isLoading={false}
+          isError={false}
+          invoiceActionState={null}
+          onFiltersChange={vi.fn()}
+          onFiltersSubmit={onFiltersSubmit}
+          onFiltersReset={vi.fn()}
+          onPreviousPage={vi.fn()}
+          onNextPage={vi.fn()}
+          onRetry={vi.fn()}
+          onDownloadInvoice={vi.fn()}
+          onPrintInvoice={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }))
+
+    expect(onFiltersSubmit).toHaveBeenCalledOnce()
+  })
+
   it('opens the complete payment filters from the compact toolbar', async () => {
     const user = userEvent.setup()
 

@@ -60,7 +60,8 @@ export function CurrentPlanCard({
 }: CurrentPlanCardProps) {
   const progressValue = getProgressValue(subscription)
   const cancelled = isCancelledSubscription(subscription)
-  const hasPendingChange = Boolean(subscription.pendingPlanName)
+  const hasPendingChange =
+    Boolean(subscription.pendingPlanName) || Boolean(subscription.pendingBillingCycle)
 
   return (
     <Card className="border-primary/20 min-w-0 gap-0 py-0">
@@ -153,8 +154,9 @@ export function CurrentPlanCard({
             <RotateCcw aria-hidden="true" />
             <AlertTitle>Đã lên lịch chuyển gói</AlertTitle>
             <AlertDescription>
-              {subscription.pendingPlanName} ({formatBillingCycle(subscription.pendingBillingCycle)}
-              ) sẽ được áp dụng vào kỳ thanh toán kế tiếp.
+              {subscription.pendingPlanName ?? subscription.planName} (
+              {formatBillingCycle(subscription.pendingBillingCycle ?? subscription.billingCycle)})
+              sẽ được áp dụng vào kỳ thanh toán kế tiếp.
             </AlertDescription>
           </Alert>
         )}
