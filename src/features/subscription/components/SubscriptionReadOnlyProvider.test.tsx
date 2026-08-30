@@ -45,7 +45,7 @@ describe('SubscriptionReadOnlyProvider', () => {
       </SubscriptionReadOnlyProvider>
     )
 
-    expect(screen.getAllByText(/Subscription đã hết hạn/)).toHaveLength(2)
+    expect(screen.getAllByText(/Gói dịch vụ đã hết hạn/)).toHaveLength(2)
     expect(screen.getByRole('alert')).toHaveTextContent('Tenant đang ở chế độ chỉ đọc')
     expect(screen.getByRole('link', { name: 'Gia hạn ngay' })).toHaveAttribute(
       'href',
@@ -63,7 +63,7 @@ describe('SubscriptionReadOnlyProvider', () => {
       </SubscriptionReadOnlyProvider>
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('true-false-Subscription đã hết hạn')
+    expect(screen.getByRole('status')).toHaveTextContent('true-false-Gói dịch vụ đã hết hạn')
     expect(screen.getByRole('alert')).toHaveTextContent('Tenant đang ở chế độ chỉ đọc')
     expect(screen.queryByRole('link', { name: 'Gia hạn ngay' })).not.toBeInTheDocument()
   })
