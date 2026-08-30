@@ -25,6 +25,10 @@ import {
 } from '../hooks/use-purchase-orders'
 import { purchaseOrderSchema, type PurchaseOrderFormValues } from '../schemas/purchase-order.schema'
 import type { SavePurchaseOrderRequest } from '../types/purchase-order.types'
+import {
+  toOperationalDateApiValue,
+  toOperationalDateInputValue,
+} from '../utils/purchase-order-format'
 
 const EMPTY_LINE = { productId: '', quantity: 1, unitPrice: null }
 const LOOKUP_PAGE_SIZE = 20
@@ -88,7 +92,7 @@ export default function PurchaseOrderFormPage({
     form.reset({
       warehouseId: detail.warehouseId ?? '',
       supplierId: detail.supplierId,
-      expectedDate: detail.expectedDate?.slice(0, 10) ?? '',
+      expectedDate: toOperationalDateInputValue(detail.expectedDate),
       lines: detail.lines.map((line) => ({
         productId: line.productId,
         quantity: line.quantity,
@@ -111,9 +115,7 @@ export default function PurchaseOrderFormPage({
     return {
       warehouseId: values.warehouseId,
       supplierId: values.supplierId,
-      expectedDate: values.expectedDate
-        ? new Date(`${values.expectedDate}T00:00:00`).toISOString()
-        : null,
+      expectedDate: toOperationalDateApiValue(values.expectedDate),
       lines: values.lines,
     }
   }

@@ -10,9 +10,18 @@ const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
   { pathPrefix: '/admin', allowedRoles: [USER_ROLES.SystemAdmin] },
   { pathPrefix: APP_ROUTES.subscription, allowedRoles: [USER_ROLES.TenantOwner] },
   { pathPrefix: APP_ROUTES.organization, allowedRoles: [USER_ROLES.TenantOwner] },
+  { pathPrefix: APP_ROUTES.settings.accessControl, allowedRoles: [USER_ROLES.TenantOwner] },
+  {
+    pathPrefix: APP_ROUTES.suppliers,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
   {
     pathPrefix: APP_ROUTES.purchaseOrders,
-    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager],
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
+    pathPrefix: APP_ROUTES.products,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
     pathPrefix: APP_ROUTES.inbound,

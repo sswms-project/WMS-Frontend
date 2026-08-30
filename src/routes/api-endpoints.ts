@@ -18,6 +18,10 @@ export const API_ENDPOINTS = {
     confirm2fa: '/settings/2fa/confirm',
     disable2fa: '/settings/2fa',
   },
+  tenantRolePermissions: {
+    workspace: '/tenant-role-permissions',
+    assign: (roleId: string) => `/tenant-role-permissions/${roleId}`,
+  },
   organization: {
     me: '/organization',
   },
@@ -58,14 +62,39 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
   },
-  products: {
-    list: '/products',
-  },
   inventory: {
     list: '/inventory',
+    movements: '/inventory/movements',
+    reservations: '/inventory/reservations',
+    damaged: '/inventory/damaged',
+    abcClassification: '/inventory/abc-classification',
+  },
+  cycleCounts: {
+    list: '/cycle-counts',
+    create: '/cycle-counts',
+    detail: (cycleCountId: string) => `/cycle-counts/${cycleCountId}`,
+    allowedActions: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/allowed-actions`,
+    recordItem: (cycleCountId: string, itemId: string) =>
+      `/cycle-counts/${cycleCountId}/items/${itemId}`,
+    submit: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/submit`,
+    recount: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/recount`,
+    finalize: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/finalize`,
+  },
+  stockAdjustments: {
+    list: '/stock-adjustments',
+    create: '/stock-adjustments',
+    detail: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}`,
+    allowedActions: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/allowed-actions`,
+    approve: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/approve`,
+    reject: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/reject`,
   },
   suppliers: {
     list: '/suppliers',
+    create: '/suppliers',
+    detail: (supplierId: string) => `/suppliers/${supplierId}`,
+    update: (supplierId: string) => `/suppliers/${supplierId}`,
+    deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
+    reactivate: (supplierId: string) => `/suppliers/${supplierId}/reactivate`,
   },
   purchaseOrders: {
     list: '/purchase-orders',
@@ -109,6 +138,21 @@ export const API_ENDPOINTS = {
   public: {
     subscriptionPlans: '/public/subscription-plans',
     subscriptionFeatures: '/public/subscription-features',
+  },
+  units: {
+    list: '/units',
+  },
+  categories: {
+    list: '/categories',
+  },
+  products: {
+    list: '/products',
+    create: '/products',
+    detail: (id: string) => `/products/${id}`,
+    update: (id: string) => `/products/${id}`,
+    stockPolicy: (id: string) => `/products/${id}/stock-policy`,
+    barcode: (id: string) => `/products/${id}/barcode`,
+    import: '/products/import',
   },
   payments: {
     history: '/payments',

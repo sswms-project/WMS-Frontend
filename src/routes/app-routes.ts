@@ -1,3 +1,5 @@
+import type { Route } from 'next'
+
 export const APP_ROUTES = {
   home: '/',
   pricing: '/pricing',
@@ -11,6 +13,8 @@ export const APP_ROUTES = {
   },
   dashboard: '/dashboard',
   subscription: '/subscription',
+  subscriptionPayments: '/subscription/payments',
+  subscriptionInvoices: '/subscription/invoices',
   organization: '/organization',
   staff: '/staff',
   invitations: {
@@ -22,6 +26,8 @@ export const APP_ROUTES = {
     staff: '/dashboard/staff',
   },
   warehouses: '/warehouses',
+  suppliers: '/suppliers',
+  supplierDetail: (supplierId: string) => `/suppliers/${supplierId}`,
   purchaseOrders: '/purchase-orders',
   purchaseOrderCreate: '/purchase-orders/new',
   purchaseOrderDetail: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
@@ -38,6 +44,16 @@ export const APP_ROUTES = {
   warehouseLocationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
     `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
   inventory: '/inventory',
+  inventoryMovements: '/inventory/movements',
+  inventoryReservations: '/inventory/reservations',
+  inventoryAbcClassification: '/inventory/abc-classification',
+  cycleCounts: '/inventory/cycle-counts',
+  cycleCountCreate: '/inventory/cycle-counts/new',
+  cycleCountDetail: (cycleCountId: string): Route =>
+    `/inventory/cycle-counts/${cycleCountId}` as Route,
+  stockAdjustments: '/inventory/stock-adjustments',
+  stockAdjustmentDetail: (adjustmentId: string): Route =>
+    `/inventory/stock-adjustments/${adjustmentId}` as Route,
   orders: '/orders',
   delivery: '/delivery',
   unauthorized: '/unauthorized',
@@ -45,8 +61,12 @@ export const APP_ROUTES = {
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
   },
+  products: '/products',
+  productDetail: (id: string) => `/products/${id}`,
+  productCreate: '/products/create',
   profile: '/profile',
   settings: {
     security: '/settings/security',
+    accessControl: '/settings/access-control',
   },
 } as const

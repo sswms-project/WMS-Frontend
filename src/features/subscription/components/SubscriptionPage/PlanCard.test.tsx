@@ -17,13 +17,18 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
 const plan: SubscriptionPlanResponse = {
   id: 'basic',
   planName: 'Basic',
-  price: 100000,
-  billingCycle: 'Monthly',
-  maxWarehouses: 1,
-  maxUsers: 5,
-  enableForecasting: false,
-  enableBarcode: true,
-  enableLayoutDesigner: false,
+  monthlyPrice: 100000,
+  yearlyPrice: 1080000,
+  yearlyDiscountPercent: 10,
+  displayOrder: 1,
+  features: [
+    {
+      featureCode: 'MaxWarehouses',
+      displayName: 'Kho hàng',
+      featureType: 'Limit',
+      limitValue: 1,
+    },
+  ],
   status: 'Active',
 }
 
@@ -36,6 +41,7 @@ describe('PlanCard', () => {
       <TooltipProvider>
         <PlanCard
           plan={plan}
+          billingCycle="Monthly"
           actionState={{
             disabled: true,
             label: 'Không hỗ trợ hạ gói',

@@ -2,6 +2,7 @@ export interface InventoryListQuery {
   pageNumber: number
   pageSize: number
   warehouseId?: string
+  zoneId?: string
   productId?: string
   searchTerm?: string
 }
@@ -31,4 +32,84 @@ export interface InventoryBalanceListResponse {
 export interface InventoryFilterOption {
   value: string
   label: string
+}
+
+export const STOCK_MOVEMENT_TYPES = {
+  inbound: 'Inbound',
+  outbound: 'Outbound',
+  transfer: 'Transfer',
+  adjustment: 'Adjustment',
+  return: 'Return',
+} as const
+
+export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[keyof typeof STOCK_MOVEMENT_TYPES]
+
+export interface StockMovementListQuery {
+  pageNumber: number
+  pageSize: number
+  productId?: string
+  movementType?: StockMovementType
+  dateFrom?: string
+  dateTo?: string
+}
+
+export interface StockMovement {
+  id: string
+  productId: string
+  sku: string
+  productName: string
+  slotId: string
+  slotCode: string
+  quantity: number
+  movementType: string
+  referenceType: string
+  referenceId: string
+  createdBy: string
+  createdByName: string
+  createdAt: string
+}
+
+export interface StockMovementListResponse {
+  items: StockMovement[]
+  totalCount: number
+  pageNumber: number
+  pageSize: number
+}
+
+export interface InventoryReservationQuery {
+  warehouseId?: string
+  productId?: string
+}
+
+export interface ReserveStockRequest {
+  productId: string
+  warehouseId: string
+  slotId: string
+  quantity: number
+}
+
+export interface ReleaseReservationRequest {
+  inventoryBalanceId: string
+  quantity: number
+}
+
+export interface ReportDamagedStockRequest {
+  productId: string
+  warehouseId: string
+  slotId: string
+  quantity: number
+  reason: string
+}
+
+export interface InventoryAbcQuery {
+  warehouseId?: string
+}
+
+export interface InventoryAbcItem {
+  productId: string
+  sku: string
+  productName: string
+  totalQuantity: number
+  cumulativePercentage: number
+  class: string
 }

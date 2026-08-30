@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
-import { SubscriptionPage } from './SubscriptionPage'
+import { SubscriptionPaymentHistoryPage } from './SubscriptionPaymentHistoryPage'
 import type { PaymentResponse } from '../types/subscription.types'
 
 const completedPayment: PaymentResponse = {
@@ -27,6 +27,8 @@ const invoiceDownloadMutation = {
   isPending: false,
 }
 
+const authState = vi.hoisted(() => ({ role: 'Tenant Owner' }))
+
 vi.mock('sonner', () => ({
   toast: { error: vi.fn() },
 }))
@@ -36,7 +38,7 @@ vi.mock('@/stores/auth.store', () => ({
     selector: (state: { user: { role: string; fullName: string; email: string } }) => unknown
   ) =>
     selector({
-      user: { role: 'Tenant Owner', fullName: 'Tenant Owner', email: 'owner@example.com' },
+      user: { role: authState.role, fullName: 'Tenant Owner', email: 'owner@example.com' },
     }),
 }))
 
@@ -69,6 +71,7 @@ vi.mock('../components/SubscriptionPage', () => ({
   SubscriptionEmptyState: () => null,
   SubscriptionErrorState: () => null,
   SubscriptionPageSkeleton: () => null,
+  TenantOwnerOnlyState: () => <div>Tenant owner only</div>,
 }))
 
 vi.mock('../hooks/use-subscription', () => ({
@@ -108,7 +111,7 @@ vi.mock('../hooks/use-subscription', () => ({
   useUpgradeSubscriptionMutation: () => ({ isPending: false }),
 }))
 
-describe('SubscriptionPage invoice actions', () => {
+describe('SubscriptionPaymentHistoryPage invoice actions', () => {
   const receiptBlob = new Blob(['receipt'])
   const printWindow = {
     opener: window,
@@ -117,6 +120,7 @@ describe('SubscriptionPage invoice actions', () => {
   let downloadFileName = ''
 
   beforeEach(() => {
+    authState.role = 'Tenant Owner'
     downloadFileName = ''
     invoiceDownloadMutation.mutateAsync.mockReset()
     invoiceDownloadMutation.mutateAsync.mockResolvedValue(receiptBlob)
@@ -139,8 +143,16 @@ describe('SubscriptionPage invoice actions', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
   })
 
+  it('restricts the payment workspace to the tenant owner', () => {
+    authState.role = 'Warehouse Manager'
+
+    render(<SubscriptionPaymentHistoryPage />)
+
+    expect(screen.getByText('Tenant owner only')).toBeInTheDocument()
+  })
+
   it('downloads the server-generated invoice PDF', async () => {
-    render(<SubscriptionPage />)
+    render(<SubscriptionPaymentHistoryPage />)
     fireEvent.click(screen.getByRole('button', { name: 'Download completed receipt' }))
 
     await waitFor(() => expect(invoiceDownloadMutation.mutateAsync).toHaveBeenCalledOnce())
@@ -154,7 +166,7 @@ describe('SubscriptionPage invoice actions', () => {
   it('does not start a browser download when the invoice API fails', async () => {
     invoiceDownloadMutation.mutateAsync.mockRejectedValueOnce(new Error('Invoice API failed'))
 
-    render(<SubscriptionPage />)
+    render(<SubscriptionPaymentHistoryPage />)
     fireEvent.click(screen.getByRole('button', { name: 'Download completed receipt' }))
 
     await waitFor(() => expect(invoiceDownloadMutation.mutateAsync).toHaveBeenCalledOnce())
@@ -163,7 +175,7 @@ describe('SubscriptionPage invoice actions', () => {
   })
 
   it('rejects invoice actions for non-completed payments', () => {
-    render(<SubscriptionPage />)
+    render(<SubscriptionPaymentHistoryPage />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Download pending receipt' }))
     fireEvent.click(screen.getByRole('button', { name: 'Print pending receipt' }))
@@ -173,7 +185,7 @@ describe('SubscriptionPage invoice actions', () => {
   })
 
   it('opens a usable print window synchronously, clears its opener, and navigates it', () => {
-    render(<SubscriptionPage />)
+    render(<SubscriptionPaymentHistoryPage />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Print completed receipt' }))
 
@@ -190,12 +202,12 @@ describe('SubscriptionPage invoice actions', () => {
       'open',
       vi.fn(() => null)
     )
-    render(<SubscriptionPage />)
+    render(<SubscriptionPaymentHistoryPage />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Print completed receipt' }))
 
     expect(toast.error).toHaveBeenCalledWith(
-      'The print window was blocked. Please allow popups and try again.'
+      'Cửa sổ in đã bị chặn. Vui lòng cho phép popup và thử lại.'
     )
   })
 })

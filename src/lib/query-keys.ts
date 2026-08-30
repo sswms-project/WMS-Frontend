@@ -15,9 +15,24 @@ import type {
   LookupQuery,
   PurchaseOrderListQuery,
 } from '@/features/purchase-order/types/purchase-order.types'
-import type { InventoryListQuery } from '@/features/inventory/types/inventory.types'
+import type { SupplierListQuery } from '@/features/supplier/types/supplier.types'
+import type {
+  InventoryListQuery,
+  InventoryAbcQuery,
+  InventoryReservationQuery,
+  StockMovementListQuery,
+} from '@/features/inventory/types/inventory.types'
+import type { ProductListQuery } from '@/features/product/types/product.types'
+import type {
+  CycleCountListQuery,
+  StockAdjustmentListQuery,
+} from '@/features/cycle-count/types/cycle-count.types'
 
 export const queryKeys = {
+  tenantRolePermissions: {
+    all: ['tenant-role-permissions'] as const,
+    workspace: ['tenant-role-permissions', 'workspace'] as const,
+  },
   organization: {
     all: ['organization'] as const,
     me: ['organization', 'me'] as const,
@@ -58,16 +73,42 @@ export const queryKeys = {
   inventory: {
     all: ['inventory'] as const,
     list: (params: InventoryListQuery) => ['inventory', 'list', params] as const,
+    movements: (params: StockMovementListQuery) => ['inventory', 'movements', params] as const,
+    reservations: (params: InventoryReservationQuery) =>
+      ['inventory', 'reservations', params] as const,
+    abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
+  },
+  units: {
+    all: ['units'] as const,
+    list: ['units', 'list'] as const,
+  },
+  categories: {
+    all: ['categories'] as const,
+    list: ['categories', 'list'] as const,
+  },
+  cycleCounts: {
+    all: ['cycle-counts'] as const,
+    list: (params: CycleCountListQuery) => ['cycle-counts', 'list', params] as const,
+    detail: (id: string) => ['cycle-counts', 'detail', id] as const,
+    allowedActions: (id: string) => ['cycle-counts', 'detail', id, 'allowed-actions'] as const,
+  },
+  stockAdjustments: {
+    all: ['stock-adjustments'] as const,
+    list: (params: StockAdjustmentListQuery) => ['stock-adjustments', 'list', params] as const,
+    detail: (id: string) => ['stock-adjustments', 'detail', id] as const,
+    allowedActions: (id: string) => ['stock-adjustments', 'detail', id, 'allowed-actions'] as const,
   },
   products: {
     all: ['products'] as const,
-    list: (params?: QueryInfo) => ['products', 'list', params] as const,
+    list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,
-    list: (params: LookupQuery) => ['suppliers', 'list', params] as const,
+    lists: ['suppliers', 'list'] as const,
+    list: (params: LookupQuery | SupplierListQuery) => ['suppliers', 'list', params] as const,
+    detail: (id: string) => ['suppliers', 'detail', id] as const,
   },
   purchaseOrders: {
     all: ['purchase-orders'] as const,

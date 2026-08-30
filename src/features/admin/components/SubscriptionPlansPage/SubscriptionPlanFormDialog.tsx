@@ -6,6 +6,7 @@ import {
   Controller,
   useFieldArray,
   useForm,
+  useWatch,
   type DefaultValues,
   type FormState,
   type UseFormSetError,
@@ -119,6 +120,7 @@ export function SubscriptionPlanFormDialog({
   })
 
   const { fields } = useFieldArray({ control, name: 'featureItems' })
+  const watchedFeatureItems = useWatch({ control, name: 'featureItems' })
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && isPending) return
@@ -247,7 +249,7 @@ export function SubscriptionPlanFormDialog({
                 Tính năng đi kèm
               </legend>
               {fields.map((field, index) => {
-                const isEnabled = watch(`featureItems.${index}.enabled`)
+                const isEnabled = watchedFeatureItems[index]?.enabled ?? false
                 const isLimit = field.featureType === 'Limit'
                 const limitError = errors.featureItems?.[index]?.limitValue
 

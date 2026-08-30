@@ -30,11 +30,11 @@ describe('layout editor history reducer', () => {
       type: 'update-geometry',
       target: 'zone',
       id: 'zone-1',
-      geometry: { ...scene.zones[0], x: 80 },
+      geometry: { ...scene.zones[0]!, x: 80 },
     })
 
-    expect(scene.zones[0].x).toBe(20)
-    expect(next.present.zones[0].x).toBe(80)
+    expect(scene.zones[0]!.x).toBe(20)
+    expect(next.present.zones[0]!.x).toBe(80)
     expect(next.past).toHaveLength(1)
   })
 
@@ -58,7 +58,7 @@ describe('layout editor history reducer', () => {
     const redone = layoutEditorHistoryReducer(undone, { type: 'redo' })
 
     expect(undone.present.decorations).toHaveLength(0)
-    expect(redone.present.decorations[0].clientKey).toBe('local-1')
+    expect(redone.present.decorations[0]!.clientKey).toBe('local-1')
   })
 
   it('tracks color changes through undo and redo', () => {
