@@ -99,6 +99,11 @@ export function isCancelledSubscription(subscription?: SubscriptionStatusRespons
   )
 }
 
+export function hasPendingSubscriptionChange(subscription?: SubscriptionStatusResponse): boolean {
+  if (!subscription) return false
+  return Boolean(subscription.pendingPlanName) || Boolean(subscription.pendingBillingCycle)
+}
+
 export function shouldShowRenewAction(subscription?: SubscriptionStatusResponse): boolean {
   if (!subscription || isCancelledSubscription(subscription)) return false
   return subscription.isExpired || subscription.daysRemaining <= NEAR_EXPIRY_DAYS

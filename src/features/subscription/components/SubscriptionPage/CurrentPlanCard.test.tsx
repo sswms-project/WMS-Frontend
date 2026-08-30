@@ -85,11 +85,11 @@ describe('CurrentPlanCard', () => {
       />
     )
 
-    expect(screen.getByText('Đã hủy')).toBeInTheDocument()
+    expect(screen.getByText('Sẽ hủy')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Hủy gói' })).not.toBeInTheDocument()
   })
 
-  it('treats a subscription with a cancellation timestamp as cancelled even while the backend status still reads Active', () => {
+  it('treats a subscription with a cancellation timestamp as cancelled even while the backend status still reads Active, and keeps showing the remaining time', () => {
     render(
       <CurrentPlanCard
         subscription={{ ...subscription, status: 'Active', cancelledAt: '2026-08-30T11:17:03Z' }}
@@ -101,9 +101,10 @@ describe('CurrentPlanCard', () => {
       />
     )
 
-    expect(screen.getByText('Đã hủy')).toBeInTheDocument()
+    expect(screen.getByText('Sẽ hủy')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Hủy gói' })).not.toBeInTheDocument()
-    expect(screen.getByText('Gói đã bị hủy')).toBeInTheDocument()
+    expect(screen.getByText('Đã lên lịch hủy gói')).toBeInTheDocument()
+    expect(screen.getByText('Còn 25 ngày')).toBeInTheDocument()
   })
 
   it('announces a pending billing-cycle change even when the plan itself is not changing', () => {
@@ -125,5 +126,48 @@ describe('CurrentPlanCard', () => {
 
     expect(screen.getByText('Đã lên lịch chuyển gói')).toBeInTheDocument()
     expect(screen.getByText(/Free \(Hàng tháng\) sẽ được áp dụng/)).toBeInTheDocument()
+  })
+
+  it('hides the pending-change banner for a subscription that is also cancelled, instead of showing both at once', () => {
+    render(
+      <CurrentPlanCard
+        subscription={{
+          ...subscription,
+          status: 'Active',
+          cancelledAt: '2026-08-30T11:17:03Z',
+          pendingBillingCycle: 'Monthly',
+        }}
+        showRenewAction={false}
+        isRenewPending={false}
+        isCancelPending={false}
+        onRenew={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Đã lên lịch hủy gói')).toBeInTheDocument()
+    expect(screen.queryByText('Đã lên lịch chuyển gói')).not.toBeInTheDocument()
+  })
+
+  it('hides the cancelled banner for a subscription that has already expired, instead of showing both at once', () => {
+    render(
+      <CurrentPlanCard
+        subscription={{
+          ...subscription,
+          status: 'Active',
+          isExpired: true,
+          daysRemaining: 0,
+          cancelledAt: '2026-08-30T11:17:03Z',
+        }}
+        showRenewAction
+        isRenewPending={false}
+        isCancelPending={false}
+        onRenew={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Gói dịch vụ đã hết hạn')).toBeInTheDocument()
+    expect(screen.queryByText('Đã lên lịch hủy gói')).not.toBeInTheDocument()
   })
 })

@@ -69,6 +69,10 @@ describe('PaymentHistoryTable', () => {
     await user.type(screen.getByLabelText('Tìm theo mã hóa đơn'), '{Enter}')
 
     expect(onFiltersSubmit).toHaveBeenCalledOnce()
+    // jsdom submits a lone-text-field form on Enter even without a submit button, so the
+    // assertion above alone would still pass if the button below regressed back to
+    // type="button" — assert the markup directly so that regression is caught too.
+    expect(screen.getByRole('button', { name: 'Tìm kiếm' })).toHaveAttribute('type', 'submit')
   })
 
   it('submits the compact toolbar search when clicking the search button', async () => {
