@@ -54,8 +54,14 @@ export const APP_ROUTES = {
   stockAdjustments: '/inventory/stock-adjustments',
   stockAdjustmentDetail: (adjustmentId: string): Route =>
     `/inventory/stock-adjustments/${adjustmentId}` as Route,
+  transfers: '/transfers',
+  transferCreate: '/transfers/new',
   orders: '/orders',
+  orderCreate: '/orders/new',
+  returns: '/returns',
   delivery: '/delivery',
+  customers: '/customers',
+  customerDetail: (customerId: string): Route => `/customers/${customerId}` as Route,
   unauthorized: '/unauthorized',
   admin: {
     roles: '/admin/roles',

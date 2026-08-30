@@ -88,7 +88,7 @@ describe('application navigation visibility', () => {
       { label: null, items: ['Dashboard'] },
       { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Nhân sự', 'Phân quyền'] },
       { label: null, items: ['Kho hàng'] },
-      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp'] },
+      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp', 'Khách hàng'] },
       {
         label: 'Vận hành kho',
         items: ['Mua hàng', 'Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Xuất kho & Giao hàng'],
@@ -108,8 +108,6 @@ describe('application navigation visibility', () => {
     )
 
     expect(plannedItems.map((item) => item.label)).toEqual([
-      'Điều chuyển kho',
-      'Xuất kho & Giao hàng',
       'Dashboard kho',
       'Báo cáo vận hành',
       'Dự báo & Bổ sung hàng',
