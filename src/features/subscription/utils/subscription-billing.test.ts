@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   PaymentHistoryFilterState,
   SubscriptionPlanResponse,
+  SubscriptionStatusResponse,
 } from '../types/subscription.types'
 import {
   buildInvoiceFileName,
@@ -9,7 +10,10 @@ import {
   formatInvoiceSnapshotValue,
   getMonthlyEquivalent,
   getPlanPrice,
+  hasPendingSubscriptionChange,
+  isCancelledSubscription,
   isCompletedPayment,
+  shouldShowRenewAction,
 } from './format-subscription'
 import { buildPaymentHistoryQuery, isInvalidPaymentDateRange } from './payment-history-query'
 import { getPlanActionState, isDowngradePlan } from './subscription-eligibility'
@@ -24,6 +28,24 @@ function createPlan(overrides: Partial<SubscriptionPlanResponse>): SubscriptionP
     displayOrder: 1,
     features: [],
     status: 'Active',
+    ...overrides,
+  }
+}
+
+function createSubscription(
+  overrides: Partial<SubscriptionStatusResponse>
+): SubscriptionStatusResponse {
+  return {
+    id: 'subscription-id',
+    planName: 'Current',
+    planPrice: 200000,
+    billingCycle: 'Monthly',
+    startDate: '2026-08-01T00:00:00Z',
+    endDate: '2026-09-01T00:00:00Z',
+    status: 'Active',
+    autoRenew: true,
+    isExpired: false,
+    daysRemaining: 20,
     ...overrides,
   }
 }
@@ -151,5 +173,48 @@ describe('subscription billing helpers', () => {
     expect(getPlanPrice(plan, 'Monthly')).toBe(100000)
     expect(getPlanPrice(plan, 'Yearly')).toBe(960000)
     expect(getMonthlyEquivalent(plan, 'Yearly')).toBe(80000)
+  })
+
+  it('treats a subscription as cancelled from its status or from a cancellation timestamp', () => {
+    expect(isCancelledSubscription(createSubscription({ status: 'Cancelled' }))).toBe(true)
+    expect(isCancelledSubscription(createSubscription({ status: 'Canceled' }))).toBe(true)
+    expect(
+      isCancelledSubscription(
+        createSubscription({ status: 'Active', cancelledAt: '2026-08-30T11:17:03Z' })
+      )
+    ).toBe(true)
+    expect(
+      isCancelledSubscription(createSubscription({ status: 'Active', cancelledAt: null }))
+    ).toBe(false)
+    expect(isCancelledSubscription(undefined)).toBe(false)
+  })
+
+  it('hides the renew action for a cancelled subscription even when it is also near expiry', () => {
+    expect(
+      shouldShowRenewAction(
+        createSubscription({
+          status: 'Active',
+          cancelledAt: '2026-08-30T11:17:03Z',
+          daysRemaining: 2,
+        })
+      )
+    ).toBe(false)
+    expect(shouldShowRenewAction(createSubscription({ isExpired: true }))).toBe(true)
+    expect(shouldShowRenewAction(createSubscription({ daysRemaining: 2 }))).toBe(true)
+    expect(shouldShowRenewAction(createSubscription({ daysRemaining: 20 }))).toBe(false)
+    expect(shouldShowRenewAction(undefined)).toBe(false)
+  })
+
+  it('detects a pending plan or billing-cycle change independently of each other', () => {
+    expect(hasPendingSubscriptionChange(createSubscription({ pendingPlanName: 'Plus' }))).toBe(true)
+    expect(
+      hasPendingSubscriptionChange(createSubscription({ pendingBillingCycle: 'Monthly' }))
+    ).toBe(true)
+    expect(
+      hasPendingSubscriptionChange(
+        createSubscription({ pendingPlanName: null, pendingBillingCycle: null })
+      )
+    ).toBe(false)
+    expect(hasPendingSubscriptionChange(undefined)).toBe(false)
   })
 })

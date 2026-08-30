@@ -63,4 +63,25 @@ describe('warehouse route permission', () => {
       USER_ROLES.TenantOwner,
     ])
   })
+
+  it('applies transfer, outbound, delivery, return, and customer role boundaries', () => {
+    const operationalRoles = [
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ]
+
+    for (const route of [
+      APP_ROUTES.transfers,
+      APP_ROUTES.transferCreate,
+      APP_ROUTES.orders,
+      APP_ROUTES.orderCreate,
+      APP_ROUTES.returns,
+      APP_ROUTES.delivery,
+      APP_ROUTES.customers,
+      APP_ROUTES.customerDetail('customer-1'),
+    ]) {
+      expect(getAllowedRolesForPath(route)).toEqual(operationalRoles)
+    }
+  })
 })
