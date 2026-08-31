@@ -68,6 +68,8 @@ export const API_ENDPOINTS = {
     reservations: '/inventory/reservations',
     damaged: '/inventory/damaged',
     abcClassification: '/inventory/abc-classification',
+    forecast: '/inventory/forecast',
+    history: '/inventory/history',
   },
   cycleCounts: {
     list: '/cycle-counts',

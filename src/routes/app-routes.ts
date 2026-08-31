@@ -47,6 +47,7 @@ export const APP_ROUTES = {
   inventoryMovements: '/inventory/movements',
   inventoryReservations: '/inventory/reservations',
   inventoryAbcClassification: '/inventory/abc-classification',
+  inventoryForecast: '/inventory/forecast',
   cycleCounts: '/inventory/cycle-counts',
   cycleCountCreate: '/inventory/cycle-counts/new',
   cycleCountDetail: (cycleCountId: string): Route =>
