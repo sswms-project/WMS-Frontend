@@ -5,8 +5,12 @@ import type {
   InventoryBalanceListResponse,
   InventoryAbcItem,
   InventoryAbcQuery,
+  InventoryForecastQuery,
+  InventoryForecastResponse,
   InventoryListQuery,
   InventoryReservationQuery,
+  InventoryStockHistoryQuery,
+  InventoryStockHistoryResponse,
   ReserveStockRequest,
   ReleaseReservationRequest,
   ReportDamagedStockRequest,
@@ -52,5 +56,13 @@ export const inventoryService = {
   getAbcClassification: (params: InventoryAbcQuery) =>
     axiosClient
       .get<ApiResponse<InventoryAbcItem[]>>(API_ENDPOINTS.inventory.abcClassification, { params })
+      .then((response) => response.data),
+  getForecast: (params: InventoryForecastQuery) =>
+    axiosClient
+      .get<ApiResponse<InventoryForecastResponse>>(API_ENDPOINTS.inventory.forecast, { params })
+      .then((response) => response.data),
+  getStockHistory: (params: InventoryStockHistoryQuery) =>
+    axiosClient
+      .get<ApiResponse<InventoryStockHistoryResponse>>(API_ENDPOINTS.inventory.history, { params })
       .then((response) => response.data),
 }

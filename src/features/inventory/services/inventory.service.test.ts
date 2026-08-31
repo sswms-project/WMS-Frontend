@@ -115,4 +115,37 @@ describe('inventoryService', () => {
       params,
     })
   })
+
+  it('calls forecast once with the exact query', async () => {
+    const response = {
+      isSuccess: true,
+      statusCode: 200,
+      message: 'Success',
+      data: {
+        productId: 'product-1',
+        warehouseId: null,
+        modelName: 'linear-trend-baseline',
+        forecast: [],
+      },
+    }
+    vi.mocked(axiosClient.get).mockResolvedValue({ data: response })
+    const params = { productId: 'product-1', horizonDays: 14 }
+
+    await expect(inventoryService.getForecast(params)).resolves.toEqual(response)
+    expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.forecast, { params })
+  })
+
+  it('calls stock history once with the exact query', async () => {
+    const response = {
+      isSuccess: true,
+      statusCode: 200,
+      message: 'Success',
+      data: { productId: 'product-1', warehouseId: null, history: [] },
+    }
+    vi.mocked(axiosClient.get).mockResolvedValue({ data: response })
+    const params = { productId: 'product-1' }
+
+    await expect(inventoryService.getStockHistory(params)).resolves.toEqual(response)
+    expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.history, { params })
+  })
 })
