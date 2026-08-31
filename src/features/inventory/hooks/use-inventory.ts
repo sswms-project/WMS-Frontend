@@ -7,8 +7,12 @@ import type {
   InventoryBalanceListResponse,
   InventoryAbcItem,
   InventoryAbcQuery,
+  InventoryForecastQuery,
+  InventoryForecastResponse,
   InventoryListQuery,
   InventoryReservationQuery,
+  InventoryStockHistoryQuery,
+  InventoryStockHistoryResponse,
   ReserveStockRequest,
   ReleaseReservationRequest,
   ReportDamagedStockRequest,
@@ -74,5 +78,23 @@ export function useInventoryAbcQuery(params: InventoryAbcQuery) {
     queryKey: queryKeys.inventory.abc(params),
     queryFn: () => inventoryService.getAbcClassification(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useInventoryForecastQuery(params: InventoryForecastQuery, enabled = true) {
+  return useQuery<InventoryForecastResponse, ApiErrorResponse>({
+    queryKey: queryKeys.inventory.forecast(params),
+    queryFn: () => inventoryService.getForecast(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
+    enabled,
+  })
+}
+
+export function useInventoryStockHistoryQuery(params: InventoryStockHistoryQuery, enabled = true) {
+  return useQuery<InventoryStockHistoryResponse, ApiErrorResponse>({
+    queryKey: queryKeys.inventory.history(params),
+    queryFn: () => inventoryService.getStockHistory(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
+    enabled,
   })
 }

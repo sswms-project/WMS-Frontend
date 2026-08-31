@@ -19,7 +19,9 @@ import type { SupplierListQuery } from '@/features/supplier/types/supplier.types
 import type {
   InventoryListQuery,
   InventoryAbcQuery,
+  InventoryForecastQuery,
   InventoryReservationQuery,
+  InventoryStockHistoryQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery } from '@/features/product/types/product.types'
@@ -92,6 +94,8 @@ export const queryKeys = {
       ['inventory', 'reservations', params] as const,
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
+    forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
+    history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
     all: ['units'] as const,

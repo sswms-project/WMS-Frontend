@@ -6,6 +6,7 @@ import {
   History,
   LockKeyhole,
   SlidersHorizontal,
+  TrendingUp,
 } from 'lucide-react'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
@@ -15,6 +16,7 @@ type InventoryWorkspaceView =
   | 'movements'
   | 'reservations'
   | 'abc'
+  | 'forecast'
   | 'cycle-counts'
   | 'adjustments'
 
@@ -95,6 +97,14 @@ export function InventoryWorkspaceNavigation({
           >
             <ChartNoAxesColumnIncreasing className="size-4" aria-hidden="true" />
             Phân loại ABC
+          </Link>
+          <Link
+            href={APP_ROUTES.inventoryForecast}
+            aria-current={currentView === 'forecast' ? 'page' : undefined}
+            className={linkClassName('forecast')}
+          >
+            <TrendingUp className="size-4" aria-hidden="true" />
+            Dự báo
           </Link>
         </>
       ) : null}
