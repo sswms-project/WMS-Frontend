@@ -34,6 +34,22 @@ export interface SubscriptionFeatureMetaResponse {
   description: string
 }
 
+export type PlanFeatureType = 'Boolean' | 'Limit'
+
+export interface PlanFeatureResponse {
+  featureCode: string
+  displayName: string
+  featureType: PlanFeatureType
+  limitValue?: number
+}
+
+export interface SubscriptionFeatureMetaResponse {
+  code: string
+  name: string
+  type: PlanFeatureType
+  description: string
+}
+
 export interface SubscriptionPlanResponse {
   id: string
   planName: string
