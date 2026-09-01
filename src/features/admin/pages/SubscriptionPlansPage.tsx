@@ -144,7 +144,11 @@ export function SubscriptionPlansPage() {
       return
     }
 
-    toast.error(error.message || 'Không thể lưu gói đăng ký. Vui lòng thử lại.')
+    const message =
+      error.statusCode >= 500
+        ? 'Lỗi máy chủ. Vui lòng thử lại sau.'
+        : error.message || 'Không thể lưu gói đăng ký. Vui lòng thử lại.'
+    toast.error(message)
   }
 
   function buildUpdatePayload(
