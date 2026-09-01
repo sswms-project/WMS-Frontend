@@ -21,7 +21,6 @@ import {
   useCurrentSubscriptionQuery,
   useRenewSubscriptionMutation,
   useSubscriptionPlansQuery,
-  useUpgradeSubscriptionMutation,
 } from '../hooks/use-subscription'
 import type {
   BillingCycle,
@@ -57,7 +56,6 @@ export function SubscriptionPage() {
 
   const subscriptionQuery = useCurrentSubscriptionQuery(isTenantOwner)
   const plansQuery = useSubscriptionPlansQuery(isTenantOwner)
-  const upgradeMutation = useUpgradeSubscriptionMutation()
   const renewMutation = useRenewSubscriptionMutation()
   const cancelMutation = useCancelSubscriptionMutation()
   const createPaymentLinkMutation = useCreatePaymentLinkMutation()
@@ -98,10 +96,7 @@ export function SubscriptionPage() {
   )
   const showRenewAction = shouldShowRenewAction(subscription)
   const isActionPending =
-    upgradeMutation.isPending ||
-    renewMutation.isPending ||
-    cancelMutation.isPending ||
-    createPaymentLinkMutation.isPending
+    renewMutation.isPending || cancelMutation.isPending || createPaymentLinkMutation.isPending
 
   const handleConfirmDialog = async () => {
     if (!dialogState) return
