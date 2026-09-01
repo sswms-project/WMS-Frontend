@@ -82,7 +82,10 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     {
       id: 'system',
       label: 'Hệ thống',
-      items: [{ href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings }],
+      items: [
+        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
+        { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
+      ],
     },
   ],
   [USER_ROLES.TenantOwner]: [
@@ -199,8 +202,8 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       collapsible: true,
       separatorBefore: true,
       items: [
-        plannedNavItem('Thông báo', Bell),
-        plannedNavItem('Audit Log', ScrollText),
+        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, 'notifications:view'),
+        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
         { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
       ],
     },
@@ -233,6 +236,8 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           [APP_ROUTES.returns, APP_ROUTES.delivery]
         ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
+        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, 'notifications:view'),
+        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
       ],
     },
   ],
@@ -263,6 +268,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           [APP_ROUTES.returns, APP_ROUTES.delivery]
         ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
+        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, 'notifications:view'),
       ],
     },
   ],

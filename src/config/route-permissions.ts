@@ -7,6 +7,14 @@ interface RoutePermission {
 }
 
 const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
+  {
+    pathPrefix: APP_ROUTES.notifications,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
+    pathPrefix: APP_ROUTES.auditLogs,
+    allowedRoles: [USER_ROLES.SystemAdmin, USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager],
+  },
   { pathPrefix: '/admin', allowedRoles: [USER_ROLES.SystemAdmin] },
   { pathPrefix: APP_ROUTES.subscription, allowedRoles: [USER_ROLES.TenantOwner] },
   { pathPrefix: APP_ROUTES.organization, allowedRoles: [USER_ROLES.TenantOwner] },

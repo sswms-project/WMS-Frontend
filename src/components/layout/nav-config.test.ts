@@ -107,14 +107,32 @@ describe('application navigation visibility', () => {
       (item) => item.status === 'planned'
     )
 
-    expect(plannedItems.map((item) => item.label)).toEqual([
-      'Dashboard kho',
-      'Báo cáo vận hành',
-      'Thông báo',
-      'Audit Log',
-    ])
+    expect(plannedItems.map((item) => item.label)).toEqual(['Dashboard kho', 'Báo cáo vận hành'])
     expect(plannedItems.every((item) => item.href === undefined)).toBe(true)
     expect(plannedItems.every((item) => !isNavItemActive('/anything', item))).toBe(true)
+  })
+
+  it('shows Platform Services only with the matching permission', () => {
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['notifications:view']).some(
+        (item) => item.href === APP_ROUTES.notifications
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['audit-logs:view']).some(
+        (item) => item.href === APP_ROUTES.auditLogs
+      )
+    ).toBe(false)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseManager, ['audit-logs:view']).some(
+        (item) => item.href === APP_ROUTES.auditLogs
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.SystemAdmin, ['audit-logs:view']).some(
+        (item) => item.href === APP_ROUTES.auditLogs
+      )
+    ).toBe(true)
   })
 
   it('marks a tenant group active when one of its child routes is active', () => {

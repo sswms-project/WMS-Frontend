@@ -72,6 +72,8 @@ export const APP_ROUTES = {
   productDetail: (id: string) => `/products/${id}`,
   productCreate: '/products/create',
   profile: '/profile',
+  notifications: '/notifications',
+  auditLogs: '/audit-logs',
   settings: {
     security: '/settings/security',
     accessControl: '/settings/access-control',

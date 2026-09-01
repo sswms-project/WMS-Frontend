@@ -4,6 +4,8 @@ import { usePathname } from 'next/navigation'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 const pageTitles: Array<{ prefix: string; label: string }> = [
+  { prefix: APP_ROUTES.notifications, label: 'Thông báo' },
+  { prefix: APP_ROUTES.auditLogs, label: 'Audit Log' },
   { prefix: APP_ROUTES.settings.accessControl, label: 'Phân quyền' },
   { prefix: APP_ROUTES.settings.security, label: 'Cài đặt' },
   { prefix: APP_ROUTES.organization, label: 'Tổ chức' },
