@@ -2,9 +2,11 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
+  CreatePaymentLinkRequestDto,
   InvoiceDataResponse,
   PaymentHistoryQuery,
   PaymentHistoryResponse,
+  PaymentLinkResponse,
   SubscriptionPlanResponse,
   SubscriptionStatusResponse,
   UpgradeSubscriptionRequestDto,
@@ -30,6 +32,22 @@ export const subscriptionService = {
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.upgrade, body)
       .then((response) => response.data),
+
+  createPaymentLink: (body: CreatePaymentLinkRequestDto) =>
+    axiosClient
+      .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.paymentLink, body)
+      .then((response) => response.data),
+
+  syncPaymentStatus: async (orderCode: string): Promise<ApiResponse<string>> => {
+    const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:7070').replace(
+      /\/+$/,
+      ''
+    )
+    const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
+    const res = await fetch(`${apiBase}${API_ENDPOINTS.subscription.paymentStatus(orderCode)}`)
+    if (!res.ok) throw new Error(`PaymentStatus fetch failed: ${res.status}`)
+    return res.json() as Promise<ApiResponse<string>>
+  },
 
   renewSubscription: () =>
     axiosClient
