@@ -112,6 +112,7 @@ export function SubscriptionPlanFormDialog({
     handleSubmit,
     setError,
     reset,
+    watch,
     formState: { errors, dirtyFields, isDirty },
   } = useForm<SubscriptionPlanFormInput, unknown, SubscriptionPlanFormOutput>({
     resolver: zodResolver(createSubscriptionPlanSchema),
