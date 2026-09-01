@@ -10,7 +10,7 @@ import {
   type StaffResponse,
 } from '../types/staff.types'
 
-export function useStaffListQuery(kind: StaffDirectoryKind, params: StaffQuery) {
+export function useStaffListQuery(kind: StaffDirectoryKind, params: StaffQuery, enabled = true) {
   return useQuery<QueryResult<StaffResponse>, ApiErrorResponse>({
     queryKey: queryKeys.staff.list(kind, params),
     queryFn: () => {
@@ -21,6 +21,7 @@ export function useStaffListQuery(kind: StaffDirectoryKind, params: StaffQuery) 
       return request.then((response) => response.data)
     },
     placeholderData: (previousData) => previousData,
+    enabled,
   })
 }
 

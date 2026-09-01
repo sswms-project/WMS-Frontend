@@ -19,10 +19,26 @@ import type { SupplierListQuery } from '@/features/supplier/types/supplier.types
 import type {
   InventoryListQuery,
   InventoryAbcQuery,
+  InventoryForecastQuery,
   InventoryReservationQuery,
+  InventoryStockHistoryQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery } from '@/features/product/types/product.types'
+import type {
+  TransferListQuery,
+  TransferSourceInventoryQuery,
+  TransferSourceWarehouseQuery,
+} from '@/features/transfer/types/transfer.types'
+import type {
+  OutboundOrderListQuery,
+  ReturnListQuery,
+} from '@/features/outbound/types/outbound.types'
+import type { DeliveryListQuery } from '@/features/delivery/types/delivery.types'
+import type {
+  CustomerListQuery,
+  CustomerOrderHistoryQuery,
+} from '@/features/customer/types/customer.types'
 import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
@@ -78,6 +94,8 @@ export const queryKeys = {
       ['inventory', 'reservations', params] as const,
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
+    forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
+    history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
     all: ['units'] as const,
@@ -129,15 +147,40 @@ export const queryKeys = {
     putawayTasks: (params: PutawayTaskQuery) =>
       ['inbound-receipts', 'putaway-tasks', params] as const,
   },
+  transfers: {
+    all: ['transfers'] as const,
+    lists: ['transfers', 'list'] as const,
+    list: (params: TransferListQuery) => ['transfers', 'list', params] as const,
+    detail: (id: string) => ['transfers', 'detail', id] as const,
+    sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
+      ['transfers', 'source-warehouses', params] as const,
+    sourceInventory: (params: TransferSourceInventoryQuery) =>
+      ['transfers', 'source-inventory', params] as const,
+  },
   outboundOrders: {
     all: ['outbound-orders'] as const,
-    list: (params?: QueryInfo) => ['outbound-orders', 'list', params] as const,
+    lists: ['outbound-orders', 'list'] as const,
+    list: (params: OutboundOrderListQuery) => ['outbound-orders', 'list', params] as const,
     detail: (id: string) => ['outbound-orders', 'detail', id] as const,
+  },
+  returns: {
+    all: ['returns'] as const,
+    lists: ['returns', 'list'] as const,
+    list: (params: ReturnListQuery) => ['returns', 'list', params] as const,
+    detail: (id: string) => ['returns', 'detail', id] as const,
+  },
+  deliveries: {
+    all: ['deliveries'] as const,
+    lists: ['deliveries', 'list'] as const,
+    list: (params: DeliveryListQuery) => ['deliveries', 'list', params] as const,
   },
   customers: {
     all: ['customers'] as const,
-    list: (params?: QueryInfo) => ['customers', 'list', params] as const,
+    lists: ['customers', 'list'] as const,
+    list: (params: CustomerListQuery) => ['customers', 'list', params] as const,
     detail: (id: string) => ['customers', 'detail', id] as const,
+    orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
+      ['customers', 'detail', id, 'orders', params] as const,
   },
   notifications: {
     all: ['notifications'] as const,

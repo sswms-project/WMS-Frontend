@@ -32,6 +32,26 @@ const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
+    pathPrefix: APP_ROUTES.transfers,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
+    pathPrefix: APP_ROUTES.orders,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
+    pathPrefix: APP_ROUTES.returns,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
+    pathPrefix: APP_ROUTES.delivery,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
+    pathPrefix: APP_ROUTES.customers,
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
+  {
     pathPrefix: APP_ROUTES.warehouses,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },

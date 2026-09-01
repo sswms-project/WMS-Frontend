@@ -11,3 +11,10 @@ export function formatInventoryDate(value: string): string {
     timeStyle: 'short',
   }).format(date)
 }
+
+export function formatInventoryDateOnly(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short' }).format(date)
+}

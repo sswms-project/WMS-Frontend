@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Package,
   PackageCheck,
+  PackageMinus,
   PackageOpen,
   PackageSearch,
   ReceiptText,
@@ -123,6 +124,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, 'suppliers:view'),
+        requiredNavItem(APP_ROUTES.customers, 'Khách hàng', Users, 'customers:view'),
       ],
     },
     {
@@ -140,8 +142,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, 'inbound-receipts:view'),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, 'inventory:view'),
-        plannedNavItem('Điều chuyển kho', ArrowLeftRight),
-        plannedNavItem('Xuất kho & Giao hàng', PackageOpen),
+        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, 'transfers:view'),
+        requiredNavItem(
+          APP_ROUTES.orders,
+          'Xuất kho & Giao hàng',
+          PackageMinus,
+          'outbound-orders:view',
+          [APP_ROUTES.returns, APP_ROUTES.delivery]
+        ),
       ],
     },
     {
@@ -153,7 +161,12 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         plannedNavItem('Dashboard kho', ChartNoAxesCombined),
         plannedNavItem('Báo cáo vận hành', FileChartColumn),
-        plannedNavItem('Dự báo & Bổ sung hàng', TrendingUp),
+        requiredNavItem(
+          APP_ROUTES.inventoryForecast,
+          'Dự báo & Bổ sung hàng',
+          TrendingUp,
+          'inventory:view'
+        ),
       ],
     },
     {
@@ -202,6 +215,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.staff, 'Nhân sự', Users, 'staff:view'),
         requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, 'warehouses:view'),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, 'suppliers:view'),
+        requiredNavItem(APP_ROUTES.customers, 'Khách hàng', Users, 'customers:view'),
         requiredNavItem(
           APP_ROUTES.purchaseOrders,
           'Mua hàng',
@@ -210,6 +224,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, 'inbound-receipts:view'),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, 'inventory:view'),
+        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, 'transfers:view'),
+        requiredNavItem(
+          APP_ROUTES.orders,
+          'Xuất kho & Giao hàng',
+          PackageMinus,
+          'outbound-orders:view',
+          [APP_ROUTES.returns, APP_ROUTES.delivery]
+        ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
       ],
     },
@@ -223,6 +245,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ]),
         requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, 'warehouses:view'),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, 'suppliers:view'),
+        requiredNavItem(APP_ROUTES.customers, 'Khách hàng', Users, 'customers:view'),
         requiredNavItem(
           APP_ROUTES.purchaseOrders,
           'Mua hàng',
@@ -231,6 +254,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, 'inbound-receipts:view'),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, 'inventory:view'),
+        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, 'transfers:view'),
+        requiredNavItem(
+          APP_ROUTES.orders,
+          'Xuất kho & Giao hàng',
+          PackageMinus,
+          'outbound-orders:view',
+          [APP_ROUTES.returns, APP_ROUTES.delivery]
+        ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
       ],
     },
