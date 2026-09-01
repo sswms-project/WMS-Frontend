@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, XCircle, Loader } from 'lucide-react'
+import { CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
@@ -23,9 +23,11 @@ export function PaymentResultPage() {
   const urlCancelled = cancelParam || statusParam === 'CANCELLED'
   const isPaid = dbStatus === 'Completed'
   const isCancelled = dbStatus === 'Failed' || (dbStatus !== 'Completed' && urlCancelled)
+  const isError = syncQuery.isError && !isPaid && !isCancelled
   const isLoading =
     !isPaid &&
     !isCancelled &&
+    !isError &&
     (syncQuery.isLoading || syncQuery.isFetching || dbStatus === 'Pending')
 
   useEffect(() => {
@@ -65,11 +67,28 @@ export function PaymentResultPage() {
         </>
       )}
 
+      {isError && (
+        <>
+          <AlertCircle className="text-destructive h-16 w-16" aria-hidden="true" />
+          <div className="text-center">
+            <h1 className="text-foreground text-2xl font-semibold">
+              Không thể xác nhận thanh toán
+            </h1>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Không thể kết nối máy chủ. Vui lòng kiểm tra lại trong lịch sử thanh toán.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => router.push('/subscription')}>
+            Quay lại gói dịch vụ
+          </Button>
+        </>
+      )}
+
       {isLoading && (
         <Loader className="text-muted-foreground h-16 w-16 animate-spin" aria-hidden="true" />
       )}
 
-      {!isLoading && !isPaid && !isCancelled && (
+      {!isLoading && !isPaid && !isCancelled && !isError && (
         <>
           <Loader className="text-muted-foreground h-16 w-16 animate-spin" aria-hidden="true" />
           <div className="text-center">

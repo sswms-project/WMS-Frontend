@@ -38,6 +38,7 @@ export const subscriptionService = {
       .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.paymentLink, body)
       .then((response) => response.data),
 
+  // Dùng fetch thay axiosClient: endpoint AllowAnonymous, axiosClient redirect login khi SameSite=Strict cookie chưa có
   syncPaymentStatus: async (orderCode: string): Promise<ApiResponse<string>> => {
     const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:7070').replace(
       /\/+$/,
