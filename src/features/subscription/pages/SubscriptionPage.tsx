@@ -17,6 +17,7 @@ import {
 } from '../components/SubscriptionPage'
 import {
   useCancelSubscriptionMutation,
+  useCreatePaymentLinkMutation,
   useCurrentSubscriptionQuery,
   useRenewSubscriptionMutation,
   useSubscriptionPlansQuery,
@@ -59,6 +60,7 @@ export function SubscriptionPage() {
   const upgradeMutation = useUpgradeSubscriptionMutation()
   const renewMutation = useRenewSubscriptionMutation()
   const cancelMutation = useCancelSubscriptionMutation()
+  const createPaymentLinkMutation = useCreatePaymentLinkMutation()
 
   if (!isTenantOwner) {
     return <TenantOwnerOnlyState />
@@ -96,14 +98,18 @@ export function SubscriptionPage() {
   )
   const showRenewAction = shouldShowRenewAction(subscription)
   const isActionPending =
-    upgradeMutation.isPending || renewMutation.isPending || cancelMutation.isPending
+    upgradeMutation.isPending ||
+    renewMutation.isPending ||
+    cancelMutation.isPending ||
+    createPaymentLinkMutation.isPending
 
   const handleConfirmDialog = async () => {
     if (!dialogState) return
 
     try {
       if (dialogState.type === 'upgrade') {
-        await upgradeMutation.mutateAsync({
+        // Creates pending payment + redirects to PayOS checkout
+        await createPaymentLinkMutation.mutateAsync({
           newPlanId: dialogState.plan.id,
           billingCycle: dialogState.billingCycle,
         })

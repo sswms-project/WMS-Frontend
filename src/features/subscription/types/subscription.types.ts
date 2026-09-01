@@ -34,6 +34,22 @@ export interface SubscriptionFeatureMetaResponse {
   description: string
 }
 
+export type PlanFeatureType = 'Boolean' | 'Limit'
+
+export interface PlanFeatureResponse {
+  featureCode: string
+  displayName: string
+  featureType: PlanFeatureType
+  limitValue?: number
+}
+
+export interface SubscriptionFeatureMetaResponse {
+  code: string
+  name: string
+  type: PlanFeatureType
+  description: string
+}
+
 export interface SubscriptionPlanResponse {
   id: string
   planName: string
@@ -124,3 +140,16 @@ export interface PaymentResponse {
 }
 
 export type PaymentHistoryResponse = QueryResult<PaymentResponse>
+
+export interface PaymentLinkResponse {
+  readonly checkoutUrl: string
+  readonly paymentLinkId: string
+  readonly orderCode: number
+}
+
+export interface CreatePaymentLinkRequestDto {
+  readonly newPlanId: string
+  readonly billingCycle: BillingCycle
+}
+
+export type PayOSPaymentStatus = 'PAID' | 'PENDING' | 'PROCESSING' | 'CANCELLED'

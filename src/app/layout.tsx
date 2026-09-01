@@ -43,7 +43,7 @@ export default function RootLayout({
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster richColors position="bottom-right" />
         <SpeedInsights />
       </body>
     </html>
