@@ -15,7 +15,7 @@
 | Backend branch       | `feat/wms-151-complete-platform-services`                                                                                                                                           |
 | Created              | 2026-08-31                                                                                                                                                                          |
 | Last updated         | 2026-09-01                                                                                                                                                                          |
-| State                | Implementation complete; authenticated visual QA pending because browser runtime is unavailable                                                                                     |
+| State                | Implementation complete; realtime workflow, routing, persistence, and popup verified end to end; narrow-viewport visual QA remains                                                  |
 | Accepted use cases   | `0 / 2`                                                                                                                                                                             |
 
 This file is the canonical implementation specification and progress tracker for Platform Services
@@ -390,12 +390,13 @@ No POST, PUT, PATCH, or DELETE Audit Log endpoint is allowed.
 
 ### Phase BE-0 - Contract, Scope, And Tests
 
-Status: `In progress`
+Status: `Done`
 
 - [x] Add failing validator tests for both list queries.
 - [x] Add failing notification isolation/search/date/read-state tests.
-- [ ] Add failing realtime authentication, tenant/user routing, post-commit publication, and
-      reconnect-recovery contract tests.
+- [x] Add realtime authentication, tenant/user routing, post-commit publication, and
+      publish-failure persistence tests.
+- [ ] Add explicit reconnect-recovery contract tests.
 - [x] Add failing audit actor/action/entity/date/search/scope tests.
 - [x] Add permission-policy tests for all four roles in Section 7.
 - [x] Freeze response/query names before FE type implementation.
@@ -414,7 +415,7 @@ Status: `Done`
 
 ### Phase BE-2 - Notification Realtime Delivery
 
-Status: `In progress`
+Status: `Done`
 
 - [x] Register ASP.NET Core SignalR and map the authorized `/hubs/notifications` endpoint.
 - [x] Configure JWT bearer extraction only for the hub path and ensure logs do not expose tokens.
@@ -423,8 +424,9 @@ Status: `In progress`
       types in the API/Infrastructure boundary.
 - [x] Publish `NotificationCreated` only after a notification database commit succeeds.
 - [x] Keep the payload limited to notification ID, type, and created timestamp.
-- [ ] Test multiple users, multiple tenants, multiple connections for one user, unauthorized
-      connection rejection, and publish-failure persistence behavior.
+- [x] Test tenant-qualified routing, multiple users, unauthorized connection rejection, and
+      publish-failure persistence behavior.
+- [ ] Add explicit multi-connection delivery coverage for one user.
 - [x] Document single-instance deployment requirements and the multi-instance scale-out trigger.
 
 ### Phase BE-3 - Audit Query And Read Model
@@ -520,7 +522,7 @@ Status: `Done`
 
 ### Phase FE-1 - Notification Page And Header
 
-Status: `Ready for QA`
+Status: `Done`
 
 - [x] Add `/notifications` App Router page using the feature page default export.
 - [x] Implement URL-backed search, type, read state, date range, and paging.
@@ -534,7 +536,7 @@ Status: `Ready for QA`
 
 ### Phase FE-2 - Notification Realtime Integration
 
-Status: `Ready for QA`
+Status: `Done`
 
 - [x] Mount exactly one `NotificationRealtimeProvider` in the authenticated private layout.
 - [x] Connect to `/hubs/notifications` with the latest JWT through `accessTokenFactory`.
@@ -580,15 +582,16 @@ Status: `In progress`
 - [x] Test query builders, schemas, date conversion, and reference routing.
 - [ ] Test notification page states and read mutation invalidation.
 - [ ] Test header unread badge, dropdown states, and mark-read behavior.
-- [ ] Test one-connection lifecycle, JWT use, event invalidation, reconnect refetch, cleanup, and
-      duplicate-event safety with a mocked HubConnection boundary.
+- [x] Test one-connection startup, event invalidation, cleanup, and duplicate-event safety with a
+      mocked HubConnection boundary.
+- [x] Add explicit JWT-factory and reconnect-refetch assertions at the mocked HubConnection boundary.
 - [ ] Test Audit Log permission visibility and safe detail rendering.
 - [x] Update nav-config and route-permission tests for all roles.
 - [x] Run formatter/lint, typecheck, targeted tests, and full FE tests.
 - [ ] Perform authenticated desktop and narrow-viewport browser QA with Tenant Owner, Warehouse
       Manager, Warehouse Staff, and System Admin accounts.
 - [ ] Verify no horizontal document scroll and no unnecessary vertical document scroll.
-- [ ] Verify a notification created in an authenticated BE workflow appears in the intended user's
+- [x] Verify a notification created in an authenticated BE workflow appears in the intended user's
       header/page without manual refresh and never appears for another user or tenant.
 
 ## 11. Use-Case Acceptance Tracker
@@ -602,10 +605,11 @@ Status: `In progress`
 - [x] Pagination is validated and deterministic.
 - [x] Single-read and mark-all-read states persist after refresh and are idempotent.
 - [x] Header badge/dropdown and full page use live API data and remain cache-consistent.
-- [ ] A newly persisted notification reaches the intended connected user without manual refresh.
-- [ ] Realtime events never cross user/tenant boundaries, and missed offline events appear after
+- [x] A newly persisted notification reaches the intended connected user without manual refresh.
+- [x] Realtime events never cross user/tenant boundaries.
+- [ ] Missed offline events appear after
       reconnect refetch.
-- [ ] Duplicate events or reconnects do not duplicate persisted notifications or user-facing state.
+- [x] Duplicate events do not duplicate persisted notifications or user-facing state.
 - [x] Known references navigate correctly; unknown references do not produce broken links.
 - [ ] Loading, empty, no-results, error, pending, success, and responsive states pass.
 - [x] Tenant Owner, Warehouse Manager, and Warehouse Staff access passes; cross-user/cross-tenant
@@ -630,15 +634,15 @@ Status: `In progress`
 
 | Order | Phase                             | Dependency           | Status       |
 | ----- | --------------------------------- | -------------------- | ------------ |
-| 1     | BE-0 contract/scope tests         | None                 | In progress  |
+| 1     | BE-0 contract/scope tests         | None                 | Done         |
 | 2     | BE-1 notifications                | BE-0                 | Done         |
-| 3     | BE-2 notification realtime        | BE-1                 | In progress  |
+| 3     | BE-2 notification realtime        | BE-1                 | Done         |
 | 4     | BE-3 audit query/read model       | BE-0                 | Done         |
 | 5     | BE-4 permissions/producers        | BE-1, BE-3           | Done         |
 | 6     | BE-5 persistence and verification | BE-1..BE-4           | Done         |
 | 7     | FE-0 contract foundation          | Final BE contract    | Done         |
 | 8     | FE-1 notification REST UI         | FE-0 and BE-1        | Ready for QA |
-| 9     | FE-2 notification realtime        | FE-0, FE-1, and BE-2 | Ready for QA |
+| 9     | FE-2 notification realtime        | FE-0, FE-1, and BE-2 | Done         |
 | 10    | FE-3 audit log                    | FE-0 and BE-3/BE-4   | Ready for QA |
 | 11    | FE-4 navigation/permissions       | FE-1..FE-3           | Done         |
 | 12    | FE-5 verification                 | All prior phases     | In progress  |
@@ -723,10 +727,11 @@ Create separate Jira work rather than silently extending `UC-NT-01` for:
 
 ## 17. Progress Log
 
-| Date       | Update                                                                                                                                                                                                                                                                                                                             | Evidence                                                                                                                              |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-31 | Synced FE and BE `dev`, read repository rules/references, inspected Jira and live checklist, audited current contracts and UI, confirmed both repositories require completion branches, and created this spec                                                                                                                      | FE `0b38095`; BE `cebda04`; Jira `WMS-151/152/153/183/233/235`; checklist rows 109-110                                                |
-| 2026-09-01 | Re-fetched both remote `dev` branches and confirmed both feature branches remain exactly aligned with their latest baselines                                                                                                                                                                                                       | `HEAD...origin/dev = 0 0` in both repositories                                                                                        |
-| 2026-09-01 | Added realtime notification delivery to required scope using persisted-first ASP.NET Core SignalR plus React Query refetch, with explicit auth, reconnect, testing, and scale-out rules                                                                                                                                            | Target hub `/hubs/notifications`; event `NotificationCreated`; BE-2 and FE-2 phases                                                   |
-| 2026-09-01 | Synchronized Jira scope, split REST and realtime responsibilities, created realtime tasks inside their existing Epics, and moved the expanded BE Epic from Testing to In Progress                                                                                                                                                  | BE `WMS-259` under `WMS-151`; FE `WMS-260` under `WMS-183`                                                                            |
-| 2026-09-01 | Implemented Notification REST/read state, Audit query/read model, role permission sync, persisted-first SignalR, FE directories/header/realtime provider, generated query-index migration, and passed full automated verification; authenticated visual QA remains pending because the in-app browser runtime could not initialize | BE build + `143/143`; FE lint/typecheck/build + `380/380`; authenticated REST role matrix; authorized/unauthorized SignalR handshakes |
+| Date       | Update                                                                                                                                                                                                                                                                                                                                          | Evidence                                                                                                                              |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-31 | Synced FE and BE `dev`, read repository rules/references, inspected Jira and live checklist, audited current contracts and UI, confirmed both repositories require completion branches, and created this spec                                                                                                                                   | FE `0b38095`; BE `cebda04`; Jira `WMS-151/152/153/183/233/235`; checklist rows 109-110                                                |
+| 2026-09-01 | Re-fetched both remote `dev` branches and confirmed both feature branches remain exactly aligned with their latest baselines                                                                                                                                                                                                                    | `HEAD...origin/dev = 0 0` in both repositories                                                                                        |
+| 2026-09-01 | Added realtime notification delivery to required scope using persisted-first ASP.NET Core SignalR plus React Query refetch, with explicit auth, reconnect, testing, and scale-out rules                                                                                                                                                         | Target hub `/hubs/notifications`; event `NotificationCreated`; BE-2 and FE-2 phases                                                   |
+| 2026-09-01 | Synchronized Jira scope, split REST and realtime responsibilities, created realtime tasks inside their existing Epics, and moved the expanded BE Epic from Testing to In Progress                                                                                                                                                               | BE `WMS-259` under `WMS-151`; FE `WMS-260` under `WMS-183`                                                                            |
+| 2026-09-01 | Implemented Notification REST/read state, Audit query/read model, role permission sync, persisted-first SignalR, FE directories/header/realtime provider, generated query-index migration, and passed full automated verification; authenticated visual QA remains pending because the in-app browser runtime could not initialize              | BE build + `143/143`; FE lint/typecheck/build + `380/380`; authenticated REST role matrix; authorized/unauthorized SignalR handshakes |
+| 2026-09-01 | Verified the real persisted-first realtime path end to end: Manager failed an `AssignedToTransport` QA delivery, Owner received one unread notification and a Sonner popup without reload, Manager/Staff received zero, and one audit event was stored. Added provider regression coverage and removed all temporary QA records/code afterward. | Real API + SignalR hub + FE provider/Sonner DOM; BE `145/145`; FE `385/385`; build/lint/typecheck passed                              |

@@ -8,21 +8,31 @@ import type {
 export const PLATFORM_SERVICES_PAGE_SIZE = 20
 
 export function toUtcStart(date: string | null): string | undefined {
-  if (!isValidDateInput(date)) return undefined
-  return new Date(`${date}T00:00:00.000Z`).toISOString()
+  const localDate = parseLocalDate(date)
+  return localDate?.toISOString()
 }
 
 export function toUtcExclusiveEnd(date: string | null): string | undefined {
-  if (!isValidDateInput(date)) return undefined
-  const result = new Date(`${date}T00:00:00.000Z`)
-  result.setUTCDate(result.getUTCDate() + 1)
-  return result.toISOString()
+  const localDate = parseLocalDate(date)
+  if (!localDate) return undefined
+  return new Date(
+    localDate.getFullYear(),
+    localDate.getMonth(),
+    localDate.getDate() + 1
+  ).toISOString()
 }
 
-function isValidDateInput(value: string | null): value is string {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const date = new Date(`${value}T00:00:00.000Z`)
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+function parseLocalDate(value: string | null): Date | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '')
+  if (!match) return undefined
+  const [, yearValue = '', monthValue = '', dayValue = ''] = match
+  const year = Number(yearValue)
+  const month = Number(monthValue)
+  const day = Number(dayValue)
+  const date = new Date(year, month - 1, day)
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+    ? date
+    : undefined
 }
 
 export function buildNotificationQuery(params: URLSearchParams): NotificationQuery {

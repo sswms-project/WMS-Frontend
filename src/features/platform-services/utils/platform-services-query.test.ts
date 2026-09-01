@@ -7,6 +7,7 @@ import { getNotificationReferenceRoute } from './platform-services-format'
 import {
   buildAuditLogQuery,
   buildNotificationQuery,
+  toUtcStart,
   toUtcExclusiveEnd,
 } from './platform-services-query'
 
@@ -21,8 +22,8 @@ describe('Platform Services query builders', () => {
       search: 'failed',
       type: 'DeliveryUpdate',
       isRead: false,
-      dateFrom: '2026-08-01T00:00:00.000Z',
-      dateTo: '2026-09-01T00:00:00.000Z',
+      dateFrom: new Date(2026, 7, 1).toISOString(),
+      dateTo: new Date(2026, 8, 1).toISOString(),
       pageNumber: 2,
       pageSize: 20,
     })
@@ -37,8 +38,10 @@ describe('Platform Services query builders', () => {
   })
 
   it('rolls the exclusive end across month boundaries', () => {
-    expect(toUtcExclusiveEnd('2026-02-28')).toBe('2026-03-01T00:00:00.000Z')
+    expect(toUtcStart('2026-02-28')).toBe(new Date(2026, 1, 28).toISOString())
+    expect(toUtcExclusiveEnd('2026-02-28')).toBe(new Date(2026, 2, 1).toISOString())
     expect(toUtcExclusiveEnd('not-a-date')).toBeUndefined()
+    expect(toUtcStart('2026-02-30')).toBeUndefined()
   })
 
   it('matches backend validation limits and rejects invalid date ranges', () => {

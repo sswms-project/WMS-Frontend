@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { NotificationItem } from '@/features/platform-services/types/platform-services.types'
 import { formatPlatformDateTime } from '@/features/platform-services/utils/platform-services-format'
+import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 interface NotificationBellProps {
@@ -37,7 +38,7 @@ export function NotificationBell(props: NotificationBellProps) {
           className="relative"
           aria-label={`Thông báo${props.unreadCount > 0 ? `, ${props.unreadCount} chưa đọc` : ''}`}
         >
-          <Bell className="size-5" aria-hidden="true" />
+          <Bell aria-hidden="true" />
           {props.unreadCount > 0 ? (
             <span className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
               {props.unreadCount > 99 ? '99+' : props.unreadCount}
@@ -45,7 +46,7 @@ export function NotificationBell(props: NotificationBellProps) {
           ) : null}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[min(22rem,calc(100vw-1rem))]">
+      <DropdownMenuContent align="end" sideOffset={4} className="w-[min(22rem,calc(100vw-1rem))]">
         <div className="flex items-center justify-between gap-2 px-2">
           <DropdownMenuLabel className="px-0">Thông báo</DropdownMenuLabel>
           {props.unreadCount > 0 ? (
@@ -89,20 +90,20 @@ export function NotificationBell(props: NotificationBellProps) {
               >
                 <div className="flex w-full items-center gap-2">
                   <span
-                    className={
+                    className={cn(
+                      'min-w-0 flex-1 truncate text-sm',
                       notification.isRead
-                        ? 'text-muted-foreground min-w-0 flex-1 truncate text-sm'
-                        : 'text-foreground min-w-0 flex-1 truncate text-sm font-semibold'
-                    }
+                        ? 'text-muted-foreground'
+                        : 'text-foreground font-semibold'
+                    )}
                   >
                     {notification.title}
                   </span>
                   <span
-                    className={
-                      notification.isRead
-                        ? 'bg-muted-foreground/30 size-2 shrink-0 rounded-full'
-                        : 'bg-primary size-2 shrink-0 rounded-full'
-                    }
+                    className={cn(
+                      'size-2 shrink-0 rounded-full',
+                      notification.isRead ? 'bg-muted-foreground/30' : 'bg-primary'
+                    )}
                     aria-label={notification.isRead ? 'Đã đọc' : 'Chưa đọc'}
                   />
                 </div>

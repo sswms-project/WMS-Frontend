@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
   NotificationDirectory,
@@ -24,6 +23,7 @@ export default function NotificationsPage() {
   const params = useMemo(() => new URLSearchParams(serializedParams), [serializedParams])
   const queryParams = useMemo(() => buildNotificationQuery(params), [params])
   const notificationsQuery = useNotificationsQuery(queryParams)
+  const unreadQuery = useNotificationsQuery({ pageNumber: 1, pageSize: 1, isRead: false })
   const markReadMutation = useMarkNotificationReadMutation()
   const markAllMutation = useMarkAllNotificationsReadMutation()
   const [pendingNotificationId, setPendingNotificationId] = useState<string | null>(null)
@@ -57,37 +57,31 @@ export default function NotificationsPage() {
     navigate(next)
   }
 
-  async function markRead(notification: NotificationItem) {
+  function markRead(notification: NotificationItem) {
     if (notification.isRead) return
     setPendingNotificationId(notification.id)
-    try {
-      await markReadMutation.mutateAsync(notification.id)
-    } catch (error) {
-      logger.error(error)
-      toast.error('Không thể cập nhật trạng thái thông báo.')
-    } finally {
-      setPendingNotificationId(null)
-    }
+    markReadMutation.mutate(notification.id, {
+      onSettled: () => setPendingNotificationId(null),
+    })
   }
 
-  async function markAllRead() {
-    try {
-      const updatedCount = await markAllMutation.mutateAsync()
-      toast.success(
-        updatedCount > 0
-          ? `Đã đánh dấu ${updatedCount} thông báo đã đọc.`
-          : 'Không còn thông báo chưa đọc.'
-      )
-    } catch (error) {
-      logger.error(error)
-      toast.error('Không thể đánh dấu tất cả thông báo đã đọc.')
-    }
+  function markAllRead() {
+    markAllMutation.mutate(undefined, {
+      onSuccess: (updatedCount) => {
+        toast.success(
+          updatedCount > 0
+            ? `Đã đánh dấu ${updatedCount} thông báo đã đọc.`
+            : 'Không còn thông báo chưa đọc.'
+        )
+      },
+    })
   }
 
   return (
     <NotificationDirectory
       items={notificationsQuery.data?.items ?? []}
       totalCount={notificationsQuery.data?.totalCount ?? 0}
+      unreadCount={unreadQuery.data?.totalCount ?? null}
       page={queryParams.pageNumber}
       pageSize={queryParams.pageSize}
       filters={filters}
@@ -104,8 +98,8 @@ export default function NotificationsPage() {
         next.set('page', String(page))
         navigate(next)
       }}
-      onMarkRead={(notification) => void markRead(notification)}
-      onMarkAllRead={() => void markAllRead()}
+      onMarkRead={markRead}
+      onMarkAllRead={markAllRead}
       onRetry={() => void notificationsQuery.refetch()}
     />
   )

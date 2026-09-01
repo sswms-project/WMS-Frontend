@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { NotificationBell } from '@/components/NotificationBell'
-import { logger } from '@/lib/logger'
 import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
@@ -20,27 +19,18 @@ export function NotificationHeaderController() {
   const markAllMutation = useMarkAllNotificationsReadMutation()
   const [pendingNotificationId, setPendingNotificationId] = useState<string | null>(null)
 
-  async function markRead(notification: NotificationItem) {
+  function markRead(notification: NotificationItem) {
     if (notification.isRead) return
     setPendingNotificationId(notification.id)
-    try {
-      await markReadMutation.mutateAsync(notification.id)
-    } catch (error) {
-      logger.error(error)
-      toast.error('Không thể cập nhật thông báo.')
-    } finally {
-      setPendingNotificationId(null)
-    }
+    markReadMutation.mutate(notification.id, {
+      onSettled: () => setPendingNotificationId(null),
+    })
   }
 
-  async function markAllRead() {
-    try {
-      await markAllMutation.mutateAsync()
-      toast.success('Đã đánh dấu tất cả thông báo đã đọc.')
-    } catch (error) {
-      logger.error(error)
-      toast.error('Không thể cập nhật thông báo.')
-    }
+  function markAllRead() {
+    markAllMutation.mutate(undefined, {
+      onSuccess: () => toast.success('Đã đánh dấu tất cả thông báo đã đọc.'),
+    })
   }
 
   return (
@@ -51,8 +41,8 @@ export function NotificationHeaderController() {
       isError={recentQuery.isError || unreadQuery.isError}
       pendingNotificationId={pendingNotificationId}
       isMarkingAll={markAllMutation.isPending}
-      onMarkRead={(notification) => void markRead(notification)}
-      onMarkAllRead={() => void markAllRead()}
+      onMarkRead={markRead}
+      onMarkAllRead={markAllRead}
       onRetry={() => {
         void recentQuery.refetch()
         void unreadQuery.refetch()
