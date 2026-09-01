@@ -36,10 +36,10 @@ vi.mock('../components/SubscriptionPage', () => ({
 
 vi.mock('../hooks/use-subscription', () => ({
   useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useCreatePaymentLinkMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useCurrentSubscriptionQuery: () => pageState.subscriptionQuery,
   useRenewSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useSubscriptionPlansQuery: () => pageState.plansQuery,
-  useUpgradeSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }))
 
 describe('SubscriptionPage states', () => {
