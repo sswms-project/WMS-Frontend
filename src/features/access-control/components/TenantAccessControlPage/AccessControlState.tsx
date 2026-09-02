@@ -13,8 +13,8 @@ import {
 import { APP_ROUTES } from '@/routes/app-routes'
 
 interface AccessControlStateProps {
-  kind: 'forbidden' | 'error' | 'empty-roles' | 'empty-permissions'
-  onRetry?: () => void
+  readonly kind: 'forbidden' | 'error' | 'empty-roles' | 'empty-permissions'
+  readonly onRetry?: () => void
 }
 
 const STATE_CONTENT = {
@@ -51,7 +51,7 @@ export function AccessControlState({ kind, onRetry }: AccessControlStateProps) {
       <EmptyContent>
         {kind === 'error' && onRetry ? (
           <Button type="button" variant="outline" onClick={onRetry}>
-            <RotateCcw aria-hidden="true" />
+            <RotateCcw data-icon="inline-start" aria-hidden="true" />
             Thử lại
           </Button>
         ) : kind === 'forbidden' ? (

@@ -14,16 +14,16 @@ export function AccessControlSkeleton() {
           <Skeleton className="h-3 w-72 max-w-[70vw]" />
         </div>
       </div>
-      <div className="border-border flex min-h-0 flex-1 overflow-hidden rounded-md border">
-        <div className="border-border hidden w-[18rem] flex-col gap-2 border-r p-3 md:flex">
-          <Skeleton className="h-24 w-full rounded-md" />
-          <Skeleton className="h-24 w-full rounded-md" />
-        </div>
+      <div className="hidden gap-2 md:flex">
+        <Skeleton className="h-12 w-56 rounded-md" />
+        <Skeleton className="h-12 w-56 rounded-md" />
+      </div>
+      <div className="border-border min-h-0 flex-1 overflow-hidden rounded-md border">
         <div className="min-w-0 flex-1">
           <div className="border-border flex flex-col gap-3 border-b p-4">
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-3 w-full max-w-md" />
-            <Skeleton className="h-12 w-full max-w-sm" />
+            <Skeleton className="h-9 w-full max-w-sm" />
           </div>
           <div className="flex flex-col gap-3 p-4">
             {Array.from({ length: 6 }).map((_, index) => (
