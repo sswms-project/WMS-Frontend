@@ -13,11 +13,11 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
 interface UnsavedChangesDialogProps {
-  open: boolean
-  saving: boolean
-  onOpenChange: (open: boolean) => void
-  onSave: () => void
-  onDiscard: () => void
+  readonly open: boolean
+  readonly saving: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly onSave: () => void
+  readonly onDiscard: () => void
 }
 
 export function UnsavedChangesDialog({
@@ -45,8 +45,8 @@ export function UnsavedChangesDialog({
             Bỏ thay đổi
           </Button>
           <Button type="button" disabled={saving} onClick={onSave}>
-            {saving && <Spinner aria-hidden="true" />}
-            {saving ? 'Đang lưu' : 'Lưu thay đổi'}
+            {saving && <Spinner data-icon="inline-start" aria-hidden="true" />}
+            {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
