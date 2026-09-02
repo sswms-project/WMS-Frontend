@@ -60,6 +60,7 @@ describe('Platform Services query builders', () => {
 
   it('routes only explicitly supported reference types', () => {
     expect(getNotificationReferenceRoute('PurchaseOrder', 'po-1')).toBe('/purchase-orders/po-1')
+    expect(getNotificationReferenceRoute('Tenant', 'tenant-1')).toBe('/organization')
     expect(getNotificationReferenceRoute('UnknownType', 'id-1')).toBeNull()
   })
 })

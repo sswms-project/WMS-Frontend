@@ -66,6 +66,9 @@ export const APP_ROUTES = {
   customerDetail: (customerId: string): Route => `/customers/${customerId}` as Route,
   unauthorized: '/unauthorized',
   admin: {
+    dashboard: '/admin/dashboard',
+    tenants: '/admin/tenants',
+    tenantDetail: (tenantId: string): Route => `/admin/tenants/${tenantId}` as Route,
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
   },

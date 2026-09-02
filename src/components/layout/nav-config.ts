@@ -54,7 +54,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       id: 'workspace',
       items: [
         {
-          href: APP_ROUTES.dashboard,
+          href: APP_ROUTES.admin.dashboard,
           label: 'Dashboard',
           icon: LayoutDashboard,
           requiredPermission: 'admin:dashboard:view',
@@ -63,8 +63,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     },
     {
       id: 'administration',
-      label: 'Quản trị',
+      label: 'Quản trị nền tảng',
       items: [
+        {
+          href: APP_ROUTES.admin.tenants,
+          label: 'Tenant',
+          icon: Building2,
+          requiredPermission: 'admin:tenants:view',
+        },
         {
           href: APP_ROUTES.admin.roles,
           label: 'Phân quyền',

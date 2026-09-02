@@ -21,6 +21,7 @@ const realtimeTest = vi.hoisted(() => {
     eventHandlers,
     reconnectedCallbacks,
     invalidateQueries: vi.fn().mockResolvedValue(undefined),
+    loggerWarn: vi.fn(),
     start,
     stop,
     off,
@@ -44,7 +45,7 @@ vi.mock('@/lib/axios', () => ({
 }))
 
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn() },
+  logger: { warn: realtimeTest.loggerWarn },
 }))
 
 vi.mock('@/stores/auth.store', () => ({
@@ -90,7 +91,9 @@ describe('NotificationRealtimeProvider', () => {
 
     await waitFor(() => expect(realtimeTest.invalidateQueries).toHaveBeenCalledTimes(3))
     expect(realtimeTest.toastInfo).toHaveBeenCalledOnce()
-    expect(realtimeTest.toastInfo).toHaveBeenCalledWith('Bạn có thông báo mới.')
+    expect(realtimeTest.toastInfo).toHaveBeenCalledWith('Bạn có thông báo mới.', {
+      duration: 6_000,
+    })
 
     realtimeTest.reconnectedCallbacks[0]?.()
     await waitFor(() => expect(realtimeTest.invalidateQueries).toHaveBeenCalledTimes(4))
@@ -98,5 +101,30 @@ describe('NotificationRealtimeProvider', () => {
     unmount()
     expect(realtimeTest.off).toHaveBeenCalledWith('NotificationCreated')
     expect(realtimeTest.stop).toHaveBeenCalledOnce()
+  })
+
+  it('waits for an in-flight negotiation before stopping during cleanup', async () => {
+    let resolveStart!: () => void
+    realtimeTest.start.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveStart = resolve
+        })
+    )
+
+    const { unmount } = render(
+      <NotificationRealtimeProvider>
+        <div>Private application</div>
+      </NotificationRealtimeProvider>
+    )
+
+    await waitFor(() => expect(realtimeTest.start).toHaveBeenCalledOnce())
+    unmount()
+    expect(realtimeTest.stop).not.toHaveBeenCalled()
+
+    resolveStart()
+
+    await waitFor(() => expect(realtimeTest.stop).toHaveBeenCalledOnce())
+    expect(realtimeTest.loggerWarn).not.toHaveBeenCalled()
   })
 })

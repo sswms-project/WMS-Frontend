@@ -34,4 +34,6 @@ export function formatAuditValue(value: string | null): string {
 
 const notificationReferenceRoutes: Record<string, (id: string) => string> = {
   PurchaseOrder: APP_ROUTES.purchaseOrderDetail,
+  Tenant: () => APP_ROUTES.organization,
+  SubscriptionPlan: () => APP_ROUTES.subscription,
 }

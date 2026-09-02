@@ -9,20 +9,25 @@ interface PlanCatalogSummaryProps {
 
 export function PlanCatalogSummary({ plans, isLoading }: PlanCatalogSummaryProps) {
   const activePlanCount = plans?.filter((p) => p.status === 'Active').length ?? 0
-  const discountedPlanCount = plans?.filter((p) => p.yearlyDiscountPercent > 0).length ?? 0
-  const enabledFeatureCount = new Set(
-    plans?.flatMap((plan) => plan.features.map((f) => f.featureCode)) ?? []
-  ).size
+  const inactivePlanCount = plans?.filter((p) => p.status === 'Inactive').length ?? 0
+  const currentSubscriberCount =
+    plans?.reduce((total, plan) => total + plan.currentSubscriberCount, 0) ?? 0
+  const pendingSubscriberCount =
+    plans?.reduce((total, plan) => total + plan.pendingSubscriberCount, 0) ?? 0
 
   const summaryItems = [
-    { label: 'Gói đang mở', value: plans?.length ?? 0, icon: Layers3 },
+    { label: 'Gói đang mở', value: activePlanCount, icon: Layers3 },
     { label: 'Đang hoạt động', value: activePlanCount, icon: Zap },
-    { label: 'Có chiết khấu năm', value: discountedPlanCount, icon: PercentCircle },
-    { label: 'Nhóm tính năng', value: enabledFeatureCount, icon: Blocks },
+    { label: 'Ngừng cung cấp', value: inactivePlanCount, icon: PercentCircle },
+    {
+      label: 'Đang dùng / chờ đổi',
+      value: `${currentSubscriberCount} / ${pendingSubscriberCount}`,
+      icon: Blocks,
+    },
   ]
 
   return (
-    <div className="bg-card/60 grid grid-cols-2 border-t border-l sm:grid-cols-4">
+    <div className="bg-card/60 grid grid-cols-2 border-t border-l lg:grid-cols-4">
       {summaryItems.map((item) => {
         const Icon = item.icon
 
@@ -40,7 +45,9 @@ export function PlanCatalogSummary({ plans, isLoading }: PlanCatalogSummaryProps
               ) : (
                 <p className="text-foreground text-base font-semibold tabular-nums">{item.value}</p>
               )}
-              <p className="text-muted-foreground truncate text-xs">{item.label}</p>
+              <p className="text-muted-foreground text-xs leading-tight text-pretty">
+                {item.label}
+              </p>
             </div>
           </div>
         )

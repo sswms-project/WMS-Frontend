@@ -10,6 +10,7 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.settings.security, label: 'Cài đặt' },
   { prefix: APP_ROUTES.organization, label: 'Tổ chức' },
   { prefix: APP_ROUTES.staff, label: 'Nhân sự' },
+  { prefix: APP_ROUTES.admin.tenants, label: 'Quản lý tenant' },
   { prefix: APP_ROUTES.admin.subscriptionPlans, label: 'Gói đăng ký' },
   { prefix: APP_ROUTES.admin.roles, label: 'Phân quyền' },
   { prefix: APP_ROUTES.dashboard, label: 'Dashboard' },

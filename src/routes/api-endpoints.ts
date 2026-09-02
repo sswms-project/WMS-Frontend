@@ -26,6 +26,14 @@ export const API_ENDPOINTS = {
   auditLogs: {
     list: '/audit-logs',
   },
+  platformAdmin: {
+    dashboard: '/admin/dashboard',
+    tenants: '/admin/tenants',
+    tenantDetail: (tenantId: string) => `/admin/tenants/${tenantId}`,
+    suspendTenant: (tenantId: string) => `/admin/tenants/${tenantId}/suspend`,
+    reactivateTenant: (tenantId: string) => `/admin/tenants/${tenantId}/reactivate`,
+    subscriptionPlans: '/subscription-plans/admin',
+  },
   tenantRolePermissions: {
     workspace: '/tenant-role-permissions',
     assign: (roleId: string) => `/tenant-role-permissions/${roleId}`,

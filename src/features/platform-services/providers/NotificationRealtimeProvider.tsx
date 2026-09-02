@@ -24,6 +24,7 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
   useEffect(() => {
     if (!user) return
     let disposed = false
+    let isStarting = false
     let restartAttempts = 0
     let restartTimer: ReturnType<typeof setTimeout> | undefined
     const connection = createNotificationHubConnection(() => getStoredAccessToken() ?? '')
@@ -37,12 +38,12 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
         logger.warn('[notifications] Invalid realtime payload', result.error.flatten())
         return
       }
-      void invalidateNotifications()
       if (!shownEventsRef.current.has(result.data.notificationId)) {
         shownEventsRef.current.add(result.data.notificationId)
         if (shownEventsRef.current.size > 100) shownEventsRef.current.clear()
-        toast.info('Bạn có thông báo mới.')
+        toast.info('Bạn có thông báo mới.', { duration: 6_000 })
       }
+      void invalidateNotifications()
     })
 
     connection.onreconnected(() => {
@@ -52,16 +53,24 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
 
     const start = async () => {
       if (disposed || !getStoredAccessToken()) return
+      isStarting = true
       try {
         await connection.start()
+        if (disposed) {
+          await connection.stop()
+          return
+        }
         restartAttempts = 0
         await invalidateNotifications()
       } catch (error) {
+        if (disposed) return
         logger.warn('[notifications] Realtime connection unavailable', error)
         if (!disposed && restartAttempts < MAX_MANUAL_RESTARTS) {
           restartAttempts += 1
           restartTimer = setTimeout(() => void start(), restartAttempts * 3_000)
         }
+      } finally {
+        isStarting = false
       }
     }
 
@@ -77,7 +86,9 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
       disposed = true
       if (restartTimer) clearTimeout(restartTimer)
       connection.off('NotificationCreated')
-      void connection.stop()
+      // SignalR throws when stop() interrupts an in-flight negotiation. In
+      // React Strict Mode, let start() settle and close itself instead.
+      if (!isStarting) void connection.stop()
     }
   }, [queryClient, user])
 
