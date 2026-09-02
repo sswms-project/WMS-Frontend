@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SubscriptionPlanResponse } from '../types/subscription.types'
 import { SubscriptionPage } from './SubscriptionPage'
 
-const paymentLinkMutation = {
+const createPaymentLinkMutation = {
   isPending: false,
   mutateAsync: vi.fn(),
 }
@@ -68,7 +68,7 @@ vi.mock('../components/SubscriptionPage', () => ({
 
 vi.mock('../hooks/use-subscription', () => ({
   useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  useCreatePaymentLinkMutation: () => paymentLinkMutation,
+  useCreatePaymentLinkMutation: () => createPaymentLinkMutation,
   useCurrentSubscriptionQuery: () => ({
     data: {
       id: 'subscription-id',
@@ -97,8 +97,8 @@ vi.mock('../hooks/use-subscription', () => ({
 
 describe('SubscriptionPage billing cycle', () => {
   beforeEach(() => {
-    paymentLinkMutation.mutateAsync.mockReset()
-    paymentLinkMutation.mutateAsync.mockResolvedValue(undefined)
+    createPaymentLinkMutation.mutateAsync.mockReset()
+    createPaymentLinkMutation.mutateAsync.mockResolvedValue(undefined)
   })
 
   it('includes the selected billing cycle in the upgrade request', async () => {
@@ -110,7 +110,7 @@ describe('SubscriptionPage billing cycle', () => {
     await user.click(screen.getByRole('button', { name: 'Chọn Professional' }))
     await user.click(screen.getByRole('button', { name: 'Xác nhận thay đổi' }))
 
-    expect(paymentLinkMutation.mutateAsync).toHaveBeenCalledWith({
+    expect(createPaymentLinkMutation.mutateAsync).toHaveBeenCalledWith({
       newPlanId: 'professional',
       billingCycle: 'Yearly',
     })
