@@ -30,7 +30,7 @@ export const subscriptionService = {
 
   upgradeSubscription: (body: UpgradeSubscriptionRequestDto) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.upgrade, body)
+      .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.upgrade, body)
       .then((response) => response.data),
 
   createPaymentLink: (body: CreatePaymentLinkRequestDto) =>
@@ -38,21 +38,14 @@ export const subscriptionService = {
       .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.paymentLink, body)
       .then((response) => response.data),
 
-  // Dùng fetch thay axiosClient: endpoint AllowAnonymous, axiosClient redirect login khi SameSite=Strict cookie chưa có
-  syncPaymentStatus: async (orderCode: string): Promise<ApiResponse<string>> => {
-    const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:7070').replace(
-      /\/+$/,
-      ''
-    )
-    const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
-    const res = await fetch(`${apiBase}${API_ENDPOINTS.subscription.paymentStatus(orderCode)}`)
-    if (!res.ok) throw new Error(`PaymentStatus fetch failed: ${res.status}`)
-    return res.json() as Promise<ApiResponse<string>>
-  },
+  syncPaymentStatus: (orderCode: string) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.subscription.paymentStatus(orderCode))
+      .then((response) => response.data),
 
   renewSubscription: () =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.renew)
+      .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.renew)
       .then((response) => response.data),
 
   cancelSubscription: () =>

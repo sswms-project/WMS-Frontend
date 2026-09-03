@@ -1,2 +1,5 @@
 export { RolesPage } from './RolesPage'
-export { SubscriptionPlansPage } from './SubscriptionPlansPage'
+export { default as SubscriptionPlansPage } from './SubscriptionPlansPage'
+export { default as PlatformDashboardPage } from './PlatformDashboardPage'
+export { default as TenantDirectoryPage } from './TenantDirectoryPage'
+export { default as TenantDetailsPage } from './TenantDetailsPage'

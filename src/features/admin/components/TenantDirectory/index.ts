@@ -1,0 +1,1 @@
+export { TenantDirectoryView } from './TenantDirectoryView'

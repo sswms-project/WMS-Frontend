@@ -43,8 +43,29 @@ import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
 } from '@/features/cycle-count/types/cycle-count.types'
+import type {
+  AuditLogQuery,
+  NotificationQuery,
+} from '@/features/platform-services/types/platform-services.types'
+import type { AdminSubscriptionPlanQuery, TenantQuery } from '@/features/admin/types/admin.types'
 
 export const queryKeys = {
+  platformAdmin: {
+    all: ['platform-admin'] as const,
+    dashboard: ['platform-admin', 'dashboard'] as const,
+    tenants: ['platform-admin', 'tenants'] as const,
+    tenantList: (params: TenantQuery) => ['platform-admin', 'tenants', params] as const,
+    tenantDetail: (tenantId: string) => ['platform-admin', 'tenants', tenantId] as const,
+    plans: (params: AdminSubscriptionPlanQuery) => ['platform-admin', 'plans', params] as const,
+  },
+  notifications: {
+    all: ['notifications'] as const,
+    list: (params: NotificationQuery) => ['notifications', 'list', params] as const,
+  },
+  auditLogs: {
+    all: ['audit-logs'] as const,
+    list: (params: AuditLogQuery) => ['audit-logs', 'list', params] as const,
+  },
   tenantRolePermissions: {
     all: ['tenant-role-permissions'] as const,
     workspace: ['tenant-role-permissions', 'workspace'] as const,
@@ -181,9 +202,5 @@ export const queryKeys = {
     detail: (id: string) => ['customers', 'detail', id] as const,
     orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
       ['customers', 'detail', id, 'orders', params] as const,
-  },
-  notifications: {
-    all: ['notifications'] as const,
-    list: (params?: QueryInfo) => ['notifications', 'list', params] as const,
   },
 }
