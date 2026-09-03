@@ -84,4 +84,17 @@ describe('warehouse route permission', () => {
       expect(getAllowedRolesForPath(route)).toEqual(operationalRoles)
     }
   })
+
+  it('applies Platform Services role boundaries', () => {
+    expect(getAllowedRolesForPath(APP_ROUTES.notifications)).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
+    expect(getAllowedRolesForPath(APP_ROUTES.auditLogs)).toEqual([
+      USER_ROLES.SystemAdmin,
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+    ])
+  })
 })

@@ -67,7 +67,10 @@ export const featureItemSchema = z
     enabled: z.boolean(),
     limitValue: z.preprocess(
       toOptionalNumber,
-      z.number({ error: numberIssueMessage('Giới hạn') }).optional()
+      z
+        .number({ error: numberIssueMessage('Giới hạn') })
+        .int('Giới hạn phải là số nguyên')
+        .optional()
     ),
   })
   .refine(
@@ -111,6 +114,7 @@ export type EditSubscriptionPlanFormOutput = z.output<typeof editSubscriptionPla
 export interface PlanFeatureInput {
   featureCode: string
   limitValue?: number
+  description?: string
 }
 
 export interface CreateSubscriptionPlanRequest {
@@ -136,5 +140,6 @@ export function featureItemsToPayload(items: FeatureItemOutput[]): PlanFeatureIn
     .map((item) => ({
       featureCode: item.featureCode,
       ...(item.featureType === 'Limit' ? { limitValue: item.limitValue } : {}),
+      description: item.description,
     }))
 }

@@ -182,6 +182,8 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
               <TableHead className="w-[25%] pl-4">Gói dịch vụ</TableHead>
               <TableHead className="w-[18%]">Giá</TableHead>
               <TableHead>Tính năng</TableHead>
+              <TableHead className="w-[10%] text-center">Đang dùng</TableHead>
+              <TableHead className="w-[10%] text-center">Chờ đổi</TableHead>
               <TableHead className="w-[15%]">Trạng thái</TableHead>
               <TableHead className="w-12 pr-3">
                 <span className="sr-only">Thao tác</span>
@@ -203,6 +205,12 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
                 <TableCell className="max-w-72 py-3">
                   <PlanFeatures plan={plan} />
                 </TableCell>
+                <TableCell className="py-3 text-center tabular-nums">
+                  {plan.currentSubscriberCount}
+                </TableCell>
+                <TableCell className="py-3 text-center tabular-nums">
+                  {plan.pendingSubscriberCount}
+                </TableCell>
                 <TableCell className="py-3">
                   <PlanStatus status={plan.status} />
                 </TableCell>
@@ -223,10 +231,10 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
           >
             <div className="flex items-start justify-between gap-3">
               <PlanIdentity plan={plan} />
-              <div className="flex shrink-0 items-center gap-2">
-                <PlanStatus status={plan.status} />
-                <PlanActions plan={plan} onEdit={onEdit} onDeactivate={onDeactivate} />
-              </div>
+              <PlanActions plan={plan} onEdit={onEdit} onDeactivate={onDeactivate} />
+            </div>
+            <div className="mt-2">
+              <PlanStatus status={plan.status} />
             </div>
 
             <div className="bg-muted/20 mt-3 border-y py-3 text-xs">
@@ -236,6 +244,10 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
               <p className="text-muted-foreground mb-1.5">Tính năng</p>
               <PlanFeatures plan={plan} />
             </div>
+            <p className="text-muted-foreground mt-3 text-xs">
+              {plan.currentSubscriberCount} tenant đang dùng · {plan.pendingSubscriberCount} thay
+              đổi chờ áp dụng
+            </p>
           </div>
         ))}
       </div>

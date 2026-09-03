@@ -119,6 +119,7 @@ export interface PaymentResponse {
   invoiceNumber: string
   amount: number
   status: string
+  providerStatus?: string | null
   paidAt: string | null
   createdAt: string
 }
