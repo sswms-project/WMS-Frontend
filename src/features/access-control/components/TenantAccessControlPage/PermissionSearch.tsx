@@ -2,13 +2,13 @@ import { Search } from 'lucide-react'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 
 interface PermissionSearchProps {
-  value: string
-  onChange: (value: string) => void
+  readonly value: string
+  readonly onChange: (value: string) => void
 }
 
 export function PermissionSearch({ value, onChange }: PermissionSearchProps) {
   return (
-    <div className="w-full sm:max-w-xs">
+    <div className="w-full sm:max-w-sm sm:flex-1">
       <label htmlFor="permission-search" className="sr-only">
         Tìm quyền
       </label>
@@ -21,7 +21,7 @@ export function PermissionSearch({ value, onChange }: PermissionSearchProps) {
           name="permission-search"
           type="search"
           value={value}
-          placeholder="Tìm quyền…"
+          placeholder="Tìm theo phân hệ, quyền hoặc từ khóa…"
           autoComplete="off"
           spellCheck={false}
           onChange={(event) => onChange(event.target.value)}

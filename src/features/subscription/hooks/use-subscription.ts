@@ -53,15 +53,11 @@ export function useInvoiceDataQuery(paymentId: string, enabled = true) {
 }
 
 export function useUpgradeSubscriptionMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
+  return useMutation<PaymentLinkResponse, ApiErrorResponse, UpgradeSubscriptionRequestDto>({
     mutationFn: (body: UpgradeSubscriptionRequestDto) =>
-      subscriptionService.upgradeSubscription(body),
-    onSuccess: () => {
-      toast.success('Đã cập nhật gói dịch vụ')
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
+      subscriptionService.upgradeSubscription(body).then((response) => response.data),
+    onSuccess: (data) => {
+      window.location.href = data.checkoutUrl
     },
     onError: (error: ApiErrorResponse) => {
       logger.error(error)
@@ -71,14 +67,10 @@ export function useUpgradeSubscriptionMutation() {
 }
 
 export function useRenewSubscriptionMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: subscriptionService.renewSubscription,
-    onSuccess: () => {
-      toast.success('Đã gia hạn gói dịch vụ')
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.me })
-      queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
+  return useMutation<PaymentLinkResponse, ApiErrorResponse>({
+    mutationFn: () => subscriptionService.renewSubscription().then((response) => response.data),
+    onSuccess: (data) => {
+      window.location.href = data.checkoutUrl
     },
     onError: (error: ApiErrorResponse) => {
       logger.error(error)
@@ -119,7 +111,7 @@ export function useSyncPaymentStatusQuery(orderCode: string | null) {
     queryKey: ['payment-status', orderCode],
     queryFn: () =>
       subscriptionService.syncPaymentStatus(orderCode!).then((response) => response.data),
-    enabled: !!orderCode,
+    enabled: Boolean(orderCode),
     retry: 3,
     refetchInterval: (query) => {
       const status = query.state.data

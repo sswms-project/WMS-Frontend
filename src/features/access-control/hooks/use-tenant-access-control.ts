@@ -30,7 +30,7 @@ export function useUpdateTenantRolePermissionsMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
       ]),
     onError: (error) => {
-      logger.error(error)
+      logger.error(error.message, error)
       toast.error(error.message ?? 'Không thể cập nhật quyền truy cập. Vui lòng thử lại.')
     },
   })

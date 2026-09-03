@@ -5,17 +5,17 @@ import type { PermissionModuleGroup } from '../../types/tenant-access-control.ty
 import { PermissionModuleSection } from './PermissionModuleSection'
 
 interface PermissionCatalogProps {
-  groups: PermissionModuleGroup[]
-  roleId: string
-  roleName: string
-  selectedIds: ReadonlySet<string>
-  inheritedIds: ReadonlySet<string>
-  openModules: string[]
-  disabled?: boolean
-  hasSearch: boolean
-  onOpenModulesChange: (modules: string[]) => void
-  onTogglePermission: (permissionId: string) => void
-  onToggleModule: (permissionIds: string[]) => void
+  readonly groups: PermissionModuleGroup[]
+  readonly roleId: string
+  readonly roleName: string
+  readonly selectedIds: ReadonlySet<string>
+  readonly inheritedIds: ReadonlySet<string>
+  readonly openModules: string[]
+  readonly disabled?: boolean
+  readonly hasSearch: boolean
+  readonly onOpenModulesChange: (modules: string[]) => void
+  readonly onTogglePermission: (permissionId: string) => void
+  readonly onToggleModule: (permissionIds: string[]) => void
 }
 
 export function PermissionCatalog({

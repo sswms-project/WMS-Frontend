@@ -5,7 +5,17 @@ import { useState } from 'react'
 import { CreditCard, PackageOpen, Plus, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ApiErrorResponse } from '@/types/api'
@@ -39,7 +49,8 @@ const SERVER_FIELD_MAP = {
 
 const DUPLICATE_PLAN_NAME_PREFIX = "SubscriptionPlan with value '"
 const DUPLICATE_PLAN_NAME_SUFFIX = "' already exists"
-const ACTIVE_SUBSCRIBERS_MESSAGE = 'Cannot delete a plan with active subscribers'
+const PENDING_PLAN_REFERENCE_MESSAGE =
+  'Cannot deactivate a plan referenced by pending subscription changes'
 
 type ServerField = keyof typeof SERVER_FIELD_MAP
 type MappedField = (typeof SERVER_FIELD_MAP)[ServerField]
@@ -69,8 +80,8 @@ function isDuplicatePlanNameError(error: ApiErrorResponse): boolean {
   )
 }
 
-function isActiveSubscribersError(error: ApiErrorResponse): boolean {
-  return error.statusCode === 409 && error.message === ACTIVE_SUBSCRIBERS_MESSAGE
+function isPendingPlanReferenceError(error: ApiErrorResponse): boolean {
+  return error.statusCode === 409 && error.message === PENDING_PLAN_REFERENCE_MESSAGE
 }
 
 function applyServerFieldErrors(
@@ -94,14 +105,30 @@ function applyServerFieldErrors(
   return hasFieldError
 }
 
-export function SubscriptionPlansPage() {
+export default function SubscriptionPlansPage() {
   const prefersReducedMotion = useReducedMotion() === true
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlanResponse | null>(null)
   const [deactivatingPlan, setDeactivatingPlan] = useState<SubscriptionPlanResponse | null>(null)
   const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<'Active' | 'Inactive'>()
+  const debouncedSearch = useDebouncedValue(search, 350).trim()
 
-  const { data: plans, isLoading, isError, isFetching, refetch } = useAdminSubscriptionPlansQuery()
+  const {
+    data: result,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useAdminSubscriptionPlansQuery({
+    pageNumber: page,
+    pageSize: 20,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+    ...(status ? { status } : {}),
+  })
+  const plans = result?.items
   const { data: featureMeta = [] } = useSubscriptionFeaturesQuery()
   const createMutation = useCreateSubscriptionPlanMutation()
   const updateMutation = useUpdateSubscriptionPlanMutation()
@@ -230,8 +257,8 @@ export function SubscriptionPlansPage() {
     } catch (error) {
       logger.error(error)
       const message =
-        isApiErrorResponse(error) && isActiveSubscribersError(error)
-          ? 'Không thể vô hiệu hóa gói đang có tenant sử dụng.'
+        isApiErrorResponse(error) && isPendingPlanReferenceError(error)
+          ? 'Không thể vô hiệu hóa vì đang có tenant chờ chuyển sang gói này.'
           : isApiErrorResponse(error)
             ? error.message
             : 'Không thể vô hiệu hóa gói. Vui lòng thử lại.'
@@ -268,7 +295,7 @@ export function SubscriptionPlansPage() {
             onClick={() => void refetch()}
           >
             <RefreshCw
-              className={isFetching ? 'size-4 animate-spin' : 'size-4'}
+              className={isFetching ? 'size-4 animate-spin motion-reduce:animate-none' : 'size-4'}
               aria-hidden="true"
             />
             Thử lại
@@ -311,7 +338,7 @@ export function SubscriptionPlansPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="flex h-full min-h-0 flex-col gap-5">
       <header className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="bg-primary text-primary-foreground relative flex size-10 shrink-0 items-center justify-center">
@@ -337,7 +364,10 @@ export function SubscriptionPlansPage() {
 
       {!isError && <PlanCatalogSummary plans={plans} isLoading={isLoading} />}
 
-      <section className="bg-card border" aria-labelledby="subscription-plans-list-title">
+      <section
+        className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden border"
+        aria-labelledby="subscription-plans-list-title"
+      >
         <div className="flex min-h-11 items-center justify-between gap-4 border-b px-3 sm:px-4">
           <div className="flex items-baseline gap-2">
             <h3
@@ -347,7 +377,7 @@ export function SubscriptionPlansPage() {
               Danh sách gói
             </h3>
             {!isLoading && !isError && (
-              <span className="text-muted-foreground text-xs">{plans?.length ?? 0} gói</span>
+              <span className="text-muted-foreground text-xs">{result?.totalCount ?? 0} gói</span>
             )}
           </div>
           <Tooltip>
@@ -361,7 +391,9 @@ export function SubscriptionPlansPage() {
                 onClick={() => void refetch()}
               >
                 <RefreshCw
-                  className={isFetching ? 'size-3.5 animate-spin' : 'size-3.5'}
+                  className={
+                    isFetching ? 'size-3.5 animate-spin motion-reduce:animate-none' : 'size-3.5'
+                  }
                   aria-hidden="true"
                 />
               </Button>
@@ -370,9 +402,55 @@ export function SubscriptionPlansPage() {
           </Tooltip>
         </div>
 
+        <div className="grid gap-2 border-b p-3 sm:grid-cols-[minmax(220px,1fr)_180px_auto]">
+          <Input
+            aria-label="Tìm gói đăng ký"
+            name="planSearch"
+            autoComplete="off"
+            value={search}
+            placeholder="Tìm theo tên gói…"
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
+          />
+          <Select
+            value={status ?? 'all'}
+            onValueChange={(value) => {
+              setStatus(value === 'all' ? undefined : value === 'Active' ? 'Active' : 'Inactive')
+              setPage(1)
+            }}
+          >
+            <SelectTrigger aria-label="Lọc trạng thái gói">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start" sideOffset={4}>
+              <SelectItem value="all">Mọi trạng thái</SelectItem>
+              <SelectItem value="Active">Đang cung cấp</SelectItem>
+              <SelectItem value="Inactive">Ngừng cung cấp</SelectItem>
+            </SelectContent>
+          </Select>
+          {search || status ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('')
+                setStatus(undefined)
+                setPage(1)
+              }}
+            >
+              Xóa lọc
+            </Button>
+          ) : (
+            <span />
+          )}
+        </div>
+
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={contentState}
+            className="min-h-0 flex-1 overflow-auto"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0 }}
@@ -381,6 +459,13 @@ export function SubscriptionPlansPage() {
             {renderPlans()}
           </motion.div>
         </AnimatePresence>
+        <OperationalPagination
+          page={page}
+          pageSize={20}
+          totalCount={result?.totalCount ?? 0}
+          isPending={isFetching}
+          onPageChange={setPage}
+        />
       </section>
 
       <SubscriptionPlanFormDialog

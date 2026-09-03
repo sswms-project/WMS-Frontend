@@ -18,6 +18,22 @@ export const API_ENDPOINTS = {
     confirm2fa: '/settings/2fa/confirm',
     disable2fa: '/settings/2fa',
   },
+  notifications: {
+    list: '/notifications',
+    markRead: (notificationId: string) => `/notifications/${notificationId}/read`,
+    markAllRead: '/notifications/read-all',
+  },
+  auditLogs: {
+    list: '/audit-logs',
+  },
+  platformAdmin: {
+    dashboard: '/admin/dashboard',
+    tenants: '/admin/tenants',
+    tenantDetail: (tenantId: string) => `/admin/tenants/${tenantId}`,
+    suspendTenant: (tenantId: string) => `/admin/tenants/${tenantId}/suspend`,
+    reactivateTenant: (tenantId: string) => `/admin/tenants/${tenantId}/reactivate`,
+    subscriptionPlans: '/subscription-plans/admin',
+  },
   tenantRolePermissions: {
     workspace: '/tenant-role-permissions',
     assign: (roleId: string) => `/tenant-role-permissions/${roleId}`,
@@ -137,7 +153,7 @@ export const API_ENDPOINTS = {
     renew: '/subscriptions/renew',
     cancel: '/subscriptions/me',
     paymentLink: '/subscriptions/payment-link',
-    paymentStatus: (orderCode: string) => `/subscriptions/payment-status/${orderCode}`,
+    paymentStatus: (orderCode: string) => `/subscriptions/payments/${orderCode}/sync`,
   },
   public: {
     subscriptionPlans: '/public/subscription-plans',

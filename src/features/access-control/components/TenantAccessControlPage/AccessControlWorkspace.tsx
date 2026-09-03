@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import type { ApiErrorResponse } from '@/types/api'
 import type {
   TenantRolePermissionWorkspace,
@@ -44,6 +45,10 @@ function getMutationMessage(error: unknown) {
     return 'Không thể lưu thay đổi. Dữ liệu đang chỉnh vẫn được giữ lại.'
   }
   if (error.statusCode === 403) {
+    const backendMessage = error.message.trim()
+    if (backendMessage && backendMessage.toLowerCase() !== 'forbidden') {
+      return backendMessage
+    }
     return 'Quyền thao tác của bạn đã thay đổi. Hãy tải lại cấu hình trước khi thử lại.'
   }
   if (error.statusCode === 404 || error.statusCode === 409) {
@@ -53,9 +58,9 @@ function getMutationMessage(error: unknown) {
 }
 
 interface AccessControlWorkspaceProps {
-  workspace: TenantRolePermissionWorkspace
-  saving: boolean
-  onSave: (roleId: string, permissionIds: string[]) => Promise<void>
+  readonly workspace: TenantRolePermissionWorkspace
+  readonly saving: boolean
+  readonly onSave: (roleId: string, permissionIds: string[]) => Promise<void>
 }
 
 export function AccessControlWorkspace({ workspace, saving, onSave }: AccessControlWorkspaceProps) {
@@ -243,7 +248,11 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
 
   return (
     <>
-      <div className="border-border bg-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border md:flex-row">
+      <Tabs
+        value={selectedRole.roleId}
+        onValueChange={requestRoleChange}
+        className="flex min-h-0 flex-1 flex-col gap-3"
+      >
         <RoleSelector
           roles={workspace.roles}
           selectedRoleId={selectedRole.roleId}
@@ -251,7 +260,10 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
           onSelect={requestRoleChange}
         />
 
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-labelledby="role-heading">
+        <TabsContent
+          value={selectedRole.roleId}
+          className="border-border bg-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border"
+        >
           <PermissionEditorHeader
             roleLabel={roleContent.label}
             roleDescription={roleContent.description}
@@ -298,8 +310,8 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
               />
             </div>
           </ScrollArea>
-        </section>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       <UnsavedChangesDialog
         open={dialogOpen}

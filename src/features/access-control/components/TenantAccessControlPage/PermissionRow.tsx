@@ -6,13 +6,13 @@ import { cn } from '@/lib/utils'
 import type { TenantAssignablePermission } from '../../types/tenant-access-control.types'
 
 interface PermissionRowProps {
-  permission: TenantAssignablePermission
-  roleId: string
-  roleName: string
-  selected: boolean
-  inherited: boolean
-  disabled?: boolean
-  onToggle: (permissionId: string) => void
+  readonly permission: TenantAssignablePermission
+  readonly roleId: string
+  readonly roleName: string
+  readonly selected: boolean
+  readonly inherited: boolean
+  readonly disabled?: boolean
+  readonly onToggle: (permissionId: string) => void
 }
 
 export function PermissionRow({

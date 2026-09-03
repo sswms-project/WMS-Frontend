@@ -66,6 +66,9 @@ export const APP_ROUTES = {
   customerDetail: (customerId: string): Route => `/customers/${customerId}` as Route,
   unauthorized: '/unauthorized',
   admin: {
+    dashboard: '/admin/dashboard',
+    tenants: '/admin/tenants',
+    tenantDetail: (tenantId: string): Route => `/admin/tenants/${tenantId}` as Route,
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
   },
@@ -73,6 +76,8 @@ export const APP_ROUTES = {
   productDetail: (id: string) => `/products/${id}`,
   productCreate: '/products/create',
   profile: '/profile',
+  notifications: '/notifications',
+  auditLogs: '/audit-logs',
   settings: {
     security: '/settings/security',
     accessControl: '/settings/access-control',

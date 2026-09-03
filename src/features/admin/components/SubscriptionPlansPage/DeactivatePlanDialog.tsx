@@ -45,8 +45,9 @@ export function DeactivatePlanDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Vô hiệu hóa gói &ldquo;{plan.planName}&rdquo;?</AlertDialogTitle>
           <AlertDialogDescription>
-            Gói sẽ ngừng xuất hiện trong danh mục dành cho tenant mới. Thao tác bị chặn nếu đang có
-            tenant sử dụng gói này.
+            Gói sẽ ngừng xuất hiện trong danh mục dành cho tenant mới. {plan.currentSubscriberCount}{' '}
+            tenant hiện tại vẫn tiếp tục sử dụng; thao tác bị chặn nếu có thay đổi gói đang chờ áp
+            dụng.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -72,7 +73,10 @@ export function DeactivatePlanDialog({
           >
             {isPending ? (
               <>
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                <Loader2
+                  className="size-4 animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
                 Đang xử lý
               </>
             ) : (

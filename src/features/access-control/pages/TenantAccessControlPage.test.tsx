@@ -129,6 +129,29 @@ describe('TenantAccessControlPage', () => {
     expect(screen.getByText('Chưa có vai trò để cấu hình')).toBeInTheDocument()
   })
 
+  it('switches role tabs without allowing vertical overflow in the tab strip', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const roleNavigation = screen.getByRole('navigation', {
+      name: 'Vai trò có thể phân quyền',
+    })
+    const managerTab = within(roleNavigation).getByRole('tab', { name: /Quản lý kho/ })
+    const staffTab = within(roleNavigation).getByRole('tab', { name: /Nhân viên kho/ })
+    const roleTabList = within(roleNavigation).getByRole('tablist')
+
+    expect(roleNavigation).toHaveClass('overflow-y-hidden')
+    expect(roleTabList).toHaveClass('h-12')
+    expect(managerTab).toHaveClass('h-full')
+    expect(managerTab).toHaveClass('ring-inset')
+    expect(managerTab).toHaveAttribute('aria-selected', 'true')
+
+    await user.click(staffTab)
+
+    expect(staffTab).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('heading', { name: 'Nhân viên kho' })).toBeInTheDocument()
+  })
+
   it('submits only the edited direct permission ids', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -182,6 +205,25 @@ describe('TenantAccessControlPage', () => {
     expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeInTheDocument()
   })
 
+  it('shows a specific backend policy message instead of masking every forbidden response', async () => {
+    testState.mutation.mutateAsync.mockRejectedValue({
+      statusCode: 403,
+      message: "Permission 'forecasting:create-po' cannot be assigned to Warehouse Manager.",
+    })
+    const user = userEvent.setup()
+    renderPage()
+    await openWarehouseModule(user)
+
+    await user.click(screen.getByRole('checkbox', { name: 'Cấu hình bố cục' }))
+    await user.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+
+    expect(
+      await screen.findByText(
+        "Permission 'forecasting:create-po' cannot be assigned to Warehouse Manager."
+      )
+    ).toBeInTheDocument()
+  })
+
   it('prompts before switching roles with an unsaved draft', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -191,7 +233,7 @@ describe('TenantAccessControlPage', () => {
     const roleNavigation = screen.getByRole('navigation', {
       name: 'Vai trò có thể phân quyền',
     })
-    await user.click(within(roleNavigation).getByRole('button', { name: /Nhân viên kho/ }))
+    await user.click(within(roleNavigation).getByRole('tab', { name: /Nhân viên kho/ }))
 
     const dialog = screen.getByRole('alertdialog')
     expect(dialog).toHaveTextContent('Bạn có thay đổi chưa lưu')

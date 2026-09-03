@@ -1,29 +1,29 @@
-import { Check, Info, ShieldCheck, Users } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Check, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import type { TenantRolePolicy } from '../../types/tenant-access-control.types'
 import { getTenantRoleContent } from '../../utils/tenant-access-control'
 
 interface RoleSelectorProps {
-  roles: TenantRolePolicy[]
-  selectedRoleId: string
-  disabled?: boolean
-  onSelect: (roleId: string) => void
+  readonly roles: TenantRolePolicy[]
+  readonly selectedRoleId: string
+  readonly disabled?: boolean
+  readonly onSelect: (roleId: string) => void
 }
 
 export function RoleSelector({ roles, selectedRoleId, disabled, onSelect }: RoleSelectorProps) {
   return (
-    <>
-      <div className="border-border bg-card border-b p-3 md:hidden">
+    <div className="shrink-0">
+      <div className="md:hidden">
         <label
           htmlFor="tenant-role-select"
           className="text-foreground mb-1.5 block text-xs font-medium"
@@ -31,93 +31,67 @@ export function RoleSelector({ roles, selectedRoleId, disabled, onSelect }: Role
           Vai trò cần cấu hình
         </label>
         <Select value={selectedRoleId} onValueChange={onSelect} disabled={disabled}>
-          <SelectTrigger id="tenant-role-select" className="h-10 w-full">
-            <SelectValue placeholder="Chọn vai trò" />
+          <SelectTrigger id="tenant-role-select" className="bg-card h-10 w-full">
+            <SelectValue placeholder="Chọn vai trò…" />
           </SelectTrigger>
-          <SelectContent align="start" sideOffset={4}>
-            {roles.map((role) => (
-              <SelectItem key={role.roleId} value={role.roleId}>
-                {getTenantRoleContent(role.roleName).label}
-              </SelectItem>
-            ))}
+          <SelectContent position="popper" align="start" sideOffset={4}>
+            <SelectGroup>
+              {roles.map((role) => (
+                <SelectItem key={role.roleId} value={role.roleId}>
+                  {getTenantRoleContent(role.roleName).label} · {role.effectivePermissionIds.length}{' '}
+                  quyền
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
-        <p className="text-muted-foreground mt-2 text-xs leading-5">
-          Chỉ Chủ doanh nghiệp có thể thay đổi quyền trong tenant.
-        </p>
       </div>
 
-      <aside className="border-border bg-muted/20 hidden min-h-0 w-[18rem] shrink-0 border-r md:flex md:flex-col">
-        <div className="border-border border-b px-4 py-4">
-          <div className="flex items-center gap-2">
-            <Users className="text-muted-foreground size-4" aria-hidden="true" />
-            <h2 className="text-foreground text-sm font-semibold">Vai trò</h2>
-          </div>
-          <p className="text-muted-foreground mt-1 text-xs leading-5">
-            Chọn vai trò để xem và chỉnh sửa quyền.
-          </p>
-        </div>
-        <nav aria-label="Vai trò có thể phân quyền" className="flex flex-col gap-2 p-3">
+      <nav
+        aria-label="Vai trò có thể phân quyền"
+        className="hidden min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain md:block"
+      >
+        <TabsList
+          aria-label="Chọn vai trò cần cấu hình"
+          className="h-12 w-max min-w-full items-stretch justify-start gap-2 bg-transparent p-0"
+        >
           {roles.map((role) => {
             const active = role.roleId === selectedRoleId
             const content = getTenantRoleContent(role.roleName)
+
             return (
-              <Button
+              <TabsTrigger
                 key={role.roleId}
-                type="button"
-                variant="ghost"
+                value={role.roleId}
                 disabled={disabled}
-                aria-current={active ? 'true' : undefined}
-                onClick={() => onSelect(role.roleId)}
                 className={cn(
-                  'h-auto w-full justify-start gap-3 rounded-md border px-3 py-3.5 text-left whitespace-normal',
+                  'h-full min-w-56 flex-none justify-start gap-2.5 self-stretch rounded-md border-0 px-3 text-left ring-1 transition-[background-color,box-shadow,color] ring-inset after:hidden',
                   active
-                    ? 'border-primary/40 bg-primary/10 hover:bg-primary/10'
-                    : 'hover:border-border hover:bg-card border-transparent'
+                    ? 'bg-primary/10 text-foreground ring-primary/50 hover:bg-primary/10'
+                    : 'bg-card text-foreground ring-border hover:bg-primary/5 hover:ring-primary/40'
                 )}
               >
                 <span
                   className={cn(
-                    'flex size-7 shrink-0 items-center justify-center rounded-md border',
+                    'flex size-6 shrink-0 items-center justify-center rounded-sm border',
                     active
-                      ? 'border-primary/30 bg-primary text-primary-foreground'
-                      : 'border-border'
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border text-muted-foreground'
                   )}
                 >
-                  {active ? (
-                    <Check className="size-4" aria-hidden="true" />
-                  ) : (
-                    <ShieldCheck className="size-4" aria-hidden="true" />
-                  )}
+                  {active ? <Check aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="text-foreground block text-sm font-medium">{content.label}</span>
-                  <span className="text-muted-foreground mt-1 block text-[11px] leading-4">
-                    {content.description}
-                  </span>
-                  <span className="text-muted-foreground mt-2 block text-[11px] tabular-nums">
-                    {role.directPermissionIds.length} trực tiếp ·{' '}
-                    {role.effectivePermissionIds.length} hiệu lực
-                  </span>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                  {content.label}
                 </span>
-                <Badge variant={active ? 'default' : 'outline'} className="self-start tabular-nums">
+                <Badge variant={active ? 'default' : 'outline'} className="shrink-0 tabular-nums">
                   {role.effectivePermissionIds.length}
                 </Badge>
-              </Button>
+              </TabsTrigger>
             )
           })}
-        </nav>
-        <div className="mt-auto p-3">
-          <Alert className="bg-primary/5 border-primary/20">
-            <Info aria-hidden="true" />
-            <AlertTitle>Phạm vi quản lý</AlertTitle>
-            <AlertDescription>
-              Chỉ Chủ doanh nghiệp được thay đổi quyền. Quyền hệ thống và quản trị nền tảng không
-              được ủy quyền.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </aside>
-    </>
+        </TabsList>
+      </nav>
+    </div>
   )
 }

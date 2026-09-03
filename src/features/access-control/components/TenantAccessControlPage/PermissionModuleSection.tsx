@@ -5,14 +5,14 @@ import type { PermissionModuleGroup } from '../../types/tenant-access-control.ty
 import { PermissionRow } from './PermissionRow'
 
 interface PermissionModuleSectionProps {
-  group: PermissionModuleGroup
-  roleId: string
-  roleName: string
-  selectedIds: ReadonlySet<string>
-  inheritedIds: ReadonlySet<string>
-  disabled?: boolean
-  onTogglePermission: (permissionId: string) => void
-  onToggleModule: (permissionIds: string[]) => void
+  readonly group: PermissionModuleGroup
+  readonly roleId: string
+  readonly roleName: string
+  readonly selectedIds: ReadonlySet<string>
+  readonly inheritedIds: ReadonlySet<string>
+  readonly disabled?: boolean
+  readonly onTogglePermission: (permissionId: string) => void
+  readonly onToggleModule: (permissionIds: string[]) => void
 }
 
 export function PermissionModuleSection({
@@ -40,7 +40,7 @@ export function PermissionModuleSection({
 
   return (
     <AccordionItem value={group.module} className="border-border border-b last:border-b-0">
-      <div className="flex min-w-0 items-center gap-3 px-3 sm:px-4">
+      <div className="flex min-h-14 min-w-0 items-center gap-3 px-3 sm:px-4">
         <Checkbox
           aria-label={`Chọn tất cả quyền trực tiếp trong ${group.moduleDisplayName}`}
           checked={allSelected ? true : someSelected ? 'indeterminate' : false}
@@ -49,7 +49,7 @@ export function PermissionModuleSection({
             onToggleModule(editablePermissions.map((permission) => permission.id))
           }
         />
-        <AccordionTrigger className="min-w-0 flex-1 py-3.5 hover:no-underline">
+        <AccordionTrigger className="min-w-0 flex-1 py-3 hover:no-underline">
           <span className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
             <span className="text-foreground min-w-0 truncate text-sm font-semibold">
               {group.moduleDisplayName}
