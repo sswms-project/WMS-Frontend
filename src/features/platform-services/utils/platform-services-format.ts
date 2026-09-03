@@ -36,4 +36,5 @@ const notificationReferenceRoutes: Record<string, (id: string) => string> = {
   PurchaseOrder: APP_ROUTES.purchaseOrderDetail,
   Tenant: () => APP_ROUTES.organization,
   SubscriptionPlan: () => APP_ROUTES.subscription,
+  Payment: () => APP_ROUTES.subscriptionPayments,
 }

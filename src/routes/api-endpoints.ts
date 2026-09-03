@@ -153,7 +153,7 @@ export const API_ENDPOINTS = {
     renew: '/subscriptions/renew',
     cancel: '/subscriptions/me',
     paymentLink: '/subscriptions/payment-link',
-    paymentStatus: (orderCode: string) => `/subscriptions/payment-status/${orderCode}`,
+    paymentStatus: (orderCode: string) => `/subscriptions/payments/${orderCode}/sync`,
   },
   public: {
     subscriptionPlans: '/public/subscription-plans',

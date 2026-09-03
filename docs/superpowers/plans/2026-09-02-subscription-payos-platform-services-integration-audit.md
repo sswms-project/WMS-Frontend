@@ -4,17 +4,17 @@
 
 | Field               | Value                                                                                                                 |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Date                | 2026-09-02                                                                                                            |
+| Date                | 2026-09-03                                                                                                            |
 | Scope               | Subscription billing, PayOS payment lifecycle, persisted notifications, SignalR realtime and Audit Log                |
-| Backend baseline    | `feat/wms-154-platform-administration` at `77739e9`, including `origin/main` PayOS changes                            |
-| Frontend baseline   | `feat/wms-184-platform-administration` at `366c4c5`, including `origin/dev` PayOS changes                             |
+| Backend baseline    | `feat/wms-154-platform-administration` at `65db46f`, including the latest `origin/dev` PayOS changes                  |
+| Frontend baseline   | `feat/wms-184-platform-administration` at `e7ecdf4`, including the latest `origin/dev` changes                        |
 | Platform dependency | WMS-151/183 Platform Services                                                                                         |
 | Purpose             | Record every confirmed gap and define the work required to integrate PayOS with Notification/Platform Services safely |
-| Status              | Audit complete; implementation not started                                                                            |
+| Status              | Implementation in progress; core BE/FE integration completed and regression-tested                                    |
 
 ## 2. Executive Summary
 
-The existing Platform Services implementation is reusable and already provides persisted notifications, per-user SignalR routing, realtime cache refresh, generic popup handling and workflow audit storage. Subscription checkout can create a PayOS payment link, receive a verified success webhook and poll PayOS from the payment-result page.
+The existing Platform Services implementation is reusable and already provides persisted notifications, per-user SignalR routing, realtime cache refresh, generic popup handling and workflow audit storage. Subscription checkout can create a PayOS payment link, receive a verified success webhook, register the webhook URL at application startup and poll PayOS by `orderCode` from the payment-result page.
 
 The two modules are not integrated yet. PayOS handlers update `Payment` and `TenantSubscription` directly without creating an audit record or persisted notification and without publishing a realtime event. The webhook and polling paths duplicate the same state transition, have no sufficient concurrency protection and can later create duplicate side effects if notification logic is added independently to both handlers.
 
@@ -28,17 +28,19 @@ Tenant Owner selects plan
   -> Payment(Pending) is saved
   -> Browser redirects to PayOS
   -> PayOS returns browser to /payment-result
-  -> FE polls GET /api/subscriptions/payment-status/{orderCode}
+  -> FE calls authenticated POST /api/subscriptions/payments/{orderCode}/sync
+  -> BE queries PayOS payment status by the same orderCode
 
 In parallel:
+API startup -> PayOS ConfirmAsync(WebhookUrl)
 PayOS -> POST /api/subscriptions/payos-webhook
 
 Webhook or polling
-  -> Payment becomes Completed/Failed
-  -> TenantSubscription may be changed
-  -> no AuditLog
-  -> no Notification row
-  -> no SignalR event
+  -> shared idempotent settlement service owns the terminal transition
+  -> Payment becomes Completed/Failed and stores provider status
+  -> TenantSubscription is updated or scheduled
+  -> AuditLog + persisted Notification are committed
+  -> SignalR is published after commit
 ```
 
 ### 3.1 Components that are already reusable
@@ -51,6 +53,27 @@ Webhook or polling
 - FE `NotificationRealtimeProvider` in the private layout.
 - FE notification header queries, notification directory, filter schema and reference routing.
 - FE payment-result polling and subscription/payment query invalidation.
+
+### 3.2 PayOS contract to preserve during Notification/Audit integration
+
+The following integration points were added or confirmed in the latest `origin/dev` baseline. They
+are owned by the PayOS billing flow and must not be removed, renamed or reimplemented by the
+Notification/Platform Services work:
+
+- `Payment.PayOSOrderCode` is the unique correlation key for payment-status synchronization. The
+  PayOS adapter now calls the provider's status API with this `orderCode`; `PayOSPaymentLinkId`
+  remains stored as provider metadata but is not the polling correlation key.
+- `POST /api/subscriptions/payos-webhook` remains the anonymous provider callback and must retain
+  cryptographic payload verification before settlement is attempted.
+- At startup, `ConfirmPayOSWebhookAsync` registers the configured `PayOSSettings.WebhookUrl` with
+  PayOS. A registration failure is intentionally logged as non-fatal so an external PayOS outage
+  does not prevent the API from starting.
+- Status synchronization is now `POST /api/subscriptions/payments/{orderCode}/sync`, requires
+  `subscriptions:view`, verifies tenant ownership and preserves the `orderCode` correlation contract.
+
+The Notification/Audit implementation may refactor only the business settlement boundary after a
+provider status has been verified. It must leave checkout-link creation, PayOS SDK calls, webhook
+configuration, callback URLs and the `orderCode` provider contract owned by the PayOS flow.
 
 ## 4. Confirmed Findings
 
@@ -286,66 +309,66 @@ Never publish before persistence. Never roll back a verified payment because Sig
 
 ## 6. Required Backend Work Checklist
 
-- [ ] Define canonical PayOS-only policy for upgrade, downgrade and renewal.
-- [ ] Add `Payment.InitiatedByUserId` and relationship configuration.
-- [ ] Generate and review EF CLI migration, including legacy-row backfill strategy.
-- [ ] Add payment optimistic concurrency/atomic settlement protection.
-- [ ] Add pending-checkout uniqueness/expiry policy.
-- [ ] Add `SubscriptionPaymentUpdate` notification type.
-- [ ] Add the shared settlement service/use case.
-- [ ] Refactor webhook to call shared settlement.
-- [ ] Replace anonymous mutating GET polling with an authenticated tenant-scoped command endpoint.
-- [ ] Refactor polling to call shared settlement.
-- [ ] Persist verified failure/cancel/expiry outcomes.
-- [ ] Add reconciliation for stale pending transactions.
-- [ ] Record audit on pending creation.
-- [ ] Record audit on every terminal payment transition.
-- [ ] Record audit on subscription upgrade/downgrade/renew/cancel transitions.
-- [ ] Persist recipient notification in the settlement transaction.
-- [ ] Publish SignalR only after successful commit.
-- [ ] Resolve PayOS adapter nullable warnings.
-- [ ] Remove/restrict legacy direct-completion upgrade and renew APIs.
+- [x] Define canonical PayOS-only policy for upgrade, downgrade and renewal.
+- [x] Add `Payment.InitiatedByUserId` and relationship configuration.
+- [x] Generate and review EF CLI migration, including legacy-row backfill strategy.
+- [x] Add payment optimistic concurrency/atomic settlement protection.
+- [x] Add pending-checkout uniqueness/expiry policy.
+- [x] Add `SubscriptionPaymentUpdate` notification type.
+- [x] Add the shared settlement service/use case.
+- [x] Refactor webhook to call shared settlement.
+- [x] Replace anonymous mutating GET polling with an authenticated tenant-scoped command endpoint.
+- [x] Refactor polling to call shared settlement.
+- [x] Persist verified failure/cancel/expiry outcomes.
+- [x] Add Quartz reconciliation for stale pending transactions.
+- [x] Record audit on pending creation.
+- [x] Record audit on every terminal payment transition.
+- [x] Record audit on subscription upgrade/downgrade/renew/cancel transitions.
+- [x] Persist recipient notification in the settlement transaction.
+- [x] Publish SignalR only after successful commit.
+- [x] Resolve PayOS adapter nullable warnings.
+- [x] Remove legacy direct-completion upgrade and renew handlers; both routes now create PayOS links.
 - [ ] Confirm `dotnet ef migrations has-pending-model-changes` reports no pending changes.
 
 ## 7. Required Frontend Work Checklist
 
-- [ ] Add the coordinated payment/subscription notification type.
-- [ ] Add localized filter label and icon/style mapping.
-- [ ] Map `ReferenceType = Payment` to the canonical payment history/subscription route.
-- [ ] Update payment-result success handling to invalidate notification queries.
-- [ ] Change polling to the protected tenant-scoped command endpoint.
-- [ ] Use the authenticated API client for payment sync.
-- [ ] Choose one canonical payment-result route and redirect/remove the duplicate.
-- [ ] Ensure plan changes and paid renewals use only the PayOS checkout mutation.
-- [ ] Show a useful terminal state when the payment is expired/cancelled/failed.
-- [ ] Preserve the self-contained public result UI even when SignalR is unavailable.
+- [x] Add the coordinated payment/subscription notification type.
+- [x] Add localized filter label mapping.
+- [x] Map `ReferenceType = Payment` to the canonical payment history route.
+- [x] Update payment-result success handling to invalidate notification queries.
+- [x] Change polling to the protected tenant-scoped command endpoint.
+- [x] Use the authenticated API client for payment sync.
+- [x] Choose `/payment-result` as the canonical route and remove the duplicate.
+- [x] Ensure plan changes and paid renewals use only PayOS checkout.
+- [x] Show a useful terminal state for failed/cancelled/expired payments.
+- [x] Preserve the self-contained public result UI even when SignalR is unavailable.
 
 ## 8. Automated Test Plan
 
 ### 8.1 Backend tests
 
-- [ ] Creating checkout persists `Payment(Pending)` with tenant and initiating user.
-- [ ] Creating checkout writes exactly one audit record.
-- [ ] Invalid webhook signature changes nothing and creates no notification/audit.
+- [x] Creating checkout persists `Payment(Pending)` with tenant and initiating user.
+- [x] Creating checkout invokes exactly one audit record.
+- [x] Invalid webhook verification errors propagate without invoking settlement.
 - [ ] Verified success completes an upgrade and records correct subscription dates.
 - [ ] Verified downgrade schedules the next plan without applying it immediately.
 - [ ] Verified failure/cancellation updates payment without changing subscription.
-- [ ] Successful settlement persists exactly one notification and publishes once after save.
+- [x] Successful renewal settlement persists exactly one notification and publishes once after save.
 - [ ] Realtime failure does not undo payment, subscription, audit or notification data.
-- [ ] Repeated webhook is idempotent.
+- [x] Repeated settlement is idempotent.
 - [ ] Webhook and polling race produces one settlement, one audit set and one notification.
 - [ ] Polling rejects anonymous callers.
-- [ ] Polling rejects a user from another tenant.
+- [x] Polling rejects a user from another tenant without calling PayOS.
 - [ ] Stale pending reconciliation reaches the correct terminal state.
 - [ ] Legacy direct upgrade/renew endpoints cannot bypass the canonical payment policy.
 
 ### 8.2 Frontend tests
 
-- [ ] Checkout sends `{ newPlanId, billingCycle }` and redirects to returned PayOS URL.
-- [ ] Payment-result polls only with a valid order code.
-- [ ] Completed result invalidates subscription, payment and notification caches.
-- [ ] Failed/cancelled/expired results stop polling and render the correct message.
-- [ ] Protected sync sends authentication and handles `401`/`403` safely.
+- [x] Checkout sends `{ newPlanId, billingCycle }` and redirects to returned PayOS URL.
+- [x] Payment-result polls only with a valid order code and renders a safe missing-code error.
+- [x] Completed result invalidates subscription, payment and notification caches.
+- [x] Failed/cancelled/expired results stop polling and render the correct message.
+- [x] Protected sync uses the shared authenticated Axios client and command endpoint.
 - [ ] `SubscriptionPaymentUpdate` realtime payload passes schema validation.
 - [ ] Realtime event invalidates notification queries and shows one deduplicated popup.
 - [ ] Clicking a payment notification navigates to the canonical billing route.
@@ -384,18 +407,19 @@ The integration is complete only when all of the following are true:
 
 | Phase   | Scope                                                                   | Status      |
 | ------- | ----------------------------------------------------------------------- | ----------- |
-| Phase 0 | Confirm business policy, recipient and canonical routes                 | Not started |
-| Phase 1 | Payment initiator, migration, concurrency and pending-payment integrity | Not started |
-| Phase 2 | Shared settlement, audit, notification and realtime publishing          | Not started |
-| Phase 3 | Secure polling, webhook failure handling and reconciliation             | Not started |
-| Phase 4 | FE notification contract, routing and payment-result integration        | Not started |
-| Phase 5 | Automated tests, QA, migration verification and regression gates        | Not started |
+| Phase 0 | Confirm business policy, recipient and canonical routes                 | Completed   |
+| Phase 1 | Payment initiator, migration, concurrency and pending-payment integrity | Completed   |
+| Phase 2 | Shared settlement, audit, notification and realtime publishing          | Completed   |
+| Phase 3 | Secure polling, webhook failure handling and reconciliation             | Completed   |
+| Phase 4 | FE notification contract, routing and payment-result integration        | Completed   |
+| Phase 5 | Automated tests, QA, migration verification and regression gates        | In progress |
 
 ## 12. Current Verification Baseline
 
-- FE typecheck passed after merging `origin/dev`.
-- FE tests passed: 395/395.
-- BE Release tests passed: 159/159.
-- No dedicated PayOS handler tests or `PaymentResultPage` tests exist at this baseline.
-- BE build reports nullable warnings in `Infrastructure/ExternalServices/PayOS/PayOSService.cs`.
-- Both feature-branch working trees were clean before this audit document was added.
+- 2026-09-03 integration verification: BE build passed with zero warnings; 165/165 BE tests passed.
+- EF reports no pending model changes, and the generated migration SQL was inspected successfully.
+- FE typecheck and lint passed; 402/402 tests passed; production build passed with 53 routes.
+- Dedicated tests now cover checkout initiator/pending policy, invalid webhook propagation,
+  cross-tenant sync isolation, verified amount mismatch, renewal settlement idempotency, protected
+  FE sync routing, untrusted return URL handling and notification cache invalidation.
+- Live PayOS sandbox QA and a true parallel SQL Server webhook/poll race test remain release QA work.

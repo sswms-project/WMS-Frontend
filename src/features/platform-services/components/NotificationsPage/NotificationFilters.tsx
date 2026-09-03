@@ -20,6 +20,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   POUpdate: 'Đơn mua',
   TenantStatusUpdate: 'Trạng thái tenant',
   SubscriptionPlanUpdate: 'Gói đăng ký',
+  SubscriptionPaymentUpdate: 'Thanh toán gói',
 }
 
 interface NotificationFiltersProps {

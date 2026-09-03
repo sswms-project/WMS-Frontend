@@ -5,6 +5,7 @@ export const NOTIFICATION_TYPES = [
   'POUpdate',
   'TenantStatusUpdate',
   'SubscriptionPlanUpdate',
+  'SubscriptionPaymentUpdate',
 ] as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]

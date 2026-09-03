@@ -14,26 +14,20 @@ export function PaymentResultPage() {
   const queryClient = useQueryClient()
 
   const orderCode = searchParams.get('orderCode')
-  const cancelParam = searchParams.get('cancel') === 'true'
-  const statusParam = searchParams.get('status')
-
   const syncQuery = useSyncPaymentStatusQuery(orderCode)
 
   const dbStatus = syncQuery.data
-  const urlCancelled = cancelParam || statusParam === 'CANCELLED'
   const isPaid = dbStatus === 'Completed'
-  const isCancelled = dbStatus === 'Failed' || (dbStatus !== 'Completed' && urlCancelled)
-  const isError = syncQuery.isError && !isPaid && !isCancelled
-  const isLoading =
-    !isPaid &&
-    !isCancelled &&
-    !isError &&
-    (syncQuery.isLoading || syncQuery.isFetching || dbStatus === 'Pending')
+  const isCancelled = dbStatus === 'Failed'
+  const isMissingOrderCode = !orderCode
+  const isError = (isMissingOrderCode || syncQuery.isError) && !isPaid && !isCancelled
+  const isProcessing = !isPaid && !isCancelled && !isError
 
   useEffect(() => {
     if (isPaid) {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
     }
   }, [isPaid, queryClient])
 
@@ -84,11 +78,7 @@ export function PaymentResultPage() {
         </>
       )}
 
-      {isLoading && (
-        <Loader className="text-muted-foreground h-16 w-16 animate-spin" aria-hidden="true" />
-      )}
-
-      {!isLoading && !isPaid && !isCancelled && !isError && (
+      {isProcessing && (
         <>
           <Loader className="text-muted-foreground h-16 w-16 animate-spin" aria-hidden="true" />
           <div className="text-center">
