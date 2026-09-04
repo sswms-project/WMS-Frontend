@@ -6,6 +6,13 @@ export const NOTIFICATION_TYPES = [
   'TenantStatusUpdate',
   'SubscriptionPlanUpdate',
   'SubscriptionPaymentUpdate',
+  'InboundUpdate',
+  'StockAdjustmentUpdate',
+  'TransferUpdate',
+  'OutboundUpdate',
+  'ReturnUpdate',
+  'CycleCountUpdate',
+  'WarehouseUpdate',
 ] as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]

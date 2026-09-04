@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   auditLogFiltersSchema,
+  notificationCreatedEventSchema,
   notificationFiltersSchema,
 } from '../schemas/platform-services.schema'
+import { NOTIFICATION_TYPES } from '../types/platform-services.types'
 import { getNotificationReferenceRoute } from './platform-services-format'
 import {
   buildAuditLogQuery,
@@ -59,8 +61,46 @@ describe('Platform Services query builders', () => {
   })
 
   it('routes only explicitly supported reference types', () => {
-    expect(getNotificationReferenceRoute('PurchaseOrder', 'po-1')).toBe('/purchase-orders/po-1')
-    expect(getNotificationReferenceRoute('Tenant', 'tenant-1')).toBe('/organization')
-    expect(getNotificationReferenceRoute('UnknownType', 'id-1')).toBeNull()
+    const routeFor = (
+      type:
+        | 'POUpdate'
+        | 'InboundUpdate'
+        | 'StockAdjustmentUpdate'
+        | 'CycleCountUpdate'
+        | 'WarehouseUpdate'
+        | 'LowStock'
+        | 'TransferUpdate'
+        | 'OutboundUpdate'
+        | 'DeliveryUpdate'
+        | 'ReturnUpdate',
+      referenceType: string,
+      referenceId = 'id-1'
+    ) => getNotificationReferenceRoute({ type, referenceType, referenceId })
+
+    expect(routeFor('POUpdate', 'PurchaseOrder', 'po-1')).toBe('/purchase-orders/po-1')
+    expect(routeFor('InboundUpdate', 'InboundReceipt')).toBe('/inbound/receipts/id-1')
+    expect(routeFor('StockAdjustmentUpdate', 'StockAdjustment')).toBe(
+      '/inventory/stock-adjustments/id-1'
+    )
+    expect(routeFor('CycleCountUpdate', 'CycleCount')).toBe('/inventory/cycle-counts/id-1')
+    expect(routeFor('WarehouseUpdate', 'Warehouse')).toBe('/warehouses/id-1')
+    expect(routeFor('LowStock', 'Product')).toBe('/products/id-1')
+    expect(routeFor('TransferUpdate', 'StockTransfer')).toBe('/transfers')
+    expect(routeFor('OutboundUpdate', 'OutboundOrder')).toBe('/orders')
+    expect(routeFor('DeliveryUpdate', 'OutboundOrder')).toBe('/delivery')
+    expect(routeFor('ReturnUpdate', 'Return')).toBe('/returns')
+    expect(routeFor('POUpdate', 'UnknownType')).toBeNull()
+  })
+
+  it('accepts every backend notification type in realtime events', () => {
+    for (const type of NOTIFICATION_TYPES) {
+      expect(
+        notificationCreatedEventSchema.safeParse({
+          notificationId: 'ea065311-734b-4f55-8d85-b43a68480c58',
+          type,
+          createdAt: '2026-09-04T03:00:00Z',
+        }).success
+      ).toBe(true)
+    }
   })
 })

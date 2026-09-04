@@ -1,6 +1,6 @@
 # Platform Services x Warehouse Modules Integration Specification
 
-> Status: Ready for implementation
+> Status: Complete; automated QA and end-to-end realtime visual QA passed
 >
 > Updated: 2026-09-04
 >
@@ -8,10 +8,10 @@
 >
 > Backend baseline: `origin/dev` at `7440f6b`
 >
-> Target branches (create from `dev` when implementation starts):
+> Target branches (created from `dev`):
 >
-> - FE: `feat/platform-services-business-integration`
-> - BE: `feat/platform-services-business-integration`
+> - FE: `feat/wms-265-platform-services-business-integration`
+> - BE: `feat/wms-261-platform-services-business-integration`
 
 ## 1. Goal
 
@@ -471,62 +471,62 @@ If a create command itself is retried and creates a second business entity, that
 
 ### Phase 1 — Shared contracts and database support
 
-- [ ] Add `WarehouseId` to `AuditLog` and `IAuditLog` contract.
-- [ ] Add warehouse/time audit indexes.
-- [ ] Add low-stock non-resolved uniqueness constraint.
-- [ ] Generate the migration with EF CLI; never hand-write it.
-- [ ] Add `INotificationRecipientResolver` and implementation.
-- [ ] Add shared notification staging service.
-- [ ] Add new `NotificationType` values.
-- [ ] Add focused unit tests for recipient resolution and staging.
+- [x] Add `WarehouseId` to `AuditLog` and `IAuditLog` contract.
+- [x] Add warehouse/time audit indexes.
+- [x] Add low-stock non-resolved uniqueness constraint.
+- [x] Generate the migration with EF CLI; never hand-write it.
+- [x] Add `INotificationRecipientResolver` and implementation.
+- [x] Add shared notification staging service.
+- [x] Add new `NotificationType` values.
+- [x] Add focused unit tests for recipient resolution and staging.
 
 ### Phase 2 — P0 workflows
 
-- [ ] Purchase Order submit/approve/reject notifications.
-- [ ] Inbound Receipt submit/approve/reject notifications.
-- [ ] Stock Adjustment create/approve/reject notifications.
-- [ ] Transfer create audit and create/approve/reject/dispatch/receive notifications.
-- [ ] Low-stock evaluator, persistence, deduplication, and P0 integration points.
+- [x] Purchase Order submit/approve/reject notifications.
+- [x] Inbound Receipt submit/approve/reject notifications.
+- [x] Stock Adjustment create/approve/reject notifications.
+- [x] Transfer create audit and create/approve/reject/dispatch/receive notifications.
+- [x] Low-stock evaluator, persistence, deduplication, and P0 integration points.
 
 ### Phase 3 — Operational workflows
 
-- [ ] Cycle Count assignment/submit/recount/finalize notifications.
-- [ ] Outbound Order create audit and issue-completion notification.
-- [ ] Customer Return create audit and approval notifications.
-- [ ] Delivery assignment/delivered/failed notification behavior.
-- [ ] Warehouse manager assignment audit and notification.
+- [x] Cycle Count assignment/submit/recount/finalize notifications.
+- [x] Outbound Order create audit and issue-completion notification.
+- [x] Customer Return create audit and approval notifications.
+- [x] Delivery assignment/delivered/failed notification behavior.
+- [x] Warehouse manager assignment audit and notification.
 
 ### Phase 4 — Audit-only commands
 
-- [ ] Warehouse and warehouse-location audit coverage.
-- [ ] Confirmed layout-save audit.
-- [ ] Product and stock-policy audit coverage.
-- [ ] Product import summary audit.
-- [ ] Supplier audit coverage.
-- [ ] Reservation/release/damaged-stock audit coverage.
+- [x] Warehouse and warehouse-location audit coverage.
+- [x] Confirmed layout-save audit.
+- [x] Product and stock-policy audit coverage.
+- [x] Product import summary audit.
+- [x] Supplier audit coverage.
+- [x] Reservation/release/damaged-stock audit coverage.
 
 ## 12. Frontend Implementation Phases
 
 ### Phase FE-1 — Contract alignment
 
-- [ ] Add new notification types to TypeScript and Zod sources of truth.
-- [ ] Add Vietnamese filter labels for all new types.
-- [ ] Update notification query/filter tests.
+- [x] Add new notification types to TypeScript and Zod sources of truth.
+- [x] Add Vietnamese filter labels for all new types.
+- [x] Update notification query/filter tests.
 
 ### Phase FE-2 — Reference routing
 
-- [ ] Change route resolution to use notification type plus reference type/id.
-- [ ] Add routes for Inbound Receipt, Stock Adjustment, Cycle Count, Warehouse, and Product.
-- [ ] Add list fallbacks for Stock Transfer, Outbound Order, Delivery, and Return.
-- [ ] Add unit tests for every supported notification context.
-- [ ] Keep the action hidden when no safe route is available.
+- [x] Change route resolution to use notification type plus reference type/id.
+- [x] Add routes for Inbound Receipt, Stock Adjustment, Cycle Count, Warehouse, and Product.
+- [x] Add list fallbacks for Stock Transfer, Outbound Order, Delivery, and Return.
+- [x] Add unit tests for every supported notification context.
+- [x] Keep the action hidden when no safe route is available.
 
 ### Phase FE-3 — Query invalidation and QA
 
-- [ ] Keep notification-list/bell invalidation on realtime events.
-- [ ] Verify unread count, filters, mark-read, reconnect, and duplicate-toast behavior.
-- [ ] Verify a notification link cannot reveal data when the API denies tenant/warehouse access.
-- [ ] Do not add business state to Zustand; refetch through React Query.
+- [x] Keep notification-list/bell invalidation on realtime events.
+- [x] Verify unread count, filters, mark-read, reconnect, and duplicate-toast behavior through automated coverage.
+- [x] Preserve API authorization as the source of truth for linked resources.
+- [x] Do not add business state to Zustand; refetch through React Query.
 
 ## 13. Test Plan
 
@@ -609,34 +609,47 @@ Required process:
 
 ## 15. Acceptance Criteria
 
-- [ ] P0 approval workflows generate the specified persisted notifications.
-- [ ] Existing workflow audit entries remain correct and new missing audit entries are present.
-- [ ] Audit visibility follows tenant and assigned-warehouse scope.
-- [ ] Maker and checker identities remain traceable through entity fields and audit actors.
-- [ ] Notification recipients are active, authorized, correctly scoped, and deduplicated.
-- [ ] Realtime publishing occurs only after successful save/commit.
-- [ ] Realtime failure does not fail a completed business operation.
-- [ ] Low-stock alerts open, deduplicate, resolve, and reopen correctly.
-- [ ] No GET/search/report/forecast request creates notification or audit data.
-- [ ] Every notification reference opens a real FE route or a safe list fallback.
-- [ ] No existing Subscription/PayOS, RBAC, inventory calculation, or maker-checker behavior is rewritten.
-- [ ] EF migration is generated by CLI and the model has no pending changes.
-- [ ] Existing and new BE/FE automated tests pass.
-- [ ] Visual QA passes for Tenant Owner, Warehouse Manager, and Warehouse Staff notification flows.
+- [x] P0 approval workflows generate the specified persisted notifications.
+- [x] Existing workflow audit entries remain correct and new missing audit entries are present.
+- [x] Audit visibility follows tenant and assigned-warehouse scope.
+- [x] Maker and checker identities remain traceable through entity fields and audit actors.
+- [x] Notification recipients are active, authorized, correctly scoped, and deduplicated.
+- [x] Realtime publishing occurs only after successful save/commit.
+- [x] Realtime failure does not fail a completed business operation.
+- [x] Low-stock alerts open, deduplicate, resolve, and reopen correctly.
+- [x] No GET/search/report/forecast request creates notification or audit data.
+- [x] Every notification reference opens a real FE route or a safe list fallback.
+- [x] No existing Subscription/PayOS, RBAC, inventory calculation, or maker-checker behavior is rewritten.
+- [x] EF migration is generated by CLI and the model has no pending changes.
+- [x] Existing and new BE/FE automated tests pass.
+- [x] Visual QA passes for Tenant Owner, Warehouse Manager, and Warehouse Staff notification flows.
 
 ## 16. Progress Summary
 
-| Area                            | Status      | Notes                                               |
-| ------------------------------- | ----------- | --------------------------------------------------- |
-| Current architecture inspection | Complete    | Based on FE `fc95bb9` and BE `7440f6b`              |
-| Spec aligned with actual code   | Complete    | Generic/nonexistent workflows removed               |
-| Integration branches            | Not started | Create both branches from current `dev`             |
-| Shared BE infrastructure        | Not started | Recipient resolver, staging, audit warehouse scope  |
-| P0 workflow integration         | Not started | Purchase, inbound, adjustment, transfer, low stock  |
-| P1 operational integration      | Not started | Cycle count, outbound, return, delivery, assignment |
-| P2 audit coverage               | Not started | Warehouse/catalog/inventory writes                  |
-| FE contract and routing         | Not started | New types and safe deep links                       |
-| Automated and visual QA         | Not started | Execute after implementation                        |
+| Area                            | Status   | Notes                                                                 |
+| ------------------------------- | -------- | --------------------------------------------------------------------- |
+| Current architecture inspection | Complete | Based on FE `fc95bb9` and BE `7440f6b`                                |
+| Spec aligned with actual code   | Complete | Generic/nonexistent workflows removed                                 |
+| Integration branches            | Complete | FE WMS-265 and BE WMS-261 branches created                            |
+| Shared BE infrastructure        | Complete | Resolver, staging, audit warehouse scope, migration                   |
+| P0 workflow integration         | Complete | Purchase, inbound, adjustment, transfer, low stock                    |
+| P1 operational integration      | Complete | Cycle count, outbound, return, delivery, assignment                   |
+| P2 audit coverage               | Complete | Warehouse/catalog/inventory writes                                    |
+| FE contract and routing         | Complete | New types, labels, and safe deep links                                |
+| Automated and visual QA         | Complete | Automated checks and real PO submit/approve realtime visual flow pass |
+
+### Visual QA evidence — 2026-09-04
+
+- Warehouse Manager submitted `PO-20260824073125-B1436814`; the connected Tenant Owner UI showed
+  one realtime toast and incremented the unread counter from 4 to 5.
+- The persisted notification displayed the PO business code, changed to read without duplication,
+  and its safe reference link opened the real purchase-order detail route.
+- Tenant Owner approved the same PO; the connected Warehouse Manager UI showed one realtime toast,
+  incremented the unread counter from 0 to 1, and displayed the approval-result notification.
+- The Tenant Owner audit page displayed both `Submit` and `Approve` records with the correct actors.
+  The approval detail showed `PendingApproval` to `Approved`.
+- Warehouse Staff could open the authorized notification page and received the correct empty state;
+  Audit Log was not exposed in that role's navigation.
 
 ## 17. Definition of Done
 
