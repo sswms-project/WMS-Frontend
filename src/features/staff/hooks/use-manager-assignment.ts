@@ -5,6 +5,7 @@ import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
 import { managerAssignmentService } from '../services/manager-assignment.service'
 import type {
   AssignManagerRequest,
+  UpdateStaffWarehousesRequest,
   WarehouseAssignmentQuery,
   WarehouseSummaryResponse,
 } from '../types/manager-assignment.types'
@@ -12,6 +13,30 @@ import type {
 interface AssignManagerVariables {
   warehouseId: string
   request: AssignManagerRequest
+}
+
+export function useStaffWarehouseAssignmentsQuery(userId: string) {
+  return useQuery({
+    queryKey: queryKeys.staff.warehouseAssignments(userId),
+    queryFn: () => managerAssignmentService.getStaffWarehouses(userId),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+}
+
+export function useUpdateStaffWarehousesMutation(userId: string) {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateStaffWarehousesRequest>({
+    mutationFn: (request) => managerAssignmentService.updateStaffWarehouses(userId, request),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all }),
+      ])
+    },
+    onError: (error) => logger.error(error),
+  })
 }
 
 export function useAssignmentWarehousesQuery(params: WarehouseAssignmentQuery, enabled: boolean) {

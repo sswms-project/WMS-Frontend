@@ -16,7 +16,11 @@ describe('invitationService', () => {
 
   it('sends only fields supported by the invitation endpoint', async () => {
     const response = { isSuccess: true, statusCode: 200, message: '', data: null }
-    const request = { email: 'staff@example.com', role: USER_ROLES.WarehouseStaff }
+    const request = {
+      email: 'staff@example.com',
+      role: USER_ROLES.WarehouseStaff,
+      warehouseId: '11111111-1111-1111-1111-111111111111',
+    }
     axios.post.mockResolvedValue({ data: response })
 
     await expect(invitationService.send(request)).resolves.toEqual(response)

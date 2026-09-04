@@ -37,6 +37,9 @@ interface StaffDirectoryTableProps {
   readonly people: readonly StaffResponse[]
   readonly warehouses: readonly WarehouseSummaryResponse[]
   readonly isWarehouseScopeLoading: boolean
+  readonly canAssignWarehouse?: boolean
+  readonly canDeactivate?: boolean
+  readonly canReactivate?: boolean
   readonly onView: (person: StaffResponse) => void
   readonly onAssignWarehouse: (person: StaffResponse) => void
   readonly onLifecycleAction: (person: StaffResponse, action: StaffLifecycleAction) => void
@@ -63,6 +66,9 @@ export function StaffDirectoryTable({
   people,
   warehouses,
   isWarehouseScopeLoading,
+  canAssignWarehouse = false,
+  canDeactivate = false,
+  canReactivate = false,
   onView,
   onAssignWarehouse,
   onLifecycleAction,
@@ -77,7 +83,11 @@ export function StaffDirectoryTable({
   }
 
   function actionFor(person: StaffResponse) {
-    return kind === STAFF_DIRECTORY_KINDS.staff ? getStaffLifecycleAction(person.status) : null
+    const action =
+      kind === STAFF_DIRECTORY_KINDS.staff ? getStaffLifecycleAction(person.status) : null
+    return (action === 'deactivate' && canDeactivate) || (action === 'reactivate' && canReactivate)
+      ? action
+      : null
   }
 
   function actionItem(person: StaffResponse, action: StaffLifecycleAction) {
@@ -113,10 +123,10 @@ export function StaffDirectoryTable({
             <Eye className="size-4" aria-hidden="true" />
             Xem chi tiết
           </DropdownMenuItem>
-          {kind === STAFF_DIRECTORY_KINDS.managers && (
+          {canAssignWarehouse && person.status === 'Active' && (
             <DropdownMenuItem onSelect={() => onAssignWarehouse(person)}>
               <Warehouse className="size-4" aria-hidden="true" />
-              Gán vào kho
+              Sửa phân công kho
             </DropdownMenuItem>
           )}
           {action && actionItem(person, action)}

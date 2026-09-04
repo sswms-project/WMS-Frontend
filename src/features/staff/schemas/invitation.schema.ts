@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { USER_ROLES } from '@/config/roles'
+import { dotNetGuidSchema } from './dotnet-guid.schema'
 
 export const INVITABLE_ROLES = [USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff] as const
 
@@ -20,6 +21,7 @@ export const sendInvitationSchema = z.object({
     .email('Email không hợp lệ')
     .max(320, 'Email không được vượt quá 320 ký tự'),
   role: z.enum(INVITABLE_ROLES),
+  warehouseId: dotNetGuidSchema('Vui lòng chọn kho làm việc ban đầu'),
 })
 
 export const acceptInvitationSchema = z

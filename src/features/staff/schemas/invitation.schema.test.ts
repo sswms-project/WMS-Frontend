@@ -3,17 +3,31 @@ import { USER_ROLES } from '@/config/roles'
 import { acceptInvitationSchema, sendInvitationSchema } from './invitation.schema'
 
 describe('invitation schemas', () => {
+  it.each([USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'requires an initial warehouse for %s',
+    (role) => {
+      expect(sendInvitationSchema.safeParse({ email: 'member@example.com', role }).success).toBe(
+        false
+      )
+      expect(
+        sendInvitationSchema.safeParse({ email: 'member@example.com', role, warehouseId: '' })
+          .success
+      ).toBe(false)
+    }
+  )
   it('accepts roles supported by the backend', () => {
     expect(
       sendInvitationSchema.safeParse({
         email: 'manager@example.com',
         role: USER_ROLES.WarehouseManager,
+        warehouseId: '11111111-1111-1111-1111-111111111111',
       }).success
     ).toBe(true)
     expect(
       sendInvitationSchema.safeParse({
         email: 'staff@example.com',
         role: USER_ROLES.WarehouseStaff,
+        warehouseId: '11111111-1111-1111-1111-111111111111',
       }).success
     ).toBe(true)
   })

@@ -12,4 +12,21 @@ export interface WarehouseAssignmentQuery extends QueryInfo {
 
 export interface AssignManagerRequest {
   managerId: string
+  expectedManagerId?: string
 }
+
+export interface StaffWarehouseOption {
+  id: string
+  warehouseCode: string
+  warehouseName: string
+  status: string
+  managerId: string | null
+  managerName: string | null
+}
+
+export interface StaffWarehouseAssignments {
+  assignedWarehouseIds: string[]
+  warehouses: StaffWarehouseOption[]
+}
+
+export type { UpdateStaffWarehousesRequest } from '../schemas/update-staff-warehouses.schema'
