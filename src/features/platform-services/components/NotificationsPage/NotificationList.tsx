@@ -48,10 +48,7 @@ interface NotificationRowProps {
 }
 
 function NotificationRow({ notification, isPending, onMarkRead }: NotificationRowProps) {
-  const referenceRoute = getNotificationReferenceRoute(
-    notification.referenceType,
-    notification.referenceId
-  )
+  const referenceRoute = getNotificationReferenceRoute(notification)
   return (
     <li className={cn('flex gap-3 px-4 py-3', !notification.isRead && 'bg-muted/60')}>
       <span
