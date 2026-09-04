@@ -16,16 +16,20 @@ vi.mock('@/hooks/use-debounced-value', () => ({
   useDebouncedValue: (value: string) => value,
 }))
 
+vi.mock('@/features/auth/hooks/use-auth', () => ({
+  useMeQuery: () => ({ data: { permissions: [] } }),
+}))
+
 vi.mock('@/stores/auth.store', () => ({
   useAuthStore: (selector: (state: { user: { role: string } }) => unknown) =>
     selector({ user: { role: 'Tenant Owner' } }),
 }))
 
 vi.mock('../components/StaffDirectoryPage', () => ({
-  InviteStaffDialog: () => null,
+  StaffInvitation: () => null,
   InvitationManagementPanel: () => null,
   InvitationRevokeDialog: () => null,
-  ManagerWarehouseAssignmentDialog: () => null,
+  StaffWarehouseAssignment: () => null,
   StaffDetailsSheet: () => null,
   StaffDirectoryPagination: () => null,
   StaffDirectoryTable: () => <div>Danh sách quản lý kho</div>,
@@ -79,6 +83,12 @@ vi.mock('../hooks/use-staff', () => ({
 describe('StaffDirectoryPage warehouse scope states', () => {
   beforeEach(() => {
     pageState.warehousesQuery.refetch.mockReset()
+  })
+
+  it('does not expose invite controls solely because the user is an owner', () => {
+    render(<StaffDirectoryPage />)
+    expect(screen.queryByRole('button', { name: 'Mời nhân sự' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Lời mời' })).not.toBeInTheDocument()
   })
 
   it('keeps the directory available and offers retry when warehouse details fail', () => {

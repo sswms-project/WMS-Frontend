@@ -11,11 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { USER_ROLES } from '@/config/roles'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAuthStore } from '@/stores/auth.store'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
-  InviteStaffDialog,
+  StaffInvitation,
   InvitationManagementPanel,
   InvitationRevokeDialog,
-  ManagerWarehouseAssignmentDialog,
+  StaffWarehouseAssignment,
   StaffDetailsSheet,
   StaffDirectoryPagination,
   StaffDirectoryTable,
@@ -74,6 +75,9 @@ function isStaffPageView(value: string): value is StaffPageView {
 export function StaffDirectoryPage() {
   const user = useAuthStore((state) => state.user)
   const isTenantOwner = user?.role === USER_ROLES.TenantOwner
+  const meQuery = useMeQuery()
+  const permissions = new Set(meQuery.data?.permissions ?? [])
+  const canInvite = permissions.has('staff:invite')
   const [kind, setKind] = useState<StaffDirectoryKind>(
     isTenantOwner ? STAFF_DIRECTORY_KINDS.managers : STAFF_DIRECTORY_KINDS.staff
   )
@@ -107,7 +111,7 @@ export function StaffDirectoryPage() {
   )
   const invitationsQuery = useInvitationsQuery(
     invitationParams,
-    activeView === STAFF_PAGE_VIEWS.invitations
+    canInvite && activeView === STAFF_PAGE_VIEWS.invitations
   )
   const detailsQuery = useStaffDetailsQuery(selectedUserId)
   const deactivateMutation = useDeactivateStaffMutation()
@@ -131,6 +135,7 @@ export function StaffDirectoryPage() {
   async function confirmLifecycleAction() {
     if (!pendingLifecycleAction) return
     const { person, action } = pendingLifecycleAction
+    if (!permissions.has(`staff:${action}`)) return
     const mutation = action === 'deactivate' ? deactivateMutation : reactivateMutation
 
     try {
@@ -153,6 +158,7 @@ export function StaffDirectoryPage() {
   }
 
   async function resendInvitation(invitation: InvitationResponse) {
+    if (!canInvite) return
     try {
       await resendInvitationMutation.mutateAsync(invitation.id)
       toast.success(`Đã gửi lại lời mời tới ${invitation.email}.`)
@@ -170,7 +176,7 @@ export function StaffDirectoryPage() {
   }
 
   async function confirmRevokeInvitation() {
-    if (!invitationToRevoke) return
+    if (!canInvite || !invitationToRevoke) return
     const shouldReturnToPreviousPage = invitations.length === 1 && invitationPage > 1
 
     try {
@@ -209,14 +215,16 @@ export function StaffDirectoryPage() {
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          className="w-full sm:w-auto"
-          onClick={() => setIsInviteDialogOpen(true)}
-        >
-          <MailPlus className="size-4" aria-hidden="true" />
-          Mời nhân sự
-        </Button>
+        {canInvite && (
+          <Button
+            type="button"
+            className="w-full sm:w-auto"
+            onClick={() => setIsInviteDialogOpen(true)}
+          >
+            <MailPlus className="size-4" aria-hidden="true" />
+            Mời nhân sự
+          </Button>
+        )}
       </header>
 
       <Tabs
@@ -229,10 +237,12 @@ export function StaffDirectoryPage() {
             <Users className="size-4" aria-hidden="true" />
             Nhân sự
           </TabsTrigger>
-          <TabsTrigger value={STAFF_PAGE_VIEWS.invitations} className="h-10 flex-none px-3">
-            <Mail className="size-4" aria-hidden="true" />
-            Lời mời
-          </TabsTrigger>
+          {canInvite && (
+            <TabsTrigger value={STAFF_PAGE_VIEWS.invitations} className="h-10 flex-none px-3">
+              <Mail className="size-4" aria-hidden="true" />
+              Lời mời
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value={STAFF_PAGE_VIEWS.directory} className="min-w-0">
@@ -357,6 +367,9 @@ export function StaffDirectoryPage() {
                   people={people}
                   warehouses={warehousesQuery.data?.items ?? []}
                   isWarehouseScopeLoading={warehousesQuery.isLoading}
+                  canAssignWarehouse={permissions.has('staff:assign-warehouse')}
+                  canDeactivate={permissions.has('staff:deactivate')}
+                  canReactivate={permissions.has('staff:reactivate')}
                   onView={(person) => setSelectedUserId(person.id)}
                   onAssignWarehouse={setManagerToAssign}
                   onLifecycleAction={(person, action) =>
@@ -374,26 +387,28 @@ export function StaffDirectoryPage() {
           </section>
         </TabsContent>
 
-        <TabsContent value={STAFF_PAGE_VIEWS.invitations} className="min-w-0">
-          <InvitationManagementPanel
-            invitations={invitations}
-            totalCount={invitationsQuery.data?.totalCount ?? 0}
-            page={invitationPage}
-            pageSize={pageSize}
-            isLoading={invitationsQuery.isLoading}
-            isError={invitationsQuery.isError}
-            isFetching={invitationsQuery.isFetching}
-            resendingId={
-              resendInvitationMutation.isPending
-                ? (resendInvitationMutation.variables ?? null)
-                : null
-            }
-            onPageChange={setInvitationPage}
-            onRefresh={() => void invitationsQuery.refetch()}
-            onResend={(invitation) => void resendInvitation(invitation)}
-            onRevoke={setInvitationToRevoke}
-          />
-        </TabsContent>
+        {canInvite && (
+          <TabsContent value={STAFF_PAGE_VIEWS.invitations} className="min-w-0">
+            <InvitationManagementPanel
+              invitations={invitations}
+              totalCount={invitationsQuery.data?.totalCount ?? 0}
+              page={invitationPage}
+              pageSize={pageSize}
+              isLoading={invitationsQuery.isLoading}
+              isError={invitationsQuery.isError}
+              isFetching={invitationsQuery.isFetching}
+              resendingId={
+                resendInvitationMutation.isPending
+                  ? (resendInvitationMutation.variables ?? null)
+                  : null
+              }
+              onPageChange={setInvitationPage}
+              onRefresh={() => void invitationsQuery.refetch()}
+              onResend={(invitation) => void resendInvitation(invitation)}
+              onRevoke={setInvitationToRevoke}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <StaffDetailsSheet
@@ -404,7 +419,7 @@ export function StaffDirectoryPage() {
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
 
-      {pendingLifecycleAction && (
+      {pendingLifecycleAction && permissions.has(`staff:${pendingLifecycleAction.action}`) && (
         <StaffLifecycleDialog
           person={pendingLifecycleAction.person}
           action={pendingLifecycleAction.action}
@@ -414,13 +429,14 @@ export function StaffDirectoryPage() {
         />
       )}
 
-      <InviteStaffDialog
-        open={isInviteDialogOpen}
-        canInviteManagers={isTenantOwner}
-        onOpenChange={setIsInviteDialogOpen}
-      />
+      {canInvite && isInviteDialogOpen && (
+        <StaffInvitation
+          canInviteManagers={isTenantOwner}
+          onClose={() => setIsInviteDialogOpen(false)}
+        />
+      )}
 
-      {invitationToRevoke && (
+      {canInvite && invitationToRevoke && (
         <InvitationRevokeDialog
           invitation={invitationToRevoke}
           isPending={revokeInvitationMutation.isPending}
@@ -429,10 +445,10 @@ export function StaffDirectoryPage() {
         />
       )}
 
-      {managerToAssign && (
-        <ManagerWarehouseAssignmentDialog
-          manager={managerToAssign}
-          onOpenChange={(open) => !open && setManagerToAssign(null)}
+      {managerToAssign && permissions.has('staff:assign-warehouse') && (
+        <StaffWarehouseAssignment
+          person={managerToAssign}
+          onClose={() => setManagerToAssign(null)}
         />
       )}
     </div>

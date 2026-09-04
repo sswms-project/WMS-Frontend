@@ -6,14 +6,14 @@ export type InvitableRole = typeof USER_ROLES.WarehouseManager | typeof USER_ROL
 export interface SendInvitationRequest {
   email: string
   role: InvitableRole
-  warehouseId?: string
+  warehouseId: string
 }
 
 export interface InvitationResponse {
   id: string
   email: string
   role: InvitableRole
-  warehouseId?: string
+  warehouseId?: string | null
   status: string
   createdAt: string
   expiresAt: string

@@ -77,13 +77,25 @@ export function InvitationManagementPanel({
         <>
           <ul className="divide-y">
             {invitations.map((invitation) => {
-              const canResend = invitation.status === 'Pending' || invitation.status === 'Expired'
+              const needsWarehouse =
+                !invitation.warehouseId &&
+                (invitation.status === 'Pending' || invitation.status === 'Expired')
+              const canResend =
+                !needsWarehouse &&
+                (invitation.status === 'Pending' || invitation.status === 'Expired')
               const canRevoke = invitation.status === 'Pending'
               return (
                 <li key={invitation.id} className="flex items-center gap-3 px-3 py-3 sm:px-4">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{invitation.email}</p>
                     <p className="text-muted-foreground text-xs">{invitation.role}</p>
+                    {needsWarehouse && (
+                      <p className="text-destructive mt-1 text-xs">
+                        {canRevoke
+                          ? 'Lời mời cũ thiếu kho. Cần thu hồi và gửi lời mời mới.'
+                          : 'Lời mời cũ thiếu kho. Cần gửi lời mời mới.'}
+                      </p>
+                    )}
                   </div>
                   <Badge variant={invitation.status === 'Pending' ? 'default' : 'outline'}>
                     {STATUS_LABELS[invitation.status] ?? invitation.status}

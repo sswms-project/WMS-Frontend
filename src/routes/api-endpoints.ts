@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
     deactivate: (userId: string) => `/staff/${userId}/deactivate`,
     reactivate: (userId: string) => `/staff/${userId}/reactivate`,
     assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
+    warehouseAssignments: (userId: string) => `/staff/${userId}/warehouses`,
   },
   warehouses: {
     list: '/warehouses',
