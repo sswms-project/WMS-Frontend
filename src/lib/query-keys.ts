@@ -169,6 +169,10 @@ export const queryKeys = {
     putawayTasks: (params: PutawayTaskQuery) =>
       ['inbound-receipts', 'putaway-tasks', params] as const,
   },
+  inboundDocumentImports: {
+    all: ['inbound-document-imports'] as const,
+    detail: (id: string) => ['inbound-document-imports', 'detail', id] as const,
+  },
   transfers: {
     all: ['transfers'] as const,
     lists: ['transfers', 'list'] as const,

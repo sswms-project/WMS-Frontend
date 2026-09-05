@@ -1,4 +1,4 @@
-import { PackagePlus, RefreshCw, Search } from 'lucide-react'
+import { PackagePlus, RefreshCw, Search, Sparkles } from 'lucide-react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -35,6 +35,7 @@ interface ReceivingTaskDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onReceive: (task: ReceivingTask) => void
+  readonly onImportDocument: (task: ReceivingTask) => void
   readonly onRetry: () => void
 }
 
@@ -50,6 +51,7 @@ export function ReceivingTaskDirectory({
   onSearchChange,
   onPageChange,
   onReceive,
+  onImportDocument,
   onRetry,
 }: ReceivingTaskDirectoryProps) {
   return (
@@ -111,10 +113,21 @@ export function ReceivingTaskDirectory({
                     {formatOperationalDate(item.expectedDate)}
                   </ItemDescription>
                 </ItemContent>
-                <Button type="button" size="sm" onClick={() => onReceive(item)}>
-                  <PackagePlus aria-hidden="true" />
-                  Nhận
-                </Button>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <Button type="button" size="sm" onClick={() => onReceive(item)}>
+                    <PackagePlus aria-hidden="true" />
+                    Nhập thủ công
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onImportDocument(item)}
+                  >
+                    <Sparkles className="text-tertiary" aria-hidden="true" />
+                    Từ chứng từ
+                  </Button>
+                </div>
               </Item>
             ))}
           </ItemGroup>
@@ -144,10 +157,21 @@ export function ReceivingTaskDirectory({
                     </TableCell>
                     <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
                     <TableCell className="text-right">
-                      <Button type="button" size="sm" onClick={() => onReceive(item)}>
-                        <PackagePlus aria-hidden="true" />
-                        Nhận hàng
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onImportDocument(item)}
+                        >
+                          <Sparkles className="text-tertiary" aria-hidden="true" />
+                          Từ chứng từ
+                        </Button>
+                        <Button type="button" size="sm" onClick={() => onReceive(item)}>
+                          <PackagePlus aria-hidden="true" />
+                          Nhập thủ công
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

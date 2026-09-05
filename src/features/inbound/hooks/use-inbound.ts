@@ -5,6 +5,7 @@ import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inboundService } from '../services/inbound.service'
 import type {
   InboundAllowedActionsResponse,
+  InboundDocumentImport,
   InboundListQuery,
   InboundReceiptDetail,
   InboundReceiptListResponse,
@@ -13,6 +14,8 @@ import type {
   ReceivingTaskListResponse,
   ReceivingTaskQuery,
   SaveInboundReceiptRequest,
+  StartInboundDocumentImportRequest,
+  ReviewInboundDocumentImportRequest,
 } from '../types/inbound.types'
 
 interface UpdateReceiptVariables {
@@ -62,6 +65,23 @@ export function useInboundReceiptQuery(receiptId: string) {
   })
 }
 
+export function useInboundDocumentImportQuery(importId: string) {
+  return useQuery<InboundDocumentImport, ApiErrorResponse>({
+    queryKey: queryKeys.inboundDocumentImports.detail(importId),
+    queryFn: () => inboundService.getDocumentImport(importId).then((response) => response.data),
+    enabled: Boolean(importId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      return status === 'Pending' ||
+        status === 'Uploaded' ||
+        status === 'Scanning' ||
+        status === 'Processing'
+        ? 1_500
+        : false
+    },
+  })
+}
+
 export function useInboundAllowedActionsQuery(receiptId: string) {
   return useQuery<InboundAllowedActionsResponse, ApiErrorResponse>({
     queryKey: queryKeys.inboundReceipts.allowedActions(receiptId),
@@ -93,6 +113,34 @@ export function useCreateInboundReceiptMutation() {
   return useMutation<ApiResponse<string>, ApiErrorResponse, SaveInboundReceiptRequest>({
     mutationFn: inboundService.createReceipt,
     onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useStartInboundDocumentImportMutation() {
+  return useMutation<ApiResponse<string>, ApiErrorResponse, StartInboundDocumentImportRequest>({
+    mutationFn: inboundService.startDocumentImport,
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReviewInboundDocumentImportMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReviewInboundDocumentImportRequest>({
+    mutationFn: inboundService.reviewDocumentImport,
+    onSuccess: (_, variables) =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inboundDocumentImports.detail(variables.id),
+      }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useCreateDraftFromDocumentMutation() {
+  const invalidateInbound = useInvalidateInbound()
+  return useMutation<ApiResponse<string>, ApiErrorResponse, string>({
+    mutationFn: inboundService.createDraftFromDocument,
+    onSuccess: () => invalidateInbound(),
     onError: (error) => logger.error(error),
   })
 }

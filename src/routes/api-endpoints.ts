@@ -139,6 +139,13 @@ export const API_ENDPOINTS = {
     allowedActions: (receiptId: string) => `/inbound-receipts/${receiptId}/allowed-actions`,
     putaway: (receiptId: string) => `/inbound-receipts/${receiptId}/putaway`,
   },
+  inboundDocumentImports: {
+    create: '/inbound-document-imports',
+    detail: (importId: string) => `/inbound-document-imports/${importId}`,
+    review: (importId: string) => `/inbound-document-imports/${importId}/review`,
+    createDraft: (importId: string) => `/inbound-document-imports/${importId}/draft-receipt`,
+    document: (importId: string) => `/inbound-document-imports/${importId}/document`,
+  },
   invitations: {
     send: '/invitations',
     accept: (token: string) => `/invitations/${token}/accept`,
