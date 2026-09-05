@@ -56,6 +56,7 @@ export function useProductOptionsQuery(params: LookupQuery) {
   return useQuery<LookupListResponse<ProductOption>, ApiErrorResponse>({
     queryKey: queryKeys.purchaseOrders.products(params),
     queryFn: () => purchaseOrderService.getProducts(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
   })
 }
 
@@ -63,6 +64,7 @@ export function useSupplierOptionsQuery(params: LookupQuery) {
   return useQuery<LookupListResponse<SupplierOption>, ApiErrorResponse>({
     queryKey: queryKeys.suppliers.list(params),
     queryFn: () => purchaseOrderService.getSuppliers(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
   })
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowLeft, Plus, Save, Send, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useIsMobile } from '@/hooks/use-mobile'
 import type { PurchaseOrderFormValues } from '../../schemas/purchase-order.schema'
 import { LookupCombobox, type LookupOption } from './LookupCombobox'
 
@@ -43,7 +45,7 @@ interface PurchaseOrderFormProps {
   readonly onSaveAndSubmit: () => void
   readonly onWarehouseSearchChange: (value: string) => void
   readonly onSupplierSearchChange: (value: string) => void
-  readonly onProductSearchChange: (value: string) => void
+  readonly onProductSearchChange: (scope: string, value: string) => void
 }
 
 export function PurchaseOrderForm({
@@ -67,12 +69,31 @@ export function PurchaseOrderForm({
   onSupplierSearchChange,
   onProductSearchChange,
 }: PurchaseOrderFormProps) {
+  const isMobile = useIsMobile()
+  const [selectedProductOptions, setSelectedProductOptions] = useState<
+    Record<string, LookupOption>
+  >({})
   const {
     register,
     setValue,
     watch,
     formState: { errors },
   } = form
+
+  function rememberProductOption(scope: string, option?: LookupOption) {
+    setSelectedProductOptions((current) => {
+      if (option) {
+        const existing = current[scope]
+        if (existing?.value === option.value && existing.label === option.label) return current
+        return { ...current, [scope]: option }
+      }
+
+      if (!current[scope]) return current
+      const next = { ...current }
+      delete next[scope]
+      return next
+    })
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
@@ -170,128 +191,139 @@ export function PurchaseOrderForm({
             <FieldError>{errors.lines.root.message}</FieldError>
           ) : null}
           <div className="bg-card border">
-            <div className="hidden overflow-x-auto md:block">
-              <Table className="min-w-[760px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Sản phẩm</TableHead>
-                    <TableHead className="w-36">Số lượng</TableHead>
-                    <TableHead className="w-44">Đơn giá (VND)</TableHead>
-                    <TableHead className="w-12">
-                      <span className="sr-only">Xóa</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fields.map((field, index) => (
-                    <TableRow key={field.id}>
-                      <TableCell className="align-top">
-                        <ProductSelect
-                          index={index}
-                          form={form}
-                          options={productOptions}
-                          isLoading={isProductSearchLoading}
-                          onSearchChange={onProductSearchChange}
-                        />
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <Input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          aria-label={`Số lượng dòng ${index + 1}`}
-                          aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
-                          {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-                        />
-                        <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="1000"
-                          aria-label={`Đơn giá dòng ${index + 1}`}
-                          aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
-                          {...register(`lines.${index}.unitPrice`, {
-                            setValueAs: (value: string) => (value === '' ? null : Number(value)),
-                          })}
-                        />
-                        <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Xóa dòng ${index + 1}`}
-                              disabled={fields.length === 1}
-                              onClick={() => onRemoveLine(index)}
-                            >
-                              <Trash2 aria-hidden="true" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Xóa dòng</TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="divide-y md:hidden">
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex flex-col gap-3 p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium">Dòng {index + 1}</p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Xóa dòng ${index + 1}`}
-                      disabled={fields.length === 1}
-                      onClick={() => onRemoveLine(index)}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </Button>
+            {isMobile ? (
+              <div className="divide-y">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex flex-col gap-3 p-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium">Dòng {index + 1}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Xóa dòng ${index + 1}`}
+                        disabled={fields.length === 1}
+                        onClick={() => onRemoveLine(index)}
+                      >
+                        <Trash2 aria-hidden="true" />
+                      </Button>
+                    </div>
+                    <ProductSelect
+                      inputId={`mobile-product-${index}`}
+                      searchScope={field.id}
+                      selectedOption={selectedProductOptions[field.id]}
+                      onSelectedOptionChange={rememberProductOption}
+                      index={index}
+                      form={form}
+                      options={productOptions}
+                      isLoading={isProductSearchLoading}
+                      onSearchChange={onProductSearchChange}
+                    />
+                    <Field>
+                      <FieldLabel htmlFor={`mobile-quantity-${index}`}>Số lượng</FieldLabel>
+                      <Input
+                        id={`mobile-quantity-${index}`}
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
+                        {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+                      />
+                      <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor={`mobile-unit-price-${index}`}>Đơn giá (VND)</FieldLabel>
+                      <Input
+                        id={`mobile-unit-price-${index}`}
+                        type="number"
+                        min="0"
+                        step="1000"
+                        aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
+                        {...register(`lines.${index}.unitPrice`, {
+                          setValueAs: (value: string) => (value === '' ? null : Number(value)),
+                        })}
+                      />
+                      <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
+                    </Field>
                   </div>
-                  <ProductSelect
-                    index={index}
-                    form={form}
-                    options={productOptions}
-                    isLoading={isProductSearchLoading}
-                    onSearchChange={onProductSearchChange}
-                  />
-                  <Field>
-                    <FieldLabel htmlFor={`mobile-quantity-${index}`}>Số lượng</FieldLabel>
-                    <Input
-                      id={`mobile-quantity-${index}`}
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
-                      {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-                    />
-                    <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`mobile-unit-price-${index}`}>Đơn giá (VND)</FieldLabel>
-                    <Input
-                      id={`mobile-unit-price-${index}`}
-                      type="number"
-                      min="0"
-                      step="1000"
-                      aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
-                      {...register(`lines.${index}.unitPrice`, {
-                        setValueAs: (value: string) => (value === '' ? null : Number(value)),
-                      })}
-                    />
-                    <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
-                  </Field>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table className="min-w-[760px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sản phẩm</TableHead>
+                      <TableHead className="w-36">Số lượng</TableHead>
+                      <TableHead className="w-44">Đơn giá (VND)</TableHead>
+                      <TableHead className="w-12">
+                        <span className="sr-only">Xóa</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fields.map((field, index) => (
+                      <TableRow key={field.id}>
+                        <TableCell className="align-top">
+                          <ProductSelect
+                            inputId={`desktop-product-${index}`}
+                            searchScope={field.id}
+                            selectedOption={selectedProductOptions[field.id]}
+                            onSelectedOptionChange={rememberProductOption}
+                            index={index}
+                            form={form}
+                            options={productOptions}
+                            isLoading={isProductSearchLoading}
+                            onSearchChange={onProductSearchChange}
+                          />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            aria-label={`Số lượng dòng ${index + 1}`}
+                            aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
+                            {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+                          />
+                          <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1000"
+                            aria-label={`Đơn giá dòng ${index + 1}`}
+                            aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
+                            {...register(`lines.${index}.unitPrice`, {
+                              setValueAs: (value: string) => (value === '' ? null : Number(value)),
+                            })}
+                          />
+                          <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Xóa dòng ${index + 1}`}
+                                disabled={fields.length === 1}
+                                onClick={() => onRemoveLine(index)}
+                              >
+                                <Trash2 aria-hidden="true" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Xóa dòng</TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </FieldSet>
       </form>
@@ -300,37 +332,47 @@ export function PurchaseOrderForm({
 }
 
 function ProductSelect({
+  inputId,
+  searchScope,
+  selectedOption,
+  onSelectedOptionChange,
   index,
   form,
   options,
   isLoading,
   onSearchChange,
 }: {
+  readonly inputId: string
+  readonly searchScope: string
+  readonly selectedOption?: LookupOption
+  readonly onSelectedOptionChange: (scope: string, option?: LookupOption) => void
   readonly index: number
   readonly form: UseFormReturn<PurchaseOrderFormValues>
   readonly options: readonly LookupOption[]
   readonly isLoading: boolean
-  readonly onSearchChange: (value: string) => void
+  readonly onSearchChange: (scope: string, value: string) => void
 }) {
   const error = form.formState.errors.lines?.[index]?.productId
   return (
     <Field data-invalid={Boolean(error)}>
       <LookupCombobox
-        id={`product-${index}`}
+        id={inputId}
         value={form.watch(`lines.${index}.productId`)}
         options={options}
+        selectedOption={selectedOption}
         placeholder="Chọn hoặc tìm sản phẩm"
         emptyMessage="Không tìm thấy sản phẩm phù hợp."
         ariaLabel={`Sản phẩm dòng ${index + 1}`}
         isLoading={isLoading}
         isInvalid={Boolean(error)}
-        onSearchChange={onSearchChange}
-        onChange={(value) =>
+        onSearchChange={(value) => onSearchChange(searchScope, value)}
+        onChange={(value, option) => {
+          onSelectedOptionChange(searchScope, option)
           form.setValue(`lines.${index}.productId`, value, {
             shouldDirty: true,
             shouldValidate: true,
           })
-        }
+        }}
       />
       <FieldError>{error?.message}</FieldError>
     </Field>

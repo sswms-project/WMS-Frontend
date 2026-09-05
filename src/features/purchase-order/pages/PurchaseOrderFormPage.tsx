@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
@@ -33,6 +33,11 @@ import {
 const EMPTY_LINE = { productId: '', quantity: 1, unitPrice: null }
 const LOOKUP_PAGE_SIZE = 20
 
+interface ProductSearchState {
+  readonly scope: string
+  readonly value: string
+}
+
 function mergeLookupOptions(
   options: readonly LookupOption[],
   fallbackOptions: readonly LookupOption[]
@@ -52,10 +57,10 @@ export default function PurchaseOrderFormPage({
   const createdPurchaseOrderId = useRef<string | null>(null)
   const [warehouseSearchText, setWarehouseSearchText] = useState('')
   const [supplierSearchText, setSupplierSearchText] = useState('')
-  const [productSearchText, setProductSearchText] = useState('')
+  const [productSearch, setProductSearch] = useState<ProductSearchState | null>(null)
   const debouncedWarehouseSearch = useDebouncedValue(warehouseSearchText.trim(), 300)
   const debouncedSupplierSearch = useDebouncedValue(supplierSearchText.trim(), 300)
-  const debouncedProductSearch = useDebouncedValue(productSearchText.trim(), 300)
+  const debouncedProductSearch = useDebouncedValue(productSearch?.value.trim() ?? '', 300)
   const isEditing = Boolean(purchaseOrderId)
   const form = useForm<PurchaseOrderFormValues>({
     resolver: zodResolver(purchaseOrderSchema),
@@ -165,6 +170,13 @@ export default function PurchaseOrderFormPage({
     )
   }
 
+  function handleProductSearchChange(scope: string, value: string) {
+    setProductSearch((current) => {
+      if (value) return { scope, value }
+      return current?.scope === scope ? null : current
+    })
+  }
+
   const isLoading =
     warehousesQuery.isLoading ||
     productsQuery.isLoading ||
@@ -177,36 +189,48 @@ export default function PurchaseOrderFormPage({
     (isEditing && detailQuery.isError)
   const isPending = createMutation.isPending || updateMutation.isPending || submitMutation.isPending
   const detail = detailQuery.data
-  const warehouseOptions = mergeLookupOptions(
-    (warehousesQuery.data?.items ?? []).map((warehouse) => ({
-      value: warehouse.id,
-      label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
-    })),
-    detail?.warehouseId
-      ? [
-          {
-            value: detail.warehouseId,
-            label: `${detail.warehouseCode ?? ''} - ${detail.warehouseName ?? 'Kho hiện tại'}`,
-          },
-        ]
-      : []
+  const warehouseOptions = useMemo(
+    () =>
+      mergeLookupOptions(
+        (warehousesQuery.data?.items ?? []).map((warehouse) => ({
+          value: warehouse.id,
+          label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
+        })),
+        detail?.warehouseId
+          ? [
+              {
+                value: detail.warehouseId,
+                label: `${detail.warehouseCode ?? ''} - ${detail.warehouseName ?? 'Kho hiện tại'}`,
+              },
+            ]
+          : []
+      ),
+    [detail, warehousesQuery.data?.items]
   )
-  const supplierOptions = mergeLookupOptions(
-    (suppliersQuery.data?.items ?? []).map((supplier) => ({
-      value: supplier.id,
-      label: `${supplier.supplierName} · ${supplier.phone}`,
-    })),
-    detail ? [{ value: detail.supplierId, label: detail.supplierName }] : []
+  const supplierOptions = useMemo(
+    () =>
+      mergeLookupOptions(
+        (suppliersQuery.data?.items ?? []).map((supplier) => ({
+          value: supplier.id,
+          label: `${supplier.supplierName} · ${supplier.phone}`,
+        })),
+        detail ? [{ value: detail.supplierId, label: detail.supplierName }] : []
+      ),
+    [detail, suppliersQuery.data?.items]
   )
-  const productOptions = mergeLookupOptions(
-    (productsQuery.data?.items ?? []).map((product) => ({
-      value: product.id,
-      label: `${product.sku} - ${product.productName}`,
-    })),
-    detail?.lines.map((line) => ({
-      value: line.productId,
-      label: `${line.productSKU} - ${line.productName}`,
-    })) ?? []
+  const productOptions = useMemo(
+    () =>
+      mergeLookupOptions(
+        (productsQuery.data?.items ?? []).map((product) => ({
+          value: product.id,
+          label: `${product.sku} - ${product.productName}`,
+        })),
+        detail?.lines.map((line) => ({
+          value: line.productId,
+          label: `${line.productSKU} - ${line.productName}`,
+        })) ?? []
+      ),
+    [detail?.lines, productsQuery.data?.items]
   )
 
   if (isLoading) return <OperationalLoadingState rows={8} />
@@ -246,7 +270,7 @@ export default function PurchaseOrderFormPage({
       onSaveAndSubmit={() => void form.handleSubmit((values) => save(values, true))()}
       onWarehouseSearchChange={setWarehouseSearchText}
       onSupplierSearchChange={setSupplierSearchText}
-      onProductSearchChange={setProductSearchText}
+      onProductSearchChange={handleProductSearchChange}
     />
   )
 }
