@@ -65,9 +65,13 @@ describe('ImportState', () => {
       />
     )
 
-    expect(screen.getByRole('link', { name: 'Xem phiếu nhập nháp' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Mở phiếu để gửi duyệt' })).toHaveAttribute(
       'href',
       '/inbound/receipts/20000000-0000-4000-8000-000000000001'
+    )
+    expect(screen.getByRole('link', { name: 'Xem danh sách phiếu nhập' })).toHaveAttribute(
+      'href',
+      '/inbound/receipts'
     )
     expect(screen.getByText(/cần được gửi và phê duyệt/)).toBeInTheDocument()
   })

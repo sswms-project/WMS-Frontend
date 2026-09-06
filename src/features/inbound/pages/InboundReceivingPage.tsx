@@ -62,7 +62,7 @@ export default function InboundReceivingPage() {
   })
   const importForm = useForm<InboundDocumentReviewFormValues>({
     resolver: zodResolver(inboundDocumentReviewSchema),
-    defaultValues: { purchaseOrderId: '', lines: [] },
+    defaultValues: { purchaseOrderId: '', acknowledgeWarehouseMismatch: false, lines: [] },
   })
 
   useEffect(() => {
@@ -72,6 +72,7 @@ export default function InboundReceivingPage() {
     initializedImportIdRef.current = importId
     importForm.reset({
       purchaseOrderId: review.purchaseOrderId,
+      acknowledgeWarehouseMismatch: review.warehouseMismatchAcknowledged,
       lines: review.lines.map((line) => ({
         sourceLineNumber: line.sourceLineNumber,
         purchaseOrderItemId: line.purchaseOrderItemId ?? '',
@@ -103,13 +104,14 @@ export default function InboundReceivingPage() {
     setImportId('')
     initializedImportIdRef.current = ''
     setDraftReceiptId(null)
-    importForm.reset({ purchaseOrderId: '', lines: [] })
+    importForm.reset({ purchaseOrderId: '', acknowledgeWarehouseMismatch: false, lines: [] })
     importForm.clearErrors()
   }
 
   function openDocumentImport(task: ReceivingTask) {
     resetImport()
     setImportTask(task)
+    if (task.activeDocumentImportId) setImportId(task.activeDocumentImportId)
   }
 
   function selectImportFile(file: File | null) {
@@ -154,6 +156,7 @@ export default function InboundReceivingPage() {
     try {
       const normalizedValues = {
         purchaseOrderId: values.purchaseOrderId,
+        acknowledgeWarehouseMismatch: values.acknowledgeWarehouseMismatch,
         lines: values.lines.map((line) => ({
           ...line,
           exceptionReason: line.exceptionReason.trim(),
@@ -162,6 +165,7 @@ export default function InboundReceivingPage() {
       await reviewImportMutation.mutateAsync({
         id: importId,
         purchaseOrderId: normalizedValues.purchaseOrderId,
+        acknowledgeWarehouseMismatch: normalizedValues.acknowledgeWarehouseMismatch,
         lines: normalizedValues.lines.map((line) => ({
           ...line,
           exceptionReason: line.exceptionReason || null,
@@ -181,7 +185,7 @@ export default function InboundReceivingPage() {
     try {
       const response = await createDraftMutation.mutateAsync(importId)
       setDraftReceiptId(response.data)
-      toast.success('Đã tạo phiếu nhập nháp từ dữ liệu đã xác nhận.')
+      toast.success('Đã tạo phiếu nhập nháp. Mở phiếu để gửi duyệt hoặc phê duyệt.')
     } catch (error) {
       logger.error(error)
       toast.error('Không thể tạo phiếu nhập nháp. Vui lòng kiểm tra lại dữ liệu mới nhất.')
@@ -262,7 +266,7 @@ export default function InboundReceivingPage() {
         task={importTask}
         file={importFile}
         importData={importQuery.data ?? null}
-        draftReceiptId={draftReceiptId}
+        draftReceiptId={draftReceiptId ?? importQuery.data?.inboundReceiptId ?? null}
         form={importForm}
         isStarting={startImportMutation.isPending}
         isLoadingImport={Boolean(importId) && importQuery.isLoading}

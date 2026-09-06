@@ -25,6 +25,7 @@ describe('inbound document import schemas', () => {
   it('requires a reason for damaged goods and rejects damage above confirmed quantity', () => {
     const base = {
       purchaseOrderId: GUID_A,
+      acknowledgeWarehouseMismatch: false,
       lines: [
         {
           sourceLineNumber: 1,
@@ -63,6 +64,7 @@ describe('inbound document import schemas', () => {
     expect(
       inboundDocumentReviewSchema.safeParse({
         purchaseOrderId: GUID_A,
+        acknowledgeWarehouseMismatch: false,
         lines: [line, { ...line, sourceLineNumber: 2 }],
       }).success
     ).toBe(false)

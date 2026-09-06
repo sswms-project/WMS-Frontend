@@ -21,6 +21,7 @@ const task: ReceivingTask = {
   orderedQuantity: 10,
   receivedQuantity: 0,
   remainingQuantity: 10,
+  activeDocumentImportId: null,
   lines: [
     {
       purchaseOrderItemId,
@@ -71,6 +72,8 @@ const importData: InboundDocumentImport = {
     warehouseName: task.warehouseName,
     warehouseAddress: null,
     expectedReceiptDate: task.expectedDate,
+    hasWarehouseMismatch: false,
+    warehouseMismatchAcknowledged: false,
     lines: [
       {
         sourceLineNumber: 1,
@@ -99,10 +102,17 @@ const importData: InboundDocumentImport = {
   },
 }
 
-function ReviewStepFixture() {
+function ReviewStepFixture({
+  data = importData,
+  onSaveReview = vi.fn(),
+}: {
+  readonly data?: InboundDocumentImport
+  readonly onSaveReview?: () => void
+}) {
   const form = useForm<InboundDocumentReviewFormValues>({
     defaultValues: {
       purchaseOrderId,
+      acknowledgeWarehouseMismatch: data.review?.warehouseMismatchAcknowledged ?? false,
       lines: [
         {
           sourceLineNumber: 1,
@@ -118,11 +128,11 @@ function ReviewStepFixture() {
   return (
     <ReviewStep
       task={task}
-      importData={importData}
+      importData={data}
       form={form}
       isSavingReview={false}
       isCreatingDraft={false}
-      onSaveReview={vi.fn()}
+      onSaveReview={onSaveReview}
       onCreateDraft={vi.fn()}
     />
   )
@@ -144,5 +154,59 @@ describe('ReviewStep', () => {
       'title',
       'Lưu và kiểm tra lại các thay đổi trước khi tạo phiếu.'
     )
+  })
+
+  it('requires the user to acknowledge a document warehouse mismatch before revalidation', async () => {
+    const review = importData.review
+    if (!review) throw new Error('Review fixture is required')
+    const mismatchImport: InboundDocumentImport = {
+      ...importData,
+      status: 'NeedsReview',
+      review: {
+        ...review,
+        extraction: {
+          ...review.extraction,
+          warehouseCode: {
+            value: 'KHO-A',
+            rawValue: 'KHO-A',
+            confidence: null,
+            source: 'AiExtracted',
+            verificationStatus: 'Mismatch',
+          },
+          warehouseName: {
+            value: 'Kho trung tâm A',
+            rawValue: 'Kho trung tâm A',
+            confidence: null,
+            source: 'AiExtracted',
+            verificationStatus: 'Mismatch',
+          },
+        },
+        hasWarehouseMismatch: true,
+        warehouseMismatchAcknowledged: false,
+        canCreateDraft: false,
+      },
+    }
+    const onSaveReview = vi.fn()
+    const user = userEvent.setup()
+
+    render(<ReviewStepFixture data={mismatchImport} onSaveReview={onSaveReview} />)
+
+    const acknowledgement = screen.getByRole('checkbox', {
+      name: /Tôi xác nhận sử dụng WH-01 · Kho trung tâm/,
+    })
+    const createDraft = screen.getByRole('button', { name: 'Tạo phiếu nhập nháp' })
+    expect(acknowledgement).not.toBeChecked()
+    expect(createDraft).toBeDisabled()
+    expect(createDraft).toHaveAttribute('title', 'Xác nhận sử dụng kho của đơn mua để tiếp tục.')
+
+    await user.click(acknowledgement)
+
+    expect(acknowledgement).toBeChecked()
+    expect(createDraft).toHaveAttribute(
+      'title',
+      'Lưu và kiểm tra lại các thay đổi trước khi tạo phiếu.'
+    )
+    await user.click(screen.getByRole('button', { name: 'Lưu và kiểm tra lại' }))
+    expect(onSaveReview).toHaveBeenCalledOnce()
   })
 })

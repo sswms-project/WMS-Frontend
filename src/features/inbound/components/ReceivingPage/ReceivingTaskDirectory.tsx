@@ -104,7 +104,9 @@ export function ReceivingTaskDirectory({
             {items.map((item) => (
               <Item key={item.purchaseOrderId} className="border-b last:border-b-0">
                 <ItemContent>
-                  <ItemTitle className="font-mono">{item.poNumber}</ItemTitle>
+                  <ItemTitle className="font-mono" translate="no">
+                    {item.poNumber}
+                  </ItemTitle>
                   <ItemDescription>
                     {item.supplierName} · {item.warehouseName}
                   </ItemDescription>
@@ -125,7 +127,7 @@ export function ReceivingTaskDirectory({
                     onClick={() => onImportDocument(item)}
                   >
                     <Sparkles className="text-tertiary" aria-hidden="true" />
-                    Từ chứng từ
+                    {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Từ chứng từ'}
                   </Button>
                 </div>
               </Item>
@@ -148,7 +150,9 @@ export function ReceivingTaskDirectory({
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.purchaseOrderId}>
-                    <TableCell className="font-mono font-semibold">{item.poNumber}</TableCell>
+                    <TableCell className="font-mono font-semibold" translate="no">
+                      {item.poNumber}
+                    </TableCell>
                     <TableCell>{item.supplierName}</TableCell>
                     <TableCell>{item.warehouseName}</TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -165,7 +169,7 @@ export function ReceivingTaskDirectory({
                           onClick={() => onImportDocument(item)}
                         >
                           <Sparkles className="text-tertiary" aria-hidden="true" />
-                          Từ chứng từ
+                          {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Từ chứng từ'}
                         </Button>
                         <Button type="button" size="sm" onClick={() => onReceive(item)}>
                           <PackagePlus aria-hidden="true" />

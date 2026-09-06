@@ -1,9 +1,16 @@
 import { AlertCircle, CheckCircle2, Save, Sparkles, TriangleAlert } from 'lucide-react'
-import type { UseFormReturn } from 'react-hook-form'
+import { Controller, type UseFormReturn } from 'react-hook-form'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
@@ -123,6 +130,8 @@ export function ReviewStep({
   const errors = form.formState.errors
   const hasUnsavedChanges = form.formState.isDirty
   const isPending = isSavingReview || isCreatingDraft
+  const needsWarehouseAcknowledgement =
+    review.hasWarehouseMismatch && !review.warehouseMismatchAcknowledged
 
   return (
     <div className="flex flex-col gap-4">
@@ -172,6 +181,53 @@ export function ReviewStep({
           <AlertDescription>{message}</AlertDescription>
         </Alert>
       ))}
+
+      {review.hasWarehouseMismatch ? (
+        <Alert>
+          <TriangleAlert aria-hidden="true" />
+          <AlertTitle>Kho trên chứng từ khác với đơn mua</AlertTitle>
+          <AlertDescription className="flex flex-col gap-3">
+            <div className="grid gap-1 sm:grid-cols-2">
+              <p>
+                Chứng từ:{' '}
+                <strong>
+                  {review.extraction.warehouseCode?.value ?? 'Không có mã'} ·{' '}
+                  {review.extraction.warehouseName?.value ?? 'Không có tên'}
+                </strong>
+              </p>
+              <p>
+                Kho của PO:{' '}
+                <strong>
+                  {review.warehouseCode ?? 'Không có mã'} · {review.warehouseName}
+                </strong>
+              </p>
+            </div>
+            <Controller
+              control={form.control}
+              name="acknowledgeWarehouseMismatch"
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="acknowledge-warehouse-mismatch"
+                    checked={field.value}
+                    disabled={isPending}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                  <FieldContent>
+                    <FieldLabel htmlFor="acknowledge-warehouse-mismatch">
+                      Tôi xác nhận sử dụng {review.warehouseCode} · {review.warehouseName} theo đơn
+                      mua.
+                    </FieldLabel>
+                    <FieldDescription>
+                      Nội dung AI chỉ dùng để đối chiếu; hệ thống không thay đổi kho nhận của PO.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              )}
+            />
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <input type="hidden" {...form.register('purchaseOrderId')} />
       <div className="max-h-[42dvh] overflow-auto border">
@@ -314,7 +370,11 @@ export function ReviewStep({
         <Button
           type="button"
           title={
-            hasUnsavedChanges ? 'Lưu và kiểm tra lại các thay đổi trước khi tạo phiếu.' : undefined
+            hasUnsavedChanges
+              ? 'Lưu và kiểm tra lại các thay đổi trước khi tạo phiếu.'
+              : needsWarehouseAcknowledgement
+                ? 'Xác nhận sử dụng kho của đơn mua để tiếp tục.'
+                : undefined
           }
           disabled={
             isPending ||

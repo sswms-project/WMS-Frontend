@@ -30,12 +30,17 @@ export function ImportState({
             Phiếu vẫn cần được gửi và phê duyệt trước khi hàng được cất vào vị trí kho.
           </p>
         </div>
-        <Button asChild>
-          <Link href={APP_ROUTES.inboundReceiptDetail(draftReceiptId) as Route}>
-            <PackagePlus data-icon="inline-start" />
-            Xem phiếu nhập nháp
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild>
+            <Link href={APP_ROUTES.inboundReceiptDetail(draftReceiptId) as Route}>
+              <PackagePlus data-icon="inline-start" aria-hidden="true" />
+              Mở phiếu để gửi duyệt
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={APP_ROUTES.inboundReceipts as Route}>Xem danh sách phiếu nhập</Link>
+          </Button>
+        </div>
       </div>
     )
   }

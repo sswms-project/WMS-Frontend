@@ -64,6 +64,7 @@ export interface ReceivingTask {
   orderedQuantity: number
   receivedQuantity: number
   remainingQuantity: number
+  activeDocumentImportId: string | null
   lines: ReceivingTaskLine[]
 }
 
@@ -233,6 +234,8 @@ export interface InboundDocumentReview {
   warehouseName: string | null
   warehouseAddress: string | null
   expectedReceiptDate: string | null
+  hasWarehouseMismatch: boolean
+  warehouseMismatchAcknowledged: boolean
   lines: InboundDocumentReviewLine[]
   warnings: string[]
   blockingErrors: string[]
@@ -274,5 +277,6 @@ export interface ReviewInboundDocumentLineRequest {
 export interface ReviewInboundDocumentImportRequest {
   id: string
   purchaseOrderId: string
+  acknowledgeWarehouseMismatch: boolean
   lines: ReviewInboundDocumentLineRequest[]
 }

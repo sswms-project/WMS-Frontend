@@ -29,6 +29,7 @@ export const inboundDocumentReviewLineSchema = z
 export const inboundDocumentReviewSchema = z
   .object({
     purchaseOrderId: dotNetGuidSchema('Đơn mua không hợp lệ.'),
+    acknowledgeWarehouseMismatch: z.boolean(),
     lines: z
       .array(inboundDocumentReviewLineSchema)
       .min(1, 'Chứng từ phải có ít nhất một dòng hàng.'),
