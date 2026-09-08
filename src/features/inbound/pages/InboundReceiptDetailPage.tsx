@@ -121,6 +121,7 @@ export default function InboundReceiptDetailPage({ receiptId }: { readonly recei
     orderedQuantity: receipt.items.reduce((sum, item) => sum + item.orderedQuantity, 0),
     receivedQuantity: receipt.items.reduce((sum, item) => sum + item.receivedQuantity, 0),
     remainingQuantity: 0,
+    activeDocumentImportId: null,
     lines: receipt.items.flatMap((item) =>
       item.purchaseOrderItemId
         ? [
