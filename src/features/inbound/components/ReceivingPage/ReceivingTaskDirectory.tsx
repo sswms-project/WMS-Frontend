@@ -1,4 +1,4 @@
-import { PackagePlus, RefreshCw, Search, Sparkles } from 'lucide-react'
+import { PackagePlus, RefreshCw, Search } from 'lucide-react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -126,8 +126,7 @@ export function ReceivingTaskDirectory({
                     variant="outline"
                     onClick={() => onImportDocument(item)}
                   >
-                    <Sparkles className="text-tertiary" aria-hidden="true" />
-                    {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Từ chứng từ'}
+                    {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
                   </Button>
                 </div>
               </Item>
@@ -168,8 +167,7 @@ export function ReceivingTaskDirectory({
                           variant="outline"
                           onClick={() => onImportDocument(item)}
                         >
-                          <Sparkles className="text-tertiary" aria-hidden="true" />
-                          {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Từ chứng từ'}
+                          {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
                         </Button>
                         <Button type="button" size="sm" onClick={() => onReceive(item)}>
                           <PackagePlus aria-hidden="true" />

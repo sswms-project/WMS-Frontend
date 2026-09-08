@@ -45,9 +45,36 @@ describe('ReceivingTaskDirectory', () => {
 
     const resumeButtons = screen.getAllByRole('button', { name: 'Tiếp tục chứng từ' })
 
-    expect(screen.queryByRole('button', { name: 'Từ chứng từ' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Nhập từ chứng từ' })).not.toBeInTheDocument()
     expect(resumeButtons).toHaveLength(2)
     fireEvent.click(resumeButtons[0]!)
     expect(onImportDocument).toHaveBeenCalledWith(receivingTask)
+  })
+
+  it('labels a new document import without an icon', () => {
+    render(
+      <TooltipProvider>
+        <ReceivingTaskDirectory
+          items={[{ ...receivingTask, activeDocumentImportId: null }]}
+          totalCount={1}
+          page={1}
+          pageSize={10}
+          searchText=""
+          isLoading={false}
+          isFetching={false}
+          isError={false}
+          onSearchChange={vi.fn()}
+          onPageChange={vi.fn()}
+          onReceive={vi.fn()}
+          onImportDocument={vi.fn()}
+          onRetry={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+
+    const importButtons = screen.getAllByRole('button', { name: 'Nhập từ chứng từ' })
+
+    expect(importButtons).toHaveLength(2)
+    expect(importButtons.every((button) => button.querySelector('svg') === null)).toBe(true)
   })
 })
