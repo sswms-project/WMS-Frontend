@@ -10,6 +10,8 @@ describe('staff status helpers', () => {
   it('does not invent transitions for pending or locked accounts', () => {
     expect(getStaffLifecycleAction('Pending')).toBeNull()
     expect(getStaffLifecycleAction('Locked')).toBeNull()
+    expect(getStaffLifecycleAction('AccountInactive')).toBeNull()
+    expect(getStaffStatusLabel('AccountInactive')).toBe('Tài khoản bị vô hiệu hóa toàn hệ thống')
   })
 
   it('keeps unknown backend statuses visible', () => {

@@ -1,7 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, MailPlus, RefreshCw, UserRoundSearch, Users, Warehouse } from 'lucide-react'
+import {
+  FileSpreadsheet,
+  Mail,
+  MailPlus,
+  RefreshCw,
+  UserRoundSearch,
+  Users,
+  Warehouse,
+} from 'lucide-react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -11,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { USER_ROLES } from '@/config/roles'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAuthStore } from '@/stores/auth.store'
+import { APP_ROUTES } from '@/routes/app-routes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
   StaffInvitation,
@@ -216,14 +226,18 @@ export function StaffDirectoryPage() {
           </div>
         </div>
         {canInvite && (
-          <Button
-            type="button"
-            className="w-full sm:w-auto"
-            onClick={() => setIsInviteDialogOpen(true)}
-          >
-            <MailPlus className="size-4" aria-hidden="true" />
-            Mời nhân sự
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="outline">
+              <Link href={APP_ROUTES.staffImport}>
+                <FileSpreadsheet aria-hidden="true" />
+                Nhập danh sách
+              </Link>
+            </Button>
+            <Button type="button" onClick={() => setIsInviteDialogOpen(true)}>
+              <MailPlus aria-hidden="true" />
+              Mời nhân sự
+            </Button>
+          </div>
         )}
       </header>
 

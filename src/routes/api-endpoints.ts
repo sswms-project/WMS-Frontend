@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
     me: '/auth/me',
     verify2fa: '/auth/verify-2fa',
     changePassword: '/auth/change-password',
+    tenantMemberships: '/auth/tenant-memberships',
+    switchTenant: '/auth/switch-tenant',
   },
   // Authenticated endpoints
   settings: {
@@ -148,10 +150,18 @@ export const API_ENDPOINTS = {
   },
   invitations: {
     send: '/invitations',
-    accept: (token: string) => `/invitations/${token}/accept`,
+    preview: (token: string) => `/invitations/${token}/preview`,
+    acceptNew: (token: string) => `/invitations/${token}/accept-new`,
+    acceptExisting: (token: string) => `/invitations/${token}/accept-existing`,
     list: '/invitations',
     resend: (id: string) => `/invitations/${id}/resend`,
     revoke: (id: string) => `/invitations/${id}`,
+  },
+  personnelImports: {
+    template: '/staff/import-template',
+    preview: '/staff/imports/preview',
+    detail: (importId: string) => `/staff/imports/${importId}`,
+    commit: (importId: string) => `/staff/imports/${importId}/commit`,
   },
   subscription: {
     me: '/subscriptions/me',

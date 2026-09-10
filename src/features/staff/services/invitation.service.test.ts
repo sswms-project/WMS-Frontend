@@ -17,9 +17,10 @@ describe('invitationService', () => {
   it('sends only fields supported by the invitation endpoint', async () => {
     const response = { isSuccess: true, statusCode: 200, message: '', data: null }
     const request = {
+      fullName: 'Nguyen Van A',
       email: 'staff@example.com',
       role: USER_ROLES.WarehouseStaff,
-      warehouseId: '11111111-1111-1111-1111-111111111111',
+      warehouseIds: ['11111111-1111-1111-1111-111111111111'],
     }
     axios.post.mockResolvedValue({ data: response })
 
@@ -30,13 +31,30 @@ describe('invitationService', () => {
 
   it('accepts an invitation by token with the current request contract', async () => {
     const response = { isSuccess: true, statusCode: 200, message: '', data: null }
-    const request = { fullName: 'Nguyen Van A', password: 'abcdefgh' }
+    const request = { password: 'Password1!', confirmPassword: 'Password1!' }
     axios.post.mockResolvedValue({ data: response })
 
-    await expect(invitationService.accept('invite-token', request)).resolves.toEqual(response)
+    await expect(invitationService.acceptNew('invite-token', request)).resolves.toEqual(response)
 
     expect(axios.post).toHaveBeenCalledWith(
-      API_ENDPOINTS.invitations.accept('invite-token'),
+      API_ENDPOINTS.invitations.acceptNew('invite-token'),
+      request
+    )
+  })
+
+  it('passes a legacy full name when the preview does not contain one', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: '', data: null }
+    const request = {
+      fullName: 'Legacy Staff',
+      password: 'Password1!',
+      confirmPassword: 'Password1!',
+    }
+    axios.post.mockResolvedValue({ data: response })
+
+    await invitationService.acceptNew('legacy-token', request)
+
+    expect(axios.post).toHaveBeenCalledWith(
+      API_ENDPOINTS.invitations.acceptNew('legacy-token'),
       request
     )
   })
