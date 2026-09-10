@@ -5,6 +5,7 @@ interface StaffDirectoryPaginationProps {
   readonly page: number
   readonly pageSize: number
   readonly totalCount: number
+  readonly disabled?: boolean
   readonly onPageChange: (page: number) => void
 }
 
@@ -12,6 +13,7 @@ export function StaffDirectoryPagination({
   page,
   pageSize,
   totalCount,
+  disabled = false,
   onPageChange,
 }: StaffDirectoryPaginationProps) {
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize))
@@ -28,7 +30,7 @@ export function StaffDirectoryPagination({
           type="button"
           variant="ghost"
           size="icon-sm"
-          disabled={page <= 1}
+          disabled={disabled || page <= 1}
           aria-label="Trang trước"
           onClick={() => onPageChange(page - 1)}
         >
@@ -41,7 +43,7 @@ export function StaffDirectoryPagination({
           type="button"
           variant="ghost"
           size="icon-sm"
-          disabled={page >= pageCount}
+          disabled={disabled || page >= pageCount}
           aria-label="Trang sau"
           onClick={() => onPageChange(page + 1)}
         >

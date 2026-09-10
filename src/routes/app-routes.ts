@@ -18,6 +18,7 @@ export const APP_ROUTES = {
   subscriptionPaymentResult: '/payment-result',
   organization: '/organization',
   staff: '/staff',
+  staffImport: '/staff/import' as Route,
   invitations: {
     accept: '/invitations/accept',
   },

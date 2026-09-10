@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { USER_ROLES } from '@/config/roles'
 import type { AuthUser } from '@/features/auth'
+import { queryKeys } from '@/lib/query-keys'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { UserMenu } from './UserMenu'
@@ -95,5 +96,53 @@ describe('UserMenu', () => {
       'aria-disabled',
       'true'
     )
+  })
+
+  it('shows the tenant switcher only when more than one membership is active', async () => {
+    const user = userEvent.setup()
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(queryKeys.auth.memberships, [
+      {
+        tenantId: 'tenant-1',
+        tenantName: 'KOVIA hiện tại',
+        role: USER_ROLES.TenantOwner,
+        status: 'Active',
+        isCurrent: true,
+      },
+      {
+        tenantId: 'tenant-inactive',
+        tenantName: 'Tổ chức đã dừng',
+        role: USER_ROLES.WarehouseStaff,
+        status: 'Inactive',
+        isCurrent: false,
+      },
+    ])
+
+    const view = renderUserMenu(queryClient)
+    await user.click(screen.getByRole('button', { name: /Mở menu tài khoản/ }))
+    expect(screen.queryByText('Tổ chức làm việc')).not.toBeInTheDocument()
+    view.unmount()
+
+    queryClient.setQueryData(queryKeys.auth.memberships, [
+      {
+        tenantId: 'tenant-1',
+        tenantName: 'KOVIA hiện tại',
+        role: USER_ROLES.TenantOwner,
+        status: 'Active',
+        isCurrent: true,
+      },
+      {
+        tenantId: 'tenant-2',
+        tenantName: 'KOVIA thứ hai',
+        role: USER_ROLES.WarehouseStaff,
+        status: 'Active',
+        isCurrent: false,
+      },
+    ])
+    renderUserMenu(queryClient)
+    await user.click(screen.getByRole('button', { name: /Mở menu tài khoản/ }))
+
+    expect(screen.getByText('Tổ chức làm việc')).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /KOVIA thứ hai/ })).toBeEnabled()
   })
 })

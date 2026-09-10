@@ -22,6 +22,18 @@ export interface LoginResponseDto {
   tempToken: string | null
 }
 
+export interface TenantMembershipResponse {
+  tenantId: string
+  tenantName: string
+  role: UserRole
+  status: string
+  isCurrent: boolean
+}
+
+export interface SwitchTenantRequest {
+  tenantId: string
+}
+
 export interface Verify2FARequestDto {
   tempToken: string
   otp: string

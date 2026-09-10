@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
     me: '/auth/me',
     verify2fa: '/auth/verify-2fa',
     changePassword: '/auth/change-password',
+    tenantMemberships: '/auth/tenant-memberships',
+    switchTenant: '/auth/switch-tenant',
   },
   // Authenticated endpoints
   settings: {
@@ -48,6 +50,7 @@ export const API_ENDPOINTS = {
     deactivate: (userId: string) => `/staff/${userId}/deactivate`,
     reactivate: (userId: string) => `/staff/${userId}/reactivate`,
     assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
+    warehouseAssignments: (userId: string) => `/staff/${userId}/warehouses`,
   },
   warehouses: {
     list: '/warehouses',
@@ -138,12 +141,27 @@ export const API_ENDPOINTS = {
     allowedActions: (receiptId: string) => `/inbound-receipts/${receiptId}/allowed-actions`,
     putaway: (receiptId: string) => `/inbound-receipts/${receiptId}/putaway`,
   },
+  inboundDocumentImports: {
+    create: '/inbound-document-imports',
+    detail: (importId: string) => `/inbound-document-imports/${importId}`,
+    review: (importId: string) => `/inbound-document-imports/${importId}/review`,
+    createDraft: (importId: string) => `/inbound-document-imports/${importId}/draft-receipt`,
+    document: (importId: string) => `/inbound-document-imports/${importId}/document`,
+  },
   invitations: {
     send: '/invitations',
-    accept: (token: string) => `/invitations/${token}/accept`,
+    preview: (token: string) => `/invitations/${token}/preview`,
+    acceptNew: (token: string) => `/invitations/${token}/accept-new`,
+    acceptExisting: (token: string) => `/invitations/${token}/accept-existing`,
     list: '/invitations',
     resend: (id: string) => `/invitations/${id}/resend`,
     revoke: (id: string) => `/invitations/${id}`,
+  },
+  personnelImports: {
+    template: '/staff/import-template',
+    preview: '/staff/imports/preview',
+    detail: (importId: string) => `/staff/imports/${importId}`,
+    commit: (importId: string) => `/staff/imports/${importId}/commit`,
   },
   subscription: {
     me: '/subscriptions/me',

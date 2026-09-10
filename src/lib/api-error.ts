@@ -12,8 +12,15 @@ const isApiError = (value: unknown): value is ApiErrorResponse =>
 // field failed instead of a bare "Validation failed".
 const flattenFieldErrors = (errors: Record<string, string[]>): string =>
   Object.entries(errors)
+    .filter(([field]) => field !== 'code')
     .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
     .join(' | ')
+
+/** Stable machine-readable error code returned through the API error envelope. */
+export function getApiErrorCode(error: unknown): string | undefined {
+  if (!isApiError(error)) return undefined
+  return error.errors?.code?.find((code) => code.trim().length > 0)
+}
 
 /** Human-readable message for a toast. */
 export function getApiErrorMessage(error: unknown, fallback = FALLBACK_MESSAGE): string {
