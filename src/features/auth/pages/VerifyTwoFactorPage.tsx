@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { VerifyTwoFactorForm, type VerifyStep } from '../components/VerifyTwoFactorPage'
 import { decodeJwtUser } from '../utils/decode-jwt-user'
 import { clearTwoFactorTempToken, getTwoFactorTempToken } from '../utils/two-factor-temp-token'
+import { takeAuthReturnUrl } from '../utils/auth-return-url'
 import {
   classifyVerify2FAError,
   isAccountInactiveError,
@@ -102,7 +103,7 @@ export function VerifyTwoFactorPage() {
 
           clearTwoFactorTempToken()
           setAuth(user, accessToken, refreshToken)
-          router.replace(APP_ROUTES.dashboard)
+          router.replace(takeAuthReturnUrl() ?? APP_ROUTES.dashboard)
         },
         onError: (error) => {
           if (flowId !== verifyFlowIdRef.current) return

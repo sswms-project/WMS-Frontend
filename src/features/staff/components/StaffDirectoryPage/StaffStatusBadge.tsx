@@ -6,6 +6,9 @@ interface StaffStatusBadgeProps {
 }
 
 export function StaffStatusBadge({ status }: StaffStatusBadgeProps) {
-  const variant = status === 'Inactive' || status === 'Locked' ? 'destructive' : 'outline'
+  const variant =
+    status === 'Inactive' || status === 'AccountInactive' || status === 'Locked'
+      ? 'destructive'
+      : 'outline'
   return <Badge variant={variant}>{getStaffStatusLabel(status)}</Badge>
 }

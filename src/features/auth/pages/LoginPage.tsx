@@ -11,8 +11,9 @@ import type { LoginFormValues } from '../schemas/login.schema'
 import type { AuthUser } from '../types/auth.types'
 import { decodeJwtUser } from '../utils/decode-jwt-user'
 import { clearTwoFactorTempToken, saveTwoFactorTempToken } from '../utils/two-factor-temp-token'
+import { safeReturnUrl, saveAuthReturnUrl } from '../utils/auth-return-url'
 
-export function LoginPage() {
+export function LoginPage({ returnUrl }: { readonly returnUrl?: string }) {
   const router = useRouter()
   const setAuth = useAuthStore((state) => state.setAuth)
   const loginMutation = useLoginMutation()
@@ -34,6 +35,7 @@ export function LoginPage() {
         }
 
         saveTwoFactorTempToken(tempToken)
+        saveAuthReturnUrl(returnUrl)
         router.replace(APP_ROUTES.auth.verify2fa)
         return
       }
@@ -57,7 +59,7 @@ export function LoginPage() {
 
       clearTwoFactorTempToken()
       setAuth(user, accessToken, refreshToken)
-      router.replace(APP_ROUTES.dashboard)
+      router.replace(safeReturnUrl(returnUrl) ?? APP_ROUTES.dashboard)
     } catch {
       // onError in useLoginMutation handles logging + toast
     }

@@ -3,6 +3,7 @@ import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse, QueryResult } from '@/types/api'
 import type {
   AcceptInvitationRequest,
+  InvitationPreviewResponse,
   InvitationQuery,
   InvitationResponse,
   SendInvitationRequest,
@@ -14,9 +15,19 @@ export const invitationService = {
       .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.send, request)
       .then((response) => response.data),
 
-  accept: (token: string, request: AcceptInvitationRequest) =>
+  preview: (token: string) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.accept(token), request)
+      .get<ApiResponse<InvitationPreviewResponse>>(API_ENDPOINTS.invitations.preview(token))
+      .then((response) => response.data),
+
+  acceptNew: (token: string, request: AcceptInvitationRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.acceptNew(token), request)
+      .then((response) => response.data),
+
+  acceptExisting: (token: string) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.invitations.acceptExisting(token))
       .then((response) => response.data),
 
   list: (params: InvitationQuery) =>

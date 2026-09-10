@@ -6,17 +6,16 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { USER_ROLES } from '@/config/roles'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useSendInvitationMutation } from '../../hooks/use-invitations'
-import { useAssignmentWarehousesQuery } from '../../hooks/use-manager-assignment'
+import { useInvitationWarehousesInfiniteQuery } from '../../hooks/use-manager-assignment'
 import {
   inviteWithWarehouseSchema,
   type InviteWithWarehouseFormValues,
 } from '../../schemas/invite-with-warehouse.schema'
 import { getActiveWarehouses } from '../../utils/active-warehouses'
-import { InviteStaffDialog } from './InviteStaffDialog'
 import type { WarehouseSummaryResponse } from '../../types/manager-assignment.types'
-
-const warehousePageSize = 100
+import { InviteStaffDialog } from './InviteStaffDialog'
 
 export function StaffInvitation({
   canInviteManagers,
@@ -25,33 +24,43 @@ export function StaffInvitation({
   readonly canInviteManagers: boolean
   readonly onClose: () => void
 }) {
-  const [page, setPage] = useState(1)
-  const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseSummaryResponse | null>(null)
+  const [warehouseSearch, setWarehouseSearch] = useState('')
+  const [selectedWarehouses, setSelectedWarehouses] = useState<WarehouseSummaryResponse[]>([])
+  const debouncedWarehouseSearch = useDebouncedValue(warehouseSearch.trim(), 300)
   const form = useForm<InviteWithWarehouseFormValues>({
     resolver: zodResolver(inviteWithWarehouseSchema),
     mode: 'onBlur',
     defaultValues: {
+      fullName: '',
       email: '',
       role: canInviteManagers ? USER_ROLES.WarehouseManager : USER_ROLES.WarehouseStaff,
-      warehouseId: '',
+      warehouseIds: [],
     },
   })
-  const warehouses = useAssignmentWarehousesQuery(
-    {
-      top: warehousePageSize,
-      skip: (page - 1) * warehousePageSize,
-      needTotalCount: true,
-      status: 'Active',
-    },
-    true
+  const warehouses = useInvitationWarehousesInfiniteQuery(debouncedWarehouseSearch)
+  const activeWarehouses = getActiveWarehouses(
+    warehouses.data?.pages.flatMap((page) => page.items) ?? []
   )
-  const activeWarehouses = getActiveWarehouses(warehouses.data?.items ?? [])
-  const options =
-    selectedWarehouse &&
-    !activeWarehouses.some((warehouse) => warehouse.id === selectedWarehouse.id)
-      ? [selectedWarehouse, ...activeWarehouses]
-      : activeWarehouses
   const mutation = useSendInvitationMutation()
+
+  function updateWarehouseSelection(warehouse: WarehouseSummaryResponse, selected: boolean) {
+    setSelectedWarehouses((current) =>
+      selected
+        ? current.some((item) => item.id === warehouse.id)
+          ? current
+          : [...current, warehouse]
+        : current.filter((item) => item.id !== warehouse.id)
+    )
+  }
+
+  function removeWarehouse(warehouseId: string) {
+    form.setValue(
+      'warehouseIds',
+      form.getValues('warehouseIds').filter((id) => id !== warehouseId),
+      { shouldDirty: true, shouldValidate: true }
+    )
+    setSelectedWarehouses((current) => current.filter((item) => item.id !== warehouseId))
+  }
   async function submit(values: InviteWithWarehouseFormValues) {
     try {
       await mutation.mutateAsync(values)
@@ -66,20 +75,20 @@ export function StaffInvitation({
       open
       canInviteManagers={canInviteManagers}
       form={form}
-      warehouses={options}
-      warehousePage={page}
-      warehousePageSize={warehousePageSize}
-      warehouseTotalCount={warehouses.data?.totalCount ?? 0}
-      onWarehousePage={setPage}
-      onWarehouseChange={(id) => {
-        setSelectedWarehouse(options.find((warehouse) => warehouse.id === id) ?? null)
-        form.setValue('warehouseId', id, { shouldValidate: true, shouldDirty: true })
-      }}
-      isLoading={warehouses.isLoading || warehouses.isFetching}
+      warehouses={activeWarehouses}
+      selectedWarehouses={selectedWarehouses}
+      warehouseSearch={warehouseSearch}
+      isLoading={warehouses.isLoading}
+      isFetchingNextPage={warehouses.isFetchingNextPage}
+      hasNextPage={warehouses.hasNextPage}
       isError={warehouses.isError}
       isPending={mutation.isPending}
       errorMessage={mutation.error ? getApiErrorMessage(mutation.error) : undefined}
       onRefresh={() => void warehouses.refetch()}
+      onWarehouseSearchChange={setWarehouseSearch}
+      onLoadMore={() => void warehouses.fetchNextPage()}
+      onWarehouseSelectionChange={updateWarehouseSelection}
+      onRemoveWarehouse={removeWarehouse}
       onOpenChange={(open) => !open && onClose()}
       onSubmit={(values) => void submit(values)}
     />

@@ -81,9 +81,12 @@ export const queryKeys = {
     warehouseAssignments: (userId: string) => ['staff', 'warehouses', userId] as const,
     allInvitations: ['staff', 'invitations'] as const,
     invitations: (params: InvitationQuery) => ['staff', 'invitations', params] as const,
+    invitationPreview: (token: string) => ['staff', 'invitation-preview', token] as const,
+    personnelImport: (importId: string) => ['staff', 'personnel-import', importId] as const,
   },
   auth: {
     me: ['auth', 'me'] as const,
+    memberships: ['auth', 'tenant-memberships'] as const,
   },
   subscription: {
     all: ['subscription'] as const,
@@ -99,6 +102,8 @@ export const queryKeys = {
   warehouses: {
     all: ['warehouses'] as const,
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
+    invitationOptions: (searchText: string) =>
+      ['warehouses', 'invitation-options', searchText] as const,
     detail: (id: string) => ['warehouses', 'detail', id] as const,
     layout: (id: string) => ['warehouses', 'detail', id, 'layout'] as const,
     layoutScene: (id: string) => ['warehouses', 'detail', id, 'layout', 'scene'] as const,
