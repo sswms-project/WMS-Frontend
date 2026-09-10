@@ -5,28 +5,19 @@ const axios = vi.hoisted(() => ({ post: vi.fn() }))
 
 vi.mock('@/lib/axios', () => ({ axiosClient: axios }))
 
-describe('subscriptionService PayOS contract', () => {
+describe('subscriptionService VNPay contract', () => {
   beforeEach(() => {
     axios.post.mockReset()
   })
 
-  it('uses the authenticated command endpoint to synchronize an order', async () => {
-    const response = { isSuccess: true, statusCode: 200, message: '', data: 'Completed' }
-    axios.post.mockResolvedValue({ data: response })
-
-    await expect(subscriptionService.syncPaymentStatus('123456789')).resolves.toEqual(response)
-
-    expect(axios.post).toHaveBeenCalledWith('/subscriptions/payments/123456789/sync')
-  })
-
-  it('creates a PayOS checkout link for renewal instead of completing it directly', async () => {
+  it('creates a VNPay checkout link for renewal instead of completing it directly', async () => {
     const response = {
       isSuccess: true,
       statusCode: 200,
       message: '',
       data: {
-        checkoutUrl: 'https://pay.payos.vn/test',
-        paymentLinkId: 'link-id',
+        checkoutUrl: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?test',
+        paymentLinkId: 'txn-ref',
         orderCode: 123456789,
       },
     }

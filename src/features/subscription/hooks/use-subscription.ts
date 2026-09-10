@@ -106,21 +106,6 @@ export function useInvoiceDataMutation() {
   })
 }
 
-export function useSyncPaymentStatusQuery(orderCode: string | null) {
-  return useQuery({
-    queryKey: ['payment-status', orderCode],
-    queryFn: () =>
-      subscriptionService.syncPaymentStatus(orderCode!).then((response) => response.data),
-    enabled: Boolean(orderCode),
-    retry: 3,
-    refetchInterval: (query) => {
-      const status = query.state.data
-      if (status === 'Completed' || status === 'Failed') return false
-      return 3000
-    },
-  })
-}
-
 export function useCreatePaymentLinkMutation() {
   return useMutation<PaymentLinkResponse, ApiErrorResponse, CreatePaymentLinkRequestDto>({
     mutationFn: (body) =>
@@ -131,6 +116,25 @@ export function useCreatePaymentLinkMutation() {
     onError: (error: ApiErrorResponse) => {
       logger.error(error)
       toast.error(error.message ?? 'Không thể tạo link thanh toán. Vui lòng thử lại.')
+    },
+  })
+}
+
+export function useProcessVNPayReturnMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation<string, ApiErrorResponse, Record<string, string>>({
+    mutationFn: (params) =>
+      subscriptionService.processVNPayReturn(params).then((response) => response.data),
+    onSuccess: (status) => {
+      if (status === 'Completed') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
+        queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
+      }
+    },
+    onError: (error: ApiErrorResponse) => {
+      logger.error(error)
     },
   })
 }

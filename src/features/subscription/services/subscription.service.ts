@@ -38,11 +38,6 @@ export const subscriptionService = {
       .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.paymentLink, body)
       .then((response) => response.data),
 
-  syncPaymentStatus: (orderCode: string) =>
-    axiosClient
-      .post<ApiResponse<string>>(API_ENDPOINTS.subscription.paymentStatus(orderCode))
-      .then((response) => response.data),
-
   renewSubscription: () =>
     axiosClient
       .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.renew)
@@ -66,5 +61,10 @@ export const subscriptionService = {
   downloadInvoice: (paymentId: string) =>
     axiosClient
       .get<Blob>(API_ENDPOINTS.payments.invoice(paymentId), { responseType: 'blob' })
+      .then((response) => response.data),
+
+  processVNPayReturn: (params: Record<string, string>) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.vnpay.return, params)
       .then((response) => response.data),
 }

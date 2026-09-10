@@ -153,7 +153,6 @@ export const API_ENDPOINTS = {
     renew: '/subscriptions/renew',
     cancel: '/subscriptions/me',
     paymentLink: '/subscriptions/payment-link',
-    paymentStatus: (orderCode: string) => `/subscriptions/payments/${orderCode}/sync`,
   },
   public: {
     subscriptionPlans: '/public/subscription-plans',
@@ -173,6 +172,9 @@ export const API_ENDPOINTS = {
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
     barcode: (id: string) => `/products/${id}/barcode`,
     import: '/products/import',
+  },
+  vnpay: {
+    return: '/vnpay/return',
   },
   payments: {
     history: '/payments',

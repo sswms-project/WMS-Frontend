@@ -1,17 +1,15 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { queryKeys } from '@/lib/query-keys'
 import { PaymentResultPage } from './PaymentResultPage'
 
 const mocks = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
   push: vi.fn(),
-  invalidateQueries: vi.fn(),
-  syncResult: {
+  mutationState: {
     data: undefined as string | undefined,
+    isPending: false,
     isError: false,
-    isLoading: false,
-    isFetching: false,
+    mutate: vi.fn(),
   },
 }))
 
@@ -20,36 +18,29 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => mocks.searchParams,
 }))
 
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}))
-
 vi.mock('../hooks/use-subscription', () => ({
-  useSyncPaymentStatusQuery: () => mocks.syncResult,
+  useProcessVNPayReturnMutation: () => mocks.mutationState,
 }))
 
 describe('PaymentResultPage', () => {
   beforeEach(() => {
-    mocks.searchParams = new URLSearchParams('orderCode=123456789')
+    mocks.searchParams = new URLSearchParams('vnp_TxnRef=123456789&vnp_ResponseCode=00')
     mocks.push.mockReset()
-    mocks.invalidateQueries.mockReset()
-    mocks.syncResult.data = undefined
-    mocks.syncResult.isError = false
-    mocks.syncResult.isLoading = false
-    mocks.syncResult.isFetching = false
+    mocks.mutationState.data = undefined
+    mocks.mutationState.isPending = false
+    mocks.mutationState.isError = false
+    mocks.mutationState.mutate = vi.fn()
   })
 
-  it('does not trust the cancel query string while the persisted status is pending', () => {
-    mocks.searchParams = new URLSearchParams('orderCode=123456789&cancel=true&status=CANCELLED')
-    mocks.syncResult.data = 'Pending'
+  it('shows processing while mutation is pending', () => {
+    mocks.mutationState.isPending = true
 
     render(<PaymentResultPage />)
 
     expect(screen.getByText('Đang xử lý thanh toán')).toBeInTheDocument()
-    expect(screen.queryByText('Đã hủy thanh toán')).not.toBeInTheDocument()
   })
 
-  it('shows a safe error when PayOS does not return an order code', () => {
+  it('shows a safe error when VNPay does not return any params', () => {
     mocks.searchParams = new URLSearchParams()
 
     render(<PaymentResultPage />)
@@ -57,16 +48,19 @@ describe('PaymentResultPage', () => {
     expect(screen.getByText('Không thể xác nhận thanh toán')).toBeInTheDocument()
   })
 
-  it('invalidates subscription, payment and notification caches after settlement', async () => {
-    mocks.syncResult.data = 'Completed'
+  it('shows success when mutation returns Completed', () => {
+    mocks.mutationState.data = 'Completed'
 
     render(<PaymentResultPage />)
 
     expect(screen.getByText('Thanh toán thành công')).toBeInTheDocument()
-    await waitFor(() => {
-      expect(mocks.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: queryKeys.notifications.all,
-      })
-    })
+  })
+
+  it('shows cancelled when mutation returns Failed', () => {
+    mocks.mutationState.data = 'Failed'
+
+    render(<PaymentResultPage />)
+
+    expect(screen.getByText('Đã hủy thanh toán')).toBeInTheDocument()
   })
 })

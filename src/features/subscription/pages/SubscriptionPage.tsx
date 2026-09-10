@@ -103,7 +103,7 @@ export function SubscriptionPage() {
 
     try {
       if (dialogState.type === 'upgrade') {
-        // Creates pending payment + redirects to PayOS checkout
+        // Creates pending payment + redirects to VNPay checkout
         await createPaymentLinkMutation.mutateAsync({
           newPlanId: dialogState.plan.id,
           billingCycle: dialogState.billingCycle,

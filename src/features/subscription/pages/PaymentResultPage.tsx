@@ -1,35 +1,38 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/lib/query-keys'
-import { useSyncPaymentStatusQuery } from '../hooks/use-subscription'
+import { useProcessVNPayReturnMutation } from '../hooks/use-subscription'
 
 export function PaymentResultPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const queryClient = useQueryClient()
+  const processedRef = useRef(false)
 
-  const orderCode = searchParams.get('orderCode')
-  const syncQuery = useSyncPaymentStatusQuery(orderCode)
-
-  const dbStatus = syncQuery.data
-  const isPaid = dbStatus === 'Completed'
-  const isCancelled = dbStatus === 'Failed'
-  const isMissingOrderCode = !orderCode
-  const isError = (isMissingOrderCode || syncQuery.isError) && !isPaid && !isCancelled
-  const isProcessing = !isPaid && !isCancelled && !isError
+  const vnpayReturnMutation = useProcessVNPayReturnMutation()
 
   useEffect(() => {
-    if (isPaid) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.payments.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
-    }
-  }, [isPaid, queryClient])
+    if (processedRef.current) return
+    processedRef.current = true
+
+    const params: Record<string, string> = {}
+    searchParams.forEach((value, key) => {
+      params[key] = value
+    })
+
+    if (Object.keys(params).length === 0) return
+
+    vnpayReturnMutation.mutate(params)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  const status = vnpayReturnMutation.data
+  const isPaid = status === 'Completed'
+  const isCancelled = status === 'Failed'
+  const isError = vnpayReturnMutation.isError || searchParams.toString() === ''
+  const isProcessing = vnpayReturnMutation.isPending && !isError
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4">
@@ -39,7 +42,7 @@ export function PaymentResultPage() {
           <div className="text-center">
             <h1 className="text-foreground text-2xl font-semibold">Thanh toán thành công</h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              Gói dịch vụ đã được cập nhật. Mã đơn: {orderCode}
+              Gói dịch vụ đã được cập nhật. Mã giao dịch: {searchParams.get('vnp_TxnRef')}
             </p>
           </div>
           <Button onClick={() => router.push('/subscription')}>Xem gói hiện tại</Button>
@@ -61,7 +64,7 @@ export function PaymentResultPage() {
         </>
       )}
 
-      {isError && (
+      {isError && !isPaid && !isCancelled && (
         <>
           <AlertCircle className="text-destructive h-16 w-16" aria-hidden="true" />
           <div className="text-center">
