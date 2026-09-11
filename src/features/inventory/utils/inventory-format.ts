@@ -12,6 +12,14 @@ export function formatInventoryDate(value: string): string {
   }).format(date)
 }
 
+export function formatInventoryPercent(value: number): string {
+  const formatted = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 1,
+    signDisplay: 'always',
+  }).format(value)
+  return `${formatted}%`
+}
+
 export function formatInventoryDateOnly(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value

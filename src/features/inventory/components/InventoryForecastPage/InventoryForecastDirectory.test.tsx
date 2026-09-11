@@ -14,7 +14,6 @@ function createProps(
     warehouseOptions: [],
     horizonDays: 14,
     chartData: [],
-    modelName: undefined,
     isLoading: false,
     isFetching: false,
     isError: false,
@@ -60,17 +59,43 @@ describe('InventoryForecastDirectory', () => {
     expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument()
   })
 
-  it('renders the model name once a forecast is loaded', () => {
+  it('falls back to the empty state when the series is too short to derive stats', () => {
     render(
       <InventoryForecastDirectory
         {...createProps({
           productId: 'product-1',
-          modelName: 'linear-trend-baseline',
           chartData: [{ date: '2026-08-01', actual: 100, forecast: null }],
         })}
       />
     )
-    expect(screen.getByText('Mô hình: linear-trend-baseline')).toBeInTheDocument()
+    expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument()
+  })
+
+  it('summarises the forecast in the stat cards once data is loaded', () => {
+    render(
+      <InventoryForecastDirectory
+        {...createProps({
+          productId: 'product-1',
+          chartData: [
+            { date: '2026-08-30', actual: 200, forecast: null },
+            { date: '2026-08-31', actual: 100, forecast: 100 },
+            { date: '2026-09-01', actual: null, forecast: 90 },
+            { date: '2026-09-02', actual: null, forecast: 80 },
+          ],
+        })}
+      />
+    )
+
+    expect(screen.getByText('Tồn kho hiện tại')).toBeInTheDocument()
+    expect(screen.getByText('Dự báo cuối kỳ')).toBeInTheDocument()
+    expect(screen.getByText('Điểm thấp nhất dự kiến')).toBeInTheDocument()
+
+    // 100 -> 80 over a 3-point (2-day) horizon: -20%, -10 per day. The end of
+    // the horizon is also the lowest point here, so 80 shows on two cards.
+    expect(screen.getByText('100')).toBeInTheDocument()
+    expect(screen.getAllByText('80')).toHaveLength(2)
+    expect(screen.getByText('-20%')).toBeInTheDocument()
+    expect(screen.getByText('-10')).toBeInTheDocument()
   })
 
   it('forwards product, warehouse and horizon selection changes', () => {

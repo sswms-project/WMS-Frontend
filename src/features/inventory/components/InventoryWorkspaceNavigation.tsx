@@ -33,8 +33,8 @@ export function InventoryWorkspaceNavigation({
     cn(
       'flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-medium transition-colors',
       view === currentView
-        ? 'border-primary text-primary'
-        : 'text-muted-foreground hover:border-border hover:text-foreground'
+        ? 'border-primary bg-primary/5 text-primary font-semibold'
+        : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
     )
 
   return (

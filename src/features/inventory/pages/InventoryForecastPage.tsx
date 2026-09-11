@@ -74,7 +74,6 @@ export default function InventoryForecastPage() {
       warehouseOptions={warehouseOptions}
       horizonDays={horizonDays}
       chartData={chartData}
-      modelName={forecastQuery.data?.modelName}
       isLoading={isLoading}
       isFetching={isFetching}
       isError={isError}
