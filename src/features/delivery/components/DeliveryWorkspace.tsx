@@ -17,6 +17,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OutboundWorkspaceNavigation } from '@/components/operations/OutboundWorkspaceNavigation'
 import type { DeliveryStatus, DeliveryTracking } from '../types/delivery.types'
 import {
   DELIVERY_STATUS_LABELS,
@@ -39,6 +40,7 @@ export function DeliveryWorkspace({
   warehouses,
   customers,
   staffNames,
+  permissions,
   canUpdate,
   isLoading,
   isFetching,
@@ -67,6 +69,7 @@ export function DeliveryWorkspace({
   readonly warehouses: readonly { id: string; label: string }[]
   readonly customers: readonly { id: string; label: string }[]
   readonly staffNames: Readonly<Record<string, string>>
+  readonly permissions: readonly string[]
   readonly canUpdate: (item: DeliveryTracking) => boolean
   readonly isLoading: boolean
   readonly isFetching: boolean
@@ -104,18 +107,19 @@ export function DeliveryWorkspace({
     </DropdownMenu>
   )
   return (
-    <section className="flex min-h-0 flex-1 flex-col border">
-      <header className="flex shrink-0 flex-col gap-3 border-b p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold">Theo dõi giao hàng</h1>
-            <p className="text-muted-foreground text-xs">{totalCount} hành trình</p>
-          </div>
-          <Button variant="outline" size="icon" aria-label="Tải lại" onClick={onRetry}>
-            <RefreshCw className={isFetching ? 'animate-spin' : ''} />
-          </Button>
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <header className="flex shrink-0 items-center justify-between border-b pb-4">
+        <div>
+          <h1 className="text-lg font-semibold">Theo dõi giao hàng</h1>
+          <p className="text-muted-foreground text-xs">{totalCount} hành trình</p>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
+        <Button variant="outline" size="icon" aria-label="Tải lại" onClick={onRetry}>
+          <RefreshCw className={isFetching ? 'animate-spin' : ''} />
+        </Button>
+      </header>
+      <OutboundWorkspaceNavigation currentView="delivery" permissions={permissions} />
+      <section className="flex min-h-0 flex-1 flex-col border">
+        <div className="grid shrink-0 gap-2 border-b p-3 sm:grid-cols-2 xl:grid-cols-6">
           <div className="relative">
             <Search className="text-muted-foreground absolute top-2.5 left-2 size-4" />
             <Input
@@ -177,64 +181,64 @@ export function DeliveryWorkspace({
             onChange={(e) => onDateToChange(e.target.value)}
           />
         </div>
-      </header>
-      {isLoading ? (
-        <OperationalLoadingState />
-      ) : isError ? (
-        <OperationalErrorState title="Không thể tải giao hàng" onRetry={onRetry} />
-      ) : items.length === 0 ? (
-        <OperationalEmptyState
-          title="Không có hành trình phù hợp"
-          description="Thử thay đổi từ khóa hoặc bộ lọc."
-        />
-      ) : (
-        <>
-          <div className="min-h-0 flex-1 overflow-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead className="bg-card sticky top-0 z-10">
-                <tr className="border-b text-left">
-                  <th className="p-3">Mã đơn</th>
-                  <th className="p-3">Kho</th>
-                  <th className="p-3">Khách hàng</th>
-                  <th className="p-3">Người nhận</th>
-                  <th className="p-3">Phụ trách</th>
-                  <th className="p-3">Trạng thái</th>
-                  <th className="p-3">Ngày tạo</th>
-                  <th className="p-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.outboundOrderId} className="border-b">
-                    <td className="p-3 font-mono font-medium">{item.orderCode}</td>
-                    <td className="p-3">{item.warehouseName}</td>
-                    <td className="p-3">{item.customerName}</td>
-                    <td className="p-3">{item.recipientName}</td>
-                    <td className="p-3">
-                      {item.assignedDeliveryStaffName ??
-                        (item.assignedDeliveryStaffId
-                          ? (staffNames[item.assignedDeliveryStaffId] ?? 'Đã phân công')
-                          : 'Chưa phân công')}
-                    </td>
-                    <td className="p-3">
-                      <DeliveryStatusBadge status={item.currentStatus} />
-                    </td>
-                    <td className="p-3">{formatDeliveryDate(item.createdAt)}</td>
-                    <td className="p-3 text-right">{actions(item)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <OperationalPagination
-            page={page}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            isPending={isFetching}
-            onPageChange={onPageChange}
+        {isLoading ? (
+          <OperationalLoadingState />
+        ) : isError ? (
+          <OperationalErrorState title="Không thể tải giao hàng" onRetry={onRetry} />
+        ) : items.length === 0 ? (
+          <OperationalEmptyState
+            title="Không có hành trình phù hợp"
+            description="Thử thay đổi từ khóa hoặc bộ lọc."
           />
-        </>
-      )}
-    </section>
+        ) : (
+          <>
+            <div className="min-h-0 flex-1 overflow-auto">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead className="bg-card sticky top-0 z-10">
+                  <tr className="border-b text-left">
+                    <th className="p-3">Mã đơn</th>
+                    <th className="p-3">Kho</th>
+                    <th className="p-3">Khách hàng</th>
+                    <th className="p-3">Người nhận</th>
+                    <th className="p-3">Phụ trách</th>
+                    <th className="p-3">Trạng thái</th>
+                    <th className="p-3">Ngày tạo</th>
+                    <th className="p-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.outboundOrderId} className="border-b">
+                      <td className="p-3 font-mono font-medium">{item.orderCode}</td>
+                      <td className="p-3">{item.warehouseName}</td>
+                      <td className="p-3">{item.customerName}</td>
+                      <td className="p-3">{item.recipientName}</td>
+                      <td className="p-3">
+                        {item.assignedDeliveryStaffName ??
+                          (item.assignedDeliveryStaffId
+                            ? (staffNames[item.assignedDeliveryStaffId] ?? 'Đã phân công')
+                            : 'Chưa phân công')}
+                      </td>
+                      <td className="p-3">
+                        <DeliveryStatusBadge status={item.currentStatus} />
+                      </td>
+                      <td className="p-3">{formatDeliveryDate(item.createdAt)}</td>
+                      <td className="p-3 text-right">{actions(item)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <OperationalPagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              isPending={isFetching}
+              onPageChange={onPageChange}
+            />
+          </>
+        )}
+      </section>
+    </div>
   )
 }

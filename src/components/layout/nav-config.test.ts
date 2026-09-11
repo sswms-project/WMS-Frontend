@@ -107,7 +107,11 @@ describe('application navigation visibility', () => {
       (item) => item.status === 'planned'
     )
 
-    expect(plannedItems.map((item) => item.label)).toEqual(['Dashboard kho', 'Báo cáo vận hành'])
+    expect(plannedItems.map((item) => item.label)).toEqual([
+      'Dashboard kho',
+      'Báo cáo vận hành',
+      'Dự báo & Bổ sung hàng',
+    ])
     expect(plannedItems.every((item) => item.href === undefined)).toBe(true)
     expect(plannedItems.every((item) => !isNavItemActive('/anything', item))).toBe(true)
   })
@@ -172,17 +176,13 @@ describe('application navigation visibility', () => {
     expect(isNavItemActive('/subscription/invoices/payment-1/print', paymentsItem!)).toBe(true)
   })
 
-  it('shows the forecasting report only to users with inventory:view', () => {
-    expect(
-      getVisibleNavItems(USER_ROLES.TenantOwner, ['inventory:view']).some(
-        (item) => item.href === APP_ROUTES.inventoryForecast
-      )
-    ).toBe(true)
-    expect(
-      getVisibleNavItems(USER_ROLES.TenantOwner, []).some(
-        (item) => item.href === APP_ROUTES.inventoryForecast
-      )
-    ).toBe(false)
+  it('keeps inventory forecasting in the inventory workspace until replenishment is available', () => {
+    const tenantItems = getNavItems(USER_ROLES.TenantOwner)
+    const replenishmentItem = tenantItems.find((item) => item.label === 'Dự báo & Bổ sung hàng')
+
+    expect(replenishmentItem?.status).toBe('planned')
+    expect(replenishmentItem?.href).toBeUndefined()
+    expect(tenantItems.some((item) => item.href === APP_ROUTES.inventoryForecast)).toBe(false)
   })
 
   it('keeps tenant inventory hidden from the system admin', () => {

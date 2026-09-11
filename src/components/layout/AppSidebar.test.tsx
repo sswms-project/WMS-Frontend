@@ -157,6 +157,23 @@ describe('AppSidebar tenant navigation', () => {
     expect(screen.getByRole('link', { name: 'Tồn kho' })).toHaveAttribute('aria-current', 'page')
   })
 
+  it('keeps inventory forecast under the warehouse operations group only', () => {
+    mocks.pathname = '/inventory/forecast'
+
+    renderSidebar()
+
+    expect(screen.getByRole('button', { name: 'Vận hành kho' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    )
+    expect(screen.getByRole('link', { name: 'Tồn kho' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Báo cáo' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    )
+    expect(screen.queryByRole('link', { name: 'Dự báo & Bổ sung hàng' })).not.toBeInTheDocument()
+  })
+
   it('renders completed operation destinations as links', async () => {
     const user = userEvent.setup()
     renderSidebar()
