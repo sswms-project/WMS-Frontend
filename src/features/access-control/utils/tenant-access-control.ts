@@ -1,9 +1,20 @@
 import { USER_ROLES } from '@/config/roles'
 import type {
+  AccessControlMode,
+  PersonalPermissionFilter,
   PermissionModuleGroup,
+  PermissionRowViewModel,
   TenantAssignablePermission,
   TenantRolePolicy,
 } from '../types/tenant-access-control.types'
+
+export function isAccessControlMode(value: string): value is AccessControlMode {
+  return value === 'role' || value === 'personal'
+}
+
+export function isPersonalPermissionFilter(value: string): value is PersonalPermissionFilter {
+  return value === 'all' || value === 'customized'
+}
 
 const ROLE_CONTENT: Record<string, { label: string; description: string }> = {
   [USER_ROLES.WarehouseManager]: {
@@ -79,4 +90,63 @@ export function filterPermissionGroups(groups: PermissionModuleGroup[], searchTe
 
 export function getRoleById(roles: TenantRolePolicy[], roleId: string) {
   return roles.find((role) => role.roleId === roleId)
+}
+
+export function filterPermissionGroupsByIds(
+  groups: PermissionModuleGroup[],
+  permissionIds: ReadonlySet<string>
+) {
+  return groups
+    .map((group) => ({
+      ...group,
+      permissions: group.permissions.filter((permission) => permissionIds.has(permission.id)),
+    }))
+    .filter((group) => group.permissions.length > 0)
+}
+
+export function getCustomizedPermissionIds(
+  effectiveIds: ReadonlySet<string>,
+  roleDefaultIds: ReadonlySet<string>
+) {
+  return new Set(
+    [...new Set([...effectiveIds, ...roleDefaultIds])].filter(
+      (permissionId) => effectiveIds.has(permissionId) !== roleDefaultIds.has(permissionId)
+    )
+  )
+}
+
+export function createRolePermissionRow(
+  permission: TenantAssignablePermission,
+  roleName: string,
+  selectedIds: ReadonlySet<string>,
+  inheritedIds: ReadonlySet<string>
+): PermissionRowViewModel {
+  const eligible = permission.eligibleRoles.includes(roleName)
+  const inherited = inheritedIds.has(permission.id)
+  return {
+    permission,
+    checked: selectedIds.has(permission.id) || inherited,
+    editable: eligible && !inherited,
+    presentation: !eligible ? 'role-unavailable' : inherited ? 'role-inherited' : 'role-direct',
+  }
+}
+
+export function createPersonalPermissionRow(
+  permission: TenantAssignablePermission,
+  roleName: string,
+  selectedIds: ReadonlySet<string>,
+  roleDefaultIds: ReadonlySet<string>
+): PermissionRowViewModel {
+  const eligible = permission.eligibleRoles.includes(roleName)
+  const customized = selectedIds.has(permission.id) !== roleDefaultIds.has(permission.id)
+  return {
+    permission,
+    checked: selectedIds.has(permission.id),
+    editable: eligible,
+    presentation: !eligible
+      ? 'personal-unavailable'
+      : customized
+        ? 'personal-customized'
+        : 'personal-default',
+  }
 }

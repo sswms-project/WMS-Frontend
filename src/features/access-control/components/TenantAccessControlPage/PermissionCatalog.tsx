@@ -1,18 +1,20 @@
 import { SearchX } from 'lucide-react'
 import { Accordion } from '@/components/ui/accordion'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import type { PermissionModuleGroup } from '../../types/tenant-access-control.types'
+import type {
+  PermissionCatalogContext,
+  PermissionModuleGroup,
+} from '../../types/tenant-access-control.types'
 import { PermissionModuleSection } from './PermissionModuleSection'
 
 interface PermissionCatalogProps {
   readonly groups: PermissionModuleGroup[]
-  readonly roleId: string
-  readonly roleName: string
-  readonly selectedIds: ReadonlySet<string>
-  readonly inheritedIds: ReadonlySet<string>
+  readonly context: PermissionCatalogContext
   readonly openModules: string[]
   readonly disabled?: boolean
   readonly hasSearch: boolean
+  readonly emptyTitle?: string
+  readonly emptyDescription?: string
   readonly onOpenModulesChange: (modules: string[]) => void
   readonly onTogglePermission: (permissionId: string) => void
   readonly onToggleModule: (permissionIds: string[]) => void
@@ -20,13 +22,12 @@ interface PermissionCatalogProps {
 
 export function PermissionCatalog({
   groups,
-  roleId,
-  roleName,
-  selectedIds,
-  inheritedIds,
+  context,
   openModules,
   disabled,
   hasSearch,
+  emptyTitle,
+  emptyDescription,
   onOpenModulesChange,
   onTogglePermission,
   onToggleModule,
@@ -39,12 +40,14 @@ export function PermissionCatalog({
             <SearchX aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>
-            {hasSearch ? 'Không tìm thấy quyền phù hợp' : 'Chưa có quyền để cấu hình'}
+            {emptyTitle ??
+              (hasSearch ? 'Không tìm thấy quyền phù hợp' : 'Chưa có quyền để cấu hình')}
           </EmptyTitle>
           <EmptyDescription>
-            {hasSearch
-              ? 'Thử từ khóa khác theo tên quyền, mô tả hoặc phân hệ.'
-              : 'Backend chưa cung cấp quyền vận hành có thể ủy quyền cho tenant.'}
+            {emptyDescription ??
+              (hasSearch
+                ? 'Thử từ khóa khác theo tên quyền, mô tả hoặc phân hệ.'
+                : 'Backend chưa cung cấp quyền vận hành có thể ủy quyền cho tenant.')}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -62,10 +65,7 @@ export function PermissionCatalog({
         <PermissionModuleSection
           key={group.module}
           group={group}
-          roleId={roleId}
-          roleName={roleName}
-          selectedIds={selectedIds}
-          inheritedIds={inheritedIds}
+          context={context}
           disabled={disabled}
           onTogglePermission={onTogglePermission}
           onToggleModule={onToggleModule}

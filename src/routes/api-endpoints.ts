@@ -40,6 +40,12 @@ export const API_ENDPOINTS = {
     workspace: '/tenant-role-permissions',
     assign: (roleId: string) => `/tenant-role-permissions/${roleId}`,
   },
+  tenantUserPermissions: {
+    subjects: '/tenant-user-permissions/subjects',
+    detail: (userId: string) => `/tenant-user-permissions/${userId}`,
+    assign: (userId: string) => `/tenant-user-permissions/${userId}`,
+    reset: (userId: string) => `/tenant-user-permissions/${userId}/reset`,
+  },
   organization: {
     me: '/organization',
   },
