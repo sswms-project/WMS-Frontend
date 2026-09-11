@@ -3,48 +3,39 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { cn } from '@/lib/utils'
-import type { TenantAssignablePermission } from '../../types/tenant-access-control.types'
+import type { PermissionRowViewModel } from '../../types/tenant-access-control.types'
 
 interface PermissionRowProps {
-  readonly permission: TenantAssignablePermission
-  readonly roleId: string
-  readonly roleName: string
-  readonly selected: boolean
-  readonly inherited: boolean
+  readonly model: PermissionRowViewModel
+  readonly subjectId: string
   readonly disabled?: boolean
   readonly onToggle: (permissionId: string) => void
 }
 
-export function PermissionRow({
-  permission,
-  roleId,
-  roleName,
-  selected,
-  inherited,
-  disabled,
-  onToggle,
-}: PermissionRowProps) {
-  const eligible = permission.eligibleRoles.includes(roleName)
-  const locked = inherited || !eligible
-  const inputId = `permission-${roleId}-${permission.id}`
+export function PermissionRow({ model, subjectId, disabled, onToggle }: PermissionRowProps) {
+  const { permission, checked, editable, presentation } = model
+  const inherited = presentation === 'role-inherited'
+  const customized = presentation === 'personal-customized'
+  const unavailable = presentation === 'role-unavailable' || presentation === 'personal-unavailable'
+  const inputId = `permission-${subjectId}-${permission.id}`
   const descriptionId = `${inputId}-description`
 
   return (
     <Field
       orientation="horizontal"
-      data-disabled={locked || disabled ? 'true' : undefined}
+      data-disabled={!editable || disabled ? 'true' : undefined}
       className={cn(
         'border-border bg-background items-start rounded-md border px-3 py-3 transition-colors',
-        selected && !inherited && 'border-primary/30 bg-primary/5',
+        checked && !inherited && 'border-primary/30 bg-primary/5',
         inherited && 'bg-muted/70',
-        !eligible && 'bg-muted/30 opacity-70'
+        unavailable && 'bg-muted/30 opacity-70'
       )}
     >
       <Checkbox
         id={inputId}
         aria-describedby={descriptionId}
-        checked={selected || inherited}
-        disabled={locked || disabled}
+        checked={checked}
+        disabled={!editable || disabled}
         onCheckedChange={() => onToggle(permission.id)}
         className="mt-0.5"
       />
@@ -59,14 +50,12 @@ export function PermissionRow({
               Kế thừa từ Nhân viên kho
             </Badge>
           )}
-          {!eligible && <Badge variant="outline">Không áp dụng</Badge>}
+          {customized && <Badge variant="secondary">Tùy chỉnh</Badge>}
+          {unavailable && <Badge variant="outline">Không áp dụng</Badge>}
         </div>
         <FieldDescription id={descriptionId} className="leading-5 break-words">
           {permission.description}
         </FieldDescription>
-        <code className="text-muted-foreground block max-w-full truncate text-[11px]">
-          {permission.permissionKey}
-        </code>
       </FieldContent>
     </Field>
   )

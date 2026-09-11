@@ -16,15 +16,15 @@ export function OutboundWorkspaceNavigation({
 }: OutboundWorkspaceNavigationProps) {
   const linkClassName = (view: OutboundWorkspaceView) =>
     cn(
-      'flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-medium transition-colors',
+      'flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-sm border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
       view === currentView
-        ? 'border-primary text-primary'
-        : 'text-muted-foreground hover:border-border hover:text-foreground'
+        ? 'border-primary bg-primary text-primary-foreground'
+        : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground'
     )
 
   return (
     <nav
-      className="flex shrink-0 overflow-x-auto border-b"
+      className="flex shrink-0 gap-1 overflow-x-auto border-b px-1 pb-1"
       aria-label="Không gian điều chuyển và xuất kho"
     >
       {permissions.includes('outbound-orders:view') ? (

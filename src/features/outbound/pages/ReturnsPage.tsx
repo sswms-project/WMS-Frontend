@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { OutboundWorkspaceNavigation } from '@/components/operations/OutboundWorkspaceNavigation'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { RejectReturnDialog, ReturnDetailSheet, ReturnDirectory } from '../components/ReturnsPage'
 import {
@@ -76,10 +75,6 @@ export default function ReturnsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <OutboundWorkspaceNavigation
-        currentView="returns"
-        permissions={meQuery.data?.permissions ?? []}
-      />
       <ReturnDirectory
         items={returnsQuery.data?.items ?? []}
         totalCount={returnsQuery.data?.totalCount ?? 0}

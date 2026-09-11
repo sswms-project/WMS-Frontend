@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import {
   Boxes,
@@ -8,6 +10,7 @@ import {
   SlidersHorizontal,
   TrendingUp,
 } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
 
@@ -29,17 +32,26 @@ export function InventoryWorkspaceNavigation({
   currentView,
   permissions,
 }: InventoryWorkspaceNavigationProps) {
+  const navigationRef = useRef<HTMLElement>(null)
+  const permissionSignature = permissions.join('|')
+
+  useEffect(() => {
+    const activeLink = navigationRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    activeLink?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  }, [currentView, permissionSignature])
+
   const linkClassName = (view: InventoryWorkspaceView) =>
     cn(
-      'flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-medium transition-colors',
+      'flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-sm border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
       view === currentView
-        ? 'border-primary text-primary'
-        : 'text-muted-foreground hover:border-border hover:text-foreground'
+        ? 'border-primary bg-primary text-primary-foreground'
+        : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground'
     )
 
   return (
     <nav
-      className="flex shrink-0 overflow-x-auto border-b"
+      ref={navigationRef}
+      className="flex shrink-0 gap-1 overflow-x-auto border-b px-1 pb-1"
       aria-label="Không gian kiểm soát tồn kho"
     >
       {permissions.includes('inventory:view') ? (
