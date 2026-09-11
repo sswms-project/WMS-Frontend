@@ -170,12 +170,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         plannedNavItem('Dashboard kho', ChartNoAxesCombined),
         plannedNavItem('Báo cáo vận hành', FileChartColumn),
-        requiredNavItem(
-          APP_ROUTES.inventoryForecast,
-          'Dự báo & Bổ sung hàng',
-          TrendingUp,
-          'inventory:view'
-        ),
+        plannedNavItem('Dự báo & Bổ sung hàng', TrendingUp),
       ],
     },
     {

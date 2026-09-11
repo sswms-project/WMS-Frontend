@@ -9,7 +9,6 @@ import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
 import { useWarehouseLocationsQuery } from '@/features/warehouse/hooks/use-warehouse'
-import { OutboundWorkspaceNavigation } from '@/components/operations/OutboundWorkspaceNavigation'
 import {
   IssueStockDialog,
   OutboundOrderDetailSheet,
@@ -230,10 +229,6 @@ export default function OutboundOrderPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <OutboundWorkspaceNavigation
-        currentView="orders"
-        permissions={meQuery.data?.permissions ?? []}
-      />
       <OutboundOrderDirectory
         items={items}
         totalCount={ordersQuery.data?.totalCount ?? 0}

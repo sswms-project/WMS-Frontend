@@ -26,6 +26,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OutboundWorkspaceNavigation } from '@/components/operations/OutboundWorkspaceNavigation'
 import type { ReturnStatus, ReturnSummary } from '../../types/outbound.types'
 import { RETURN_STATUS_LABELS, formatOutboundDate } from '../../utils/outbound-format'
 import { ReturnStatusBadge } from './ReturnStatusBadge'
@@ -100,6 +101,7 @@ export function ReturnDirectory({
           </p>
         </div>
       </header>
+      <OutboundWorkspaceNavigation currentView="returns" permissions={permissions} />
       <section className="bg-card flex min-h-0 flex-col overflow-hidden border [&>[data-slot=table-container]]:overflow-y-auto">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>

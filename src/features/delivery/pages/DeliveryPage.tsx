@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { OutboundWorkspaceNavigation } from '@/components/operations/OutboundWorkspaceNavigation'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useStaffListQuery } from '@/features/staff/hooks/use-staff'
 import { STAFF_DIRECTORY_KINDS } from '@/features/staff/types/staff.types'
@@ -129,10 +128,6 @@ export default function DeliveryPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <OutboundWorkspaceNavigation
-        currentView="delivery"
-        permissions={meQuery.data?.permissions ?? []}
-      />
       <DeliveryWorkspace
         items={deliveries.data?.items ?? []}
         totalCount={deliveries.data?.totalCount ?? 0}
@@ -153,6 +148,7 @@ export default function DeliveryPage() {
           label: `${item.customerCode} · ${item.customerName}`,
         }))}
         staffNames={staffNames}
+        permissions={meQuery.data?.permissions ?? []}
         canUpdate={canUpdate}
         isLoading={deliveries.isLoading}
         isFetching={deliveries.isFetching}

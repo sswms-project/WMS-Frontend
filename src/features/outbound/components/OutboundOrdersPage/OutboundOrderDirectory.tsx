@@ -19,6 +19,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OutboundWorkspaceNavigation } from '@/components/operations/OutboundWorkspaceNavigation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -190,6 +191,8 @@ export function OutboundOrderDirectory({
           </Button>
         ) : null}
       </header>
+
+      <OutboundWorkspaceNavigation currentView="orders" permissions={permissions} />
 
       <section
         className="bg-card flex min-h-0 flex-col border"

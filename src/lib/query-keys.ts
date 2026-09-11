@@ -48,6 +48,7 @@ import type {
   NotificationQuery,
 } from '@/features/platform-services/types/platform-services.types'
 import type { AdminSubscriptionPlanQuery, TenantQuery } from '@/features/admin/types/admin.types'
+import type { TenantUserPermissionSubjectQuery } from '@/features/access-control/types/tenant-access-control.types'
 
 export const queryKeys = {
   platformAdmin: {
@@ -69,6 +70,13 @@ export const queryKeys = {
   tenantRolePermissions: {
     all: ['tenant-role-permissions'] as const,
     workspace: ['tenant-role-permissions', 'workspace'] as const,
+  },
+  tenantUserPermissions: {
+    all: ['tenant-user-permissions'] as const,
+    allSubjects: ['tenant-user-permissions', 'subjects'] as const,
+    subjects: (params: TenantUserPermissionSubjectQuery) =>
+      ['tenant-user-permissions', 'subjects', params] as const,
+    detail: (userId: string) => ['tenant-user-permissions', 'detail', userId] as const,
   },
   organization: {
     all: ['organization'] as const,
