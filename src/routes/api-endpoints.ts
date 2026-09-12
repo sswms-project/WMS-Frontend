@@ -238,4 +238,11 @@ export const API_ENDPOINTS = {
     update: (customerId: string) => `/customers/${customerId}`,
     orderHistory: (customerId: string) => `/customers/${customerId}/orders`,
   },
+  aiAssistant: {
+    chat: '/ai/chat',
+    conversations: '/ai/conversations',
+    messages: (conversationId: string) => `/ai/conversations/${conversationId}/messages`,
+    confirmAction: (draftId: string) => `/ai/actions/${draftId}/confirm`,
+    cancelAction: (draftId: string) => `/ai/actions/${draftId}/cancel`,
+  },
 } as const
