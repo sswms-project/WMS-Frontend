@@ -221,4 +221,9 @@ export const queryKeys = {
     orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
       ['customers', 'detail', id, 'orders', params] as const,
   },
+  aiAssistant: {
+    all: ['ai-assistant'] as const,
+    conversations: ['ai-assistant', 'conversations'] as const,
+    messages: (conversationId: string) => ['ai-assistant', 'messages', conversationId] as const,
+  },
 }
