@@ -13,8 +13,6 @@ import type {
   RegisterResponseDto,
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
-  SwitchTenantRequest,
-  TenantMembershipResponse,
   UpdateProfileRequest,
   UserProfileResponse,
   Verify2FARequestDto,
@@ -100,21 +98,6 @@ export function useMeQuery() {
   return useQuery<UserProfileResponse, ApiErrorResponse>({
     queryKey: queryKeys.auth.me,
     queryFn: () => authService.getMe().then((r) => r.data),
-  })
-}
-
-export function useTenantMembershipsQuery(enabled = true) {
-  return useQuery<TenantMembershipResponse[], ApiErrorResponse>({
-    queryKey: queryKeys.auth.memberships,
-    queryFn: () => authService.getTenantMemberships().then((response) => response.data),
-    enabled,
-  })
-}
-
-export function useSwitchTenantMutation() {
-  return useMutation<ApiResponse<LoginResponseDto>, ApiErrorResponse, SwitchTenantRequest>({
-    mutationFn: authService.switchTenant,
-    onError: (error) => logAuthError('switch tenant', error),
   })
 }
 

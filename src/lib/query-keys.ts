@@ -94,7 +94,6 @@ export const queryKeys = {
   },
   auth: {
     me: ['auth', 'me'] as const,
-    memberships: ['auth', 'tenant-memberships'] as const,
   },
   subscription: {
     all: ['subscription'] as const,

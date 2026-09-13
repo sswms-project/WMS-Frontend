@@ -23,5 +23,3 @@ export interface StaffQuery extends QueryInfo {
   skip: number
   needTotalCount: true
 }
-
-export type StaffLifecycleAction = 'deactivate' | 'reactivate'
