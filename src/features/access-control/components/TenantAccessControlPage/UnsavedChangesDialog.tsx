@@ -13,16 +13,18 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
 interface UnsavedChangesDialogProps {
-  open: boolean
-  saving: boolean
-  onOpenChange: (open: boolean) => void
-  onSave: () => void
-  onDiscard: () => void
+  readonly open: boolean
+  readonly saving: boolean
+  readonly saveDisabled?: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly onSave: () => void
+  readonly onDiscard: () => void
 }
 
 export function UnsavedChangesDialog({
   open,
   saving,
+  saveDisabled,
   onOpenChange,
   onSave,
   onDiscard,
@@ -36,7 +38,7 @@ export function UnsavedChangesDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Bạn có thay đổi chưa lưu</AlertDialogTitle>
           <AlertDialogDescription>
-            Lưu quyền vừa chỉnh trước khi chuyển vai trò hoặc rời khỏi trang này.
+            Lưu quyền vừa chỉnh trước khi chuyển lựa chọn hoặc rời khỏi trang này.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -44,9 +46,9 @@ export function UnsavedChangesDialog({
           <Button type="button" variant="outline" disabled={saving} onClick={onDiscard}>
             Bỏ thay đổi
           </Button>
-          <Button type="button" disabled={saving} onClick={onSave}>
-            {saving && <Spinner aria-hidden="true" />}
-            {saving ? 'Đang lưu' : 'Lưu thay đổi'}
+          <Button type="button" disabled={saving || saveDisabled} onClick={onSave}>
+            {saving && <Spinner data-icon="inline-start" aria-hidden="true" />}
+            {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

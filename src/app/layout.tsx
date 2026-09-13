@@ -36,6 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${jetBrainsMono.variable} ${baloo2.variable} h-full antialiased`}
       suppressHydrationWarning
     >
@@ -43,7 +44,7 @@ export default function RootLayout({
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster richColors position="bottom-right" />
         <SpeedInsights />
       </body>
     </html>

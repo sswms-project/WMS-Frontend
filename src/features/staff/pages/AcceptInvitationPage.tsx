@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { AcceptInvitationForm } from '../components/AcceptInvitationPage'
-import { useAcceptInvitationMutation } from '../hooks/use-invitations'
+import { useAcceptInvitationMutation, useInvitationPreviewQuery } from '../hooks/use-invitations'
 import type { AcceptInvitationFormValues } from '../schemas/invitation.schema'
 
 interface AcceptInvitationPageProps {
@@ -11,31 +12,40 @@ interface AcceptInvitationPageProps {
 
 export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
   const acceptMutation = useAcceptInvitationMutation()
+  const previewQuery = useInvitationPreviewQuery(token ?? '')
   const [isSuccess, setIsSuccess] = useState(false)
+  const [actionErrorMessage, setActionErrorMessage] = useState<string>()
 
   async function acceptInvitation(values: AcceptInvitationFormValues) {
-    if (!token) return
+    if (!token || acceptMutation.isPending) return
 
+    setActionErrorMessage(undefined)
     try {
       await acceptMutation.mutateAsync({
         token,
         request: {
-          fullName: values.fullName,
+          fullName: values.fullName?.trim() || undefined,
           password: values.password,
+          confirmPassword: values.confirmPassword,
         },
       })
       setIsSuccess(true)
-    } catch {
-      // The form keeps the API message visible so expired and reused links remain actionable.
+    } catch (error) {
+      setActionErrorMessage(
+        getApiErrorMessage(error, 'Không thể kích hoạt tài khoản. Vui lòng thử lại.')
+      )
     }
   }
 
   return (
     <AcceptInvitationForm
       token={token}
+      preview={previewQuery.data}
+      isPreviewLoading={previewQuery.isLoading}
       isLoading={acceptMutation.isPending}
       isSuccess={isSuccess}
-      errorMessage={acceptMutation.error?.message}
+      errorMessage={previewQuery.error?.message}
+      actionErrorMessage={actionErrorMessage}
       onSubmit={acceptInvitation}
     />
   )

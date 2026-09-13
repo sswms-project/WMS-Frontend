@@ -1,29 +1,26 @@
 import { ChevronsUp, RotateCcw, Save } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PermissionSearch } from './PermissionSearch'
 
 interface PermissionEditorHeaderProps {
-  roleLabel: string
-  roleDescription: string
-  directCount: number
-  effectiveCount: number
-  moduleCount: number
-  searchText: string
-  dirty: boolean
-  pending: boolean
-  canCollapse: boolean
-  onSearchChange: (value: string) => void
-  onCollapseAll: () => void
-  onDiscard: () => void
-  onSave: () => void
+  readonly directCount: number
+  readonly effectiveCount: number
+  readonly moduleCount: number
+  readonly searchText: string
+  readonly dirty: boolean
+  readonly pending: boolean
+  readonly canCollapse: boolean
+  readonly onSearchChange: (value: string) => void
+  readonly onCollapseAll: () => void
+  readonly onDiscard: () => void
+  readonly onSave: () => void
 }
 
 export function PermissionEditorHeader({
-  roleLabel,
-  roleDescription,
   directCount,
   effectiveCount,
   moduleCount,
@@ -37,61 +34,24 @@ export function PermissionEditorHeader({
   onSave,
 }: PermissionEditorHeaderProps) {
   return (
-    <div className="border-border bg-card shrink-0 border-b">
-      <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-muted-foreground text-xs font-medium">Quyền truy cập</p>
-            {dirty && <Badge variant="secondary">Chưa lưu</Badge>}
+    <div className="border-border bg-muted/20 flex shrink-0 flex-col gap-2 border-b px-3 py-2.5 sm:px-4 xl:flex-row xl:items-center">
+      <h2 className="sr-only">Danh sách quyền theo vai trò</h2>
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center xl:flex-1">
+        <dl className="flex shrink-0 items-center divide-x text-xs" aria-label="Thống kê quyền">
+          <div className="flex items-baseline gap-1.5 pr-3">
+            <dt className="text-muted-foreground">Trực tiếp</dt>
+            <dd className="text-foreground font-semibold tabular-nums">{directCount}</dd>
           </div>
-          <h2 id="role-heading" className="text-foreground mt-1 text-lg font-semibold">
-            {roleLabel}
-          </h2>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-xs leading-5">
-            {roleDescription}
-          </p>
-
-          <dl className="mt-3 grid max-w-md grid-cols-3 divide-x">
-            <div className="pr-3">
-              <dt className="text-muted-foreground text-[11px]">Trực tiếp</dt>
-              <dd className="text-foreground mt-0.5 text-sm font-semibold tabular-nums">
-                {directCount}
-              </dd>
-            </div>
-            <div className="px-3">
-              <dt className="text-muted-foreground text-[11px]">Hiệu lực</dt>
-              <dd className="text-foreground mt-0.5 text-sm font-semibold tabular-nums">
-                {effectiveCount}
-              </dd>
-            </div>
-            <div className="pl-3">
-              <dt className="text-muted-foreground text-[11px]">Phân hệ</dt>
-              <dd className="text-foreground mt-0.5 text-sm font-semibold tabular-nums">
-                {moduleCount}
-              </dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap gap-2">
-          {dirty && (
-            <Button type="button" variant="outline" disabled={pending} onClick={onDiscard}>
-              <RotateCcw data-icon="inline-start" aria-hidden="true" />
-              Bỏ thay đổi
-            </Button>
-          )}
-          <Button type="button" disabled={!dirty || pending} onClick={onSave}>
-            {pending ? (
-              <Spinner data-icon="inline-start" aria-hidden="true" />
-            ) : (
-              <Save data-icon="inline-start" aria-hidden="true" />
-            )}
-            {pending ? 'Đang lưu…' : 'Lưu thay đổi'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="border-border bg-muted/20 flex items-center gap-2 border-t px-4 py-2.5">
+          <div className="flex items-baseline gap-1.5 px-3">
+            <dt className="text-muted-foreground">Hiệu lực</dt>
+            <dd className="text-foreground font-semibold tabular-nums">{effectiveCount}</dd>
+          </div>
+          <div className="flex items-baseline gap-1.5 px-3">
+            <dt className="text-muted-foreground">Phân hệ</dt>
+            <dd className="text-foreground font-semibold tabular-nums">{moduleCount}</dd>
+          </div>
+        </dl>
+        <Separator orientation="vertical" className="hidden h-5 sm:block" />
         <PermissionSearch value={searchText} onChange={onSearchChange} />
         <Tooltip>
           <TooltipTrigger asChild>
@@ -108,6 +68,24 @@ export function PermissionEditorHeader({
           </TooltipTrigger>
           <TooltipContent>Thu gọn tất cả</TooltipContent>
         </Tooltip>
+      </div>
+
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        {dirty && <Badge variant="secondary">Chưa lưu</Badge>}
+        {dirty && (
+          <Button type="button" variant="outline" disabled={pending} onClick={onDiscard}>
+            <RotateCcw data-icon="inline-start" aria-hidden="true" />
+            Bỏ thay đổi
+          </Button>
+        )}
+        <Button type="button" disabled={!dirty || pending} onClick={onSave}>
+          {pending ? (
+            <Spinner data-icon="inline-start" aria-hidden="true" />
+          ) : (
+            <Save data-icon="inline-start" aria-hidden="true" />
+          )}
+          {pending ? 'Đang lưu…' : 'Lưu thay đổi'}
+        </Button>
       </div>
     </div>
   )

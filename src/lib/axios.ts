@@ -61,7 +61,8 @@ export const axiosClient = axios.create({
 
 const isClient = typeof window !== 'undefined'
 
-const getAccessToken = (): string | null => (isClient ? localStorage.getItem('access_token') : null)
+export const getStoredAccessToken = (): string | null =>
+  isClient ? localStorage.getItem('access_token') : null
 
 const getRefreshToken = (): string | null =>
   isClient ? localStorage.getItem('refresh_token') : null
@@ -108,7 +109,7 @@ let isRefreshing = false
 let pendingRequests: PendingRequest[] = []
 
 const refreshAccessToken = async (): Promise<string> => {
-  const accessToken = getAccessToken()
+  const accessToken = getStoredAccessToken()
   const refreshToken = getRefreshToken()
   if (!accessToken || !refreshToken) throw new Error('Missing session token')
 
@@ -151,7 +152,7 @@ const handleTokenRefresh = async (): Promise<string> => {
 // ── Request interceptor ────────────────────────────────────────
 
 axiosClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getAccessToken()
+  const token = getStoredAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })

@@ -64,6 +64,7 @@ export interface ReceivingTask {
   orderedQuantity: number
   receivedQuantity: number
   remainingQuantity: number
+  activeDocumentImportId: string | null
   lines: ReceivingTaskLine[]
 }
 
@@ -142,3 +143,140 @@ export interface InboundAllowedActionsResponse {
 
 export type InboundReceiptListResponse = PagedResponse<InboundReceiptSummary>
 export type ReceivingTaskListResponse = PagedResponse<ReceivingTask>
+
+export const INBOUND_DOCUMENT_IMPORT_STATUSES = [
+  'Pending',
+  'Uploaded',
+  'Scanning',
+  'Processing',
+  'NeedsReview',
+  'ReadyForDraft',
+  'DraftReceiptCreated',
+  'Completed',
+  'Failed',
+  'Cancelled',
+] as const
+
+export type InboundDocumentImportStatus = (typeof INBOUND_DOCUMENT_IMPORT_STATUSES)[number]
+
+export interface ExtractedField<T> {
+  value: T | null
+  rawValue: string | null
+  confidence: number | null
+  source:
+    | 'AiExtracted'
+    | 'DocumentParser'
+    | 'PurchaseOrder'
+    | 'SupplierMaster'
+    | 'WarehouseMaster'
+    | 'SystemGenerated'
+    | 'UserEdited'
+  verificationStatus:
+    | 'Unverified'
+    | 'Matched'
+    | 'LowConfidence'
+    | 'Mismatch'
+    | 'UserConfirmed'
+    | 'UserCorrected'
+    | 'NotProvided'
+}
+
+export interface SupplierDocumentExtraction {
+  schemaVersion: string
+  documentNumber: ExtractedField<string> | null
+  purchaseOrderNumber: ExtractedField<string> | null
+  supplierName: ExtractedField<string> | null
+  documentDate: ExtractedField<string> | null
+  supplierDeliveryDate: ExtractedField<string> | null
+  warehouseCode: ExtractedField<string> | null
+  warehouseName: ExtractedField<string> | null
+  items: SupplierDocumentLineExtraction[]
+}
+
+export interface SupplierDocumentLineExtraction {
+  sourceLineNumber: number
+  sku: ExtractedField<string> | null
+  productName: ExtractedField<string> | null
+  unitOfMeasure: ExtractedField<string> | null
+  deliveredQuantity: ExtractedField<number> | null
+  damagedQuantity: ExtractedField<number> | null
+}
+
+export interface InboundDocumentReviewLine {
+  sourceLineNumber: number
+  extractedSku: string | null
+  extractedProductName: string | null
+  extractedUnitOfMeasure: string | null
+  documentQuantity: number | null
+  purchaseOrderItemId: string | null
+  productId: string | null
+  productSku: string | null
+  productName: string | null
+  unitName: string | null
+  orderedQuantity: number
+  previouslyReceivedQuantity: number
+  remainingQuantity: number
+  confirmedQuantity: number
+  damagedQuantity: number
+  exceptionReason: string | null
+  status: string
+  isUserCorrected: boolean
+}
+
+export interface InboundDocumentReview {
+  extraction: SupplierDocumentExtraction
+  purchaseOrderId: string | null
+  purchaseOrderNumber: string | null
+  supplierId: string | null
+  supplierName: string | null
+  warehouseId: string | null
+  warehouseCode: string | null
+  warehouseName: string | null
+  warehouseAddress: string | null
+  expectedReceiptDate: string | null
+  hasWarehouseMismatch: boolean
+  warehouseMismatchAcknowledged: boolean
+  lines: InboundDocumentReviewLine[]
+  warnings: string[]
+  blockingErrors: string[]
+  canCreateDraft: boolean
+}
+
+export interface InboundDocumentImport {
+  id: string
+  fileName: string
+  contentType: string
+  fileSize: number
+  status: InboundDocumentImportStatus
+  schemaVersion: string
+  failureCode: string | null
+  failureMessage: string | null
+  extractionProvider: string | null
+  extractionModel: string | null
+  createdAt: string
+  reviewedAt: string | null
+  inboundReceiptId: string | null
+  duplicateFileDetected: boolean
+  review: InboundDocumentReview | null
+}
+
+export interface StartInboundDocumentImportRequest {
+  file: File
+  purchaseOrderId?: string
+  warehouseId?: string
+}
+
+export interface ReviewInboundDocumentLineRequest {
+  sourceLineNumber: number
+  purchaseOrderItemId: string
+  confirmedQuantity: number
+  damagedQuantity: number
+  exceptionReason: string | null
+}
+
+export interface ReviewInboundDocumentImportRequest {
+  id: string
+  purchaseOrderId: string
+  acknowledgeWarehouseMismatch: boolean
+  lines: ReviewInboundDocumentLineRequest[]
+}

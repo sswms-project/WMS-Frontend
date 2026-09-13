@@ -8,9 +8,15 @@ import type {
 } from '../schemas/subscription-plan.schema'
 import type {
   AssignPermissionsRequest,
+  AdminSubscriptionPlanListResponse,
+  AdminSubscriptionPlanQuery,
   PermissionResponse,
+  PlatformDashboardResponse,
   RoleResponse,
-  SubscriptionPlanResponse,
+  TenantDetailsResponse,
+  TenantListResponse,
+  TenantQuery,
+  TenantStateChangeRequest,
 } from '../types/admin.types'
 
 export const adminService = {
@@ -22,9 +28,40 @@ export const adminService = {
   assignPermissions: (roleId: string, body: AssignPermissionsRequest) =>
     axiosClient.put<ApiResponse<void>>(`/roles/${roleId}/permissions`, body).then((r) => r.data),
 
-  getSubscriptionPlans: () =>
+  getSubscriptionPlans: (params: AdminSubscriptionPlanQuery) =>
     axiosClient
-      .get<ApiResponse<SubscriptionPlanResponse[]>>(API_ENDPOINTS.subscription.plans)
+      .get<
+        ApiResponse<AdminSubscriptionPlanListResponse>
+      >(API_ENDPOINTS.platformAdmin.subscriptionPlans, { params })
+      .then((r) => r.data.data),
+
+  getPlatformDashboard: () =>
+    axiosClient
+      .get<ApiResponse<PlatformDashboardResponse>>(API_ENDPOINTS.platformAdmin.dashboard)
+      .then((r) => r.data.data),
+
+  getTenants: (params: TenantQuery) =>
+    axiosClient
+      .get<ApiResponse<TenantListResponse>>(API_ENDPOINTS.platformAdmin.tenants, { params })
+      .then((r) => r.data.data),
+
+  getTenant: (tenantId: string) =>
+    axiosClient
+      .get<ApiResponse<TenantDetailsResponse>>(API_ENDPOINTS.platformAdmin.tenantDetail(tenantId))
+      .then((r) => r.data.data),
+
+  suspendTenant: (tenantId: string, body: TenantStateChangeRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<TenantDetailsResponse>
+      >(API_ENDPOINTS.platformAdmin.suspendTenant(tenantId), body)
+      .then((r) => r.data),
+
+  reactivateTenant: (tenantId: string, body: TenantStateChangeRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<TenantDetailsResponse>
+      >(API_ENDPOINTS.platformAdmin.reactivateTenant(tenantId), body)
       .then((r) => r.data),
 
   getSubscriptionFeatures: () =>
@@ -36,12 +73,12 @@ export const adminService = {
 
   createSubscriptionPlan: (body: CreateSubscriptionPlanRequest) =>
     axiosClient
-      .post<ApiResponse<SubscriptionPlanResponse>>(API_ENDPOINTS.subscription.plans, body)
+      .post<ApiResponse<string>>(API_ENDPOINTS.subscription.plans, body)
       .then((r) => r.data),
 
   updateSubscriptionPlan: (id: string, body: UpdateSubscriptionPlanRequest) =>
     axiosClient
-      .put<ApiResponse<SubscriptionPlanResponse>>(API_ENDPOINTS.subscription.planById(id), body)
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.subscription.planById(id), body)
       .then((r) => r.data),
 
   // Backend soft-delete: chuyển Status sang Inactive, trả ApiResponse<Unit> không có data thật.

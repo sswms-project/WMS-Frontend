@@ -2,6 +2,7 @@ import { LoaderCircle, Mail, RefreshCw, Send, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ROLE_LABELS_VI } from '@/config/roles'
 import type { InvitationResponse } from '../../types/invitation.types'
 import { StaffDirectoryPagination } from './StaffDirectoryPagination'
 
@@ -25,6 +26,15 @@ const STATUS_LABELS: Record<string, string> = {
   Accepted: 'Đã chấp nhận',
   Expired: 'Hết hạn',
   Revoked: 'Đã thu hồi',
+}
+
+const DELIVERY_LABELS: Record<string, string> = {
+  Queued: 'Đang chờ',
+  Processing: 'Đang gửi',
+  Sent: 'Đã gửi',
+  Failed: 'Gửi thất bại',
+  Superseded: 'Đã thay thế',
+  NotQueued: 'Chưa xếp hàng',
 }
 
 export function InvitationManagementPanel({
@@ -77,44 +87,73 @@ export function InvitationManagementPanel({
         <>
           <ul className="divide-y">
             {invitations.map((invitation) => {
-              const canResend = invitation.status === 'Pending' || invitation.status === 'Expired'
-              const canRevoke = invitation.status === 'Pending'
+              const needsWarehouse =
+                invitation.warehouses.length === 0 &&
+                (invitation.effectiveStatus === 'Pending' ||
+                  invitation.effectiveStatus === 'Expired')
               return (
-                <li key={invitation.id} className="flex items-center gap-3 px-3 py-3 sm:px-4">
+                <li
+                  key={invitation.id}
+                  className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-4"
+                >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{invitation.email}</p>
-                    <p className="text-muted-foreground text-xs">{invitation.role}</p>
+                    <p className="truncate font-medium">{invitation.fullName}</p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {invitation.email} · {ROLE_LABELS_VI[invitation.role]}
+                    </p>
+                    {invitation.warehouses.length > 0 && (
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {invitation.warehouses
+                          .map((warehouse) => warehouse.warehouseCode)
+                          .join(', ')}
+                      </p>
+                    )}
+                    {needsWarehouse && (
+                      <p className="text-destructive mt-1 text-xs">
+                        {invitation.canRevoke
+                          ? 'Lời mời cũ thiếu kho. Cần thu hồi và gửi lời mời mới.'
+                          : 'Lời mời cũ thiếu kho. Cần gửi lời mời mới.'}
+                      </p>
+                    )}
                   </div>
-                  <Badge variant={invitation.status === 'Pending' ? 'default' : 'outline'}>
-                    {STATUS_LABELS[invitation.status] ?? invitation.status}
-                  </Badge>
-                  {canResend ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Gửi lại lời mời ${invitation.email}`}
-                      disabled={resendingId === invitation.id}
-                      onClick={() => onResend(invitation)}
+                  <div className="flex flex-wrap items-center justify-end gap-2 self-end sm:self-auto">
+                    <Badge
+                      variant={invitation.effectiveStatus === 'Pending' ? 'default' : 'outline'}
                     >
-                      {resendingId === invitation.id ? (
-                        <LoaderCircle className="animate-spin" aria-hidden="true" />
-                      ) : (
-                        <Send aria-hidden="true" />
-                      )}
-                    </Button>
-                  ) : null}
-                  {canRevoke ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Thu hồi lời mời ${invitation.email}`}
-                      onClick={() => onRevoke(invitation)}
-                    >
-                      <Trash2 className="text-destructive" aria-hidden="true" />
-                    </Button>
-                  ) : null}
+                      {STATUS_LABELS[invitation.effectiveStatus] ?? invitation.effectiveStatus}
+                    </Badge>
+                    <Badge variant="outline">
+                      Email:{' '}
+                      {DELIVERY_LABELS[invitation.deliveryStatus] ?? invitation.deliveryStatus}
+                    </Badge>
+                    {invitation.canResend && !needsWarehouse ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Gửi lại lời mời ${invitation.email}`}
+                        disabled={resendingId === invitation.id}
+                        onClick={() => onResend(invitation)}
+                      >
+                        {resendingId === invitation.id ? (
+                          <LoaderCircle className="animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Send aria-hidden="true" />
+                        )}
+                      </Button>
+                    ) : null}
+                    {invitation.canRevoke ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Thu hồi lời mời ${invitation.email}`}
+                        onClick={() => onRevoke(invitation)}
+                      >
+                        <Trash2 className="text-destructive" aria-hidden="true" />
+                      </Button>
+                    ) : null}
+                  </div>
                 </li>
               )
             })}

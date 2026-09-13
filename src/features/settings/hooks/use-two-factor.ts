@@ -51,8 +51,8 @@ export function useTwoFactorDisableMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: settingsService.disable2FA,
-    onSuccess: (response) => {
-      toast.success(response.data)
+    onSuccess: () => {
+      toast.success('Đã tắt xác thực hai yếu tố.')
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
     onError: (error: ApiErrorResponse) => {

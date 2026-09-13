@@ -16,7 +16,10 @@ const tabs = [
 export function InboundTabs() {
   const pathname = usePathname()
   return (
-    <nav className="flex max-w-full gap-1 overflow-x-auto border-b" aria-label="Nghiệp vụ nhập kho">
+    <nav
+      className="flex max-w-full gap-1 overflow-x-auto border-b px-1 pb-1"
+      aria-label="Nghiệp vụ nhập kho"
+    >
       {tabs.map((tab) => {
         const isActive =
           tab.href === APP_ROUTES.inbound ? pathname === tab.href : pathname.startsWith(tab.href)
@@ -27,10 +30,10 @@ export function InboundTabs() {
             href={tab.href as Route}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              'focus-visible:ring-ring inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-medium outline-none focus-visible:ring-2',
+              'focus-visible:ring-ring inline-flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-sm border px-3 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none',
               isActive
-                ? 'border-primary text-primary'
-                : 'text-muted-foreground hover:text-foreground border-transparent'
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
             )}
           >
             <Icon className="size-4" aria-hidden="true" />

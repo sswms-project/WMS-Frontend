@@ -10,7 +10,7 @@ import {
   type StaffResponse,
 } from '../types/staff.types'
 
-export function useStaffListQuery(kind: StaffDirectoryKind, params: StaffQuery) {
+export function useStaffListQuery(kind: StaffDirectoryKind, params: StaffQuery, enabled = true) {
   return useQuery<QueryResult<StaffResponse>, ApiErrorResponse>({
     queryKey: queryKeys.staff.list(kind, params),
     queryFn: () => {
@@ -21,6 +21,7 @@ export function useStaffListQuery(kind: StaffDirectoryKind, params: StaffQuery) 
       return request.then((response) => response.data)
     },
     placeholderData: (previousData) => previousData,
+    enabled,
   })
 }
 
@@ -32,24 +33,15 @@ export function useStaffDetailsQuery(userId: string | null) {
   })
 }
 
-function useStaffLifecycleMutation(action: 'deactivate' | 'reactivate') {
+export function useTerminateStaffMutation() {
   const queryClient = useQueryClient()
 
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn:
-      action === 'deactivate' ? staffService.deactivateStaff : staffService.reactivateStaff,
+    mutationFn: staffService.terminateStaff,
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(userId) })
     },
     onError: (error) => logger.error(error),
   })
-}
-
-export function useDeactivateStaffMutation() {
-  return useStaffLifecycleMutation('deactivate')
-}
-
-export function useReactivateStaffMutation() {
-  return useStaffLifecycleMutation('reactivate')
 }

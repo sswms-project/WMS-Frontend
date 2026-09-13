@@ -1,13 +1,17 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { ShieldCheck } from 'lucide-react'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 const pageTitles: Array<{ prefix: string; label: string }> = [
+  { prefix: APP_ROUTES.notifications, label: 'Thông báo' },
+  { prefix: APP_ROUTES.auditLogs, label: 'Audit Log' },
   { prefix: APP_ROUTES.settings.accessControl, label: 'Phân quyền' },
   { prefix: APP_ROUTES.settings.security, label: 'Cài đặt' },
   { prefix: APP_ROUTES.organization, label: 'Tổ chức' },
   { prefix: APP_ROUTES.staff, label: 'Nhân sự' },
+  { prefix: APP_ROUTES.admin.tenants, label: 'Quản lý tenant' },
   { prefix: APP_ROUTES.admin.subscriptionPlans, label: 'Gói đăng ký' },
   { prefix: APP_ROUTES.admin.roles, label: 'Phân quyền' },
   { prefix: APP_ROUTES.dashboard, label: 'Dashboard' },
@@ -34,8 +38,16 @@ export function getPageTitle(pathname: string) {
 
 export function PageHeading() {
   const pathname = usePathname()
+  const showAccessControlIcon =
+    pathname === APP_ROUTES.settings.accessControl ||
+    pathname.startsWith(`${APP_ROUTES.settings.accessControl}/`)
 
   return (
-    <h1 className="text-foreground truncate text-[15px] font-semibold">{getPageTitle(pathname)}</h1>
+    <div className="flex min-w-0 items-center gap-2">
+      {showAccessControlIcon && <ShieldCheck className="text-primary size-4" aria-hidden="true" />}
+      <h1 className="text-foreground truncate text-[15px] font-semibold">
+        {getPageTitle(pathname)}
+      </h1>
+    </div>
   )
 }

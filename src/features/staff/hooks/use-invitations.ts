@@ -6,6 +6,7 @@ import { invitationService } from '../services/invitation.service'
 import type {
   AcceptInvitationRequest,
   InvitationQuery,
+  InvitationPreviewResponse,
   InvitationResponse,
   SendInvitationRequest,
 } from '../types/invitation.types'
@@ -27,8 +28,17 @@ export function useSendInvitationMutation() {
 
 export function useAcceptInvitationMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, AcceptInvitationVariables>({
-    mutationFn: ({ token, request }) => invitationService.accept(token, request),
+    mutationFn: ({ token, request }) => invitationService.acceptNew(token, request),
     onError: (error) => logger.error(error),
+  })
+}
+
+export function useInvitationPreviewQuery(token: string) {
+  return useQuery<InvitationPreviewResponse, ApiErrorResponse>({
+    queryKey: queryKeys.staff.invitationPreview(token),
+    queryFn: () => invitationService.preview(token).then((response) => response.data),
+    enabled: Boolean(token),
+    retry: false,
   })
 }
 

@@ -19,19 +19,64 @@ import type { SupplierListQuery } from '@/features/supplier/types/supplier.types
 import type {
   InventoryListQuery,
   InventoryAbcQuery,
+  InventoryForecastQuery,
   InventoryReservationQuery,
+  InventoryStockHistoryQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery } from '@/features/product/types/product.types'
 import type {
+  TransferListQuery,
+  TransferSourceInventoryQuery,
+  TransferSourceWarehouseQuery,
+} from '@/features/transfer/types/transfer.types'
+import type {
+  OutboundOrderListQuery,
+  ReturnListQuery,
+} from '@/features/outbound/types/outbound.types'
+import type { DeliveryListQuery } from '@/features/delivery/types/delivery.types'
+import type {
+  CustomerListQuery,
+  CustomerOrderHistoryQuery,
+} from '@/features/customer/types/customer.types'
+import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
 } from '@/features/cycle-count/types/cycle-count.types'
+import type {
+  AuditLogQuery,
+  NotificationQuery,
+} from '@/features/platform-services/types/platform-services.types'
+import type { AdminSubscriptionPlanQuery, TenantQuery } from '@/features/admin/types/admin.types'
+import type { TenantUserPermissionSubjectQuery } from '@/features/access-control/types/tenant-access-control.types'
 
 export const queryKeys = {
+  platformAdmin: {
+    all: ['platform-admin'] as const,
+    dashboard: ['platform-admin', 'dashboard'] as const,
+    tenants: ['platform-admin', 'tenants'] as const,
+    tenantList: (params: TenantQuery) => ['platform-admin', 'tenants', params] as const,
+    tenantDetail: (tenantId: string) => ['platform-admin', 'tenants', tenantId] as const,
+    plans: (params: AdminSubscriptionPlanQuery) => ['platform-admin', 'plans', params] as const,
+  },
+  notifications: {
+    all: ['notifications'] as const,
+    list: (params: NotificationQuery) => ['notifications', 'list', params] as const,
+  },
+  auditLogs: {
+    all: ['audit-logs'] as const,
+    list: (params: AuditLogQuery) => ['audit-logs', 'list', params] as const,
+  },
   tenantRolePermissions: {
     all: ['tenant-role-permissions'] as const,
     workspace: ['tenant-role-permissions', 'workspace'] as const,
+  },
+  tenantUserPermissions: {
+    all: ['tenant-user-permissions'] as const,
+    allSubjects: ['tenant-user-permissions', 'subjects'] as const,
+    subjects: (params: TenantUserPermissionSubjectQuery) =>
+      ['tenant-user-permissions', 'subjects', params] as const,
+    detail: (userId: string) => ['tenant-user-permissions', 'detail', userId] as const,
   },
   organization: {
     all: ['organization'] as const,
@@ -41,8 +86,11 @@ export const queryKeys = {
     all: ['staff'] as const,
     list: (kind: StaffDirectoryKind, params: StaffQuery) => ['staff', kind, params] as const,
     detail: (userId: string) => ['staff', 'detail', userId] as const,
+    warehouseAssignments: (userId: string) => ['staff', 'warehouses', userId] as const,
     allInvitations: ['staff', 'invitations'] as const,
     invitations: (params: InvitationQuery) => ['staff', 'invitations', params] as const,
+    invitationPreview: (token: string) => ['staff', 'invitation-preview', token] as const,
+    personnelImport: (importId: string) => ['staff', 'personnel-import', importId] as const,
   },
   auth: {
     me: ['auth', 'me'] as const,
@@ -61,6 +109,8 @@ export const queryKeys = {
   warehouses: {
     all: ['warehouses'] as const,
     list: (params?: QueryInfo) => ['warehouses', 'list', params] as const,
+    invitationOptions: (searchText: string) =>
+      ['warehouses', 'invitation-options', searchText] as const,
     detail: (id: string) => ['warehouses', 'detail', id] as const,
     layout: (id: string) => ['warehouses', 'detail', id, 'layout'] as const,
     layoutScene: (id: string) => ['warehouses', 'detail', id, 'layout', 'scene'] as const,
@@ -78,6 +128,8 @@ export const queryKeys = {
       ['inventory', 'reservations', params] as const,
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
+    forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
+    history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
     all: ['units'] as const,
@@ -129,18 +181,48 @@ export const queryKeys = {
     putawayTasks: (params: PutawayTaskQuery) =>
       ['inbound-receipts', 'putaway-tasks', params] as const,
   },
+  inboundDocumentImports: {
+    all: ['inbound-document-imports'] as const,
+    detail: (id: string) => ['inbound-document-imports', 'detail', id] as const,
+  },
+  transfers: {
+    all: ['transfers'] as const,
+    lists: ['transfers', 'list'] as const,
+    list: (params: TransferListQuery) => ['transfers', 'list', params] as const,
+    detail: (id: string) => ['transfers', 'detail', id] as const,
+    sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
+      ['transfers', 'source-warehouses', params] as const,
+    sourceInventory: (params: TransferSourceInventoryQuery) =>
+      ['transfers', 'source-inventory', params] as const,
+  },
   outboundOrders: {
     all: ['outbound-orders'] as const,
-    list: (params?: QueryInfo) => ['outbound-orders', 'list', params] as const,
+    lists: ['outbound-orders', 'list'] as const,
+    list: (params: OutboundOrderListQuery) => ['outbound-orders', 'list', params] as const,
     detail: (id: string) => ['outbound-orders', 'detail', id] as const,
+  },
+  returns: {
+    all: ['returns'] as const,
+    lists: ['returns', 'list'] as const,
+    list: (params: ReturnListQuery) => ['returns', 'list', params] as const,
+    detail: (id: string) => ['returns', 'detail', id] as const,
+  },
+  deliveries: {
+    all: ['deliveries'] as const,
+    lists: ['deliveries', 'list'] as const,
+    list: (params: DeliveryListQuery) => ['deliveries', 'list', params] as const,
   },
   customers: {
     all: ['customers'] as const,
-    list: (params?: QueryInfo) => ['customers', 'list', params] as const,
+    lists: ['customers', 'list'] as const,
+    list: (params: CustomerListQuery) => ['customers', 'list', params] as const,
     detail: (id: string) => ['customers', 'detail', id] as const,
+    orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
+      ['customers', 'detail', id, 'orders', params] as const,
   },
-  notifications: {
-    all: ['notifications'] as const,
-    list: (params?: QueryInfo) => ['notifications', 'list', params] as const,
+  aiAssistant: {
+    all: ['ai-assistant'] as const,
+    conversations: ['ai-assistant', 'conversations'] as const,
+    messages: (conversationId: string) => ['ai-assistant', 'messages', conversationId] as const,
   },
 }

@@ -10,6 +10,7 @@ import {
   formatBillingCycle,
   formatCurrency,
   formatDate,
+  hasPendingSubscriptionChange,
   isCancelledSubscription,
 } from '../../utils/format-subscription'
 
@@ -44,7 +45,7 @@ function CurrentStatusBadge({
   }
 
   if (isCancelledSubscription(subscription)) {
-    return <Badge variant="outline">Đã hủy</Badge>
+    return <Badge variant="outline">Sẽ hủy</Badge>
   }
 
   return <Badge>Đang hoạt động</Badge>
@@ -60,7 +61,14 @@ export function CurrentPlanCard({
 }: CurrentPlanCardProps) {
   const progressValue = getProgressValue(subscription)
   const cancelled = isCancelledSubscription(subscription)
-  const hasPendingChange = Boolean(subscription.pendingPlanName)
+  const hasPendingChange = hasPendingSubscriptionChange(subscription)
+
+  // Expired, cancelled, and pending-change are shown as mutually exclusive banners
+  // (most severe first) so the page never states two contradictory things at once —
+  // e.g. "already cancelled" next to "your change applies next cycle".
+  const showExpiredAlert = subscription.isExpired
+  const showCancelledAlert = !subscription.isExpired && cancelled
+  const showPendingChangeAlert = !subscription.isExpired && !cancelled && hasPendingChange
 
   return (
     <Card className="border-primary/20 min-w-0 gap-0 py-0">
@@ -115,7 +123,7 @@ export function CurrentPlanCard({
           )}
         </div>
 
-        {!subscription.isExpired && !cancelled && (
+        {!subscription.isExpired && (
           <div className="flex min-w-0 items-center gap-3">
             <Progress
               className="h-1.5 flex-1"
@@ -128,7 +136,7 @@ export function CurrentPlanCard({
           </div>
         )}
 
-        {subscription.isExpired && (
+        {showExpiredAlert && (
           <Alert variant="destructive">
             <CalendarClock aria-hidden="true" />
             <AlertTitle>Gói dịch vụ đã hết hạn</AlertTitle>
@@ -138,23 +146,25 @@ export function CurrentPlanCard({
           </Alert>
         )}
 
-        {cancelled && (
+        {showCancelledAlert && (
           <Alert>
             <XCircle aria-hidden="true" />
-            <AlertTitle>Gói đã bị hủy</AlertTitle>
+            <AlertTitle>Đã lên lịch hủy gói</AlertTitle>
             <AlertDescription>
-              Chọn lại gói phù hợp để tiếp tục sử dụng sau khi thời hạn hiện tại kết thúc.
+              Bạn vẫn có thể sử dụng đầy đủ đến hết thời hạn. Chọn gói mới bất cứ lúc nào nếu muốn
+              tiếp tục sử dụng sau đó.
             </AlertDescription>
           </Alert>
         )}
 
-        {hasPendingChange && (
+        {showPendingChangeAlert && (
           <Alert>
             <RotateCcw aria-hidden="true" />
             <AlertTitle>Đã lên lịch chuyển gói</AlertTitle>
             <AlertDescription>
-              {subscription.pendingPlanName} ({formatBillingCycle(subscription.pendingBillingCycle)}
-              ) sẽ được áp dụng vào kỳ thanh toán kế tiếp.
+              {subscription.pendingPlanName || subscription.planName} (
+              {formatBillingCycle(subscription.pendingBillingCycle || subscription.billingCycle)})
+              sẽ được áp dụng vào kỳ thanh toán kế tiếp.
             </AlertDescription>
           </Alert>
         )}

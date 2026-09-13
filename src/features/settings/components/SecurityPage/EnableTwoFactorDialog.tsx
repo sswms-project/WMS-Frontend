@@ -86,24 +86,29 @@ export function EnableTwoFactorDialog() {
     confirmMutation.reset()
   }
 
-  // Bump setupSessionIdRef + reset state cục bộ. Chỉ gọi từ event handler thực sự
-  // (onOpenChange của Dialog, onClick) — không được gọi từ trong handleConfirm vì
-  // handleConfirm được truyền cho handleSubmit() và bị gọi ngay lúc render.
-  function resetFlow() {
-    setupSessionIdRef.current += 1
-    resetLocalState()
-  }
-
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && isBusy) return
 
     setOpen(nextOpen)
 
     if (nextOpen) {
-      resetFlow()
+      setApiErrorKind(null)
+      setCopied(false)
+      form.reset({ otp: '' })
+
+      if (step === 'setupReady' && secret && qrUri) {
+        setStep('setupReady')
+        return
+      }
+
       startSetupFlow()
     } else {
-      resetFlow()
+      setupSessionIdRef.current += 1
+      setApiErrorKind(null)
+      setCopied(false)
+      form.reset({ otp: '' })
+      setupMutation.reset()
+      confirmMutation.reset()
     }
   }
 
@@ -121,8 +126,8 @@ export function EnableTwoFactorDialog() {
     confirmMutation.mutate(
       { otp: values.otp },
       {
-        onSuccess: (response) => {
-          toast.success(response.data)
+        onSuccess: () => {
+          toast.success('Đã bật xác thực hai yếu tố.')
           setOpen(false)
           resetLocalState()
         },

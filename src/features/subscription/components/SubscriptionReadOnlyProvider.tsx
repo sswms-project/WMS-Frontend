@@ -11,7 +11,7 @@ interface SubscriptionReadOnlyContextValue {
 }
 
 const READ_ONLY_REASON =
-  'Subscription đã hết hạn. Vui lòng gia hạn để tiếp tục thao tác ghi dữ liệu.'
+  'Gói dịch vụ đã hết hạn. Vui lòng gia hạn để tiếp tục thao tác ghi dữ liệu.'
 
 const SubscriptionReadOnlyContext = createContext<SubscriptionReadOnlyContextValue | null>(null)
 

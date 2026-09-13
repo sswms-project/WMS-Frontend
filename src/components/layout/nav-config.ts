@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Package,
   PackageCheck,
+  PackageMinus,
   PackageOpen,
   PackageSearch,
   ReceiptText,
@@ -53,7 +54,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       id: 'workspace',
       items: [
         {
-          href: APP_ROUTES.dashboard,
+          href: APP_ROUTES.admin.dashboard,
           label: 'Dashboard',
           icon: LayoutDashboard,
           requiredPermission: 'admin:dashboard:view',
@@ -62,8 +63,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     },
     {
       id: 'administration',
-      label: 'Quản trị',
+      label: 'Quản trị nền tảng',
       items: [
+        {
+          href: APP_ROUTES.admin.tenants,
+          label: 'Tenant',
+          icon: Building2,
+          requiredPermission: 'admin:tenants:view',
+        },
         {
           href: APP_ROUTES.admin.roles,
           label: 'Phân quyền',
@@ -81,7 +88,10 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     {
       id: 'system',
       label: 'Hệ thống',
-      items: [{ href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings }],
+      items: [
+        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
+        { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
+      ],
     },
   ],
   [USER_ROLES.TenantOwner]: [
@@ -123,6 +133,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, 'suppliers:view'),
+        requiredNavItem(APP_ROUTES.customers, 'Khách hàng', Users, 'customers:view'),
       ],
     },
     {
@@ -140,8 +151,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, 'inbound-receipts:view'),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, 'inventory:view'),
-        plannedNavItem('Điều chuyển kho', ArrowLeftRight),
-        plannedNavItem('Xuất kho & Giao hàng', PackageOpen),
+        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, 'transfers:view'),
+        requiredNavItem(
+          APP_ROUTES.orders,
+          'Xuất kho & Giao hàng',
+          PackageMinus,
+          'outbound-orders:view',
+          [APP_ROUTES.returns, APP_ROUTES.delivery]
+        ),
       ],
     },
     {
@@ -186,8 +203,8 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       collapsible: true,
       separatorBefore: true,
       items: [
-        plannedNavItem('Thông báo', Bell),
-        plannedNavItem('Audit Log', ScrollText),
+        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, 'notifications:view'),
+        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
         { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
       ],
     },
@@ -202,6 +219,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.staff, 'Nhân sự', Users, 'staff:view'),
         requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, 'warehouses:view'),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, 'suppliers:view'),
+        requiredNavItem(APP_ROUTES.customers, 'Khách hàng', Users, 'customers:view'),
         requiredNavItem(
           APP_ROUTES.purchaseOrders,
           'Mua hàng',
@@ -210,7 +228,17 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, 'inbound-receipts:view'),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, 'inventory:view'),
+        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, 'transfers:view'),
+        requiredNavItem(
+          APP_ROUTES.orders,
+          'Xuất kho & Giao hàng',
+          PackageMinus,
+          'outbound-orders:view',
+          [APP_ROUTES.returns, APP_ROUTES.delivery]
+        ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
+        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, 'notifications:view'),
+        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
       ],
     },
   ],
@@ -223,6 +251,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ]),
         requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, 'warehouses:view'),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, 'suppliers:view'),
+        requiredNavItem(APP_ROUTES.customers, 'Khách hàng', Users, 'customers:view'),
         requiredNavItem(
           APP_ROUTES.purchaseOrders,
           'Mua hàng',
@@ -231,7 +260,16 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, 'inbound-receipts:view'),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, 'inventory:view'),
+        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, 'transfers:view'),
+        requiredNavItem(
+          APP_ROUTES.orders,
+          'Xuất kho & Giao hàng',
+          PackageMinus,
+          'outbound-orders:view',
+          [APP_ROUTES.returns, APP_ROUTES.delivery]
+        ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, 'products:view'),
+        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, 'notifications:view'),
       ],
     },
   ],

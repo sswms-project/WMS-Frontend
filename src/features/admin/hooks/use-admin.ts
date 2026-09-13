@@ -9,7 +9,12 @@ import type {
   UpdateSubscriptionPlanRequest,
 } from '../schemas/subscription-plan.schema'
 import { adminService } from '../services/admin.service'
-import type { AssignPermissionsRequest, SubscriptionPlanResponse } from '../types/admin.types'
+import type {
+  AdminSubscriptionPlanQuery,
+  AssignPermissionsRequest,
+  TenantQuery,
+  TenantStateChangeRequest,
+} from '../types/admin.types'
 
 const KEYS = {
   roles: ['admin', 'roles'] as const,
@@ -54,11 +59,80 @@ export interface UpdateSubscriptionPlanVariables {
 
 // Dùng chung query key với feature subscription vì cùng gọi GET /subscription-plans;
 // tách key riêng sẽ khiến danh sách gói phía tenant giữ dữ liệu cũ sau khi admin sửa.
-export function useAdminSubscriptionPlansQuery() {
-  return useQuery<SubscriptionPlanResponse[], ApiErrorResponse>({
-    queryKey: queryKeys.subscription.plans,
-    queryFn: () => adminService.getSubscriptionPlans().then((r) => r.data),
+export function useAdminSubscriptionPlansQuery(params: AdminSubscriptionPlanQuery) {
+  return useQuery({
+    queryKey: queryKeys.platformAdmin.plans(params),
+    queryFn: () => adminService.getSubscriptionPlans(params),
   })
+}
+
+export function usePlatformDashboardQuery() {
+  return useQuery({
+    queryKey: queryKeys.platformAdmin.dashboard,
+    queryFn: adminService.getPlatformDashboard,
+  })
+}
+
+export function useTenantsQuery(params: TenantQuery) {
+  return useQuery({
+    queryKey: queryKeys.platformAdmin.tenantList(params),
+    queryFn: () => adminService.getTenants(params),
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useTenantQuery(tenantId: string) {
+  return useQuery({
+    queryKey: queryKeys.platformAdmin.tenantDetail(tenantId),
+    queryFn: () => adminService.getTenant(tenantId),
+  })
+}
+
+interface TenantStateVariables {
+  readonly tenantId: string
+  readonly body: TenantStateChangeRequest
+}
+
+function useTenantStateMutation(action: 'suspend' | 'reactivate') {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, body }: TenantStateVariables) =>
+      action === 'suspend'
+        ? adminService.suspendTenant(tenantId, body)
+        : adminService.reactivateTenant(tenantId, body),
+    onSuccess: (response, variables) => {
+      queryClient.setQueryData(
+        queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+        response.data
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.tenants })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+      })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.dashboard })
+      queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs.all })
+      toast.success(action === 'suspend' ? 'Đã tạm ngưng tenant.' : 'Đã kích hoạt lại tenant.')
+    },
+    onError: (error: ApiErrorResponse, variables) => {
+      logger.error(error)
+      if (error.statusCode === 409) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.tenants })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+        })
+        queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.dashboard })
+      }
+      toast.error(error.message || 'Không thể cập nhật trạng thái tenant.')
+    },
+  })
+}
+
+export function useSuspendTenantMutation() {
+  return useTenantStateMutation('suspend')
+}
+
+export function useReactivateTenantMutation() {
+  return useTenantStateMutation('reactivate')
 }
 
 export function useSubscriptionFeaturesQuery() {
@@ -73,14 +147,11 @@ export function useSubscriptionFeaturesQuery() {
 // nên hiển thị toast thêm tại đây sẽ gây trùng thông báo.
 export function useCreateSubscriptionPlanMutation() {
   const queryClient = useQueryClient()
-  return useMutation<
-    ApiResponse<SubscriptionPlanResponse>,
-    ApiErrorResponse,
-    CreateSubscriptionPlanRequest
-  >({
+  return useMutation<ApiResponse<string>, ApiErrorResponse, CreateSubscriptionPlanRequest>({
     mutationFn: adminService.createSubscriptionPlan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.all })
     },
     onError: (error) => logger.error(error),
   })
@@ -88,14 +159,11 @@ export function useCreateSubscriptionPlanMutation() {
 
 export function useUpdateSubscriptionPlanMutation() {
   const queryClient = useQueryClient()
-  return useMutation<
-    ApiResponse<SubscriptionPlanResponse>,
-    ApiErrorResponse,
-    UpdateSubscriptionPlanVariables
-  >({
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateSubscriptionPlanVariables>({
     mutationFn: ({ id, body }) => adminService.updateSubscriptionPlan(id, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.all })
     },
     onError: (error) => logger.error(error),
   })
@@ -107,6 +175,7 @@ export function useDeactivateSubscriptionPlanMutation() {
     mutationFn: adminService.deactivateSubscriptionPlan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.all })
     },
     onError: (error) => logger.error(error),
   })

@@ -113,3 +113,39 @@ export interface InventoryAbcItem {
   cumulativePercentage: number
   class: string
 }
+
+export interface InventoryForecastQuery {
+  productId: string
+  warehouseId?: string
+  horizonDays?: number
+}
+
+export interface ForecastPoint {
+  date: string
+  predictedQuantity: number
+}
+
+export interface InventoryForecastResponse {
+  productId: string
+  warehouseId: string | null
+  modelName: string
+  forecast: ForecastPoint[]
+}
+
+export interface InventoryStockHistoryQuery {
+  productId: string
+  warehouseId?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
+export interface StockHistoryPoint {
+  date: string
+  quantity: number
+}
+
+export interface InventoryStockHistoryResponse {
+  productId: string
+  warehouseId: string | null
+  history: StockHistoryPoint[]
+}

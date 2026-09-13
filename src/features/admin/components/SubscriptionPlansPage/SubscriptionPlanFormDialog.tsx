@@ -296,7 +296,7 @@ export function SubscriptionPlanFormDialog({
                             min="1"
                             step="1"
                             className="h-8 w-40"
-                            placeholder="Nhập giới hạn..."
+                            placeholder="Nhập giới hạn…"
                             aria-invalid={Boolean(limitError)}
                             {...register(`featureItems.${index}.limitValue`)}
                           />
@@ -326,7 +326,10 @@ export function SubscriptionPlanFormDialog({
               disabled={isPending || (isEditMode && !isDirty)}
             >
               {isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                <Loader2
+                  className="size-4 animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
               ) : isEditMode ? (
                 'Lưu thay đổi'
               ) : (

@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   APP_ROUTES.auth.forgotPassword,
   APP_ROUTES.auth.resetPassword,
   APP_ROUTES.auth.verify2fa,
+  APP_ROUTES.subscriptionPaymentResult,
 ]
 
 const KNOWN_ROLES = Object.values(USER_ROLES)

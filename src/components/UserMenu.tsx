@@ -95,7 +95,7 @@ export function UserMenu() {
           ) : (
             <LogOut className="size-4" aria-hidden="true" />
           )}
-          {logoutMutation.isPending ? 'Đang đăng xuất...' : 'Đăng xuất'}
+          {logoutMutation.isPending ? 'Đang đăng xuất…' : 'Đăng xuất'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

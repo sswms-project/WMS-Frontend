@@ -35,6 +35,7 @@ interface ReceivingTaskDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onReceive: (task: ReceivingTask) => void
+  readonly onImportDocument: (task: ReceivingTask) => void
   readonly onRetry: () => void
 }
 
@@ -50,6 +51,7 @@ export function ReceivingTaskDirectory({
   onSearchChange,
   onPageChange,
   onReceive,
+  onImportDocument,
   onRetry,
 }: ReceivingTaskDirectoryProps) {
   return (
@@ -102,7 +104,9 @@ export function ReceivingTaskDirectory({
             {items.map((item) => (
               <Item key={item.purchaseOrderId} className="border-b last:border-b-0">
                 <ItemContent>
-                  <ItemTitle className="font-mono">{item.poNumber}</ItemTitle>
+                  <ItemTitle className="font-mono" translate="no">
+                    {item.poNumber}
+                  </ItemTitle>
                   <ItemDescription>
                     {item.supplierName} · {item.warehouseName}
                   </ItemDescription>
@@ -111,10 +115,20 @@ export function ReceivingTaskDirectory({
                     {formatOperationalDate(item.expectedDate)}
                   </ItemDescription>
                 </ItemContent>
-                <Button type="button" size="sm" onClick={() => onReceive(item)}>
-                  <PackagePlus aria-hidden="true" />
-                  Nhận
-                </Button>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <Button type="button" size="sm" onClick={() => onReceive(item)}>
+                    <PackagePlus aria-hidden="true" />
+                    Nhập thủ công
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onImportDocument(item)}
+                  >
+                    {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
+                  </Button>
+                </div>
               </Item>
             ))}
           </ItemGroup>
@@ -135,7 +149,9 @@ export function ReceivingTaskDirectory({
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.purchaseOrderId}>
-                    <TableCell className="font-mono font-semibold">{item.poNumber}</TableCell>
+                    <TableCell className="font-mono font-semibold" translate="no">
+                      {item.poNumber}
+                    </TableCell>
                     <TableCell>{item.supplierName}</TableCell>
                     <TableCell>{item.warehouseName}</TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -144,10 +160,20 @@ export function ReceivingTaskDirectory({
                     </TableCell>
                     <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
                     <TableCell className="text-right">
-                      <Button type="button" size="sm" onClick={() => onReceive(item)}>
-                        <PackagePlus aria-hidden="true" />
-                        Nhận hàng
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onImportDocument(item)}
+                        >
+                          {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
+                        </Button>
+                        <Button type="button" size="sm" onClick={() => onReceive(item)}>
+                          <PackagePlus aria-hidden="true" />
+                          Nhập thủ công
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -6,8 +6,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import type { ApiErrorResponse } from '@/types/api'
 import type {
+  AccessControlMode,
   TenantRolePermissionWorkspace,
   TenantRolePolicy,
 } from '../../types/tenant-access-control.types'
@@ -15,16 +17,17 @@ import {
   arePermissionSetsEqual,
   filterPermissionGroups,
   getRoleById,
-  getTenantRoleContent,
   groupTenantPermissions,
 } from '../../utils/tenant-access-control'
 import { PermissionCatalog } from './PermissionCatalog'
+import { AccessControlModeTabs } from './AccessControlModeTabs'
 import { PermissionEditorHeader } from './PermissionEditorHeader'
 import { RoleSelector } from './RoleSelector'
 import { UnsavedChangesDialog } from './UnsavedChangesDialog'
 
 type PendingIntent =
   | { type: 'role'; roleId: string }
+  | { type: 'mode'; mode: AccessControlMode }
   | { type: 'navigation'; href: string }
   | { type: 'history' }
 
@@ -44,6 +47,10 @@ function getMutationMessage(error: unknown) {
     return 'Không thể lưu thay đổi. Dữ liệu đang chỉnh vẫn được giữ lại.'
   }
   if (error.statusCode === 403) {
+    const backendMessage = error.message.trim()
+    if (backendMessage && backendMessage.toLowerCase() !== 'forbidden') {
+      return backendMessage
+    }
     return 'Quyền thao tác của bạn đã thay đổi. Hãy tải lại cấu hình trước khi thử lại.'
   }
   if (error.statusCode === 404 || error.statusCode === 409) {
@@ -53,12 +60,20 @@ function getMutationMessage(error: unknown) {
 }
 
 interface AccessControlWorkspaceProps {
-  workspace: TenantRolePermissionWorkspace
-  saving: boolean
-  onSave: (roleId: string, permissionIds: string[]) => Promise<void>
+  readonly activeMode: AccessControlMode
+  readonly workspace: TenantRolePermissionWorkspace
+  readonly saving: boolean
+  readonly onSave: (roleId: string, permissionIds: string[]) => Promise<void>
+  readonly onModeChange: (mode: AccessControlMode) => void
 }
 
-export function AccessControlWorkspace({ workspace, saving, onSave }: AccessControlWorkspaceProps) {
+export function AccessControlWorkspace({
+  activeMode,
+  workspace,
+  saving,
+  onSave,
+  onModeChange,
+}: AccessControlWorkspaceProps) {
   const router = useRouter()
   const pathname = usePathname()
   const historyTraversal = useRef<'idle' | 'restoring' | 'leaving'>('idle')
@@ -77,7 +92,6 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
   const [mutationError, setMutationError] = useState<string | null>(null)
 
   const selectedRole = getRoleById(workspace.roles, selectedRoleId) ?? firstRole
-  const roleContent = getTenantRoleContent(selectedRole.roleName)
   const inheritedIds = useMemo(
     () => new Set(selectedRole.inheritedPermissionIds),
     [selectedRole.inheritedPermissionIds]
@@ -185,6 +199,16 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
     setDialogOpen(true)
   }
 
+  function requestModeChange(mode: AccessControlMode) {
+    if (mode === activeMode || saving) return
+    if (!isDirty) {
+      onModeChange(mode)
+      return
+    }
+    setPendingIntent({ type: 'mode', mode })
+    setDialogOpen(true)
+  }
+
   function togglePermission(permissionId: string) {
     setMutationError(null)
     setDraftIds((current) => {
@@ -227,6 +251,8 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
     if (pendingIntent.type === 'role') {
       const nextRole = getRoleById(workspace.roles, pendingIntent.roleId)
       if (nextRole) selectRole(nextRole)
+    } else if (pendingIntent.type === 'mode') {
+      onModeChange(pendingIntent.mode)
     } else if (pendingIntent.type === 'navigation') {
       router.push(pendingIntent.href as Route)
     } else {
@@ -243,7 +269,12 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
 
   return (
     <>
-      <div className="border-border bg-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border md:flex-row">
+      <AccessControlModeTabs value={activeMode} disabled={saving} onChange={requestModeChange} />
+      <Tabs
+        value={selectedRole.roleId}
+        onValueChange={requestRoleChange}
+        className="flex min-h-0 flex-1 flex-col gap-3"
+      >
         <RoleSelector
           roles={workspace.roles}
           selectedRoleId={selectedRole.roleId}
@@ -251,10 +282,11 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
           onSelect={requestRoleChange}
         />
 
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-labelledby="role-heading">
+        <TabsContent
+          value={selectedRole.roleId}
+          className="border-border bg-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border"
+        >
           <PermissionEditorHeader
-            roleLabel={roleContent.label}
-            roleDescription={roleContent.description}
             directCount={draftIds.size}
             effectiveCount={effectiveCount}
             moduleCount={permissionGroups.length}
@@ -283,10 +315,13 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
             <div className="p-3 sm:p-4">
               <PermissionCatalog
                 groups={filteredGroups}
-                roleId={selectedRole.roleId}
-                roleName={selectedRole.roleName}
-                selectedIds={draftIds}
-                inheritedIds={inheritedIds}
+                context={{
+                  kind: 'role',
+                  subjectId: selectedRole.roleId,
+                  roleName: selectedRole.roleName,
+                  selectedIds: draftIds,
+                  inheritedIds,
+                }}
                 openModules={visibleOpenModules}
                 disabled={saving}
                 hasSearch={Boolean(searchText.trim())}
@@ -298,8 +333,8 @@ export function AccessControlWorkspace({ workspace, saving, onSave }: AccessCont
               />
             </div>
           </ScrollArea>
-        </section>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       <UnsavedChangesDialog
         open={dialogOpen}

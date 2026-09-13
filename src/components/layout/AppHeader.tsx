@@ -1,10 +1,10 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
-import { NotificationBell } from '@/components/NotificationBell'
+import { AiAssistantLauncher } from '@/features/ai-assistant/components/AiAssistantPanel/AiAssistantLauncher'
+import { NotificationHeaderController } from '@/features/platform-services/components/NotificationHeaderController'
 import { PageHeading } from '@/components/PageHeading'
 import { ThemeToggle } from './ThemeToggle'
 import { UserMenu } from '@/components/UserMenu'
-import { notifications } from '@/features/dashboard/utils/sample-data'
 
 export function AppHeader() {
   return (
@@ -15,7 +15,8 @@ export function AppHeader() {
         <PageHeading />
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <NotificationBell notifications={notifications} />
+        <AiAssistantLauncher />
+        <NotificationHeaderController />
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>

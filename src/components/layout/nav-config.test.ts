@@ -88,7 +88,7 @@ describe('application navigation visibility', () => {
       { label: null, items: ['Dashboard'] },
       { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Nhân sự', 'Phân quyền'] },
       { label: null, items: ['Kho hàng'] },
-      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp'] },
+      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp', 'Khách hàng'] },
       {
         label: 'Vận hành kho',
         items: ['Mua hàng', 'Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Xuất kho & Giao hàng'],
@@ -108,16 +108,35 @@ describe('application navigation visibility', () => {
     )
 
     expect(plannedItems.map((item) => item.label)).toEqual([
-      'Điều chuyển kho',
-      'Xuất kho & Giao hàng',
       'Dashboard kho',
       'Báo cáo vận hành',
       'Dự báo & Bổ sung hàng',
-      'Thông báo',
-      'Audit Log',
     ])
     expect(plannedItems.every((item) => item.href === undefined)).toBe(true)
     expect(plannedItems.every((item) => !isNavItemActive('/anything', item))).toBe(true)
+  })
+
+  it('shows Platform Services only with the matching permission', () => {
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['notifications:view']).some(
+        (item) => item.href === APP_ROUTES.notifications
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['audit-logs:view']).some(
+        (item) => item.href === APP_ROUTES.auditLogs
+      )
+    ).toBe(false)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseManager, ['audit-logs:view']).some(
+        (item) => item.href === APP_ROUTES.auditLogs
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.SystemAdmin, ['audit-logs:view']).some(
+        (item) => item.href === APP_ROUTES.auditLogs
+      )
+    ).toBe(true)
   })
 
   it('marks a tenant group active when one of its child routes is active', () => {
@@ -155,6 +174,15 @@ describe('application navigation visibility', () => {
     expect(isNavItemActive('/subscription/payments', planItem!)).toBe(false)
     expect(isNavItemActive('/subscription/payments', paymentsItem!)).toBe(true)
     expect(isNavItemActive('/subscription/invoices/payment-1/print', paymentsItem!)).toBe(true)
+  })
+
+  it('keeps inventory forecasting in the inventory workspace until replenishment is available', () => {
+    const tenantItems = getNavItems(USER_ROLES.TenantOwner)
+    const replenishmentItem = tenantItems.find((item) => item.label === 'Dự báo & Bổ sung hàng')
+
+    expect(replenishmentItem?.status).toBe('planned')
+    expect(replenishmentItem?.href).toBeUndefined()
+    expect(tenantItems.some((item) => item.href === APP_ROUTES.inventoryForecast)).toBe(false)
   })
 
   it('keeps tenant inventory hidden from the system admin', () => {

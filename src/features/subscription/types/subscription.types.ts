@@ -135,8 +135,22 @@ export interface PaymentResponse {
   invoiceNumber: string
   amount: number
   status: string
+  providerStatus?: string | null
   paidAt: string | null
   createdAt: string
 }
 
 export type PaymentHistoryResponse = QueryResult<PaymentResponse>
+
+export interface PaymentLinkResponse {
+  readonly checkoutUrl: string
+  readonly paymentLinkId: string
+  readonly orderCode: number
+}
+
+export interface CreatePaymentLinkRequestDto {
+  readonly newPlanId: string
+  readonly billingCycle: BillingCycle
+}
+
+export type PayOSPaymentStatus = 'PAID' | 'PENDING' | 'PROCESSING' | 'CANCELLED'

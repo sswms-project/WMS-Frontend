@@ -2,9 +2,11 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
+  CreatePaymentLinkRequestDto,
   InvoiceDataResponse,
   PaymentHistoryQuery,
   PaymentHistoryResponse,
+  PaymentLinkResponse,
   SubscriptionPlanResponse,
   SubscriptionStatusResponse,
   UpgradeSubscriptionRequestDto,
@@ -28,12 +30,22 @@ export const subscriptionService = {
 
   upgradeSubscription: (body: UpgradeSubscriptionRequestDto) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.upgrade, body)
+      .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.upgrade, body)
+      .then((response) => response.data),
+
+  createPaymentLink: (body: CreatePaymentLinkRequestDto) =>
+    axiosClient
+      .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.paymentLink, body)
+      .then((response) => response.data),
+
+  syncPaymentStatus: (orderCode: string) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.subscription.paymentStatus(orderCode))
       .then((response) => response.data),
 
   renewSubscription: () =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.subscription.renew)
+      .post<ApiResponse<PaymentLinkResponse>>(API_ENDPOINTS.subscription.renew)
       .then((response) => response.data),
 
   cancelSubscription: () =>

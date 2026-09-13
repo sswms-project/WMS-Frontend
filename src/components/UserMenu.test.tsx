@@ -91,9 +91,18 @@ describe('UserMenu', () => {
     renderUserMenu(queryClient)
     await user.click(screen.getByRole('button', { name: /Mở menu tài khoản/ }))
 
-    expect(screen.getByRole('menuitem', { name: 'Đang đăng xuất...' })).toHaveAttribute(
+    expect(screen.getByRole('menuitem', { name: 'Đang đăng xuất…' })).toHaveAttribute(
       'aria-disabled',
       'true'
     )
+  })
+
+  it('does not expose a tenant switcher for a single-tenant account', async () => {
+    const user = userEvent.setup()
+    const queryClient = new QueryClient()
+    renderUserMenu(queryClient)
+    await user.click(screen.getByRole('button', { name: /Mở menu tài khoản/ }))
+
+    expect(screen.queryByText('Tổ chức làm việc')).not.toBeInTheDocument()
   })
 })
