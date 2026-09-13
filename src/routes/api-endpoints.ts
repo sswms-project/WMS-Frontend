@@ -192,6 +192,8 @@ export const API_ENDPOINTS = {
     update: (id: string) => `/products/${id}`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
     barcode: (id: string) => `/products/${id}/barcode`,
+    suppliers: (id: string) => `/products/${id}/suppliers`,
+    supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
     import: '/products/import',
   },
   payments: {

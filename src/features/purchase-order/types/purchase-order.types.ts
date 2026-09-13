@@ -40,6 +40,7 @@ export interface PurchaseOrderSummary {
   warehouseName: string | null
   supplierId: string
   supplierName: string
+  currency: string
   status: PurchaseOrderStatus
   createdBy: string
   createdByName: string

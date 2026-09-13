@@ -155,6 +155,7 @@ export const queryKeys = {
     all: ['products'] as const,
     list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
+    suppliers: (id: string) => ['products', 'detail', id, 'suppliers'] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,

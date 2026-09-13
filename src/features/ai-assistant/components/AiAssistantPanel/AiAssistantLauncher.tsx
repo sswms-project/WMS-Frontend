@@ -99,7 +99,11 @@ export function AiAssistantLauncher() {
   const [conversationId, setConversationId] = useState<string | null>(null)
 
   useEffect(() => {
-    setPosition(getStoredPosition() ?? getDefaultPosition())
+    const animationFrame = window.requestAnimationFrame(() => {
+      setPosition(getStoredPosition() ?? getDefaultPosition())
+    })
+
+    return () => window.cancelAnimationFrame(animationFrame)
   }, [])
 
   const finishDragging = () => {

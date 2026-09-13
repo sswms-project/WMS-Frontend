@@ -4,6 +4,7 @@ export interface SubscriptionStatusResponse {
   id: string
   planName: string
   planPrice: number
+  currency: string
   billingCycle: string
   startDate: string
   endDate: string
@@ -38,6 +39,7 @@ export interface SubscriptionPlanResponse {
   id: string
   planName: string
   monthlyPrice: number
+  currency: string
   yearlyPrice: number
   yearlyDiscountPercent: number
   displayOrder: number
@@ -88,6 +90,7 @@ export interface InvoiceDataResponse {
   readonly planName: string | null
   readonly invoiceNumber: string
   readonly amount: number
+  readonly currency: string
   readonly status: string
   readonly paidAt: string | null
   readonly createdAt: string
@@ -118,6 +121,7 @@ export interface PaymentResponse {
   planName: string | null
   invoiceNumber: string
   amount: number
+  currency: string
   status: string
   providerStatus?: string | null
   paidAt: string | null

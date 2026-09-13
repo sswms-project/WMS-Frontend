@@ -64,3 +64,26 @@ export interface ImportProductItemRequest {
 export interface ImportProductsRequest {
   items: ImportProductItemRequest[]
 }
+
+export interface ProductSupplier {
+  id: string
+  productId: string
+  productSKU: string
+  productName: string
+  supplierId: string
+  supplierName: string
+  supplierProductCode: string | null
+  unitPrice: number | null
+  isPreferred: boolean
+  createdAt: string
+  modifiedAt: string | null
+}
+
+export interface SaveProductSupplierRequest {
+  supplierId: string
+  supplierProductCode: string | null
+  unitPrice: number | null
+  isPreferred: boolean
+}
+
+export type UpdateProductSupplierRequest = Omit<SaveProductSupplierRequest, 'supplierId'>

@@ -249,8 +249,8 @@ function getDialogCopy(dialogState: DialogState | null, subscription?: Subscript
     return {
       title: isScheduledChange ? 'Xác nhận chuyển gói' : 'Xác nhận nâng cấp gói',
       description: isScheduledChange
-        ? `${dialogState.plan.planName} (${formatBillingCycle(dialogState.billingCycle)}) sẽ được áp dụng từ kỳ thanh toán kế tiếp với giá ${formatCurrency(selectedPrice)} ${getBillingPeriodLabel(dialogState.billingCycle)}.`
-        : `Chuyển từ ${subscription?.planName ?? 'gói hiện tại'} sang ${dialogState.plan.planName} với giá ${formatCurrency(selectedPrice)} ${getBillingPeriodLabel(dialogState.billingCycle)}.`,
+        ? `${dialogState.plan.planName} (${formatBillingCycle(dialogState.billingCycle)}) sẽ được áp dụng từ kỳ thanh toán kế tiếp với giá ${formatCurrency(selectedPrice, dialogState.plan.currency)} ${getBillingPeriodLabel(dialogState.billingCycle)}.`
+        : `Chuyển từ ${subscription?.planName ?? 'gói hiện tại'} sang ${dialogState.plan.planName} với giá ${formatCurrency(selectedPrice, dialogState.plan.currency)} ${getBillingPeriodLabel(dialogState.billingCycle)}.`,
       confirmLabel: isScheduledChange ? 'Xác nhận chuyển' : 'Nâng cấp',
     }
   }

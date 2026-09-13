@@ -68,11 +68,11 @@ export function formatQuantity(value: number) {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value)
 }
 
-export function formatCurrency(value: number | null) {
+export function formatCurrency(value: number | null, currency = 'VND') {
   if (value === null) return 'Chưa nhập'
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
+    currency,
+    maximumFractionDigits: currency === 'VND' ? 0 : 2,
   }).format(value)
 }

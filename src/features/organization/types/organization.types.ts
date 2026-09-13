@@ -4,5 +4,6 @@ export interface OrganizationResponse {
   email: string
   phone: string
   address: string | null
+  defaultCurrency: string
   status: string
 }

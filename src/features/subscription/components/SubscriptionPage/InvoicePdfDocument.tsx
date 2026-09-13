@@ -123,7 +123,7 @@ export function InvoicePdfDocument({ invoice, customer }: InvoicePdfDocumentProp
 
         <View style={styles.totalRow}>
           <Text>Tổng thanh toán</Text>
-          <Text>{formatCurrency(invoice.amount)}</Text>
+          <Text>{formatCurrency(invoice.amount, invoice.currency)}</Text>
         </View>
 
         <Text style={styles.note}>

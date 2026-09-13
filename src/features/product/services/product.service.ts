@@ -9,7 +9,10 @@ import type {
   ProductListQuery,
   ProductListResponse,
   ProductResponse,
+  ProductSupplier,
+  SaveProductSupplierRequest,
   UnitResponse,
+  UpdateProductSupplierRequest,
   UpdateProductRequest,
 } from '../types/product.types'
 
@@ -53,5 +56,29 @@ export const productService = {
   importProducts: (request: ImportProductsRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.products.import, request)
+      .then((r) => r.data),
+
+  getProductSuppliers: (id: string) =>
+    axiosClient
+      .get<ApiResponse<ProductSupplier[]>>(API_ENDPOINTS.products.suppliers(id))
+      .then((r) => r.data),
+
+  addProductSupplier: (id: string, request: SaveProductSupplierRequest) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.products.suppliers(id), request)
+      .then((r) => r.data),
+
+  updateProductSupplier: (
+    productId: string,
+    linkId: string,
+    request: UpdateProductSupplierRequest
+  ) =>
+    axiosClient
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.products.supplier(productId, linkId), request)
+      .then((r) => r.data),
+
+  deleteProductSupplier: (productId: string, linkId: string) =>
+    axiosClient
+      .delete<ApiResponse<unknown>>(API_ENDPOINTS.products.supplier(productId, linkId))
       .then((r) => r.data),
 }

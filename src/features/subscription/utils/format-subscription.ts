@@ -6,20 +6,18 @@ import type {
 
 export const NEAR_EXPIRY_DAYS = 7
 
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-})
-
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
 })
 
-export function formatCurrency(value: number): string {
-  return currencyFormatter.format(value)
+export function formatCurrency(value: number, currency = 'VND'): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: currency === 'VND' ? 0 : 2,
+  }).format(value)
 }
 
 export function formatDate(value: string | null): string {

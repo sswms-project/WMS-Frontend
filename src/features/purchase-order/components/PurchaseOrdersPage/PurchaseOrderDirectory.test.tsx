@@ -20,6 +20,7 @@ const purchaseOrder: PurchaseOrderSummary = {
   lineCount: 1,
   orderedQuantity: 6,
   receivedQuantity: 6,
+  currency: 'VND',
 }
 
 describe('PurchaseOrderDirectory', () => {
