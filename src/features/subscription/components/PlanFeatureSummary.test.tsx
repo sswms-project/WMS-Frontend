@@ -8,6 +8,7 @@ const plan: SubscriptionPlanResponse = {
   id: 'professional',
   planName: 'Professional',
   monthlyPrice: 500000,
+  currency: 'VND',
   yearlyPrice: 5100000,
   yearlyDiscountPercent: 15,
   displayOrder: 2,

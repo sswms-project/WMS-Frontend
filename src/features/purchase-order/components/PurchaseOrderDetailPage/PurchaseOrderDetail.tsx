@@ -216,7 +216,7 @@ export function PurchaseOrderDetail({
                     {formatQuantity(line.remainingQuantity)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {formatCurrency(line.unitPrice)}
+                    {formatCurrency(line.unitPrice, purchaseOrder.currency)}
                   </TableCell>
                 </TableRow>
               ))}

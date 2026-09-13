@@ -19,13 +19,8 @@ export const staffService = {
       .get<ApiResponse<StaffResponse>>(API_ENDPOINTS.staff.detail(userId))
       .then((response) => response.data),
 
-  deactivateStaff: (userId: string) =>
+  terminateStaff: (userId: string) =>
     axiosClient
-      .put<ApiResponse<unknown>>(API_ENDPOINTS.staff.deactivate(userId))
-      .then((response) => response.data),
-
-  reactivateStaff: (userId: string) =>
-    axiosClient
-      .put<ApiResponse<unknown>>(API_ENDPOINTS.staff.reactivate(userId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.staff.terminate(userId))
       .then((response) => response.data),
 }

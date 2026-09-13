@@ -1,11 +1,4 @@
-import {
-  Eye,
-  MoreHorizontal,
-  ShieldCheck,
-  UserRoundCheck,
-  UserRoundX,
-  Warehouse,
-} from 'lucide-react'
+import { Eye, MoreHorizontal, ShieldCheck, UserRoundX, Warehouse } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -22,27 +15,19 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { WarehouseSummaryResponse } from '../../types/manager-assignment.types'
-import {
-  STAFF_DIRECTORY_KINDS,
-  type StaffDirectoryKind,
-  type StaffLifecycleAction,
-  type StaffResponse,
-} from '../../types/staff.types'
+import type { StaffResponse } from '../../types/staff.types'
 import { getAssignedWarehouseIds, staffWarehouseScopeSummary } from '../../utils/staff-warehouse'
-import { getStaffLifecycleAction } from '../../utils/staff-status'
 import { StaffStatusBadge } from './StaffStatusBadge'
 
 interface StaffDirectoryTableProps {
-  readonly kind: StaffDirectoryKind
   readonly people: readonly StaffResponse[]
   readonly warehouses: readonly WarehouseSummaryResponse[]
   readonly isWarehouseScopeLoading: boolean
   readonly canAssignWarehouse?: boolean
-  readonly canDeactivate?: boolean
-  readonly canReactivate?: boolean
+  readonly canTerminate?: boolean
   readonly onView: (person: StaffResponse) => void
   readonly onAssignWarehouse: (person: StaffResponse) => void
-  readonly onLifecycleAction: (person: StaffResponse, action: StaffLifecycleAction) => void
+  readonly onTerminate: (person: StaffResponse) => void
 }
 
 function formatLastLogin(value: string | null) {
@@ -62,16 +47,14 @@ function initials(fullName: string) {
 }
 
 export function StaffDirectoryTable({
-  kind,
   people,
   warehouses,
   isWarehouseScopeLoading,
   canAssignWarehouse = false,
-  canDeactivate = false,
-  canReactivate = false,
+  canTerminate = false,
   onView,
   onAssignWarehouse,
-  onLifecycleAction,
+  onTerminate,
 }: StaffDirectoryTableProps) {
   function warehouseScopeLabel(person: StaffResponse) {
     const assignedWarehouseIds = getAssignedWarehouseIds(person)
@@ -82,30 +65,17 @@ export function StaffDirectoryTable({
     return staffWarehouseScopeSummary(assignedWarehouseIds, warehouses)
   }
 
-  function actionFor(person: StaffResponse) {
-    const action =
-      kind === STAFF_DIRECTORY_KINDS.staff ? getStaffLifecycleAction(person.status) : null
-    return (action === 'deactivate' && canDeactivate) || (action === 'reactivate' && canReactivate)
-      ? action
-      : null
-  }
-
-  function actionItem(person: StaffResponse, action: StaffLifecycleAction) {
-    const isDeactivate = action === 'deactivate'
-    const Icon = isDeactivate ? UserRoundX : UserRoundCheck
+  function terminationItem(person: StaffResponse) {
     return (
-      <DropdownMenuItem
-        variant={isDeactivate ? 'destructive' : 'default'}
-        onSelect={() => onLifecycleAction(person, action)}
-      >
-        <Icon className="size-4" aria-hidden="true" />
-        {isDeactivate ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt lại tài khoản'}
+      <DropdownMenuItem variant="destructive" onSelect={() => onTerminate(person)}>
+        <UserRoundX aria-hidden="true" />
+        Chấm dứt làm việc
       </DropdownMenuItem>
     )
   }
 
   function rowActions(person: StaffResponse) {
-    const action = actionFor(person)
+    const canTerminatePerson = canTerminate && person.status !== 'Terminated'
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -129,7 +99,7 @@ export function StaffDirectoryTable({
               Sửa phân công kho
             </DropdownMenuItem>
           )}
-          {action && actionItem(person, action)}
+          {canTerminatePerson && terminationItem(person)}
         </DropdownMenuContent>
       </DropdownMenu>
     )

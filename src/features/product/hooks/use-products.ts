@@ -12,7 +12,10 @@ import type {
   ProductListQuery,
   ProductListResponse,
   ProductResponse,
+  ProductSupplier,
+  SaveProductSupplierRequest,
   UnitResponse,
+  UpdateProductSupplierRequest,
   UpdateProductRequest,
 } from '../types/product.types'
 
@@ -100,6 +103,46 @@ export function useImportProductsMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all })
     },
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useProductSuppliersQuery(id: string) {
+  return useQuery<ProductSupplier[], ApiErrorResponse>({
+    queryKey: queryKeys.products.suppliers(id),
+    queryFn: () => productService.getProductSuppliers(id).then((response) => response.data),
+    enabled: Boolean(id),
+  })
+}
+
+export function useAddProductSupplierMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<string, ApiErrorResponse, SaveProductSupplierRequest>({
+    mutationFn: (request) =>
+      productService.addProductSupplier(id, request).then((response) => response.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.suppliers(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useUpdateProductSupplierMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<
+    unknown,
+    ApiErrorResponse,
+    { linkId: string; request: UpdateProductSupplierRequest }
+  >({
+    mutationFn: ({ linkId, request }) => productService.updateProductSupplier(id, linkId, request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.suppliers(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useDeleteProductSupplierMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, string>({
+    mutationFn: (linkId) => productService.deleteProductSupplier(id, linkId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.suppliers(id) }),
     onError: (error) => logger.error(formatApiError(error)),
   })
 }

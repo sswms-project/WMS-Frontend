@@ -34,7 +34,7 @@ vi.mock('../components/StaffDirectoryPage', () => ({
   StaffDirectoryPagination: () => null,
   StaffDirectoryTable: () => <div>Danh sách quản lý kho</div>,
   StaffDirectoryToolbar: () => null,
-  StaffLifecycleDialog: () => null,
+  StaffTerminationDialog: () => null,
 }))
 
 vi.mock('../hooks/use-invitations', () => ({
@@ -54,8 +54,7 @@ vi.mock('../hooks/use-manager-assignment', () => ({
 }))
 
 vi.mock('../hooks/use-staff', () => ({
-  useDeactivateStaffMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  useReactivateStaffMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useTerminateStaffMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useStaffDetailsQuery: () => ({ data: undefined, isLoading: false, isError: false }),
   useStaffListQuery: () => ({
     data: {

@@ -11,8 +11,6 @@ export const API_ENDPOINTS = {
     me: '/auth/me',
     verify2fa: '/auth/verify-2fa',
     changePassword: '/auth/change-password',
-    tenantMemberships: '/auth/tenant-memberships',
-    switchTenant: '/auth/switch-tenant',
   },
   // Authenticated endpoints
   settings: {
@@ -53,8 +51,7 @@ export const API_ENDPOINTS = {
     managers: '/managers',
     list: '/staff',
     detail: (userId: string) => `/staff/${userId}`,
-    deactivate: (userId: string) => `/staff/${userId}/deactivate`,
-    reactivate: (userId: string) => `/staff/${userId}/reactivate`,
+    terminate: (userId: string) => `/staff/${userId}/terminate`,
     assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
     warehouseAssignments: (userId: string) => `/staff/${userId}/warehouses`,
   },
@@ -158,7 +155,6 @@ export const API_ENDPOINTS = {
     send: '/invitations',
     preview: (token: string) => `/invitations/${token}/preview`,
     acceptNew: (token: string) => `/invitations/${token}/accept-new`,
-    acceptExisting: (token: string) => `/invitations/${token}/accept-existing`,
     list: '/invitations',
     resend: (id: string) => `/invitations/${id}/resend`,
     revoke: (id: string) => `/invitations/${id}`,
@@ -196,6 +192,8 @@ export const API_ENDPOINTS = {
     update: (id: string) => `/products/${id}`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
     barcode: (id: string) => `/products/${id}/barcode`,
+    suppliers: (id: string) => `/products/${id}/suppliers`,
+    supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
     import: '/products/import',
   },
   payments: {
@@ -237,5 +235,12 @@ export const API_ENDPOINTS = {
     detail: (customerId: string) => `/customers/${customerId}`,
     update: (customerId: string) => `/customers/${customerId}`,
     orderHistory: (customerId: string) => `/customers/${customerId}/orders`,
+  },
+  aiAssistant: {
+    chat: '/ai/chat',
+    conversations: '/ai/conversations',
+    messages: (conversationId: string) => `/ai/conversations/${conversationId}/messages`,
+    confirmAction: (draftId: string) => `/ai/actions/${draftId}/confirm`,
+    cancelAction: (draftId: string) => `/ai/actions/${draftId}/cancel`,
   },
 } as const

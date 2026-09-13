@@ -25,6 +25,12 @@ const planNameSchema = z
   .min(1, 'Tên gói là bắt buộc')
   .max(100, 'Tên gói không được vượt quá 100 ký tự')
 
+const currencySchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z]{3}$/, 'Mã tiền tệ phải gồm đúng 3 chữ cái')
+
 const monthlyPriceSchema = z
   .preprocess(toOptionalNumber, z.number({ error: numberIssueMessage('Giá tháng') }))
   .pipe(
@@ -87,6 +93,7 @@ export type FeatureItemOutput = z.output<typeof featureItemSchema>
 export const createSubscriptionPlanSchema = z.object({
   planName: planNameSchema,
   monthlyPrice: monthlyPriceSchema,
+  currency: currencySchema,
   yearlyDiscountPercent: yearlyDiscountSchema,
   displayOrder: positiveIntSchema('Thứ tự hiển thị'),
   featureItems: z.array(featureItemSchema),
@@ -95,6 +102,7 @@ export const createSubscriptionPlanSchema = z.object({
 export const editSubscriptionPlanSchema = z.object({
   planName: planNameSchema.optional(),
   monthlyPrice: optionalMonthlyPriceSchema,
+  currency: currencySchema.optional(),
   yearlyDiscountPercent: z
     .preprocess(
       toOptionalNumber,
@@ -120,6 +128,7 @@ export interface PlanFeatureInput {
 export interface CreateSubscriptionPlanRequest {
   planName: string
   monthlyPrice: number
+  currency: string
   yearlyDiscountPercent: number
   displayOrder: number
   features: PlanFeatureInput[]
@@ -128,6 +137,7 @@ export interface CreateSubscriptionPlanRequest {
 export interface UpdateSubscriptionPlanRequest {
   planName?: string
   monthlyPrice?: number
+  currency?: string
   yearlyDiscountPercent?: number
   displayOrder?: number
   features?: PlanFeatureInput[]

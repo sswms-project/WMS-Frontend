@@ -94,7 +94,6 @@ export const queryKeys = {
   },
   auth: {
     me: ['auth', 'me'] as const,
-    memberships: ['auth', 'tenant-memberships'] as const,
   },
   subscription: {
     all: ['subscription'] as const,
@@ -156,6 +155,7 @@ export const queryKeys = {
     all: ['products'] as const,
     list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
+    suppliers: (id: string) => ['products', 'detail', id, 'suppliers'] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,
@@ -220,5 +220,10 @@ export const queryKeys = {
     detail: (id: string) => ['customers', 'detail', id] as const,
     orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
       ['customers', 'detail', id, 'orders', params] as const,
+  },
+  aiAssistant: {
+    all: ['ai-assistant'] as const,
+    conversations: ['ai-assistant', 'conversations'] as const,
+    messages: (conversationId: string) => ['ai-assistant', 'messages', conversationId] as const,
   },
 }

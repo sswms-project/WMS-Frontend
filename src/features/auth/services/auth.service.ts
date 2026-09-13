@@ -11,8 +11,6 @@ import type {
   RegisterResponseDto,
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
-  SwitchTenantRequest,
-  TenantMembershipResponse,
   UpdateProfileRequest,
   UserProfileResponse,
   Verify2FARequestDto,
@@ -53,16 +51,6 @@ export const authService = {
   updateMe: (body: UpdateProfileRequest) =>
     axiosClient
       .put<ApiResponse<UserProfileResponse>>(API_ENDPOINTS.auth.me, body)
-      .then((r) => r.data),
-
-  getTenantMemberships: () =>
-    axiosClient
-      .get<ApiResponse<TenantMembershipResponse[]>>(API_ENDPOINTS.auth.tenantMemberships)
-      .then((r) => r.data),
-
-  switchTenant: (body: SwitchTenantRequest) =>
-    axiosClient
-      .post<ApiResponse<LoginResponseDto>>(API_ENDPOINTS.auth.switchTenant, body)
       .then((r) => r.data),
 
   verify2FA: (body: Verify2FARequestDto) =>

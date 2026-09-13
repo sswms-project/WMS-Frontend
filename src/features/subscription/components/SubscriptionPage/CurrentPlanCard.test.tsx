@@ -8,6 +8,7 @@ const subscription: SubscriptionStatusResponse = {
   id: 'subscription-1',
   planName: 'Free',
   planPrice: 0,
+  currency: 'VND',
   billingCycle: 'Monthly',
   startDate: '2026-08-03T00:00:00+07:00',
   endDate: '2026-09-03T00:00:00+07:00',

@@ -18,6 +18,7 @@ const plan: SubscriptionPlanResponse = {
   id: 'basic',
   planName: 'Basic',
   monthlyPrice: 100000,
+  currency: 'VND',
   yearlyPrice: 1080000,
   yearlyDiscountPercent: 10,
   displayOrder: 1,

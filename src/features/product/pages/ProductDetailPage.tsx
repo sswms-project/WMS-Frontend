@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Archive, ArrowLeft, Pencil, QrCode, RefreshCw, Settings2 } from 'lucide-react'
+import { Archive, ArrowLeft, Pencil, QrCode, RefreshCw, Settings2, Store } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
@@ -11,7 +11,11 @@ import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { ProductDetailSidebar, ProductBarcodePanel } from '../components/ProductDetailPage'
+import {
+  ProductDetailSidebar,
+  ProductBarcodePanel,
+  ProductSuppliersPanel,
+} from '../components/ProductDetailPage'
 import { UpdateProductDialog } from '../components/ProductForm'
 import { ProductArchiveDialog } from '../components/ProductArchiveDialog'
 import { ProductStockPolicyDialog } from '../components/ProductStockPolicyForm'
@@ -173,6 +177,10 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
               <QrCode className="size-4" aria-hidden="true" />
               Mã vạch
             </TabsTrigger>
+            <TabsTrigger value="suppliers" className="h-10 flex-none px-3">
+              <Store className="size-4" aria-hidden="true" />
+              Nhà cung cấp
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="mt-4">
@@ -243,6 +251,10 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
                 onGenerate={() => void handleGenerateBarcode()}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="suppliers" className="mt-4">
+            <ProductSuppliersPanel productId={productId} canManage={canUpdate} />
           </TabsContent>
         </Tabs>
       </div>
