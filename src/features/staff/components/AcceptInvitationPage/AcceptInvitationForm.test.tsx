@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { USER_ROLES } from '@/config/roles'
 import { AcceptInvitationForm } from './AcceptInvitationForm'
 
-const existingAccountPreview = {
+const invitationPreview = {
   fullName: 'Nguyễn Văn A',
   email: 'staff@example.com',
   tenantName: 'KOVIA Demo',
@@ -18,7 +18,7 @@ const existingAccountPreview = {
   ],
   expiresAt: '2026-09-09T00:00:00Z',
   effectiveStatus: 'Pending',
-  accountMode: 'ExistingAccount' as const,
+  accountMode: 'NewAccount' as const,
 }
 
 describe('AcceptInvitationForm', () => {
@@ -26,13 +26,11 @@ describe('AcceptInvitationForm', () => {
     render(
       <AcceptInvitationForm
         token="valid-token"
-        preview={{ ...existingAccountPreview, accountMode: 'NewAccount' }}
+        preview={invitationPreview}
         isPreviewLoading={false}
-        isAuthenticated={false}
         isLoading={false}
         isSuccess
         onSubmit={vi.fn()}
-        onAcceptExisting={vi.fn()}
       />
     )
 
@@ -44,25 +42,22 @@ describe('AcceptInvitationForm', () => {
     expect(screen.queryByRole('link', { name: 'Đi tới Dashboard' })).not.toBeInTheDocument()
   })
 
-  it('keeps invitation context and retry action visible after an action error', () => {
+  it('keeps invitation context and activation form visible after an action error', () => {
     render(
       <AcceptInvitationForm
         token="valid-token"
-        preview={existingAccountPreview}
+        preview={invitationPreview}
         isPreviewLoading={false}
-        isAuthenticated
-        authenticatedEmail="staff@example.com"
         isLoading={false}
         isSuccess={false}
-        actionErrorMessage="Không thể chuyển tổ chức. Vui lòng thử lại."
+        actionErrorMessage="Không thể kích hoạt tài khoản. Vui lòng thử lại."
         onSubmit={vi.fn()}
-        onAcceptExisting={vi.fn()}
       />
     )
 
     expect(screen.getByText('Nguyễn Văn A')).toBeInTheDocument()
-    expect(screen.getByText('Không thể chuyển tổ chức. Vui lòng thử lại.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chấp nhận và chuyển tổ chức' })).toBeEnabled()
+    expect(screen.getByText('Không thể kích hoạt tài khoản. Vui lòng thử lại.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Kích hoạt tài khoản' })).toBeEnabled()
   })
 
   it('uses a blocking error state only when invitation preview fails', () => {
@@ -70,44 +65,15 @@ describe('AcceptInvitationForm', () => {
       <AcceptInvitationForm
         token="invalid-token"
         isPreviewLoading={false}
-        isAuthenticated={false}
         isLoading={false}
         isSuccess={false}
         errorMessage="Invitation link is invalid."
         onSubmit={vi.fn()}
-        onAcceptExisting={vi.fn()}
       />
     )
 
     expect(screen.getByText('Không thể sử dụng lời mời')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Chấp nhận và chuyển tổ chức' })
-    ).not.toBeInTheDocument()
-  })
-
-  it('does not offer acceptance while a different account is authenticated', () => {
-    render(
-      <AcceptInvitationForm
-        token="valid-token"
-        preview={existingAccountPreview}
-        isPreviewLoading={false}
-        isAuthenticated
-        authenticatedEmail="different@example.com"
-        isLoading={false}
-        isSuccess={false}
-        onSubmit={vi.fn()}
-        onAcceptExisting={vi.fn()}
-      />
-    )
-
-    expect(screen.getByText('Đang đăng nhập sai tài khoản')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Đăng nhập bằng tài khoản khác' })).toHaveAttribute(
-      'href',
-      expect.stringContaining('returnUrl=')
-    )
-    expect(
-      screen.queryByRole('button', { name: 'Chấp nhận và chuyển tổ chức' })
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Kích hoạt tài khoản' })).not.toBeInTheDocument()
   })
 
   it('collects a full name when accepting a legacy invitation without one', async () => {
@@ -116,13 +82,11 @@ describe('AcceptInvitationForm', () => {
     render(
       <AcceptInvitationForm
         token="legacy-token"
-        preview={{ ...existingAccountPreview, fullName: '', accountMode: 'NewAccount' }}
+        preview={{ ...invitationPreview, fullName: '' }}
         isPreviewLoading={false}
-        isAuthenticated={false}
         isLoading={false}
         isSuccess={false}
         onSubmit={onSubmit}
-        onAcceptExisting={vi.fn()}
       />
     )
 

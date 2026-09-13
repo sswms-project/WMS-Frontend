@@ -11,8 +11,6 @@ export const API_ENDPOINTS = {
     me: '/auth/me',
     verify2fa: '/auth/verify-2fa',
     changePassword: '/auth/change-password',
-    tenantMemberships: '/auth/tenant-memberships',
-    switchTenant: '/auth/switch-tenant',
   },
   // Authenticated endpoints
   settings: {
@@ -53,8 +51,7 @@ export const API_ENDPOINTS = {
     managers: '/managers',
     list: '/staff',
     detail: (userId: string) => `/staff/${userId}`,
-    deactivate: (userId: string) => `/staff/${userId}/deactivate`,
-    reactivate: (userId: string) => `/staff/${userId}/reactivate`,
+    terminate: (userId: string) => `/staff/${userId}/terminate`,
     assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
     warehouseAssignments: (userId: string) => `/staff/${userId}/warehouses`,
   },
@@ -158,7 +155,6 @@ export const API_ENDPOINTS = {
     send: '/invitations',
     preview: (token: string) => `/invitations/${token}/preview`,
     acceptNew: (token: string) => `/invitations/${token}/accept-new`,
-    acceptExisting: (token: string) => `/invitations/${token}/accept-existing`,
     list: '/invitations',
     resend: (id: string) => `/invitations/${id}/resend`,
     revoke: (id: string) => `/invitations/${id}`,

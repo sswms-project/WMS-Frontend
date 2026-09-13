@@ -1,11 +1,3 @@
-import type { StaffLifecycleAction } from '../types/staff.types'
-
-export function getStaffLifecycleAction(status: string): StaffLifecycleAction | null {
-  if (status === 'Active') return 'deactivate'
-  if (status === 'Inactive') return 'reactivate'
-  return null
-}
-
 export function getStaffStatusLabel(status: string) {
   const labels: Record<string, string> = {
     Active: 'Đang hoạt động',
@@ -13,6 +5,7 @@ export function getStaffStatusLabel(status: string) {
     AccountInactive: 'Tài khoản bị vô hiệu hóa toàn hệ thống',
     Pending: 'Đang chờ',
     Locked: 'Đã khóa',
+    Terminated: 'Đã chấm dứt làm việc',
   }
   return labels[status] ?? status
 }

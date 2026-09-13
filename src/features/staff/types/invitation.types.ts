@@ -49,7 +49,7 @@ export interface InvitationPreviewResponse {
   warehouses: InvitationWarehouseResponse[]
   expiresAt: string
   effectiveStatus: string
-  accountMode: 'NewAccount' | 'ExistingAccount'
+  accountMode: 'NewAccount'
 }
 
 export interface PersonnelImportSummary {
@@ -72,7 +72,7 @@ export interface PersonnelImportRow {
   roleCode: string
   warehouseCodes: string[]
   resolvedWarehouses: InvitationWarehouseResponse[]
-  accountMode: 'NewAccount' | 'ExistingAccount'
+  accountMode: 'NewAccount'
   status: 'Valid' | 'Invalid'
   errors: PersonnelImportIssue[]
   warnings: PersonnelImportIssue[]

@@ -42,13 +42,6 @@ export function useInvitationPreviewQuery(token: string) {
   })
 }
 
-export function useAcceptExistingInvitationMutation() {
-  return useMutation<ApiResponse<string>, ApiErrorResponse, string>({
-    mutationFn: invitationService.acceptExisting,
-    onError: (error) => logger.error(error),
-  })
-}
-
 export function useInvitationsQuery(params: InvitationQuery, enabled = true) {
   return useQuery({
     queryKey: queryKeys.staff.invitations(params),

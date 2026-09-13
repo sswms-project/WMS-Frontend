@@ -1,9 +1,8 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, CheckCircle2, Circle, Eye, EyeOff, KeyRound, LoaderCircle } from 'lucide-react'
+import { CheckCircle2, Circle, Eye, EyeOff, KeyRound, LoaderCircle } from 'lucide-react'
 import Link from 'next/link'
-import type { Route } from 'next'
 import { useMemo, useState } from 'react'
 import { useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
 import { Logo } from '@/components/Logo'
@@ -27,28 +26,22 @@ interface Props {
   readonly token?: string
   readonly preview?: InvitationPreviewResponse
   readonly isPreviewLoading: boolean
-  readonly isAuthenticated: boolean
-  readonly authenticatedEmail?: string
   readonly isLoading: boolean
   readonly isSuccess: boolean
   readonly errorMessage?: string
   readonly actionErrorMessage?: string
   readonly onSubmit: (values: AcceptInvitationFormValues) => Promise<void>
-  readonly onAcceptExisting: () => Promise<void>
 }
 
 export function AcceptInvitationForm({
   token,
   preview,
   isPreviewLoading,
-  isAuthenticated,
-  authenticatedEmail,
   isLoading,
   isSuccess,
   errorMessage,
   actionErrorMessage,
   onSubmit,
-  onAcceptExisting,
 }: Props) {
   const [showPassword, setShowPassword] = useState(false)
   const requiresFullName = Boolean(preview && !preview.fullName.trim())
@@ -61,14 +54,7 @@ export function AcceptInvitationForm({
     defaultValues: { fullName: '', password: '', confirmPassword: '' },
   })
   const password = useWatch({ control: form.control, name: 'password' }) ?? ''
-  const loginUrl =
-    `${APP_ROUTES.auth.login}?returnUrl=${encodeURIComponent(`${APP_ROUTES.invitations.accept}?token=${token ?? ''}`)}` as Route
   const unusable = !preview || preview.effectiveStatus !== 'Pending'
-  const isMatchingAccount = Boolean(
-    preview &&
-    authenticatedEmail &&
-    preview.email.trim().toLowerCase() === authenticatedEmail.trim().toLowerCase()
-  )
 
   return (
     <main className="bg-muted/30 flex min-h-dvh items-center justify-center p-4 sm:p-8">
@@ -111,98 +97,64 @@ export function AcceptInvitationForm({
                     <AlertDescription>{actionErrorMessage}</AlertDescription>
                   </Alert>
                 )}
-                {preview.accountMode === 'ExistingAccount' ? (
-                  <div className="space-y-4">
-                    <Alert>
-                      <Building2 aria-hidden="true" />
-                      <AlertTitle>Tài khoản KOVIA đã tồn tại</AlertTitle>
-                      <AlertDescription>
-                        Đăng nhập đúng email nhận lời mời để thêm tổ chức này; mật khẩu hiện tại
-                        không thay đổi.
-                      </AlertDescription>
-                    </Alert>
-                    {isAuthenticated && !isMatchingAccount ? (
-                      <>
-                        <Alert variant="destructive">
-                          <AlertTitle>Đang đăng nhập sai tài khoản</AlertTitle>
-                          <AlertDescription>
-                            Hãy đăng nhập bằng {preview.email} để chấp nhận lời mời này.
-                          </AlertDescription>
-                        </Alert>
-                        <Button asChild variant="outline" className="w-full">
-                          <Link href={loginUrl}>Đăng nhập bằng tài khoản khác</Link>
-                        </Button>
-                      </>
-                    ) : isAuthenticated ? (
-                      <Button
-                        className="w-full"
+                <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+                  {requiresFullName && (
+                    <Field data-invalid={Boolean(form.formState.errors.fullName)}>
+                      <FieldLabel htmlFor="invitation-full-name">Họ và tên</FieldLabel>
+                      <Input
+                        id="invitation-full-name"
+                        autoComplete="name"
+                        maxLength={300}
                         disabled={isLoading}
-                        onClick={() => void onAcceptExisting()}
-                      >
-                        {isLoading && <LoaderCircle className="animate-spin" aria-hidden="true" />}
-                        Chấp nhận và chuyển tổ chức
-                      </Button>
-                    ) : (
-                      <Button asChild className="w-full">
-                        <Link href={loginUrl}>Đăng nhập để chấp nhận</Link>
-                      </Button>
+                        aria-invalid={Boolean(form.formState.errors.fullName)}
+                        placeholder="Nguyễn Văn A"
+                        {...form.register('fullName')}
+                      />
+                      <FieldError>{form.formState.errors.fullName?.message}</FieldError>
+                    </Field>
+                  )}
+                  <PasswordField
+                    id="invitation-password"
+                    label="Mật khẩu"
+                    shown={showPassword}
+                    disabled={isLoading}
+                    error={form.formState.errors.password?.message}
+                    registration={form.register('password')}
+                    onToggle={() => setShowPassword((value) => !value)}
+                  />
+                  <ul className="text-muted-foreground grid gap-1 border p-3 text-xs sm:grid-cols-2">
+                    {acceptInvitationPasswordRequirements.map((requirement) => {
+                      const met = requirement.validate(password)
+                      const Icon = met ? CheckCircle2 : Circle
+                      return (
+                        <li
+                          key={requirement.id}
+                          className={cn('flex items-center gap-2', met && 'text-primary')}
+                        >
+                          <Icon className="size-3.5" aria-hidden="true" />
+                          {requirement.label}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  <PasswordField
+                    id="invitation-confirm-password"
+                    label="Xác nhận mật khẩu"
+                    shown={false}
+                    disabled={isLoading}
+                    error={form.formState.errors.confirmPassword?.message}
+                    registration={form.register('confirmPassword')}
+                  />
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && (
+                      <LoaderCircle
+                        className="animate-spin motion-reduce:animate-none"
+                        aria-hidden="true"
+                      />
                     )}
-                  </div>
-                ) : (
-                  <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-                    {requiresFullName && (
-                      <Field data-invalid={Boolean(form.formState.errors.fullName)}>
-                        <FieldLabel htmlFor="invitation-full-name">Họ và tên</FieldLabel>
-                        <Input
-                          id="invitation-full-name"
-                          autoComplete="name"
-                          maxLength={300}
-                          disabled={isLoading}
-                          aria-invalid={Boolean(form.formState.errors.fullName)}
-                          placeholder="Nguyễn Văn A"
-                          {...form.register('fullName')}
-                        />
-                        <FieldError>{form.formState.errors.fullName?.message}</FieldError>
-                      </Field>
-                    )}
-                    <PasswordField
-                      id="invitation-password"
-                      label="Mật khẩu"
-                      shown={showPassword}
-                      disabled={isLoading}
-                      error={form.formState.errors.password?.message}
-                      registration={form.register('password')}
-                      onToggle={() => setShowPassword((value) => !value)}
-                    />
-                    <ul className="text-muted-foreground grid gap-1 border p-3 text-xs sm:grid-cols-2">
-                      {acceptInvitationPasswordRequirements.map((requirement) => {
-                        const met = requirement.validate(password)
-                        const Icon = met ? CheckCircle2 : Circle
-                        return (
-                          <li
-                            key={requirement.id}
-                            className={cn('flex items-center gap-2', met && 'text-primary')}
-                          >
-                            <Icon className="size-3.5" aria-hidden="true" />
-                            {requirement.label}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                    <PasswordField
-                      id="invitation-confirm-password"
-                      label="Xác nhận mật khẩu"
-                      shown={false}
-                      disabled={isLoading}
-                      error={form.formState.errors.confirmPassword?.message}
-                      registration={form.register('confirmPassword')}
-                    />
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading && <LoaderCircle className="animate-spin" aria-hidden="true" />}
-                      Kích hoạt tài khoản
-                    </Button>
-                  </form>
-                )}
+                    Kích hoạt tài khoản
+                  </Button>
+                </form>
               </>
             )
           )}

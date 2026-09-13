@@ -31,7 +31,7 @@ import {
   StaffDirectoryPagination,
   StaffDirectoryTable,
   StaffDirectoryToolbar,
-  StaffLifecycleDialog,
+  StaffTerminationDialog,
 } from '../components/StaffDirectoryPage'
 import {
   useInvitationsQuery,
@@ -40,8 +40,7 @@ import {
 } from '../hooks/use-invitations'
 import { useAssignmentWarehousesQuery } from '../hooks/use-manager-assignment'
 import {
-  useDeactivateStaffMutation,
-  useReactivateStaffMutation,
+  useTerminateStaffMutation,
   useStaffDetailsQuery,
   useStaffListQuery,
 } from '../hooks/use-staff'
@@ -50,7 +49,6 @@ import type { WarehouseAssignmentQuery } from '../types/manager-assignment.types
 import {
   STAFF_DIRECTORY_KINDS,
   type StaffDirectoryKind,
-  type StaffLifecycleAction,
   type StaffQuery,
   type StaffResponse,
 } from '../types/staff.types'
@@ -68,11 +66,6 @@ const STAFF_PAGE_VIEWS = {
 } as const
 
 type StaffPageView = (typeof STAFF_PAGE_VIEWS)[keyof typeof STAFF_PAGE_VIEWS]
-
-interface PendingLifecycleAction {
-  readonly person: StaffResponse
-  readonly action: StaffLifecycleAction
-}
 
 function isStaffDirectoryKind(value: string): value is StaffDirectoryKind {
   return value === STAFF_DIRECTORY_KINDS.managers || value === STAFF_DIRECTORY_KINDS.staff
@@ -97,8 +90,7 @@ export function StaffDirectoryPage() {
   const [invitationPage, setInvitationPage] = useState(1)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [managerToAssign, setManagerToAssign] = useState<StaffResponse | null>(null)
-  const [pendingLifecycleAction, setPendingLifecycleAction] =
-    useState<PendingLifecycleAction | null>(null)
+  const [staffToTerminate, setStaffToTerminate] = useState<StaffResponse | null>(null)
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
   const [invitationToRevoke, setInvitationToRevoke] = useState<InvitationResponse | null>(null)
   const debouncedSearchText = useDebouncedValue(searchText.trim(), 300)
@@ -124,12 +116,9 @@ export function StaffDirectoryPage() {
     canInvite && activeView === STAFF_PAGE_VIEWS.invitations
   )
   const detailsQuery = useStaffDetailsQuery(selectedUserId)
-  const deactivateMutation = useDeactivateStaffMutation()
-  const reactivateMutation = useReactivateStaffMutation()
+  const terminateMutation = useTerminateStaffMutation()
   const resendInvitationMutation = useResendInvitationMutation()
   const revokeInvitationMutation = useRevokeInvitationMutation()
-  const lifecycleMutation =
-    pendingLifecycleAction?.action === 'reactivate' ? reactivateMutation : deactivateMutation
 
   function changeKind(nextKind: StaffDirectoryKind) {
     setKind(nextKind)
@@ -142,18 +131,13 @@ export function StaffDirectoryPage() {
     setPage(1)
   }
 
-  async function confirmLifecycleAction() {
-    if (!pendingLifecycleAction) return
-    const { person, action } = pendingLifecycleAction
-    if (!permissions.has(`staff:${action}`)) return
-    const mutation = action === 'deactivate' ? deactivateMutation : reactivateMutation
+  async function confirmTermination() {
+    if (!staffToTerminate || !permissions.has('staff:terminate')) return
 
     try {
-      await mutation.mutateAsync(person.id)
-      toast.success(
-        action === 'deactivate' ? 'Đã vô hiệu hóa tài khoản.' : 'Đã kích hoạt lại tài khoản.'
-      )
-      setPendingLifecycleAction(null)
+      await terminateMutation.mutateAsync(staffToTerminate.id)
+      toast.success('Đã chấm dứt quyền truy cập của nhân viên.')
+      setStaffToTerminate(null)
     } catch (error) {
       logger.error(error)
       toast.error(
@@ -162,7 +146,7 @@ export function StaffDirectoryPage() {
           'message' in error &&
           typeof error.message === 'string'
           ? error.message
-          : 'Không thể cập nhật trạng thái tài khoản.'
+          : 'Không thể chấm dứt quyền truy cập của nhân viên.'
       )
     }
   }
@@ -377,18 +361,14 @@ export function StaffDirectoryPage() {
             {people.length > 0 && (
               <>
                 <StaffDirectoryTable
-                  kind={kind}
                   people={people}
                   warehouses={warehousesQuery.data?.items ?? []}
                   isWarehouseScopeLoading={warehousesQuery.isLoading}
                   canAssignWarehouse={permissions.has('staff:assign-warehouse')}
-                  canDeactivate={permissions.has('staff:deactivate')}
-                  canReactivate={permissions.has('staff:reactivate')}
+                  canTerminate={permissions.has('staff:terminate')}
                   onView={(person) => setSelectedUserId(person.id)}
                   onAssignWarehouse={setManagerToAssign}
-                  onLifecycleAction={(person, action) =>
-                    setPendingLifecycleAction({ person, action })
-                  }
+                  onTerminate={setStaffToTerminate}
                 />
                 <StaffDirectoryPagination
                   page={page}
@@ -433,13 +413,12 @@ export function StaffDirectoryPage() {
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
 
-      {pendingLifecycleAction && permissions.has(`staff:${pendingLifecycleAction.action}`) && (
-        <StaffLifecycleDialog
-          person={pendingLifecycleAction.person}
-          action={pendingLifecycleAction.action}
-          isPending={lifecycleMutation.isPending}
-          onOpenChange={(open) => !open && setPendingLifecycleAction(null)}
-          onConfirm={() => void confirmLifecycleAction()}
+      {staffToTerminate && permissions.has('staff:terminate') && (
+        <StaffTerminationDialog
+          person={staffToTerminate}
+          isPending={terminateMutation.isPending}
+          onOpenChange={(open) => !open && setStaffToTerminate(null)}
+          onConfirm={() => void confirmTermination()}
         />
       )}
 
