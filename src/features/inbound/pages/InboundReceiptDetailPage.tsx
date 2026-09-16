@@ -48,6 +48,10 @@ export default function InboundReceiptDetailPage({ receiptId }: { readonly recei
                 receivedQty: item.receivedQuantity,
                 damagedQty: item.damagedQuantity,
                 exceptionReason: item.exceptionReason ?? '',
+                isLotTracked: Boolean(item.lotId),
+                lotNumber: item.lotNumber ?? '',
+                manufacturedDate: item.manufacturedDate ?? '',
+                expiryDate: item.expiryDate ?? '',
               },
             ]
           : []
@@ -62,8 +66,13 @@ export default function InboundReceiptDetailPage({ receiptId }: { readonly recei
         receiptId,
         request: {
           lines: values.lines.map((line) => ({
-            ...line,
+            poLineId: line.poLineId,
+            receivedQty: line.receivedQty,
+            damagedQty: line.damagedQty,
             exceptionReason: line.exceptionReason.trim() || null,
+            lotNumber: line.isLotTracked ? line.lotNumber.trim() || null : null,
+            manufacturedDate: line.isLotTracked ? line.manufacturedDate || null : null,
+            expiryDate: line.isLotTracked ? line.expiryDate || null : null,
           })),
         },
       })
@@ -131,6 +140,7 @@ export default function InboundReceiptDetailPage({ receiptId }: { readonly recei
               productSKU: item.productSKU,
               productName: item.productName,
               barcodeValue: null,
+              isLotTracked: Boolean(item.lotId),
               orderedQuantity: item.orderedQuantity,
               receivedQuantity: 0,
               remainingQuantity: item.orderedQuantity,

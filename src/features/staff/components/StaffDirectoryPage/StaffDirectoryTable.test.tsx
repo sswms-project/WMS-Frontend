@@ -1,13 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { STAFF_DIRECTORY_KINDS } from '../../types/staff.types'
 import { StaffDirectoryTable } from './StaffDirectoryTable'
 
 describe('StaffDirectoryTable', () => {
   it('shows a manager and the warehouse they manage', () => {
     render(
       <StaffDirectoryTable
-        kind={STAFF_DIRECTORY_KINDS.managers}
         people={[
           {
             id: 'manager-1',
@@ -33,7 +31,7 @@ describe('StaffDirectoryTable', () => {
         isWarehouseScopeLoading={false}
         onView={vi.fn()}
         onAssignWarehouse={vi.fn()}
-        onLifecycleAction={vi.fn()}
+        onTerminate={vi.fn()}
       />
     )
 
@@ -47,7 +45,6 @@ describe('StaffDirectoryTable', () => {
   it('shows the warehouse scope loading state for assigned people', () => {
     render(
       <StaffDirectoryTable
-        kind={STAFF_DIRECTORY_KINDS.managers}
         people={[
           {
             id: 'manager-1',
@@ -64,7 +61,7 @@ describe('StaffDirectoryTable', () => {
         isWarehouseScopeLoading
         onView={vi.fn()}
         onAssignWarehouse={vi.fn()}
-        onLifecycleAction={vi.fn()}
+        onTerminate={vi.fn()}
       />
     )
 

@@ -61,6 +61,7 @@ export function ReturnDetailSheet({
                 <TableRow>
                   <TableHead>Sản phẩm</TableHead>
                   <TableHead>SKU</TableHead>
+                  <TableHead>Lô / dòng lấy</TableHead>
                   <TableHead>Tình trạng</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
                 </TableRow>
@@ -70,6 +71,12 @@ export function ReturnDetailSheet({
                   <TableRow key={line.id}>
                     <TableCell>{line.productName}</TableCell>
                     <TableCell className="font-mono">{line.sku}</TableCell>
+                    <TableCell>
+                      <p className="font-mono text-xs">{line.lotNumber ?? 'Theo số lượng'}</p>
+                      <p className="text-muted-foreground font-mono text-xs">
+                        {line.outboundPickDetailId ?? '—'}
+                      </p>
+                    </TableCell>
                     <TableCell>{RETURN_ITEM_CONDITION_LABELS[line.condition]}</TableCell>
                     <TableCell className="text-right">
                       {formatOutboundQuantity(line.quantity)}

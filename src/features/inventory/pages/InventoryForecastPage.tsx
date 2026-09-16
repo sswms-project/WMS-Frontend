@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useProductListQuery } from '@/features/product/hooks/use-products'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
-import { InventoryForecastDirectory } from '../components/InventoryForecastPage'
+import { ForecastRunPanel, InventoryForecastDirectory } from '../components/InventoryForecastPage'
 import { useInventoryForecastQuery, useInventoryStockHistoryQuery } from '../hooks/use-inventory'
 import { mergeHistoryAndForecast } from '../utils/forecast-chart'
 
@@ -12,6 +12,7 @@ const DEFAULT_HORIZON_DAYS = 14
 
 export default function InventoryForecastPage() {
   const meQuery = useMeQuery()
+  const permissions = meQuery.data?.permissions ?? []
   const [productId, setProductId] = useState('')
   const [warehouseId, setWarehouseId] = useState('')
   const [horizonDays, setHorizonDays] = useState(DEFAULT_HORIZON_DAYS)
@@ -66,27 +67,32 @@ export default function InventoryForecastPage() {
   const isError = forecastQuery.isError || historyQuery.isError
 
   return (
-    <InventoryForecastDirectory
-      permissions={meQuery.data?.permissions ?? []}
-      productId={productId}
-      productOptions={productOptions}
-      warehouseId={warehouseId}
-      warehouseOptions={warehouseOptions}
-      horizonDays={horizonDays}
-      chartData={chartData}
-      modelName={forecastQuery.data?.modelName}
-      isLoading={isLoading}
-      isFetching={isFetching}
-      isError={isError}
-      areProductsLoading={productsQuery.isLoading}
-      areWarehousesLoading={warehousesQuery.isLoading}
-      onProductChange={setProductId}
-      onWarehouseChange={setWarehouseId}
-      onHorizonChange={setHorizonDays}
-      onRetry={() => {
-        void forecastQuery.refetch()
-        void historyQuery.refetch()
-      }}
-    />
+    <div className="flex flex-col gap-4">
+      <InventoryForecastDirectory
+        permissions={permissions}
+        productId={productId}
+        productOptions={productOptions}
+        warehouseId={warehouseId}
+        warehouseOptions={warehouseOptions}
+        horizonDays={horizonDays}
+        chartData={chartData}
+        modelName={forecastQuery.data?.modelName}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        isError={isError}
+        areProductsLoading={productsQuery.isLoading}
+        areWarehousesLoading={warehousesQuery.isLoading}
+        onProductChange={setProductId}
+        onWarehouseChange={setWarehouseId}
+        onHorizonChange={setHorizonDays}
+        onRetry={() => {
+          void forecastQuery.refetch()
+          void historyQuery.refetch()
+        }}
+      />
+      {permissions.includes('products:configure-policy') ? (
+        <ForecastRunPanel warehouseOptions={warehouseOptions} permissions={permissions} />
+      ) : null}
+    </div>
   )
 }

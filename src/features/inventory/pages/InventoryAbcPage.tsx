@@ -4,13 +4,16 @@ import { useMemo, useState } from 'react'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { InventoryAbcDirectory } from '../components/InventoryAbcPage'
-import { useInventoryAbcQuery } from '../hooks/use-inventory'
+import { useInventoryAbcQuery, useRunInventoryAbcMutation } from '../hooks/use-inventory'
+import { toast } from 'sonner'
 
 export default function InventoryAbcPage() {
   const meQuery = useMeQuery()
   const [warehouseId, setWarehouseId] = useState('')
-  const params = useMemo(() => (warehouseId ? { warehouseId } : {}), [warehouseId])
-  const abcQuery = useInventoryAbcQuery(params)
+  const [historicalPeriodDays, setHistoricalPeriodDays] = useState(90)
+  const params = useMemo(() => ({ warehouseId }), [warehouseId])
+  const abcQuery = useInventoryAbcQuery(params, Boolean(warehouseId))
+  const runMutation = useRunInventoryAbcMutation()
   const warehousesQuery = useWarehousesQuery({
     top: 100,
     skip: 0,
@@ -40,6 +43,16 @@ export default function InventoryAbcPage() {
       onWarehouseChange={setWarehouseId}
       onRetryWarehouses={() => void warehousesQuery.refetch()}
       onRetry={() => void abcQuery.refetch()}
+      historicalPeriodDays={historicalPeriodDays}
+      isRunning={runMutation.isPending}
+      onHistoricalPeriodDaysChange={setHistoricalPeriodDays}
+      onRun={() => {
+        if (!warehouseId || historicalPeriodDays < 1 || historicalPeriodDays > 366) return
+        void runMutation
+          .mutateAsync({ warehouseId, historicalPeriodDays })
+          .then(() => toast.success('Đã cập nhật phân loại ABC cho kho.'))
+          .catch(() => toast.error('Không thể chạy phân loại ABC.'))
+      }}
     />
   )
 }

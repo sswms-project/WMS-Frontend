@@ -48,6 +48,7 @@ export interface ReceivingTaskLine {
   productSKU: string
   productName: string
   barcodeValue: string | null
+  isLotTracked: boolean
   orderedQuantity: number
   receivedQuantity: number
   remainingQuantity: number
@@ -91,6 +92,10 @@ export interface InboundReceiptItem {
   productId: string
   productSKU: string
   productName: string
+  lotId: string | null
+  lotNumber: string | null
+  manufacturedDate: string | null
+  expiryDate: string | null
   orderedQuantity: number
   receivedQuantity: number
   damagedQuantity: number
@@ -98,6 +103,23 @@ export interface InboundReceiptItem {
   putAwayQuantity: number
   remainingPutAwayQuantity: number
   exceptionReason: string | null
+  putAwayDetails: PutAwayDetail[]
+}
+
+export interface PutAwayDetail {
+  id: string
+  inventoryStockId: string
+  stockMovementId: string
+  warehouseId: string
+  slotId: string
+  slotCode: string
+  lotId: string | null
+  lotNumber: string | null
+  qualityStatus: string
+  performedByUserId: string
+  performedByName: string
+  quantity: number
+  putAwayAt: string
 }
 
 export interface InboundReceiptDetail extends Omit<
@@ -120,6 +142,9 @@ export interface ReceiptLineRequest {
   receivedQty: number
   damagedQty: number
   exceptionReason: string | null
+  lotNumber: string | null
+  manufacturedDate: string | null
+  expiryDate: string | null
 }
 
 export interface SaveInboundReceiptRequest {
@@ -219,6 +244,10 @@ export interface InboundDocumentReviewLine {
   confirmedQuantity: number
   damagedQuantity: number
   exceptionReason: string | null
+  isLotTracked: boolean
+  lotNumber: string | null
+  manufacturedDate: string | null
+  expiryDate: string | null
   status: string
   isUserCorrected: boolean
 }
@@ -272,6 +301,9 @@ export interface ReviewInboundDocumentLineRequest {
   confirmedQuantity: number
   damagedQuantity: number
   exceptionReason: string | null
+  lotNumber: string | null
+  manufacturedDate: string | null
+  expiryDate: string | null
 }
 
 export interface ReviewInboundDocumentImportRequest {

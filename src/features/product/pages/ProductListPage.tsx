@@ -20,11 +20,12 @@ import { CreateProductDialog } from '../components/ProductForm'
 import { ProductImportDialog } from '../components/ProductImportDialog'
 import {
   useCreateProductMutation,
+  useCategoriesQuery,
   useImportProductsMutation,
   useProductListQuery,
+  useUnitsQuery,
 } from '../hooks/use-products'
 import type { CreateProductFormValues } from '../schemas/product.schema'
-import { productService } from '../services/product.service'
 import type { ProductResponse } from '../types/product.types'
 
 const PAGE_SIZE = 10
@@ -46,6 +47,8 @@ export default function ProductListPage() {
 
   const createMutation = useCreateProductMutation()
   const importMutation = useImportProductsMutation()
+  const unitsQuery = useUnitsQuery(isCreateOpen)
+  const categoriesQuery = useCategoriesQuery(isCreateOpen)
 
   const products = listQuery.data?.items ?? []
   const permissions = new Set(meQuery.data?.permissions ?? [])
@@ -60,11 +63,7 @@ export default function ProductListPage() {
 
   async function handleCreate(values: CreateProductFormValues) {
     try {
-      const { minStockThreshold, ...createRequest } = values
-      const id = await createMutation.mutateAsync(createRequest)
-      if (minStockThreshold != null && !isNaN(minStockThreshold)) {
-        await productService.configureStockPolicy(id, { minStockThreshold })
-      }
+      const id = await createMutation.mutateAsync(values)
       toast.success('Đã thêm sản phẩm mới.')
       setIsCreateOpen(false)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -221,6 +220,14 @@ export default function ProductListPage() {
 
       {canCreate && (
         <CreateProductDialog
+          units={unitsQuery.data ?? []}
+          categories={categoriesQuery.data ?? []}
+          areOptionsLoading={unitsQuery.isLoading || categoriesQuery.isLoading}
+          areOptionsError={unitsQuery.isError || categoriesQuery.isError}
+          onRetryOptions={() => {
+            void unitsQuery.refetch()
+            void categoriesQuery.refetch()
+          }}
           open={isCreateOpen}
           isPending={createMutation.isPending}
           onOpenChange={setIsCreateOpen}

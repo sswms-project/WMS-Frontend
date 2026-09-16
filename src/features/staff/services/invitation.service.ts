@@ -25,11 +25,6 @@ export const invitationService = {
       .post<ApiResponse<unknown>>(API_ENDPOINTS.invitations.acceptNew(token), request)
       .then((response) => response.data),
 
-  acceptExisting: (token: string) =>
-    axiosClient
-      .post<ApiResponse<string>>(API_ENDPOINTS.invitations.acceptExisting(token))
-      .then((response) => response.data),
-
   list: (params: InvitationQuery) =>
     axiosClient
       .get<ApiResponse<QueryResult<InvitationResponse>>>(API_ENDPOINTS.invitations.list, { params })

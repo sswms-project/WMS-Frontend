@@ -1,11 +1,16 @@
-import type { InventoryReservationQuery } from '../types/inventory.types'
+import type {
+  InventoryReservationQuery,
+  InventoryReservationStatus,
+} from '../types/inventory.types'
 
 export function buildInventoryReservationQuery(
   warehouseId: string,
-  productId: string
+  productId: string,
+  status: InventoryReservationStatus
 ): InventoryReservationQuery {
   return {
     ...(warehouseId ? { warehouseId } : {}),
     ...(productId ? { productId } : {}),
+    status,
   }
 }

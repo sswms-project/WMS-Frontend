@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2, Save, Sparkles, TriangleAlert } from 'lucide-react'
-import { Controller, type UseFormReturn } from 'react-hook-form'
+import { Controller, useWatch, type UseFormReturn } from 'react-hook-form'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -125,6 +125,7 @@ export function ReviewStep({
   onSaveReview,
   onCreateDraft,
 }: ReviewStepProps) {
+  const formLines = useWatch({ control: form.control, name: 'lines' })
   const review = importData.review
   if (!review) return null
   const errors = form.formState.errors
@@ -238,6 +239,7 @@ export function ReviewStep({
               <TableHead className="bg-card sticky top-0 z-10">Dòng đơn mua</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 text-right">Còn lại</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 text-right">SL chứng từ</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Thông tin lô</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 text-right">SL xác nhận</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 text-right">SL hỏng</TableHead>
               <TableHead className="bg-card sticky top-0 z-10">Tình trạng hàng hỏng</TableHead>
@@ -268,7 +270,29 @@ export function ReviewStep({
                       id={`po-line-${index}`}
                       className="w-64"
                       aria-invalid={Boolean(errors.lines?.[index]?.purchaseOrderItemId)}
-                      {...form.register(`lines.${index}.purchaseOrderItemId`)}
+                      value={formLines[index]?.purchaseOrderItemId ?? ''}
+                      onChange={(event) => {
+                        const option = task.lines.find(
+                          (item) => item.purchaseOrderItemId === event.target.value
+                        )
+                        form.setValue(`lines.${index}.purchaseOrderItemId`, event.target.value, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                        form.setValue(
+                          `lines.${index}.isLotTracked`,
+                          option?.isLotTracked ?? false,
+                          {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          }
+                        )
+                        if (!option?.isLotTracked) {
+                          form.setValue(`lines.${index}.lotNumber`, '')
+                          form.setValue(`lines.${index}.manufacturedDate`, '')
+                          form.setValue(`lines.${index}.expiryDate`, '')
+                        }
+                      }}
                     >
                       <NativeSelectOption value="">Chọn sản phẩm</NativeSelectOption>
                       {task.lines.map((option) => (
@@ -293,6 +317,35 @@ export function ReviewStep({
                     )}
                     fallback={line.documentQuantity ?? 0}
                   />
+                </TableCell>
+                <TableCell>
+                  <input type="hidden" {...form.register(`lines.${index}.isLotTracked`)} />
+                  {formLines[index]?.isLotTracked ? (
+                    <div className="grid w-64 gap-2">
+                      <Input
+                        aria-label={`Số lô dòng ${line.sourceLineNumber}`}
+                        placeholder="Số lô"
+                        maxLength={100}
+                        {...form.register(`lines.${index}.lotNumber`)}
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          aria-label={`Ngày sản xuất dòng ${line.sourceLineNumber}`}
+                          type="date"
+                          {...form.register(`lines.${index}.manufacturedDate`)}
+                        />
+                        <Input
+                          aria-label={`Hạn sử dụng dòng ${line.sourceLineNumber}`}
+                          type="date"
+                          {...form.register(`lines.${index}.expiryDate`)}
+                        />
+                      </div>
+                      <FieldError>{errors.lines?.[index]?.lotNumber?.message}</FieldError>
+                      <FieldError>{errors.lines?.[index]?.expiryDate?.message}</FieldError>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">Theo số lượng</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Field data-invalid={Boolean(errors.lines?.[index]?.confirmedQuantity)}>

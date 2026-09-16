@@ -11,24 +11,32 @@ import type {
   ImportProductsRequest,
   ProductListQuery,
   ProductListResponse,
+  ProductLot,
+  ProductLotQuery,
   ProductResponse,
+  ProductSupplier,
+  ProductWarehousePolicy,
+  SaveProductSupplierRequest,
   UnitResponse,
+  UpdateProductSupplierRequest,
   UpdateProductRequest,
 } from '../types/product.types'
 
-export function useUnitsQuery() {
+export function useUnitsQuery(enabled = true) {
   return useQuery<UnitResponse[], ApiErrorResponse>({
     queryKey: queryKeys.units.list,
     queryFn: () => productService.getUnits().then((r) => r.data),
     staleTime: 5 * 60 * 1000,
+    enabled,
   })
 }
 
-export function useCategoriesQuery() {
+export function useCategoriesQuery(enabled = true) {
   return useQuery<CategoryResponse[], ApiErrorResponse>({
     queryKey: queryKeys.categories.list,
     queryFn: () => productService.getCategories().then((r) => r.data),
     staleTime: 5 * 60 * 1000,
+    enabled,
   })
 }
 
@@ -76,8 +84,36 @@ export function useConfigureStockPolicyMutation(id: string) {
   return useMutation<unknown, ApiErrorResponse, ConfigureStockPolicyRequest>({
     mutationFn: (request) => productService.configureStockPolicy(id, request),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.products.detail(id) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.stockPolicies(id) })
     },
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useProductStockPoliciesQuery(id: string) {
+  return useQuery<ProductWarehousePolicy[], ApiErrorResponse>({
+    queryKey: queryKeys.products.stockPolicies(id),
+    queryFn: () => productService.getStockPolicies(id).then((response) => response.data),
+    enabled: Boolean(id),
+  })
+}
+
+export function useProductLotsQuery(id: string, params: ProductLotQuery, enabled = true) {
+  return useQuery<ProductLot[], ApiErrorResponse>({
+    queryKey: queryKeys.products.lots(id, params),
+    queryFn: () => productService.getProductLots(id, params).then((response) => response.data),
+    enabled: Boolean(id) && enabled,
+  })
+}
+
+export function useUpdateProductLotStatusMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { lotId: string; status: 'Active' | 'Blocked' }>({
+    mutationFn: ({ lotId, status }) => productService.updateProductLotStatus(id, lotId, status),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.products.detail(id), 'lots'],
+      }),
     onError: (error) => logger.error(formatApiError(error)),
   })
 }
@@ -100,6 +136,46 @@ export function useImportProductsMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all })
     },
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useProductSuppliersQuery(id: string) {
+  return useQuery<ProductSupplier[], ApiErrorResponse>({
+    queryKey: queryKeys.products.suppliers(id),
+    queryFn: () => productService.getProductSuppliers(id).then((response) => response.data),
+    enabled: Boolean(id),
+  })
+}
+
+export function useAddProductSupplierMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<string, ApiErrorResponse, SaveProductSupplierRequest>({
+    mutationFn: (request) =>
+      productService.addProductSupplier(id, request).then((response) => response.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.suppliers(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useUpdateProductSupplierMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<
+    unknown,
+    ApiErrorResponse,
+    { linkId: string; request: UpdateProductSupplierRequest }
+  >({
+    mutationFn: ({ linkId, request }) => productService.updateProductSupplier(id, linkId, request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.suppliers(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useDeleteProductSupplierMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, string>({
+    mutationFn: (linkId) => productService.deleteProductSupplier(id, linkId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.suppliers(id) }),
     onError: (error) => logger.error(formatApiError(error)),
   })
 }

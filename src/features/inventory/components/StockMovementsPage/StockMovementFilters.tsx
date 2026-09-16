@@ -36,10 +36,14 @@ interface StockMovementFiltersProps {
 
 const movementOptions = [
   { value: STOCK_MOVEMENT_TYPES.inbound, label: 'Nhập kho' },
-  { value: STOCK_MOVEMENT_TYPES.outbound, label: 'Xuất kho' },
-  { value: STOCK_MOVEMENT_TYPES.transfer, label: 'Chuyển kho' },
+  { value: STOCK_MOVEMENT_TYPES.putAway, label: 'Cất hàng' },
+  { value: STOCK_MOVEMENT_TYPES.pick, label: 'Lấy hàng' },
+  { value: STOCK_MOVEMENT_TYPES.issue, label: 'Xuất kho' },
+  { value: STOCK_MOVEMENT_TYPES.transferOut, label: 'Điều chuyển đi' },
+  { value: STOCK_MOVEMENT_TYPES.transferIn, label: 'Điều chuyển đến' },
   { value: STOCK_MOVEMENT_TYPES.adjustment, label: 'Điều chỉnh' },
-  { value: STOCK_MOVEMENT_TYPES.return, label: 'Trả hàng' },
+  { value: STOCK_MOVEMENT_TYPES.returnIn, label: 'Nhập hàng trả lại' },
+  { value: STOCK_MOVEMENT_TYPES.scrap, label: 'Loại bỏ' },
 ] as const
 
 export function StockMovementFilters({

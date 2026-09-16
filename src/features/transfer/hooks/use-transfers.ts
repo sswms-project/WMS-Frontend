@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import type { QueryResult } from '@/types/api'
 import type { WarehouseResponse } from '@/types/warehouse'
-import type { InventoryBalanceListResponse } from '@/features/inventory/types/inventory.types'
+import type { InventoryStockListResponse } from '@/features/inventory/types/inventory.types'
 import { transferService } from '../services/transfer.service'
 import type {
   CreateTransferRequest,
@@ -66,7 +66,7 @@ export function useTransferSourceInventoryQuery(
   params: TransferSourceInventoryQuery,
   enabled = true
 ) {
-  return useQuery<InventoryBalanceListResponse, ApiErrorResponse>({
+  return useQuery<InventoryStockListResponse, ApiErrorResponse>({
     queryKey: queryKeys.transfers.sourceInventory(params),
     queryFn: () => transferService.getSourceInventory(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,

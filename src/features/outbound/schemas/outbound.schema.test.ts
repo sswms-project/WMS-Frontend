@@ -32,7 +32,8 @@ describe('outbound schemas', () => {
       productName: 'A',
       sku: 'A',
       remainingQuantity: 5,
-      sourceSlotId: two,
+      inventoryStockId: two,
+      availableQuantity: 5,
     }
     expect(issueStockSchema.safeParse({ lines: [{ ...base, pickedQuantity: 3 }] }).success).toBe(
       true
@@ -42,8 +43,16 @@ describe('outbound schemas', () => {
     )
   })
 
-  it('requires a restock slot only for selected good stock', () => {
-    const base = { productId: one, quantity: 1, condition: 'Good' as const, restockSlotId: '' }
+  it('requires a restock slot for every condition except scrap', () => {
+    const base = {
+      outboundPickDetailId: one,
+      productName: 'A',
+      lotNumber: null,
+      returnableQuantity: 1,
+      quantity: 1,
+      condition: 'Good' as const,
+      restockSlotId: '',
+    }
     expect(recordReturnSchema.safeParse({ reason: 'Hoàn', lines: [base] }).success).toBe(false)
     expect(
       recordReturnSchema.safeParse({ reason: 'Hoàn', lines: [{ ...base, restockSlotId: two }] })
@@ -53,6 +62,12 @@ describe('outbound schemas', () => {
       recordReturnSchema.safeParse({
         reason: 'Hoàn',
         lines: [{ ...base, condition: 'Damaged', restockSlotId: '' }],
+      }).success
+    ).toBe(false)
+    expect(
+      recordReturnSchema.safeParse({
+        reason: 'Hoàn',
+        lines: [{ ...base, condition: 'Scrap', restockSlotId: '' }],
       }).success
     ).toBe(true)
   })

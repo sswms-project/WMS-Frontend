@@ -65,7 +65,7 @@ export function InvoicePrintView({ invoice, customer }: InvoicePrintViewProps) {
 
         <div className="bg-muted print:border-border flex items-center justify-between rounded-md p-4 font-semibold print:border print:bg-white">
           <span>Tổng thanh toán</span>
-          <span>{formatCurrency(invoice.amount)}</span>
+          <span>{formatCurrency(invoice.amount, invoice.currency)}</span>
         </div>
 
         <p className="text-muted-foreground mt-6 text-xs leading-5">

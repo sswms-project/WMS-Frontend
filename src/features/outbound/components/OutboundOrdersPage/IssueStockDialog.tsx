@@ -1,4 +1,5 @@
-import type { UseFormReturn } from 'react-hook-form'
+import { Plus, Trash2 } from 'lucide-react'
+import { useFieldArray, type UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,7 +27,10 @@ interface IssueStockDialogProps {
   readonly onSubmit: (values: IssueStockFormValues) => Promise<void>
   readonly inventoryOptions: readonly {
     productId: string
+    inventoryStockId: string
     slotId: string
+    lotNumber: string | null
+    qualityStatus: string
     label: string
     availableQuantity: number
   }[]
@@ -42,6 +46,7 @@ export function IssueStockDialog({
   inventorySearch,
   onInventorySearchChange,
 }: IssueStockDialogProps) {
+  const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
   const lines = form.watch('lines')
   const linesError = form.formState.errors.lines
 
@@ -49,9 +54,10 @@ export function IssueStockDialog({
     <Dialog open={Boolean(order)} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Lấy hàng &amp; xuất kho</DialogTitle>
+          <DialogTitle>Lấy hàng &amp; phân bổ tồn kho</DialogTitle>
           <DialogDescription>
-            Nhập số lượng thực tế lấy được cho từng sản phẩm trong đơn.
+            Chọn vị trí hoặc lô và ghi nhận số lượng lấy. Hệ thống sẽ giữ lượng hàng này cho đơn
+            xuất; tồn thực tế chỉ giảm khi hàng rời kho.
           </DialogDescription>
         </DialogHeader>
         {order ? (
@@ -84,7 +90,7 @@ export function IssueStockDialog({
                   const inputId = `issue-stock-line-${index}`
 
                   return (
-                    <Field key={line.outboundOrderItemId} data-invalid={Boolean(lineError)}>
+                    <Field key={fieldArray.fields[index]?.id} data-invalid={Boolean(lineError)}>
                       <FieldLabel htmlFor={inputId}>
                         <span className="truncate">{line.productName}</span>
                       </FieldLabel>
@@ -106,15 +112,34 @@ export function IssueStockDialog({
                         {...form.register(`lines.${index}.pickedQuantity`, { valueAsNumber: true })}
                       />
                       <NativeSelect
-                        aria-label={`Vị trí lấy ${line.productName}`}
-                        {...form.register(`lines.${index}.sourceSlotId`)}
+                        aria-label={`Dòng tồn kho lấy ${line.productName}`}
+                        value={line.inventoryStockId}
+                        onChange={(event) => {
+                          const option = inventoryOptions.find(
+                            (candidate) => candidate.inventoryStockId === event.target.value
+                          )
+                          form.setValue(`lines.${index}.inventoryStockId`, event.target.value, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                          form.setValue(
+                            `lines.${index}.availableQuantity`,
+                            option?.availableQuantity ?? 0,
+                            { shouldValidate: true }
+                          )
+                        }}
                       >
-                        <NativeSelectOption value="">Chọn vị trí lấy</NativeSelectOption>
+                        <NativeSelectOption value="">Chọn dòng tồn kho</NativeSelectOption>
                         {inventoryOptions
                           .filter((option) => option.productId === line.productId)
                           .map((option) => (
-                            <NativeSelectOption key={option.slotId} value={option.slotId}>
-                              {option.label} · khả dụng {option.availableQuantity}
+                            <NativeSelectOption
+                              key={option.inventoryStockId}
+                              value={option.inventoryStockId}
+                            >
+                              {option.label} · {option.qualityStatus}
+                              {option.lotNumber ? ` · lô ${option.lotNumber}` : ''} · khả dụng{' '}
+                              {option.availableQuantity}
                             </NativeSelectOption>
                           ))}
                       </NativeSelect>
@@ -122,11 +147,42 @@ export function IssueStockDialog({
                         errors={
                           lineError?.pickedQuantity
                             ? [lineError.pickedQuantity]
-                            : lineError?.sourceSlotId
-                              ? [lineError.sourceSlotId]
+                            : lineError?.inventoryStockId
+                              ? [lineError.inventoryStockId]
                               : undefined
                         }
                       />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            fieldArray.append({
+                              ...line,
+                              inventoryStockId: '',
+                              availableQuantity: 0,
+                              pickedQuantity: 0,
+                            })
+                          }
+                        >
+                          <Plus aria-hidden="true" />
+                          Thêm vị trí/lô
+                        </Button>
+                        {lines.filter(
+                          (candidate) => candidate.outboundOrderItemId === line.outboundOrderItemId
+                        ).length > 1 ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Xóa phân bổ ${line.productName}`}
+                            onClick={() => fieldArray.remove(index)}
+                          >
+                            <Trash2 aria-hidden="true" />
+                          </Button>
+                        ) : null}
+                      </div>
                     </Field>
                   )
                 })}
@@ -145,7 +201,7 @@ export function IssueStockDialog({
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending ? <Spinner data-icon="inline-start" /> : null}
-                Xác nhận xuất kho
+                Xác nhận lấy hàng
               </Button>
             </DialogFooter>
           </form>

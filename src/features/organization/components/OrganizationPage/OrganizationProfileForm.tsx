@@ -47,6 +47,7 @@ export function OrganizationProfileForm({
       tenantName: organization.tenantName,
       phone: organization.phone,
       address: organization.address ?? '',
+      defaultCurrency: organization.defaultCurrency,
     },
   })
 
@@ -92,6 +93,16 @@ export function OrganizationProfileForm({
               {...form.register('phone')}
             />
             <FieldError errors={fieldError(form.formState.errors, 'phone')} />
+          </Field>
+          <Field data-invalid={Boolean(form.formState.errors.defaultCurrency)}>
+            <FieldLabel htmlFor="defaultCurrency">Tiền tệ mặc định</FieldLabel>
+            <Input
+              id="defaultCurrency"
+              maxLength={3}
+              aria-invalid={Boolean(form.formState.errors.defaultCurrency)}
+              {...form.register('defaultCurrency')}
+            />
+            <FieldError errors={fieldError(form.formState.errors, 'defaultCurrency')} />
           </Field>
 
           <Field className="md:col-span-2" data-invalid={Boolean(form.formState.errors.address)}>

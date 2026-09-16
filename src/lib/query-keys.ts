@@ -24,7 +24,7 @@ import type {
   InventoryStockHistoryQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
-import type { ProductListQuery } from '@/features/product/types/product.types'
+import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
   TransferListQuery,
   TransferSourceInventoryQuery,
@@ -94,7 +94,6 @@ export const queryKeys = {
   },
   auth: {
     me: ['auth', 'me'] as const,
-    memberships: ['auth', 'tenant-memberships'] as const,
   },
   subscription: {
     all: ['subscription'] as const,
@@ -130,6 +129,7 @@ export const queryKeys = {
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
     forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
+    forecastRun: (id: string) => ['inventory', 'forecast-runs', id] as const,
     history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
@@ -156,6 +156,10 @@ export const queryKeys = {
     all: ['products'] as const,
     list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
+    suppliers: (id: string) => ['products', 'detail', id, 'suppliers'] as const,
+    stockPolicies: (id: string) => ['products', 'detail', id, 'stock-policies'] as const,
+    lots: (id: string, params: ProductLotQuery) =>
+      ['products', 'detail', id, 'lots', params] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,
@@ -220,5 +224,10 @@ export const queryKeys = {
     detail: (id: string) => ['customers', 'detail', id] as const,
     orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
       ['customers', 'detail', id, 'orders', params] as const,
+  },
+  aiAssistant: {
+    all: ['ai-assistant'] as const,
+    conversations: ['ai-assistant', 'conversations'] as const,
+    messages: (conversationId: string) => ['ai-assistant', 'messages', conversationId] as const,
   },
 }

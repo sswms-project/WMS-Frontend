@@ -2,7 +2,8 @@ export function formatInventoryQuantity(value: number): string {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 }).format(value)
 }
 
-export function formatInventoryDate(value: string): string {
+export function formatInventoryDate(value: string | null): string {
+  if (!value) return 'Chưa cập nhật'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return 'Không xác định'
 

@@ -33,6 +33,10 @@ describe('inbound document import schemas', () => {
           confirmedQuantity: 4,
           damagedQuantity: 1,
           exceptionReason: '',
+          isLotTracked: false,
+          lotNumber: '',
+          manufacturedDate: '',
+          expiryDate: '',
         },
       ],
     }
@@ -59,6 +63,10 @@ describe('inbound document import schemas', () => {
       confirmedQuantity: 1,
       damagedQuantity: 0,
       exceptionReason: '',
+      isLotTracked: false,
+      lotNumber: '',
+      manufacturedDate: '',
+      expiryDate: '',
     }
 
     expect(

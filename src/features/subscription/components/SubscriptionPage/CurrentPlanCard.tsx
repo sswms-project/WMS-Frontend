@@ -88,7 +88,10 @@ export function CurrentPlanCard({
           </div>
 
           <dl className="border-border grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 border-y py-3 sm:grid-cols-3 lg:border-y-0 lg:border-l lg:py-0 lg:pl-5">
-            <Metric label="Chi phí" value={formatCurrency(subscription.planPrice)} />
+            <Metric
+              label="Chi phí"
+              value={formatCurrency(subscription.planPrice, subscription.currency)}
+            />
             <Metric label="Chu kỳ" value={formatBillingCycle(subscription.billingCycle)} />
             <Metric
               className="col-span-2 sm:col-span-1"
