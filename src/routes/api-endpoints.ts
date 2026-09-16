@@ -83,6 +83,7 @@ export const API_ENDPOINTS = {
     locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
+    quarantineSlot: (warehouseId: string) => `/warehouses/${warehouseId}/quarantine-slot`,
   },
   inventory: {
     list: '/inventory',
@@ -203,6 +204,9 @@ export const API_ENDPOINTS = {
     stockPolicies: (id: string) => `/products/${id}/stock-policies`,
     lots: (id: string) => `/products/${id}/lots`,
     lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
+    lotImpact: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/impact`,
+    blockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/block`,
+    unlockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/unlock`,
     barcode: (id: string) => `/products/${id}/barcode`,
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
@@ -238,6 +242,7 @@ export const API_ENDPOINTS = {
     detail: (returnId: string) => `/returns/${returnId}`,
     approve: (returnId: string) => `/returns/${returnId}/approve`,
     reject: (returnId: string) => `/returns/${returnId}/reject`,
+    restock: (returnId: string) => `/returns/${returnId}/restock`,
   },
   deliveries: {
     list: '/deliveries',

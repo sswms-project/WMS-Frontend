@@ -39,7 +39,7 @@ const policy: ProductWarehousePolicy = {
 describe('product inventory panels', () => {
   it('forwards lot filters and status actions', async () => {
     const onWarehouseChange = vi.fn()
-    const onStatusUpdate = vi.fn()
+    const onBlock = vi.fn()
     render(
       <ProductLotsPanel
         lots={[lot]}
@@ -60,24 +60,30 @@ describe('product inventory panels', () => {
         isLoading={false}
         isError={false}
         isUpdating={false}
-        canManage
+        canBlock
+        canUnlock
+        impact={null}
+        isImpactLoading={false}
         onWarehouseChange={onWarehouseChange}
         onStatusChange={vi.fn()}
         onOnlyAvailableChange={vi.fn()}
         onExpiryChange={vi.fn()}
         onRetry={vi.fn()}
-        onStatusUpdate={onStatusUpdate}
+        onInspectImpact={vi.fn()}
+        onBlock={onBlock}
+        onUnlock={vi.fn()}
       />
     )
 
     fireEvent.change(screen.getByLabelText('Kho'), { target: { value: 'warehouse-1' } })
     await userEvent.click(screen.getByRole('button', { name: 'Khóa lô' }))
+    await userEvent.type(screen.getByLabelText('Lý do thao tác lô'), 'Lỗi kiểm tra chất lượng')
     await userEvent.click(
-      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Khóa lô' })
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Khóa lô' })
     )
 
     expect(onWarehouseChange).toHaveBeenCalledWith('warehouse-1')
-    expect(onStatusUpdate).toHaveBeenCalledWith(lot, 'Blocked')
+    expect(onBlock).toHaveBeenCalledWith(lot, 'Lỗi kiểm tra chất lượng')
   })
 
   it('keeps policy configuration hidden without management permission', () => {

@@ -10,6 +10,7 @@ import type {
   OutboundOrderListResponse,
   OutboundOrderSummary,
   RecordReturnRequest,
+  RestockReturnRequest,
   RejectReturnRequest,
   ReturnListQuery,
   ReturnListResponse,
@@ -39,6 +40,11 @@ interface RemovePickDetailVariables {
 interface RejectReturnVariables {
   returnId: string
   request: RejectReturnRequest
+}
+
+interface RestockReturnVariables {
+  returnId: string
+  request: RestockReturnRequest
 }
 
 export function useOutboundOrdersQuery(params: OutboundOrderListQuery, enabled = true) {
@@ -154,6 +160,19 @@ export function useRejectReturnMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.returns.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.outboundOrders.all }),
       ]),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useRestockReturnMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, RestockReturnVariables>({
+    mutationFn: ({ returnId, request }) => outboundService.restockReturn(returnId, request),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.returns.all })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.outboundOrders.all })
+    },
     onError: (error) => logger.error(error),
   })
 }

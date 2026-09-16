@@ -170,6 +170,16 @@ export interface RejectReturnRequest {
   reason: string
 }
 
+export interface RestockReturnItemRequest {
+  returnItemId: string
+  condition: ReturnItemCondition
+  restockSlotId: string | null
+}
+
+export interface RestockReturnRequest {
+  items: RestockReturnItemRequest[]
+}
+
 export interface OutboundOrderFilters {
   status: OutboundOrderStatus | ''
   warehouseId: string

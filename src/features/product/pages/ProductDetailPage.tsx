@@ -28,12 +28,15 @@ import {
   useConfigureStockPolicyMutation,
   useGenerateBarcodeMutation,
   useProductLotsQuery,
+  useProductLotImpactQuery,
   useProductStockPoliciesQuery,
-  useUpdateProductLotStatusMutation,
+  useBlockProductLotMutation,
+  useUnlockProductLotMutation,
   useUnitsQuery,
 } from '../hooks/use-products'
 import type { StockPolicyFormValues, UpdateProductFormValues } from '../schemas/product.schema'
 import type { ProductLot, ProductLotStatus } from '../types/product.types'
+import { USER_ROLES } from '@/config/roles'
 
 interface ProductDetailPageProps {
   readonly productId: string
@@ -49,6 +52,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const [lotStatus, setLotStatus] = useState<ProductLotStatus | ''>('')
   const [onlyAvailableLots, setOnlyAvailableLots] = useState(false)
   const [expiresOnOrBefore, setExpiresOnOrBefore] = useState('')
+  const [impactLotId, setImpactLotId] = useState<string | null>(null)
 
   const detailQuery = useProductDetailQuery(productId)
   const meQuery = useMeQuery()
@@ -67,13 +71,20 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     },
     Boolean(detailQuery.data?.isLotTracked)
   )
-  const lotStatusMutation = useUpdateProductLotStatusMutation(productId)
+  const impactQuery = useProductLotImpactQuery(productId, impactLotId)
+  const blockLotMutation = useBlockProductLotMutation(productId)
+  const unlockLotMutation = useUnlockProductLotMutation(productId)
   const unitsQuery = useUnitsQuery(isEditOpen)
   const categoriesQuery = useCategoriesQuery(isEditOpen)
 
   const product = detailQuery.data
   const permissions = new Set(meQuery.data?.permissions ?? [])
   const canUpdate = permissions.has('products:update')
+  const canBlockLot =
+    canUpdate &&
+    (meQuery.data?.role === USER_ROLES.TenantOwner ||
+      meQuery.data?.role === USER_ROLES.WarehouseManager)
+  const canUnlockLot = canUpdate && meQuery.data?.role === USER_ROLES.TenantOwner
   const canConfigureStockPolicy = permissions.has('products:configure-policy')
   const canGenerateBarcode = permissions.has('products:generate-barcode')
 
@@ -95,13 +106,23 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     }
   }
 
-  async function handleLotStatusUpdate(lot: ProductLot, status: 'Active' | 'Blocked') {
+  async function handleBlockLot(lot: ProductLot, reason: string) {
     try {
-      await lotStatusMutation.mutateAsync({ lotId: lot.id, status })
-      toast.success(status === 'Blocked' ? 'Đã khóa lô.' : 'Đã mở khóa lô.')
+      await blockLotMutation.mutateAsync({ lotId: lot.id, reason })
+      toast.success('Đã khóa lô và chặn xuất tại mọi kho.')
     } catch (error) {
       logger.error(formatApiError(error))
-      toast.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái lô.'))
+      toast.error(getApiErrorMessage(error, 'Không thể khóa lô.'))
+    }
+  }
+
+  async function handleUnlockLot(lot: ProductLot, reason: string) {
+    try {
+      await unlockLotMutation.mutateAsync({ lotId: lot.id, reason })
+      toast.success('Đã mở khóa lô.')
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể mở khóa lô.'))
     }
   }
 
@@ -326,14 +347,19 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
                 expiresOnOrBefore={expiresOnOrBefore}
                 isLoading={lotsQuery.isLoading}
                 isError={lotsQuery.isError}
-                isUpdating={lotStatusMutation.isPending}
-                canManage={canUpdate}
+                impact={impactQuery.data ?? null}
+                isImpactLoading={impactQuery.isLoading}
+                isUpdating={blockLotMutation.isPending || unlockLotMutation.isPending}
+                canBlock={canBlockLot}
+                canUnlock={canUnlockLot}
                 onWarehouseChange={setLotWarehouseId}
                 onStatusChange={setLotStatus}
                 onOnlyAvailableChange={setOnlyAvailableLots}
                 onExpiryChange={setExpiresOnOrBefore}
                 onRetry={() => void lotsQuery.refetch()}
-                onStatusUpdate={(lot, status) => void handleLotStatusUpdate(lot, status)}
+                onInspectImpact={(lot) => setImpactLotId(lot.id)}
+                onBlock={(lot, reason) => void handleBlockLot(lot, reason)}
+                onUnlock={(lot, reason) => void handleUnlockLot(lot, reason)}
               />
             </TabsContent>
           ) : null}

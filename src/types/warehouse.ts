@@ -9,6 +9,8 @@ export interface WarehouseResponse {
 
 export interface WarehouseDetailResponse extends WarehouseResponse {
   zoneCount: number
+  quarantineSlotId?: string | null
+  quarantineSlotCode?: string | null
   modifiedAt: string | null
 }
 

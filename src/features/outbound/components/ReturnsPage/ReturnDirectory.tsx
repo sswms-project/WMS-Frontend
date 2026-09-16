@@ -56,6 +56,7 @@ interface ReturnDirectoryProps {
   readonly onInspect: (item: ReturnSummary) => void
   readonly onApprove: (item: ReturnSummary) => void
   readonly onReject: (item: ReturnSummary) => void
+  readonly onRestock: (item: ReturnSummary) => void
   readonly onRetry: () => void
 }
 
@@ -84,6 +85,7 @@ export function ReturnDirectory({
   onInspect,
   onApprove,
   onReject,
+  onRestock,
   onRetry,
 }: ReturnDirectoryProps) {
   const canApprove = permissions.includes('returns:approve')
@@ -225,6 +227,12 @@ export function ReturnDirectory({
                                 Từ chối
                               </DropdownMenuItem>
                             </>
+                          ) : null}
+                          {canApprove && item.status === 'Approved' ? (
+                            <DropdownMenuItem onSelect={() => onRestock(item)}>
+                              <Undo2 />
+                              Nhập lại kho
+                            </DropdownMenuItem>
                           ) : null}
                         </DropdownMenuGroup>
                       </DropdownMenuContent>

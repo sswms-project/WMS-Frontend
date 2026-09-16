@@ -1,9 +1,24 @@
-import { CalendarDays, MapPin, Warehouse } from 'lucide-react'
+import { CalendarDays, MapPin, Settings2, Warehouse } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { useState } from 'react'
 import type { WarehouseDetailResponse } from '@/types/warehouse'
 
 interface WarehouseOverviewProps {
   readonly warehouse: WarehouseDetailResponse
+  readonly slots?: readonly { id: string; label: string }[]
+  readonly canConfigureQuarantine?: boolean
+  readonly isConfiguringQuarantine?: boolean
+  readonly onConfigureQuarantine?: (slotId: string) => void
 }
 
 function formatDateTime(value: string | null) {
@@ -15,7 +30,15 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value))
 }
 
-export function WarehouseOverview({ warehouse }: WarehouseOverviewProps) {
+export function WarehouseOverview({
+  warehouse,
+  slots = [],
+  canConfigureQuarantine = false,
+  isConfiguringQuarantine = false,
+  onConfigureQuarantine,
+}: WarehouseOverviewProps) {
+  const [isQuarantineDialogOpen, setIsQuarantineDialogOpen] = useState(false)
+  const [quarantineSlotId, setQuarantineSlotId] = useState(warehouse.quarantineSlotId ?? '')
   const metadata = [
     { label: 'Mã kho', value: warehouse.warehouseCode, mono: true },
     { label: 'Địa chỉ', value: warehouse.address || 'Chưa cập nhật', icon: MapPin },
@@ -48,6 +71,65 @@ export function WarehouseOverview({ warehouse }: WarehouseOverviewProps) {
           {warehouse.status === 'Active' ? 'Hoạt động' : warehouse.status}
         </Badge>
       </div>
+      <div className="flex min-w-0 items-center justify-between gap-3 border-t px-3 py-2.5 sm:px-4">
+        <div>
+          <p className="text-muted-foreground text-xs">Vị trí quarantine</p>
+          <p className="mt-0.5 font-mono text-sm font-medium">
+            {warehouse.quarantineSlotCode ?? 'Chưa cấu hình'}
+          </p>
+        </div>
+        {canConfigureQuarantine ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsQuarantineDialogOpen(true)}
+          >
+            <Settings2 data-icon="inline-start" aria-hidden="true" />
+            Cấu hình
+          </Button>
+        ) : null}
+      </div>
+      <Dialog open={isQuarantineDialogOpen} onOpenChange={setIsQuarantineDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cấu hình vị trí quarantine</DialogTitle>
+            <DialogDescription>
+              Hàng thuộc lô bị block hoặc hoàn trả có lỗi sẽ được đưa về vị trí này trong kho{' '}
+              {warehouse.warehouseCode}.
+            </DialogDescription>
+          </DialogHeader>
+          <NativeSelect
+            aria-label="Vị trí quarantine"
+            value={quarantineSlotId}
+            onChange={(event) => setQuarantineSlotId(event.target.value)}
+          >
+            <NativeSelectOption value="">Chọn vị trí</NativeSelectOption>
+            {slots.map((slot) => (
+              <NativeSelectOption key={slot.id} value={slot.id}>
+                {slot.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isConfiguringQuarantine}
+              onClick={() => setIsQuarantineDialogOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              disabled={!quarantineSlotId || isConfiguringQuarantine}
+              onClick={() => onConfigureQuarantine?.(quarantineSlotId)}
+            >
+              {isConfiguringQuarantine ? 'Đang lưu…' : 'Lưu cấu hình'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

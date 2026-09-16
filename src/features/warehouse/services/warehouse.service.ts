@@ -121,4 +121,9 @@ export const warehouseService = {
     axiosClient
       .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.deactivate(warehouseId))
       .then((response) => response.data),
+
+  configureQuarantineSlot: (warehouseId: string, slotId: string) =>
+    axiosClient
+      .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.quarantineSlot(warehouseId), { slotId })
+      .then((response) => response.data),
 }

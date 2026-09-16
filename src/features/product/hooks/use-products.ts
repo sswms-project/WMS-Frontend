@@ -12,6 +12,7 @@ import type {
   ProductListQuery,
   ProductListResponse,
   ProductLot,
+  ProductLotImpact,
   ProductLotQuery,
   ProductResponse,
   ProductSupplier,
@@ -106,10 +107,31 @@ export function useProductLotsQuery(id: string, params: ProductLotQuery, enabled
   })
 }
 
-export function useUpdateProductLotStatusMutation(id: string) {
+export function useProductLotImpactQuery(id: string, lotId: string | null) {
+  return useQuery<ProductLotImpact, ApiErrorResponse>({
+    queryKey: [...queryKeys.products.detail(id), 'lots', lotId, 'impact'],
+    queryFn: () =>
+      productService.getProductLotImpact(id, lotId ?? '').then((response) => response.data),
+    enabled: Boolean(id && lotId),
+  })
+}
+
+export function useBlockProductLotMutation(id: string) {
   const queryClient = useQueryClient()
-  return useMutation<unknown, ApiErrorResponse, { lotId: string; status: 'Active' | 'Blocked' }>({
-    mutationFn: ({ lotId, status }) => productService.updateProductLotStatus(id, lotId, status),
+  return useMutation<unknown, ApiErrorResponse, { lotId: string; reason: string }>({
+    mutationFn: ({ lotId, reason }) => productService.blockProductLot(id, lotId, reason),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.products.detail(id), 'lots'],
+      }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useUnlockProductLotMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { lotId: string; reason: string }>({
+    mutationFn: ({ lotId, reason }) => productService.unlockProductLot(id, lotId, reason),
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.products.detail(id), 'lots'],

@@ -8,6 +8,7 @@ import type {
   OutboundOrderListResponse,
   OutboundOrderSummary,
   RecordReturnRequest,
+  RestockReturnRequest,
   RejectReturnRequest,
   ReturnListQuery,
   ReturnListResponse,
@@ -65,5 +66,10 @@ export const outboundService = {
   rejectReturn: (returnId: string, request: RejectReturnRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.returns.reject(returnId), request)
+      .then((response) => response.data),
+
+  restockReturn: (returnId: string, request: RestockReturnRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.returns.restock(returnId), request)
       .then((response) => response.data),
 }
