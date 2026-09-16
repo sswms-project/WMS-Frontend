@@ -28,6 +28,7 @@ function PurchaseOrderFormTestTree() {
       <PurchaseOrderForm
         title="Tạo đơn mua hàng"
         description="Chọn kho, nhà cung cấp và các sản phẩm cần nhập."
+        currency="VND"
         form={form}
         fields={fieldArray.fields}
         warehouseOptions={[]}

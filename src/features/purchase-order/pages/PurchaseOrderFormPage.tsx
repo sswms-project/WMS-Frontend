@@ -14,6 +14,7 @@ import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import { useOrganizationQuery } from '@/features/organization/hooks/use-organization'
 import { PurchaseOrderForm, type LookupOption } from '../components/PurchaseOrderFormPage'
 import {
   useCreatePurchaseOrderMutation,
@@ -88,6 +89,7 @@ export default function PurchaseOrderFormPage({
     ...(debouncedSupplierSearch ? { searchTerm: debouncedSupplierSearch } : {}),
   })
   const createMutation = useCreatePurchaseOrderMutation()
+  const organizationQuery = useOrganizationQuery()
   const updateMutation = useUpdatePurchaseOrderMutation()
   const submitMutation = useSubmitPurchaseOrderMutation()
 
@@ -250,6 +252,7 @@ export default function PurchaseOrderFormPage({
 
   return (
     <PurchaseOrderForm
+      currency={detailQuery.data?.currency ?? organizationQuery.data?.defaultCurrency ?? 'VND'}
       title={
         isEditing ? `Chỉnh sửa ${detailQuery.data?.poNumber ?? 'đơn mua'}` : 'Tạo đơn mua hàng'
       }

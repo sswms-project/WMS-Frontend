@@ -8,6 +8,10 @@ export const inboundDocumentReviewLineSchema = z
     confirmedQuantity: z.number().positive('Số lượng xác nhận phải lớn hơn 0.'),
     damagedQuantity: z.number().min(0, 'Số lượng hỏng không được âm.'),
     exceptionReason: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự.'),
+    isLotTracked: z.boolean(),
+    lotNumber: z.string().trim().max(100, 'Số lô không được vượt quá 100 ký tự.'),
+    manufacturedDate: z.string(),
+    expiryDate: z.string(),
   })
   .superRefine((line, context) => {
     if (line.damagedQuantity > line.confirmedQuantity) {
@@ -22,6 +26,31 @@ export const inboundDocumentReviewLineSchema = z
         code: 'custom',
         path: ['exceptionReason'],
         message: 'Vui lòng ghi rõ tình trạng hàng hỏng.',
+      })
+    }
+    if (line.isLotTracked && !line.lotNumber) {
+      context.addIssue({
+        code: 'custom',
+        path: ['lotNumber'],
+        message: 'Vui lòng nhập số lô.',
+      })
+    }
+    if (!line.isLotTracked && (line.lotNumber || line.manufacturedDate || line.expiryDate)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['lotNumber'],
+        message: 'Sản phẩm theo số lượng không nhận thông tin lô.',
+      })
+    }
+    if (
+      line.manufacturedDate &&
+      line.expiryDate &&
+      new Date(line.expiryDate) < new Date(line.manufacturedDate)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['expiryDate'],
+        message: 'Hạn sử dụng phải bằng hoặc sau ngày sản xuất.',
       })
     }
   })

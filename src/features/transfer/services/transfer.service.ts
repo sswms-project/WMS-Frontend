@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type { QueryResult } from '@/types/api'
 import type { WarehouseResponse } from '@/types/warehouse'
-import type { InventoryBalanceListResponse } from '@/features/inventory/types/inventory.types'
+import type { InventoryStockListResponse } from '@/features/inventory/types/inventory.types'
 import type {
   ApproveTransferRequest,
   CreateTransferRequest,
@@ -36,7 +36,7 @@ export const transferService = {
 
   getSourceInventory: (params: TransferSourceInventoryQuery) =>
     axiosClient
-      .get<ApiResponse<InventoryBalanceListResponse>>(API_ENDPOINTS.transfers.sourceInventory, {
+      .get<ApiResponse<InventoryStockListResponse>>(API_ENDPOINTS.transfers.sourceInventory, {
         params,
       })
       .then((response) => response.data),

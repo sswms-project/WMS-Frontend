@@ -17,7 +17,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { FieldError } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
@@ -169,10 +169,13 @@ export function CycleCountDetailView({
             <TableHeader>
               <TableRow>
                 {allowedActions.includes('RequestRecount') ? (
-                  <TableHead className="bg-card sticky top-0 w-12" />
+                  <TableHead className="bg-card sticky top-0 w-12">
+                    <span className="sr-only">Chọn dòng kiểm đếm lại</span>
+                  </TableHead>
                 ) : null}
                 <TableHead className="bg-card sticky top-0 w-64">Sản phẩm</TableHead>
                 <TableHead className="bg-card sticky top-0 w-28">Slot</TableHead>
+                <TableHead className="bg-card sticky top-0 w-36">Lô / chất lượng</TableHead>
                 <TableHead className="bg-card sticky top-0 w-36 text-right">Tồn hệ thống</TableHead>
                 <TableHead className="bg-card sticky top-0 w-52 text-right">Số đếm</TableHead>
                 <TableHead className="bg-card sticky top-0 w-32 text-right">Chênh lệch</TableHead>
@@ -194,6 +197,7 @@ export function CycleCountDetailView({
                     {allowedActions.includes('RequestRecount') ? (
                       <TableCell>
                         <Checkbox
+                          aria-label={`Chọn ${item.productName} tại vị trí ${item.slotCode} để kiểm đếm lại`}
                           checked={selected.includes(item.id)}
                           onCheckedChange={(checked) =>
                             recountForm.setValue(
@@ -212,6 +216,10 @@ export function CycleCountDetailView({
                       <p className="text-muted-foreground font-mono text-xs">{item.productSku}</p>
                     </TableCell>
                     <TableCell className="font-mono">{item.slotCode}</TableCell>
+                    <TableCell>
+                      <p className="font-mono text-xs">{item.lotNumber ?? 'Theo số lượng'}</p>
+                      <p className="text-muted-foreground text-xs">{item.qualityStatus}</p>
+                    </TableCell>
                     <TableCell className="text-right font-mono">
                       {item.systemQuantity === null ? (
                         <span className="text-muted-foreground inline-flex items-center gap-1">
@@ -225,6 +233,7 @@ export function CycleCountDetailView({
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         <Input
+                          aria-label={`Số đếm thực tế của ${item.productName} tại vị trí ${item.slotCode}`}
                           className="h-8 w-28 text-right font-mono"
                           type="number"
                           min="0"
@@ -324,10 +333,13 @@ export function CycleCountDetailView({
             </DialogDescription>
           </DialogHeader>
           {dialog === 'recount' ? (
-            <>
+            <Field data-invalid={Boolean(recountForm.formState.errors.reason)}>
+              <FieldLabel htmlFor="recount-reason">Lý do kiểm đếm lại</FieldLabel>
               <Textarea
+                id="recount-reason"
                 maxLength={500}
-                placeholder="Nhập lý do bắt buộc"
+                placeholder="Ví dụ: Số đếm thực tế chênh lệch với hệ thống…"
+                aria-invalid={Boolean(recountForm.formState.errors.reason)}
                 {...recountForm.register('reason')}
               />
               <FieldError
@@ -337,12 +349,15 @@ export function CycleCountDetailView({
                     : undefined
                 }
               />
-            </>
+            </Field>
           ) : (
-            <>
+            <Field data-invalid={Boolean(adjustmentForm.formState.errors.reason)}>
+              <FieldLabel htmlFor="adjustment-reason">Lý do điều chỉnh tồn kho</FieldLabel>
               <Textarea
+                id="adjustment-reason"
                 maxLength={255}
-                placeholder="Nhập lý do bắt buộc"
+                placeholder="Ví dụ: Điều chỉnh theo kết quả kiểm kê đã xác nhận…"
+                aria-invalid={Boolean(adjustmentForm.formState.errors.reason)}
                 {...adjustmentForm.register('reason')}
               />
               <FieldError
@@ -352,7 +367,7 @@ export function CycleCountDetailView({
                     : undefined
                 }
               />
-            </>
+            </Field>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>

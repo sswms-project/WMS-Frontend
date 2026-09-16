@@ -15,7 +15,7 @@ export const RETURN_STATUSES = ['Requested', 'Approved', 'Rejected', 'Restocked'
 
 export type ReturnStatus = (typeof RETURN_STATUSES)[number]
 
-export const RETURN_ITEM_CONDITIONS = ['Good', 'Damaged'] as const
+export const RETURN_ITEM_CONDITIONS = ['Good', 'Damaged', 'Expired', 'Scrap'] as const
 
 export type ReturnItemCondition = (typeof RETURN_ITEM_CONDITIONS)[number]
 
@@ -39,8 +39,24 @@ export interface OutboundOrderItem {
   pickedQuantity: number
   returnedQuantity: number
   returnableQuantity: number
-  sourceSlotId: string | null
-  sourceSlotCode: string | null
+  pickDetails: OutboundPickDetail[]
+}
+
+export interface OutboundPickDetail {
+  id: string
+  inventoryStockId: string
+  slotId: string
+  slotCode: string
+  lotId: string | null
+  lotNumber: string | null
+  qualityStatus: string
+  pickedQuantity: number
+  returnedQuantity: number
+  returnableQuantity: number
+  pickedByUserId: string
+  pickedByName: string
+  pickedAt: string
+  issuedAt: string | null
 }
 
 export interface OutboundOrderSummary {
@@ -84,7 +100,7 @@ export interface CreateOutboundOrderRequest {
 
 export interface IssueStockItemRequest {
   outboundOrderItemId: string
-  sourceSlotId: string
+  inventoryStockId: string
   pickedQuantity: number
 }
 
@@ -93,7 +109,7 @@ export interface IssueStockRequest {
 }
 
 export interface RecordReturnItemRequest {
-  productId: string
+  outboundPickDetailId: string
   quantity: number
   condition: ReturnItemCondition
   restockSlotId: string | null
@@ -106,12 +122,15 @@ export interface RecordReturnRequest {
 
 export interface ReturnItem {
   id: string
+  outboundPickDetailId: string | null
   productId: string
   productName: string
   sku: string
   quantity: number
   condition: ReturnItemCondition
   restockSlotId: string | null
+  lotId: string | null
+  lotNumber: string | null
 }
 
 export interface ReturnSummary {

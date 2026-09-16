@@ -180,6 +180,7 @@ export function ReceiptDetail({
                 <TableHead className="text-right">Hỏng</TableHead>
                 <TableHead className="text-right">Khả dụng</TableHead>
                 <TableHead className="text-right">Còn cất</TableHead>
+                <TableHead>Lô hàng</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -207,6 +208,18 @@ export function ReceiptDetail({
                   <TableCell className="text-right tabular-nums">
                     {formatQuantity(item.remainingPutAwayQuantity)}
                   </TableCell>
+                  <TableCell>
+                    {item.lotNumber ? (
+                      <div className="text-xs">
+                        <p className="font-mono font-medium">{item.lotNumber}</p>
+                        <p className="text-muted-foreground">
+                          SX {item.manufacturedDate ?? '—'} · HSD {item.expiryDate ?? '—'}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">Theo số lượng</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -217,6 +230,9 @@ export function ReceiptDetail({
             <div key={item.id} className="p-4">
               <p className="font-medium">{item.productName}</p>
               <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
+              {item.lotNumber ? (
+                <p className="mt-1 font-mono text-xs">Lô {item.lotNumber}</p>
+              ) : null}
               <dl className="mt-3 grid grid-cols-3 gap-3">
                 <Metadata label="Nhận" value={formatQuantity(item.receivedQuantity)} />
                 <Metadata label="Hỏng" value={formatQuantity(item.damagedQuantity)} />
@@ -229,6 +245,51 @@ export function ReceiptDetail({
           ))}
         </div>
       </section>
+      {receipt.items.some((item) => item.putAwayDetails.length > 0) ? (
+        <section className="bg-card border">
+          <div className="border-b p-4">
+            <h2 className="text-sm font-semibold">Chi tiết cất hàng</h2>
+            <p className="text-muted-foreground text-xs">
+              Mỗi dòng thể hiện vị trí, lô và biến động tồn kho đã phát sinh.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[920px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead>Vị trí</TableHead>
+                  <TableHead>Lô</TableHead>
+                  <TableHead>Chất lượng</TableHead>
+                  <TableHead className="text-right">Số lượng</TableHead>
+                  <TableHead>Người thực hiện</TableHead>
+                  <TableHead>Thời điểm</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {receipt.items.flatMap((item) =>
+                  item.putAwayDetails.map((detail) => (
+                    <TableRow key={detail.id}>
+                      <TableCell>
+                        <p className="font-medium">{item.productName}</p>
+                        <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
+                      </TableCell>
+                      <TableCell className="font-mono">{detail.slotCode}</TableCell>
+                      <TableCell className="font-mono">{detail.lotNumber ?? '—'}</TableCell>
+                      <TableCell>{detail.qualityStatus}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQuantity(detail.quantity)}
+                      </TableCell>
+                      <TableCell>{detail.performedByName}</TableCell>
+                      <TableCell>{formatOperationalDate(detail.putAwayAt)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      ) : null}
       <section className="bg-card border p-4">
         <h2 className="mb-4 text-sm font-semibold">Lịch sử xử lý</h2>
         <LifecycleTimeline events={receipt.history} />

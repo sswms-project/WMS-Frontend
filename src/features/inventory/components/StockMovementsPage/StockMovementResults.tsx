@@ -49,20 +49,21 @@ export function StockMovementMobileList({ items }: { readonly items: readonly St
           <ItemContent className="min-w-0">
             <ItemTitle className="flex items-center justify-between gap-3">
               <span className="truncate">{item.productName || 'Sản phẩm chưa xác định'}</span>
-              <QuantityChange value={item.quantity} />
+              <QuantityChange value={item.quantityChange} />
             </ItemTitle>
             <ItemDescription>
               <span className="font-mono" translate="no">
                 {item.sku || item.productId}
               </span>{' '}
-              · Slot {item.slotCode || item.slotId}
+              · Slot {item.slotCode || item.slotId} ·{' '}
+              {item.lotNumber ? `Lô ${item.lotNumber}` : 'Không theo lô'} · {item.qualityStatus}
             </ItemDescription>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <MovementBadge value={item.movementType} />
-              <span className="text-muted-foreground">{formatInventoryDate(item.createdAt)}</span>
+              <span className="text-muted-foreground">{formatInventoryDate(item.occurredAt)}</span>
             </div>
             <ItemDescription>
-              {item.createdByName || 'Người dùng chưa xác định'} ·{' '}
+              {item.performedByName || 'Người dùng chưa xác định'} ·{' '}
               {item.referenceType || 'Không có nguồn'}
             </ItemDescription>
           </ItemContent>
@@ -82,7 +83,11 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
             <TableHead className="bg-card sticky top-0 z-10 w-36">Loại</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-64">Sản phẩm</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-32">Slot</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-36">Lô / Chất lượng</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">Biến động</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">
+              Sau biến động
+            </TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-48">Chứng từ</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-48">Người thực hiện</TableHead>
           </TableRow>
@@ -91,7 +96,7 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="text-muted-foreground text-xs">
-                {formatInventoryDate(item.createdAt)}
+                {formatInventoryDate(item.occurredAt)}
               </TableCell>
               <TableCell>
                 <MovementBadge value={item.movementType} />
@@ -107,8 +112,15 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
               <TableCell className="truncate font-mono text-xs" title={item.slotId}>
                 {item.slotCode || item.slotId}
               </TableCell>
+              <TableCell>
+                <p className="truncate font-mono text-xs">{item.lotNumber ?? 'Không theo lô'}</p>
+                <p className="text-muted-foreground text-xs">{item.qualityStatus}</p>
+              </TableCell>
               <TableCell className="text-right">
-                <QuantityChange value={item.quantity} />
+                <QuantityChange value={item.quantityChange} />
+              </TableCell>
+              <TableCell className="text-right font-mono tabular-nums">
+                {formatStockMovementQuantity(item.balanceAfter).replace('+', '')}
               </TableCell>
               <TableCell className="min-w-0">
                 <p className="truncate">{item.referenceType || 'Không có nguồn'}</p>
@@ -119,8 +131,11 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
                   {formatReferenceId(item.referenceId)}
                 </p>
               </TableCell>
-              <TableCell className="truncate" title={item.createdByName || item.createdBy}>
-                {item.createdByName || 'Người dùng chưa xác định'}
+              <TableCell
+                className="truncate"
+                title={item.performedByName || item.performedByUserId}
+              >
+                {item.performedByName || 'Người dùng chưa xác định'}
               </TableCell>
             </TableRow>
           ))}

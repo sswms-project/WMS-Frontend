@@ -14,7 +14,15 @@ const ids = [
 
 describe('transfer schemas', () => {
   it('rejects equal warehouses and duplicate source inventory', () => {
-    const line = { productId: ids[1], sourceSlotId: ids[2], destinationSlotId: ids[3], quantity: 1 }
+    const line = {
+      productId: ids[1],
+      sourceInventoryStockId: ids[1],
+      sourceSlotId: ids[2],
+      destinationSlotId: ids[3],
+      lotId: null,
+      availableQuantity: 5,
+      quantity: 1,
+    }
     expect(
       createTransferSchema.safeParse({
         sourceWarehouseId: ids[0],
@@ -22,6 +30,26 @@ describe('transfer schemas', () => {
         lines: [line, line],
       }).success
     ).toBe(false)
+  })
+
+  it('accepts an exact lot-tracked source inventory row within availability', () => {
+    expect(
+      createTransferSchema.safeParse({
+        sourceWarehouseId: ids[0],
+        destinationWarehouseId: ids[1],
+        lines: [
+          {
+            productId: ids[1],
+            sourceInventoryStockId: ids[2],
+            sourceSlotId: ids[2],
+            destinationSlotId: ids[3],
+            lotId: ids[3],
+            availableQuantity: 5,
+            quantity: 4,
+          },
+        ],
+      }).success
+    ).toBe(true)
   })
 
   it('limits approved quantity to the requested quantity', () => {

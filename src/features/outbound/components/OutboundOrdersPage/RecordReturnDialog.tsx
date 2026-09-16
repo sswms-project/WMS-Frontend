@@ -23,7 +23,7 @@ export function RecordReturnDialog({
   form,
   isPending,
   slotOptions,
-  allowableByProduct,
+  allowableByPickDetail,
   slotSearch,
   onSlotSearchChange,
   onOpenChange,
@@ -33,7 +33,7 @@ export function RecordReturnDialog({
   readonly form: UseFormReturn<RecordReturnFormValues>
   readonly isPending: boolean
   readonly slotOptions: readonly { id: string; label: string }[]
-  readonly allowableByProduct: Readonly<Record<string, number>>
+  readonly allowableByPickDetail: Readonly<Record<string, number>>
   readonly slotSearch: string
   readonly onSlotSearchChange: (value: string) => void
   readonly onOpenChange: (open: boolean) => void
@@ -68,13 +68,17 @@ export function RecordReturnDialog({
                 />
               </Field>
               {form.watch('lines').map((line, index) => (
-                <FieldGroup key={line.productId} className="grid gap-3 border p-3 sm:grid-cols-3">
+                <FieldGroup
+                  key={line.outboundPickDetailId}
+                  className="grid gap-3 border p-3 sm:grid-cols-3"
+                >
                   <div>
-                    <p className="text-sm font-medium">
-                      {order.items.find((item) => item.productId === line.productId)?.productName}
+                    <p className="text-sm font-medium">{line.productName}</p>
+                    <p className="text-muted-foreground font-mono text-xs">
+                      {line.lotNumber ? `Lô ${line.lotNumber}` : 'Theo số lượng'}
                     </p>
                     <p className="text-muted-foreground text-xs">
-                      Có thể hoàn: {allowableByProduct[line.productId] ?? 0}
+                      Có thể hoàn: {allowableByPickDetail[line.outboundPickDetailId] ?? 0}
                     </p>
                   </div>
                   <Field data-invalid={Boolean(form.formState.errors.lines?.[index]?.quantity)}>
@@ -84,7 +88,7 @@ export function RecordReturnDialog({
                       type="number"
                       min={0}
                       step="0.01"
-                      max={allowableByProduct[line.productId] ?? 0}
+                      max={allowableByPickDetail[line.outboundPickDetailId] ?? 0}
                       {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })}
                     />
                     <FieldError errors={[form.formState.errors.lines?.[index]?.quantity]} />
@@ -97,8 +101,10 @@ export function RecordReturnDialog({
                     >
                       <NativeSelectOption value="Good">Còn tốt</NativeSelectOption>
                       <NativeSelectOption value="Damaged">Hư hỏng</NativeSelectOption>
+                      <NativeSelectOption value="Expired">Hết hạn</NativeSelectOption>
+                      <NativeSelectOption value="Scrap">Hủy bỏ</NativeSelectOption>
                     </NativeSelect>
-                    {line.condition === 'Good' ? (
+                    {line.condition !== 'Scrap' ? (
                       <NativeSelect
                         aria-label="Vị trí nhập lại"
                         {...form.register(`lines.${index}.restockSlotId`)}

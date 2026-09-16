@@ -1,4 +1,4 @@
-import { Box, FolderOpen, Package, Scale } from 'lucide-react'
+import { Boxes, FolderOpen, Package, Scale } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ProductStatusBadge } from '../ProductStatusBadge'
@@ -66,16 +66,12 @@ export function ProductDetailSidebar({ product }: ProductDetailSidebarProps) {
         />
         <Separator />
         <DetailRow
-          label="Tồn kho tối thiểu"
+          label="Quản lý tồn kho"
           value={
-            product.minStockThreshold != null ? (
-              <span className="flex items-center gap-1.5">
-                <Box className="text-muted-foreground size-3.5" aria-hidden="true" />
-                {product.minStockThreshold}
-              </span>
-            ) : (
-              <span className="text-muted-foreground text-xs">Chưa cấu hình</span>
-            )
+            <span className="flex items-center gap-1.5">
+              <Boxes className="text-muted-foreground size-3.5" aria-hidden="true" />
+              {product.isLotTracked ? 'Theo lô' : 'Theo số lượng'}
+            </span>
           }
         />
       </div>

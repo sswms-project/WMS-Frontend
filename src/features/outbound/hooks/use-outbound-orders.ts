@@ -31,6 +31,11 @@ interface RecordReturnVariables {
   request: RecordReturnRequest
 }
 
+interface RemovePickDetailVariables {
+  outboundOrderId: string
+  pickDetailId: string
+}
+
 interface RejectReturnVariables {
   returnId: string
   request: RejectReturnRequest
@@ -76,6 +81,23 @@ export function useIssueStockMutation() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.outboundOrders.all })
       void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all })
     },
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useRemovePickDetailMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, RemovePickDetailVariables>({
+    mutationFn: ({ outboundOrderId, pickDetailId }) =>
+      outboundService.removePickDetail(outboundOrderId, pickDetailId),
+    onSuccess: (_, variables) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.outboundOrders.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.outboundOrders.detail(variables.outboundOrderId),
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+      ]),
     onError: (error) => logger.error(error),
   })
 }

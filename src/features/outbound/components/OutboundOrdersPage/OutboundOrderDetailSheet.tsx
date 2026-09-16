@@ -2,6 +2,7 @@
 
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
 import {
   OperationalErrorState,
   OperationalLoadingState,
@@ -16,6 +17,8 @@ interface OutboundOrderDetailSheetProps {
   readonly isLoading: boolean
   readonly isError: boolean
   readonly onRetry: () => void
+  readonly isRemovingPick: boolean
+  readonly onRemovePickDetail: (pickDetailId: string) => void
 }
 
 export function OutboundOrderDetailSheet({
@@ -24,6 +27,8 @@ export function OutboundOrderDetailSheet({
   isError,
   onRetry,
   onOpenChange,
+  isRemovingPick,
+  onRemovePickDetail,
 }: OutboundOrderDetailSheetProps) {
   return (
     <Sheet open={Boolean(order) || isLoading || isError} onOpenChange={onOpenChange}>
@@ -88,8 +93,49 @@ export function OutboundOrderDetailSheet({
                           <span className="font-mono" translate="no">
                             {item.sku}
                           </span>
-                          {item.sourceSlotCode ? ` · ${item.sourceSlotCode}` : ''}
                         </ItemDescription>
+                        {item.pickDetails.length > 0 ? (
+                          <div className="mt-2 space-y-2">
+                            {item.pickDetails.map((detail) => (
+                              <div key={detail.id} className="bg-muted/40 border p-2 text-xs">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <p>
+                                      Vị trí <span className="font-mono">{detail.slotCode}</span>
+                                      {detail.lotNumber ? (
+                                        <>
+                                          {' '}
+                                          · Lô <span className="font-mono">{detail.lotNumber}</span>
+                                        </>
+                                      ) : null}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      {detail.qualityStatus} ·{' '}
+                                      {formatOutboundQuantity(detail.pickedQuantity)} ·{' '}
+                                      {detail.pickedByName} · {formatOutboundDate(detail.pickedAt)}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      {detail.issuedAt
+                                        ? `Đã xuất ${formatOutboundDate(detail.issuedAt)}`
+                                        : 'Chưa xuất kho'}
+                                    </p>
+                                  </div>
+                                  {!detail.issuedAt ? (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={isRemovingPick}
+                                      onClick={() => onRemovePickDetail(detail.id)}
+                                    >
+                                      Bỏ phân bổ
+                                    </Button>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
                       </ItemContent>
                       <span className="text-sm font-medium tabular-nums">
                         {formatOutboundQuantity(item.pickedQuantity)}/

@@ -24,7 +24,7 @@ import type {
   InventoryStockHistoryQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
-import type { ProductListQuery } from '@/features/product/types/product.types'
+import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
   TransferListQuery,
   TransferSourceInventoryQuery,
@@ -129,6 +129,7 @@ export const queryKeys = {
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
     forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
+    forecastRun: (id: string) => ['inventory', 'forecast-runs', id] as const,
     history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
@@ -156,6 +157,9 @@ export const queryKeys = {
     list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
     suppliers: (id: string) => ['products', 'detail', id, 'suppliers'] as const,
+    stockPolicies: (id: string) => ['products', 'detail', id, 'stock-policies'] as const,
+    lots: (id: string, params: ProductLotQuery) =>
+      ['products', 'detail', id, 'lots', params] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,

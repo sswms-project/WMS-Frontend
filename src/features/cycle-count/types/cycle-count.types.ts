@@ -76,6 +76,9 @@ export interface CycleCountItem {
   activeAdjustmentId: string | null
   activeAdjustmentStatus: StockAdjustmentStatus | null
   countHistory: CycleCountItemHistory[]
+  lotId: string | null
+  lotNumber: string | null
+  qualityStatus: 'Good' | 'Damaged' | 'Quarantine'
 }
 
 export interface CycleCountDetail {
@@ -106,7 +109,12 @@ export interface CreateCycleCountRequest {
   zoneId: string | null
   scheduledDate: string
   assignedTo: string
-  items: Array<{ productId: string; slotId: string }>
+  items: Array<{
+    productId: string
+    slotId: string
+    lotId: string | null
+    qualityStatus: 'Good' | 'Damaged' | 'Quarantine'
+  }>
   isBlindCount: boolean
 }
 
@@ -161,6 +169,9 @@ export interface StockAdjustment {
   rejectedByName: string | null
   rejectedAt: string | null
   rejectionReason: string | null
+  lotId: string | null
+  lotNumber: string | null
+  qualityStatus: 'Good' | 'Damaged' | 'Quarantine'
 }
 
 export interface StockAdjustmentListResponse {

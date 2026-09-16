@@ -35,6 +35,13 @@ export const outboundService = {
       .post<ApiResponse<unknown>>(API_ENDPOINTS.outboundOrders.issue(outboundOrderId), request)
       .then((response) => response.data),
 
+  removePickDetail: (outboundOrderId: string, pickDetailId: string) =>
+    axiosClient
+      .delete<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.outboundOrders.removePickDetail(outboundOrderId, pickDetailId))
+      .then((response) => response.data),
+
   recordReturn: (outboundOrderId: string, request: RecordReturnRequest) =>
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.outboundOrders.returns(outboundOrderId), request)
