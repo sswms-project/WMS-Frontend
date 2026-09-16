@@ -29,6 +29,7 @@ import { LookupCombobox, type LookupOption } from './LookupCombobox'
 interface PurchaseOrderFormProps {
   readonly title: string
   readonly description: string
+  readonly currency: string
   readonly form: UseFormReturn<PurchaseOrderFormValues>
   readonly fields: readonly FieldArrayWithId<PurchaseOrderFormValues, 'lines', 'id'>[]
   readonly warehouseOptions: readonly LookupOption[]
@@ -51,6 +52,7 @@ interface PurchaseOrderFormProps {
 export function PurchaseOrderForm({
   title,
   description,
+  currency,
   form,
   fields,
   warehouseOptions,
@@ -232,7 +234,9 @@ export function PurchaseOrderForm({
                       <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor={`mobile-unit-price-${index}`}>Đơn giá (VND)</FieldLabel>
+                      <FieldLabel htmlFor={`mobile-unit-price-${index}`}>
+                        Đơn giá ({currency})
+                      </FieldLabel>
                       <Input
                         id={`mobile-unit-price-${index}`}
                         type="number"
@@ -255,7 +259,7 @@ export function PurchaseOrderForm({
                     <TableRow>
                       <TableHead>Sản phẩm</TableHead>
                       <TableHead className="w-36">Số lượng</TableHead>
-                      <TableHead className="w-44">Đơn giá (VND)</TableHead>
+                      <TableHead className="w-44">Đơn giá ({currency})</TableHead>
                       <TableHead className="w-12">
                         <span className="sr-only">Xóa</span>
                       </TableHead>

@@ -2,10 +2,14 @@ import { STOCK_MOVEMENT_TYPES } from '../types/inventory.types'
 
 const movementLabels: Record<string, string> = {
   [STOCK_MOVEMENT_TYPES.inbound]: 'Nhập kho',
-  [STOCK_MOVEMENT_TYPES.outbound]: 'Xuất kho',
-  [STOCK_MOVEMENT_TYPES.transfer]: 'Chuyển kho',
+  [STOCK_MOVEMENT_TYPES.putAway]: 'Cất hàng',
+  [STOCK_MOVEMENT_TYPES.pick]: 'Lấy hàng',
+  [STOCK_MOVEMENT_TYPES.issue]: 'Xuất kho',
+  [STOCK_MOVEMENT_TYPES.transferOut]: 'Điều chuyển đi',
+  [STOCK_MOVEMENT_TYPES.transferIn]: 'Điều chuyển đến',
   [STOCK_MOVEMENT_TYPES.adjustment]: 'Điều chỉnh',
-  [STOCK_MOVEMENT_TYPES.return]: 'Trả hàng',
+  [STOCK_MOVEMENT_TYPES.returnIn]: 'Nhập hàng trả lại',
+  [STOCK_MOVEMENT_TYPES.scrap]: 'Loại bỏ',
 }
 
 export function formatStockMovementType(value: string): string {

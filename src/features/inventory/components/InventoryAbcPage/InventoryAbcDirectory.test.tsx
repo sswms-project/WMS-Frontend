@@ -6,11 +6,16 @@ import { InventoryAbcDirectory } from './InventoryAbcDirectory'
 
 const abcItem = {
   productId: 'product-1',
+  warehouseId: 'warehouse-1',
   sku: 'SKU-01',
   productName: 'Bộ điều khiển',
   totalQuantity: 120,
+  metricValue: 120,
   cumulativePercentage: 72.5,
   class: 'A',
+  calculationBasis: 'Quantity',
+  analysisFrom: '2026-08-01',
+  analysisTo: '2026-08-31',
 }
 
 function createProps(
@@ -29,6 +34,10 @@ function createProps(
     onWarehouseChange: vi.fn(),
     onRetryWarehouses: vi.fn(),
     onRetry: vi.fn(),
+    historicalPeriodDays: 90,
+    isRunning: false,
+    onHistoricalPeriodDaysChange: vi.fn(),
+    onRun: vi.fn(),
     ...overrides,
   }
 }

@@ -90,7 +90,16 @@ export const API_ENDPOINTS = {
     reservations: '/inventory/reservations',
     damaged: '/inventory/damaged',
     abcClassification: '/inventory/abc-classification',
+    runAbcClassification: '/inventory/abc-classification/run',
     forecast: '/inventory/forecast',
+    forecastRuns: '/inventory/forecast-runs',
+    forecastRun: (id: string) => `/inventory/forecast-runs/${id}`,
+    executeForecastRun: (id: string) => `/inventory/forecast-runs/${id}/execute`,
+    evaluateForecastRun: (id: string) => `/inventory/forecast-runs/${id}/evaluate-accuracy`,
+    acceptReplenishmentSuggestion: (id: string) =>
+      `/inventory/replenishment-suggestions/${id}/accept`,
+    acceptRebalancingSuggestion: (id: string) => `/inventory/rebalancing-suggestions/${id}/accept`,
+    rejectForecastSuggestion: (id: string) => `/inventory/forecast-suggestions/${id}/reject`,
     history: '/inventory/history',
   },
   cycleCounts: {
@@ -191,6 +200,9 @@ export const API_ENDPOINTS = {
     detail: (id: string) => `/products/${id}`,
     update: (id: string) => `/products/${id}`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
+    stockPolicies: (id: string) => `/products/${id}/stock-policies`,
+    lots: (id: string) => `/products/${id}/lots`,
+    lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
     barcode: (id: string) => `/products/${id}/barcode`,
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
@@ -217,6 +229,8 @@ export const API_ENDPOINTS = {
     create: '/outbound-orders',
     detail: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}`,
     issue: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/issue`,
+    removePickDetail: (outboundOrderId: string, pickDetailId: string) =>
+      `/outbound-orders/${outboundOrderId}/pick-details/${pickDetailId}`,
     returns: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/returns`,
   },
   returns: {

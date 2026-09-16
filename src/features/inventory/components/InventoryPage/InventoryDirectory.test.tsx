@@ -13,6 +13,12 @@ const inventoryItem = {
   warehouseName: 'Kho trung tâm',
   slotId: 'slot-1',
   slotCode: 'A-01-01',
+  lotId: null,
+  lotNumber: null,
+  manufacturedDate: null,
+  expiryDate: null,
+  lotStatus: null,
+  qualityStatus: 'Good' as const,
   quantityOnHand: 125.5,
   reservedQuantity: 20,
   availableQuantity: 105.5,
@@ -39,7 +45,6 @@ function createProps(
     areFiltersLoading: false,
     areFiltersError: false,
     activeFilterCount: 0,
-    canReserve: false,
     canReportDamaged: false,
     onSearchChange: vi.fn(),
     onWarehouseChange: vi.fn(),
@@ -48,7 +53,6 @@ function createProps(
     onRetryFilters: vi.fn(),
     onPageChange: vi.fn(),
     onRetry: vi.fn(),
-    onReserve: vi.fn(),
     onReportDamaged: vi.fn(),
     ...overrides,
   }
@@ -110,19 +114,6 @@ describe('InventoryDirectory states', () => {
     expect(onProductChange).toHaveBeenCalledWith('product-1')
     expect(onRetry).toHaveBeenCalledTimes(1)
     expect(onPageChange).toHaveBeenCalledWith(2)
-  })
-
-  it('only exposes reserve action when permission and available stock allow it', () => {
-    const onReserve = vi.fn()
-    renderDirectory(
-      createProps({ items: [inventoryItem], totalCount: 1, canReserve: true, onReserve })
-    )
-
-    const [reserveButton] = screen.getAllByRole('button', { name: 'Giữ tồn' })
-    expect(reserveButton).toBeDefined()
-    if (!reserveButton) return
-    fireEvent.click(reserveButton)
-    expect(onReserve).toHaveBeenCalledWith(inventoryItem)
   })
 
   it('only exposes damaged action with its dedicated permission', () => {

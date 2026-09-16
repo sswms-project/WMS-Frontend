@@ -8,8 +8,11 @@ import type {
   ImportProductsRequest,
   ProductListQuery,
   ProductListResponse,
+  ProductLot,
+  ProductLotQuery,
   ProductResponse,
   ProductSupplier,
+  ProductWarehousePolicy,
   SaveProductSupplierRequest,
   UnitResponse,
   UpdateProductSupplierRequest,
@@ -48,6 +51,21 @@ export const productService = {
   configureStockPolicy: (id: string, request: ConfigureStockPolicyRequest) =>
     axiosClient
       .patch<ApiResponse<unknown>>(API_ENDPOINTS.products.stockPolicy(id), request)
+      .then((r) => r.data),
+
+  getStockPolicies: (id: string) =>
+    axiosClient
+      .get<ApiResponse<ProductWarehousePolicy[]>>(API_ENDPOINTS.products.stockPolicies(id))
+      .then((r) => r.data),
+
+  getProductLots: (id: string, params: ProductLotQuery) =>
+    axiosClient
+      .get<ApiResponse<ProductLot[]>>(API_ENDPOINTS.products.lots(id), { params })
+      .then((r) => r.data),
+
+  updateProductLotStatus: (productId: string, lotId: string, status: 'Active' | 'Blocked') =>
+    axiosClient
+      .patch<ApiResponse<unknown>>(API_ENDPOINTS.products.lotStatus(productId, lotId), { status })
       .then((r) => r.data),
 
   generateBarcode: (id: string) =>

@@ -1,3 +1,5 @@
 export { ProductDetailSidebar } from './ProductDetailSidebar'
 export { ProductBarcodePanel } from './ProductBarcodePanel'
 export { ProductSuppliersPanel } from './ProductSuppliersPanel'
+export { ProductLotsPanel } from './ProductLotsPanel'
+export { ProductWarehousePoliciesPanel } from './ProductWarehousePoliciesPanel'

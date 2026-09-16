@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
@@ -21,6 +23,7 @@ import {
   useOutboundOrderQuery,
   useOutboundOrdersQuery,
   useRecordReturnMutation,
+  useRemovePickDetailMutation,
 } from '../hooks/use-outbound-orders'
 import {
   issueStockSchema,
@@ -32,15 +35,6 @@ import type { OutboundOrderStatus, OutboundOrderSummary } from '../types/outboun
 
 const PAGE_SIZE = 10
 
-function resolveErrorMessage(error: unknown, fallback: string): string {
-  return typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof error.message === 'string'
-    ? error.message
-    : fallback
-}
-
 function toIssueStockLines(order: OutboundOrderSummary): IssueStockFormValues['lines'] {
   return order.items.map((item) => ({
     outboundOrderItemId: item.id,
@@ -48,7 +42,8 @@ function toIssueStockLines(order: OutboundOrderSummary): IssueStockFormValues['l
     productName: item.productName,
     sku: item.sku,
     remainingQuantity: Math.max(0, item.quantity - item.pickedQuantity),
-    sourceSlotId: item.sourceSlotId ?? '',
+    inventoryStockId: '',
+    availableQuantity: 0,
     pickedQuantity: 0,
   }))
 }
@@ -112,6 +107,7 @@ export default function OutboundOrderPage() {
 
   const issueStockMutation = useIssueStockMutation()
   const recordReturnMutation = useRecordReturnMutation()
+  const removePickDetailMutation = useRemovePickDetailMutation()
 
   const issueStockForm = useForm<IssueStockFormValues>({
     resolver: zodResolver(issueStockSchema),
@@ -163,22 +159,25 @@ export default function OutboundOrderPage() {
             .filter((line) => line.pickedQuantity > 0)
             .map((line) => ({
               outboundOrderItemId: line.outboundOrderItemId,
-              sourceSlotId: line.sourceSlotId,
+              inventoryStockId: line.inventoryStockId,
               pickedQuantity: line.pickedQuantity,
             })),
         },
       })
-      toast.success('Đã xuất kho, tồn kho được cập nhật.')
+      toast.success('Đã ghi nhận lấy hàng và giữ tồn kho cho đơn xuất.')
       handleIssueStockDialogOpenChange(false)
     } catch (error) {
-      toast.error(resolveErrorMessage(error, 'Không thể xuất kho. Vui lòng thử lại.'))
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể ghi nhận lấy hàng. Vui lòng thử lại.'))
     }
   }
 
-  const allowableByProduct = useMemo(() => {
+  const allowableByPickDetail = useMemo(() => {
     if (!returningOrder) return {}
     return Object.fromEntries(
-      returningOrder.items.map((item) => [item.productId, Math.max(0, item.returnableQuantity)])
+      returningOrder.items.flatMap((item) =>
+        item.pickDetails.map((detail) => [detail.id, Math.max(0, detail.returnableQuantity)])
+      )
     )
   }, [returningOrder])
 
@@ -187,22 +186,25 @@ export default function OutboundOrderPage() {
     setReturnSlotSearch('')
     returnForm.reset({
       reason: '',
-      lines: order.items
-        .filter((item) => item.pickedQuantity > 0)
-        .map((item) => ({
-          productId: item.productId,
-          quantity: 0,
-          condition: 'Good',
-          restockSlotId: '',
-        })),
+      lines: order.items.flatMap((item) =>
+        item.pickDetails
+          .filter((detail) => detail.issuedAt && detail.returnableQuantity > 0)
+          .map((detail) => ({
+            outboundPickDetailId: detail.id,
+            productName: item.productName,
+            lotNumber: detail.lotNumber,
+            returnableQuantity: detail.returnableQuantity,
+            quantity: 0,
+            condition: 'Good',
+            restockSlotId: '',
+          }))
+      ),
     })
   }
 
   async function handleRecordReturn(values: RecordReturnFormValues) {
     if (!returningOrder) return
-    const invalid = values.lines.some(
-      (line) => line.quantity > (allowableByProduct[line.productId] ?? 0)
-    )
+    const invalid = values.lines.some((line) => line.quantity > line.returnableQuantity)
     if (invalid) {
       toast.error('Số lượng hoàn vượt quá số lượng cho phép.')
       return
@@ -215,15 +217,18 @@ export default function OutboundOrderPage() {
           items: values.lines
             .filter((line) => line.quantity > 0)
             .map((line) => ({
-              ...line,
-              restockSlotId: line.condition === 'Good' ? line.restockSlotId : null,
+              outboundPickDetailId: line.outboundPickDetailId,
+              quantity: line.quantity,
+              condition: line.condition,
+              restockSlotId: line.condition === 'Scrap' ? null : line.restockSlotId,
             })),
         },
       })
       toast.success('Đã tạo yêu cầu hoàn hàng.')
       setReturningOrder(null)
     } catch (error) {
-      toast.error(resolveErrorMessage(error, 'Không thể ghi nhận hoàn hàng.'))
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể ghi nhận hoàn hàng.'))
     }
   }
 
@@ -266,6 +271,18 @@ export default function OutboundOrderPage() {
         isLoading={orderDetailQuery.isLoading}
         isError={orderDetailQuery.isError}
         onRetry={() => void orderDetailQuery.refetch()}
+        isRemovingPick={removePickDetailMutation.isPending}
+        onRemovePickDetail={(pickDetailId) => {
+          const orderId = orderDetailQuery.data?.id
+          if (!orderId) return
+          void removePickDetailMutation
+            .mutateAsync({ outboundOrderId: orderId, pickDetailId })
+            .then(() => toast.success('Đã bỏ dòng phân bổ chưa xuất kho.'))
+            .catch((error) => {
+              logger.error(formatApiError(error))
+              toast.error(getApiErrorMessage(error, 'Không thể bỏ dòng phân bổ.'))
+            })
+        }}
         onOpenChange={(open) => {
           if (!open) setInspectedOrder(null)
         }}
@@ -277,10 +294,13 @@ export default function OutboundOrderPage() {
         onOpenChange={handleIssueStockDialogOpenChange}
         onSubmit={handleIssueStock}
         inventoryOptions={(inventoryQuery.data?.items ?? [])
-          .filter((item) => item.availableQuantity > 0)
+          .filter((item) => item.availableQuantity > 0 && item.qualityStatus === 'Good')
           .map((item) => ({
             productId: item.productId,
+            inventoryStockId: item.id,
             slotId: item.slotId,
+            lotNumber: item.lotNumber,
+            qualityStatus: item.qualityStatus,
             label: item.slotCode,
             availableQuantity: item.availableQuantity,
           }))}
@@ -295,7 +315,7 @@ export default function OutboundOrderPage() {
           id: slot.id,
           label: slot.code,
         }))}
-        allowableByProduct={allowableByProduct}
+        allowableByPickDetail={allowableByPickDetail}
         slotSearch={returnSlotSearch}
         onSlotSearchChange={setReturnSlotSearch}
         onOpenChange={(open) => {

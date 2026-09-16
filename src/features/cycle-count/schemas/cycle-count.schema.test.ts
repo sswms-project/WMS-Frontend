@@ -11,14 +11,14 @@ describe('cycle count schemas', () => {
         zoneId: '',
         scheduledDate: '2026-08-25T10:00',
         assignedTo: guid,
-        items: [{ productId: guid, slotId: guid }],
+        items: [{ productId: guid, slotId: guid, lotId: null, qualityStatus: 'Good' }],
         isBlindCount: true,
       }).success
     ).toBe(true)
   })
 
   it('rejects duplicate inventory lines', () => {
-    const item = { productId: guid, slotId: guid }
+    const item = { productId: guid, slotId: guid, lotId: null, qualityStatus: 'Good' }
     expect(
       createCycleCountSchema.safeParse({
         warehouseId: guid,

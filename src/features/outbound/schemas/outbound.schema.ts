@@ -34,7 +34,8 @@ export const issueStockLineSchema = z.object({
   productName: z.string(),
   sku: z.string(),
   remainingQuantity: z.number(),
-  sourceSlotId: z.string(),
+  inventoryStockId: z.string(),
+  availableQuantity: z.number().min(0),
   pickedQuantity: z.number().min(0, 'Số lượng lấy hàng không được âm.'),
 })
 
@@ -53,11 +54,11 @@ export const issueStockSchema = z
     }
 
     values.lines.forEach((line, index) => {
-      if (line.pickedQuantity > 0 && !line.sourceSlotId) {
+      if (line.pickedQuantity > 0 && !line.inventoryStockId) {
         context.addIssue({
           code: 'custom',
-          path: ['lines', index, 'sourceSlotId'],
-          message: 'Vui lòng chọn vị trí lấy hàng.',
+          path: ['lines', index, 'inventoryStockId'],
+          message: 'Vui lòng chọn đúng dòng tồn kho để lấy hàng.',
         })
       }
 
@@ -68,11 +69,47 @@ export const issueStockSchema = z
           message: 'Số lượng lấy hàng không được vượt quá số lượng đặt.',
         })
       }
+      if (line.pickedQuantity > line.availableQuantity) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'pickedQuantity'],
+          message: 'Số lượng lấy không được vượt quá tồn khả dụng của dòng đã chọn.',
+        })
+      }
+    })
+    const totals = new Map<string, number>()
+    const allocations = new Set<string>()
+    values.lines.forEach((line) => {
+      totals.set(
+        line.outboundOrderItemId,
+        (totals.get(line.outboundOrderItemId) ?? 0) + line.pickedQuantity
+      )
+    })
+    values.lines.forEach((line, index) => {
+      const key = `${line.outboundOrderItemId}:${line.inventoryStockId}`
+      if (line.inventoryStockId && allocations.has(key)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'inventoryStockId'],
+          message: 'Dòng tồn kho này đã được phân bổ cho sản phẩm.',
+        })
+      }
+      allocations.add(key)
+      if ((totals.get(line.outboundOrderItemId) ?? 0) > line.remainingQuantity) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'pickedQuantity'],
+          message: 'Tổng phân bổ vượt quá số lượng còn phải lấy của sản phẩm.',
+        })
+      }
     })
   })
 
 export const returnLineSchema = z.object({
-  productId: dotNetGuidSchema('Vui lòng chọn sản phẩm.'),
+  outboundPickDetailId: dotNetGuidSchema('Dòng lấy hàng không hợp lệ.'),
+  productName: z.string(),
+  lotNumber: z.string().nullable(),
+  returnableQuantity: z.number().min(0),
   quantity: z.number().min(0, 'Số lượng không được âm.'),
   condition: z.enum(RETURN_ITEM_CONDITIONS),
   restockSlotId: z.string(),
@@ -95,22 +132,30 @@ export const recordReturnSchema = z
         message: 'Vui lòng chọn ít nhất một sản phẩm hoàn.',
       })
     }
-    const productIds = new Set<string>()
+    const pickDetailIds = new Set<string>()
     values.lines.forEach((line, index) => {
-      if (line.productId && productIds.has(line.productId)) {
+      if (pickDetailIds.has(line.outboundPickDetailId)) {
         context.addIssue({
           code: 'custom',
-          path: ['lines', index, 'productId'],
-          message: 'Sản phẩm này đã có trong phiếu trả hàng.',
+          path: ['lines', index, 'outboundPickDetailId'],
+          message: 'Dòng lấy hàng này đã có trong phiếu trả hàng.',
         })
       }
-      productIds.add(line.productId)
+      pickDetailIds.add(line.outboundPickDetailId)
 
-      if (line.quantity > 0 && line.condition === 'Good' && !line.restockSlotId) {
+      if (line.quantity > line.returnableQuantity) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'quantity'],
+          message: 'Số lượng hoàn vượt quá số lượng còn có thể hoàn.',
+        })
+      }
+
+      if (line.quantity > 0 && line.condition !== 'Scrap' && !line.restockSlotId) {
         context.addIssue({
           code: 'custom',
           path: ['lines', index, 'restockSlotId'],
-          message: 'Hàng còn tốt cần chọn vị trí nhập lại kho.',
+          message: 'Hàng không hủy bỏ cần chọn vị trí nhập lại kho.',
         })
       }
     })

@@ -103,6 +103,7 @@ export function TransferDetailSheet({
                             {item.sku}
                           </span>{' '}
                           · {item.sourceSlotCode} → {item.destinationSlotCode}
+                          {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
                         </ItemDescription>
                       </ItemContent>
                       <span className="text-right text-xs tabular-nums">

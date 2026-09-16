@@ -79,6 +79,10 @@ export default function InboundReceivingPage() {
         confirmedQuantity: line.confirmedQuantity,
         damagedQuantity: line.damagedQuantity,
         exceptionReason: line.exceptionReason ?? '',
+        isLotTracked: line.isLotTracked,
+        lotNumber: line.lotNumber ?? '',
+        manufacturedDate: line.manufacturedDate ?? '',
+        expiryDate: line.expiryDate ?? '',
       })),
     })
   }, [importId, importQuery.data?.review, importForm])
@@ -94,6 +98,10 @@ export default function InboundReceivingPage() {
           receivedQty: line.remainingQuantity,
           damagedQty: 0,
           exceptionReason: '',
+          isLotTracked: line.isLotTracked,
+          lotNumber: '',
+          manufacturedDate: '',
+          expiryDate: '',
         })),
     })
   }
@@ -158,8 +166,15 @@ export default function InboundReceivingPage() {
         purchaseOrderId: values.purchaseOrderId,
         acknowledgeWarehouseMismatch: values.acknowledgeWarehouseMismatch,
         lines: values.lines.map((line) => ({
-          ...line,
+          sourceLineNumber: line.sourceLineNumber,
+          purchaseOrderItemId: line.purchaseOrderItemId,
+          confirmedQuantity: line.confirmedQuantity,
+          damagedQuantity: line.damagedQuantity,
           exceptionReason: line.exceptionReason.trim(),
+          isLotTracked: line.isLotTracked,
+          lotNumber: line.isLotTracked ? line.lotNumber.trim() : '',
+          manufacturedDate: line.isLotTracked ? line.manufacturedDate : '',
+          expiryDate: line.isLotTracked ? line.expiryDate : '',
         })),
       }
       await reviewImportMutation.mutateAsync({
@@ -167,8 +182,14 @@ export default function InboundReceivingPage() {
         purchaseOrderId: normalizedValues.purchaseOrderId,
         acknowledgeWarehouseMismatch: normalizedValues.acknowledgeWarehouseMismatch,
         lines: normalizedValues.lines.map((line) => ({
-          ...line,
+          sourceLineNumber: line.sourceLineNumber,
+          purchaseOrderItemId: line.purchaseOrderItemId,
+          confirmedQuantity: line.confirmedQuantity,
+          damagedQuantity: line.damagedQuantity,
           exceptionReason: line.exceptionReason || null,
+          lotNumber: line.isLotTracked ? line.lotNumber || null : null,
+          manufacturedDate: line.isLotTracked ? line.manufacturedDate || null : null,
+          expiryDate: line.isLotTracked ? line.expiryDate || null : null,
         })),
       })
       importForm.reset(normalizedValues)
@@ -197,8 +218,13 @@ export default function InboundReceivingPage() {
       const request: SaveInboundReceiptRequest = {
         purchaseOrderId: values.purchaseOrderId,
         lines: values.lines.map((line) => ({
-          ...line,
+          poLineId: line.poLineId,
+          receivedQty: line.receivedQty,
+          damagedQty: line.damagedQty,
           exceptionReason: line.exceptionReason.trim() || null,
+          lotNumber: line.isLotTracked ? line.lotNumber.trim() || null : null,
+          manufacturedDate: line.isLotTracked ? line.manufacturedDate || null : null,
+          expiryDate: line.isLotTracked ? line.expiryDate || null : null,
         })),
       }
       const response = await createMutation.mutateAsync(request)

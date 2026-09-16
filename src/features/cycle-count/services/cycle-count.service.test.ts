@@ -19,7 +19,14 @@ describe('cycleCountService', () => {
       zoneId: null,
       scheduledDate: '2026-08-25T10:00:00.000Z',
       assignedTo: 'staff-1',
-      items: [{ productId: 'product-1', slotId: 'slot-1' }],
+      items: [
+        {
+          productId: 'product-1',
+          slotId: 'slot-1',
+          lotId: null,
+          qualityStatus: 'Good' as const,
+        },
+      ],
       isBlindCount: true,
     }
     await cycleCountService.createCycleCount(request)

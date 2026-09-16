@@ -42,8 +42,8 @@ export interface TransferItem {
   productId: string
   productName: string
   sku: string
-  sourceSlotId: string
-  sourceSlotCode: string
+  sourceSlotId: string | null
+  sourceSlotCode: string | null
   destinationSlotId: string
   destinationSlotCode: string
   quantity: number
@@ -52,6 +52,8 @@ export interface TransferItem {
   receivedQuantity: number
   damagedQuantity: number
   missingQuantity: number
+  lotId: string | null
+  lotNumber: string | null
 }
 
 export interface TransferSummary {
@@ -87,6 +89,7 @@ export interface CreateTransferItemRequest {
   sourceSlotId: string
   destinationSlotId: string
   quantity: number
+  lotId: string | null
 }
 
 export interface CreateTransferRequest {

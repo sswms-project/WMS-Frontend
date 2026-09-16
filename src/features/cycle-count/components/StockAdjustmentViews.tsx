@@ -147,6 +147,10 @@ export function StockAdjustmentDirectory(props: DirectoryProps) {
                     </TableCell>
                     <TableCell>
                       {item.warehouseName} / <span className="font-mono">{item.slotCode}</span>
+                      <p className="text-muted-foreground text-xs">
+                        {item.lotNumber ? `Lô ${item.lotNumber}` : 'Theo số lượng'} ·{' '}
+                        {item.qualityStatus}
+                      </p>
                     </TableCell>
                     <TableCell
                       className={`text-right font-mono font-semibold ${item.quantityChange < 0 ? 'text-destructive' : 'text-primary'}`}
@@ -248,6 +252,10 @@ export function StockAdjustmentDetailView({
             <dd>{detail.warehouseName}</dd>
             <dt className="text-muted-foreground">Lý do</dt>
             <dd>{detail.reason}</dd>
+            <dt className="text-muted-foreground">Lô hàng</dt>
+            <dd className="font-mono">{detail.lotNumber ?? 'Theo số lượng'}</dd>
+            <dt className="text-muted-foreground">Chất lượng</dt>
+            <dd>{detail.qualityStatus}</dd>
             <dt className="text-muted-foreground">Người tạo</dt>
             <dd>{detail.createdByName}</dd>
             <dt className="text-muted-foreground">Thời điểm</dt>

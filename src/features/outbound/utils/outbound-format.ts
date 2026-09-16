@@ -25,6 +25,8 @@ export const RETURN_STATUS_LABELS: Record<ReturnStatus, string> = {
 export const RETURN_ITEM_CONDITION_LABELS: Record<ReturnItemCondition, string> = {
   Good: 'Còn tốt',
   Damaged: 'Hư hỏng',
+  Expired: 'Hết hạn',
+  Scrap: 'Hủy bỏ',
 }
 
 export function formatOutboundQuantity(value: number): string {

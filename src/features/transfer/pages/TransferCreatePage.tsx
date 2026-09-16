@@ -23,7 +23,15 @@ import {
 } from '../hooks/use-transfers'
 import { createTransferSchema, type CreateTransferFormValues } from '../schemas/transfer.schema'
 
-const EMPTY_LINE = { productId: '', sourceSlotId: '', destinationSlotId: '', quantity: 1 }
+const EMPTY_LINE = {
+  productId: '',
+  sourceInventoryStockId: '',
+  sourceSlotId: '',
+  destinationSlotId: '',
+  lotId: null,
+  availableQuantity: 0,
+  quantity: 1,
+}
 
 export default function TransferCreatePage() {
   const router = useRouter()
@@ -76,7 +84,10 @@ export default function TransferCreatePage() {
   })
   const mutation = useCreateTransferMutation()
   const inventoryOptions = useMemo(
-    () => (inventory.data?.items ?? []).filter((item) => item.availableQuantity > 0),
+    () =>
+      (inventory.data?.items ?? []).filter(
+        (item) => item.availableQuantity > 0 && item.qualityStatus === 'Good'
+      ),
     [inventory.data?.items]
   )
 
@@ -85,7 +96,13 @@ export default function TransferCreatePage() {
       await mutation.mutateAsync({
         sourceWarehouseId: values.sourceWarehouseId,
         destinationWarehouseId: values.destinationWarehouseId,
-        items: values.lines,
+        items: values.lines.map((line) => ({
+          productId: line.productId,
+          sourceSlotId: line.sourceSlotId,
+          destinationSlotId: line.destinationSlotId,
+          quantity: line.quantity,
+          lotId: line.lotId,
+        })),
       })
       toast.success('Đã tạo phiếu điều chuyển.')
       router.push(APP_ROUTES.transfers)
@@ -102,7 +119,10 @@ export default function TransferCreatePage() {
       form.getValues('lines').map((line) => ({
         ...line,
         productId: '',
+        sourceInventoryStockId: '',
         sourceSlotId: '',
+        lotId: null,
+        availableQuantity: 0,
         destinationSlotId: '',
       })),
       { shouldValidate: true }
@@ -116,7 +136,14 @@ export default function TransferCreatePage() {
     form.setValue('sourceWarehouseId', value, { shouldValidate: true })
     form.setValue(
       'lines',
-      form.getValues('lines').map((line) => ({ ...line, productId: '', sourceSlotId: '' })),
+      form.getValues('lines').map((line) => ({
+        ...line,
+        productId: '',
+        sourceInventoryStockId: '',
+        sourceSlotId: '',
+        lotId: null,
+        availableQuantity: 0,
+      })),
       { shouldValidate: true }
     )
     setInventorySearch('')
@@ -231,25 +258,38 @@ export default function TransferCreatePage() {
                 <FieldLabel htmlFor={`transfer-inventory-${index}`}>Tồn nguồn</FieldLabel>
                 <NativeSelect
                   id={`transfer-inventory-${index}`}
-                  value={`${watchedLines[index]?.productId ?? ''}|${watchedLines[index]?.sourceSlotId ?? ''}`}
+                  value={watchedLines[index]?.sourceInventoryStockId ?? ''}
                   onChange={(event) => {
-                    const [productId = '', sourceSlotId = ''] = event.target.value.split('|')
-                    form.setValue(`lines.${index}.productId`, productId, { shouldValidate: true })
-                    form.setValue(`lines.${index}.sourceSlotId`, sourceSlotId, {
+                    const selected = inventoryOptions.find((item) => item.id === event.target.value)
+                    form.setValue(`lines.${index}.sourceInventoryStockId`, selected?.id ?? '', {
                       shouldValidate: true,
                     })
+                    form.setValue(`lines.${index}.productId`, selected?.productId ?? '', {
+                      shouldValidate: true,
+                    })
+                    form.setValue(`lines.${index}.sourceSlotId`, selected?.slotId ?? '', {
+                      shouldValidate: true,
+                    })
+                    form.setValue(`lines.${index}.lotId`, selected?.lotId ?? null)
+                    form.setValue(
+                      `lines.${index}.availableQuantity`,
+                      selected?.availableQuantity ?? 0,
+                      { shouldValidate: true }
+                    )
                   }}
                 >
-                  <NativeSelectOption value="|">Chọn sản phẩm/vị trí</NativeSelectOption>
+                  <NativeSelectOption value="">Chọn sản phẩm/vị trí/lô</NativeSelectOption>
                   {inventoryOptions.map((item) => (
-                    <NativeSelectOption key={item.id} value={`${item.productId}|${item.slotId}`}>
-                      {item.sku} · {item.productName} · {item.slotCode} ({item.availableQuantity})
+                    <NativeSelectOption key={item.id} value={item.id}>
+                      {item.sku} · {item.productName} · {item.slotCode}
+                      {item.lotNumber ? ` · lô ${item.lotNumber}` : ''} ({item.availableQuantity})
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
                 <FieldError
                   errors={[
                     form.formState.errors.lines?.[index]?.productId,
+                    form.formState.errors.lines?.[index]?.sourceInventoryStockId,
                     form.formState.errors.lines?.[index]?.sourceSlotId,
                   ]}
                 />

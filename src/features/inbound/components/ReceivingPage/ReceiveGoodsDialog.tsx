@@ -124,6 +124,42 @@ export function ReceiveGoodsDialog({
                       <FieldError>{errors.lines?.[index]?.exceptionReason?.message}</FieldError>
                     </Field>
                   ) : null}
+                  {line.isLotTracked ? (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <Field data-invalid={Boolean(errors.lines?.[index]?.lotNumber)}>
+                        <FieldLabel htmlFor={`lot-number-${index}`}>Số lô</FieldLabel>
+                        <Input
+                          id={`lot-number-${index}`}
+                          maxLength={100}
+                          aria-invalid={Boolean(errors.lines?.[index]?.lotNumber)}
+                          {...register(`lines.${index}.lotNumber`)}
+                        />
+                        <FieldError>{errors.lines?.[index]?.lotNumber?.message}</FieldError>
+                      </Field>
+                      <Field data-invalid={Boolean(errors.lines?.[index]?.manufacturedDate)}>
+                        <FieldLabel htmlFor={`manufactured-date-${index}`}>
+                          Ngày sản xuất
+                        </FieldLabel>
+                        <Input
+                          id={`manufactured-date-${index}`}
+                          type="date"
+                          aria-invalid={Boolean(errors.lines?.[index]?.manufacturedDate)}
+                          {...register(`lines.${index}.manufacturedDate`)}
+                        />
+                        <FieldError>{errors.lines?.[index]?.manufacturedDate?.message}</FieldError>
+                      </Field>
+                      <Field data-invalid={Boolean(errors.lines?.[index]?.expiryDate)}>
+                        <FieldLabel htmlFor={`expiry-date-${index}`}>Hạn sử dụng</FieldLabel>
+                        <Input
+                          id={`expiry-date-${index}`}
+                          type="date"
+                          aria-invalid={Boolean(errors.lines?.[index]?.expiryDate)}
+                          {...register(`lines.${index}.expiryDate`)}
+                        />
+                        <FieldError>{errors.lines?.[index]?.expiryDate?.message}</FieldError>
+                      </Field>
+                    </div>
+                  ) : null}
                 </section>
               )
             })}
