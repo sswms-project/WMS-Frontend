@@ -14,6 +14,8 @@ export const settingsService = {
       .post<ApiResponse<unknown>>(API_ENDPOINTS.settings.confirm2fa, body)
       .then((r) => r.data),
 
-  disable2FA: () =>
-    axiosClient.delete<ApiResponse<unknown>>(API_ENDPOINTS.settings.disable2fa).then((r) => r.data),
+  disable2FA: (body: Confirm2FARequest) =>
+    axiosClient
+      .delete<ApiResponse<unknown>>(API_ENDPOINTS.settings.disable2fa, { data: body })
+      .then((r) => r.data),
 }

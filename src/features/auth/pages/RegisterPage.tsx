@@ -26,7 +26,7 @@ export function RegisterPage() {
         confirmPassword: values.confirmPassword,
         acceptTerms: values.acceptTerms,
       })
-      setSuccessMessage(response.data)
+      setSuccessMessage(response.message)
       toast.success('Đăng ký thành công. Vui lòng kiểm tra email xác minh.')
     } catch {
       // onError in useRegisterMutation handles logging + toast

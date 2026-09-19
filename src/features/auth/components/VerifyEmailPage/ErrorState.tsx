@@ -1,4 +1,4 @@
-import { AlertCircle, RotateCcw } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -6,9 +6,10 @@ import { APP_ROUTES } from '@/routes/app-routes'
 
 interface ErrorStateProps {
   readonly message: string
+  readonly resendForm: React.ReactNode
 }
 
-export function ErrorState({ message }: ErrorStateProps) {
+export function ErrorState({ message, resendForm }: ErrorStateProps) {
   return (
     <div className="flex min-h-[360px] flex-col justify-center">
       <div className="bg-error-container text-destructive mx-auto flex size-20 items-center justify-center rounded-full">
@@ -25,17 +26,11 @@ export function ErrorState({ message }: ErrorStateProps) {
         <AlertCircle className="text-destructive size-4" aria-hidden="true" />
         <AlertTitle>Gợi ý xử lý</AlertTitle>
         <AlertDescription>
-          Nếu link đã hết hạn, hãy đăng ký lại để nhận email xác minh mới hoặc liên hệ quản trị viên
-          hệ thống.
+          Nếu liên kết đã hết hạn, nhập email đã đăng ký để nhận một liên kết xác minh mới.
         </AlertDescription>
       </Alert>
+      {resendForm}
       <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-        <Button asChild size="auth">
-          <Link href={APP_ROUTES.auth.register}>
-            <RotateCcw className="size-4" aria-hidden="true" />
-            Đăng ký lại
-          </Link>
-        </Button>
         <Button asChild variant="outline" size="auth" className="border-secondary text-secondary">
           <Link href={APP_ROUTES.auth.login}>Về trang đăng nhập</Link>
         </Button>

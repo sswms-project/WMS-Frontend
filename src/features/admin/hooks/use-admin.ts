@@ -13,6 +13,7 @@ import type {
   AdminSubscriptionPlanQuery,
   AssignPermissionsRequest,
   TenantQuery,
+  TenantRegistrationDecisionRequest,
   TenantStateChangeRequest,
 } from '../types/admin.types'
 
@@ -133,6 +134,50 @@ export function useSuspendTenantMutation() {
 
 export function useReactivateTenantMutation() {
   return useTenantStateMutation('reactivate')
+}
+
+interface TenantRegistrationDecisionVariables {
+  readonly tenantId: string
+  readonly body: TenantRegistrationDecisionRequest
+}
+
+function useTenantRegistrationDecisionMutation(action: 'approve' | 'reject') {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, body }: TenantRegistrationDecisionVariables) =>
+      action === 'approve'
+        ? adminService.approveTenantRegistration(tenantId, body)
+        : adminService.rejectTenantRegistration(tenantId, body),
+    onSuccess: (response, variables) => {
+      queryClient.setQueryData(
+        queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+        response.data
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.tenants })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.dashboard })
+      queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs.all })
+      toast.success(
+        action === 'approve' ? 'Đã phê duyệt đăng ký tenant.' : 'Đã từ chối đăng ký tenant.'
+      )
+    },
+    onError: (error: ApiErrorResponse, variables) => {
+      logger.error(error)
+      if (error.statusCode === 409) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+        })
+      }
+      toast.error(error.message || 'Không thể xử lý đăng ký tenant.')
+    },
+  })
+}
+
+export function useApproveTenantRegistrationMutation() {
+  return useTenantRegistrationDecisionMutation('approve')
+}
+
+export function useRejectTenantRegistrationMutation() {
+  return useTenantRegistrationDecisionMutation('reject')
 }
 
 export function useSubscriptionFeaturesQuery() {
