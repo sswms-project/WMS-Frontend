@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const phonePattern = /^\+?[0-9\s-]{7,20}$/
+const phonePattern = /^(0|\+84)[3-9][0-9]{8}$/
 
 export const profileFormSchema = z.object({
   fullName: z
@@ -8,13 +8,12 @@ export const profileFormSchema = z.object({
     .trim()
     .min(1, 'Họ và tên là bắt buộc.')
     .max(255, 'Họ và tên tối đa 255 ký tự.'),
-  email: z.string().trim().email('Email không hợp lệ.'),
   phone: z
     .string()
     .trim()
     .refine(
       (val) => val === '' || phonePattern.test(val),
-      'Số điện thoại phải có 7-20 chữ số và có thể chứa +, khoảng trắng hoặc dấu gạch ngang.'
+      'Số điện thoại phải bắt đầu bằng 0 hoặc +84 và có 10 chữ số.'
     ),
 })
 

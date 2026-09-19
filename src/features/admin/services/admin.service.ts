@@ -16,6 +16,7 @@ import type {
   TenantDetailsResponse,
   TenantListResponse,
   TenantQuery,
+  TenantRegistrationDecisionRequest,
   TenantStateChangeRequest,
 } from '../types/admin.types'
 
@@ -62,6 +63,20 @@ export const adminService = {
       .post<
         ApiResponse<TenantDetailsResponse>
       >(API_ENDPOINTS.platformAdmin.reactivateTenant(tenantId), body)
+      .then((r) => r.data),
+
+  approveTenantRegistration: (tenantId: string, body: TenantRegistrationDecisionRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<TenantDetailsResponse>
+      >(API_ENDPOINTS.platformAdmin.approveTenantRegistration(tenantId), body)
+      .then((r) => r.data),
+
+  rejectTenantRegistration: (tenantId: string, body: TenantRegistrationDecisionRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<TenantDetailsResponse>
+      >(API_ENDPOINTS.platformAdmin.rejectTenantRegistration(tenantId), body)
       .then((r) => r.data),
 
   getSubscriptionFeatures: () =>

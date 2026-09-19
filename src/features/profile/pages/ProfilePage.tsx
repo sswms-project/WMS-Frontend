@@ -21,7 +21,6 @@ import {
 
 const serverFieldMap = {
   FullName: 'fullName',
-  Email: 'email',
   Phone: 'phone',
 } as const
 
@@ -60,7 +59,6 @@ function buildUpdateRequest(
 ): UpdateProfileFormRequest {
   return updateProfileRequestSchema.parse({
     ...(dirtyFields.fullName ? { fullName: values.fullName } : {}),
-    ...(dirtyFields.email ? { email: values.email } : {}),
     ...(dirtyFields.phone ? { phone: values.phone } : {}),
   })
 }

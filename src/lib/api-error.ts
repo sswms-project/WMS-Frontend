@@ -2,7 +2,7 @@ import type { ApiErrorResponse } from '@/types/api'
 
 const FALLBACK_MESSAGE = 'Đã xảy ra lỗi. Vui lòng thử lại.'
 
-const isApiError = (value: unknown): value is ApiErrorResponse =>
+export const isApiErrorResponse = (value: unknown): value is ApiErrorResponse =>
   typeof value === 'object' &&
   value !== null &&
   typeof (value as ApiErrorResponse).statusCode === 'number' &&
@@ -18,13 +18,13 @@ const flattenFieldErrors = (errors: Record<string, string[]>): string =>
 
 /** Stable machine-readable error code returned through the API error envelope. */
 export function getApiErrorCode(error: unknown): string | undefined {
-  if (!isApiError(error)) return undefined
+  if (!isApiErrorResponse(error)) return undefined
   return error.errors?.code?.find((code) => code.trim().length > 0)
 }
 
 /** Human-readable message for a toast. */
 export function getApiErrorMessage(error: unknown, fallback = FALLBACK_MESSAGE): string {
-  if (!isApiError(error)) return error instanceof Error ? error.message : fallback
+  if (!isApiErrorResponse(error)) return error instanceof Error ? error.message : fallback
 
   const fieldErrors = error.errors ? flattenFieldErrors(error.errors) : ''
   return fieldErrors ? `${error.message} — ${fieldErrors}` : error.message
@@ -35,6 +35,6 @@ export function getApiErrorMessage(error: unknown, fallback = FALLBACK_MESSAGE):
  * dev overlay, which hides the status code and field errors we actually need.
  */
 export function formatApiError(error: unknown): string {
-  if (!isApiError(error)) return String(error)
+  if (!isApiErrorResponse(error)) return String(error)
   return `[${error.statusCode}] ${getApiErrorMessage(error)}`
 }

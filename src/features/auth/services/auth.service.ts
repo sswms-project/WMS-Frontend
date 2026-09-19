@@ -3,12 +3,14 @@ import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
   ChangePasswordRequestDto,
+  CaptchaChallengeResponse,
   ForgotPasswordRequestDto,
   ForgotPasswordResponseDto,
   LoginRequestDto,
   LoginResponseDto,
   RegisterRequestDto,
   RegisterResponseDto,
+  ResendVerificationRequestDto,
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
   UpdateProfileRequest,
@@ -23,9 +25,19 @@ export const authService = {
       .post<ApiResponse<LoginResponseDto>>(API_ENDPOINTS.auth.login, body)
       .then((r) => r.data),
 
+  createCaptcha: () =>
+    axiosClient
+      .post<ApiResponse<CaptchaChallengeResponse>>(API_ENDPOINTS.auth.captchaChallenge)
+      .then((r) => r.data),
+
   registerTenant: (body: RegisterRequestDto) =>
     axiosClient
       .post<ApiResponse<RegisterResponseDto>>(API_ENDPOINTS.auth.register, body)
+      .then((r) => r.data),
+
+  resendVerification: (body: ResendVerificationRequestDto) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.auth.resendVerification, body)
       .then((r) => r.data),
 
   verifyEmail: (token: string) =>
@@ -49,9 +61,7 @@ export const authService = {
     axiosClient.get<ApiResponse<UserProfileResponse>>(API_ENDPOINTS.auth.me).then((r) => r.data),
 
   updateMe: (body: UpdateProfileRequest) =>
-    axiosClient
-      .put<ApiResponse<UserProfileResponse>>(API_ENDPOINTS.auth.me, body)
-      .then((r) => r.data),
+    axiosClient.put<ApiResponse<unknown>>(API_ENDPOINTS.auth.me, body).then((r) => r.data),
 
   verify2FA: (body: Verify2FARequestDto) =>
     axiosClient

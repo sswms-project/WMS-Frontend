@@ -6,11 +6,13 @@ import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { authService } from '../services/auth.service'
 import type {
   ChangePasswordRequestDto,
+  CaptchaChallengeResponse,
   ForgotPasswordRequestDto,
   ForgotPasswordResponseDto,
   LoginResponseDto,
   RegisterRequestDto,
   RegisterResponseDto,
+  ResendVerificationRequestDto,
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
   UpdateProfileRequest,
@@ -32,7 +34,16 @@ export function useLoginMutation() {
     mutationFn: authService.login,
     onError: (error: ApiErrorResponse) => {
       logAuthError('login', error)
-      toast.error(error.message ?? 'Đăng nhập thất bại. Vui lòng thử lại.')
+    },
+  })
+}
+
+export function useCaptchaMutation() {
+  return useMutation<ApiResponse<CaptchaChallengeResponse>, ApiErrorResponse, void>({
+    mutationFn: authService.createCaptcha,
+    onError: (error) => {
+      logAuthError('create captcha', error)
+      toast.error(error.message ?? 'Không thể tải CAPTCHA. Vui lòng thử lại.')
     },
   })
 }
@@ -63,6 +74,17 @@ export function useVerifyEmailQuery(token?: string) {
     queryFn: () => authService.verifyEmail(token ?? ''),
     enabled: Boolean(token),
     retry: false,
+  })
+}
+
+export function useResendVerificationMutation() {
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ResendVerificationRequestDto>({
+    mutationFn: authService.resendVerification,
+    onSuccess: (response) => toast.success(response.message),
+    onError: (error) => {
+      logAuthError('resend verification', error)
+      toast.error(error.message ?? 'Không thể gửi lại email xác minh. Vui lòng thử lại.')
+    },
   })
 }
 
@@ -103,11 +125,9 @@ export function useMeQuery() {
 
 export function useUpdateProfileMutation() {
   const queryClient = useQueryClient()
-  return useMutation<ApiResponse<UserProfileResponse>, ApiErrorResponse, UpdateProfileRequest>({
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateProfileRequest>({
     mutationFn: authService.updateMe,
-    onSuccess: (response) => {
-      queryClient.setQueryData(queryKeys.auth.me, response.data)
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
     onError: (error) => logger.error(error),
   })
 }

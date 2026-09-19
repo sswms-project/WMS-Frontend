@@ -4,6 +4,8 @@ export const API_ENDPOINTS = {
     login: '/auth/login',
     register: '/auth/register',
     verifyEmail: '/auth/verify-email',
+    resendVerification: '/auth/resend-verification',
+    captchaChallenge: '/auth/captcha/challenge',
     refreshToken: '/auth/refresh',
     logout: '/auth/logout',
     forgotPassword: '/auth/forgot-password',
@@ -32,6 +34,10 @@ export const API_ENDPOINTS = {
     tenantDetail: (tenantId: string) => `/admin/tenants/${tenantId}`,
     suspendTenant: (tenantId: string) => `/admin/tenants/${tenantId}/suspend`,
     reactivateTenant: (tenantId: string) => `/admin/tenants/${tenantId}/reactivate`,
+    approveTenantRegistration: (tenantId: string) =>
+      `/admin/tenants/${tenantId}/approve-registration`,
+    rejectTenantRegistration: (tenantId: string) =>
+      `/admin/tenants/${tenantId}/reject-registration`,
     subscriptionPlans: '/subscription-plans/admin',
   },
   tenantRolePermissions: {

@@ -3,6 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react'
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -19,7 +21,9 @@ import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from '@/features/auth/schemas/change-password.schema'
-import type { ApiErrorResponse } from '@/types/api'
+import { APP_ROUTES } from '@/routes/app-routes'
+import { useAuthStore } from '@/stores/auth.store'
+import { isApiErrorResponse } from '@/lib/api-error'
 import { SectionIconBadge } from './SectionIconBadge'
 
 export function ChangePasswordCard() {
@@ -27,13 +31,15 @@ export function ChangePasswordCard() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const changePasswordMutation = useChangePasswordMutation()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const clearAuth = useAuthStore((state) => state.clearAuth)
 
   const {
     register,
     handleSubmit,
     control,
     setError,
-    reset,
     formState: { errors },
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -49,15 +55,17 @@ export function ChangePasswordCard() {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       })
-      toast.success('Đổi mật khẩu thành công.')
-      reset()
+      toast.success('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.')
+      clearAuth()
+      queryClient.clear()
+      router.replace(APP_ROUTES.auth.login)
     } catch (error) {
-      if (isCurrentPasswordIncorrectError(error as ApiErrorResponse)) {
+      if (isApiErrorResponse(error) && isCurrentPasswordIncorrectError(error)) {
         setError('currentPassword', { message: 'Mật khẩu hiện tại không đúng.' })
         return
       }
       toast.error(
-        (error as ApiErrorResponse).message ?? 'Không thể đổi mật khẩu. Vui lòng thử lại.'
+        isApiErrorResponse(error) ? error.message : 'Không thể đổi mật khẩu. Vui lòng thử lại.'
       )
     }
   }

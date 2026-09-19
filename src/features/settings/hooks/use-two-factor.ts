@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse } from '@/types/api'
 import { settingsService } from '../services/settings.service'
+import type { Confirm2FARequest } from '../types/settings.types'
 
 const SETUP_EXPIRED_MESSAGE = 'Phiên thiết lập 2FA đã hết hạn. Vui lòng thử lại.'
 const INVALID_OTP_MESSAGE = 'Mã OTP không đúng. Vui lòng kiểm tra lại ứng dụng xác thực.'
@@ -48,12 +49,10 @@ export function useTwoFactorConfirmMutation() {
 }
 
 export function useTwoFactorDisableMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
+  return useMutation<unknown, ApiErrorResponse, Confirm2FARequest>({
     mutationFn: settingsService.disable2FA,
     onSuccess: () => {
       toast.success('Đã tắt xác thực hai yếu tố.')
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
     onError: (error: ApiErrorResponse) => {
       logger.error(error)
