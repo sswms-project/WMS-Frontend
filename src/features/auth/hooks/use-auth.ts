@@ -187,7 +187,7 @@ export function useChangePasswordMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, ChangePasswordRequestDto>({
     mutationFn: authService.changePassword,
     onError: (error) => {
-      // Không toast ở đây — ChangePasswordCard classify (sai mật khẩu hiện tại →
+      // Không toast ở đây — SecurityPage classify (sai mật khẩu hiện tại →
       // lỗi inline tại field, còn lại → toast chung) tránh trùng lặp hiển thị.
       logger.error(error)
     },

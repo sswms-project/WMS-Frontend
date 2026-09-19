@@ -1,8 +1,7 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,12 +14,13 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
-import { tenantStateSchema, type TenantStateFormValues } from '../../schemas/tenant-state.schema'
+import type { TenantStateFormValues } from '../../schemas/tenant-state.schema'
 
 interface TenantRegistrationDialogProps {
   readonly open: boolean
   readonly tenantName: string
   readonly action: 'approve' | 'reject'
+  readonly form: UseFormReturn<TenantStateFormValues>
   readonly isPending: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: (values: TenantStateFormValues) => Promise<void>
@@ -30,14 +30,11 @@ export function TenantRegistrationDialog({
   open,
   tenantName,
   action,
+  form,
   isPending,
   onOpenChange,
   onSubmit,
 }: TenantRegistrationDialogProps) {
-  const form = useForm<TenantStateFormValues>({
-    resolver: zodResolver(tenantStateSchema),
-    defaultValues: { reason: '' },
-  })
   const isApprove = action === 'approve'
 
   function handleOpenChange(nextOpen: boolean) {

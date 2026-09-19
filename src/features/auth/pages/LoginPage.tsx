@@ -18,6 +18,7 @@ import type { AuthUser, CaptchaChallengeResponse } from '../types/auth.types'
 import { decodeJwtUser } from '../utils/decode-jwt-user'
 import { clearTwoFactorTempToken, saveTwoFactorTempToken } from '../utils/two-factor-temp-token'
 import { safeReturnUrl, saveAuthReturnUrl } from '../utils/auth-return-url'
+import { getTemporaryLockSeconds } from '../utils/temporary-lock'
 
 export function LoginPage({ returnUrl }: { readonly returnUrl?: string }) {
   const router = useRouter()
@@ -125,8 +126,7 @@ export function LoginPage({ returnUrl }: { readonly returnUrl?: string }) {
         setAuthNotice(error.message)
       }
       if (error.statusCode === 429) {
-        const retryAfter = Number(error.errors?.retryAfterSeconds?.[0] ?? 900)
-        setLockSeconds(Number.isFinite(retryAfter) ? retryAfter : 900)
+        setLockSeconds(getTemporaryLockSeconds(error))
       }
 
       const isInlineError = Boolean(authState) || error.statusCode === 429

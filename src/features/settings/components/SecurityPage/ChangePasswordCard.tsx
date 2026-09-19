@@ -1,74 +1,36 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
-import { useForm, useWatch } from 'react-hook-form'
-import { toast } from 'sonner'
+import { useWatch, type UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { ConfirmPasswordHint } from '@/features/auth/components/RegisterPage/ConfirmPasswordHint'
 import { PasswordRequirementList } from '@/features/auth/components/RegisterPage/PasswordRequirementList'
-import {
-  isCurrentPasswordIncorrectError,
-  useChangePasswordMutation,
-} from '@/features/auth/hooks/use-auth'
-import {
-  changePasswordSchema,
-  type ChangePasswordFormValues,
-} from '@/features/auth/schemas/change-password.schema'
-import { APP_ROUTES } from '@/routes/app-routes'
-import { useAuthStore } from '@/stores/auth.store'
-import { isApiErrorResponse } from '@/lib/api-error'
+import type { ChangePasswordFormValues } from '@/features/auth/schemas/change-password.schema'
 import { SectionIconBadge } from './SectionIconBadge'
 
-export function ChangePasswordCard() {
+interface ChangePasswordCardProps {
+  readonly form: UseFormReturn<ChangePasswordFormValues>
+  readonly isPending: boolean
+  readonly onSubmit: (values: ChangePasswordFormValues) => Promise<void>
+}
+
+export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePasswordCardProps) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const changePasswordMutation = useChangePasswordMutation()
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const clearAuth = useAuthStore((state) => state.clearAuth)
-
   const {
     register,
     handleSubmit,
     control,
-    setError,
     formState: { errors },
-  } = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
-  })
+  } = form
 
   const newPasswordValue = useWatch({ control, name: 'newPassword' }) ?? ''
   const confirmPasswordValue = useWatch({ control, name: 'confirmPassword' }) ?? ''
-
-  async function handleChangePassword(values: ChangePasswordFormValues) {
-    try {
-      await changePasswordMutation.mutateAsync({
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      })
-      toast.success('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.')
-      clearAuth()
-      queryClient.clear()
-      router.replace(APP_ROUTES.auth.login)
-    } catch (error) {
-      if (isApiErrorResponse(error) && isCurrentPasswordIncorrectError(error)) {
-        setError('currentPassword', { message: 'Mật khẩu hiện tại không đúng.' })
-        return
-      }
-      toast.error(
-        isApiErrorResponse(error) ? error.message : 'Không thể đổi mật khẩu. Vui lòng thử lại.'
-      )
-    }
-  }
 
   return (
     <Card className="gap-0 py-0">
@@ -82,7 +44,7 @@ export function ChangePasswordCard() {
         </div>
       </CardHeader>
       <CardContent className="px-6 py-6">
-        <form onSubmit={handleSubmit(handleChangePassword)} className="space-y-4.5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4.5">
           <Field data-invalid={Boolean(errors.currentPassword)}>
             <FieldLabel htmlFor="currentPassword">Mật khẩu hiện tại</FieldLabel>
             <div className="relative">
@@ -176,10 +138,10 @@ export function ChangePasswordCard() {
 
           <Button
             type="submit"
-            disabled={changePasswordMutation.isPending}
+            disabled={isPending}
             className="h-[38px] w-fit rounded-lg px-5 text-[13px] font-semibold"
           >
-            {changePasswordMutation.isPending ? (
+            {isPending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             ) : (
               'Cập nhật mật khẩu'

@@ -1,27 +1,32 @@
 'use client'
 
-import { useEffect } from 'react'
 import { Shield, ShieldQuestion } from 'lucide-react'
-import { toast } from 'sonner'
+import type { UseFormReturn } from 'react-hook-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
-import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import type { TwoFactorOtpFormValues } from '../../schemas/two-factor.schema'
 import { DisableTwoFactorDialog } from './DisableTwoFactorDialog'
 import { EnableTwoFactorDialog } from './EnableTwoFactorDialog'
 import { SectionIconBadge } from './SectionIconBadge'
 
-export function TwoFactorCard() {
-  const meQuery = useMeQuery()
-  const isTwoFactorEnabled = meQuery.data?.isTwoFactorEnabled ?? false
+interface TwoFactorCardProps {
+  readonly isLoading: boolean
+  readonly isError: boolean
+  readonly isTwoFactorEnabled: boolean
+  readonly disableForm: UseFormReturn<TwoFactorOtpFormValues>
+  readonly isDisabling: boolean
+  readonly onDisable: (values: TwoFactorOtpFormValues) => Promise<void>
+}
 
-  useEffect(() => {
-    if (!meQuery.error) return
-    logger.error(meQuery.error)
-    toast.error(meQuery.error.message ?? 'Không thể tải thông tin tài khoản. Vui lòng thử lại.')
-  }, [meQuery.error])
-
+export function TwoFactorCard({
+  isLoading,
+  isError,
+  isTwoFactorEnabled,
+  disableForm,
+  isDisabling,
+  onDisable,
+}: TwoFactorCardProps) {
   return (
     <Card className="gap-0 py-0">
       <CardHeader className="flex flex-row items-center gap-2.5 border-b px-6 pt-5 pb-4">
@@ -34,16 +39,16 @@ export function TwoFactorCard() {
         </div>
       </CardHeader>
       <CardContent className="px-6 py-6">
-        {meQuery.isLoading && <Skeleton className="h-9 w-full" />}
+        {isLoading && <Skeleton className="h-9 w-full" />}
 
-        {meQuery.isError && !meQuery.isLoading && (
+        {isError && !isLoading && (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <ShieldQuestion className="size-4" aria-hidden="true" />
             Không thể tải trạng thái xác thực hai yếu tố.
           </div>
         )}
 
-        {meQuery.data && (
+        {!isLoading && !isError && (
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <span
@@ -61,7 +66,15 @@ export function TwoFactorCard() {
                 {isTwoFactorEnabled ? 'Đã bật' : 'Chưa bật'}
               </span>
             </div>
-            {isTwoFactorEnabled ? <DisableTwoFactorDialog /> : <EnableTwoFactorDialog />}
+            {isTwoFactorEnabled ? (
+              <DisableTwoFactorDialog
+                form={disableForm}
+                isPending={isDisabling}
+                onSubmit={onDisable}
+              />
+            ) : (
+              <EnableTwoFactorDialog />
+            )}
           </div>
         )}
       </CardContent>

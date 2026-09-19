@@ -1,35 +1,22 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Send } from 'lucide-react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 
-const resendVerificationSchema = z.object({
-  email: z.string().trim().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-})
-
-type ResendVerificationValues = z.infer<typeof resendVerificationSchema>
+import type { ResendVerificationFormValues } from '../../schemas/resend-verification.schema'
 
 interface ResendVerificationFormProps {
+  readonly form: UseFormReturn<ResendVerificationFormValues>
   readonly isPending: boolean
-  readonly onSubmit: (email: string) => Promise<void>
+  readonly onSubmit: (values: ResendVerificationFormValues) => Promise<void>
 }
 
-export function ResendVerificationForm({ isPending, onSubmit }: ResendVerificationFormProps) {
-  const form = useForm<ResendVerificationValues>({
-    resolver: zodResolver(resendVerificationSchema),
-    defaultValues: { email: '' },
-  })
-
+export function ResendVerificationForm({ form, isPending, onSubmit }: ResendVerificationFormProps) {
   return (
-    <form
-      className="mt-5 flex flex-col gap-3"
-      onSubmit={form.handleSubmit((values) => onSubmit(values.email))}
-    >
+    <form className="mt-5 flex flex-col gap-3" onSubmit={form.handleSubmit(onSubmit)}>
       <Field data-invalid={Boolean(form.formState.errors.email)}>
         <FieldLabel htmlFor="resend-email">Email đã đăng ký</FieldLabel>
         <Input

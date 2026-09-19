@@ -1,6 +1,8 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import {
   TenantDetailsView,
   TenantRegistrationDialog,
@@ -13,7 +15,7 @@ import {
   useSuspendTenantMutation,
   useTenantQuery,
 } from '../hooks/use-admin'
-import type { TenantStateFormValues } from '../schemas/tenant-state.schema'
+import { tenantStateSchema, type TenantStateFormValues } from '../schemas/tenant-state.schema'
 
 export default function TenantDetailsPage({ tenantId }: { readonly tenantId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -23,6 +25,10 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
   const reactivate = useReactivateTenantMutation()
   const approve = useApproveTenantRegistrationMutation()
   const reject = useRejectTenantRegistrationMutation()
+  const registrationForm = useForm<TenantStateFormValues>({
+    resolver: zodResolver(tenantStateSchema),
+    defaultValues: { reason: '' },
+  })
   const action = query.data?.status === 'Active' ? 'suspend' : 'reactivate'
   const mutation = action === 'suspend' ? suspend : reactivate
 
@@ -38,6 +44,7 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
       tenantId,
       body: { concurrencyToken: query.data.concurrencyToken, reason: values.reason },
     })
+    registrationForm.reset()
     setRegistrationAction(null)
   }
 
@@ -69,9 +76,13 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
           open
           tenantName={query.data.tenantName}
           action={registrationAction}
+          form={registrationForm}
           isPending={approve.isPending || reject.isPending}
           onOpenChange={(open) => {
-            if (!open) setRegistrationAction(null)
+            if (!open) {
+              registrationForm.reset()
+              setRegistrationAction(null)
+            }
           }}
           onSubmit={handleRegistrationDecision}
         />

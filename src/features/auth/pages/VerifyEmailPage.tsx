@@ -1,10 +1,12 @@
 'use client'
 
 import * as React from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
 import { logger } from '@/lib/logger'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
@@ -12,6 +14,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import type { ApiErrorResponse } from '@/types/api'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useResendVerificationMutation, useVerifyEmailQuery } from '../hooks/use-auth'
+import {
+  resendVerificationSchema,
+  type ResendVerificationFormValues,
+} from '../schemas/resend-verification.schema'
 import {
   ErrorState,
   LoadingState,
@@ -31,6 +37,10 @@ function getApiErrorMessage(error: ApiErrorResponse | null) {
 export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
   const verifyEmailQuery = useVerifyEmailQuery(token)
   const resendMutation = useResendVerificationMutation()
+  const resendForm = useForm<ResendVerificationFormValues>({
+    resolver: zodResolver(resendVerificationSchema),
+    defaultValues: { email: '' },
+  })
   const errorMessage = getApiErrorMessage(verifyEmailQuery.error)
   const successMessage = verifyEmailQuery.data?.message
 
@@ -40,9 +50,9 @@ export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
     toast.error(getApiErrorMessage(verifyEmailQuery.error))
   }, [verifyEmailQuery.error])
 
-  async function resendVerification(email: string) {
+  async function resendVerification(values: ResendVerificationFormValues) {
     try {
-      await resendMutation.mutateAsync({ email })
+      await resendMutation.mutateAsync({ email: values.email })
     } catch {
       // The mutation shows the user-facing error.
     }
@@ -112,6 +122,7 @@ export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
                     message={errorMessage}
                     resendForm={
                       <ResendVerificationForm
+                        form={resendForm}
                         isPending={resendMutation.isPending}
                         onSubmit={resendVerification}
                       />

@@ -1,11 +1,8 @@
 'use client'
 
-import { useQueryClient } from '@tanstack/react-query'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -19,37 +16,21 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { APP_ROUTES } from '@/routes/app-routes'
-import { useAuthStore } from '@/stores/auth.store'
-import { useTwoFactorDisableMutation } from '../../hooks/use-two-factor'
-import { twoFactorOtpSchema, type TwoFactorOtpFormValues } from '../../schemas/two-factor.schema'
+import type { TwoFactorOtpFormValues } from '../../schemas/two-factor.schema'
 
-export function DisableTwoFactorDialog() {
+interface DisableTwoFactorDialogProps {
+  readonly form: UseFormReturn<TwoFactorOtpFormValues>
+  readonly isPending: boolean
+  readonly onSubmit: (values: TwoFactorOtpFormValues) => Promise<void>
+}
+
+export function DisableTwoFactorDialog({ form, isPending, onSubmit }: DisableTwoFactorDialogProps) {
   const [open, setOpen] = useState(false)
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const clearAuth = useAuthStore((state) => state.clearAuth)
-  const disableMutation = useTwoFactorDisableMutation()
-  const form = useForm<TwoFactorOtpFormValues>({
-    resolver: zodResolver(twoFactorOtpSchema),
-    defaultValues: { otp: '' },
-  })
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && disableMutation.isPending) return
+    if (!nextOpen && isPending) return
     if (!nextOpen) form.reset()
     setOpen(nextOpen)
-  }
-
-  async function handleDisable(values: TwoFactorOtpFormValues) {
-    try {
-      await disableMutation.mutateAsync(values)
-      clearAuth()
-      queryClient.clear()
-      router.replace(APP_ROUTES.auth.login)
-    } catch {
-      // The mutation shows the user-facing error.
-    }
   }
 
   return (
@@ -65,7 +46,7 @@ export function DisableTwoFactorDialog() {
       <DialogContent
         className="animation-duration-250"
         onEscapeKeyDown={(event) => {
-          if (disableMutation.isPending) event.preventDefault()
+          if (isPending) event.preventDefault()
         }}
       >
         <DialogHeader>
@@ -74,7 +55,7 @@ export function DisableTwoFactorDialog() {
             Nhập mã hiện tại từ ứng dụng xác thực. Sau khi tắt, phiên đăng nhập này sẽ kết thúc.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleDisable)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <Field data-invalid={Boolean(form.formState.errors.otp)}>
             <FieldLabel htmlFor="disable-2fa-otp">Mã OTP hiện tại</FieldLabel>
             <Input
@@ -89,15 +70,15 @@ export function DisableTwoFactorDialog() {
           </Field>
           <DialogFooter className="mt-5">
             <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={disableMutation.isPending}>
+              <Button type="button" variant="outline" disabled={isPending}>
                 Hủy
               </Button>
             </DialogClose>
-            <Button type="submit" variant="destructive" disabled={disableMutation.isPending}>
-              {disableMutation.isPending ? (
+            <Button type="submit" variant="destructive" disabled={isPending}>
+              {isPending ? (
                 <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
               ) : null}
-              {disableMutation.isPending ? 'Đang tắt…' : 'Tắt và đăng xuất'}
+              {isPending ? 'Đang tắt…' : 'Tắt và đăng xuất'}
             </Button>
           </DialogFooter>
         </form>
