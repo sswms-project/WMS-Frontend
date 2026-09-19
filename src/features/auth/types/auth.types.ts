@@ -12,6 +12,14 @@ export interface AuthUser {
 export interface LoginRequestDto {
   email: string
   password: string
+  captchaId?: string
+  captchaAnswer?: string
+}
+
+export interface CaptchaChallengeResponse {
+  captchaId: string
+  imageDataUrl: string
+  expiresInSeconds: number
 }
 
 export interface LoginResponseDto {
@@ -43,9 +51,13 @@ export interface RegisterRequestDto {
   acceptTerms: boolean
 }
 
-export type RegisterResponseDto = string
+export type RegisterResponseDto = unknown
 
-export type VerifyEmailResponseDto = string
+export type VerifyEmailResponseDto = unknown
+
+export interface ResendVerificationRequestDto {
+  email: string
+}
 
 export interface ForgotPasswordRequestDto {
   email: string
@@ -62,7 +74,6 @@ export type ResetPasswordResponseDto = unknown
 
 export interface UpdateProfileRequest {
   fullName?: string
-  email?: string
   phone?: string
 }
 

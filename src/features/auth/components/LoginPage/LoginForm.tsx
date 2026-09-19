@@ -1,33 +1,56 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login.schema'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { BenefitsPanel } from '@/features/auth/components/RegisterPage'
+import type { CaptchaChallengeResponse } from '../../types/auth.types'
 
 interface LoginFormProps {
   readonly onSubmit: (values: LoginFormValues) => Promise<void>
   readonly isLoading: boolean
+  readonly captcha: CaptchaChallengeResponse | null
+  readonly isCaptchaLoading: boolean
+  readonly authNotice: string | null
+  readonly requiresVerification: boolean
+  readonly isResending: boolean
+  readonly lockSeconds: number
+  readonly onRefreshCaptcha: () => void
+  readonly onResendVerification: () => void
 }
 
-export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
+export function LoginForm({
+  onSubmit,
+  isLoading,
+  captcha,
+  isCaptchaLoading,
+  authNotice,
+  requiresVerification,
+  isResending,
+  lockSeconds,
+  onRefreshCaptcha,
+  onResendVerification,
+}: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, submitCount },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '', password: '', captchaId: undefined, captchaAnswer: '' },
   })
   const hasErrors = Object.keys(errors).length > 0
   const formRef = useRef<HTMLFormElement>(null)
@@ -39,6 +62,11 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
     const t = setTimeout(() => el.classList.remove('animate-shake'), 450)
     return () => clearTimeout(t)
   }, [submitCount, hasErrors])
+
+  useEffect(() => {
+    setValue('captchaId', captcha?.captchaId)
+    setValue('captchaAnswer', '')
+  }, [captcha, setValue])
 
   return (
     <div className="flex min-h-dvh min-w-0">
@@ -85,7 +113,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
               </p>
             </header>
 
-            <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
               <Field data-invalid={Boolean(errors.email)}>
                 <FieldLabel
                   htmlFor="email"
@@ -144,9 +172,80 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
                 <FieldError>{errors.password?.message}</FieldError>
               </Field>
 
+              {captcha ? (
+                <Field data-invalid={Boolean(errors.captchaAnswer)}>
+                  <div className="flex items-center justify-between gap-3">
+                    <FieldLabel htmlFor="captchaAnswer">Kết quả CAPTCHA</FieldLabel>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isCaptchaLoading}
+                      onClick={onRefreshCaptcha}
+                    >
+                      <RefreshCw
+                        className={
+                          isCaptchaLoading ? 'animate-spin motion-reduce:animate-none' : undefined
+                        }
+                        aria-hidden="true"
+                      />
+                      Làm mới
+                    </Button>
+                  </div>
+                  <Image
+                    src={captcha.imageDataUrl}
+                    alt="CAPTCHA hiển thị một phép tính cần giải"
+                    width={220}
+                    height={72}
+                    unoptimized
+                    className="border-border bg-card h-[72px] w-[220px] max-w-full rounded-md border"
+                  />
+                  <Input
+                    id="captchaAnswer"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    aria-invalid={Boolean(errors.captchaAnswer)}
+                    placeholder="Nhập kết quả phép tính"
+                    {...register('captchaAnswer')}
+                  />
+                  <FieldError>{errors.captchaAnswer?.message}</FieldError>
+                </Field>
+              ) : null}
+
+              {authNotice ? (
+                <Alert>
+                  <AlertTitle>Trạng thái tài khoản</AlertTitle>
+                  <AlertDescription className="flex flex-col gap-3">
+                    <span>{authNotice}</span>
+                    {requiresVerification ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-fit"
+                        disabled={isResending}
+                        onClick={onResendVerification}
+                      >
+                        {isResending ? 'Đang gửi…' : 'Gửi lại email xác minh'}
+                      </Button>
+                    ) : null}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              {lockSeconds > 0 ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Tài khoản tạm thời bị khóa</AlertTitle>
+                  <AlertDescription>
+                    Thử lại sau {Math.floor(lockSeconds / 60)}:
+                    {String(lockSeconds % 60).padStart(2, '0')}.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || lockSeconds > 0}
                 className="mt-1 h-10 w-full cursor-pointer rounded-md text-sm font-semibold transition-all active:scale-[0.98]"
               >
                 {isLoading ? (
