@@ -20,8 +20,8 @@ describe('QuickActionsBar', () => {
       </TooltipProvider>
     )
 
-    expect(screen.getByRole('button', { name: 'Tạo đơn hàng' })).toBeDisabled()
-    expect(screen.queryByRole('link', { name: 'Tạo đơn hàng' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tạo yêu cầu xuất kho' })).toBeDisabled()
+    expect(screen.queryByRole('link', { name: 'Tạo yêu cầu xuất kho' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Xem báo cáo' })).toHaveAttribute('href', '/reports')
   })
 

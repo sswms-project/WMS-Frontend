@@ -3,7 +3,7 @@ import { dotNetGuidSchema } from '@/lib/dotnet-guid.schema'
 
 export const receiptLineSchema = z
   .object({
-    poLineId: dotNetGuidSchema('Dòng đơn mua không hợp lệ.'),
+    inboundRequestItemId: dotNetGuidSchema('Dòng yêu cầu nhập kho không hợp lệ.'),
     receivedQty: z.number().positive('Số lượng nhận phải lớn hơn 0.'),
     damagedQty: z.number().min(0, 'Số lượng hỏng không được âm.'),
     exceptionReason: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự.'),
@@ -54,9 +54,9 @@ export const receiptLineSchema = z
     }
   })
 
-export const inboundReceiptSchema = z.object({
-  purchaseOrderId: dotNetGuidSchema('Đơn mua không hợp lệ.'),
-  lines: z.array(receiptLineSchema).min(1, 'Phiếu nhập phải có ít nhất một sản phẩm.'),
+export const goodsReceiptSchema = z.object({
+  inboundRequestId: dotNetGuidSchema('Yêu cầu nhập kho không hợp lệ.'),
+  lines: z.array(receiptLineSchema).min(1, 'Phiếu nhận hàng phải có ít nhất một sản phẩm.'),
 })
 
 export const putawaySchema = z
@@ -64,7 +64,7 @@ export const putawaySchema = z
     lines: z
       .array(
         z.object({
-          inboundReceiptItemId: dotNetGuidSchema('Dòng phiếu nhập không hợp lệ.'),
+          goodsReceiptItemId: dotNetGuidSchema('Dòng phiếu nhận hàng không hợp lệ.'),
           slotId: dotNetGuidSchema('Vui lòng chọn vị trí lưu trữ.'),
           quantity: z.number().positive('Số lượng cất phải lớn hơn 0.'),
         })
@@ -74,7 +74,7 @@ export const putawaySchema = z
   .superRefine((values, context) => {
     const allocations = new Set<string>()
     values.lines.forEach((line, index) => {
-      const allocationKey = `${line.inboundReceiptItemId}:${line.slotId}`
+      const allocationKey = `${line.goodsReceiptItemId}:${line.slotId}`
       if (allocations.has(allocationKey)) {
         context.addIssue({
           code: 'custom',
@@ -86,5 +86,5 @@ export const putawaySchema = z
     })
   })
 
-export type InboundReceiptFormValues = z.infer<typeof inboundReceiptSchema>
+export type GoodsReceiptFormValues = z.infer<typeof goodsReceiptSchema>
 export type PutawayFormValues = z.infer<typeof putawaySchema>

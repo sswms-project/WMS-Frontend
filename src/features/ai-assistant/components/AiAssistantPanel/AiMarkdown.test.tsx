@@ -14,8 +14,8 @@ describe('parseAiMarkdown', () => {
         '| SKU | Tồn |',
         '| --- | ---: |',
         '| SKU-001 | 5 |',
-        '1. Kiểm tra PO',
-        '2. Tạo đơn mua',
+        '1. Kiểm tra yêu cầu nhập kho',
+        '2. Tạo yêu cầu nhập kho',
       ].join('\n')
     )
 
@@ -29,7 +29,7 @@ describe('parseAiMarkdown', () => {
     expect(blocks[4]).toMatchObject({
       kind: 'list',
       ordered: true,
-      items: ['Kiểm tra PO', 'Tạo đơn mua'],
+      items: ['Kiểm tra yêu cầu nhập kho', 'Tạo yêu cầu nhập kho'],
     })
   })
 })

@@ -16,16 +16,15 @@ import type { NotificationFilterValues } from './types'
 const TYPE_LABELS: Record<NotificationType, string> = {
   LowStock: 'Tồn kho thấp',
   TaskAssigned: 'Nhiệm vụ',
-  DeliveryUpdate: 'Giao hàng',
-  POUpdate: 'Đơn mua',
+  InboundRequestUpdate: 'Yêu cầu nhập kho',
   TenantStatusUpdate: 'Trạng thái tenant',
   SubscriptionPlanUpdate: 'Gói đăng ký',
   SubscriptionPaymentUpdate: 'Thanh toán gói',
-  InboundUpdate: 'Nhập kho',
+  GoodsReceiptUpdate: 'Phiếu nhận hàng',
   StockAdjustmentUpdate: 'Điều chỉnh tồn',
   TransferUpdate: 'Điều chuyển kho',
-  OutboundUpdate: 'Xuất kho',
-  ReturnUpdate: 'Hoàn hàng',
+  StockIssueRequestUpdate: 'Yêu cầu xuất kho',
+  GoodsReturnRequestUpdate: 'Yêu cầu trả hàng',
   CycleCountUpdate: 'Kiểm kê',
   WarehouseUpdate: 'Kho hàng',
 }
@@ -59,7 +58,7 @@ export function NotificationFilters({ filters, onApply, onClear }: NotificationF
           id="notification-search"
           name="search"
           defaultValue={filters.search}
-          placeholder="Ví dụ: giao hàng thất bại…"
+          placeholder="Ví dụ: yêu cầu xuất kho đã được xác nhận…"
           autoComplete="off"
         />
       </div>

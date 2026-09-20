@@ -94,7 +94,7 @@ export function ForecastRunPanel({
   const isPending = createMutation.isPending || executeMutation.isPending
   const adjusted = adjustedQuantity === '' ? null : Number(adjustedQuantity)
   const isAdjustedQuantityValid = adjusted === null || (Number.isFinite(adjusted) && adjusted > 0)
-  const canCreatePurchaseOrder = permissions.includes('purchase-orders:create')
+  const canCreateInboundRequest = permissions.includes('inbound-requests:create')
   const canCreateTransfer = permissions.includes('transfers:create')
   const historicalPeriodInvalid = historicalPeriodDays < 1 || historicalPeriodDays > 366
   const horizonInvalid = horizonDays < 1 || horizonDays > 90
@@ -277,7 +277,7 @@ export function ForecastRunPanel({
                 setAdjustedQuantity('')
               }}
               onReject={(id) => reject(id, 'Replenishment')}
-              canAccept={canCreatePurchaseOrder}
+              canAccept={canCreateInboundRequest}
               isRejecting={rejectSuggestion.isPending}
             />
             <SuggestionList
@@ -347,7 +347,7 @@ export function ForecastRunPanel({
                 </p>
               ) : null}
               <Field className="justify-end">
-                <FieldLabel className="sr-only">Tạo đơn mua từ đề xuất</FieldLabel>
+                <FieldLabel className="sr-only">Tạo yêu cầu nhập kho từ đề xuất</FieldLabel>
                 <Button
                   type="button"
                   disabled={
@@ -365,7 +365,7 @@ export function ForecastRunPanel({
                       },
                       {
                         onSuccess: () => {
-                          toast.success('Đã tạo đơn mua nháp từ đề xuất.')
+                          toast.success('Đã tạo yêu cầu nhập kho nháp từ đề xuất.')
                           setSelectedReplenishment(null)
                         },
                         onError: (error) => {
@@ -376,14 +376,16 @@ export function ForecastRunPanel({
                     )
                   }
                 >
-                  {acceptReplenishment.isPending ? 'Đang tạo…' : 'Tạo đơn mua'}
+                  {acceptReplenishment.isPending ? 'Đang tạo…' : 'Tạo yêu cầu nhập kho'}
                 </Button>
               </Field>
               {productSuppliers.isError ? (
                 <Alert variant="destructive" className="sm:col-span-3">
                   <AlertTitle>Không thể tải nhà cung cấp</AlertTitle>
                   <AlertDescription className="flex flex-col items-start gap-2">
-                    <span>Không thể tạo đơn mua cho tới khi danh sách được tải thành công.</span>
+                    <span>
+                      Không thể tạo yêu cầu nhập kho cho tới khi danh sách được tải thành công.
+                    </span>
                     <Button
                       type="button"
                       variant="outline"

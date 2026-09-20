@@ -172,7 +172,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
                     </TableCell>
                     <TableCell>
                       <p>
-                        {item.referenceType === 'OutboundPick'
+                        {item.referenceType === 'StockIssuePick'
                           ? 'Lấy hàng xuất kho'
                           : 'Điều chuyển kho'}
                       </p>

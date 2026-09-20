@@ -104,10 +104,10 @@ export function SupplierDirectory({
             <Truck aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="text-primary text-xs font-medium">Mua hàng</p>
+            <p className="text-primary text-xs font-medium">Nguồn nhập kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Nhà cung cấp</h1>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Quản lý danh bạ nhà cung cấp phục vụ hoạt động mua hàng của tổ chức.
+              Quản lý danh bạ nhà cung cấp phục vụ hoạt động nhập kho của tổ chức.
             </p>
           </div>
         </div>

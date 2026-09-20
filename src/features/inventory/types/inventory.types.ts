@@ -117,7 +117,7 @@ export interface InventoryReservation {
   lotId: string | null
   lotNumber: string | null
   qualityStatus: QualityStatus
-  referenceType: 'OutboundPick' | 'StockTransfer'
+  referenceType: 'StockIssuePick' | 'StockTransfer'
   referenceId: string
   referenceCode: string
   reservedQuantity: number
@@ -207,7 +207,7 @@ export interface ReplenishmentSuggestion {
   suggestedQuantity: number
   adjustedQuantity: number | null
   status: ForecastSuggestionStatus
-  purchaseOrderId: string | null
+  inboundRequestId: string | null
   acceptedByUserId: string | null
   acceptedAt: string | null
 }

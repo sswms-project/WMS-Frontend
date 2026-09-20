@@ -13,13 +13,13 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import type { InboundReceiptFormValues } from '../../schemas/inbound.schema'
+import type { GoodsReceiptFormValues } from '../../schemas/inbound.schema'
 import type { ReceivingTask } from '../../types/inbound.types'
-import { formatQuantity } from '@/features/purchase-order/utils/purchase-order-format'
+import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 
 interface ReceiveGoodsDialogProps {
   readonly task: ReceivingTask | null
-  readonly form: UseFormReturn<InboundReceiptFormValues>
+  readonly form: UseFormReturn<GoodsReceiptFormValues>
   readonly isPending: boolean
   readonly title?: string
   readonly description?: string
@@ -51,7 +51,7 @@ export function ReceiveGoodsDialog({
     <Dialog open={Boolean(task)} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{title ?? `Nhận hàng ${task?.poNumber ?? ''}`}</DialogTitle>
+          <DialogTitle>{title ?? `Nhận hàng ${task?.inboundRequestCode ?? ''}`}</DialogTitle>
           <DialogDescription>
             {description ??
               'Nhập số lượng thực nhận và ghi rõ tình trạng hàng hỏng trước khi lưu phiếu.'}
@@ -63,7 +63,7 @@ export function ReceiveGoodsDialog({
               const damaged = watch(`lines.${index}.damagedQty`) ?? 0
               const received = watch(`lines.${index}.receivedQty`) ?? 0
               return (
-                <section key={line.purchaseOrderItemId} className="border p-3">
+                <section key={line.inboundRequestItemId} className="border p-3">
                   <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-medium">{line.productName}</p>
@@ -81,7 +81,7 @@ export function ReceiveGoodsDialog({
                       )}
                     </p>
                   </div>
-                  <input type="hidden" {...register(`lines.${index}.poLineId`)} />
+                  <input type="hidden" {...register(`lines.${index}.inboundRequestItemId`)} />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field data-invalid={Boolean(errors.lines?.[index]?.receivedQty)}>
                       <FieldLabel htmlFor={`received-${index}`}>Số lượng thực nhận</FieldLabel>

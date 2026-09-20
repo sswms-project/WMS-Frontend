@@ -6,13 +6,13 @@ import type { InboundDocumentReviewFormValues } from '../../../schemas/inbound-d
 import type { InboundDocumentImport, ReceivingTask } from '../../../types/inbound.types'
 import { ReviewStep } from './ReviewStep'
 
-const purchaseOrderId = '10000000-0000-4000-8000-000000000001'
-const purchaseOrderItemId = '20000000-0000-4000-8000-000000000001'
+const inboundRequestId = '10000000-0000-4000-8000-000000000001'
+const inboundRequestItemId = '20000000-0000-4000-8000-000000000001'
 const productId = '50000000-0000-4000-8000-000000000001'
 
 const task: ReceivingTask = {
-  purchaseOrderId,
-  poNumber: 'PO-001',
+  inboundRequestId,
+  inboundRequestCode: 'PO-001',
   warehouseId: '30000000-0000-4000-8000-000000000001',
   warehouseName: 'Kho trung tâm',
   supplierId: '40000000-0000-4000-8000-000000000001',
@@ -24,7 +24,7 @@ const task: ReceivingTask = {
   activeDocumentImportId: null,
   lines: [
     {
-      purchaseOrderItemId,
+      inboundRequestItemId,
       productId,
       productSKU: 'SKU-001',
       productName: 'Trà xanh',
@@ -50,13 +50,13 @@ const importData: InboundDocumentImport = {
   extractionModel: 'gemini-3.6-flash',
   createdAt: '2026-09-05T00:00:00Z',
   reviewedAt: '2026-09-05T00:01:00Z',
-  inboundReceiptId: null,
+  goodsReceiptId: null,
   duplicateFileDetected: false,
   review: {
     extraction: {
       schemaVersion: '1.0',
       documentNumber: null,
-      purchaseOrderNumber: null,
+      inboundRequestCode: null,
       supplierName: null,
       documentDate: null,
       supplierDeliveryDate: null,
@@ -64,8 +64,8 @@ const importData: InboundDocumentImport = {
       warehouseName: null,
       items: [],
     },
-    purchaseOrderId,
-    purchaseOrderNumber: 'PO-001',
+    inboundRequestId,
+    inboundRequestCode: 'PO-001',
     supplierId: task.supplierId,
     supplierName: task.supplierName,
     warehouseId: task.warehouseId,
@@ -82,7 +82,7 @@ const importData: InboundDocumentImport = {
         extractedProductName: 'Trà xanh',
         extractedUnitOfMeasure: 'Thùng',
         documentQuantity: 10,
-        purchaseOrderItemId,
+        inboundRequestItemId,
         productId,
         productSku: 'SKU-001',
         productName: 'Trà xanh',
@@ -116,12 +116,12 @@ function ReviewStepFixture({
 }) {
   const form = useForm<InboundDocumentReviewFormValues>({
     defaultValues: {
-      purchaseOrderId,
+      inboundRequestId,
       acknowledgeWarehouseMismatch: data.review?.warehouseMismatchAcknowledged ?? false,
       lines: [
         {
           sourceLineNumber: 1,
-          purchaseOrderItemId,
+          inboundRequestItemId,
           confirmedQuantity: 10,
           damagedQuantity: 0,
           exceptionReason: '',
@@ -151,7 +151,7 @@ describe('ReviewStep', () => {
   it('requires unsaved edits to be reviewed before creating a draft receipt', async () => {
     const user = userEvent.setup()
     render(<ReviewStepFixture />)
-    const createDraft = screen.getByRole('button', { name: 'Tạo phiếu nhập nháp' })
+    const createDraft = screen.getByRole('button', { name: 'Tạo phiếu nhận hàng nháp' })
     expect(createDraft).toBeEnabled()
 
     const confirmedQuantity = screen.getByLabelText('Số lượng xác nhận')
@@ -203,10 +203,13 @@ describe('ReviewStep', () => {
     const acknowledgement = screen.getByRole('checkbox', {
       name: /Tôi xác nhận sử dụng WH-01 · Kho trung tâm/,
     })
-    const createDraft = screen.getByRole('button', { name: 'Tạo phiếu nhập nháp' })
+    const createDraft = screen.getByRole('button', { name: 'Tạo phiếu nhận hàng nháp' })
     expect(acknowledgement).not.toBeChecked()
     expect(createDraft).toBeDisabled()
-    expect(createDraft).toHaveAttribute('title', 'Xác nhận sử dụng kho của đơn mua để tiếp tục.')
+    expect(createDraft).toHaveAttribute(
+      'title',
+      'Xác nhận sử dụng kho của yêu cầu nhập kho để tiếp tục.'
+    )
 
     await user.click(acknowledgement)
 

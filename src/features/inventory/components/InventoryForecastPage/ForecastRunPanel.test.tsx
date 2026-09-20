@@ -70,7 +70,7 @@ vi.mock('../../hooks/use-inventory', () => ({
           suggestedQuantity: 10,
           adjustedQuantity: null,
           status: 'New',
-          purchaseOrderId: null,
+          inboundRequestId: null,
           acceptedByUserId: null,
           acceptedAt: null,
         },
@@ -94,7 +94,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['purchase-orders:create']}
+        permissions={['inbound-requests:create']}
       />
     )
 
@@ -108,7 +108,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['purchase-orders:create']}
+        permissions={['inbound-requests:create']}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Chấp nhận' }))
@@ -121,12 +121,12 @@ describe('ForecastRunPanel', () => {
       target: { value: '0' },
     })
     expect(screen.getByRole('alert')).toHaveTextContent('Số lượng điều chỉnh phải lớn hơn 0.')
-    expect(screen.getByRole('button', { name: 'Tạo đơn mua' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Tạo yêu cầu nhập kho' })).toBeDisabled()
 
     fireEvent.change(screen.getByLabelText('Số lượng bổ sung điều chỉnh'), {
       target: { value: '7.5' },
     })
-    await userEvent.click(screen.getByRole('button', { name: 'Tạo đơn mua' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo yêu cầu nhập kho' }))
     expect(state.acceptReplenishment).toHaveBeenCalledWith(
       {
         id: 'suggestion-1',
@@ -140,7 +140,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['purchase-orders:create']}
+        permissions={['inbound-requests:create']}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Chấp nhận' }))
@@ -148,7 +148,7 @@ describe('ForecastRunPanel', () => {
       screen.getByLabelText('Nhà cung cấp cho đề xuất bổ sung'),
       'supplier-active'
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Tạo đơn mua' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo yêu cầu nhập kho' }))
 
     const callbacks = state.acceptReplenishment.mock.calls[0]?.[1]
     act(() =>

@@ -1,0 +1,288 @@
+'use client'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import type { Route } from 'next'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useFieldArray, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import {
+  OperationalErrorState,
+  OperationalLoadingState,
+} from '@/components/operations/OperationalState'
+import { logger } from '@/lib/logger'
+import { APP_ROUTES } from '@/routes/app-routes'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import { useOrganizationQuery } from '@/features/organization/hooks/use-organization'
+import { InboundRequestForm, type LookupOption } from '../components/InboundRequestFormPage'
+import {
+  useCreateInboundRequestMutation,
+  useProductOptionsQuery,
+  useInboundRequestQuery,
+  useSubmitInboundRequestMutation,
+  useSupplierOptionsQuery,
+  useUpdateInboundRequestMutation,
+} from '../hooks/use-inbound-requests'
+import {
+  inboundRequestSchema,
+  type InboundRequestFormValues,
+} from '../schemas/inbound-request.schema'
+import type { SaveInboundRequestRequest } from '../types/inbound-request.types'
+import {
+  toOperationalDateApiValue,
+  toOperationalDateInputValue,
+} from '../utils/inbound-request-format'
+
+const EMPTY_LINE = { productId: '', quantity: 1, unitPrice: null }
+const LOOKUP_PAGE_SIZE = 20
+
+interface ProductSearchState {
+  readonly scope: string
+  readonly value: string
+}
+
+function mergeLookupOptions(
+  options: readonly LookupOption[],
+  fallbackOptions: readonly LookupOption[]
+): LookupOption[] {
+  return Array.from(
+    new Map([...fallbackOptions, ...options].map((option) => [option.value, option])).values()
+  )
+}
+
+export default function InboundRequestFormPage({
+  inboundRequestId,
+}: {
+  readonly inboundRequestId?: string
+}) {
+  const router = useRouter()
+  const hydratedInboundRequestId = useRef<string | null>(null)
+  const createdInboundRequestId = useRef<string | null>(null)
+  const [warehouseSearchText, setWarehouseSearchText] = useState('')
+  const [supplierSearchText, setSupplierSearchText] = useState('')
+  const [productSearch, setProductSearch] = useState<ProductSearchState | null>(null)
+  const debouncedWarehouseSearch = useDebouncedValue(warehouseSearchText.trim(), 300)
+  const debouncedSupplierSearch = useDebouncedValue(supplierSearchText.trim(), 300)
+  const debouncedProductSearch = useDebouncedValue(productSearch?.value.trim() ?? '', 300)
+  const isEditing = Boolean(inboundRequestId)
+  const form = useForm<InboundRequestFormValues>({
+    resolver: zodResolver(inboundRequestSchema),
+    defaultValues: { warehouseId: '', supplierId: '', expectedDate: '', lines: [EMPTY_LINE] },
+  })
+  const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
+  const detailQuery = useInboundRequestQuery(inboundRequestId ?? '')
+  const warehousesQuery = useWarehousesQuery({
+    top: LOOKUP_PAGE_SIZE,
+    skip: 0,
+    needTotalCount: true,
+    isActive: true,
+    ...(debouncedWarehouseSearch ? { searchText: debouncedWarehouseSearch } : {}),
+  })
+  const productsQuery = useProductOptionsQuery({
+    pageNumber: 1,
+    pageSize: LOOKUP_PAGE_SIZE,
+    status: 'Active',
+    ...(debouncedProductSearch ? { searchTerm: debouncedProductSearch } : {}),
+  })
+  const suppliersQuery = useSupplierOptionsQuery({
+    pageNumber: 1,
+    pageSize: LOOKUP_PAGE_SIZE,
+    status: 'Active',
+    ...(debouncedSupplierSearch ? { searchTerm: debouncedSupplierSearch } : {}),
+  })
+  const createMutation = useCreateInboundRequestMutation()
+  const organizationQuery = useOrganizationQuery()
+  const updateMutation = useUpdateInboundRequestMutation()
+  const submitMutation = useSubmitInboundRequestMutation()
+
+  useEffect(() => {
+    const detail = detailQuery.data
+    if (!detail || hydratedInboundRequestId.current === detail.id) return
+    form.reset({
+      warehouseId: detail.warehouseId ?? '',
+      supplierId: detail.supplierId,
+      expectedDate: toOperationalDateInputValue(detail.expectedDate),
+      lines: detail.lines.map((line) => ({
+        productId: line.productId,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+      })),
+    })
+    hydratedInboundRequestId.current = detail.id
+  }, [detailQuery.data, form])
+
+  useEffect(() => {
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      if (!form.formState.isDirty) return
+      event.preventDefault()
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload)
+  }, [form.formState.isDirty])
+
+  function toRequest(values: InboundRequestFormValues): SaveInboundRequestRequest {
+    return {
+      warehouseId: values.warehouseId,
+      supplierId: values.supplierId,
+      expectedDate: toOperationalDateApiValue(values.expectedDate),
+      lines: values.lines,
+    }
+  }
+
+  async function save(values: InboundRequestFormValues, shouldSubmit: boolean) {
+    let savedId = inboundRequestId ?? createdInboundRequestId.current
+    try {
+      const request = toRequest(values)
+      if (savedId) {
+        await updateMutation.mutateAsync({ inboundRequestId: savedId, request })
+      } else {
+        const response = await createMutation.mutateAsync(request)
+        savedId = response.data
+        createdInboundRequestId.current = savedId
+      }
+      if (shouldSubmit && savedId) {
+        try {
+          await submitMutation.mutateAsync(savedId)
+        } catch (error) {
+          logger.error(error)
+          toast.error(
+            'Yêu cầu nhập kho đã được lưu nháp nhưng chưa gửi duyệt. Bạn có thể thử lại từ trang chi tiết.'
+          )
+          router.push(APP_ROUTES.inboundRequestDetail(savedId) as Route)
+          return
+        }
+      }
+      form.reset(values)
+      toast.success(
+        shouldSubmit
+          ? 'Đã lưu và gửi yêu cầu nhập kho để duyệt.'
+          : 'Đã lưu bản nháp yêu cầu nhập kho.'
+      )
+      if (savedId) router.push(APP_ROUTES.inboundRequestDetail(savedId) as Route)
+    } catch (error) {
+      logger.error(error)
+      toast.error('Không thể lưu yêu cầu nhập kho. Vui lòng kiểm tra dữ liệu và thử lại.')
+    }
+  }
+
+  function handleCancel() {
+    if (
+      form.formState.isDirty &&
+      !window.confirm('Dữ liệu chưa lưu sẽ bị mất. Bạn vẫn muốn rời trang?')
+    )
+      return
+    router.push(
+      (inboundRequestId
+        ? APP_ROUTES.inboundRequestDetail(inboundRequestId)
+        : APP_ROUTES.inboundRequests) as Route
+    )
+  }
+
+  function handleProductSearchChange(scope: string, value: string) {
+    setProductSearch((current) => {
+      if (value) return { scope, value }
+      return current?.scope === scope ? null : current
+    })
+  }
+
+  const isLoading =
+    warehousesQuery.isLoading ||
+    productsQuery.isLoading ||
+    suppliersQuery.isLoading ||
+    (isEditing && detailQuery.isLoading)
+  const isError =
+    warehousesQuery.isError ||
+    productsQuery.isError ||
+    suppliersQuery.isError ||
+    (isEditing && detailQuery.isError)
+  const isPending = createMutation.isPending || updateMutation.isPending || submitMutation.isPending
+  const detail = detailQuery.data
+  const warehouseOptions = useMemo(
+    () =>
+      mergeLookupOptions(
+        (warehousesQuery.data?.items ?? []).map((warehouse) => ({
+          value: warehouse.id,
+          label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
+        })),
+        detail?.warehouseId
+          ? [
+              {
+                value: detail.warehouseId,
+                label: `${detail.warehouseCode ?? ''} - ${detail.warehouseName ?? 'Kho hiện tại'}`,
+              },
+            ]
+          : []
+      ),
+    [detail, warehousesQuery.data?.items]
+  )
+  const supplierOptions = useMemo(
+    () =>
+      mergeLookupOptions(
+        (suppliersQuery.data?.items ?? []).map((supplier) => ({
+          value: supplier.id,
+          label: `${supplier.supplierName} · ${supplier.phone}`,
+        })),
+        detail ? [{ value: detail.supplierId, label: detail.supplierName }] : []
+      ),
+    [detail, suppliersQuery.data?.items]
+  )
+  const productOptions = useMemo(
+    () =>
+      mergeLookupOptions(
+        (productsQuery.data?.items ?? []).map((product) => ({
+          value: product.id,
+          label: `${product.sku} - ${product.productName}`,
+        })),
+        detail?.lines.map((line) => ({
+          value: line.productId,
+          label: `${line.productSKU} - ${line.productName}`,
+        })) ?? []
+      ),
+    [detail?.lines, productsQuery.data?.items]
+  )
+
+  if (isLoading) return <OperationalLoadingState rows={8} />
+  if (isError) {
+    return (
+      <OperationalErrorState
+        title="Không thể chuẩn bị biểu mẫu yêu cầu nhập kho"
+        onRetry={() => {
+          void warehousesQuery.refetch()
+          void productsQuery.refetch()
+          void suppliersQuery.refetch()
+          if (isEditing) void detailQuery.refetch()
+        }}
+      />
+    )
+  }
+
+  return (
+    <InboundRequestForm
+      currency={detailQuery.data?.currency ?? organizationQuery.data?.defaultCurrency ?? 'VND'}
+      title={
+        isEditing
+          ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`
+          : 'Tạo yêu cầu nhập kho'
+      }
+      description="Chọn kho, nhà cung cấp và các sản phẩm cần nhập."
+      form={form}
+      fields={fieldArray.fields}
+      warehouseOptions={warehouseOptions}
+      supplierOptions={supplierOptions}
+      productOptions={productOptions}
+      isWarehouseSearchLoading={warehousesQuery.isFetching}
+      isSupplierSearchLoading={suppliersQuery.isFetching}
+      isProductSearchLoading={productsQuery.isFetching}
+      isPending={isPending}
+      onAddLine={() => fieldArray.append(EMPTY_LINE)}
+      onRemoveLine={fieldArray.remove}
+      onCancel={handleCancel}
+      onSaveDraft={() => void form.handleSubmit((values) => save(values, false))()}
+      onSaveAndSubmit={() => void form.handleSubmit((values) => save(values, true))()}
+      onWarehouseSearchChange={setWarehouseSearchText}
+      onSupplierSearchChange={setSupplierSearchText}
+      onProductSearchChange={handleProductSearchChange}
+    />
+  )
+}

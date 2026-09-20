@@ -71,4 +71,18 @@ describe('warehouseService.deactivateWarehouse', () => {
     })
     expect(axios.get).toHaveBeenCalledWith('/warehouses/warehouse-1/locations/rack/rack-1/barcode')
   })
+
+  it('configures an existing slot as outbound staging', async () => {
+    const response = { isSuccess: true, statusCode: 200, message: '', data: null }
+    axios.patch.mockResolvedValue({ data: response })
+
+    await warehouseService.configureOutboundStaging('warehouse-1', 'rack-1', 'slot-1', {
+      isOutboundStaging: true,
+    })
+
+    expect(axios.patch).toHaveBeenCalledWith(
+      '/warehouses/warehouse-1/racks/rack-1/slots/slot-1/outbound-staging',
+      { isOutboundStaging: true }
+    )
+  })
 })

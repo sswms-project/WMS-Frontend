@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button'
 
 const SUGGESTED_PROMPTS = [
   'Kho nào đang có nhiều sản phẩm sắp hết hàng?',
-  'Trong tháng này có bao nhiêu đơn hàng đã hoàn thành?',
-  'Có đơn hàng nào đang bị trễ xử lý không?',
+  'Trong tháng này có bao nhiêu yêu cầu xuất kho đã hoàn tất?',
+  'Có yêu cầu kho nào đang bị trễ xử lý không?',
   'Sản phẩm nào nên nhập thêm hàng?',
   'Trang dự báo tồn kho ở đâu?',
 ] as const
@@ -23,7 +23,7 @@ export function AiSuggestedPrompts({ disabled, onSelect }: AiSuggestedPromptsPro
       <div>
         <p className="text-sm font-semibold">Xin chào! Mình có thể giúp gì cho bạn?</p>
         <p className="text-muted-foreground text-xs">
-          Hỏi về tồn kho, đơn hàng, dự báo hoặc nhờ mình chỉ đường tới đúng màn hình.
+          Hỏi về tồn kho, vận hành kho, dự báo hoặc nhờ mình chỉ đường tới đúng màn hình.
         </p>
       </div>
       <ul className="flex w-full flex-col gap-2" aria-label="Câu hỏi gợi ý">

@@ -20,10 +20,9 @@ export function getNotificationReferenceRoute(
   const { type, referenceType, referenceId } = notification
   if (!referenceType || !referenceId) return null
 
-  if (referenceType === 'OutboundOrder') {
-    if (type === 'DeliveryUpdate' || type === 'TaskAssigned') return APP_ROUTES.delivery
-    if (type === 'OutboundUpdate') return APP_ROUTES.orders
-    return null
+  if (referenceType === 'StockIssueRequest') {
+    if (type === 'StockIssueRequestUpdate' || type === 'TaskAssigned')
+      return APP_ROUTES.stockIssueRequests
   }
 
   const route = notificationReferenceRoutes[referenceType]
@@ -40,14 +39,14 @@ export function formatAuditValue(value: string | null): string {
 }
 
 const notificationReferenceRoutes: Record<string, (id: string) => string> = {
-  PurchaseOrder: APP_ROUTES.purchaseOrderDetail,
-  InboundReceipt: APP_ROUTES.inboundReceiptDetail,
+  InboundRequest: APP_ROUTES.inboundRequestDetail,
+  GoodsReceipt: APP_ROUTES.goodsReceiptDetail,
   StockAdjustment: APP_ROUTES.stockAdjustmentDetail,
   CycleCount: APP_ROUTES.cycleCountDetail,
   Warehouse: APP_ROUTES.warehouseDetail,
   Product: APP_ROUTES.productDetail,
   StockTransfer: () => APP_ROUTES.transfers,
-  Return: () => APP_ROUTES.returns,
+  GoodsReturnRequest: () => APP_ROUTES.goodsReturnRequests,
   Tenant: () => APP_ROUTES.organization,
   SubscriptionPlan: () => APP_ROUTES.subscription,
   Payment: () => APP_ROUTES.subscriptionPayments,

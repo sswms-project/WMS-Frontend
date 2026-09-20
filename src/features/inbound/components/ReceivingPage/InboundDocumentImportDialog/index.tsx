@@ -43,7 +43,7 @@ export function InboundDocumentImportDialog({
           <DialogTitle>Nhập hàng từ chứng từ</DialogTitle>
           <DialogDescription>
             {task
-              ? `${task.poNumber} · ${task.supplierName} · ${task.warehouseName}`
+              ? `${task.inboundRequestCode} · ${task.supplierName} · ${task.warehouseName}`
               : 'Phân tích chứng từ nhà cung cấp.'}
           </DialogDescription>
         </DialogHeader>
