@@ -8,6 +8,7 @@ import type {
   CreateRackRequest,
   CreateSlotRequest,
   CreateZoneRequest,
+  ConfigureOutboundStagingRequest,
   CreateWarehouseRequest,
   LocationBarcodeResponse,
   LocationSearchResponse,
@@ -70,6 +71,10 @@ interface DeactivateSlotVariables {
   warehouseId: string
   rackId: string
   slotId: string
+}
+
+interface ConfigureOutboundStagingVariables extends DeactivateSlotVariables {
+  request: ConfigureOutboundStagingRequest
 }
 
 export function useWarehousesQuery(params: WarehouseListQuery) {
@@ -263,6 +268,16 @@ export function useDeactivateSlotMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateSlotVariables>({
     mutationFn: ({ warehouseId, rackId, slotId }) =>
       warehouseService.deactivateSlot(warehouseId, rackId, slotId),
+    onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useConfigureOutboundStagingMutation() {
+  const invalidateStructure = useInvalidateWarehouseStructure()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ConfigureOutboundStagingVariables>({
+    mutationFn: ({ warehouseId, rackId, slotId, request }) =>
+      warehouseService.configureOutboundStaging(warehouseId, rackId, slotId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
     onError: (error) => logger.error(error),
   })

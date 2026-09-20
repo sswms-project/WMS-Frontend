@@ -118,6 +118,15 @@ export function useConfirmStockDispatchMutation() {
   })
 }
 
+export function useAuthorizeStockDispatchMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
+    mutationFn: stockIssueService.authorizeDispatch,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
 export function useCreateGoodsReturnRequestMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<string>, ApiErrorResponse, CreateGoodsReturnRequestVariables>({

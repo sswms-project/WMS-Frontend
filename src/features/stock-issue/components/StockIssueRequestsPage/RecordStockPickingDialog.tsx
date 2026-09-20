@@ -34,6 +34,7 @@ interface RecordStockPickingDialogProps {
     label: string
     availableQuantity: number
   }[]
+  readonly stagingSlotOptions: readonly { id: string; label: string }[]
 }
 
 export function RecordStockPickingDialog({
@@ -45,6 +46,7 @@ export function RecordStockPickingDialog({
   inventoryOptions,
   inventorySearch,
   onInventorySearchChange,
+  stagingSlotOptions,
 }: RecordStockPickingDialogProps) {
   const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
   const lines = form.watch('lines')
@@ -83,6 +85,13 @@ export function RecordStockPickingDialog({
                   onChange={(event) => onInventorySearchChange(event.target.value)}
                 />
               </Field>
+
+              {stagingSlotOptions.length === 0 ? (
+                <p className="text-destructive text-sm" role="status">
+                  Kho này chưa có khu chờ xuất. Tenant Owner cần chọn một vị trí đang hoạt động làm
+                  khu chờ xuất trước khi lấy hàng.
+                </p>
+              ) : null}
 
               <FieldGroup>
                 {lines.map((line, index) => {
@@ -143,13 +152,33 @@ export function RecordStockPickingDialog({
                             </NativeSelectOption>
                           ))}
                       </NativeSelect>
+                      <NativeSelect
+                        aria-label={`Khu chờ xuất cho ${line.productName}`}
+                        value={line.stagingSlotId}
+                        disabled={isPending}
+                        onChange={(event) =>
+                          form.setValue(`lines.${index}.stagingSlotId`, event.target.value, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                        }
+                      >
+                        <NativeSelectOption value="">Chọn khu chờ xuất</NativeSelectOption>
+                        {stagingSlotOptions.map((slot) => (
+                          <NativeSelectOption key={slot.id} value={slot.id}>
+                            {slot.label}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
                       <FieldError
                         errors={
                           lineError?.pickedQuantity
                             ? [lineError.pickedQuantity]
                             : lineError?.inventoryStockId
                               ? [lineError.inventoryStockId]
-                              : undefined
+                              : lineError?.stagingSlotId
+                                ? [lineError.stagingSlotId]
+                                : undefined
                         }
                       />
                       <div className="flex justify-end gap-2">
@@ -161,6 +190,7 @@ export function RecordStockPickingDialog({
                             fieldArray.append({
                               ...line,
                               inventoryStockId: '',
+                              stagingSlotId: line.stagingSlotId,
                               availableQuantity: 0,
                               pickedQuantity: 0,
                             })
@@ -200,7 +230,7 @@ export function RecordStockPickingDialog({
               >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending || stagingSlotOptions.length === 0}>
                 {isPending ? <Spinner data-icon="inline-start" /> : null}
                 Xác nhận lấy hàng
               </Button>

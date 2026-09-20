@@ -2,6 +2,7 @@ export const STOCK_ISSUE_REQUEST_STATUSES = [
   'Pending',
   'Picking',
   'Picked',
+  'AuthorizedForDispatch',
   'Dispatched',
   'Cancelled',
 ] as const
@@ -49,6 +50,8 @@ export interface StockIssuePickDetail {
   inventoryStockId: string
   slotId: string
   slotCode: string
+  stagingSlotId: string
+  stagingSlotCode: string
   lotId: string | null
   lotNumber: string | null
   qualityStatus: string
@@ -76,6 +79,8 @@ export interface StockIssueRequestSummary {
   recipientAddress: string
   status: StockIssueRequestStatus
   createdAt: string
+  dispatchAuthorizedByUserId: string | null
+  dispatchAuthorizedAt: string | null
   dispatchedAt: string | null
   items: StockIssueRequestItem[]
 }
@@ -102,6 +107,7 @@ export interface CreateStockIssueRequestRequest {
 export interface RecordStockPickingItemRequest {
   stockIssueRequestItemId: string
   inventoryStockId: string
+  stagingSlotId: string
   pickedQuantity: number
 }
 

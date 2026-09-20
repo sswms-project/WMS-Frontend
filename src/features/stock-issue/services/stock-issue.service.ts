@@ -46,6 +46,13 @@ export const stockIssueService = {
       .post<ApiResponse<unknown>>(API_ENDPOINTS.stockIssueRequests.dispatch(stockIssueRequestId))
       .then((response) => response.data),
 
+  authorizeDispatch: (stockIssueRequestId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.stockIssueRequests.authorizeDispatch(stockIssueRequestId))
+      .then((response) => response.data),
+
   removePickDetail: (stockIssueRequestId: string, pickDetailId: string) =>
     axiosClient
       .delete<

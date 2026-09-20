@@ -86,6 +86,8 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}`,
     deactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/deactivate`,
+    configureOutboundStaging: (warehouseId: string, rackId: string, slotId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/outbound-staging`,
     locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
@@ -237,6 +239,8 @@ export const API_ENDPOINTS = {
     picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
     dispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
+    authorizeDispatch: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/authorize-dispatch`,
     removePickDetail: (stockIssueRequestId: string, pickDetailId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/pick-details/${pickDetailId}`,
     goodsReturnRequests: (stockIssueRequestId: string) =>

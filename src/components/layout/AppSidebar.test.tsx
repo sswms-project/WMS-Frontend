@@ -24,7 +24,6 @@ const mocks = vi.hoisted(() => ({
     'transfers:view',
     'stock-issue-requests:view',
     'returns:view',
-    'deliveries:view',
     'stock-recipients:view',
     'subscriptions:view',
     'subscription-plans:view',

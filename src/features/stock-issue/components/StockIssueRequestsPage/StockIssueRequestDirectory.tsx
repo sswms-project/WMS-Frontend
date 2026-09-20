@@ -95,6 +95,7 @@ interface StockIssueRequestDirectoryProps {
   readonly onRetry: () => void
   readonly onInspect: (order: StockIssueRequestSummary) => void
   readonly onRecordStockPicking: (order: StockIssueRequestSummary) => void
+  readonly onAuthorizeDispatch: (order: StockIssueRequestSummary) => void
   readonly onConfirmDispatch: (order: StockIssueRequestSummary) => void
   readonly onCreateGoodsReturnRequest: (order: StockIssueRequestSummary) => void
 }
@@ -126,6 +127,7 @@ export function StockIssueRequestDirectory({
   onRetry,
   onInspect,
   onRecordStockPicking,
+  onAuthorizeDispatch,
   onConfirmDispatch,
   onCreateGoodsReturnRequest,
 }: StockIssueRequestDirectoryProps) {
@@ -139,6 +141,7 @@ export function StockIssueRequestDirectory({
 
   const canPick = permissions.includes('stock-issue-requests:pick')
   const canDispatch = permissions.includes('stock-issue-requests:dispatch')
+  const canAuthorizeDispatch = permissions.includes('stock-issue-requests:authorize-dispatch')
   const canGoodsReturnRequest = permissions.includes('stock-issue-requests:return')
 
   const renderRowActions = (order: StockIssueRequestSummary) => (
@@ -164,7 +167,13 @@ export function StockIssueRequestDirectory({
             Ghi nhận lấy hàng
           </DropdownMenuItem>
         ) : null}
-        {canDispatch && order.status === 'Picked' ? (
+        {canAuthorizeDispatch && order.status === 'Picked' ? (
+          <DropdownMenuItem onSelect={() => onAuthorizeDispatch(order)}>
+            <Send className="size-4" aria-hidden="true" />
+            Cho phép xuất kho
+          </DropdownMenuItem>
+        ) : null}
+        {canDispatch && order.status === 'AuthorizedForDispatch' ? (
           <DropdownMenuItem onSelect={() => onConfirmDispatch(order)}>
             <Send className="size-4" aria-hidden="true" />
             Xác nhận hàng rời kho

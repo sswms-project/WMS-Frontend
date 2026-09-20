@@ -6,6 +6,7 @@ export interface WarehouseCapabilities {
   readonly canDeactivateWarehouse: boolean
   readonly canConfigureLayout: boolean
   readonly canGenerateLocationBarcode: boolean
+  readonly canConfigureOutboundStaging: boolean
 }
 
 export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabilities {
@@ -18,5 +19,6 @@ export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabi
     canDeactivateWarehouse: isTenantOwner,
     canConfigureLayout: isTenantOwner || isWarehouseManager,
     canGenerateLocationBarcode: isTenantOwner || isWarehouseManager,
+    canConfigureOutboundStaging: isTenantOwner,
   }
 }

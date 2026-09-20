@@ -35,6 +35,7 @@ import {
   useStockIssueRequestQuery,
   useStockIssueRequestsQuery,
   useCreateGoodsReturnRequestMutation,
+  useAuthorizeStockDispatchMutation,
   useConfirmStockDispatchMutation,
   useRemovePickDetailMutation,
 } from '../hooks/use-stock-issue-requests'
@@ -58,6 +59,7 @@ function toRecordStockPickingLines(
     sku: item.sku,
     remainingQuantity: Math.max(0, item.quantity - item.pickedQuantity),
     inventoryStockId: '',
+    stagingSlotId: '',
     availableQuantity: 0,
     pickedQuantity: 0,
   }))
@@ -77,6 +79,7 @@ export default function StockIssueRequestPage() {
     null
   )
   const [dispatchingOrder, setDispatchingOrder] = useState<StockIssueRequestSummary | null>(null)
+  const [authorizingOrder, setAuthorizingOrder] = useState<StockIssueRequestSummary | null>(null)
   const [issueInventorySearch, setIssueInventorySearch] = useState('')
   const [returnSlotSearch, setGoodsReturnRequestSlotSearch] = useState('')
 
@@ -118,6 +121,13 @@ export default function StockIssueRequestPage() {
       ? { searchText: debouncedGoodsReturnRequestSlotSearch.trim() }
       : {}),
   })
+  const stagingSlotsQuery = useWarehouseLocationsQuery(issuingOrder?.warehouseId ?? '', {
+    top: 200,
+    skip: 0,
+    needTotalCount: true,
+    type: 'Slot',
+    lifecycleStatus: 'Active',
+  })
   const warehousesQuery = useWarehousesQuery({
     top: 100,
     skip: 0,
@@ -128,6 +138,7 @@ export default function StockIssueRequestPage() {
   const recordStockPickingMutation = useRecordStockPickingMutation()
   const createGoodsReturnRequestMutation = useCreateGoodsReturnRequestMutation()
   const confirmDispatchMutation = useConfirmStockDispatchMutation()
+  const authorizeDispatchMutation = useAuthorizeStockDispatchMutation()
   const removePickDetailMutation = useRemovePickDetailMutation()
 
   const recordStockPickingForm = useForm<RecordStockPickingFormValues>({
@@ -181,6 +192,7 @@ export default function StockIssueRequestPage() {
             .map((line) => ({
               stockIssueRequestItemId: line.stockIssueRequestItemId,
               inventoryStockId: line.inventoryStockId,
+              stagingSlotId: line.stagingSlotId,
               pickedQuantity: line.pickedQuantity,
             })),
         },
@@ -265,6 +277,18 @@ export default function StockIssueRequestPage() {
     }
   }
 
+  async function handleAuthorizeDispatch() {
+    if (!authorizingOrder) return
+    try {
+      await authorizeDispatchMutation.mutateAsync(authorizingOrder.id)
+      toast.success('Đã cho phép nhân viên xác nhận hàng rời kho.')
+      setAuthorizingOrder(null)
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể cho phép xuất kho.'))
+    }
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <StockIssueRequestDirectory
@@ -299,6 +323,7 @@ export default function StockIssueRequestPage() {
         onRetry={() => void ordersQuery.refetch()}
         onInspect={setInspectedOrder}
         onRecordStockPicking={handleOpenRecordStockPicking}
+        onAuthorizeDispatch={setAuthorizingOrder}
         onConfirmDispatch={setDispatchingOrder}
         onCreateGoodsReturnRequest={openGoodsReturnRequest}
       />
@@ -342,6 +367,9 @@ export default function StockIssueRequestPage() {
           }))}
         inventorySearch={issueInventorySearch}
         onInventorySearchChange={setIssueInventorySearch}
+        stagingSlotOptions={(stagingSlotsQuery.data?.items ?? [])
+          .filter((slot) => slot.isOutboundStaging)
+          .map((slot) => ({ id: slot.id, label: slot.code }))}
       />
       <CreateGoodsReturnRequestDialog
         order={returningOrder}
@@ -362,6 +390,36 @@ export default function StockIssueRequestPage() {
         }}
         onSubmit={handleCreateGoodsReturnRequest}
       />
+      <AlertDialog
+        open={Boolean(authorizingOrder)}
+        onOpenChange={(open) => {
+          if (!open && !authorizeDispatchMutation.isPending) setAuthorizingOrder(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <Send aria-hidden="true" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Cho phép xuất kho?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hàng đã được lấy và đưa tới khu chờ xuất. Sau khi bạn cho phép, nhân viên kho mới có
+              thể quét và xác nhận hàng rời kho.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={authorizeDispatchMutation.isPending}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={authorizeDispatchMutation.isPending}
+              onClick={() => void handleAuthorizeDispatch()}
+            >
+              {authorizeDispatchMutation.isPending ? 'Đang xử lý…' : 'Cho phép xuất'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog
         open={Boolean(dispatchingOrder)}
         onOpenChange={(open) => {

@@ -32,7 +32,14 @@ describe('stockIssueService', () => {
   })
   it('sends issue and return commands unchanged', async () => {
     const issue = {
-      items: [{ stockIssueRequestItemId: 'line', inventoryStockId: 'stock', pickedQuantity: 2 }],
+      items: [
+        {
+          stockIssueRequestItemId: 'line',
+          inventoryStockId: 'stock',
+          stagingSlotId: 'staging',
+          pickedQuantity: 2,
+        },
+      ],
     }
     const returned = {
       reason: 'reason',
@@ -69,6 +76,13 @@ describe('stockIssueService', () => {
     await stockIssueService.confirmDispatch('request-1')
     expect(axiosClient.post).toHaveBeenCalledWith(
       API_ENDPOINTS.stockIssueRequests.dispatch('request-1')
+    )
+  })
+
+  it('authorizes dispatch through the owner workflow endpoint', async () => {
+    await stockIssueService.authorizeDispatch('request-1')
+    expect(axiosClient.post).toHaveBeenCalledWith(
+      API_ENDPOINTS.stockIssueRequests.authorizeDispatch('request-1')
     )
   })
 })

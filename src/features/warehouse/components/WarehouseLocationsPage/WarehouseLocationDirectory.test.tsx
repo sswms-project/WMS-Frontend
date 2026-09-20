@@ -21,6 +21,7 @@ const locations: LocationSearchResponse[] = [
     capacity: null,
     currentOccupancy: null,
     barcodeValue: 'Z-01',
+    isOutboundStaging: false,
   },
   {
     id: 'slot-1',
@@ -36,6 +37,7 @@ const locations: LocationSearchResponse[] = [
     capacity: 100,
     currentOccupancy: 25,
     barcodeValue: 'S-01',
+    isOutboundStaging: false,
   },
 ]
 
@@ -84,6 +86,7 @@ function renderDirectory(overrides?: DirectoryOverrides) {
     onPageChange: vi.fn(),
     onRetry: vi.fn(),
     onRetryFilterMetadata: vi.fn(),
+    onConfigureOutboundStaging: vi.fn(),
   }
 
   render(
@@ -104,6 +107,8 @@ function renderDirectory(overrides?: DirectoryOverrides) {
         isFilterMetadataLoading={overrides?.isFilterMetadataLoading ?? false}
         isFilterMetadataError={overrides?.isFilterMetadataError ?? false}
         canGenerateBarcode={overrides?.canGenerateBarcode ?? true}
+        canConfigureOutboundStaging={true}
+        configuringStagingSlotId={null}
         {...callbacks}
       />
     </TooltipProvider>
