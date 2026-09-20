@@ -1,9 +1,9 @@
 import type {
   LifecycleEvent,
   PagedResponse,
-} from '@/features/purchase-order/types/purchase-order.types'
+} from '@/features/inbound-request/types/inbound-request.types'
 
-export const INBOUND_RECEIPT_STATUSES = [
+export const GOODS_RECEIPT_STATUSES = [
   'Draft',
   'PendingApproval',
   'Approved',
@@ -11,14 +11,14 @@ export const INBOUND_RECEIPT_STATUSES = [
   'Rejected',
 ] as const
 
-export type InboundReceiptStatus = (typeof INBOUND_RECEIPT_STATUSES)[number]
-export type InboundReceiptAction = 'Update' | 'Submit' | 'Approve' | 'Reject' | 'PutAway'
+export type GoodsReceiptStatus = (typeof GOODS_RECEIPT_STATUSES)[number]
+export type GoodsReceiptAction = 'Update' | 'Submit' | 'Approve' | 'Reject' | 'PutAway'
 
 export interface InboundListQuery {
   pageNumber: number
   pageSize: number
   searchTerm?: string
-  status?: InboundReceiptStatus
+  status?: GoodsReceiptStatus
   warehouseId?: string
   creatorId?: string
   dateFrom?: string
@@ -43,7 +43,7 @@ export interface PutawayTaskQuery {
 }
 
 export interface ReceivingTaskLine {
-  purchaseOrderItemId: string
+  inboundRequestItemId: string
   productId: string
   productSKU: string
   productName: string
@@ -55,8 +55,8 @@ export interface ReceivingTaskLine {
 }
 
 export interface ReceivingTask {
-  purchaseOrderId: string
-  poNumber: string
+  inboundRequestId: string
+  inboundRequestCode: string
   warehouseId: string
   warehouseName: string
   supplierId: string
@@ -69,14 +69,14 @@ export interface ReceivingTask {
   lines: ReceivingTaskLine[]
 }
 
-export interface InboundReceiptSummary {
+export interface GoodsReceiptSummary {
   id: string
   receiptCode: string
-  purchaseOrderId: string
-  poNumber: string
+  inboundRequestId: string
+  inboundRequestCode: string
   warehouseId: string
   warehouseName: string
-  status: InboundReceiptStatus
+  status: GoodsReceiptStatus
   createdBy: string
   createdByName: string
   createdAt: string
@@ -86,9 +86,9 @@ export interface InboundReceiptSummary {
   putAwayQuantity: number
 }
 
-export interface InboundReceiptItem {
+export interface GoodsReceiptItem {
   id: string
-  purchaseOrderItemId: string | null
+  inboundRequestItemId: string | null
   productId: string
   productSKU: string
   productName: string
@@ -122,8 +122,8 @@ export interface PutAwayDetail {
   putAwayAt: string
 }
 
-export interface InboundReceiptDetail extends Omit<
-  InboundReceiptSummary,
+export interface GoodsReceiptDetail extends Omit<
+  GoodsReceiptSummary,
   'lineCount' | 'receivedQuantity' | 'damagedQuantity' | 'putAwayQuantity'
 > {
   warehouseCode: string
@@ -133,12 +133,12 @@ export interface InboundReceiptDetail extends Omit<
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
-  items: InboundReceiptItem[]
+  items: GoodsReceiptItem[]
   history: LifecycleEvent[]
 }
 
 export interface ReceiptLineRequest {
-  poLineId: string
+  inboundRequestItemId: string
   receivedQty: number
   damagedQty: number
   exceptionReason: string | null
@@ -147,13 +147,13 @@ export interface ReceiptLineRequest {
   expiryDate: string | null
 }
 
-export interface SaveInboundReceiptRequest {
-  purchaseOrderId: string
+export interface SaveGoodsReceiptRequest {
+  inboundRequestId: string
   lines: ReceiptLineRequest[]
 }
 
 export interface PutawayLineRequest {
-  inboundReceiptItemId: string
+  goodsReceiptItemId: string
   slotId: string
   quantity: number
 }
@@ -163,10 +163,10 @@ export interface PutawayRequest {
 }
 
 export interface InboundAllowedActionsResponse {
-  allowedActions: InboundReceiptAction[]
+  allowedActions: GoodsReceiptAction[]
 }
 
-export type InboundReceiptListResponse = PagedResponse<InboundReceiptSummary>
+export type GoodsReceiptListResponse = PagedResponse<GoodsReceiptSummary>
 export type ReceivingTaskListResponse = PagedResponse<ReceivingTask>
 
 export const INBOUND_DOCUMENT_IMPORT_STATUSES = [
@@ -191,7 +191,7 @@ export interface ExtractedField<T> {
   source:
     | 'AiExtracted'
     | 'DocumentParser'
-    | 'PurchaseOrder'
+    | 'InboundRequest'
     | 'SupplierMaster'
     | 'WarehouseMaster'
     | 'SystemGenerated'
@@ -209,7 +209,7 @@ export interface ExtractedField<T> {
 export interface SupplierDocumentExtraction {
   schemaVersion: string
   documentNumber: ExtractedField<string> | null
-  purchaseOrderNumber: ExtractedField<string> | null
+  inboundRequestCode: ExtractedField<string> | null
   supplierName: ExtractedField<string> | null
   documentDate: ExtractedField<string> | null
   supplierDeliveryDate: ExtractedField<string> | null
@@ -233,7 +233,7 @@ export interface InboundDocumentReviewLine {
   extractedProductName: string | null
   extractedUnitOfMeasure: string | null
   documentQuantity: number | null
-  purchaseOrderItemId: string | null
+  inboundRequestItemId: string | null
   productId: string | null
   productSku: string | null
   productName: string | null
@@ -254,8 +254,8 @@ export interface InboundDocumentReviewLine {
 
 export interface InboundDocumentReview {
   extraction: SupplierDocumentExtraction
-  purchaseOrderId: string | null
-  purchaseOrderNumber: string | null
+  inboundRequestId: string | null
+  inboundRequestCode: string | null
   supplierId: string | null
   supplierName: string | null
   warehouseId: string | null
@@ -284,20 +284,20 @@ export interface InboundDocumentImport {
   extractionModel: string | null
   createdAt: string
   reviewedAt: string | null
-  inboundReceiptId: string | null
+  goodsReceiptId: string | null
   duplicateFileDetected: boolean
   review: InboundDocumentReview | null
 }
 
 export interface StartInboundDocumentImportRequest {
   file: File
-  purchaseOrderId?: string
+  inboundRequestId?: string
   warehouseId?: string
 }
 
 export interface ReviewInboundDocumentLineRequest {
   sourceLineNumber: number
-  purchaseOrderItemId: string
+  inboundRequestItemId: string
   confirmedQuantity: number
   damagedQuantity: number
   exceptionReason: string | null
@@ -308,7 +308,7 @@ export interface ReviewInboundDocumentLineRequest {
 
 export interface ReviewInboundDocumentImportRequest {
   id: string
-  purchaseOrderId: string
+  inboundRequestId: string
   acknowledgeWarehouseMismatch: boolean
   lines: ReviewInboundDocumentLineRequest[]
 }

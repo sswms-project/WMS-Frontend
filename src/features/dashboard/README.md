@@ -86,7 +86,7 @@ All dashboards currently render hardcoded sample data — metrics, chart data, r
 ## Animation
 
 - `FadeIn` (framer-motion) staggers each dashboard's sections into view on mount — used by `TenantOwnerDashboard`, `WarehouseManagerDashboard`, and `WarehouseStaffDashboard`.
-- `PageTransition` (`src/components/PageTransition.tsx`) fades between routes inside the private layout, so switching between dashboard/warehouses/inventory/orders/delivery feels smooth.
+- `PageTransition` (`src/components/PageTransition.tsx`) fades between routes inside the private layout, including dashboard, warehouses, inventory, and stock issue requests.
 - `MetricCard` and `WarehouseStatsCard` get a subtle ring highlight on hover; table rows use `transition-colors` on hover.
 - `NotificationBell`'s unread badge has a ping pulse to draw attention.
 - `tw-animate-css` is imported in `src/app/index.css`, which activates the `animate-in`/`data-[state=...]` open/close transitions already wired into the shadcn/ui primitives (dropdown, select, dialog, popover, etc.) across the whole app.

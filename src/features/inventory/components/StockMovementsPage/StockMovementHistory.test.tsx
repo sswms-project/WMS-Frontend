@@ -18,7 +18,7 @@ const movement = {
   balanceAfter: 15.5,
   unitCost: null,
   movementType: 'Issue' as const,
-  referenceType: 'OutboundOrder',
+  referenceType: 'StockIssueRequest',
   referenceId: '12345678-1234-1234-1234-123456789abc',
   performedByUserId: 'user-1',
   performedByName: 'Nguyễn Văn Kho',

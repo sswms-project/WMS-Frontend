@@ -38,16 +38,16 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import {
   formatOperationalDate,
   formatQuantity,
-} from '@/features/purchase-order/utils/purchase-order-format'
+} from '@/features/inbound-request/utils/inbound-request-format'
 import type {
-  InboundReceiptAction,
-  InboundReceiptDetail as ReceiptDetailType,
+  GoodsReceiptAction,
+  GoodsReceiptDetail as ReceiptDetailType,
 } from '../../types/inbound.types'
 import { InboundStatusBadge } from '../InboundWorkspace'
 
 interface ReceiptDetailProps {
   readonly receipt: ReceiptDetailType
-  readonly allowedActions: readonly InboundReceiptAction[]
+  readonly allowedActions: readonly GoodsReceiptAction[]
   readonly isPending: boolean
   readonly onUpdate: () => void
   readonly onSubmit: () => Promise<boolean>
@@ -97,7 +97,7 @@ export function ReceiptDetail({
       <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-3">
           <Button asChild variant="outline" size="icon">
-            <Link href={APP_ROUTES.inboundReceipts as Route} aria-label="Quay lại danh sách">
+            <Link href={APP_ROUTES.goodsReceipts as Route} aria-label="Quay lại danh sách">
               <ArrowLeft aria-hidden="true" />
             </Link>
           </Button>
@@ -107,7 +107,7 @@ export function ReceiptDetail({
               <InboundStatusBadge status={receipt.status} />
             </div>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Đơn mua {receipt.poNumber} · {receipt.warehouseName}
+              Yêu cầu nhập kho {receipt.inboundRequestCode} · {receipt.warehouseName}
             </p>
           </div>
         </div>
@@ -148,10 +148,10 @@ export function ReceiptDetail({
       </header>
       <section className="bg-card border">
         <div className="border-b p-4">
-          <h2 className="text-sm font-semibold">Tổng quan phiếu nhập</h2>
+          <h2 className="text-sm font-semibold">Tổng quan phiếu nhận hàng</h2>
         </div>
         <dl className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-4">
-          <Metadata label="Đơn mua" value={receipt.poNumber} />
+          <Metadata label="Yêu cầu nhập kho" value={receipt.inboundRequestCode} />
           <Metadata label="Kho nhận" value={receipt.warehouseName} />
           <Metadata label="Người tạo" value={receipt.createdByName} />
           <Metadata label="Ngày tạo" value={formatOperationalDate(receipt.createdAt)} />
@@ -304,12 +304,12 @@ export function ReceiptDetail({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmationAction === 'Approve'
-                ? 'Phê duyệt phiếu nhập?'
-                : 'Gửi phiếu nhập để duyệt?'}
+                ? 'Phê duyệt phiếu nhận hàng?'
+                : 'Gửi phiếu nhận hàng để duyệt?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmationAction === 'Approve'
-                ? 'Số lượng nhận sẽ được ghi nhận vào đơn mua và chuyển sang chờ cất hàng.'
+                ? 'Số lượng nhận sẽ được ghi nhận vào yêu cầu nhập kho và chuyển sang chờ cất hàng.'
                 : 'Phiếu sẽ được khóa chỉnh sửa trong lúc chờ quản lý duyệt.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -330,7 +330,7 @@ export function ReceiptDetail({
       <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Từ chối phiếu nhập</DialogTitle>
+            <DialogTitle>Từ chối phiếu nhận hàng</DialogTitle>
             <DialogDescription>
               Ghi rõ số lượng hoặc tình trạng hàng cần kiểm tra lại.
             </DialogDescription>

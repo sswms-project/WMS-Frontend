@@ -5,8 +5,8 @@ import type { ReceivingTask } from '../../types/inbound.types'
 import { ReceivingTaskDirectory } from './ReceivingTaskDirectory'
 
 const receivingTask: ReceivingTask = {
-  purchaseOrderId: '58f22fa2-de73-4eab-878e-08df0b58ac68',
-  poNumber: 'PO-20260905141918-A4569F3D',
+  inboundRequestId: '58f22fa2-de73-4eab-878e-08df0b58ac68',
+  inboundRequestCode: 'PO-20260905141918-A4569F3D',
   warehouseId: '398483fe-ddf6-4719-dc77-08df069816ab',
   warehouseName: 'Kho Kovia',
   supplierId: '4e159df0-fbee-4cff-9a62-7255aecb1ae6',

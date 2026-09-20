@@ -4,7 +4,7 @@ import { dotNetGuidSchema } from '@/lib/dotnet-guid.schema'
 export const inboundDocumentReviewLineSchema = z
   .object({
     sourceLineNumber: z.number().int().positive(),
-    purchaseOrderItemId: dotNetGuidSchema('Vui lòng chọn một dòng đơn mua hợp lệ.'),
+    inboundRequestItemId: dotNetGuidSchema('Vui lòng chọn một dòng yêu cầu nhập kho hợp lệ.'),
     confirmedQuantity: z.number().positive('Số lượng xác nhận phải lớn hơn 0.'),
     damagedQuantity: z.number().min(0, 'Số lượng hỏng không được âm.'),
     exceptionReason: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự.'),
@@ -57,7 +57,7 @@ export const inboundDocumentReviewLineSchema = z
 
 export const inboundDocumentReviewSchema = z
   .object({
-    purchaseOrderId: dotNetGuidSchema('Đơn mua không hợp lệ.'),
+    inboundRequestId: dotNetGuidSchema('Yêu cầu nhập kho không hợp lệ.'),
     acknowledgeWarehouseMismatch: z.boolean(),
     lines: z
       .array(inboundDocumentReviewLineSchema)
@@ -66,13 +66,13 @@ export const inboundDocumentReviewSchema = z
   .superRefine((review, context) => {
     review.lines.forEach((line, index) => {
       const firstIndex = review.lines.findIndex(
-        (candidate) => candidate.purchaseOrderItemId === line.purchaseOrderItemId
+        (candidate) => candidate.inboundRequestItemId === line.inboundRequestItemId
       )
       if (firstIndex !== index) {
         context.addIssue({
           code: 'custom',
-          path: ['lines', index, 'purchaseOrderItemId'],
-          message: 'Dòng đơn mua này đã được chọn ở một dòng chứng từ khác.',
+          path: ['lines', index, 'inboundRequestItemId'],
+          message: 'Dòng yêu cầu nhập kho này đã được chọn ở một dòng chứng từ khác.',
         })
       }
     })

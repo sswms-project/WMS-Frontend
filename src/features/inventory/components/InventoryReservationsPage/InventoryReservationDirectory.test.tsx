@@ -18,7 +18,7 @@ const reservation = {
   lotId: null,
   lotNumber: null,
   qualityStatus: 'Good' as const,
-  referenceType: 'OutboundPick' as const,
+  referenceType: 'StockIssuePick' as const,
   referenceId: 'pick-1',
   referenceCode: 'SO-001',
   reservedQuantity: 5,

@@ -44,7 +44,8 @@ export function SupplierReactivateDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Khôi phục hợp tác với “{supplierName}”?</AlertDialogTitle>
           <AlertDialogDescription>
-            Nhà cung cấp sẽ trở lại trạng thái đang hợp tác và có thể được chọn khi tạo đơn mua mới.
+            Nhà cung cấp sẽ trở lại trạng thái đang hợp tác và có thể được chọn khi tạo yêu cầu nhập
+            kho mới.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

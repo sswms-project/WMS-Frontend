@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
-import type { LifecycleEvent } from '@/features/purchase-order/types/purchase-order.types'
-import { formatOperationalDateTime } from '@/features/purchase-order/utils/purchase-order-format'
+import type { LifecycleEvent } from '@/features/inbound-request/types/inbound-request.types'
+import { formatOperationalDateTime } from '@/features/inbound-request/utils/inbound-request-format'
 
 export function LifecycleTimeline({ events }: { readonly events: readonly LifecycleEvent[] }) {
   if (events.length === 0) {

@@ -109,7 +109,7 @@ export const recentOperations: RecentOperation[] = [
   {
     id: '1',
     type: 'inbound',
-    title: 'Đã nhận phiếu nhập kho #MF-9021-X',
+    title: 'Đã nhận phiếu nhận hàng #MF-9021-X',
     description: 'SKU: LT-0245 | Đã nhận 5.000 đơn vị',
     timestamp: '14:23',
     status: 'completed',
@@ -333,8 +333,8 @@ export const notifications: AppNotification[] = [
   },
   {
     id: '4',
-    title: 'Giao hàng hoàn tất',
-    description: 'Đơn hàng #ORD-2024-001240 đã giao thành công',
+    title: 'Đã xác nhận xuất kho',
+    description: 'Yêu cầu xuất kho #SIR-2024-001240 đã rời kho',
     timestamp: '6 giờ trước',
     read: true,
   },
@@ -343,10 +343,10 @@ export const notifications: AppNotification[] = [
 export const tenantOwnerQuickActions: QuickAction[] = [
   {
     id: '1',
-    label: 'Tạo đơn hàng',
+    label: 'Tạo yêu cầu xuất kho',
     icon: 'package',
-    href: '/orders/create',
-    description: 'Tạo đơn hàng mới',
+    href: '/stock-issue-requests/new',
+    description: 'Tạo yêu cầu xuất kho mới',
     readOnlyWrite: true,
   },
   {

@@ -9,7 +9,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 
 const tabs = [
   { href: APP_ROUTES.inbound, label: 'Chờ nhận hàng', icon: PackageOpen },
-  { href: APP_ROUTES.inboundReceipts, label: 'Phiếu nhập', icon: ClipboardCheck },
+  { href: APP_ROUTES.goodsReceipts, label: 'Phiếu nhận hàng', icon: ClipboardCheck },
   { href: APP_ROUTES.inboundPutaway, label: 'Chờ cất hàng', icon: PackageCheck },
 ] as const
 

@@ -24,7 +24,7 @@ const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
-    pathPrefix: APP_ROUTES.purchaseOrders,
+    pathPrefix: APP_ROUTES.inboundRequests,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
@@ -44,19 +44,15 @@ const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
-    pathPrefix: APP_ROUTES.orders,
+    pathPrefix: APP_ROUTES.stockIssueRequests,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
-    pathPrefix: APP_ROUTES.returns,
+    pathPrefix: APP_ROUTES.goodsReturnRequests,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
-    pathPrefix: APP_ROUTES.delivery,
-    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
-  },
-  {
-    pathPrefix: APP_ROUTES.customers,
+    pathPrefix: APP_ROUTES.stockRecipients,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {

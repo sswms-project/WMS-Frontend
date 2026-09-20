@@ -17,12 +17,12 @@ describe('Platform Services query builders', () => {
   it('normalizes notification filters and uses an exclusive UTC end date', () => {
     const query = buildNotificationQuery(
       new URLSearchParams(
-        'search=%20failed%20&type=DeliveryUpdate&readState=unread&dateFrom=2026-08-01&dateTo=2026-08-31&page=2'
+        'search=%20dispatch%20&type=StockIssueRequestUpdate&readState=unread&dateFrom=2026-08-01&dateTo=2026-08-31&page=2'
       )
     )
     expect(query).toEqual({
-      search: 'failed',
-      type: 'DeliveryUpdate',
+      search: 'dispatch',
+      type: 'StockIssueRequestUpdate',
       isRead: false,
       dateFrom: new Date(2026, 7, 1).toISOString(),
       dateTo: new Date(2026, 8, 1).toISOString(),
@@ -63,22 +63,23 @@ describe('Platform Services query builders', () => {
   it('routes only explicitly supported reference types', () => {
     const routeFor = (
       type:
-        | 'POUpdate'
-        | 'InboundUpdate'
+        | 'InboundRequestUpdate'
+        | 'GoodsReceiptUpdate'
         | 'StockAdjustmentUpdate'
         | 'CycleCountUpdate'
         | 'WarehouseUpdate'
         | 'LowStock'
         | 'TransferUpdate'
-        | 'OutboundUpdate'
-        | 'DeliveryUpdate'
-        | 'ReturnUpdate',
+        | 'StockIssueRequestUpdate'
+        | 'GoodsReturnRequestUpdate',
       referenceType: string,
       referenceId = 'id-1'
     ) => getNotificationReferenceRoute({ type, referenceType, referenceId })
 
-    expect(routeFor('POUpdate', 'PurchaseOrder', 'po-1')).toBe('/purchase-orders/po-1')
-    expect(routeFor('InboundUpdate', 'InboundReceipt')).toBe('/inbound/receipts/id-1')
+    expect(routeFor('InboundRequestUpdate', 'InboundRequest', 'inbound-1')).toBe(
+      '/inbound-requests/inbound-1'
+    )
+    expect(routeFor('GoodsReceiptUpdate', 'GoodsReceipt')).toBe('/inbound/receipts/id-1')
     expect(routeFor('StockAdjustmentUpdate', 'StockAdjustment')).toBe(
       '/inventory/stock-adjustments/id-1'
     )
@@ -86,10 +87,11 @@ describe('Platform Services query builders', () => {
     expect(routeFor('WarehouseUpdate', 'Warehouse')).toBe('/warehouses/id-1')
     expect(routeFor('LowStock', 'Product')).toBe('/products/id-1')
     expect(routeFor('TransferUpdate', 'StockTransfer')).toBe('/transfers')
-    expect(routeFor('OutboundUpdate', 'OutboundOrder')).toBe('/orders')
-    expect(routeFor('DeliveryUpdate', 'OutboundOrder')).toBe('/delivery')
-    expect(routeFor('ReturnUpdate', 'Return')).toBe('/returns')
-    expect(routeFor('POUpdate', 'UnknownType')).toBeNull()
+    expect(routeFor('StockIssueRequestUpdate', 'StockIssueRequest')).toBe('/stock-issue-requests')
+    expect(routeFor('GoodsReturnRequestUpdate', 'GoodsReturnRequest')).toBe(
+      '/goods-return-requests'
+    )
+    expect(routeFor('InboundRequestUpdate', 'UnknownType')).toBeNull()
   })
 
   it('accepts every backend notification type in realtime events', () => {

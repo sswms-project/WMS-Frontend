@@ -9,9 +9,9 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { formatQuantity } from '@/features/purchase-order/utils/purchase-order-format'
+import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { PutawayFormValues } from '../../schemas/inbound.schema'
-import type { InboundReceiptDetail } from '../../types/inbound.types'
+import type { GoodsReceiptDetail } from '../../types/inbound.types'
 
 export interface SlotOption {
   id: string
@@ -21,7 +21,7 @@ export interface SlotOption {
 }
 
 interface PutawayFormProps {
-  readonly receipt: InboundReceiptDetail
+  readonly receipt: GoodsReceiptDetail
   readonly form: UseFormReturn<PutawayFormValues>
   readonly fields: readonly FieldArrayWithId<PutawayFormValues, 'lines', 'id'>[]
   readonly slots: readonly SlotOption[]
@@ -66,7 +66,7 @@ export function PutawayForm({
             <p className="text-primary text-xs font-medium">Cất hàng</p>
             <h1 className="font-mono text-xl font-semibold">{receipt.receiptCode}</h1>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              {receipt.poNumber} · {receipt.warehouseName}
+              {receipt.inboundRequestCode} · {receipt.warehouseName}
             </p>
           </div>
         </div>
@@ -97,22 +97,22 @@ export function PutawayForm({
         </div>
         <div className="divide-y">
           {fields.map((field, index) => {
-            const selectedItemId = watch(`lines.${index}.inboundReceiptItemId`)
+            const selectedItemId = watch(`lines.${index}.goodsReceiptItemId`)
             const selectedItem = receipt.items.find((item) => item.id === selectedItemId)
             return (
               <div
                 key={field.id}
                 className="grid gap-3 p-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(120px,.6fr)_auto]"
               >
-                <Field data-invalid={Boolean(errors.lines?.[index]?.inboundReceiptItemId)}>
+                <Field data-invalid={Boolean(errors.lines?.[index]?.goodsReceiptItemId)}>
                   <FieldLabel htmlFor={`putaway-item-${index}`}>Sản phẩm</FieldLabel>
                   <NativeSelect
                     id={`putaway-item-${index}`}
                     className="w-full"
-                    aria-invalid={Boolean(errors.lines?.[index]?.inboundReceiptItemId)}
+                    aria-invalid={Boolean(errors.lines?.[index]?.goodsReceiptItemId)}
                     value={selectedItemId}
                     onChange={(event) =>
-                      setValue(`lines.${index}.inboundReceiptItemId`, event.target.value, {
+                      setValue(`lines.${index}.goodsReceiptItemId`, event.target.value, {
                         shouldDirty: true,
                         shouldValidate: true,
                       })
@@ -127,7 +127,7 @@ export function PutawayForm({
                         </NativeSelectOption>
                       ))}
                   </NativeSelect>
-                  <FieldError>{errors.lines?.[index]?.inboundReceiptItemId?.message}</FieldError>
+                  <FieldError>{errors.lines?.[index]?.goodsReceiptItemId?.message}</FieldError>
                   {selectedItem ? (
                     <p className="text-muted-foreground text-xs">
                       Còn {formatQuantity(selectedItem.remainingPutAwayQuantity)}

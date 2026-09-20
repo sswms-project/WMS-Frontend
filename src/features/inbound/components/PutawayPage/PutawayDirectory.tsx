@@ -22,11 +22,11 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import {
   formatOperationalDate,
   formatQuantity,
-} from '@/features/purchase-order/utils/purchase-order-format'
-import type { InboundReceiptSummary } from '../../types/inbound.types'
+} from '@/features/inbound-request/utils/inbound-request-format'
+import type { GoodsReceiptSummary } from '../../types/inbound.types'
 
 interface PutawayDirectoryProps {
-  readonly items: readonly InboundReceiptSummary[]
+  readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
   readonly pageSize: number
@@ -39,7 +39,7 @@ interface PutawayDirectoryProps {
   readonly onRetry: () => void
 }
 
-function remainingQuantity(item: InboundReceiptSummary) {
+function remainingQuantity(item: GoodsReceiptSummary) {
   return Math.max(0, item.receivedQuantity - item.damagedQuantity - item.putAwayQuantity)
 }
 
@@ -106,7 +106,7 @@ export function PutawayDirectory({
                 <ItemContent>
                   <ItemTitle className="font-mono">{item.receiptCode}</ItemTitle>
                   <ItemDescription>
-                    {item.poNumber} · {item.warehouseName}
+                    {item.inboundRequestCode} · {item.warehouseName}
                   </ItemDescription>
                   <ItemDescription>
                     {formatQuantity(remainingQuantity(item))} còn cất
@@ -128,7 +128,7 @@ export function PutawayDirectory({
               <TableHeader>
                 <TableRow>
                   <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Đơn mua</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10 text-right">Còn cất</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10">Ngày nhận</TableHead>
@@ -139,7 +139,7 @@ export function PutawayDirectory({
                 {items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-mono font-semibold">{item.receiptCode}</TableCell>
-                    <TableCell className="font-mono">{item.poNumber}</TableCell>
+                    <TableCell className="font-mono">{item.inboundRequestCode}</TableCell>
                     <TableCell>{item.warehouseName}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatQuantity(remainingQuantity(item))}

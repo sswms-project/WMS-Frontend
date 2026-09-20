@@ -25,7 +25,7 @@ import {
 import {
   formatOperationalDate,
   formatQuantity,
-} from '@/features/purchase-order/utils/purchase-order-format'
+} from '@/features/inbound-request/utils/inbound-request-format'
 import type { InboundDocumentReviewFormValues } from '../../../schemas/inbound-document-import.schema'
 import type {
   InboundDocumentImport,
@@ -79,7 +79,7 @@ function StatusBadges({
 const SOURCE_LABELS = {
   AiExtracted: 'AI trích xuất',
   DocumentParser: 'Đọc từ tệp',
-  PurchaseOrder: 'Đơn mua',
+  InboundRequest: 'Yêu cầu nhập kho',
   SupplierMaster: 'Danh mục NCC',
   WarehouseMaster: 'Danh mục kho',
   SystemGenerated: 'Hệ thống',
@@ -156,8 +156,8 @@ export function ReviewStep({
         <section className="bg-card flex flex-col gap-2 border p-3">
           <h3 className="text-sm font-semibold">Dữ liệu WMS có thẩm quyền</h3>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-            <dt className="text-muted-foreground">Đơn mua</dt>
-            <dd className="font-mono">{review.purchaseOrderNumber}</dd>
+            <dt className="text-muted-foreground">Yêu cầu nhập kho</dt>
+            <dd className="font-mono">{review.inboundRequestCode}</dd>
             <dt className="text-muted-foreground">Nhà cung cấp</dt>
             <dd>{review.supplierName}</dd>
             <dt className="text-muted-foreground">Kho nhận</dt>
@@ -186,7 +186,7 @@ export function ReviewStep({
       {review.hasWarehouseMismatch ? (
         <Alert>
           <TriangleAlert aria-hidden="true" />
-          <AlertTitle>Kho trên chứng từ khác với đơn mua</AlertTitle>
+          <AlertTitle>Kho trên chứng từ khác với yêu cầu nhập kho</AlertTitle>
           <AlertDescription className="flex flex-col gap-3">
             <div className="grid gap-1 sm:grid-cols-2">
               <p>
@@ -230,13 +230,13 @@ export function ReviewStep({
         </Alert>
       ) : null}
 
-      <input type="hidden" {...form.register('purchaseOrderId')} />
+      <input type="hidden" {...form.register('inboundRequestId')} />
       <div className="max-h-[42dvh] overflow-auto border">
         <Table className="min-w-[980px]">
           <TableHeader>
             <TableRow>
               <TableHead className="bg-card sticky top-0 z-10">Dòng chứng từ</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Dòng đơn mua</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Dòng yêu cầu nhập kho</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 text-right">Còn lại</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 text-right">SL chứng từ</TableHead>
               <TableHead className="bg-card sticky top-0 z-10">Thông tin lô</TableHead>
@@ -262,20 +262,20 @@ export function ReviewStep({
                   </p>
                 </TableCell>
                 <TableCell>
-                  <Field data-invalid={Boolean(errors.lines?.[index]?.purchaseOrderItemId)}>
+                  <Field data-invalid={Boolean(errors.lines?.[index]?.inboundRequestItemId)}>
                     <FieldLabel className="sr-only" htmlFor={`po-line-${index}`}>
-                      Dòng đơn mua
+                      Dòng yêu cầu nhập kho
                     </FieldLabel>
                     <NativeSelect
                       id={`po-line-${index}`}
                       className="w-64"
-                      aria-invalid={Boolean(errors.lines?.[index]?.purchaseOrderItemId)}
-                      value={formLines[index]?.purchaseOrderItemId ?? ''}
+                      aria-invalid={Boolean(errors.lines?.[index]?.inboundRequestItemId)}
+                      value={formLines[index]?.inboundRequestItemId ?? ''}
                       onChange={(event) => {
                         const option = task.lines.find(
-                          (item) => item.purchaseOrderItemId === event.target.value
+                          (item) => item.inboundRequestItemId === event.target.value
                         )
-                        form.setValue(`lines.${index}.purchaseOrderItemId`, event.target.value, {
+                        form.setValue(`lines.${index}.inboundRequestItemId`, event.target.value, {
                           shouldDirty: true,
                           shouldValidate: true,
                         })
@@ -297,14 +297,14 @@ export function ReviewStep({
                       <NativeSelectOption value="">Chọn sản phẩm</NativeSelectOption>
                       {task.lines.map((option) => (
                         <NativeSelectOption
-                          key={option.purchaseOrderItemId}
-                          value={option.purchaseOrderItemId}
+                          key={option.inboundRequestItemId}
+                          value={option.inboundRequestItemId}
                         >
                           {option.productSKU} · {option.productName}
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                    <FieldError>{errors.lines?.[index]?.purchaseOrderItemId?.message}</FieldError>
+                    <FieldError>{errors.lines?.[index]?.inboundRequestItemId?.message}</FieldError>
                   </Field>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
@@ -426,7 +426,7 @@ export function ReviewStep({
             hasUnsavedChanges
               ? 'Lưu và kiểm tra lại các thay đổi trước khi tạo phiếu.'
               : needsWarehouseAcknowledgement
-                ? 'Xác nhận sử dụng kho của đơn mua để tiếp tục.'
+                ? 'Xác nhận sử dụng kho của yêu cầu nhập kho để tiếp tục.'
                 : undefined
           }
           disabled={
@@ -442,7 +442,7 @@ export function ReviewStep({
           ) : (
             <CheckCircle2 data-icon="inline-start" />
           )}
-          Tạo phiếu nhập nháp
+          Tạo phiếu nhận hàng nháp
         </Button>
       </div>
     </div>

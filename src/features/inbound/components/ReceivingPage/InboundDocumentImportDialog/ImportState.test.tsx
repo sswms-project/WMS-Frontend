@@ -18,7 +18,7 @@ function importResult(status: InboundDocumentImport['status']): InboundDocumentI
     extractionModel: 'gemini-3.6-flash',
     createdAt: '2026-09-04T00:00:00Z',
     reviewedAt: null,
-    inboundReceiptId: null,
+    goodsReceiptId: null,
     duplicateFileDetected: false,
     review: null,
   }
@@ -69,7 +69,7 @@ describe('ImportState', () => {
       'href',
       '/inbound/receipts/20000000-0000-4000-8000-000000000001'
     )
-    expect(screen.getByRole('link', { name: 'Xem danh sách phiếu nhập' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Xem danh sách phiếu nhận hàng' })).toHaveAttribute(
       'href',
       '/inbound/receipts'
     )
