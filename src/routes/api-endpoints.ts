@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     rejectTenantRegistration: (tenantId: string) =>
       `/admin/tenants/${tenantId}/reject-registration`,
     subscriptionPlans: '/subscription-plans/admin',
+    activateSubscriptionPlan: (planId: string) => `/subscription-plans/${planId}/activate`,
   },
   tenantRolePermissions: {
     workspace: '/tenant-role-permissions',
@@ -184,12 +185,12 @@ export const API_ENDPOINTS = {
   },
   subscription: {
     me: '/subscriptions/me',
+    entitlement: '/subscriptions/entitlement',
     plans: '/subscription-plans',
     planById: (id: string) => `/subscription-plans/${id}`,
-    upgrade: '/subscriptions/upgrade',
+    initialSelection: '/subscriptions/initial-selection',
+    changePlan: '/subscriptions/change-plan',
     renew: '/subscriptions/renew',
-    cancel: '/subscriptions/me',
-    paymentLink: '/subscriptions/payment-link',
     paymentStatus: (orderCode: string) => `/subscriptions/payments/${orderCode}/sync`,
   },
   public: {

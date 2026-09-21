@@ -35,8 +35,8 @@ vi.mock('../components/SubscriptionPage', () => ({
 }))
 
 vi.mock('../hooks/use-subscription', () => ({
-  useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  useCreatePaymentLinkMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useChangeSubscriptionPlanMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useInitialSubscriptionSelectionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useCurrentSubscriptionQuery: () => pageState.subscriptionQuery,
   useRenewSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useSubscriptionPlansQuery: () => pageState.plansQuery,
@@ -79,13 +79,13 @@ describe('SubscriptionPage states', () => {
 
     render(<SubscriptionPage />)
 
-    expect(screen.getByText('Chưa có gói dịch vụ')).toBeInTheDocument()
+    expect(screen.getByText('Chọn gói để bắt đầu sử dụng KOVIA')).toBeInTheDocument()
   })
 
   it('explains when no active plan is available', () => {
     render(<SubscriptionPage />)
 
-    expect(screen.getByText('Chưa có plan active')).toBeInTheDocument()
+    expect(screen.getByText('Chưa có gói đang mở đăng ký')).toBeInTheDocument()
   })
 
   it('keeps payment history out of the plan management page', () => {

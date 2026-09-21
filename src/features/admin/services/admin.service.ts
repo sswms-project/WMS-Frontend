@@ -102,4 +102,9 @@ export const adminService = {
     axiosClient
       .delete<ApiResponse<unknown>>(API_ENDPOINTS.subscription.planById(id))
       .then((r) => r.data),
+
+  activateSubscriptionPlan: (id: string) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.platformAdmin.activateSubscriptionPlan(id))
+      .then((r) => r.data),
 }

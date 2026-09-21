@@ -18,10 +18,13 @@ export function PaymentResultPage() {
 
   const dbStatus = syncQuery.data
   const isPaid = dbStatus === 'Completed'
-  const isCancelled = dbStatus === 'Failed'
+  const isFailed = dbStatus === 'Failed'
+  const isCancelled = dbStatus === 'Cancelled'
+  const isExpired = dbStatus === 'Expired'
   const isMissingOrderCode = !orderCode
-  const isError = (isMissingOrderCode || syncQuery.isError) && !isPaid && !isCancelled
-  const isProcessing = !isPaid && !isCancelled && !isError
+  const isError =
+    (isMissingOrderCode || syncQuery.isError) && !isPaid && !isFailed && !isCancelled && !isExpired
+  const isProcessing = !isPaid && !isFailed && !isCancelled && !isExpired && !isError
 
   useEffect(() => {
     if (isPaid) {
@@ -46,13 +49,24 @@ export function PaymentResultPage() {
         </>
       )}
 
-      {isCancelled && (
+      {(isFailed || isCancelled || isExpired) && (
         <>
           <XCircle className="text-destructive h-16 w-16" aria-hidden="true" />
           <div className="text-center">
-            <h1 className="text-foreground text-2xl font-semibold">Đã hủy thanh toán</h1>
+            <h1 className="text-foreground text-2xl font-semibold">
+              {isCancelled
+                ? 'Đã hủy thanh toán'
+                : isExpired
+                  ? 'Thanh toán đã hết hạn'
+                  : 'Thanh toán thất bại'}
+            </h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              Giao dịch bị hủy. Gói dịch vụ không thay đổi.
+              {isCancelled
+                ? 'Bạn đã hủy giao dịch.'
+                : isExpired
+                  ? 'Liên kết thanh toán không còn hiệu lực.'
+                  : 'Nhà cung cấp chưa xác nhận giao dịch thành công.'}{' '}
+              Gói dịch vụ hiện tại không thay đổi.
             </p>
           </div>
           <Button variant="outline" onClick={() => router.push('/subscription')}>

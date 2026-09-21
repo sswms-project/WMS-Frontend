@@ -19,6 +19,7 @@ import { decodeJwtUser } from '../utils/decode-jwt-user'
 import { clearTwoFactorTempToken, saveTwoFactorTempToken } from '../utils/two-factor-temp-token'
 import { safeReturnUrl, saveAuthReturnUrl } from '../utils/auth-return-url'
 import { getTemporaryLockSeconds } from '../utils/temporary-lock'
+import { resolvePostLoginRoute } from '../utils/post-login-route'
 
 export function LoginPage({ returnUrl }: { readonly returnUrl?: string }) {
   const router = useRouter()
@@ -108,7 +109,7 @@ export function LoginPage({ returnUrl }: { readonly returnUrl?: string }) {
 
       clearTwoFactorTempToken()
       setAuth(user, accessToken, refreshToken)
-      router.replace(safeReturnUrl(returnUrl) ?? APP_ROUTES.dashboard)
+      router.replace(await resolvePostLoginRoute(user, safeReturnUrl(returnUrl)))
     } catch (error) {
       if (!isApiErrorResponse(error)) return
 

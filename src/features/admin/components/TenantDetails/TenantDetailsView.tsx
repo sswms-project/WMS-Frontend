@@ -169,7 +169,7 @@ export function TenantDetailsView({
                   ['Hiệu lực từ', formatAdminDate(data.subscription.startDate)],
                   ['Hết hạn', formatAdminDate(data.subscription.endDate)],
                   ['Trạng thái', data.subscription.status],
-                  ['Tự động gia hạn', data.subscription.autoRenew ? 'Có' : 'Không'],
+                  ['Phương thức gia hạn', 'Thủ công qua PayOS'],
                   ['Thay đổi chờ áp dụng', data.subscription.pendingPlanName ?? 'Không có'],
                   ['Chu kỳ chờ áp dụng', data.subscription.pendingBillingCycle ?? '—'],
                 ]}

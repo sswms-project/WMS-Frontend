@@ -1,4 +1,5 @@
 import type { UserRole } from '@/config/roles'
+import type { BillingCycle } from '@/features/subscription/types/subscription.types'
 
 export interface AuthUser {
   id: string
@@ -49,6 +50,8 @@ export interface RegisterRequestDto {
   password: string
   confirmPassword: string
   acceptTerms: boolean
+  selectedPlanId?: string
+  selectedBillingCycle?: BillingCycle
 }
 
 export type RegisterResponseDto = unknown
