@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -13,14 +13,23 @@ interface RoleCardProps {
 
 export function RoleCard({ role }: RoleCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const permissionPanelId = `role-permissions-${role.id}`
+
+  function collapsePermissions() {
+    setExpanded(false)
+    triggerRef.current?.focus({ preventScroll: true })
+  }
 
   return (
     <article className="border-border bg-card overflow-hidden rounded-lg border shadow-sm">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="hover:bg-muted/60 flex w-full items-center gap-3 px-5 py-4 text-left"
         aria-expanded={expanded}
+        aria-controls={permissionPanelId}
       >
         <ShieldCheck
           className={cn(
@@ -50,8 +59,8 @@ export function RoleCard({ role }: RoleCardProps) {
       </button>
 
       {expanded && (
-        <div className="border-border/60 border-t">
-          <RolePermissionEditor role={role} />
+        <div id={permissionPanelId} className="border-border/60 border-t">
+          <RolePermissionEditor role={role} onClose={collapsePermissions} />
         </div>
       )}
     </article>
