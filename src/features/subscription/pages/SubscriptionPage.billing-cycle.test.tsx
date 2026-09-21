@@ -116,6 +116,9 @@ describe('SubscriptionPage billing cycle', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Thanh toán hàng năm' }))
     await user.click(screen.getByRole('button', { name: 'Chọn Professional' }))
+
+    expect(screen.getByText(/một chu kỳ năm đầy đủ mới sẽ bắt đầu ngay/)).toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: 'Xác nhận thay đổi' }))
 
     expect(changePlanMutation.mutateAsync).toHaveBeenCalledWith({

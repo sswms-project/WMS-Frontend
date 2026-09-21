@@ -89,6 +89,7 @@ export function SubscriptionPage() {
 
   const subscription = subscriptionQuery.data
   const isOnboarding = !subscription || subscription.status === 'Pending'
+  const hasPendingInitialPayment = isOnboarding && Boolean(subscription?.pendingPaymentId)
   const plans = plansQuery.data ?? []
   const activePlans = plans.filter(isActivePlan).toSorted((firstPlan, secondPlan) => {
     if (firstPlan.displayOrder !== secondPlan.displayOrder) {
@@ -182,7 +183,9 @@ export function SubscriptionPage() {
           }
           description={
             subscription
-              ? `Gói ${subscription.planName} đang chờ kích hoạt. Tiếp tục với gói đã chọn hoặc chọn một gói khác.`
+              ? hasPendingInitialPayment
+                ? `Thanh toán cho gói ${subscription.planName} đang chờ xác nhận. Hãy tiếp tục checkout hiện tại hoặc chờ giao dịch kết thúc trước khi chọn gói khác.`
+                : `Gói ${subscription.planName} đang chờ kích hoạt. Tiếp tục với gói đã chọn hoặc chọn một gói khác.`
               : 'Dữ liệu tổ chức đã được giữ nguyên. Hãy chọn rõ gói Free hoặc gói trả phí phù hợp để kích hoạt quyền vận hành kho.'
           }
         />
@@ -237,14 +240,25 @@ export function SubscriptionPage() {
                 selectedBillingCycle,
                 isActionPending || Boolean(!isOnboarding && subscription?.pendingPlanName)
               )
-              const isPendingSelectedPlan =
-                subscription?.status === 'Pending' && subscription.planName === plan.planName
-              const actionState = isPendingSelectedPlan
-                ? {
-                    disabled: isActionPending,
-                    label: isActionPending ? 'Đang xử lý…' : 'Tiếp tục kích hoạt',
-                  }
-                : defaultActionState
+              const isPendingSelectedPlan = Boolean(
+                subscription?.status === 'Pending' &&
+                subscription.planName === plan.planName &&
+                normalizeBillingCycle(subscription.billingCycle) === selectedBillingCycle
+              )
+              const actionState =
+                hasPendingInitialPayment && !isPendingSelectedPlan
+                  ? {
+                      disabled: true,
+                      label: 'Đang có thanh toán chờ',
+                      tooltip:
+                        'Hoàn tất hoặc chờ checkout hiện tại kết thúc trước khi chọn gói khác.',
+                    }
+                  : isPendingSelectedPlan
+                    ? {
+                        disabled: isActionPending,
+                        label: isActionPending ? 'Đang xử lý…' : 'Tiếp tục kích hoạt',
+                      }
+                    : defaultActionState
               return (
                 <PlanCard
                   key={plan.id}
@@ -318,7 +332,7 @@ function PlanChangeTimingOptions({
           <span className="block text-sm font-medium">Áp dụng ngay</span>
           <span className="text-muted-foreground mt-1 block text-xs font-normal">
             {immediateEligible
-              ? `Thanh toán phần chênh lệch theo thời gian còn lại; kỳ hiện tại vẫn kết thúc ${formatDate(subscription.endDate)}.`
+              ? `Giá gói mới được trừ phần giá trị chưa sử dụng của gói hiện tại. Sau thanh toán, một chu kỳ ${dialogState.billingCycle === 'Monthly' ? 'tháng' : 'năm'} đầy đủ mới sẽ bắt đầu ngay.`
               : 'Chỉ dành cho nâng cấp lên gói cao hơn và giữ nguyên chu kỳ thanh toán.'}
           </span>
         </Label>
