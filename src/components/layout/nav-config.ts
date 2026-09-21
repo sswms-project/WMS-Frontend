@@ -55,7 +55,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         {
           href: APP_ROUTES.admin.dashboard,
-          label: 'Dashboard',
+          label: 'Tổng quan',
           icon: LayoutDashboard,
           requiredPermission: 'admin:dashboard:view',
         },
@@ -67,7 +67,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         {
           href: APP_ROUTES.admin.tenants,
-          label: 'Tenant',
+          label: 'Đơn vị thuê',
           icon: Building2,
           requiredPermission: 'admin:tenants:view',
         },
@@ -89,7 +89,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       id: 'system',
       label: 'Hệ thống',
       items: [
-        requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, 'audit-logs:view'),
+        requiredNavItem(APP_ROUTES.auditLogs, 'Nhật ký hoạt động', ScrollText, 'audit-logs:view'),
         { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
       ],
     },

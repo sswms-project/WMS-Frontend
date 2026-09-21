@@ -30,6 +30,21 @@ describe('application navigation visibility', () => {
     ).toBe(false)
   })
 
+  it('uses Vietnamese labels throughout the system admin sidebar', () => {
+    const adminSections = NAV_CONFIG[USER_ROLES.SystemAdmin]
+
+    expect(
+      adminSections.map((section) => ({
+        label: section.label ?? null,
+        items: section.items.map((item) => item.label),
+      }))
+    ).toEqual([
+      { label: null, items: ['Tổng quan'] },
+      { label: 'Quản trị nền tảng', items: ['Đơn vị thuê', 'Phân quyền', 'Gói đăng ký'] },
+      { label: 'Hệ thống', items: ['Nhật ký hoạt động', 'Cài đặt'] },
+    ])
+  })
+
   it('shows permission-gated workspaces only when the current user has access', () => {
     expect(
       getVisibleNavItems(USER_ROLES.TenantOwner, ['inbound-requests:view']).some(

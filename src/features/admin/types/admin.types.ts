@@ -177,7 +177,11 @@ export interface TenantStateChangeRequest {
   readonly reason: string
 }
 
-export interface TenantRegistrationDecisionRequest {
+export interface ApproveTenantRegistrationRequest {
+  readonly concurrencyToken: string
+}
+
+export interface RejectTenantRegistrationRequest {
   readonly concurrencyToken: string
   readonly reason: string
 }

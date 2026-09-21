@@ -12,8 +12,8 @@ import { adminService } from '../services/admin.service'
 import type {
   AdminSubscriptionPlanQuery,
   AssignPermissionsRequest,
+  TenantDetailsResponse,
   TenantQuery,
-  TenantRegistrationDecisionRequest,
   TenantStateChangeRequest,
 } from '../types/admin.types'
 
@@ -136,18 +136,19 @@ export function useReactivateTenantMutation() {
   return useTenantStateMutation('reactivate')
 }
 
-interface TenantRegistrationDecisionVariables {
+interface TenantRegistrationDecisionVariables<TBody> {
   readonly tenantId: string
-  readonly body: TenantRegistrationDecisionRequest
+  readonly body: TBody
 }
 
-function useTenantRegistrationDecisionMutation(action: 'approve' | 'reject') {
+function useTenantRegistrationDecisionMutation<TBody>(
+  action: 'approve' | 'reject',
+  mutation: (tenantId: string, body: TBody) => Promise<ApiResponse<TenantDetailsResponse>>
+) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ tenantId, body }: TenantRegistrationDecisionVariables) =>
-      action === 'approve'
-        ? adminService.approveTenantRegistration(tenantId, body)
-        : adminService.rejectTenantRegistration(tenantId, body),
+    mutationFn: ({ tenantId, body }: TenantRegistrationDecisionVariables<TBody>) =>
+      mutation(tenantId, body),
     onSuccess: (response, variables) => {
       queryClient.setQueryData(
         queryKeys.platformAdmin.tenantDetail(variables.tenantId),
@@ -173,11 +174,11 @@ function useTenantRegistrationDecisionMutation(action: 'approve' | 'reject') {
 }
 
 export function useApproveTenantRegistrationMutation() {
-  return useTenantRegistrationDecisionMutation('approve')
+  return useTenantRegistrationDecisionMutation('approve', adminService.approveTenantRegistration)
 }
 
 export function useRejectTenantRegistrationMutation() {
-  return useTenantRegistrationDecisionMutation('reject')
+  return useTenantRegistrationDecisionMutation('reject', adminService.rejectTenantRegistration)
 }
 
 export function useSubscriptionFeaturesQuery() {

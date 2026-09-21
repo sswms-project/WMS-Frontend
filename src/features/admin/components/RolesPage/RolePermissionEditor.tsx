@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Shield } from 'lucide-react'
+import { ChevronUp, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -13,6 +13,7 @@ import type { PermissionResponse, RoleResponse } from '../../types/admin.types'
 
 interface RolePermissionEditorProps {
   readonly role: RoleResponse
+  readonly onClose: () => void
 }
 
 function groupByModule(permissions: PermissionResponse[]) {
@@ -24,7 +25,7 @@ function groupByModule(permissions: PermissionResponse[]) {
   }, {})
 }
 
-export function RolePermissionEditor({ role }: RolePermissionEditorProps) {
+export function RolePermissionEditor({ role, onClose }: RolePermissionEditorProps) {
   const { data: allPermissions, isLoading } = usePermissionsQuery()
   const assignMutation = useAssignPermissionsMutation()
   const [selected, setSelected] = useState<Set<string>>(
@@ -126,16 +127,29 @@ export function RolePermissionEditor({ role }: RolePermissionEditorProps) {
         )
       })}
 
-      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={!isDirty || assignMutation.isPending}
-          className="w-full gap-2 sm:w-auto"
-        >
-          <Shield className="size-3.5" aria-hidden="true" />
-          {assignMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
-        </Button>
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!isDirty || assignMutation.isPending}
+            className="w-full sm:w-auto"
+          >
+            <Shield data-icon="inline-start" aria-hidden="true" />
+            {assignMutation.isPending ? 'Đang lưu…' : 'Lưu thay đổi'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={assignMutation.isPending}
+            className="w-full sm:w-auto"
+          >
+            <ChevronUp data-icon="inline-start" aria-hidden="true" />
+            Đóng
+          </Button>
+        </div>
         {isDirty && <p className="text-on-primary-container text-xs">Có thay đổi chưa được lưu</p>}
       </div>
     </div>
