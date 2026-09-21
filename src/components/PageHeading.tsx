@@ -20,12 +20,12 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.subscription, label: 'Gói dịch vụ' },
   { prefix: APP_ROUTES.warehouses, label: 'Kho hàng' },
   { prefix: APP_ROUTES.suppliers, label: 'Nhà cung cấp' },
-  { prefix: APP_ROUTES.purchaseOrders, label: 'Mua hàng' },
+  { prefix: APP_ROUTES.inboundRequests, label: 'Yêu cầu nhập kho' },
   { prefix: APP_ROUTES.inbound, label: 'Nhập kho' },
   { prefix: APP_ROUTES.inventory, label: 'Tồn kho' },
   { prefix: APP_ROUTES.products, label: 'Sản phẩm' },
-  { prefix: APP_ROUTES.orders, label: 'Đơn hàng' },
-  { prefix: APP_ROUTES.delivery, label: 'Vận chuyển' },
+  { prefix: APP_ROUTES.stockIssueRequests, label: 'Yêu cầu xuất kho' },
+  { prefix: APP_ROUTES.goodsReturnRequests, label: 'Yêu cầu trả hàng' },
 ]
 
 export function getPageTitle(pathname: string) {

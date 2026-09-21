@@ -32,30 +32,30 @@ describe('application navigation visibility', () => {
 
   it('shows permission-gated workspaces only when the current user has access', () => {
     expect(
-      getVisibleNavItems(USER_ROLES.TenantOwner, ['purchase-orders:view']).some(
-        (item) => item.href === APP_ROUTES.purchaseOrders
+      getVisibleNavItems(USER_ROLES.TenantOwner, ['inbound-requests:view']).some(
+        (item) => item.href === APP_ROUTES.inboundRequests
       )
     ).toBe(true)
     expect(
-      getVisibleNavItems(USER_ROLES.WarehouseManager, ['purchase-orders:view']).some(
-        (item) => item.href === APP_ROUTES.purchaseOrders
+      getVisibleNavItems(USER_ROLES.WarehouseManager, ['inbound-requests:view']).some(
+        (item) => item.href === APP_ROUTES.inboundRequests
       )
     ).toBe(true)
     expect(
-      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['purchase-orders:view']).some(
-        (item) => item.href === APP_ROUTES.purchaseOrders
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['inbound-requests:view']).some(
+        (item) => item.href === APP_ROUTES.inboundRequests
       )
     ).toBe(true)
     expect(
       getVisibleNavItems(USER_ROLES.WarehouseStaff, []).some(
-        (item) => item.href === APP_ROUTES.purchaseOrders
+        (item) => item.href === APP_ROUTES.inboundRequests
       )
     ).toBe(false)
 
     const staffItems = getVisibleNavItems(USER_ROLES.WarehouseStaff, [
       'suppliers:view',
       'products:view',
-      'inbound-receipts:view',
+      'goods-receipts:view',
       'inventory:view',
     ])
     expect(staffItems.some((item) => item.href === APP_ROUTES.suppliers)).toBe(true)
@@ -88,10 +88,16 @@ describe('application navigation visibility', () => {
       { label: null, items: ['Dashboard'] },
       { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Nhân sự', 'Phân quyền'] },
       { label: null, items: ['Kho hàng'] },
-      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp', 'Khách hàng'] },
+      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp', 'Đơn vị nhận hàng'] },
       {
         label: 'Vận hành kho',
-        items: ['Mua hàng', 'Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Xuất kho & Giao hàng'],
+        items: [
+          'Yêu cầu nhập kho',
+          'Nhập kho',
+          'Tồn kho',
+          'Điều chuyển kho',
+          'Xuất kho & Trả hàng',
+        ],
       },
       {
         label: 'Báo cáo',

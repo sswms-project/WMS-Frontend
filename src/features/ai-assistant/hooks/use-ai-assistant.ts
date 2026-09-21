@@ -20,7 +20,7 @@ export interface AiDraftActionVariables {
 
 // Lists that change once a confirmed draft has been executed.
 const ACTION_RESULT_QUERY_KEYS: Record<string, QueryKey> = {
-  [AI_ACTIONS.createPurchaseOrder]: queryKeys.purchaseOrders.all,
+  [AI_ACTIONS.createInboundRequest]: queryKeys.inboundRequests.all,
   [AI_ACTIONS.createTransfer]: queryKeys.transfers.all,
   [AI_ACTIONS.createStockAdjustment]: queryKeys.stockAdjustments.all,
 }

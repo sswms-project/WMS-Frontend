@@ -21,26 +21,26 @@ import {
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { APP_ROUTES } from '@/routes/app-routes'
-import type { InboundReceiptStatus, InboundReceiptSummary } from '../../types/inbound.types'
+import type { GoodsReceiptStatus, GoodsReceiptSummary } from '../../types/inbound.types'
 import { INBOUND_STATUS_LABELS } from '../../utils/inbound-format'
 import {
   formatOperationalDate,
   formatQuantity,
-} from '@/features/purchase-order/utils/purchase-order-format'
+} from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundStatusBadge } from '../InboundWorkspace'
 
 interface ReceiptDirectoryProps {
-  readonly items: readonly InboundReceiptSummary[]
+  readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
   readonly pageSize: number
   readonly searchText: string
-  readonly status: InboundReceiptStatus | ''
+  readonly status: GoodsReceiptStatus | ''
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
   readonly onSearchChange: (value: string) => void
-  readonly onStatusChange: (value: InboundReceiptStatus | '') => void
+  readonly onStatusChange: (value: GoodsReceiptStatus | '') => void
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
 }
@@ -64,7 +64,7 @@ export function ReceiptDirectory({
     <section className="bg-card flex min-h-0 flex-col border">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-sm font-semibold">Danh sách phiếu nhập</h2>
+          <h2 className="text-sm font-semibold">Danh sách phiếu nhận hàng</h2>
           <p className="text-muted-foreground text-xs tabular-nums">{totalCount} phiếu</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -73,16 +73,16 @@ export function ReceiptDirectory({
               <Search aria-hidden="true" />
             </InputGroupAddon>
             <InputGroupInput
-              aria-label="Tìm phiếu nhập"
+              aria-label="Tìm phiếu nhận hàng"
               placeholder="Tìm mã phiếu, mã PO…"
               value={searchText}
               onChange={(event) => onSearchChange(event.target.value)}
             />
           </InputGroup>
           <NativeSelect
-            aria-label="Lọc trạng thái phiếu nhập"
+            aria-label="Lọc trạng thái phiếu nhận hàng"
             value={status}
-            onChange={(event) => onStatusChange(event.target.value as InboundReceiptStatus | '')}
+            onChange={(event) => onStatusChange(event.target.value as GoodsReceiptStatus | '')}
           >
             <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
             {Object.entries(INBOUND_STATUS_LABELS).map(([value, label]) => (
@@ -110,10 +110,10 @@ export function ReceiptDirectory({
       {isLoading ? (
         <OperationalLoadingState />
       ) : isError ? (
-        <OperationalErrorState title="Không thể tải phiếu nhập" onRetry={onRetry} />
+        <OperationalErrorState title="Không thể tải phiếu nhận hàng" onRetry={onRetry} />
       ) : items.length === 0 ? (
         <OperationalEmptyState
-          title="Chưa có phiếu nhập phù hợp"
+          title="Chưa có phiếu nhận hàng phù hợp"
           description="Phiếu nhận hàng được lưu sẽ xuất hiện tại đây."
         />
       ) : (
@@ -124,7 +124,7 @@ export function ReceiptDirectory({
                 <ItemContent>
                   <ItemTitle className="flex flex-wrap items-center gap-2">
                     <Link
-                      href={APP_ROUTES.inboundReceiptDetail(item.id) as Route}
+                      href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
                       className="font-mono font-semibold hover:underline"
                     >
                       {item.receiptCode}
@@ -132,7 +132,7 @@ export function ReceiptDirectory({
                     <InboundStatusBadge status={item.status} />
                   </ItemTitle>
                   <ItemDescription>
-                    {item.poNumber} · {item.warehouseName}
+                    {item.inboundRequestCode} · {item.warehouseName}
                   </ItemDescription>
                   <ItemDescription>
                     Nhận {formatQuantity(item.receivedQuantity)} · Hỏng{' '}
@@ -147,7 +147,7 @@ export function ReceiptDirectory({
               <TableHeader>
                 <TableRow>
                   <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Đơn mua</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10 text-right">
@@ -165,13 +165,13 @@ export function ReceiptDirectory({
                   <TableRow key={item.id}>
                     <TableCell>
                       <Link
-                        href={APP_ROUTES.inboundReceiptDetail(item.id) as Route}
+                        href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
                         className="font-mono font-semibold hover:underline"
                       >
                         {item.receiptCode}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono">{item.poNumber}</TableCell>
+                    <TableCell className="font-mono">{item.inboundRequestCode}</TableCell>
                     <TableCell>{item.warehouseName}</TableCell>
                     <TableCell>
                       <InboundStatusBadge status={item.status} />
@@ -185,7 +185,7 @@ export function ReceiptDirectory({
                     <TableCell>
                       <Button asChild variant="ghost" size="icon-sm">
                         <Link
-                          href={APP_ROUTES.inboundReceiptDetail(item.id) as Route}
+                          href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
                           aria-label={`Xem ${item.receiptCode}`}
                         >
                           <Eye aria-hidden="true" />

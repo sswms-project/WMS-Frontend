@@ -15,7 +15,7 @@ describe('InboundTabs', () => {
   it('shows the current workflow as a distinct filled navigation item', () => {
     render(<InboundTabs />)
 
-    const activeLink = screen.getByRole('link', { name: 'Phiếu nhập' })
+    const activeLink = screen.getByRole('link', { name: 'Phiếu nhận hàng' })
     const inactiveLink = screen.getByRole('link', { name: 'Chờ nhận hàng' })
 
     expect(activeLink).toHaveAttribute('aria-current', 'page')

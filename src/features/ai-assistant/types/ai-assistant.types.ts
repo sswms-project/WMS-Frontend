@@ -6,7 +6,7 @@ export const AI_CARD_TYPES = {
 } as const
 
 export const AI_ACTIONS = {
-  createPurchaseOrder: 'create_purchase_order',
+  createInboundRequest: 'create_inbound_request',
   createTransfer: 'create_transfer',
   createStockAdjustment: 'create_stock_adjustment',
 } as const

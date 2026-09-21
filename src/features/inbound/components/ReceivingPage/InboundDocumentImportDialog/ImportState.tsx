@@ -25,20 +25,20 @@ export function ImportState({
       <div className="flex flex-col items-center gap-4 py-8 text-center">
         <CheckCircle2 className="text-primary size-10" aria-hidden="true" />
         <div className="flex flex-col gap-1">
-          <h3 className="text-base font-semibold">Đã tạo phiếu nhập nháp</h3>
+          <h3 className="text-base font-semibold">Đã tạo phiếu nhận hàng nháp</h3>
           <p className="text-muted-foreground max-w-md text-sm">
             Phiếu vẫn cần được gửi và phê duyệt trước khi hàng được cất vào vị trí kho.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild>
-            <Link href={APP_ROUTES.inboundReceiptDetail(draftReceiptId) as Route}>
+            <Link href={APP_ROUTES.goodsReceiptDetail(draftReceiptId) as Route}>
               <PackagePlus data-icon="inline-start" aria-hidden="true" />
               Mở phiếu để gửi duyệt
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href={APP_ROUTES.inboundReceipts as Route}>Xem danh sách phiếu nhập</Link>
+            <Link href={APP_ROUTES.goodsReceipts as Route}>Xem danh sách phiếu nhận hàng</Link>
           </Button>
         </div>
       </div>
@@ -56,7 +56,7 @@ export function ImportState({
         <div>
           <h3 className="text-sm font-semibold">Đang phân tích chứng từ…</h3>
           <p className="text-muted-foreground mt-1 text-xs">
-            Hệ thống đang trích xuất, đối chiếu đơn mua và kiểm tra số lượng.
+            Hệ thống đang trích xuất, đối chiếu yêu cầu nhập kho và kiểm tra số lượng.
           </p>
         </div>
       </div>

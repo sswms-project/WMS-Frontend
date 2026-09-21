@@ -31,7 +31,7 @@ export function AiChatComposer({ form, isSending, onSubmit }: AiChatComposerProp
           {...form.register('message')}
           aria-label="Câu hỏi cho trợ lý AI"
           aria-invalid={Boolean(error)}
-          placeholder="Hỏi về tồn kho, đơn hàng, dự báo…"
+          placeholder="Hỏi về tồn kho, vận hành kho, dự báo…"
           rows={1}
           maxLength={AI_CHAT_MESSAGE_MAX_LENGTH}
           readOnly={isSending}

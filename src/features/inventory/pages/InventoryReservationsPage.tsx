@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useProductOptionsQuery } from '@/features/purchase-order/hooks/use-purchase-orders'
+import { useProductOptionsQuery } from '@/features/inbound-request/hooks/use-inbound-requests'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { InventoryReservationDirectory } from '../components/InventoryReservationsPage'
 import { useInventoryReservationsQuery } from '../hooks/use-inventory'
