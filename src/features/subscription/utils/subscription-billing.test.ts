@@ -7,6 +7,7 @@ import type {
 import {
   buildInvoiceFileName,
   formatHistoricalPlanName,
+  formatPaymentStatus,
   formatInvoiceSnapshotValue,
   getMonthlyEquivalent,
   getPlanPrice,
@@ -16,7 +17,11 @@ import {
   shouldShowRenewAction,
 } from './format-subscription'
 import { buildPaymentHistoryQuery, isInvalidPaymentDateRange } from './payment-history-query'
-import { getPlanActionState, isDowngradePlan } from './subscription-eligibility'
+import {
+  canApplyPlanChangeImmediately,
+  getPlanActionState,
+  isDowngradePlan,
+} from './subscription-eligibility'
 
 function createPlan(overrides: Partial<SubscriptionPlanResponse>): SubscriptionPlanResponse {
   return {
@@ -99,6 +104,12 @@ describe('subscription billing helpers', () => {
     expect(isCompletedPayment('Pending')).toBe(false)
   })
 
+  it('keeps failed, cancelled, and expired payment outcomes distinct', () => {
+    expect(formatPaymentStatus('Failed')).toBe('Thất bại')
+    expect(formatPaymentStatus('Cancelled')).toBe('Đã hủy')
+    expect(formatPaymentStatus('Expired')).toBe('Đã hết hạn')
+  })
+
   it('uses historical invoice fallbacks without current-plan substitution', () => {
     expect(formatHistoricalPlanName(null)).toBe('Không xác định')
     expect(formatInvoiceSnapshotValue(null)).toBe('Không có dữ liệu lịch sử')
@@ -176,6 +187,25 @@ describe('subscription billing helpers', () => {
     expect(getPlanPrice(plan, 'Monthly')).toBe(100000)
     expect(getPlanPrice(plan, 'Yearly')).toBe(960000)
     expect(getMonthlyEquivalent(plan, 'Yearly')).toBe(80000)
+  })
+
+  it('allows immediate Free-to-paid selection for either billing cycle but restricts paid upgrades', () => {
+    const paidPlan = createPlan({ monthlyPrice: 300000, yearlyPrice: 3000000 })
+
+    expect(
+      canApplyPlanChangeImmediately(
+        paidPlan,
+        createSubscription({ planPrice: 0, endDate: null, billingCycle: 'Monthly' }),
+        'Yearly'
+      )
+    ).toBe(true)
+    expect(
+      canApplyPlanChangeImmediately(
+        paidPlan,
+        createSubscription({ planPrice: 200000, billingCycle: 'Monthly' }),
+        'Yearly'
+      )
+    ).toBe(false)
   })
 
   it('treats a subscription as cancelled from its status or from a cancellation timestamp', () => {

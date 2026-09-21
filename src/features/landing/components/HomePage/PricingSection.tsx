@@ -53,6 +53,10 @@ function PricingPlanCard({
   const prefersReducedMotion = useReducedMotion()
   const price = getPlanPrice(plan, billingCycle)
   const monthlyEquivalent = getMonthlyEquivalent(plan, billingCycle)
+  const registerHref = {
+    pathname: APP_ROUTES.auth.register,
+    query: { planId: plan.id, billingCycle },
+  }
 
   return (
     <motion.div
@@ -101,7 +105,7 @@ function PricingPlanCard({
         </CardContent>
         <CardFooter className="p-4 pt-3">
           <Button className="w-full" variant="outline" asChild>
-            <Link href={APP_ROUTES.auth.register}>Đăng ký sử dụng</Link>
+            <Link href={registerHref}>Đăng ký sử dụng</Link>
           </Button>
         </CardFooter>
       </Card>

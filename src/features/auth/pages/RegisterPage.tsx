@@ -7,12 +7,22 @@ import { toast } from 'sonner'
 import { Logo } from '@/components/Logo'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useRegisterMutation } from '../hooks/use-auth'
+import { usePublicSubscriptionPlansQuery } from '@/features/subscription/hooks/use-subscription'
+import type { BillingCycle } from '@/features/subscription/types/subscription.types'
 import type { RegisterFormValues } from '../schemas/register.schema'
 import { BenefitsPanel, RegisterForm, RegisterSuccess } from '../components/RegisterPage'
 
-export function RegisterPage() {
+interface RegisterPageProps {
+  readonly selectedPlanId?: string
+  readonly selectedBillingCycle?: string
+}
+
+export function RegisterPage({ selectedPlanId, selectedBillingCycle }: RegisterPageProps) {
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
   const registerMutation = useRegisterMutation()
+  const plansQuery = usePublicSubscriptionPlansQuery()
+  const billingCycle: BillingCycle = selectedBillingCycle === 'Yearly' ? 'Yearly' : 'Monthly'
+  const selectedPlan = plansQuery.data?.find((plan) => plan.id === selectedPlanId)
 
   async function handleRegister(values: RegisterFormValues) {
     try {
@@ -25,6 +35,9 @@ export function RegisterPage() {
         password: values.password,
         confirmPassword: values.confirmPassword,
         acceptTerms: values.acceptTerms,
+        ...(selectedPlan
+          ? { selectedPlanId: selectedPlan.id, selectedBillingCycle: billingCycle }
+          : {}),
       })
       setSuccessMessage(response.message)
       toast.success('Đăng ký thành công. Vui lòng kiểm tra email xác minh.')
@@ -71,7 +84,13 @@ export function RegisterPage() {
                 onCreateAnother={() => setSuccessMessage(null)}
               />
             ) : (
-              <RegisterForm onSubmit={handleRegister} isLoading={registerMutation.isPending} />
+              <RegisterForm
+                onSubmit={handleRegister}
+                isLoading={registerMutation.isPending}
+                selectedPlan={selectedPlan}
+                selectedBillingCycle={billingCycle}
+                isPlanLoading={Boolean(selectedPlanId) && plansQuery.isLoading}
+              />
             )}
           </div>
         </div>
