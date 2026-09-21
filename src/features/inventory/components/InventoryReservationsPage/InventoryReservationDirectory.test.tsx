@@ -5,18 +5,28 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { InventoryReservationDirectory } from './InventoryReservationDirectory'
 
 const reservation = {
-  id: 'balance-1',
+  id: 'reservation-1',
+  inventoryStockId: 'stock-1',
   productId: 'product-1',
-  sku: 'SKU-01',
-  productName: 'Bộ điều khiển',
+  productSku: 'SKU-001',
+  productName: 'Pin AA',
   warehouseId: 'warehouse-1',
+  warehouseCode: 'WH-001',
   warehouseName: 'Kho trung tâm',
   slotId: 'slot-1',
-  slotCode: 'A-01',
-  quantityOnHand: 20,
+  slotCode: 'A-01-01',
+  lotId: null,
+  lotNumber: null,
+  qualityStatus: 'Good' as const,
+  referenceType: 'StockIssuePick' as const,
+  referenceId: 'pick-1',
+  referenceCode: 'SO-001',
   reservedQuantity: 5,
-  availableQuantity: 15,
-  updatedAt: '2026-08-24T10:00:00+07:00',
+  status: 'Active' as const,
+  createdByUserId: 'user-1',
+  createdByName: 'Nguyễn Văn A',
+  releasedAt: null,
+  createdAt: '2026-08-24T10:00:00+07:00',
 }
 
 function createProps(
@@ -27,6 +37,7 @@ function createProps(
     items: [],
     warehouseId: '',
     productId: '',
+    status: 'Active',
     warehouseOptions: [],
     productOptions: [],
     isLoading: false,
@@ -35,13 +46,12 @@ function createProps(
     areFiltersLoading: false,
     areFiltersError: false,
     activeFilterCount: 0,
-    canRelease: false,
     onWarehouseChange: vi.fn(),
     onProductChange: vi.fn(),
+    onStatusChange: vi.fn(),
     onResetFilters: vi.fn(),
     onRetryFilters: vi.fn(),
     onRetry: vi.fn(),
-    onRelease: vi.fn(),
     ...overrides,
   }
 }
@@ -57,9 +67,9 @@ function renderDirectory(props: ComponentProps<typeof InventoryReservationDirect
 describe('InventoryReservationDirectory', () => {
   it.each([
     ['loading', { isLoading: true }, 'loading'],
-    ['error', { isError: true }, 'Không thể tải tồn đang giữ'],
-    ['empty', {}, 'Không có tồn đang giữ phù hợp'],
-    ['populated', { items: [reservation] }, 'Bộ điều khiển'],
+    ['error', { isError: true }, 'Không thể tải lịch sử giữ hàng'],
+    ['empty', {}, 'Không có dữ liệu phù hợp'],
+    ['populated', { items: [reservation] }, 'Lấy hàng xuất kho'],
   ] as const)('renders %s state', (_, overrides, expected) => {
     renderDirectory(createProps(overrides))
     if (expected === 'loading')
@@ -78,20 +88,18 @@ describe('InventoryReservationDirectory', () => {
         onWarehouseChange,
       })
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Làm mới tồn đang giữ' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Làm mới lịch sử giữ hàng' }))
     fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }))
     fireEvent.change(screen.getByLabelText('Kho'), { target: { value: 'warehouse-1' } })
     expect(onRetry).toHaveBeenCalledOnce()
     expect(onWarehouseChange).toHaveBeenCalledWith('warehouse-1')
   })
 
-  it('only exposes release action with inventory reserve permission', () => {
-    const onRelease = vi.fn()
-    renderDirectory(createProps({ items: [reservation], canRelease: true, onRelease }))
-    const [releaseButton] = screen.getAllByRole('button', { name: 'Giải phóng' })
-    expect(releaseButton).toBeDefined()
-    if (!releaseButton) return
-    fireEvent.click(releaseButton)
-    expect(onRelease).toHaveBeenCalledWith(reservation)
+  it('forwards reservation status filters', () => {
+    const onStatusChange = vi.fn()
+    renderDirectory(createProps({ onStatusChange }))
+    fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }))
+    fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'Consumed' } })
+    expect(onStatusChange).toHaveBeenCalledWith('Consumed')
   })
 })

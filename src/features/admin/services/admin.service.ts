@@ -8,6 +8,7 @@ import type {
 } from '../schemas/subscription-plan.schema'
 import type {
   AssignPermissionsRequest,
+  ApproveTenantRegistrationRequest,
   AdminSubscriptionPlanListResponse,
   AdminSubscriptionPlanQuery,
   PermissionResponse,
@@ -16,6 +17,7 @@ import type {
   TenantDetailsResponse,
   TenantListResponse,
   TenantQuery,
+  RejectTenantRegistrationRequest,
   TenantStateChangeRequest,
 } from '../types/admin.types'
 
@@ -62,6 +64,20 @@ export const adminService = {
       .post<
         ApiResponse<TenantDetailsResponse>
       >(API_ENDPOINTS.platformAdmin.reactivateTenant(tenantId), body)
+      .then((r) => r.data),
+
+  approveTenantRegistration: (tenantId: string, body: ApproveTenantRegistrationRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<TenantDetailsResponse>
+      >(API_ENDPOINTS.platformAdmin.approveTenantRegistration(tenantId), body)
+      .then((r) => r.data),
+
+  rejectTenantRegistration: (tenantId: string, body: RejectTenantRegistrationRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<TenantDetailsResponse>
+      >(API_ENDPOINTS.platformAdmin.rejectTenantRegistration(tenantId), body)
       .then((r) => r.data),
 
   getSubscriptionFeatures: () =>

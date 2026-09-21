@@ -1,17 +1,24 @@
-import { AlertTriangle, Boxes, ClipboardCheck, PackageCheck, Truck, Warehouse } from 'lucide-react'
+import {
+  AlertTriangle,
+  Boxes,
+  ClipboardCheck,
+  PackageCheck,
+  PackageMinus,
+  Warehouse,
+} from 'lucide-react'
 
 const metrics = [
   { label: 'Available stock', value: '42,680', detail: 'Across 3 warehouses', icon: Boxes },
   { label: 'Low stock SKUs', value: '18', detail: 'Need reorder review', icon: AlertTriangle },
   { label: 'Inbound today', value: '12', detail: '4 awaiting approval', icon: PackageCheck },
-  { label: 'Orders shipping', value: '31', detail: '7 assigned to transport', icon: Truck },
+  { label: 'Stock issues', value: '31', detail: '7 awaiting dispatch', icon: PackageMinus },
 ]
 
 const workflows = [
-  ['Purchase order PO-1048', 'Confirmed', 'Awaiting goods receipt'],
-  ['Outbound order SO-8831', 'Picking', 'Assigned to staff team A'],
+  ['Inbound request IR-1048', 'Confirmed', 'Awaiting goods receipt'],
+  ['Stock issue request SIR-8831', 'Picking', 'Assigned to staff team A'],
   ['Cycle count WH-A-Z2', 'In progress', '128 slots remaining'],
-  ['Stock transfer ST-221', 'ReadyToShip', 'From WH-A to WH-C'],
+  ['Stock transfer ST-221', 'Approved', 'From WH-A to WH-C'],
 ]
 
 export function OperationsDashboard() {

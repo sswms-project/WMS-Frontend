@@ -21,6 +21,8 @@ interface TenantDetailsViewProps {
   readonly isPending: boolean
   readonly onRetry: () => void
   readonly onStateAction: () => void
+  readonly onApprove: () => void
+  readonly onReject: () => void
 }
 
 function DetailList({ items }: { readonly items: ReadonlyArray<readonly [string, string]> }) {
@@ -44,6 +46,8 @@ export function TenantDetailsView({
   isPending,
   onRetry,
   onStateAction,
+  onApprove,
+  onReject,
 }: TenantDetailsViewProps) {
   if (isLoading)
     return (
@@ -67,6 +71,7 @@ export function TenantDetailsView({
       </Alert>
     )
   const isActive = data.status === 'Active'
+  const isPendingRegistration = data.status === 'Pending'
 
   return (
     <div className="mx-auto w-full max-w-[1440px] space-y-4">
@@ -92,7 +97,11 @@ export function TenantDetailsView({
           <Badge
             variant="outline"
             className={cn(
-              isActive ? 'border-primary/30 text-primary' : 'border-destructive/30 text-destructive'
+              isActive
+                ? 'border-primary/30 text-primary'
+                : isPendingRegistration
+                  ? 'border-warning text-warning'
+                  : 'border-destructive/30 text-destructive'
             )}
           >
             {data.status}
@@ -174,23 +183,47 @@ export function TenantDetailsView({
         </div>
 
         <aside className="order-first space-y-4 lg:order-none lg:col-span-4">
-          <Alert variant={isActive ? 'default' : 'destructive'}>
+          <Alert variant={isActive || isPendingRegistration ? 'default' : 'destructive'}>
             {isActive ? <CircleCheck aria-hidden="true" /> : <CirclePause aria-hidden="true" />}
             <AlertTitle>Trạng thái tenant: {data.status}</AlertTitle>
             <AlertDescription>
-              {isActive
-                ? 'Tạm ngưng sẽ thu hồi phiên đăng nhập và chặn truy cập tenant.'
-                : data.status === 'Suspended'
-                  ? 'Kích hoạt lại để khôi phục quyền truy cập của tenant.'
-                  : 'Chỉ tenant đang hoạt động hoặc tạm ngưng mới có thể đổi trạng thái tại đây.'}
-              <Button
-                className="mt-4 w-full"
-                variant={isActive ? 'destructive' : 'default'}
-                disabled={isPending || (!isActive && data.status !== 'Suspended')}
-                onClick={onStateAction}
-              >
-                {isActive ? 'Tạm ngưng tenant' : 'Kích hoạt lại tenant'}
-              </Button>
+              {isPendingRegistration
+                ? data.owner.emailVerified
+                  ? 'Email chủ sở hữu đã được xác minh. Đăng ký đã sẵn sàng để xét duyệt.'
+                  : 'Chủ sở hữu chưa xác minh email. Chưa thể phê duyệt đăng ký.'
+                : isActive
+                  ? 'Tạm ngưng sẽ thu hồi phiên đăng nhập và chặn truy cập tenant.'
+                  : data.status === 'Suspended'
+                    ? 'Kích hoạt lại để khôi phục quyền truy cập của tenant.'
+                    : 'Chỉ tenant đang hoạt động hoặc tạm ngưng mới có thể đổi trạng thái tại đây.'}
+              {isPendingRegistration ? (
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    className="flex-1"
+                    disabled={isPending || !data.owner.emailVerified}
+                    onClick={onApprove}
+                  >
+                    Phê duyệt
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    variant="destructive"
+                    disabled={isPending}
+                    onClick={onReject}
+                  >
+                    Từ chối
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  className="mt-4 w-full"
+                  variant={isActive ? 'destructive' : 'default'}
+                  disabled={isPending || (!isActive && data.status !== 'Suspended')}
+                  onClick={onStateAction}
+                >
+                  {isActive ? 'Tạm ngưng tenant' : 'Kích hoạt lại tenant'}
+                </Button>
+              )}
             </AlertDescription>
           </Alert>
           <section className="bg-card border p-4">

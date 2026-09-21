@@ -24,15 +24,19 @@ describe('inbound document import schemas', () => {
 
   it('requires a reason for damaged goods and rejects damage above confirmed quantity', () => {
     const base = {
-      purchaseOrderId: GUID_A,
+      inboundRequestId: GUID_A,
       acknowledgeWarehouseMismatch: false,
       lines: [
         {
           sourceLineNumber: 1,
-          purchaseOrderItemId: GUID_B,
+          inboundRequestItemId: GUID_B,
           confirmedQuantity: 4,
           damagedQuantity: 1,
           exceptionReason: '',
+          isLotTracked: false,
+          lotNumber: '',
+          manufacturedDate: '',
+          expiryDate: '',
         },
       ],
     }
@@ -52,18 +56,22 @@ describe('inbound document import schemas', () => {
     ).toBe(true)
   })
 
-  it('does not allow two document rows to target the same purchase order line', () => {
+  it('does not allow two document rows to target the same inbound request line', () => {
     const line = {
       sourceLineNumber: 1,
-      purchaseOrderItemId: GUID_B,
+      inboundRequestItemId: GUID_B,
       confirmedQuantity: 1,
       damagedQuantity: 0,
       exceptionReason: '',
+      isLotTracked: false,
+      lotNumber: '',
+      manufacturedDate: '',
+      expiryDate: '',
     }
 
     expect(
       inboundDocumentReviewSchema.safeParse({
-        purchaseOrderId: GUID_A,
+        inboundRequestId: GUID_A,
         acknowledgeWarehouseMismatch: false,
         lines: [line, { ...line, sourceLineNumber: 2 }],
       }).success

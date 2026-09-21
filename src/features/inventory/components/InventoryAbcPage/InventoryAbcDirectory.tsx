@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -34,6 +35,10 @@ interface InventoryAbcDirectoryProps {
   readonly onWarehouseChange: (value: string) => void
   readonly onRetryWarehouses: () => void
   readonly onRetry: () => void
+  readonly historicalPeriodDays: number
+  readonly isRunning: boolean
+  readonly onHistoricalPeriodDaysChange: (value: number) => void
+  readonly onRun: () => void
 }
 
 const classStyles: Record<string, string> = {
@@ -55,6 +60,10 @@ export function InventoryAbcDirectory({
   onWarehouseChange,
   onRetryWarehouses,
   onRetry,
+  historicalPeriodDays,
+  isRunning,
+  onHistoricalPeriodDaysChange,
+  onRun,
 }: InventoryAbcDirectoryProps) {
   const counts: Record<string, number> = {
     A: items.filter((item) => item.class === 'A').length,
@@ -120,6 +129,24 @@ export function InventoryAbcDirectory({
                 </NativeSelectOption>
               ))}
             </NativeSelect>
+            <Input
+              aria-label="Số ngày lịch sử phân loại ABC"
+              className="w-28"
+              type="number"
+              min={1}
+              max={366}
+              value={historicalPeriodDays}
+              onChange={(event) => onHistoricalPeriodDaysChange(Number(event.target.value))}
+            />
+            <Button
+              type="button"
+              disabled={
+                !warehouseId || isRunning || historicalPeriodDays < 1 || historicalPeriodDays > 366
+              }
+              onClick={onRun}
+            >
+              {isRunning ? 'Đang chạy…' : 'Chạy phân loại'}
+            </Button>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -216,6 +243,7 @@ function AbcResults({ items }: { readonly items: readonly InventoryAbcItem[] }) 
               <TableHead className="bg-card sticky top-0 z-10 w-36 text-right">
                 Tỷ lệ tích lũy
               </TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-44">Cơ sở / kỳ</TableHead>
               <TableHead className="bg-card sticky top-0 z-10 w-28 text-center">Nhóm</TableHead>
             </TableRow>
           </TableHeader>
@@ -235,6 +263,12 @@ function AbcResults({ items }: { readonly items: readonly InventoryAbcItem[] }) 
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
                   {item.cumulativePercentage.toLocaleString('vi-VN')}%
+                </TableCell>
+                <TableCell className="text-xs">
+                  <p>{item.calculationBasis}</p>
+                  <p className="text-muted-foreground">
+                    {item.analysisFrom.slice(0, 10)} – {item.analysisTo.slice(0, 10)}
+                  </p>
                 </TableCell>
                 <TableCell className="text-center">
                   <Badge variant="outline" className={classStyles[item.class]}>

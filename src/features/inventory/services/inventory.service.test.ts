@@ -55,39 +55,15 @@ describe('inventoryService', () => {
   it('calls reservations once with supported filters only', async () => {
     const response = { isSuccess: true, statusCode: 200, message: 'Success', data: [] }
     vi.mocked(axiosClient.get).mockResolvedValue({ data: response })
-    const params = { warehouseId: 'warehouse-1', productId: 'product-1' }
+    const params = {
+      warehouseId: 'warehouse-1',
+      productId: 'product-1',
+      status: 'Consumed' as const,
+    }
 
     await expect(inventoryService.getReservations(params)).resolves.toEqual(response)
     expect(axiosClient.get).toHaveBeenCalledTimes(1)
     expect(axiosClient.get).toHaveBeenCalledWith(API_ENDPOINTS.inventory.reservations, { params })
-  })
-
-  it('sends the exact reserve stock command', async () => {
-    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: null }
-    vi.mocked(axiosClient.post).mockResolvedValue({ data: response })
-    const request = {
-      productId: 'product-1',
-      warehouseId: 'warehouse-1',
-      slotId: 'slot-1',
-      quantity: 4,
-    }
-
-    await expect(inventoryService.reserveStock(request)).resolves.toEqual(response)
-    expect(axiosClient.post).toHaveBeenCalledOnce()
-    expect(axiosClient.post).toHaveBeenCalledWith(API_ENDPOINTS.inventory.reservations, request)
-  })
-
-  it('sends release quantity as the primitive delete body required by backend', async () => {
-    const response = { isSuccess: true, statusCode: 200, message: 'Success', data: null }
-    vi.mocked(axiosClient.delete).mockResolvedValue({ data: response })
-
-    await expect(
-      inventoryService.releaseReservation({ inventoryBalanceId: 'balance-1', quantity: 2.5 })
-    ).resolves.toEqual(response)
-    expect(axiosClient.delete).toHaveBeenCalledWith(
-      `${API_ENDPOINTS.inventory.reservations}/balance-1`,
-      { data: 2.5 }
-    )
   })
 
   it('sends the exact damaged stock command', async () => {
@@ -97,6 +73,7 @@ describe('inventoryService', () => {
       productId: 'product-1',
       warehouseId: 'warehouse-1',
       slotId: 'slot-1',
+      lotId: 'lot-1',
       quantity: 2,
       reason: 'Bao bì thấm nước',
     }

@@ -10,6 +10,7 @@ const invoice: InvoiceDataResponse = {
   planName: null,
   invoiceNumber: 'INV-2026-001',
   amount: 200000,
+  currency: 'VND',
   status: 'Completed',
   paidAt: '2026-08-01T10:00:00+07:00',
   createdAt: '2026-08-01T09:00:00+07:00',

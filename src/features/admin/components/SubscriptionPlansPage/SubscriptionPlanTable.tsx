@@ -134,12 +134,12 @@ function PlanPrice({ plan }: { readonly plan: SubscriptionPlanResponse }) {
   return (
     <div>
       <p className="text-foreground text-sm font-semibold tabular-nums">
-        {plan.monthlyPrice === 0 ? 'Miễn phí' : formatCurrency(plan.monthlyPrice)}
+        {plan.monthlyPrice === 0 ? 'Miễn phí' : formatCurrency(plan.monthlyPrice, plan.currency)}
         <span className="text-muted-foreground text-xs font-normal">/tháng</span>
       </p>
       {plan.yearlyDiscountPercent > 0 && (
         <p className="text-muted-foreground mt-0.5 text-xs">
-          {formatCurrency(plan.yearlyPrice)}/năm
+          {formatCurrency(plan.yearlyPrice, plan.currency)}/năm
           <span className="text-primary ml-1">−{plan.yearlyDiscountPercent}%</span>
         </p>
       )}

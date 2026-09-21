@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useProductOptionsQuery } from '@/features/purchase-order/hooks/use-purchase-orders'
+import { useProductOptionsQuery } from '@/features/inbound-request/hooks/use-inbound-requests'
 import { StockMovementHistory } from '../components/StockMovementsPage'
 import { useStockMovementsQuery } from '../hooks/use-inventory'
 import type { StockMovementType } from '../types/inventory.types'

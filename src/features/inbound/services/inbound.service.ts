@@ -5,13 +5,13 @@ import type {
   InboundAllowedActionsResponse,
   InboundDocumentImport,
   InboundListQuery,
-  InboundReceiptDetail,
-  InboundReceiptListResponse,
+  GoodsReceiptDetail,
+  GoodsReceiptListResponse,
   PutawayRequest,
   PutawayTaskQuery,
   ReceivingTaskListResponse,
   ReceivingTaskQuery,
-  SaveInboundReceiptRequest,
+  SaveGoodsReceiptRequest,
   StartInboundDocumentImportRequest,
   ReviewInboundDocumentImportRequest,
 } from '../types/inbound.types'
@@ -21,60 +21,60 @@ export const inboundService = {
     axiosClient
       .get<
         ApiResponse<ReceivingTaskListResponse>
-      >(API_ENDPOINTS.inboundReceipts.receivingTasks, { params })
+      >(API_ENDPOINTS.goodsReceipts.receivingTasks, { params })
       .then((response) => response.data),
   getReceipts: (params: InboundListQuery) =>
     axiosClient
-      .get<ApiResponse<InboundReceiptListResponse>>(API_ENDPOINTS.inboundReceipts.list, { params })
+      .get<ApiResponse<GoodsReceiptListResponse>>(API_ENDPOINTS.goodsReceipts.list, { params })
       .then((response) => response.data),
   getPutawayTasks: (params: PutawayTaskQuery) =>
     axiosClient
       .get<
-        ApiResponse<InboundReceiptListResponse>
-      >(API_ENDPOINTS.inboundReceipts.putawayTasks, { params })
+        ApiResponse<GoodsReceiptListResponse>
+      >(API_ENDPOINTS.goodsReceipts.putawayTasks, { params })
       .then((response) => response.data),
   getReceipt: (receiptId: string) =>
     axiosClient
-      .get<ApiResponse<InboundReceiptDetail>>(API_ENDPOINTS.inboundReceipts.detail(receiptId))
+      .get<ApiResponse<GoodsReceiptDetail>>(API_ENDPOINTS.goodsReceipts.detail(receiptId))
       .then((response) => response.data),
   getAllowedActions: (receiptId: string) =>
     axiosClient
       .get<
         ApiResponse<InboundAllowedActionsResponse>
-      >(API_ENDPOINTS.inboundReceipts.allowedActions(receiptId))
+      >(API_ENDPOINTS.goodsReceipts.allowedActions(receiptId))
       .then((response) => response.data),
-  createReceipt: (request: SaveInboundReceiptRequest) =>
+  createReceipt: (request: SaveGoodsReceiptRequest) =>
     axiosClient
-      .post<ApiResponse<string>>(API_ENDPOINTS.inboundReceipts.create, request)
+      .post<ApiResponse<string>>(API_ENDPOINTS.goodsReceipts.create, request)
       .then((response) => response.data),
-  updateReceipt: (receiptId: string, request: Omit<SaveInboundReceiptRequest, 'purchaseOrderId'>) =>
+  updateReceipt: (receiptId: string, request: Omit<SaveGoodsReceiptRequest, 'inboundRequestId'>) =>
     axiosClient
-      .put<ApiResponse<unknown>>(API_ENDPOINTS.inboundReceipts.update(receiptId), request)
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.update(receiptId), request)
       .then((response) => response.data),
   submitReceipt: (receiptId: string) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundReceipts.submit(receiptId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.submit(receiptId))
       .then((response) => response.data),
   approveReceipt: (receiptId: string) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundReceipts.approve(receiptId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.approve(receiptId))
       .then((response) => response.data),
   rejectReceipt: (receiptId: string, reason: string) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundReceipts.reject(receiptId), { reason })
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.reject(receiptId), { reason })
       .then((response) => response.data),
   putaway: (receiptId: string, request: PutawayRequest) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundReceipts.putaway(receiptId), request)
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.putaway(receiptId), request)
       .then((response) => response.data),
   startDocumentImport: ({
     file,
-    purchaseOrderId,
+    inboundRequestId,
     warehouseId,
   }: StartInboundDocumentImportRequest) => {
     const formData = new FormData()
     formData.append('file', file)
-    if (purchaseOrderId) formData.append('purchaseOrderId', purchaseOrderId)
+    if (inboundRequestId) formData.append('inboundRequestId', inboundRequestId)
     if (warehouseId) formData.append('warehouseId', warehouseId)
     return axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.inboundDocumentImports.create, formData, {

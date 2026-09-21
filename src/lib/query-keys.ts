@@ -13,8 +13,8 @@ import type {
 } from '@/features/inbound/types/inbound.types'
 import type {
   LookupQuery,
-  PurchaseOrderListQuery,
-} from '@/features/purchase-order/types/purchase-order.types'
+  InboundRequestListQuery,
+} from '@/features/inbound-request/types/inbound-request.types'
 import type { SupplierListQuery } from '@/features/supplier/types/supplier.types'
 import type {
   InventoryListQuery,
@@ -24,21 +24,20 @@ import type {
   InventoryStockHistoryQuery,
   StockMovementListQuery,
 } from '@/features/inventory/types/inventory.types'
-import type { ProductListQuery } from '@/features/product/types/product.types'
+import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
   TransferListQuery,
   TransferSourceInventoryQuery,
   TransferSourceWarehouseQuery,
 } from '@/features/transfer/types/transfer.types'
 import type {
-  OutboundOrderListQuery,
-  ReturnListQuery,
-} from '@/features/outbound/types/outbound.types'
-import type { DeliveryListQuery } from '@/features/delivery/types/delivery.types'
+  StockIssueRequestListQuery,
+  GoodsReturnRequestListQuery,
+} from '@/features/stock-issue/types/stock-issue.types'
 import type {
-  CustomerListQuery,
-  CustomerOrderHistoryQuery,
-} from '@/features/customer/types/customer.types'
+  StockRecipientListQuery,
+  StockRecipientIssueHistoryQuery,
+} from '@/features/stock-recipient/types/stock-recipient.types'
 import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
@@ -129,6 +128,7 @@ export const queryKeys = {
     abc: (params: InventoryAbcQuery) => ['inventory', 'abc-classification', params] as const,
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
     forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
+    forecastRun: (id: string) => ['inventory', 'forecast-runs', id] as const,
     history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
@@ -155,6 +155,10 @@ export const queryKeys = {
     all: ['products'] as const,
     list: (params?: ProductListQuery) => ['products', 'list', params] as const,
     detail: (id: string) => ['products', 'detail', id] as const,
+    suppliers: (id: string) => ['products', 'detail', id, 'suppliers'] as const,
+    stockPolicies: (id: string) => ['products', 'detail', id, 'stock-policies'] as const,
+    lots: (id: string, params: ProductLotQuery) =>
+      ['products', 'detail', id, 'lots', params] as const,
   },
   suppliers: {
     all: ['suppliers'] as const,
@@ -162,24 +166,24 @@ export const queryKeys = {
     list: (params: LookupQuery | SupplierListQuery) => ['suppliers', 'list', params] as const,
     detail: (id: string) => ['suppliers', 'detail', id] as const,
   },
-  purchaseOrders: {
-    all: ['purchase-orders'] as const,
-    lists: ['purchase-orders', 'list'] as const,
-    list: (params: PurchaseOrderListQuery) => ['purchase-orders', 'list', params] as const,
-    detail: (id: string) => ['purchase-orders', 'detail', id] as const,
-    allowedActions: (id: string) => ['purchase-orders', 'detail', id, 'allowed-actions'] as const,
-    products: (params: LookupQuery) => ['products', 'purchase-order-options', params] as const,
+  inboundRequests: {
+    all: ['inbound-requests'] as const,
+    lists: ['inbound-requests', 'list'] as const,
+    list: (params: InboundRequestListQuery) => ['inbound-requests', 'list', params] as const,
+    detail: (id: string) => ['inbound-requests', 'detail', id] as const,
+    allowedActions: (id: string) => ['inbound-requests', 'detail', id, 'allowed-actions'] as const,
+    products: (params: LookupQuery) => ['products', 'inbound-request-options', params] as const,
   },
-  inboundReceipts: {
-    all: ['inbound-receipts'] as const,
-    lists: ['inbound-receipts', 'list'] as const,
-    list: (params: InboundListQuery) => ['inbound-receipts', 'list', params] as const,
-    detail: (id: string) => ['inbound-receipts', 'detail', id] as const,
-    allowedActions: (id: string) => ['inbound-receipts', 'detail', id, 'allowed-actions'] as const,
+  goodsReceipts: {
+    all: ['goods-receipts'] as const,
+    lists: ['goods-receipts', 'list'] as const,
+    list: (params: InboundListQuery) => ['goods-receipts', 'list', params] as const,
+    detail: (id: string) => ['goods-receipts', 'detail', id] as const,
+    allowedActions: (id: string) => ['goods-receipts', 'detail', id, 'allowed-actions'] as const,
     receivingTasks: (params: ReceivingTaskQuery) =>
-      ['inbound-receipts', 'receiving-tasks', params] as const,
+      ['goods-receipts', 'receiving-tasks', params] as const,
     putawayTasks: (params: PutawayTaskQuery) =>
-      ['inbound-receipts', 'putaway-tasks', params] as const,
+      ['goods-receipts', 'putaway-tasks', params] as const,
   },
   inboundDocumentImports: {
     all: ['inbound-document-imports'] as const,
@@ -195,30 +199,26 @@ export const queryKeys = {
     sourceInventory: (params: TransferSourceInventoryQuery) =>
       ['transfers', 'source-inventory', params] as const,
   },
-  outboundOrders: {
-    all: ['outbound-orders'] as const,
-    lists: ['outbound-orders', 'list'] as const,
-    list: (params: OutboundOrderListQuery) => ['outbound-orders', 'list', params] as const,
-    detail: (id: string) => ['outbound-orders', 'detail', id] as const,
+  stockIssueRequests: {
+    all: ['stock-issue-requests'] as const,
+    lists: ['stock-issue-requests', 'list'] as const,
+    list: (params: StockIssueRequestListQuery) => ['stock-issue-requests', 'list', params] as const,
+    detail: (id: string) => ['stock-issue-requests', 'detail', id] as const,
   },
-  returns: {
-    all: ['returns'] as const,
-    lists: ['returns', 'list'] as const,
-    list: (params: ReturnListQuery) => ['returns', 'list', params] as const,
-    detail: (id: string) => ['returns', 'detail', id] as const,
+  goodsReturnRequests: {
+    all: ['goods-return-requests'] as const,
+    lists: ['goods-return-requests', 'list'] as const,
+    list: (params: GoodsReturnRequestListQuery) =>
+      ['goods-return-requests', 'list', params] as const,
+    detail: (id: string) => ['goods-return-requests', 'detail', id] as const,
   },
-  deliveries: {
-    all: ['deliveries'] as const,
-    lists: ['deliveries', 'list'] as const,
-    list: (params: DeliveryListQuery) => ['deliveries', 'list', params] as const,
-  },
-  customers: {
-    all: ['customers'] as const,
-    lists: ['customers', 'list'] as const,
-    list: (params: CustomerListQuery) => ['customers', 'list', params] as const,
-    detail: (id: string) => ['customers', 'detail', id] as const,
-    orderHistory: (id: string, params: CustomerOrderHistoryQuery) =>
-      ['customers', 'detail', id, 'orders', params] as const,
+  stockRecipients: {
+    all: ['stock-recipients'] as const,
+    lists: ['stock-recipients', 'list'] as const,
+    list: (params: StockRecipientListQuery) => ['stock-recipients', 'list', params] as const,
+    detail: (id: string) => ['stock-recipients', 'detail', id] as const,
+    issueHistory: (id: string, params: StockRecipientIssueHistoryQuery) =>
+      ['stock-recipients', 'detail', id, 'issue-history', params] as const,
   },
   aiAssistant: {
     all: ['ai-assistant'] as const,

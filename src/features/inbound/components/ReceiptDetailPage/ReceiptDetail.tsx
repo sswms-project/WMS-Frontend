@@ -38,16 +38,16 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import {
   formatOperationalDate,
   formatQuantity,
-} from '@/features/purchase-order/utils/purchase-order-format'
+} from '@/features/inbound-request/utils/inbound-request-format'
 import type {
-  InboundReceiptAction,
-  InboundReceiptDetail as ReceiptDetailType,
+  GoodsReceiptAction,
+  GoodsReceiptDetail as ReceiptDetailType,
 } from '../../types/inbound.types'
 import { InboundStatusBadge } from '../InboundWorkspace'
 
 interface ReceiptDetailProps {
   readonly receipt: ReceiptDetailType
-  readonly allowedActions: readonly InboundReceiptAction[]
+  readonly allowedActions: readonly GoodsReceiptAction[]
   readonly isPending: boolean
   readonly onUpdate: () => void
   readonly onSubmit: () => Promise<boolean>
@@ -97,7 +97,7 @@ export function ReceiptDetail({
       <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-3">
           <Button asChild variant="outline" size="icon">
-            <Link href={APP_ROUTES.inboundReceipts as Route} aria-label="Quay lại danh sách">
+            <Link href={APP_ROUTES.goodsReceipts as Route} aria-label="Quay lại danh sách">
               <ArrowLeft aria-hidden="true" />
             </Link>
           </Button>
@@ -107,7 +107,7 @@ export function ReceiptDetail({
               <InboundStatusBadge status={receipt.status} />
             </div>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Đơn mua {receipt.poNumber} · {receipt.warehouseName}
+              Yêu cầu nhập kho {receipt.inboundRequestCode} · {receipt.warehouseName}
             </p>
           </div>
         </div>
@@ -148,10 +148,10 @@ export function ReceiptDetail({
       </header>
       <section className="bg-card border">
         <div className="border-b p-4">
-          <h2 className="text-sm font-semibold">Tổng quan phiếu nhập</h2>
+          <h2 className="text-sm font-semibold">Tổng quan phiếu nhận hàng</h2>
         </div>
         <dl className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-4">
-          <Metadata label="Đơn mua" value={receipt.poNumber} />
+          <Metadata label="Yêu cầu nhập kho" value={receipt.inboundRequestCode} />
           <Metadata label="Kho nhận" value={receipt.warehouseName} />
           <Metadata label="Người tạo" value={receipt.createdByName} />
           <Metadata label="Ngày tạo" value={formatOperationalDate(receipt.createdAt)} />
@@ -180,6 +180,7 @@ export function ReceiptDetail({
                 <TableHead className="text-right">Hỏng</TableHead>
                 <TableHead className="text-right">Khả dụng</TableHead>
                 <TableHead className="text-right">Còn cất</TableHead>
+                <TableHead>Lô hàng</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -207,6 +208,18 @@ export function ReceiptDetail({
                   <TableCell className="text-right tabular-nums">
                     {formatQuantity(item.remainingPutAwayQuantity)}
                   </TableCell>
+                  <TableCell>
+                    {item.lotNumber ? (
+                      <div className="text-xs">
+                        <p className="font-mono font-medium">{item.lotNumber}</p>
+                        <p className="text-muted-foreground">
+                          SX {item.manufacturedDate ?? '—'} · HSD {item.expiryDate ?? '—'}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">Theo số lượng</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -217,6 +230,9 @@ export function ReceiptDetail({
             <div key={item.id} className="p-4">
               <p className="font-medium">{item.productName}</p>
               <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
+              {item.lotNumber ? (
+                <p className="mt-1 font-mono text-xs">Lô {item.lotNumber}</p>
+              ) : null}
               <dl className="mt-3 grid grid-cols-3 gap-3">
                 <Metadata label="Nhận" value={formatQuantity(item.receivedQuantity)} />
                 <Metadata label="Hỏng" value={formatQuantity(item.damagedQuantity)} />
@@ -229,6 +245,51 @@ export function ReceiptDetail({
           ))}
         </div>
       </section>
+      {receipt.items.some((item) => item.putAwayDetails.length > 0) ? (
+        <section className="bg-card border">
+          <div className="border-b p-4">
+            <h2 className="text-sm font-semibold">Chi tiết cất hàng</h2>
+            <p className="text-muted-foreground text-xs">
+              Mỗi dòng thể hiện vị trí, lô và biến động tồn kho đã phát sinh.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[920px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead>Vị trí</TableHead>
+                  <TableHead>Lô</TableHead>
+                  <TableHead>Chất lượng</TableHead>
+                  <TableHead className="text-right">Số lượng</TableHead>
+                  <TableHead>Người thực hiện</TableHead>
+                  <TableHead>Thời điểm</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {receipt.items.flatMap((item) =>
+                  item.putAwayDetails.map((detail) => (
+                    <TableRow key={detail.id}>
+                      <TableCell>
+                        <p className="font-medium">{item.productName}</p>
+                        <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
+                      </TableCell>
+                      <TableCell className="font-mono">{detail.slotCode}</TableCell>
+                      <TableCell className="font-mono">{detail.lotNumber ?? '—'}</TableCell>
+                      <TableCell>{detail.qualityStatus}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQuantity(detail.quantity)}
+                      </TableCell>
+                      <TableCell>{detail.performedByName}</TableCell>
+                      <TableCell>{formatOperationalDate(detail.putAwayAt)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      ) : null}
       <section className="bg-card border p-4">
         <h2 className="mb-4 text-sm font-semibold">Lịch sử xử lý</h2>
         <LifecycleTimeline events={receipt.history} />
@@ -243,12 +304,12 @@ export function ReceiptDetail({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmationAction === 'Approve'
-                ? 'Phê duyệt phiếu nhập?'
-                : 'Gửi phiếu nhập để duyệt?'}
+                ? 'Phê duyệt phiếu nhận hàng?'
+                : 'Gửi phiếu nhận hàng để duyệt?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmationAction === 'Approve'
-                ? 'Số lượng nhận sẽ được ghi nhận vào đơn mua và chuyển sang chờ cất hàng.'
+                ? 'Số lượng nhận sẽ được ghi nhận vào yêu cầu nhập kho và chuyển sang chờ cất hàng.'
                 : 'Phiếu sẽ được khóa chỉnh sửa trong lúc chờ quản lý duyệt.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -269,7 +330,7 @@ export function ReceiptDetail({
       <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Từ chối phiếu nhập</DialogTitle>
+            <DialogTitle>Từ chối phiếu nhận hàng</DialogTitle>
             <DialogDescription>
               Ghi rõ số lượng hoặc tình trạng hàng cần kiểm tra lại.
             </DialogDescription>

@@ -82,6 +82,7 @@ function buildDefaults(
     return {
       planName: plan.planName,
       monthlyPrice: plan.monthlyPrice,
+      currency: plan.currency,
       yearlyDiscountPercent: plan.yearlyDiscountPercent,
       displayOrder: plan.displayOrder,
       featureItems: buildFeatureItems(meta, plan),
@@ -90,6 +91,7 @@ function buildDefaults(
   return {
     planName: '',
     monthlyPrice: '',
+    currency: 'VND',
     yearlyDiscountPercent: 0,
     displayOrder: '',
     featureItems: buildFeatureItems(meta),
@@ -121,6 +123,7 @@ export function SubscriptionPlanFormDialog({
 
   const { fields } = useFieldArray({ control, name: 'featureItems' })
   const watchedFeatureItems = useWatch({ control, name: 'featureItems' })
+  const watchedCurrency = useWatch({ control, name: 'currency' })
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && isPending) return
@@ -189,7 +192,7 @@ export function SubscriptionPlanFormDialog({
               <FieldError>{errors.planName?.message}</FieldError>
             </Field>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Field data-invalid={Boolean(errors.monthlyPrice)}>
                 <FieldLabel htmlFor="monthlyPrice">Giá tháng</FieldLabel>
                 <InputGroup className="h-11 sm:h-8">
@@ -202,10 +205,21 @@ export function SubscriptionPlanFormDialog({
                     {...register('monthlyPrice')}
                   />
                   <InputGroupAddon align="inline-end">
-                    <InputGroupText>VND</InputGroupText>
+                    <InputGroupText>{watchedCurrency || 'VND'}</InputGroupText>
                   </InputGroupAddon>
                 </InputGroup>
                 <FieldError>{errors.monthlyPrice?.message}</FieldError>
+              </Field>
+
+              <Field data-invalid={Boolean(errors.currency)}>
+                <FieldLabel htmlFor="currency">Tiền tệ</FieldLabel>
+                <Input
+                  id="currency"
+                  maxLength={3}
+                  aria-invalid={Boolean(errors.currency)}
+                  {...register('currency')}
+                />
+                <FieldError>{errors.currency?.message}</FieldError>
               </Field>
 
               <Field data-invalid={Boolean(errors.yearlyDiscountPercent)}>

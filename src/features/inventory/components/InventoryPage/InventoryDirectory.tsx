@@ -30,13 +30,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import type { InventoryBalance, InventoryFilterOption } from '../../types/inventory.types'
+import type { InventoryFilterOption, InventoryStock } from '../../types/inventory.types'
 import { formatInventoryDate, formatInventoryQuantity } from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryDirectoryProps {
   readonly permissions: readonly string[]
-  readonly items: readonly InventoryBalance[]
+  readonly items: readonly InventoryStock[]
   readonly totalCount: number
   readonly page: number
   readonly pageSize: number
@@ -51,7 +51,6 @@ interface InventoryDirectoryProps {
   readonly areFiltersLoading: boolean
   readonly areFiltersError: boolean
   readonly activeFilterCount: number
-  readonly canReserve: boolean
   readonly canReportDamaged: boolean
   readonly onSearchChange: (value: string) => void
   readonly onWarehouseChange: (value: string) => void
@@ -60,8 +59,7 @@ interface InventoryDirectoryProps {
   readonly onRetryFilters: () => void
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
-  readonly onReserve: (item: InventoryBalance) => void
-  readonly onReportDamaged: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryStock) => void
 }
 
 export function InventoryDirectory({
@@ -81,7 +79,6 @@ export function InventoryDirectory({
   areFiltersLoading,
   areFiltersError,
   activeFilterCount,
-  canReserve,
   canReportDamaged,
   onSearchChange,
   onWarehouseChange,
@@ -90,7 +87,6 @@ export function InventoryDirectory({
   onRetryFilters,
   onPageChange,
   onRetry,
-  onReserve,
   onReportDamaged,
 }: InventoryDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -206,16 +202,12 @@ export function InventoryDirectory({
           <>
             <InventoryMobileList
               items={items}
-              canReserve={canReserve}
               canReportDamaged={canReportDamaged}
-              onReserve={onReserve}
               onReportDamaged={onReportDamaged}
             />
             <InventoryDesktopTable
               items={items}
-              canReserve={canReserve}
               canReportDamaged={canReportDamaged}
-              onReserve={onReserve}
               onReportDamaged={onReportDamaged}
             />
             <OperationalPagination
@@ -311,16 +303,12 @@ export function InventoryDirectory({
 
 function InventoryMobileList({
   items,
-  canReserve,
   canReportDamaged,
-  onReserve,
   onReportDamaged,
 }: {
-  readonly items: readonly InventoryBalance[]
-  readonly canReserve: boolean
+  readonly items: readonly InventoryStock[]
   readonly canReportDamaged: boolean
-  readonly onReserve: (item: InventoryBalance) => void
-  readonly onReportDamaged: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryStock) => void
 }) {
   return (
     <ItemGroup className="gap-0 @min-[980px]:hidden">
@@ -339,17 +327,10 @@ function InventoryMobileList({
               </span>{' '}
               · {item.warehouseName} / {item.slotCode}
             </ItemDescription>
-            {canReserve && item.availableQuantity > 0 ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-1 w-fit"
-                onClick={() => onReserve(item)}
-              >
-                Giữ tồn
-              </Button>
-            ) : null}
+            <ItemDescription>
+              {item.lotNumber ? `Lô ${item.lotNumber} · ` : ''}
+              {item.qualityStatus}
+            </ItemDescription>
             {canReportDamaged && item.availableQuantity > 0 ? (
               <Button
                 type="button"
@@ -374,16 +355,12 @@ function InventoryMobileList({
 
 function InventoryDesktopTable({
   items,
-  canReserve,
   canReportDamaged,
-  onReserve,
   onReportDamaged,
 }: {
-  readonly items: readonly InventoryBalance[]
-  readonly canReserve: boolean
+  readonly items: readonly InventoryStock[]
   readonly canReportDamaged: boolean
-  readonly onReserve: (item: InventoryBalance) => void
-  readonly onReportDamaged: (item: InventoryBalance) => void
+  readonly onReportDamaged: (item: InventoryStock) => void
 }) {
   return (
     <div className="hidden min-h-0 flex-1 overflow-y-auto @min-[980px]:block">
@@ -392,11 +369,12 @@ function InventoryDesktopTable({
           <TableRow>
             <TableHead className="bg-card sticky top-0 z-10 w-56">Sản phẩm</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-40">Kho / Slot</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-36">Lô / Chất lượng</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đã giữ</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Khả dụng</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-32">Cập nhật</TableHead>
-            {canReserve || canReportDamaged ? (
+            {canReportDamaged ? (
               <TableHead className="bg-card sticky top-0 z-10 w-44 text-right">Thao tác</TableHead>
             ) : null}
           </TableRow>
@@ -416,6 +394,10 @@ function InventoryDesktopTable({
                   {item.slotCode}
                 </p>
               </TableCell>
+              <TableCell>
+                <p className="truncate font-mono text-xs">{item.lotNumber ?? 'Không theo lô'}</p>
+                <p className="text-muted-foreground text-xs">{item.qualityStatus}</p>
+              </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
                 {formatInventoryQuantity(item.quantityOnHand)}
               </TableCell>
@@ -428,8 +410,8 @@ function InventoryDesktopTable({
               <TableCell className="text-muted-foreground text-xs">
                 {formatInventoryDate(item.updatedAt)}
               </TableCell>
-              {canReserve || canReportDamaged ? (
-                <TableCell className="space-x-1 text-right">
+              {canReportDamaged ? (
+                <TableCell className="text-right">
                   {canReportDamaged ? (
                     <Button
                       type="button"
@@ -439,17 +421,6 @@ function InventoryDesktopTable({
                       onClick={() => onReportDamaged(item)}
                     >
                       Báo hỏng
-                    </Button>
-                  ) : null}
-                  {canReserve ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={item.availableQuantity <= 0}
-                      onClick={() => onReserve(item)}
-                    >
-                      Giữ tồn
                     </Button>
                   ) : null}
                 </TableCell>

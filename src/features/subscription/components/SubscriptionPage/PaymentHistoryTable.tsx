@@ -262,7 +262,9 @@ function PaymentHistoryMobileList({
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Số tiền</dt>
-              <dd className="font-medium tabular-nums">{formatCurrency(payment.amount)}</dd>
+              <dd className="font-medium tabular-nums">
+                {formatCurrency(payment.amount, payment.currency)}
+              </dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Thanh toán</dt>
@@ -332,7 +334,7 @@ function PaymentHistoryDesktopTable({
               <TableCell className="font-mono">{payment.invoiceNumber}</TableCell>
               <TableCell>{formatHistoricalPlanName(payment.planName)}</TableCell>
               <TableCell className="text-right font-medium tabular-nums">
-                {formatCurrency(payment.amount)}
+                {formatCurrency(payment.amount, payment.currency)}
               </TableCell>
               <TableCell>{formatPaymentStatus(payment.status)}</TableCell>
               <TableCell>

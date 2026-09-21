@@ -53,4 +53,23 @@ describe('adminService platform administration', () => {
       { reason: 'Yêu cầu từ bộ phận tuân thủ' }
     )
   })
+
+  it('approves with concurrency data and rejects with a reason', async () => {
+    const approvalBody = { concurrencyToken: 'tenant-version' }
+    const rejectionBody = { concurrencyToken: 'tenant-version', reason: 'Thiếu hồ sơ đăng ký' }
+
+    await adminService.approveTenantRegistration('tenant-1', approvalBody)
+    await adminService.rejectTenantRegistration('tenant-2', rejectionBody)
+
+    expect(axiosClient.post).toHaveBeenNthCalledWith(
+      1,
+      API_ENDPOINTS.platformAdmin.approveTenantRegistration('tenant-1'),
+      approvalBody
+    )
+    expect(axiosClient.post).toHaveBeenNthCalledWith(
+      2,
+      API_ENDPOINTS.platformAdmin.rejectTenantRegistration('tenant-2'),
+      rejectionBody
+    )
+  })
 })

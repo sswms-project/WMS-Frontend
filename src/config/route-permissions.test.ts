@@ -28,7 +28,7 @@ describe('warehouse route permission', () => {
   })
 
   it('applies purchasing and inbound role boundaries', () => {
-    expect(getAllowedRolesForPath(APP_ROUTES.purchaseOrders)).toEqual([
+    expect(getAllowedRolesForPath(APP_ROUTES.inboundRequests)).toEqual([
       USER_ROLES.TenantOwner,
       USER_ROLES.WarehouseManager,
       USER_ROLES.WarehouseStaff,
@@ -64,7 +64,7 @@ describe('warehouse route permission', () => {
     ])
   })
 
-  it('applies transfer, outbound, delivery, return, and customer role boundaries', () => {
+  it('applies transfer, stock issue, goods return, and stock recipient role boundaries', () => {
     const operationalRoles = [
       USER_ROLES.TenantOwner,
       USER_ROLES.WarehouseManager,
@@ -74,12 +74,11 @@ describe('warehouse route permission', () => {
     for (const route of [
       APP_ROUTES.transfers,
       APP_ROUTES.transferCreate,
-      APP_ROUTES.orders,
-      APP_ROUTES.orderCreate,
-      APP_ROUTES.returns,
-      APP_ROUTES.delivery,
-      APP_ROUTES.customers,
-      APP_ROUTES.customerDetail('customer-1'),
+      APP_ROUTES.stockIssueRequests,
+      APP_ROUTES.stockIssueRequestCreate,
+      APP_ROUTES.goodsReturnRequests,
+      APP_ROUTES.stockRecipients,
+      APP_ROUTES.stockRecipientDetail('stockRecipient-1'),
     ]) {
       expect(getAllowedRolesForPath(route)).toEqual(operationalRoles)
     }

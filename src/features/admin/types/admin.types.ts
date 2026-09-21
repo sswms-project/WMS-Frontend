@@ -52,6 +52,7 @@ export interface TenantSummaryResponse {
   readonly createdAt: string
   readonly ownerName: string
   readonly ownerEmail: string
+  readonly ownerEmailVerified: boolean
   readonly activeUserCount: number
   readonly warehouseCount: number
   readonly subscriptionPlanId: string | null
@@ -73,6 +74,7 @@ export interface TenantOwnerResponse {
   readonly email: string
   readonly phone: string | null
   readonly status: string
+  readonly emailVerified: boolean
   readonly lastLoginAt: string | null
 }
 
@@ -114,6 +116,7 @@ export interface TenantDetailsResponse {
   readonly address: string | null
   readonly status: TenantStatus
   readonly createdAt: string
+  readonly concurrencyToken: string
   readonly owner: TenantOwnerResponse
   readonly usage: TenantUsageResponse
   readonly subscription: TenantSubscriptionAdminResponse | null
@@ -171,5 +174,14 @@ export interface AdminSubscriptionPlanListResponse {
 }
 
 export interface TenantStateChangeRequest {
+  readonly reason: string
+}
+
+export interface ApproveTenantRegistrationRequest {
+  readonly concurrencyToken: string
+}
+
+export interface RejectTenantRegistrationRequest {
+  readonly concurrencyToken: string
   readonly reason: string
 }

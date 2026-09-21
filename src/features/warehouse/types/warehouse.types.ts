@@ -46,6 +46,11 @@ export interface LocationSearchResponse {
   capacity: number | null
   currentOccupancy: number | null
   barcodeValue: string | null
+  isOutboundStaging: boolean
+}
+
+export interface ConfigureOutboundStagingRequest {
+  isOutboundStaging: boolean
 }
 
 export interface LocationFilterState {

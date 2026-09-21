@@ -25,9 +25,12 @@ export function getAiActionResultLink(
   if (!resultEntityId) return null
 
   switch (action) {
-    case AI_ACTIONS.createPurchaseOrder:
-      // purchaseOrderDetail builds a plain string path; the dynamic segment is a server-issued GUID.
-      return { href: APP_ROUTES.purchaseOrderDetail(resultEntityId) as Route, label: 'Xem đơn mua' }
+    case AI_ACTIONS.createInboundRequest:
+      // inboundRequestDetail builds a plain string path; the dynamic segment is a server-issued GUID.
+      return {
+        href: APP_ROUTES.inboundRequestDetail(resultEntityId) as Route,
+        label: 'Xem yêu cầu nhập kho',
+      }
     case AI_ACTIONS.createTransfer:
       return { href: APP_ROUTES.transfers, label: 'Xem danh sách chuyển kho' }
     case AI_ACTIONS.createStockAdjustment:

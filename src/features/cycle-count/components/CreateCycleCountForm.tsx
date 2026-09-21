@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { APP_ROUTES } from '@/routes/app-routes'
-import type { InventoryBalance } from '@/features/inventory/types/inventory.types'
+import type { InventoryStock } from '@/features/inventory/types/inventory.types'
 import type { CreateCycleCountFormValues } from '../schemas/cycle-count.schema'
 
 interface Props {
@@ -27,7 +27,7 @@ interface Props {
   readonly warehouses: readonly { value: string; label: string }[]
   readonly zones: readonly { value: string; label: string }[]
   readonly staff: readonly { value: string; label: string }[]
-  readonly inventory: readonly InventoryBalance[]
+  readonly inventory: readonly InventoryStock[]
   readonly inventoryPage: number
   readonly inventoryPageSize: number
   readonly inventoryTotalCount: number
@@ -55,11 +55,23 @@ export function CreateCycleCountForm({
   const warehouseId = form.watch('warehouseId')
   const isBlindCount = form.watch('isBlindCount')
   const itemError = form.formState.errors.items
-  function toggleItem(item: InventoryBalance, checked: boolean) {
+  function toggleItem(item: InventoryStock, checked: boolean) {
     const next = checked
-      ? [...selectedItems, { productId: item.productId, slotId: item.slotId }]
+      ? [
+          ...selectedItems,
+          {
+            productId: item.productId,
+            slotId: item.slotId,
+            lotId: item.lotId,
+            qualityStatus: item.qualityStatus,
+          },
+        ]
       : selectedItems.filter(
-          (selected) => selected.productId !== item.productId || selected.slotId !== item.slotId
+          (selected) =>
+            selected.productId !== item.productId ||
+            selected.slotId !== item.slotId ||
+            selected.lotId !== item.lotId ||
+            selected.qualityStatus !== item.qualityStatus
         )
     form.setValue('items', next, { shouldDirty: true, shouldValidate: true })
   }
@@ -197,25 +209,26 @@ export function CreateCycleCountForm({
                 </TableHead>
                 <TableHead className="bg-card sticky top-0">Sản phẩm</TableHead>
                 <TableHead className="bg-card sticky top-0">Vị trí</TableHead>
+                <TableHead className="bg-card sticky top-0">Lô / chất lượng</TableHead>
                 <TableHead className="bg-card sticky top-0 text-right">Tồn hiện tại</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isInventoryLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground h-32 text-center">
+                  <TableCell colSpan={5} className="text-muted-foreground h-32 text-center">
                     Đang tải tồn kho...
                   </TableCell>
                 </TableRow>
               ) : !warehouseId ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground h-32 text-center">
+                  <TableCell colSpan={5} className="text-muted-foreground h-32 text-center">
                     Chọn kho để xem các vị trí có tồn.
                   </TableCell>
                 </TableRow>
               ) : inventory.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground h-32 text-center">
+                  <TableCell colSpan={5} className="text-muted-foreground h-32 text-center">
                     Không có tồn kho phù hợp.
                   </TableCell>
                 </TableRow>
@@ -223,7 +236,10 @@ export function CreateCycleCountForm({
                 inventory.map((item) => {
                   const checked = selectedItems.some(
                     (selected) =>
-                      selected.productId === item.productId && selected.slotId === item.slotId
+                      selected.productId === item.productId &&
+                      selected.slotId === item.slotId &&
+                      selected.lotId === item.lotId &&
+                      selected.qualityStatus === item.qualityStatus
                   )
                   return (
                     <TableRow key={item.id} data-state={checked ? 'selected' : undefined}>
@@ -239,6 +255,10 @@ export function CreateCycleCountForm({
                         <p className="text-muted-foreground font-mono text-xs">{item.sku}</p>
                       </TableCell>
                       <TableCell className="font-mono">{item.slotCode}</TableCell>
+                      <TableCell>
+                        <p className="font-mono text-xs">{item.lotNumber ?? 'Theo số lượng'}</p>
+                        <p className="text-muted-foreground text-xs">{item.qualityStatus}</p>
+                      </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">
                         {item.quantityOnHand}
                       </TableCell>

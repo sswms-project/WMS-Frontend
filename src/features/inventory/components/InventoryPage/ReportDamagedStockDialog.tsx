@@ -13,11 +13,11 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import type { ReportDamagedStockFormValues } from '../../schemas/report-damaged-stock.schema'
-import type { InventoryBalance } from '../../types/inventory.types'
+import type { InventoryStock } from '../../types/inventory.types'
 import { formatInventoryQuantity } from '../../utils/inventory-format'
 
 interface ReportDamagedStockDialogProps {
-  readonly item: InventoryBalance | null
+  readonly item: InventoryStock | null
   readonly form: UseFormReturn<ReportDamagedStockFormValues>
   readonly isPending: boolean
   readonly onOpenChange: (open: boolean) => void

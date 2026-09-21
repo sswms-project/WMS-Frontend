@@ -7,20 +7,20 @@ import type {
   InboundAllowedActionsResponse,
   InboundDocumentImport,
   InboundListQuery,
-  InboundReceiptDetail,
-  InboundReceiptListResponse,
+  GoodsReceiptDetail,
+  GoodsReceiptListResponse,
   PutawayRequest,
   PutawayTaskQuery,
   ReceivingTaskListResponse,
   ReceivingTaskQuery,
-  SaveInboundReceiptRequest,
+  SaveGoodsReceiptRequest,
   StartInboundDocumentImportRequest,
   ReviewInboundDocumentImportRequest,
 } from '../types/inbound.types'
 
 interface UpdateReceiptVariables {
   receiptId: string
-  request: Omit<SaveInboundReceiptRequest, 'purchaseOrderId'>
+  request: Omit<SaveGoodsReceiptRequest, 'inboundRequestId'>
 }
 
 interface RejectReceiptVariables {
@@ -35,31 +35,31 @@ interface PutawayVariables {
 
 export function useReceivingTasksQuery(params: ReceivingTaskQuery) {
   return useQuery<ReceivingTaskListResponse, ApiErrorResponse>({
-    queryKey: queryKeys.inboundReceipts.receivingTasks(params),
+    queryKey: queryKeys.goodsReceipts.receivingTasks(params),
     queryFn: () => inboundService.getReceivingTasks(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
   })
 }
 
-export function useInboundReceiptsQuery(params: InboundListQuery) {
-  return useQuery<InboundReceiptListResponse, ApiErrorResponse>({
-    queryKey: queryKeys.inboundReceipts.list(params),
+export function useGoodsReceiptsQuery(params: InboundListQuery) {
+  return useQuery<GoodsReceiptListResponse, ApiErrorResponse>({
+    queryKey: queryKeys.goodsReceipts.list(params),
     queryFn: () => inboundService.getReceipts(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
   })
 }
 
 export function usePutawayTasksQuery(params: PutawayTaskQuery) {
-  return useQuery<InboundReceiptListResponse, ApiErrorResponse>({
-    queryKey: queryKeys.inboundReceipts.putawayTasks(params),
+  return useQuery<GoodsReceiptListResponse, ApiErrorResponse>({
+    queryKey: queryKeys.goodsReceipts.putawayTasks(params),
     queryFn: () => inboundService.getPutawayTasks(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
   })
 }
 
-export function useInboundReceiptQuery(receiptId: string) {
-  return useQuery<InboundReceiptDetail, ApiErrorResponse>({
-    queryKey: queryKeys.inboundReceipts.detail(receiptId),
+export function useGoodsReceiptQuery(receiptId: string) {
+  return useQuery<GoodsReceiptDetail, ApiErrorResponse>({
+    queryKey: queryKeys.goodsReceipts.detail(receiptId),
     queryFn: () => inboundService.getReceipt(receiptId).then((response) => response.data),
     enabled: Boolean(receiptId),
   })
@@ -84,7 +84,7 @@ export function useInboundDocumentImportQuery(importId: string) {
 
 export function useInboundAllowedActionsQuery(receiptId: string) {
   return useQuery<InboundAllowedActionsResponse, ApiErrorResponse>({
-    queryKey: queryKeys.inboundReceipts.allowedActions(receiptId),
+    queryKey: queryKeys.goodsReceipts.allowedActions(receiptId),
     queryFn: () => inboundService.getAllowedActions(receiptId).then((response) => response.data),
     enabled: Boolean(receiptId),
   })
@@ -94,13 +94,13 @@ function useInvalidateInbound() {
   const queryClient = useQueryClient()
   return async (receiptId?: string) => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.inboundReceipts.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.goodsReceipts.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.inboundRequests.all }),
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
       ...(receiptId
         ? [
             queryClient.invalidateQueries({
-              queryKey: queryKeys.inboundReceipts.detail(receiptId),
+              queryKey: queryKeys.goodsReceipts.detail(receiptId),
             }),
           ]
         : []),
@@ -108,9 +108,9 @@ function useInvalidateInbound() {
   }
 }
 
-export function useCreateInboundReceiptMutation() {
+export function useCreateGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
-  return useMutation<ApiResponse<string>, ApiErrorResponse, SaveInboundReceiptRequest>({
+  return useMutation<ApiResponse<string>, ApiErrorResponse, SaveGoodsReceiptRequest>({
     mutationFn: inboundService.createReceipt,
     onSuccess: () => invalidate(),
     onError: (error) => logger.error(error),
@@ -145,7 +145,7 @@ export function useCreateDraftFromDocumentMutation() {
   })
 }
 
-export function useUpdateInboundReceiptMutation() {
+export function useUpdateGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateReceiptVariables>({
     mutationFn: ({ receiptId, request }) => inboundService.updateReceipt(receiptId, request),
@@ -154,7 +154,7 @@ export function useUpdateInboundReceiptMutation() {
   })
 }
 
-export function useSubmitInboundReceiptMutation() {
+export function useSubmitGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: inboundService.submitReceipt,
@@ -163,7 +163,7 @@ export function useSubmitInboundReceiptMutation() {
   })
 }
 
-export function useApproveInboundReceiptMutation() {
+export function useApproveGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: inboundService.approveReceipt,
@@ -172,7 +172,7 @@ export function useApproveInboundReceiptMutation() {
   })
 }
 
-export function useRejectInboundReceiptMutation() {
+export function useRejectGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, RejectReceiptVariables>({
     mutationFn: ({ receiptId, reason }) => inboundService.rejectReceipt(receiptId, reason),

@@ -57,7 +57,7 @@ export function SupplierCreateDialog({
         <DialogHeader>
           <DialogTitle>Thêm nhà cung cấp</DialogTitle>
           <DialogDescription>
-            Nhập thông tin liên hệ để bắt đầu tạo đơn mua với nhà cung cấp này.
+            Nhập thông tin liên hệ để bắt đầu tạo yêu cầu nhập kho với nhà cung cấp này.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

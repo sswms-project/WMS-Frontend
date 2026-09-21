@@ -1,5 +1,5 @@
 export { default as InboundReceivingPage } from './InboundReceivingPage'
-export { default as InboundReceiptsPage } from './InboundReceiptsPage'
-export { default as InboundReceiptDetailPage } from './InboundReceiptDetailPage'
+export { default as GoodsReceiptsPage } from './GoodsReceiptsPage'
+export { default as GoodsReceiptDetailPage } from './GoodsReceiptDetailPage'
 export { default as InboundPutawayPage } from './InboundPutawayPage'
 export { default as InboundPutawayDetailPage } from './InboundPutawayDetailPage'

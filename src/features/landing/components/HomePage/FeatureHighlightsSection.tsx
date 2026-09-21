@@ -23,7 +23,7 @@ const featureHighlights: FeatureHighlight[] = [
     icon: Truck,
     title: 'Điều phối vận chuyển',
     description:
-      'Lập kế hoạch xuất nhập, gán tài xế và theo dõi trạng thái giao hàng trên một bảng điều khiển.',
+      'Theo dõi yêu cầu nhập kho, nhận hàng, lấy hàng và xác nhận xuất kho trên một bảng điều khiển.',
     iconClassName: 'bg-secondary-container text-on-secondary-container',
   },
   {

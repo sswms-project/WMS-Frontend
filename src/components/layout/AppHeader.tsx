@@ -20,7 +20,6 @@ export function AppHeader() {
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>
-        <Separator orientation="vertical" className="mx-1 hidden h-4 sm:block lg:mx-2" />
         <UserMenu />
       </div>
     </header>

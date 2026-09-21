@@ -21,7 +21,7 @@ import type { ReceivingTask } from '../../types/inbound.types'
 import {
   formatOperationalDate,
   formatQuantity,
-} from '@/features/purchase-order/utils/purchase-order-format'
+} from '@/features/inbound-request/utils/inbound-request-format'
 
 interface ReceivingTaskDirectoryProps {
   readonly items: readonly ReceivingTask[]
@@ -96,16 +96,16 @@ export function ReceivingTaskDirectory({
       ) : items.length === 0 ? (
         <OperationalEmptyState
           title="Không có đơn chờ nhận"
-          description="Các đơn mua đã duyệt và còn số lượng sẽ xuất hiện tại đây."
+          description="Các yêu cầu nhập kho đã duyệt và còn số lượng sẽ xuất hiện tại đây."
         />
       ) : (
         <>
           <ItemGroup className="gap-0 md:hidden">
             {items.map((item) => (
-              <Item key={item.purchaseOrderId} className="border-b last:border-b-0">
+              <Item key={item.inboundRequestId} className="border-b last:border-b-0">
                 <ItemContent>
                   <ItemTitle className="font-mono" translate="no">
-                    {item.poNumber}
+                    {item.inboundRequestCode}
                   </ItemTitle>
                   <ItemDescription>
                     {item.supplierName} · {item.warehouseName}
@@ -148,9 +148,9 @@ export function ReceivingTaskDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.purchaseOrderId}>
+                  <TableRow key={item.inboundRequestId}>
                     <TableCell className="font-mono font-semibold" translate="no">
-                      {item.poNumber}
+                      {item.inboundRequestCode}
                     </TableCell>
                     <TableCell>{item.supplierName}</TableCell>
                     <TableCell>{item.warehouseName}</TableCell>

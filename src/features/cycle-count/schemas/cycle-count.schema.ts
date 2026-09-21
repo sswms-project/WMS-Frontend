@@ -4,6 +4,8 @@ import { dotNetGuidSchema } from '@/lib/dotnet-guid.schema'
 const cycleCountItemSchema = z.object({
   productId: dotNetGuidSchema('Sản phẩm không hợp lệ.'),
   slotId: dotNetGuidSchema('Vị trí không hợp lệ.'),
+  lotId: z.string().nullable(),
+  qualityStatus: z.enum(['Good', 'Damaged', 'Quarantine']),
 })
 
 export const createCycleCountSchema = z
@@ -18,12 +20,12 @@ export const createCycleCountSchema = z
   .superRefine((values, context) => {
     const keys = new Set<string>()
     values.items.forEach((item, index) => {
-      const key = `${item.productId}:${item.slotId}`
+      const key = `${item.productId}:${item.slotId}:${item.lotId ?? ''}:${item.qualityStatus}`
       if (keys.has(key)) {
         context.addIssue({
           code: 'custom',
           path: ['items', index],
-          message: 'Sản phẩm và vị trí này đã được chọn.',
+          message: 'Dòng tồn kho này đã được chọn.',
         })
       }
       keys.add(key)

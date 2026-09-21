@@ -1,8 +1,8 @@
 import { Badge } from '@/components/ui/badge'
-import type { InboundReceiptStatus } from '../../types/inbound.types'
+import type { GoodsReceiptStatus } from '../../types/inbound.types'
 import { INBOUND_STATUS_LABELS } from '../../utils/inbound-format'
 
-export function InboundStatusBadge({ status }: { readonly status: InboundReceiptStatus }) {
+export function InboundStatusBadge({ status }: { readonly status: GoodsReceiptStatus }) {
   const variant =
     status === 'Rejected'
       ? 'destructive'

@@ -34,21 +34,21 @@ export function AuditLogFilters({ filters, onApply, onClear }: AuditLogFiltersPr
         name="search"
         label="Tìm kiếm"
         value={filters.search}
-        placeholder="Ví dụ: phê duyệt đơn mua…"
+        placeholder="Ví dụ: phê duyệt yêu cầu nhập kho…"
       />
       <FilterInput
         id="audit-action"
         name="action"
         label="Hành động"
         value={filters.action}
-        placeholder="Ví dụ: ApprovePurchaseOrder…"
+        placeholder="Ví dụ: ApproveInboundRequest…"
       />
       <FilterInput
         id="audit-entity-type"
         name="entityType"
         label="Loại đối tượng"
         value={filters.entityType}
-        placeholder="Ví dụ: PurchaseOrder…"
+        placeholder="Ví dụ: InboundRequest…"
       />
       <FilterInput
         id="audit-user-id"

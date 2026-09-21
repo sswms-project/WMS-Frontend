@@ -58,7 +58,7 @@ export function PlanCard({ plan, billingCycle, actionState, onUpgrade }: PlanCar
         </div>
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="min-w-0 text-xl font-semibold [overflow-wrap:anywhere] tabular-nums">
-            {planPrice === 0 ? 'Miễn phí' : formatCurrency(planPrice)}
+            {planPrice === 0 ? 'Miễn phí' : formatCurrency(planPrice, plan.currency)}
           </p>
           {planPrice > 0 && (
             <p className="text-muted-foreground text-xs">{getBillingPeriodLabel(billingCycle)}</p>
@@ -66,7 +66,7 @@ export function PlanCard({ plan, billingCycle, actionState, onUpgrade }: PlanCar
         </div>
         {billingCycle === 'Yearly' && planPrice > 0 && (
           <p className="text-muted-foreground text-xs tabular-nums">
-            Tương đương {formatCurrency(monthlyEquivalent)}/tháng
+            Tương đương {formatCurrency(monthlyEquivalent, plan.currency)}/tháng
           </p>
         )}
       </CardHeader>

@@ -3,7 +3,10 @@ import { dotNetGuidSchema } from '@/lib/dotnet-guid.schema'
 
 export const transferLineSchema = z.object({
   productId: dotNetGuidSchema('Vui lòng chọn sản phẩm.'),
+  sourceInventoryStockId: dotNetGuidSchema('Vui lòng chọn dòng tồn kho nguồn.'),
   sourceSlotId: dotNetGuidSchema('Vui lòng chọn vị trí xuất.'),
+  lotId: z.string().nullable(),
+  availableQuantity: z.number().positive(),
   destinationSlotId: dotNetGuidSchema('Vui lòng chọn vị trí nhận.'),
   quantity: z.number().positive('Số lượng phải lớn hơn 0.'),
 })
@@ -33,8 +36,8 @@ export const createTransferSchema = z
         })
       }
 
-      const sourceKey = `${line.productId}:${line.sourceSlotId}`
-      if (line.productId && line.sourceSlotId && sourceKeys.has(sourceKey)) {
+      const sourceKey = line.sourceInventoryStockId
+      if (sourceKey && sourceKeys.has(sourceKey)) {
         context.addIssue({
           code: 'custom',
           path: ['lines', index, 'sourceSlotId'],
@@ -42,6 +45,13 @@ export const createTransferSchema = z
         })
       }
       sourceKeys.add(sourceKey)
+      if (line.quantity > line.availableQuantity) {
+        context.addIssue({
+          code: 'custom',
+          path: ['lines', index, 'quantity'],
+          message: 'Số lượng điều chuyển vượt quá tồn khả dụng.',
+        })
+      }
     })
   })
 

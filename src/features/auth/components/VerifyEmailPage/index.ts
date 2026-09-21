@@ -1,4 +1,5 @@
 export * from './ErrorState'
 export * from './LoadingState'
 export * from './MissingTokenState'
+export * from './ResendVerificationForm'
 export * from './SuccessState'

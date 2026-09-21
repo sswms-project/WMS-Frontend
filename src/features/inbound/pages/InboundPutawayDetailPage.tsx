@@ -13,14 +13,14 @@ import { useWarehouseLayoutQuery } from '@/features/warehouse/hooks/use-warehous
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { PutawayForm, type SlotOption } from '../components/PutawayDetailPage'
-import { useInboundReceiptQuery, usePutawayMutation } from '../hooks/use-inbound'
+import { useGoodsReceiptQuery, usePutawayMutation } from '../hooks/use-inbound'
 import { putawaySchema, type PutawayFormValues } from '../schemas/inbound.schema'
 
-const EMPTY_ALLOCATION = { inboundReceiptItemId: '', slotId: '', quantity: 1 }
+const EMPTY_ALLOCATION = { goodsReceiptItemId: '', slotId: '', quantity: 1 }
 
 export default function InboundPutawayDetailPage({ receiptId }: { readonly receiptId: string }) {
   const router = useRouter()
-  const receiptQuery = useInboundReceiptQuery(receiptId)
+  const receiptQuery = useGoodsReceiptQuery(receiptId)
   const layoutQuery = useWarehouseLayoutQuery(
     receiptQuery.data?.warehouseId ?? '',
     Boolean(receiptQuery.data?.warehouseId)
@@ -54,8 +54,8 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     const quantitiesByItem = new Map<string, number>()
     for (const line of values.lines)
       quantitiesByItem.set(
-        line.inboundReceiptItemId,
-        (quantitiesByItem.get(line.inboundReceiptItemId) ?? 0) + line.quantity
+        line.goodsReceiptItemId,
+        (quantitiesByItem.get(line.goodsReceiptItemId) ?? 0) + line.quantity
       )
     const exceedsReceipt = receipt.items.some(
       (item) => (quantitiesByItem.get(item.id) ?? 0) > item.remainingPutAwayQuantity
@@ -77,7 +77,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     try {
       await mutation.mutateAsync({ receiptId, request: { lines: values.lines } })
       toast.success('Đã ghi nhận cất hàng vào vị trí lưu trữ.')
-      router.push(APP_ROUTES.inboundReceiptDetail(receiptId) as Route)
+      router.push(APP_ROUTES.goodsReceiptDetail(receiptId) as Route)
     } catch (error) {
       logger.error(error)
       toast.error('Không thể cất hàng. Dữ liệu vị trí có thể đã thay đổi, vui lòng tải lại.')

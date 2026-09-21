@@ -10,6 +10,7 @@ describe('getWarehouseCapabilities', () => {
       canDeactivateWarehouse: true,
       canConfigureLayout: true,
       canGenerateLocationBarcode: true,
+      canConfigureOutboundStaging: true,
     })
   })
 
@@ -20,6 +21,7 @@ describe('getWarehouseCapabilities', () => {
       canDeactivateWarehouse: false,
       canConfigureLayout: true,
       canGenerateLocationBarcode: true,
+      canConfigureOutboundStaging: false,
     })
   })
 
@@ -30,6 +32,7 @@ describe('getWarehouseCapabilities', () => {
       canDeactivateWarehouse: false,
       canConfigureLayout: false,
       canGenerateLocationBarcode: false,
+      canConfigureOutboundStaging: false,
     }
 
     expect(getWarehouseCapabilities(USER_ROLES.WarehouseStaff)).toEqual(readOnlyCapabilities)

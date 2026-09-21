@@ -4,6 +4,8 @@ export const API_ENDPOINTS = {
     login: '/auth/login',
     register: '/auth/register',
     verifyEmail: '/auth/verify-email',
+    resendVerification: '/auth/resend-verification',
+    captchaChallenge: '/auth/captcha/challenge',
     refreshToken: '/auth/refresh',
     logout: '/auth/logout',
     forgotPassword: '/auth/forgot-password',
@@ -32,6 +34,10 @@ export const API_ENDPOINTS = {
     tenantDetail: (tenantId: string) => `/admin/tenants/${tenantId}`,
     suspendTenant: (tenantId: string) => `/admin/tenants/${tenantId}/suspend`,
     reactivateTenant: (tenantId: string) => `/admin/tenants/${tenantId}/reactivate`,
+    approveTenantRegistration: (tenantId: string) =>
+      `/admin/tenants/${tenantId}/approve-registration`,
+    rejectTenantRegistration: (tenantId: string) =>
+      `/admin/tenants/${tenantId}/reject-registration`,
     subscriptionPlans: '/subscription-plans/admin',
   },
   tenantRolePermissions: {
@@ -80,6 +86,8 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}`,
     deactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/deactivate`,
+    configureOutboundStaging: (warehouseId: string, rackId: string, slotId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/outbound-staging`,
     locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
@@ -90,7 +98,16 @@ export const API_ENDPOINTS = {
     reservations: '/inventory/reservations',
     damaged: '/inventory/damaged',
     abcClassification: '/inventory/abc-classification',
+    runAbcClassification: '/inventory/abc-classification/run',
     forecast: '/inventory/forecast',
+    forecastRuns: '/inventory/forecast-runs',
+    forecastRun: (id: string) => `/inventory/forecast-runs/${id}`,
+    executeForecastRun: (id: string) => `/inventory/forecast-runs/${id}/execute`,
+    evaluateForecastRun: (id: string) => `/inventory/forecast-runs/${id}/evaluate-accuracy`,
+    acceptReplenishmentSuggestion: (id: string) =>
+      `/inventory/replenishment-suggestions/${id}/accept`,
+    acceptRebalancingSuggestion: (id: string) => `/inventory/rebalancing-suggestions/${id}/accept`,
+    rejectForecastSuggestion: (id: string) => `/inventory/forecast-suggestions/${id}/reject`,
     history: '/inventory/history',
   },
   cycleCounts: {
@@ -120,29 +137,29 @@ export const API_ENDPOINTS = {
     deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
     reactivate: (supplierId: string) => `/suppliers/${supplierId}/reactivate`,
   },
-  purchaseOrders: {
-    list: '/purchase-orders',
-    create: '/purchase-orders',
-    detail: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
-    update: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
-    submit: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/submit`,
-    approve: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/approve`,
-    reject: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/reject`,
-    allowedActions: (purchaseOrderId: string) =>
-      `/purchase-orders/${purchaseOrderId}/allowed-actions`,
+  inboundRequests: {
+    list: '/inbound-requests',
+    create: '/inbound-requests',
+    detail: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}`,
+    update: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}`,
+    submit: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/submit`,
+    approve: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/approve`,
+    reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
+    allowedActions: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },
-  inboundReceipts: {
-    list: '/inbound-receipts',
-    create: '/inbound-receipts',
-    detail: (receiptId: string) => `/inbound-receipts/${receiptId}`,
-    update: (receiptId: string) => `/inbound-receipts/${receiptId}`,
-    receivingTasks: '/inbound-receipts/receiving-tasks',
-    putawayTasks: '/inbound-receipts/putaway-tasks',
-    submit: (receiptId: string) => `/inbound-receipts/${receiptId}/submit`,
-    approve: (receiptId: string) => `/inbound-receipts/${receiptId}/approve`,
-    reject: (receiptId: string) => `/inbound-receipts/${receiptId}/reject`,
-    allowedActions: (receiptId: string) => `/inbound-receipts/${receiptId}/allowed-actions`,
-    putaway: (receiptId: string) => `/inbound-receipts/${receiptId}/putaway`,
+  goodsReceipts: {
+    list: '/goods-receipts',
+    create: '/goods-receipts',
+    detail: (receiptId: string) => `/goods-receipts/${receiptId}`,
+    update: (receiptId: string) => `/goods-receipts/${receiptId}`,
+    receivingTasks: '/goods-receipts/receiving-tasks',
+    putawayTasks: '/goods-receipts/putaway-tasks',
+    submit: (receiptId: string) => `/goods-receipts/${receiptId}/submit`,
+    approve: (receiptId: string) => `/goods-receipts/${receiptId}/approve`,
+    reject: (receiptId: string) => `/goods-receipts/${receiptId}/reject`,
+    allowedActions: (receiptId: string) => `/goods-receipts/${receiptId}/allowed-actions`,
+    putaway: (receiptId: string) => `/goods-receipts/${receiptId}/putaway`,
   },
   inboundDocumentImports: {
     create: '/inbound-document-imports',
@@ -191,7 +208,12 @@ export const API_ENDPOINTS = {
     detail: (id: string) => `/products/${id}`,
     update: (id: string) => `/products/${id}`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
+    stockPolicies: (id: string) => `/products/${id}/stock-policies`,
+    lots: (id: string) => `/products/${id}/lots`,
+    lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
     barcode: (id: string) => `/products/${id}/barcode`,
+    suppliers: (id: string) => `/products/${id}/suppliers`,
+    supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
     import: '/products/import',
   },
   payments: {
@@ -210,29 +232,35 @@ export const API_ENDPOINTS = {
     dispatch: (transferId: string) => `/transfers/${transferId}/dispatch`,
     receive: (transferId: string) => `/transfers/${transferId}/receive`,
   },
-  outboundOrders: {
-    list: '/outbound-orders',
-    create: '/outbound-orders',
-    detail: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}`,
-    issue: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/issue`,
-    returns: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/returns`,
+  stockIssueRequests: {
+    list: '/stock-issue-requests',
+    create: '/stock-issue-requests',
+    detail: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}`,
+    picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
+    dispatch: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
+    authorizeDispatch: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/authorize-dispatch`,
+    removePickDetail: (stockIssueRequestId: string, pickDetailId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/pick-details/${pickDetailId}`,
+    goodsReturnRequests: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/goods-return-requests`,
   },
-  returns: {
-    list: '/returns',
-    detail: (returnId: string) => `/returns/${returnId}`,
-    approve: (returnId: string) => `/returns/${returnId}/approve`,
-    reject: (returnId: string) => `/returns/${returnId}/reject`,
+  goodsReturnRequests: {
+    list: '/goods-return-requests',
+    detail: (goodsReturnRequestId: string) => `/goods-return-requests/${goodsReturnRequestId}`,
+    approve: (goodsReturnRequestId: string) =>
+      `/goods-return-requests/${goodsReturnRequestId}/approve`,
+    reject: (goodsReturnRequestId: string) =>
+      `/goods-return-requests/${goodsReturnRequestId}/reject`,
   },
-  deliveries: {
-    list: '/deliveries',
-    updateStatus: (outboundOrderId: string) => `/deliveries/${outboundOrderId}/status`,
-  },
-  customers: {
-    list: '/customers',
-    create: '/customers',
-    detail: (customerId: string) => `/customers/${customerId}`,
-    update: (customerId: string) => `/customers/${customerId}`,
-    orderHistory: (customerId: string) => `/customers/${customerId}/orders`,
+  stockRecipients: {
+    list: '/stock-recipients',
+    create: '/stock-recipients',
+    detail: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
+    update: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
+    issueHistory: (stockRecipientId: string) =>
+      `/stock-recipients/${stockRecipientId}/issue-history`,
   },
   aiAssistant: {
     chat: '/ai/chat',

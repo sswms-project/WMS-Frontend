@@ -7,7 +7,9 @@ export interface InventoryListQuery {
   searchTerm?: string
 }
 
-export interface InventoryBalance {
+export type QualityStatus = 'Good' | 'Damaged' | 'Quarantine'
+
+export interface InventoryStock {
   id: string
   productId: string
   sku: string
@@ -16,14 +18,20 @@ export interface InventoryBalance {
   warehouseName: string
   slotId: string
   slotCode: string
+  lotId: string | null
+  lotNumber: string | null
+  manufacturedDate: string | null
+  expiryDate: string | null
+  lotStatus: string | null
+  qualityStatus: QualityStatus
   quantityOnHand: number
   reservedQuantity: number
   availableQuantity: number
-  updatedAt: string
+  updatedAt: string | null
 }
 
-export interface InventoryBalanceListResponse {
-  items: InventoryBalance[]
+export interface InventoryStockListResponse {
+  items: InventoryStock[]
   totalCount: number
   pageNumber: number
   pageSize: number
@@ -36,10 +44,14 @@ export interface InventoryFilterOption {
 
 export const STOCK_MOVEMENT_TYPES = {
   inbound: 'Inbound',
-  outbound: 'Outbound',
-  transfer: 'Transfer',
+  putAway: 'PutAway',
+  pick: 'Pick',
+  issue: 'Issue',
+  transferOut: 'TransferOut',
+  transferIn: 'TransferIn',
   adjustment: 'Adjustment',
-  return: 'Return',
+  returnIn: 'ReturnIn',
+  scrap: 'Scrap',
 } as const
 
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[keyof typeof STOCK_MOVEMENT_TYPES]
@@ -48,6 +60,7 @@ export interface StockMovementListQuery {
   pageNumber: number
   pageSize: number
   productId?: string
+  warehouseId?: string
   movementType?: StockMovementType
   dateFrom?: string
   dateTo?: string
@@ -60,12 +73,18 @@ export interface StockMovement {
   productName: string
   slotId: string
   slotCode: string
-  quantity: number
-  movementType: string
+  lotId: string | null
+  lotNumber: string | null
+  qualityStatus: QualityStatus
+  quantityChange: number
+  balanceAfter: number
+  unitCost: number | null
+  movementType: StockMovementType
   referenceType: string
   referenceId: string
-  createdBy: string
-  createdByName: string
+  performedByUserId: string
+  performedByName: string
+  occurredAt: string
   createdAt: string
 }
 
@@ -79,39 +98,66 @@ export interface StockMovementListResponse {
 export interface InventoryReservationQuery {
   warehouseId?: string
   productId?: string
+  status?: InventoryReservationStatus
 }
 
-export interface ReserveStockRequest {
+export type InventoryReservationStatus = 'Active' | 'Released' | 'Consumed'
+
+export interface InventoryReservation {
+  id: string
+  inventoryStockId: string
   productId: string
+  productSku: string
+  productName: string
   warehouseId: string
+  warehouseCode: string
+  warehouseName: string
   slotId: string
-  quantity: number
-}
-
-export interface ReleaseReservationRequest {
-  inventoryBalanceId: string
-  quantity: number
+  slotCode: string
+  lotId: string | null
+  lotNumber: string | null
+  qualityStatus: QualityStatus
+  referenceType: 'StockIssuePick' | 'StockTransfer'
+  referenceId: string
+  referenceCode: string
+  reservedQuantity: number
+  status: InventoryReservationStatus
+  createdByUserId: string
+  createdByName: string
+  releasedAt: string | null
+  createdAt: string
 }
 
 export interface ReportDamagedStockRequest {
   productId: string
   warehouseId: string
   slotId: string
+  lotId?: string
   quantity: number
   reason: string
 }
 
 export interface InventoryAbcQuery {
-  warehouseId?: string
+  warehouseId: string
+}
+
+export interface RunInventoryAbcRequest {
+  warehouseId: string
+  historicalPeriodDays: number
 }
 
 export interface InventoryAbcItem {
+  warehouseId: string
   productId: string
   sku: string
   productName: string
   totalQuantity: number
+  metricValue: number
   cumulativePercentage: number
   class: string
+  calculationBasis: string
+  analysisFrom: string
+  analysisTo: string
 }
 
 export interface InventoryForecastQuery {
@@ -131,6 +177,87 @@ export interface InventoryForecastResponse {
   modelName: string
   forecast: ForecastPoint[]
 }
+
+export type ForecastRunStatus = 'Pending' | 'Running' | 'Completed' | 'Failed'
+export type ForecastSuggestionStatus = 'New' | 'Accepted' | 'Rejected' | 'Expired'
+
+export interface CreateForecastRunRequest {
+  warehouseId: string
+  historicalPeriodDays: number
+  horizonDays: number
+}
+
+export interface ForecastRunResult {
+  id: string
+  productId: string
+  sku: string
+  productName: string
+  forecastDate: string
+  forecastQuantity: number
+  actualQuantity: number | null
+  accuracyPercent: number | null
+}
+
+export interface ReplenishmentSuggestion {
+  id: string
+  productId: string
+  sku: string
+  productName: string
+  warehouseId: string
+  suggestedQuantity: number
+  adjustedQuantity: number | null
+  status: ForecastSuggestionStatus
+  inboundRequestId: string | null
+  acceptedByUserId: string | null
+  acceptedAt: string | null
+}
+
+export interface RebalancingSuggestion {
+  id: string
+  productId: string
+  sku: string
+  productName: string
+  sourceWarehouseId: string
+  sourceWarehouseName: string
+  destinationWarehouseId: string
+  destinationWarehouseName: string
+  suggestedQuantity: number
+  status: ForecastSuggestionStatus
+  stockTransferId: string | null
+  acceptedByUserId: string | null
+  acceptedAt: string | null
+}
+
+export interface ForecastRun {
+  id: string
+  warehouseId: string
+  warehouseName: string
+  createdByUserId: string
+  createdByName: string
+  method: string
+  historicalPeriodDays: number
+  forecastStartDate: string
+  forecastEndDate: string
+  status: ForecastRunStatus
+  failureReason: string | null
+  completedAt: string | null
+  createdAt: string
+  results: ForecastRunResult[]
+  replenishmentSuggestions: ReplenishmentSuggestion[]
+  rebalancingSuggestions: RebalancingSuggestion[]
+}
+
+export interface AcceptReplenishmentSuggestionRequest {
+  supplierId: string
+  adjustedQuantity: number | null
+}
+
+export interface AcceptRebalancingSuggestionRequest {
+  destinationSlotId: string
+  adjustedQuantity: number | null
+}
+
+export type ForecastSuggestionType = 'Replenishment' | 'Rebalancing'
 
 export interface InventoryStockHistoryQuery {
   productId: string

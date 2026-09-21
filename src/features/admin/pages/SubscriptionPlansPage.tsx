@@ -185,6 +185,7 @@ export default function SubscriptionPlansPage() {
     return {
       ...(dirtyFields.planName ? { planName: values.planName } : {}),
       ...(dirtyFields.monthlyPrice ? { monthlyPrice: values.monthlyPrice } : {}),
+      ...(dirtyFields.currency ? { currency: values.currency } : {}),
       ...(dirtyFields.yearlyDiscountPercent
         ? { yearlyDiscountPercent: values.yearlyDiscountPercent }
         : {}),
@@ -202,6 +203,7 @@ export default function SubscriptionPlansPage() {
         await createMutation.mutateAsync({
           planName: values.planName,
           monthlyPrice: values.monthlyPrice,
+          currency: values.currency,
           yearlyDiscountPercent: values.yearlyDiscountPercent,
           displayOrder: values.displayOrder,
           features: featureItemsToPayload(values.featureItems),
