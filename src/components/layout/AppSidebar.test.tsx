@@ -222,7 +222,7 @@ describe('AppSidebar tenant navigation', () => {
     renderSidebar()
 
     const dashboardMenuButton = screen
-      .getByRole('link', { name: 'Dashboard' })
+      .getByRole('link', { name: 'Tổng quan' })
       .closest('[data-sidebar="menu-button"]')
     const brandName = screen.getByText('KOVIA')
 

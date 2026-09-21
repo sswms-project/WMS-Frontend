@@ -15,7 +15,11 @@ import {
   useSuspendTenantMutation,
   useTenantQuery,
 } from '../hooks/use-admin'
-import { tenantStateSchema, type TenantStateFormValues } from '../schemas/tenant-state.schema'
+import {
+  tenantRegistrationRejectionSchema,
+  type TenantRegistrationRejectionFormValues,
+} from '../schemas/tenant-registration-rejection.schema'
+import type { TenantStateFormValues } from '../schemas/tenant-state.schema'
 
 export default function TenantDetailsPage({ tenantId }: { readonly tenantId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -25,8 +29,8 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
   const reactivate = useReactivateTenantMutation()
   const approve = useApproveTenantRegistrationMutation()
   const reject = useRejectTenantRegistrationMutation()
-  const registrationForm = useForm<TenantStateFormValues>({
-    resolver: zodResolver(tenantStateSchema),
+  const registrationForm = useForm<TenantRegistrationRejectionFormValues>({
+    resolver: zodResolver(tenantRegistrationRejectionSchema),
     defaultValues: { reason: '' },
   })
   const action = query.data?.status === 'Active' ? 'suspend' : 'reactivate'
@@ -37,10 +41,19 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
     setDialogOpen(false)
   }
 
-  async function handleRegistrationDecision(values: TenantStateFormValues) {
-    if (!query.data || !registrationAction) return
-    const decisionMutation = registrationAction === 'approve' ? approve : reject
-    await decisionMutation.mutateAsync({
+  async function handleRegistrationApproval() {
+    if (!query.data) return
+    await approve.mutateAsync({
+      tenantId,
+      body: { concurrencyToken: query.data.concurrencyToken },
+    })
+    registrationForm.reset()
+    setRegistrationAction(null)
+  }
+
+  async function handleRegistrationRejection(values: TenantRegistrationRejectionFormValues) {
+    if (!query.data) return
+    await reject.mutateAsync({
       tenantId,
       body: { concurrencyToken: query.data.concurrencyToken, reason: values.reason },
     })
@@ -84,7 +97,8 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
               setRegistrationAction(null)
             }
           }}
-          onSubmit={handleRegistrationDecision}
+          onApprove={handleRegistrationApproval}
+          onReject={handleRegistrationRejection}
         />
       ) : null}
     </>
