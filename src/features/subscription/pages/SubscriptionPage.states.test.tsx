@@ -27,16 +27,38 @@ vi.mock('@/stores/auth.store', () => ({
 
 vi.mock('../components/SubscriptionPage', () => ({
   CurrentPlanCard: () => <div>Current plan</div>,
-  PlanCard: () => <div>Available plan</div>,
+  PlanCard: ({
+    plan,
+    actionState,
+  }: {
+    readonly plan: { readonly planName: string }
+    readonly actionState: { readonly disabled: boolean; readonly label: string }
+  }) => (
+    <div>
+      <span>{plan.planName}</span>
+      <button disabled={actionState.disabled}>{actionState.label}</button>
+    </div>
+  ),
   SubscriptionActionDialog: () => null,
-  SubscriptionEmptyState: ({ title }: { readonly title: string }) => <div>{title}</div>,
+  SubscriptionEmptyState: ({
+    title,
+    description,
+  }: {
+    readonly title: string
+    readonly description: string
+  }) => (
+    <div>
+      <div>{title}</div>
+      <div>{description}</div>
+    </div>
+  ),
   SubscriptionErrorState: () => <div>Subscription error</div>,
   SubscriptionPageSkeleton: () => <div>Subscription skeleton</div>,
 }))
 
 vi.mock('../hooks/use-subscription', () => ({
-  useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  useCreatePaymentLinkMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useChangeSubscriptionPlanMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useInitialSubscriptionSelectionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useCurrentSubscriptionQuery: () => pageState.subscriptionQuery,
   useRenewSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useSubscriptionPlansQuery: () => pageState.plansQuery,
@@ -79,18 +101,64 @@ describe('SubscriptionPage states', () => {
 
     render(<SubscriptionPage />)
 
-    expect(screen.getByText('Chưa có gói dịch vụ')).toBeInTheDocument()
+    expect(screen.getByText('Chọn gói để bắt đầu sử dụng KOVIA')).toBeInTheDocument()
   })
 
   it('explains when no active plan is available', () => {
     render(<SubscriptionPage />)
 
-    expect(screen.getByText('Chưa có plan active')).toBeInTheDocument()
+    expect(screen.getByText('Chưa có gói đang mở đăng ký')).toBeInTheDocument()
   })
 
   it('keeps payment history out of the plan management page', () => {
     render(<SubscriptionPage />)
 
     expect(screen.queryByText('Lịch sử thanh toán')).not.toBeInTheDocument()
+  })
+
+  it('keeps only the matching checkout available while initial payment is pending', () => {
+    pageState.subscriptionQuery = {
+      ...pageState.subscriptionQuery,
+      data: {
+        ...subscription,
+        planName: 'Plus',
+        billingCycle: 'Monthly',
+        status: 'Pending',
+        pendingPaymentId: 'payment-1',
+      },
+    }
+    pageState.plansQuery = {
+      ...pageState.plansQuery,
+      data: [
+        {
+          id: 'plus',
+          planName: 'Plus',
+          monthlyPrice: 499000,
+          yearlyPrice: 5389200,
+          yearlyDiscountPercent: 10,
+          displayOrder: 1,
+          currency: 'VND',
+          status: 'Active',
+          features: [],
+        },
+        {
+          id: 'premium',
+          planName: 'Premium',
+          monthlyPrice: 999000,
+          yearlyPrice: 9590400,
+          yearlyDiscountPercent: 20,
+          displayOrder: 2,
+          currency: 'VND',
+          status: 'Active',
+          features: [],
+        },
+      ],
+    }
+
+    render(<SubscriptionPage />)
+
+    expect(screen.getByRole('button', { name: 'Tiếp tục kích hoạt' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Đang có thanh toán chờ' })).toBeDisabled()
+    expect(screen.getByText(/Hãy tiếp tục checkout hiện tại/)).toBeInTheDocument()
   })
 })

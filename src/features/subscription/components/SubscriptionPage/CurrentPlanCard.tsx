@@ -1,4 +1,4 @@
-import { CalendarClock, CreditCard, RotateCcw, XCircle } from 'lucide-react'
+import { CalendarClock, CreditCard, RotateCcw } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,12 +18,11 @@ interface CurrentPlanCardProps {
   readonly subscription: SubscriptionStatusResponse
   readonly showRenewAction: boolean
   readonly isRenewPending: boolean
-  readonly isCancelPending: boolean
   readonly onRenew: () => void
-  readonly onCancel: () => void
 }
 
 function getProgressValue(subscription: SubscriptionStatusResponse): number {
+  if (!subscription.startDate || !subscription.endDate) return 100
   const startDate = new Date(subscription.startDate)
   const endDate = new Date(subscription.endDate)
   const now = new Date()
@@ -44,10 +43,6 @@ function CurrentStatusBadge({
     return <Badge variant="destructive">Đã hết hạn</Badge>
   }
 
-  if (isCancelledSubscription(subscription)) {
-    return <Badge variant="outline">Sẽ hủy</Badge>
-  }
-
   return <Badge>Đang hoạt động</Badge>
 }
 
@@ -55,9 +50,7 @@ export function CurrentPlanCard({
   subscription,
   showRenewAction,
   isRenewPending,
-  isCancelPending,
   onRenew,
-  onCancel,
 }: CurrentPlanCardProps) {
   const progressValue = getProgressValue(subscription)
   const cancelled = isCancelledSubscription(subscription)
@@ -67,7 +60,6 @@ export function CurrentPlanCard({
   // (most severe first) so the page never states two contradictory things at once —
   // e.g. "already cancelled" next to "your change applies next cycle".
   const showExpiredAlert = subscription.isExpired
-  const showCancelledAlert = !subscription.isExpired && cancelled
   const showPendingChangeAlert = !subscription.isExpired && !cancelled && hasPendingChange
 
   return (
@@ -100,33 +92,22 @@ export function CurrentPlanCard({
             />
           </dl>
 
-          {!cancelled && (
+          {!cancelled && showRenewAction && (
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
-              {showRenewAction && (
-                <Button
-                  type="button"
-                  className="w-full sm:w-auto"
-                  disabled={isRenewPending}
-                  onClick={onRenew}
-                >
-                  <RotateCcw data-icon="inline-start" aria-hidden="true" />
-                  {isRenewPending ? 'Đang gia hạn…' : 'Gia hạn'}
-                </Button>
-              )}
               <Button
                 type="button"
-                variant="outline"
                 className="w-full sm:w-auto"
-                disabled={isCancelPending}
-                onClick={onCancel}
+                disabled={isRenewPending}
+                onClick={onRenew}
               >
-                Hủy gói
+                <RotateCcw data-icon="inline-start" aria-hidden="true" />
+                {isRenewPending ? 'Đang gia hạn…' : 'Gia hạn thủ công'}
               </Button>
             </div>
           )}
         </div>
 
-        {!subscription.isExpired && (
+        {!subscription.isExpired && subscription.endDate && (
           <div className="flex min-w-0 items-center gap-3">
             <Progress
               className="h-1.5 flex-1"
@@ -149,17 +130,6 @@ export function CurrentPlanCard({
           </Alert>
         )}
 
-        {showCancelledAlert && (
-          <Alert>
-            <XCircle aria-hidden="true" />
-            <AlertTitle>Đã lên lịch hủy gói</AlertTitle>
-            <AlertDescription>
-              Bạn vẫn có thể sử dụng đầy đủ đến hết thời hạn. Chọn gói mới bất cứ lúc nào nếu muốn
-              tiếp tục sử dụng sau đó.
-            </AlertDescription>
-          </Alert>
-        )}
-
         {showPendingChangeAlert && (
           <Alert>
             <RotateCcw aria-hidden="true" />
@@ -167,7 +137,11 @@ export function CurrentPlanCard({
             <AlertDescription>
               {subscription.pendingPlanName || subscription.planName} (
               {formatBillingCycle(subscription.pendingBillingCycle || subscription.billingCycle)})
-              sẽ được áp dụng vào kỳ thanh toán kế tiếp.
+              sẽ được áp dụng{' '}
+              {subscription.pendingEffectiveAt
+                ? `từ ${formatDate(subscription.pendingEffectiveAt)}`
+                : 'vào kỳ thanh toán kế tiếp'}
+              .{subscription.pendingPaymentId ? ' Khoản thanh toán đã được ghi nhận.' : ''}
             </AlertDescription>
           </Alert>
         )}

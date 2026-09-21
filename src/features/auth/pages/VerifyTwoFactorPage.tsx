@@ -19,6 +19,7 @@ import {
 } from '../hooks/use-auth'
 import type { VerifyTwoFactorFormValues } from '../schemas/verify-two-factor.schema'
 import type { AuthUser } from '../types/auth.types'
+import { resolvePostLoginRoute } from '../utils/post-login-route'
 
 // sessionStorage chỉ có ở client — dùng cùng kỹ thuật useSyncExternalStore đã có ở
 // ProtectedRoute.tsx để biết đã qua hydration hay chưa, tránh gọi setState trong
@@ -80,7 +81,7 @@ export function VerifyTwoFactorPage() {
     verifyMutation.mutate(
       { tempToken, otp: values.otp },
       {
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
           if (flowId !== verifyFlowIdRef.current) return
 
           const result = response.data
@@ -103,7 +104,7 @@ export function VerifyTwoFactorPage() {
 
           clearTwoFactorTempToken()
           setAuth(user, accessToken, refreshToken)
-          router.replace(takeAuthReturnUrl() ?? APP_ROUTES.dashboard)
+          router.replace(await resolvePostLoginRoute(user, takeAuthReturnUrl()))
         },
         onError: (error) => {
           if (flowId !== verifyFlowIdRef.current) return

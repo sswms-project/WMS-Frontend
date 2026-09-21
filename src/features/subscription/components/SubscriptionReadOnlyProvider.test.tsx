@@ -19,7 +19,7 @@ vi.mock('@/stores/auth.store', () => ({
 }))
 
 vi.mock('../hooks/use-subscription', () => ({
-  useCurrentSubscriptionQuery: (...args: unknown[]) => subscriptionQuery(...args),
+  useSubscriptionEntitlementQuery: (...args: unknown[]) => subscriptionQuery(...args),
 }))
 
 function ReadOnlyStatus() {
@@ -32,7 +32,11 @@ describe('SubscriptionReadOnlyProvider', () => {
   beforeEach(() => {
     currentUser.value = { role: 'Tenant Owner' }
     subscriptionQuery.mockReturnValue({
-      data: { isExpired: true },
+      data: {
+        isOperationalWriteAllowed: false,
+        reason: 'Gói dịch vụ đã hết hạn. Vui lòng gia hạn để tiếp tục thao tác.',
+        status: 'Expired',
+      },
       isLoading: false,
     })
   })
@@ -46,7 +50,7 @@ describe('SubscriptionReadOnlyProvider', () => {
     )
 
     expect(screen.getAllByText(/Gói dịch vụ đã hết hạn/)).toHaveLength(2)
-    expect(screen.getByRole('alert')).toHaveTextContent('Tenant đang ở chế độ chỉ đọc')
+    expect(screen.getByRole('alert')).toHaveTextContent('Đơn vị đang ở chế độ chỉ đọc')
     expect(screen.getByRole('link', { name: 'Gia hạn ngay' })).toHaveAttribute(
       'href',
       '/subscription'
@@ -64,7 +68,7 @@ describe('SubscriptionReadOnlyProvider', () => {
     )
 
     expect(screen.getByRole('status')).toHaveTextContent('true-false-Gói dịch vụ đã hết hạn')
-    expect(screen.getByRole('alert')).toHaveTextContent('Tenant đang ở chế độ chỉ đọc')
+    expect(screen.getByRole('alert')).toHaveTextContent('Đơn vị đang ở chế độ chỉ đọc')
     expect(screen.queryByRole('link', { name: 'Gia hạn ngay' })).not.toBeInTheDocument()
   })
 
