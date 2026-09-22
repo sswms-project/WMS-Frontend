@@ -14,7 +14,6 @@ import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
-import { useOrganizationQuery } from '@/features/organization/hooks/use-organization'
 import { InboundRequestForm, type LookupOption } from '../components/InboundRequestFormPage'
 import {
   useCreateInboundRequestMutation,
@@ -92,7 +91,6 @@ export default function InboundRequestFormPage({
     ...(debouncedSupplierSearch ? { searchTerm: debouncedSupplierSearch } : {}),
   })
   const createMutation = useCreateInboundRequestMutation()
-  const organizationQuery = useOrganizationQuery()
   const updateMutation = useUpdateInboundRequestMutation()
   const submitMutation = useSubmitInboundRequestMutation()
 
@@ -259,7 +257,7 @@ export default function InboundRequestFormPage({
 
   return (
     <InboundRequestForm
-      currency={detailQuery.data?.currency ?? organizationQuery.data?.defaultCurrency ?? 'VND'}
+      currency={detailQuery.data?.currency ?? 'VND'}
       title={
         isEditing
           ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`

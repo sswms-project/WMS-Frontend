@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { P } from '@/config/permissionCodes'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -94,8 +95,8 @@ export function ForecastRunPanel({
   const isPending = createMutation.isPending || executeMutation.isPending
   const adjusted = adjustedQuantity === '' ? null : Number(adjustedQuantity)
   const isAdjustedQuantityValid = adjusted === null || (Number.isFinite(adjusted) && adjusted > 0)
-  const canCreateInboundRequest = permissions.includes('inbound-requests:create')
-  const canCreateTransfer = permissions.includes('transfers:create')
+  const canCreateInboundRequest = permissions.includes(P.INBOUND_REQUESTS_CREATE)
+  const canCreateTransfer = permissions.includes(P.TRANSFERS_CREATE)
   const historicalPeriodInvalid = historicalPeriodDays < 1 || historicalPeriodDays > 366
   const horizonInvalid = horizonDays < 1 || horizonDays > 90
 

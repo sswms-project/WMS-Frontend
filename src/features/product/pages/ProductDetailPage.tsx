@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -73,9 +74,9 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
 
   const product = detailQuery.data
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const canUpdate = permissions.has('products:update')
-  const canConfigureStockPolicy = permissions.has('products:configure-policy')
-  const canGenerateBarcode = permissions.has('products:generate-barcode')
+  const canUpdate = permissions.has(P.PRODUCTS_UPDATE)
+  const canConfigureStockPolicy = permissions.has(P.PRODUCTS_CONFIGURE_POLICY)
+  const canGenerateBarcode = permissions.has(P.PRODUCTS_GENERATE_BARCODE)
 
   async function handleUpdate(values: UpdateProductFormValues) {
     try {

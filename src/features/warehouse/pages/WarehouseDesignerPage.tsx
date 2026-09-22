@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useAuthStore } from '@/stores/auth.store'
 import { RackFormSheet, ZoneFormSheet } from '../components/WarehouseDetailPage'
@@ -94,7 +95,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
   const { editorScene, hasGeneratedGeometry } = mappedScene
   const canConfigure =
     capabilities.canConfigureLayout &&
-    meQuery.data.permissions.includes('warehouses:configure-layout') &&
+    meQuery.data.permissions.includes(P.WAREHOUSES_CONFIGURE_LAYOUT) &&
     warehouseQuery.data.status === 'Active'
 
   async function saveScene(scene: WarehouseLayoutEditorScene, baseVersion: number) {

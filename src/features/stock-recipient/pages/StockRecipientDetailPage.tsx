@@ -1,11 +1,13 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { Route } from 'next'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
 import { Button } from '@/components/ui/button'
 import {
   OperationalEmptyState,
@@ -74,7 +76,7 @@ export default function StockRecipientDetailPage({
       <header className="flex shrink-0 items-start justify-between gap-3 border-b pb-4">
         <div className="flex gap-3">
           <Button asChild variant="outline" size="icon">
-            <Link href={APP_ROUTES.stockRecipients} aria-label="Quay lại">
+            <Link href={APP_ROUTES.stockRecipients as Route} aria-label="Quay lại">
               <ArrowLeft />
             </Link>
           </Button>
@@ -89,7 +91,7 @@ export default function StockRecipientDetailPage({
             </p>
           </div>
         </div>
-        {(meQuery.data?.permissions ?? []).includes('stock-recipients:update') ? (
+        {(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_UPDATE) ? (
           <Button
             onClick={() => {
               form.reset({

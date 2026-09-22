@@ -1,0 +1,135 @@
+/**
+ * Permission codes mirrored from BE [HasPermission] attributes.
+ * Keep this file in sync when BE permission routes change.
+ */
+export const P = {
+  // Admin
+  ADMIN_DASHBOARD_VIEW: 'admin:dashboard:view',
+  ADMIN_TENANTS_VIEW: 'admin:tenants:view',
+  ADMIN_TENANTS_APPROVE: 'admin:tenants:approve',
+  ADMIN_TENANTS_SUSPEND: 'admin:tenants:suspend',
+
+  // Audit Logs
+  AUDIT_LOGS_VIEW: 'audit-logs:view',
+
+  // Cycle Counts
+  CYCLE_COUNTS_VIEW: 'cycle-counts:view',
+  CYCLE_COUNTS_RECORD: 'cycle-counts:record',
+  CYCLE_COUNTS_CREATE: 'cycle-counts:create',
+  CYCLE_COUNTS_FINALIZE: 'cycle-counts:finalize',
+
+  // Dashboard / Reports
+  DASHBOARD_VIEW: 'dashboard:view',
+  REPORTS_VIEW: 'reports:view',
+
+  // Goods Receipts
+  GOODS_RECEIPTS_VIEW: 'goods-receipts:view',
+  GOODS_RECEIPTS_CREATE: 'goods-receipts:create',
+  GOODS_RECEIPTS_SUBMIT: 'goods-receipts:submit',
+  GOODS_RECEIPTS_PUTAWAY: 'goods-receipts:putaway',
+  GOODS_RECEIPTS_APPROVE: 'goods-receipts:approve',
+  GOODS_RECEIPTS_REJECT: 'goods-receipts:reject',
+
+  // Goods Return Requests
+  GOODS_RETURN_REQUESTS_VIEW: 'goods-return-requests:view',
+  GOODS_RETURN_REQUESTS_APPROVE: 'goods-return-requests:approve',
+
+  // Inbound Requests
+  INBOUND_REQUESTS_VIEW: 'inbound-requests:view',
+  INBOUND_REQUESTS_CREATE: 'inbound-requests:create',
+  INBOUND_REQUESTS_EDIT: 'inbound-requests:edit',
+  INBOUND_REQUESTS_SUBMIT: 'inbound-requests:submit',
+  INBOUND_REQUESTS_APPROVE: 'inbound-requests:approve',
+  INBOUND_REQUESTS_REJECT: 'inbound-requests:reject',
+
+  // Inventory
+  INVENTORY_VIEW: 'inventory:view',
+  INVENTORY_RESERVE: 'inventory:reserve',
+  INVENTORY_REPORT_DAMAGED: 'inventory:report-damaged',
+
+  // Notifications
+  NOTIFICATIONS_VIEW: 'notifications:view',
+
+  // Organization
+  ORGANIZATION_VIEW: 'organization:view',
+  ORGANIZATION_UPDATE: 'organization:update',
+
+  // Payments / Subscription
+  PAYMENTS_VIEW: 'payments:view',
+  PAYMENTS_CREATE: 'payments:create',
+  PAYMENTS_INVOICE: 'payments:invoice',
+  PAYMENTS_SYNC: 'payments:sync',
+  SUBSCRIPTIONS_VIEW: 'subscriptions:view',
+  SUBSCRIPTIONS_UPGRADE: 'subscriptions:upgrade',
+  SUBSCRIPTIONS_RENEW: 'subscriptions:renew',
+  SUBSCRIPTIONS_CANCEL: 'subscriptions:cancel',
+  SUBSCRIPTION_PLANS_VIEW: 'subscription-plans:view',
+  SUBSCRIPTION_PLANS_CREATE: 'subscription-plans:create',
+  SUBSCRIPTION_PLANS_UPDATE: 'subscription-plans:update',
+  SUBSCRIPTION_PLANS_ACTIVATE: 'subscription-plans:activate',
+  SUBSCRIPTION_PLANS_DELETE: 'subscription-plans:delete',
+
+  // Products
+  PRODUCTS_VIEW: 'products:view',
+  PRODUCTS_CREATE: 'products:create',
+  PRODUCTS_UPDATE: 'products:update',
+  PRODUCTS_CONFIGURE_POLICY: 'products:configure-policy',
+  PRODUCTS_GENERATE_BARCODE: 'products:generate-barcode',
+  PRODUCTS_IMPORT: 'products:import',
+
+  // RBAC
+  ROLES_VIEW: 'roles:view',
+  ROLES_ASSIGN_PERMISSION: 'roles:assign-permission',
+  TENANT_ROLE_PERMISSIONS_VIEW: 'tenant-role-permissions:view',
+  TENANT_ROLE_PERMISSIONS_MANAGE: 'tenant-role-permissions:manage',
+
+  // Staff
+  STAFF_VIEW: 'staff:view',
+  STAFF_INVITE: 'staff:invite',
+  STAFF_TERMINATE: 'staff:terminate',
+  STAFF_ASSIGN_MANAGER: 'staff:assign-manager',
+  STAFF_ASSIGN_WAREHOUSE: 'staff:assign-warehouse',
+
+  // Stock Adjustments
+  STOCK_ADJUSTMENTS_VIEW: 'stock-adjustments:view',
+  STOCK_ADJUSTMENTS_CREATE: 'stock-adjustments:create',
+  STOCK_ADJUSTMENTS_APPROVE: 'stock-adjustments:approve',
+
+  // Stock Issue Requests
+  STOCK_ISSUE_REQUESTS_VIEW: 'stock-issue-requests:view',
+  STOCK_ISSUE_REQUESTS_CREATE: 'stock-issue-requests:create',
+  STOCK_ISSUE_REQUESTS_PICK: 'stock-issue-requests:pick',
+  STOCK_ISSUE_REQUESTS_DISPATCH: 'stock-issue-requests:dispatch',
+  STOCK_ISSUE_REQUESTS_AUTHORIZE_DISPATCH: 'stock-issue-requests:authorize-dispatch',
+  STOCK_ISSUE_REQUESTS_RETURN: 'stock-issue-requests:return',
+
+  // Stock Recipients
+  STOCK_RECIPIENTS_VIEW: 'stock-recipients:view',
+  STOCK_RECIPIENTS_CREATE: 'stock-recipients:create',
+  STOCK_RECIPIENTS_UPDATE: 'stock-recipients:update',
+
+  // Suppliers
+  SUPPLIERS_VIEW: 'suppliers:view',
+  SUPPLIERS_CREATE: 'suppliers:create',
+  SUPPLIERS_UPDATE: 'suppliers:update',
+  SUPPLIERS_DEACTIVATE: 'suppliers:deactivate',
+  SUPPLIERS_REACTIVATE: 'suppliers:reactivate',
+
+  // Transfers
+  TRANSFERS_VIEW: 'transfers:view',
+  TRANSFERS_CREATE: 'transfers:create',
+  TRANSFERS_APPROVE: 'transfers:approve',
+  TRANSFERS_DISPATCH: 'transfers:dispatch',
+  TRANSFERS_RECEIVE: 'transfers:receive',
+
+  // Warehouses
+  WAREHOUSES_VIEW: 'warehouses:view',
+  WAREHOUSES_CREATE: 'warehouses:create',
+  WAREHOUSES_UPDATE: 'warehouses:update',
+  WAREHOUSES_DEACTIVATE: 'warehouses:deactivate',
+  WAREHOUSES_CONFIGURE_LAYOUT: 'warehouses:configure-layout',
+  WAREHOUSES_CONFIGURE_STAGING: 'warehouses:configure-staging',
+  WAREHOUSES_GENERATE_BARCODE: 'warehouses:generate-barcode',
+} as const
+
+export type PermissionCode = (typeof P)[keyof typeof P]

@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { InventoryWorkspaceNavigation } from './InventoryWorkspaceNavigation'
 
-const permissions = ['inventory:view', 'cycle-counts:view', 'stock-adjustments:view']
+const permissions = [P.INVENTORY_VIEW, P.CYCLE_COUNTS_VIEW, P.STOCK_ADJUSTMENTS_VIEW]
 const scrollIntoView = vi.fn()
 
 Object.defineProperty(Element.prototype, 'scrollIntoView', {
