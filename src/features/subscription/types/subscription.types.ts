@@ -6,15 +6,23 @@ export interface SubscriptionStatusResponse {
   planPrice: number
   currency: string
   billingCycle: string
-  startDate: string
-  endDate: string
+  startDate: string | null
+  endDate: string | null
   status: string
   autoRenew: boolean
   isExpired: boolean
   daysRemaining: number
   pendingPlanName?: string | null
   pendingBillingCycle?: BillingCycle | null
+  pendingEffectiveAt?: string | null
+  pendingPaymentId?: string | null
   cancelledAt?: string | null
+}
+
+export interface SubscriptionEntitlementResponse {
+  isOperationalWriteAllowed: boolean
+  reason: string
+  status: string | null
 }
 
 export type PlanFeatureType = 'Boolean' | 'Limit'
@@ -63,12 +71,46 @@ export interface SubscriptionPlanResponse {
   status: string
 }
 
-export interface UpgradeSubscriptionRequestDto {
-  newPlanId: string
+export type SubscriptionApplicationTiming = 'ApplyImmediately' | 'ApplyNextCycle'
+
+export interface InitialSubscriptionSelectionRequestDto {
+  planId: string
   billingCycle: BillingCycle
 }
 
-export const PAYMENT_STATUS_VALUES = ['Completed', 'Pending', 'Failed'] as const
+export interface InitialSubscriptionSelectionResponse {
+  subscriptionStatus: string
+  requiresPayment: boolean
+  payment?: PaymentLinkResponse | null
+}
+
+export interface ChangeSubscriptionPlanRequestDto {
+  planId: string
+  billingCycle: BillingCycle
+  applicationTiming: SubscriptionApplicationTiming
+}
+
+export interface SubscriptionPlanChangeResponse {
+  applicationTiming: SubscriptionApplicationTiming
+  effectiveAt: string | null
+  amount: number
+  currency: string
+  currentUsers: number
+  targetUserLimit: number | null
+  currentWarehouses: number
+  targetWarehouseLimit: number | null
+  exceedsTargetLimits: boolean
+  requiresPayment: boolean
+  payment?: PaymentLinkResponse | null
+}
+
+export const PAYMENT_STATUS_VALUES = [
+  'Completed',
+  'Pending',
+  'Failed',
+  'Cancelled',
+  'Expired',
+] as const
 
 export type PaymentStatus = (typeof PAYMENT_STATUS_VALUES)[number]
 
@@ -152,9 +194,4 @@ export interface PaymentLinkResponse {
   readonly orderCode: number
 }
 
-export interface CreatePaymentLinkRequestDto {
-  readonly newPlanId: string
-  readonly billingCycle: BillingCycle
-}
-
-export type PayOSPaymentStatus = 'PAID' | 'PENDING' | 'PROCESSING' | 'CANCELLED'
+export type PayOSPaymentStatus = 'PAID' | 'PENDING' | 'PROCESSING' | 'CANCELLED' | 'EXPIRED'

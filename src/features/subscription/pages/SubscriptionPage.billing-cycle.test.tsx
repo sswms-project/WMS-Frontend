@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SubscriptionPlanResponse } from '../types/subscription.types'
 import { SubscriptionPage } from './SubscriptionPage'
 
-const createPaymentLinkMutation = {
+const changePlanMutation = {
   isPending: false,
   mutateAsync: vi.fn(),
 }
@@ -54,14 +54,19 @@ vi.mock('../components/SubscriptionPage', () => ({
   SubscriptionActionDialog: ({
     open,
     onConfirm,
+    children,
   }: {
     readonly open: boolean
     readonly onConfirm: () => void
+    readonly children?: React.ReactNode
   }) =>
     open ? (
-      <button type="button" onClick={onConfirm}>
-        Xác nhận thay đổi
-      </button>
+      <div>
+        {children}
+        <button type="button" onClick={onConfirm}>
+          Xác nhận thay đổi
+        </button>
+      </div>
     ) : null,
   SubscriptionEmptyState: () => null,
   SubscriptionErrorState: () => null,
@@ -69,8 +74,8 @@ vi.mock('../components/SubscriptionPage', () => ({
 }))
 
 vi.mock('../hooks/use-subscription', () => ({
-  useCancelSubscriptionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  useCreatePaymentLinkMutation: () => createPaymentLinkMutation,
+  useChangeSubscriptionPlanMutation: () => changePlanMutation,
+  useInitialSubscriptionSelectionMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
   useCurrentSubscriptionQuery: () => ({
     data: {
       id: 'subscription-id',
@@ -100,8 +105,8 @@ vi.mock('../hooks/use-subscription', () => ({
 
 describe('SubscriptionPage billing cycle', () => {
   beforeEach(() => {
-    createPaymentLinkMutation.mutateAsync.mockReset()
-    createPaymentLinkMutation.mutateAsync.mockResolvedValue(undefined)
+    changePlanMutation.mutateAsync.mockReset()
+    changePlanMutation.mutateAsync.mockResolvedValue({ requiresPayment: false })
   })
 
   it('includes the selected billing cycle in the upgrade request', async () => {
@@ -111,11 +116,15 @@ describe('SubscriptionPage billing cycle', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Thanh toán hàng năm' }))
     await user.click(screen.getByRole('button', { name: 'Chọn Professional' }))
+
+    expect(screen.getByText(/một chu kỳ năm đầy đủ mới sẽ bắt đầu ngay/)).toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: 'Xác nhận thay đổi' }))
 
-    expect(createPaymentLinkMutation.mutateAsync).toHaveBeenCalledWith({
-      newPlanId: 'professional',
+    expect(changePlanMutation.mutateAsync).toHaveBeenCalledWith({
+      planId: 'professional',
       billingCycle: 'Yearly',
+      applicationTiming: 'ApplyImmediately',
     })
   })
 })

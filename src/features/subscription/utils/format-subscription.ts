@@ -68,6 +68,8 @@ export function formatPaymentStatus(value: string): string {
   if (normalizedValue === 'completed') return 'Đã thanh toán'
   if (normalizedValue === 'pending') return 'Đang xử lý'
   if (normalizedValue === 'failed') return 'Thất bại'
+  if (normalizedValue === 'cancelled' || normalizedValue === 'canceled') return 'Đã hủy'
+  if (normalizedValue === 'expired') return 'Đã hết hạn'
   return value || 'Không xác định'
 }
 
@@ -102,13 +104,13 @@ export function hasPendingSubscriptionChange(subscription?: SubscriptionStatusRe
   return Boolean(subscription.pendingPlanName) || Boolean(subscription.pendingBillingCycle)
 }
 
-export function shouldShowRenewAction(subscription?: SubscriptionStatusResponse): boolean {
+export function shouldShowRenewAction(subscription?: SubscriptionStatusResponse | null): boolean {
   if (!subscription || isCancelledSubscription(subscription)) return false
   return subscription.isExpired || subscription.daysRemaining <= NEAR_EXPIRY_DAYS
 }
 
 export function findCurrentPlan(
-  subscription: SubscriptionStatusResponse | undefined,
+  subscription: SubscriptionStatusResponse | null | undefined,
   plans: readonly SubscriptionPlanResponse[]
 ): SubscriptionPlanResponse | undefined {
   if (!subscription) return undefined

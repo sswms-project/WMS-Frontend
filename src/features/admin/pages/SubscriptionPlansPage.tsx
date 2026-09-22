@@ -28,6 +28,7 @@ import {
 } from '../components/SubscriptionPlansPage'
 import {
   useAdminSubscriptionPlansQuery,
+  useActivateSubscriptionPlanMutation,
   useCreateSubscriptionPlanMutation,
   useDeactivateSubscriptionPlanMutation,
   useSubscriptionFeaturesQuery,
@@ -133,6 +134,7 @@ export default function SubscriptionPlansPage() {
   const createMutation = useCreateSubscriptionPlanMutation()
   const updateMutation = useUpdateSubscriptionPlanMutation()
   const deactivateMutation = useDeactivateSubscriptionPlanMutation()
+  const activateMutation = useActivateSubscriptionPlanMutation()
 
   const isFormOpen = isCreateOpen || editingPlan !== null
   const isFormPending = createMutation.isPending || updateMutation.isPending
@@ -208,7 +210,7 @@ export default function SubscriptionPlansPage() {
           displayOrder: values.displayOrder,
           features: featureItemsToPayload(values.featureItems),
         })
-        toast.success('Đã tạo gói đăng ký.')
+        toast.success('Đã tạo gói ở trạng thái ngừng cung cấp. Kiểm tra cấu hình rồi kích hoạt.')
         return true
       } catch (error) {
         handleFormApiError(error, setError, true)
@@ -334,6 +336,19 @@ export default function SubscriptionPlansPage() {
         onDeactivate={(plan) => {
           setDeactivateErrorMessage(null)
           setDeactivatingPlan(plan)
+        }}
+        onActivate={async (plan) => {
+          try {
+            await activateMutation.mutateAsync(plan.id)
+            toast.success(`Đã kích hoạt gói ${plan.planName}.`)
+          } catch (error) {
+            logger.error(error)
+            toast.error(
+              isApiErrorResponse(error)
+                ? error.message
+                : 'Không thể kích hoạt gói. Vui lòng kiểm tra cấu hình.'
+            )
+          }
         }}
       />
     )

@@ -226,3 +226,15 @@ export function useDeactivateSubscriptionPlanMutation() {
     onError: (error) => logger.error(error),
   })
 }
+
+export function useActivateSubscriptionPlanMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
+    mutationFn: adminService.activateSubscriptionPlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.all })
+    },
+    onError: (error) => logger.error(error),
+  })
+}

@@ -1,7 +1,8 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,18 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
 import { registerSchema, type RegisterFormValues } from '@/features/auth/schemas/register.schema'
+import type {
+  BillingCycle,
+  SubscriptionPlanResponse,
+} from '@/features/subscription/types/subscription.types'
+import {
+  formatBillingCycle,
+  formatCurrency,
+  getBillingPeriodLabel,
+  getPlanPrice,
+} from '@/features/subscription/utils/format-subscription'
+import { APP_ROUTES } from '@/routes/app-routes'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmPasswordHint } from './ConfirmPasswordHint'
 import { PasswordRequirementList } from './PasswordRequirementList'
 import { TextField } from './TextField'
@@ -17,6 +30,9 @@ import { TextField } from './TextField'
 interface RegisterFormProps {
   readonly onSubmit: (values: RegisterFormValues) => Promise<void>
   readonly isLoading: boolean
+  readonly selectedPlan?: SubscriptionPlanResponse
+  readonly selectedBillingCycle: BillingCycle
+  readonly isPlanLoading: boolean
 }
 
 const defaultValues: RegisterFormValues = {
@@ -30,7 +46,13 @@ const defaultValues: RegisterFormValues = {
   acceptTerms: false,
 }
 
-export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
+export function RegisterForm({
+  onSubmit,
+  isLoading,
+  selectedPlan,
+  selectedBillingCycle,
+  isPlanLoading,
+}: RegisterFormProps) {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues,
@@ -71,6 +93,36 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
           Cung cấp thông tin doanh nghiệp và người đại diện để khởi tạo workspace KOVIA.
         </p>
       </header>
+
+      {isPlanLoading ? (
+        <Card size="sm" className="border-border mb-5 rounded-lg">
+          <CardContent className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-6 w-48" />
+          </CardContent>
+        </Card>
+      ) : selectedPlan ? (
+        <Card size="sm" className="border-primary/30 bg-primary/5 mb-5 rounded-lg">
+          <CardContent className="flex items-start gap-3">
+            <CheckCircle2 className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Gói đã chọn: {selectedPlan.planName}</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {formatBillingCycle(selectedBillingCycle)} ·{' '}
+                {getPlanPrice(selectedPlan, selectedBillingCycle) === 0
+                  ? 'Miễn phí'
+                  : `${formatCurrency(getPlanPrice(selectedPlan, selectedBillingCycle), selectedPlan.currency)} ${getBillingPeriodLabel(selectedBillingCycle)}`}
+              </p>
+              <Link
+                href={APP_ROUTES.pricing}
+                className="text-primary mt-2 inline-flex text-xs font-medium underline-offset-4 hover:underline"
+              >
+                Chọn gói khác
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
         <TextField

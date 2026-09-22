@@ -34,6 +34,7 @@ interface SubscriptionPlanTableProps {
   readonly plans: readonly SubscriptionPlanResponse[]
   readonly onEdit: (plan: SubscriptionPlanResponse) => void
   readonly onDeactivate: (plan: SubscriptionPlanResponse) => void
+  readonly onActivate: (plan: SubscriptionPlanResponse) => void
 }
 
 function PlanStatus({ status }: { readonly status: SubscriptionPlanResponse['status'] }) {
@@ -83,10 +84,12 @@ function PlanActions({
   plan,
   onEdit,
   onDeactivate,
+  onActivate,
 }: {
   readonly plan: SubscriptionPlanResponse
   readonly onEdit: (plan: SubscriptionPlanResponse) => void
   readonly onDeactivate: (plan: SubscriptionPlanResponse) => void
+  readonly onActivate: (plan: SubscriptionPlanResponse) => void
 }) {
   const isActive = plan.status === 'Active'
 
@@ -117,14 +120,17 @@ function PlanActions({
           Chỉnh sửa
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          variant="destructive"
-          disabled={!isActive}
-          onSelect={() => onDeactivate(plan)}
-        >
-          <CircleOff aria-hidden="true" />
-          Vô hiệu hóa
-        </DropdownMenuItem>
+        {isActive ? (
+          <DropdownMenuItem variant="destructive" onSelect={() => onDeactivate(plan)}>
+            <CircleOff aria-hidden="true" />
+            Vô hiệu hóa
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={() => onActivate(plan)}>
+            <CircleCheck aria-hidden="true" />
+            Kích hoạt
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -172,7 +178,12 @@ function PlanIdentity({ plan }: { readonly plan: SubscriptionPlanResponse }) {
   )
 }
 
-export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: SubscriptionPlanTableProps) {
+export function SubscriptionPlanTable({
+  plans,
+  onEdit,
+  onDeactivate,
+  onActivate,
+}: SubscriptionPlanTableProps) {
   return (
     <>
       <div className="hidden xl:block">
@@ -215,7 +226,12 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
                   <PlanStatus status={plan.status} />
                 </TableCell>
                 <TableCell className="py-3 pr-3 text-right">
-                  <PlanActions plan={plan} onEdit={onEdit} onDeactivate={onDeactivate} />
+                  <PlanActions
+                    plan={plan}
+                    onEdit={onEdit}
+                    onDeactivate={onDeactivate}
+                    onActivate={onActivate}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -231,7 +247,12 @@ export function SubscriptionPlanTable({ plans, onEdit, onDeactivate }: Subscript
           >
             <div className="flex items-start justify-between gap-3">
               <PlanIdentity plan={plan} />
-              <PlanActions plan={plan} onEdit={onEdit} onDeactivate={onDeactivate} />
+              <PlanActions
+                plan={plan}
+                onEdit={onEdit}
+                onDeactivate={onDeactivate}
+                onActivate={onActivate}
+              />
             </div>
             <div className="mt-2">
               <PlanStatus status={plan.status} />

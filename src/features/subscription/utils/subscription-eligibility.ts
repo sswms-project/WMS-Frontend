@@ -18,10 +18,17 @@ export function isDowngradePlan(
 export function getPlanActionState(
   plan: SubscriptionPlanResponse,
   currentPlan: SubscriptionPlanResponse | undefined,
-  subscription: SubscriptionStatusResponse | undefined,
+  subscription: SubscriptionStatusResponse | null | undefined,
   billingCycle: BillingCycle,
   isPending: boolean
 ): PlanActionState {
+  if (!subscription) {
+    return {
+      disabled: isPending,
+      label: isPending ? 'Đang xử lý…' : 'Chọn gói',
+    }
+  }
+
   const isCurrentPlan = currentPlan?.id === plan.id || currentPlan?.planName === plan.planName
   const isCurrentCycle = normalizeBillingCycle(subscription?.billingCycle) === billingCycle
 
@@ -49,4 +56,20 @@ export function getPlanActionState(
   }
 
   return { disabled: false, label: 'Nâng cấp' }
+}
+
+export function canApplyPlanChangeImmediately(
+  plan: SubscriptionPlanResponse,
+  subscription: SubscriptionStatusResponse,
+  billingCycle: BillingCycle
+): boolean {
+  const targetPrice = getPlanPrice(plan, billingCycle)
+  if (subscription.planPrice === 0 && targetPrice > 0) return true
+
+  const currentCycle = normalizeBillingCycle(subscription.billingCycle)
+  if (currentCycle !== billingCycle) return false
+
+  return Boolean(
+    subscription.startDate && subscription.endDate && targetPrice > subscription.planPrice
+  )
 }

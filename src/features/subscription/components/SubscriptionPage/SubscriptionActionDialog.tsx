@@ -8,6 +8,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import type { ReactNode } from 'react'
 
 interface SubscriptionActionDialogProps {
   readonly open: boolean
@@ -18,6 +19,7 @@ interface SubscriptionActionDialogProps {
   readonly variant?: 'default' | 'destructive'
   readonly onOpenChange: (open: boolean) => void
   readonly onConfirm: () => void
+  readonly children?: ReactNode
 }
 
 export function SubscriptionActionDialog({
@@ -29,6 +31,7 @@ export function SubscriptionActionDialog({
   variant = 'default',
   onOpenChange,
   onConfirm,
+  children,
 }: SubscriptionActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -37,6 +40,7 @@ export function SubscriptionActionDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Đóng</AlertDialogCancel>
           <Button type="button" variant={variant} disabled={isPending} onClick={onConfirm}>

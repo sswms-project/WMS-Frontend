@@ -5,6 +5,7 @@ import { PageTransition } from '@/components/PageTransition'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { SubscriptionReadOnlyBanner } from '@/features/subscription/components/SubscriptionReadOnlyBanner'
 import { SubscriptionReadOnlyProvider } from '@/features/subscription/components/SubscriptionReadOnlyProvider'
+import { SubscriptionWriteGuard } from '@/features/subscription/components/SubscriptionWriteGuard'
 import { NotificationRealtimeProvider } from '@/features/platform-services/providers/NotificationRealtimeProvider'
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,9 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
                   <div className="shrink-0 print:hidden">
                     <SubscriptionReadOnlyBanner />
                   </div>
-                  <PageTransition>{children}</PageTransition>
+                  <SubscriptionWriteGuard>
+                    <PageTransition>{children}</PageTransition>
+                  </SubscriptionWriteGuard>
                 </div>
               </SidebarInset>
             </SidebarProvider>
