@@ -9,16 +9,19 @@ export interface WarehouseCapabilities {
   readonly canConfigureOutboundStaging: boolean
 }
 
-export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabilities {
+export function getWarehouseCapabilities(
+  role: UserRole | null,
+  permissions: readonly string[] = []
+): WarehouseCapabilities {
   const isTenantOwner = role === USER_ROLES.TenantOwner
-  const isWarehouseManager = role === USER_ROLES.WarehouseManager
+  const hasPermission = (permission: string) => isTenantOwner || permissions.includes(permission)
 
   return {
     canCreateWarehouse: isTenantOwner,
-    canEditWarehouse: isTenantOwner || isWarehouseManager,
+    canEditWarehouse: hasPermission('warehouses:update'),
     canDeactivateWarehouse: isTenantOwner,
-    canConfigureLayout: isTenantOwner || isWarehouseManager,
-    canGenerateLocationBarcode: isTenantOwner || isWarehouseManager,
-    canConfigureOutboundStaging: isTenantOwner,
+    canConfigureLayout: hasPermission('warehouses:configure-layout'),
+    canGenerateLocationBarcode: hasPermission('warehouses:generate-barcode'),
+    canConfigureOutboundStaging: hasPermission('warehouses:configure-staging'),
   }
 }

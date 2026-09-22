@@ -1,6 +1,7 @@
 'use client'
 
-import { CircleOff, LoaderCircle } from 'lucide-react'
+import { CircleOff, LoaderCircle, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface WarehouseLocationDeactivateDialogProps {
   readonly open: boolean
@@ -20,8 +23,9 @@ interface WarehouseLocationDeactivateDialogProps {
   readonly locationCode: string
   readonly isPending: boolean
   readonly errorMessage: string | null
+  readonly isReactivation?: boolean
   readonly onOpenChange: (open: boolean) => void
-  readonly onConfirm: () => void
+  readonly onConfirm: (reason: string | null) => void
 }
 
 export function WarehouseLocationDeactivateDialog({
@@ -30,24 +34,38 @@ export function WarehouseLocationDeactivateDialog({
   locationCode,
   isPending,
   errorMessage,
+  isReactivation = false,
   onOpenChange,
   onConfirm,
 }: WarehouseLocationDeactivateDialogProps) {
+  const [reason, setReason] = useState('')
+
   return (
-    <AlertDialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isPending) {
+          if (!nextOpen) setReason('')
+          onOpenChange(nextOpen)
+        }
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <CircleOff aria-hidden="true" />
+            {isReactivation ? <RotateCcw aria-hidden="true" /> : <CircleOff aria-hidden="true" />}
           </AlertDialogMedia>
-          <AlertDialogTitle>Ngừng hoạt động {locationLabel}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isReactivation ? 'Kích hoạt lại' : 'Ngừng hoạt động'} {locationLabel}
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {locationLabel}{' '}
             <span translate="no" className="font-mono">
               {locationCode}
             </span>{' '}
-            sẽ không thể tiếp tục cấu hình hoặc phát hành barcode. Thao tác bị chặn nếu vị trí này
-            hoặc các vị trí con còn hàng hay lượng giữ chỗ.
+            {isReactivation
+              ? ' sẽ hoạt động trở lại sau khi hệ thống kiểm tra các cấp cha.'
+              : ' sẽ ngừng nhận cấu hình mới. Thao tác bị chặn nếu vị trí này hoặc các vị trí con còn hàng, lượng giữ hoặc công việc đang xử lý.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -58,6 +76,20 @@ export function WarehouseLocationDeactivateDialog({
           </Alert>
         ) : null}
 
+        <div className="grid gap-2">
+          <Label htmlFor="location-lifecycle-reason">Lý do (không bắt buộc)</Label>
+          <Textarea
+            id="location-lifecycle-reason"
+            name="locationLifecycleReason"
+            autoComplete="off"
+            value={reason}
+            maxLength={500}
+            disabled={isPending}
+            placeholder="Nhập lý do nếu cần lưu vào nhật ký"
+            onChange={(event) => setReason(event.currentTarget.value)}
+          />
+        </div>
+
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
           <AlertDialogAction
@@ -65,7 +97,7 @@ export function WarehouseLocationDeactivateDialog({
             disabled={isPending}
             onClick={(event) => {
               event.preventDefault()
-              onConfirm()
+              onConfirm(reason.trim() || null)
             }}
           >
             {isPending ? (
@@ -73,7 +105,7 @@ export function WarehouseLocationDeactivateDialog({
             ) : (
               <CircleOff data-icon="inline-start" aria-hidden="true" />
             )}
-            Xác nhận ngừng
+            {isReactivation ? 'Xác nhận kích hoạt' : 'Xác nhận ngừng'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

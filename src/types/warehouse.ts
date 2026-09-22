@@ -5,6 +5,7 @@ export interface WarehouseResponse {
   address: string | null
   status: string
   createdAt: string
+  rowVersion?: string | null
 }
 
 export interface WarehouseDetailResponse extends WarehouseResponse {
@@ -17,9 +18,12 @@ export interface SlotResponse {
   slotCode: string
   status: string
   isActive: boolean
-  capacity: number
+  isOutboundStaging?: boolean
+  allowsMixedProducts?: boolean
+  capacity: number | null
   currentOccupancy: number
   barcodeValue: string | null
+  rowVersion?: string | null
 }
 
 export interface RackResponse {
@@ -27,6 +31,10 @@ export interface RackResponse {
   rackCode: string
   rackName: string
   status: string
+  storageMode?: 'RackLevel' | 'SlotLevel'
+  allowsMixedProducts?: boolean
+  capacity?: number | null
+  rowVersion?: string | null
   slots: SlotResponse[]
 }
 
@@ -36,5 +44,6 @@ export interface ZoneResponse {
   zoneName: string
   description: string | null
   status: string
+  rowVersion?: string | null
   racks: RackResponse[]
 }

@@ -76,7 +76,10 @@ export function WarehouseLocationsPage({ warehouseId }: WarehouseLocationsPagePr
         warehouseId,
         rackId: location.rackId,
         slotId: location.id,
-        request: { isOutboundStaging: !location.isOutboundStaging },
+        request: {
+          isOutboundStaging: !location.isOutboundStaging,
+          expectedRowVersion: location.rowVersion ?? '',
+        },
       })
       toast.success(
         location.isOutboundStaging

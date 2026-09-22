@@ -110,14 +110,48 @@ describe('warehouse structure schemas', () => {
       zoneName: 'Khu nhận',
       description: 'Mô tả',
     })
-    expect(rackSchema.parse({ rackCode: ' R-01 ', rackName: ' Kệ 01 ' })).toEqual({
+    expect(
+      rackSchema.parse({
+        rackCode: ' R-01 ',
+        rackName: ' Kệ 01 ',
+        storageMode: 'SlotLevel',
+        allowsMixedProducts: true,
+        capacity: null,
+      })
+    ).toEqual({
       rackCode: 'R-01',
       rackName: 'Kệ 01',
+      storageMode: 'SlotLevel',
+      allowsMixedProducts: true,
+      capacity: null,
     })
   })
 
   it('rejects an empty slot code and non-positive capacity', () => {
-    expect(slotSchema.safeParse({ slotCode: ' ', capacity: 10 }).success).toBe(false)
-    expect(slotSchema.safeParse({ slotCode: 'S-01', capacity: 0 }).success).toBe(false)
+    expect(
+      slotSchema.safeParse({ slotCode: ' ', allowsMixedProducts: false, capacity: 10 }).success
+    ).toBe(false)
+    expect(
+      slotSchema.safeParse({ slotCode: 'S-01', allowsMixedProducts: false, capacity: 0 }).success
+    ).toBe(false)
+  })
+
+  it('does not allow a shared quantity limit for mixed-product storage', () => {
+    expect(
+      rackSchema.safeParse({
+        rackCode: 'R-01',
+        rackName: 'Kệ 01',
+        storageMode: 'RackLevel',
+        allowsMixedProducts: true,
+        capacity: 100,
+      }).success
+    ).toBe(false)
+    expect(
+      slotSchema.safeParse({
+        slotCode: 'S-01',
+        allowsMixedProducts: true,
+        capacity: 100,
+      }).success
+    ).toBe(false)
   })
 })

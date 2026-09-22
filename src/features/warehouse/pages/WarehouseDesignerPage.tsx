@@ -167,7 +167,14 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
       warehouseId,
       zoneId: rack.zoneId,
       rackId: rack.id,
-      request: { rackCode: rack.rackCode, rackName },
+      request: {
+        rackCode: rack.rackCode,
+        rackName,
+        storageMode: rack.storageMode ?? 'SlotLevel',
+        allowsMixedProducts: rack.allowsMixedProducts ?? true,
+        capacity: rack.capacity ?? null,
+        expectedRowVersion: rack.rowVersion ?? '',
+      },
     })
   }
 
@@ -176,6 +183,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
       warehouseId,
       zoneId: rack.zoneId,
       rackId: rack.id,
+      request: { reason: null, expectedRowVersion: rack.rowVersion ?? '' },
     })
   }
 
@@ -217,7 +225,13 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
           open
           mode="create"
           isPending={createRackMutation.isPending}
-          defaultValues={{ rackCode: '', rackName: '' }}
+          defaultValues={{
+            rackCode: '',
+            rackName: '',
+            storageMode: 'SlotLevel',
+            allowsMixedProducts: true,
+            capacity: null,
+          }}
           onOpenChange={(open) => !open && setRackZoneId(null)}
           onSubmit={submitRack}
         />

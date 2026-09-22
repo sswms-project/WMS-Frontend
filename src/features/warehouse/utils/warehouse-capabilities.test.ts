@@ -15,7 +15,13 @@ describe('getWarehouseCapabilities', () => {
   })
 
   it('allows a warehouse manager to configure layout without owner actions', () => {
-    expect(getWarehouseCapabilities(USER_ROLES.WarehouseManager)).toEqual({
+    expect(
+      getWarehouseCapabilities(USER_ROLES.WarehouseManager, [
+        'warehouses:update',
+        'warehouses:configure-layout',
+        'warehouses:generate-barcode',
+      ])
+    ).toEqual({
       canCreateWarehouse: false,
       canEditWarehouse: true,
       canDeactivateWarehouse: false,

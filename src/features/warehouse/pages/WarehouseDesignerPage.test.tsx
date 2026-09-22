@@ -230,7 +230,14 @@ describe('WarehouseDesignerPage', () => {
       warehouseId: 'warehouse-1',
       zoneId: 'zone-1',
       rackId: 'rack-1',
-      request: { rackCode: 'R-01', rackName: 'Finished goods rack' },
+      request: {
+        rackCode: 'R-01',
+        rackName: 'Finished goods rack',
+        storageMode: 'SlotLevel',
+        allowsMixedProducts: true,
+        capacity: null,
+        expectedRowVersion: '',
+      },
     })
 
     await user.click(screen.getByRole('button', { name: 'Ngừng kệ' }))
@@ -238,6 +245,7 @@ describe('WarehouseDesignerPage', () => {
       warehouseId: 'warehouse-1',
       zoneId: 'zone-1',
       rackId: 'rack-1',
+      request: { reason: null, expectedRowVersion: '' },
     })
   })
 

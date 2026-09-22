@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
@@ -26,6 +28,9 @@ import {
   useDeactivateRackMutation,
   useDeactivateSlotMutation,
   useDeactivateZoneMutation,
+  useReactivateRackMutation,
+  useReactivateSlotMutation,
+  useReactivateZoneMutation,
   useUpdateRackMutation,
   useUpdateSlotMutation,
   useUpdateZoneMutation,
@@ -69,7 +74,8 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const role = useAuthStore((state) => state.user?.role ?? null)
-  const capabilities = getWarehouseCapabilities(role)
+  const meQuery = useMeQuery()
+  const capabilities = getWarehouseCapabilities(role, meQuery.data?.permissions)
   const warehouseQuery = useWarehouseQuery(warehouseId)
   const layoutQuery = useWarehouseLayoutQuery(warehouseId, true)
   const createZoneMutation = useCreateZoneMutation()
@@ -81,15 +87,37 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   const createSlotMutation = useCreateSlotMutation()
   const updateSlotMutation = useUpdateSlotMutation()
   const deactivateSlotMutation = useDeactivateSlotMutation()
+  const reactivateZoneMutation = useReactivateZoneMutation()
+  const reactivateRackMutation = useReactivateRackMutation()
+  const reactivateSlotMutation = useReactivateSlotMutation()
   const [zoneFormTarget, setZoneFormTarget] = useState<ZoneFormTarget | null>(null)
   const [rackFormTarget, setRackFormTarget] = useState<RackFormTarget | null>(null)
   const [slotFormTarget, setSlotFormTarget] = useState<SlotFormTarget | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<DeactivateTarget | null>(null)
   const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
+  const zones = layoutQuery.data ?? []
+  const selection = getWarehouseLayoutSelection(
+    zones,
+    searchParams.get('zone'),
+    searchParams.get('rack')
+  )
+  const selectedRack = zones
+    .find((zone) => zone.id === selection.selectedZoneId)
+    ?.racks.find((rack) => rack.id === selection.selectedRackId)
+  const inventoryQuery = useInventoryQuery(
+    {
+      pageNumber: 1,
+      pageSize: 100,
+      warehouseId,
+      rackId: selectedRack?.id,
+    },
+    Boolean(selectedRack)
+  )
 
-  if (layoutQuery.isLoading || warehouseQuery.isLoading) return <Skeleton className="h-[32rem]" />
+  if (layoutQuery.isLoading || warehouseQuery.isLoading || meQuery.isLoading)
+    return <Skeleton className="h-[32rem]" />
 
-  if (layoutQuery.isError || warehouseQuery.isError || !warehouseQuery.data) {
+  if (layoutQuery.isError || warehouseQuery.isError || meQuery.isError || !warehouseQuery.data) {
     return (
       <Empty className="min-h-72 border">
         <EmptyHeader>
@@ -112,12 +140,6 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
     )
   }
 
-  const zones = layoutQuery.data ?? []
-  const selection = getWarehouseLayoutSelection(
-    zones,
-    searchParams.get('zone'),
-    searchParams.get('rack')
-  )
   const isWarehouseActive = warehouseQuery.data.status === 'Active'
 
   function navigate(zoneId: string | null, rackId: string | null) {
@@ -139,7 +161,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         await updateZoneMutation.mutateAsync({
           warehouseId,
           zoneId: zoneFormTarget.zone.id,
-          request: values,
+          request: { ...values, expectedRowVersion: zoneFormTarget.zone.rowVersion ?? '' },
         })
         toast.success('Đã cập nhật khu vực.')
       }
@@ -159,7 +181,13 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         await createRackMutation.mutateAsync({
           warehouseId,
           zoneId: rackFormTarget.zone.id,
-          request: values,
+          request: {
+            rackCode: values.rackCode,
+            rackName: values.rackName,
+            storageMode: values.storageMode,
+            allowsMixedProducts: values.allowsMixedProducts,
+            capacity: values.capacity,
+          },
         })
         toast.success('Đã thêm kệ hàng.')
       } else {
@@ -167,7 +195,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           warehouseId,
           zoneId: rackFormTarget.zone.id,
           rackId: rackFormTarget.rack.id,
-          request: values,
+          request: { ...values, expectedRowVersion: rackFormTarget.rack.rowVersion ?? '' },
         })
         toast.success('Đã cập nhật kệ hàng.')
       }
@@ -187,7 +215,11 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         await createSlotMutation.mutateAsync({
           warehouseId,
           rackId: slotFormTarget.rack.id,
-          request: values,
+          request: {
+            slotCode: values.slotCode,
+            allowsMixedProducts: values.allowsMixedProducts,
+            capacity: values.capacity,
+          },
         })
         toast.success('Đã thêm vị trí lưu trữ.')
       } else {
@@ -195,7 +227,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           warehouseId,
           rackId: slotFormTarget.rack.id,
           slotId: slotFormTarget.slot.id,
-          request: values,
+          request: { ...values, expectedRowVersion: slotFormTarget.slot.rowVersion ?? '' },
         })
         toast.success('Đã cập nhật vị trí lưu trữ.')
       }
@@ -208,25 +240,51 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
     }
   }
 
-  async function confirmDeactivate() {
+  async function confirmLifecycle(reason: string | null) {
     if (!deactivateTarget) return
+    const request = {
+      reason,
+      expectedRowVersion:
+        deactivateTarget.type === 'Zone'
+          ? (deactivateTarget.zone.rowVersion ?? '')
+          : deactivateTarget.type === 'Rack'
+            ? (deactivateTarget.rack.rowVersion ?? '')
+            : (deactivateTarget.slot.rowVersion ?? ''),
+    }
+    const isReactivation =
+      deactivateTarget.type === 'Zone'
+        ? deactivateTarget.zone.status === 'Inactive'
+        : deactivateTarget.type === 'Rack'
+          ? deactivateTarget.rack.status === 'Inactive'
+          : deactivateTarget.slot.status === 'Inactive'
     try {
       if (deactivateTarget.type === 'Zone') {
-        await deactivateZoneMutation.mutateAsync({ warehouseId, zoneId: deactivateTarget.zone.id })
+        const variables = { warehouseId, zoneId: deactivateTarget.zone.id, request }
+        await (isReactivation
+          ? reactivateZoneMutation.mutateAsync(variables)
+          : deactivateZoneMutation.mutateAsync(variables))
       } else if (deactivateTarget.type === 'Rack') {
-        await deactivateRackMutation.mutateAsync({
+        const variables = {
           warehouseId,
           zoneId: deactivateTarget.zone.id,
           rackId: deactivateTarget.rack.id,
-        })
+          request,
+        }
+        await (isReactivation
+          ? reactivateRackMutation.mutateAsync(variables)
+          : deactivateRackMutation.mutateAsync(variables))
       } else {
-        await deactivateSlotMutation.mutateAsync({
+        const variables = {
           warehouseId,
           rackId: deactivateTarget.rack.id,
           slotId: deactivateTarget.slot.id,
-        })
+          request,
+        }
+        await (isReactivation
+          ? reactivateSlotMutation.mutateAsync(variables)
+          : deactivateSlotMutation.mutateAsync(variables))
       }
-      toast.success('Đã ngừng hoạt động vị trí.')
+      toast.success(isReactivation ? 'Đã kích hoạt lại vị trí.' : 'Đã ngừng hoạt động vị trí.')
       setDeactivateTarget(null)
       setDeactivateErrorMessage(null)
     } catch (error) {
@@ -240,7 +298,18 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   const isDeactivating =
     deactivateZoneMutation.isPending ||
     deactivateRackMutation.isPending ||
-    deactivateSlotMutation.isPending
+    deactivateSlotMutation.isPending ||
+    reactivateZoneMutation.isPending ||
+    reactivateRackMutation.isPending ||
+    reactivateSlotMutation.isPending
+  const isReactivation =
+    deactivateTarget?.type === 'Zone'
+      ? deactivateTarget.zone.status === 'Inactive'
+      : deactivateTarget?.type === 'Rack'
+        ? deactivateTarget.rack.status === 'Inactive'
+        : deactivateTarget?.type === 'Slot'
+          ? deactivateTarget.slot.status === 'Inactive'
+          : false
   const deactivateCode =
     deactivateTarget?.type === 'Zone'
       ? deactivateTarget.zone.zoneCode
@@ -267,6 +336,9 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         canConfigure={capabilities.canConfigureLayout}
         canGenerateBarcode={capabilities.canGenerateLocationBarcode}
         isWarehouseActive={isWarehouseActive}
+        inventoryItems={inventoryQuery.data?.items ?? []}
+        isInventoryLoading={inventoryQuery.isLoading}
+        isInventoryError={inventoryQuery.isError}
         onCreateZone={() => setZoneFormTarget({ mode: 'create' })}
         onCreateRack={(zone) => setRackFormTarget({ mode: 'create', zone })}
         onCreateSlot={(rack) => setSlotFormTarget({ mode: 'create', rack })}
@@ -276,6 +348,9 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         onDeactivateZone={(zone) => openDeactivate({ type: 'Zone', zone })}
         onDeactivateRack={(zone, rack) => openDeactivate({ type: 'Rack', zone, rack })}
         onDeactivateSlot={(rack, slot) => openDeactivate({ type: 'Slot', rack, slot })}
+        onReactivateZone={(zone) => openDeactivate({ type: 'Zone', zone })}
+        onReactivateRack={(zone, rack) => openDeactivate({ type: 'Rack', zone, rack })}
+        onReactivateSlot={(rack, slot) => openDeactivate({ type: 'Slot', rack, slot })}
         onBarcode={(type, locationId) =>
           router.push(APP_ROUTES.warehouseLocationBarcode(warehouseId, type, locationId) as Route)
         }
@@ -307,8 +382,21 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           isPending={createRackMutation.isPending || updateRackMutation.isPending}
           defaultValues={
             rackFormTarget.mode === 'update'
-              ? { rackCode: rackFormTarget.rack.rackCode, rackName: rackFormTarget.rack.rackName }
-              : { rackCode: '', rackName: '' }
+              ? {
+                  rackCode: rackFormTarget.rack.rackCode,
+                  rackName: rackFormTarget.rack.rackName,
+                  storageMode: rackFormTarget.rack.storageMode ?? 'SlotLevel',
+                  allowsMixedProducts: rackFormTarget.rack.allowsMixedProducts ?? true,
+                  capacity: rackFormTarget.rack.capacity ?? null,
+                  expectedRowVersion: rackFormTarget.rack.rowVersion ?? '',
+                }
+              : {
+                  rackCode: '',
+                  rackName: '',
+                  storageMode: 'SlotLevel',
+                  allowsMixedProducts: true,
+                  capacity: null,
+                }
           }
           onOpenChange={(open) => !open && setRackFormTarget(null)}
           onSubmit={submitRack}
@@ -322,8 +410,13 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           isPending={createSlotMutation.isPending || updateSlotMutation.isPending}
           defaultValues={
             slotFormTarget.mode === 'update'
-              ? { slotCode: slotFormTarget.slot.slotCode, capacity: slotFormTarget.slot.capacity }
-              : { slotCode: '', capacity: 1 }
+              ? {
+                  slotCode: slotFormTarget.slot.slotCode,
+                  allowsMixedProducts: slotFormTarget.slot.allowsMixedProducts ?? true,
+                  capacity: slotFormTarget.slot.capacity,
+                  expectedRowVersion: slotFormTarget.slot.rowVersion ?? '',
+                }
+              : { slotCode: '', allowsMixedProducts: true, capacity: null }
           }
           onOpenChange={(open) => !open && setSlotFormTarget(null)}
           onSubmit={submitSlot}
@@ -336,13 +429,14 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         locationCode={deactivateCode}
         isPending={isDeactivating}
         errorMessage={deactivateErrorMessage}
+        isReactivation={isReactivation}
         onOpenChange={(open) => {
           if (!open) {
             setDeactivateTarget(null)
             setDeactivateErrorMessage(null)
           }
         }}
-        onConfirm={() => void confirmDeactivate()}
+        onConfirm={(reason) => void confirmLifecycle(reason)}
       />
     </>
   )

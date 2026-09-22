@@ -103,6 +103,9 @@ function renderLayout(overrides?: {
     onDeactivateZone: vi.fn(),
     onDeactivateRack: vi.fn(),
     onDeactivateSlot: vi.fn(),
+    onReactivateZone: vi.fn(),
+    onReactivateRack: vi.fn(),
+    onReactivateSlot: vi.fn(),
     onBarcode: vi.fn(),
   }
 
@@ -208,6 +211,9 @@ describe('WarehouseLayoutView', () => {
           onDeactivateZone={vi.fn()}
           onDeactivateRack={vi.fn()}
           onDeactivateSlot={vi.fn()}
+          onReactivateZone={vi.fn()}
+          onReactivateRack={vi.fn()}
+          onReactivateSlot={vi.fn()}
           onBarcode={vi.fn()}
         />
       </TooltipProvider>

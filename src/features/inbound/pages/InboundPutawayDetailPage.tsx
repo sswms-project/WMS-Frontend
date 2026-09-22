@@ -36,12 +36,19 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
       ? zone.racks.flatMap((rack) =>
           rack.status === 'Active'
             ? rack.slots
-                .filter((slot) => slot.isActive && slot.capacity > slot.currentOccupancy)
+                .filter(
+                  (slot) =>
+                    slot.isActive &&
+                    (slot.capacity === null || slot.capacity > slot.currentOccupancy)
+                )
                 .map((slot) => ({
                   id: slot.id,
                   code: slot.slotCode,
                   hierarchy: `${zone.zoneCode} / ${rack.rackCode}`,
-                  availableCapacity: slot.capacity - slot.currentOccupancy,
+                  availableCapacity:
+                    slot.capacity === null
+                      ? Number.MAX_SAFE_INTEGER
+                      : slot.capacity - slot.currentOccupancy,
                 }))
             : []
         )
