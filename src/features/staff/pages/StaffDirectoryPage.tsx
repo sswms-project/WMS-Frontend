@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES } from '@/config/roles'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAuthStore } from '@/stores/auth.store'
@@ -80,7 +81,7 @@ export function StaffDirectoryPage() {
   const isTenantOwner = user?.role === USER_ROLES.TenantOwner
   const meQuery = useMeQuery()
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const canInvite = permissions.has('staff:invite')
+  const canInvite = permissions.has(P.STAFF_INVITE)
   const [kind, setKind] = useState<StaffDirectoryKind>(
     isTenantOwner ? STAFF_DIRECTORY_KINDS.managers : STAFF_DIRECTORY_KINDS.staff
   )
@@ -132,7 +133,7 @@ export function StaffDirectoryPage() {
   }
 
   async function confirmTermination() {
-    if (!staffToTerminate || !permissions.has('staff:terminate')) return
+    if (!staffToTerminate || !permissions.has(P.STAFF_TERMINATE)) return
 
     try {
       await terminateMutation.mutateAsync(staffToTerminate.id)
@@ -364,8 +365,8 @@ export function StaffDirectoryPage() {
                   people={people}
                   warehouses={warehousesQuery.data?.items ?? []}
                   isWarehouseScopeLoading={warehousesQuery.isLoading}
-                  canAssignWarehouse={permissions.has('staff:assign-warehouse')}
-                  canTerminate={permissions.has('staff:terminate')}
+                  canAssignWarehouse={permissions.has(P.STAFF_ASSIGN_WAREHOUSE)}
+                  canTerminate={permissions.has(P.STAFF_TERMINATE)}
                   onView={(person) => setSelectedUserId(person.id)}
                   onAssignWarehouse={setManagerToAssign}
                   onTerminate={setStaffToTerminate}
@@ -413,7 +414,7 @@ export function StaffDirectoryPage() {
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
 
-      {staffToTerminate && permissions.has('staff:terminate') && (
+      {staffToTerminate && permissions.has(P.STAFF_TERMINATE) && (
         <StaffTerminationDialog
           person={staffToTerminate}
           isPending={terminateMutation.isPending}
@@ -438,7 +439,7 @@ export function StaffDirectoryPage() {
         />
       )}
 
-      {managerToAssign && permissions.has('staff:assign-warehouse') && (
+      {managerToAssign && permissions.has(P.STAFF_ASSIGN_WAREHOUSE) && (
         <StaffWarehouseAssignment
           person={managerToAssign}
           onClose={() => setManagerToAssign(null)}

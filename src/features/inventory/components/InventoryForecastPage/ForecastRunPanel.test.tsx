@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { ForecastRunPanel } from './ForecastRunPanel'
 
 const state = vi.hoisted(() => ({
@@ -94,7 +95,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['inbound-requests:create']}
+        permissions={[P.INBOUND_REQUESTS_CREATE]}
       />
     )
 
@@ -108,7 +109,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['inbound-requests:create']}
+        permissions={[P.INBOUND_REQUESTS_CREATE]}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Chấp nhận' }))
@@ -140,7 +141,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['inbound-requests:create']}
+        permissions={[P.INBOUND_REQUESTS_CREATE]}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Chấp nhận' }))

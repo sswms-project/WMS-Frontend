@@ -8,6 +8,7 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { CycleCountDetailView } from '../components/CycleCountDetailView'
@@ -74,7 +75,7 @@ export default function CycleCountDetailPage({ cycleCountId }: { readonly cycleC
       detail={detail.data}
       allowedActions={actions.data?.allowedActions ?? []}
       isPending={pending}
-      canCreateAdjustment={me.data?.permissions.includes('stock-adjustments:create') ?? false}
+      canCreateAdjustment={me.data?.permissions.includes(P.STOCK_ADJUSTMENTS_CREATE) ?? false}
       recountForm={recountForm}
       adjustmentForm={adjustmentForm}
       onRecord={async (itemId, quantity) => {

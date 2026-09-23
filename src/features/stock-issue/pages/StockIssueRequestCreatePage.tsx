@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { Route } from 'next'
 import { ArrowLeft, Plus, Trash2, UserPlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -90,7 +91,7 @@ export default function StockIssueRequestCreatePage() {
         items: values.lines,
       })
       toast.success('Đã tạo yêu cầu xuất kho.')
-      router.push(APP_ROUTES.stockIssueRequests)
+      router.push(APP_ROUTES.stockIssueRequests as Route)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể tạo yêu cầu xuất kho.')
     }
@@ -124,7 +125,7 @@ export default function StockIssueRequestCreatePage() {
           type="button"
           variant="outline"
           size="icon"
-          onClick={() => router.push(APP_ROUTES.stockIssueRequests)}
+          onClick={() => router.push(APP_ROUTES.stockIssueRequests as Route)}
           aria-label="Quay lại"
         >
           <ArrowLeft />
@@ -285,7 +286,7 @@ export default function StockIssueRequestCreatePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(APP_ROUTES.stockIssueRequests)}
+            onClick={() => router.push(APP_ROUTES.stockIssueRequests as Route)}
           >
             Hủy
           </Button>

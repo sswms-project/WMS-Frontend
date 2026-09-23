@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useProductOptionsQuery } from '@/features/inbound-request/hooks/use-inbound-requests'
@@ -128,7 +129,7 @@ export default function InventoryPage() {
         areFiltersLoading={warehousesQuery.isLoading || productsQuery.isLoading}
         areFiltersError={warehousesQuery.isError || productsQuery.isError}
         activeFilterCount={Number(Boolean(warehouseId)) + Number(Boolean(productId))}
-        canReportDamaged={meQuery.data?.permissions.includes('inventory:report-damaged') ?? false}
+        canReportDamaged={meQuery.data?.permissions.includes(P.INVENTORY_REPORT_DAMAGED) ?? false}
         onSearchChange={(value) => updateFilter(setSearchText, value)}
         onWarehouseChange={(value) => updateFilter(setWarehouseId, value)}
         onProductChange={(value) => updateFilter(setProductId, value)}
