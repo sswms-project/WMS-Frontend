@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES } from '@/config/roles'
 import type { TenantRolePermissionWorkspace } from '../types/tenant-access-control.types'
 import TenantAccessControlPage from './TenantAccessControlPage'
@@ -114,7 +115,7 @@ const workspace: TenantRolePermissionWorkspace = {
   permissions: [
     {
       id: VIEW_PERMISSION_ID,
-      permissionKey: 'warehouses:view',
+      permissionKey: P.WAREHOUSES_VIEW,
       module: 'warehouses',
       moduleDisplayName: 'Kho hàng',
       displayName: 'Xem kho hàng',
@@ -123,7 +124,7 @@ const workspace: TenantRolePermissionWorkspace = {
     },
     {
       id: CONFIGURE_PERMISSION_ID,
-      permissionKey: 'warehouses:configure-layout',
+      permissionKey: P.WAREHOUSES_CONFIGURE_LAYOUT,
       module: 'warehouses',
       moduleDisplayName: 'Kho hàng',
       displayName: 'Cấu hình bố cục',
@@ -351,7 +352,7 @@ describe('TenantAccessControlPage', () => {
 
     await openWarehouseModule(user)
 
-    expect(screen.queryByText('warehouses:view')).not.toBeInTheDocument()
+    expect(screen.queryByText(P.WAREHOUSES_VIEW)).not.toBeInTheDocument()
     expect(screen.getByText('Xem danh sách và thông tin kho.')).toBeInTheDocument()
   })
 

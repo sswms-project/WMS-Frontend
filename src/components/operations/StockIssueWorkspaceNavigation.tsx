@@ -1,5 +1,7 @@
 import Link from 'next/link'
+import type { Route } from 'next'
 import { PackageMinus, Undo2 } from 'lucide-react'
+import { P } from '@/config/permissionCodes'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
 
@@ -27,9 +29,9 @@ export function StockIssueWorkspaceNavigation({
       className="flex shrink-0 gap-1 overflow-x-auto border-b px-1 pb-1"
       aria-label="Không gian xuất kho và trả hàng"
     >
-      {permissions.includes('stock-issue-requests:view') ? (
+      {permissions.includes(P.STOCK_ISSUE_REQUESTS_VIEW) ? (
         <Link
-          href={APP_ROUTES.stockIssueRequests}
+          href={APP_ROUTES.stockIssueRequests as Route}
           aria-current={currentView === 'stockIssueRequests' ? 'page' : undefined}
           className={linkClassName('stockIssueRequests')}
         >
@@ -37,9 +39,9 @@ export function StockIssueWorkspaceNavigation({
           Xuất kho
         </Link>
       ) : null}
-      {permissions.includes('goods-return-requests:view') ? (
+      {permissions.includes(P.GOODS_RETURN_REQUESTS_VIEW) ? (
         <Link
-          href={APP_ROUTES.goodsReturnRequests}
+          href={APP_ROUTES.goodsReturnRequests as Route}
           aria-current={currentView === 'goodsReturnRequests' ? 'page' : undefined}
           className={linkClassName('goodsReturnRequests')}
         >

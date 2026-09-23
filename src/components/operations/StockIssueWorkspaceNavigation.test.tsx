@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { StockIssueWorkspaceNavigation } from './StockIssueWorkspaceNavigation'
 
-const permissions = ['stock-issue-requests:view', 'goods-return-requests:view']
+const permissions = [P.STOCK_ISSUE_REQUESTS_VIEW, P.GOODS_RETURN_REQUESTS_VIEW]
 
 describe('StockIssueWorkspaceNavigation', () => {
   it('shows the current view as a distinct filled navigation item', () => {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
@@ -57,7 +58,7 @@ export default function StockRecipientPage() {
         page={page}
         pageSize={PAGE_SIZE}
         searchText={searchText}
-        canCreate={(meQuery.data?.permissions ?? []).includes('stock-recipients:create')}
+        canCreate={(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_CREATE)}
         isLoading={stockRecipientsQuery.isLoading}
         isFetching={stockRecipientsQuery.isFetching}
         isError={stockRecipientsQuery.isError}

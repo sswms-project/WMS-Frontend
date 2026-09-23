@@ -51,6 +51,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { P } from '@/config/permissionCodes'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { TransferStatus, TransferSummary } from '../../types/transfer.types'
 import {
@@ -139,9 +140,9 @@ export function TransferDirectory({
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0)
 
-  const canApprove = permissions.includes('transfers:approve')
-  const canDispatch = permissions.includes('transfers:dispatch')
-  const canReceive = permissions.includes('transfers:receive')
+  const canApprove = permissions.includes(P.TRANSFERS_APPROVE)
+  const canDispatch = permissions.includes(P.TRANSFERS_DISPATCH)
+  const canReceive = permissions.includes(P.TRANSFERS_RECEIVE)
 
   const renderRowActions = (transfer: TransferSummary) => (
     <DropdownMenu>
@@ -207,7 +208,7 @@ export function TransferDirectory({
             </p>
           </div>
         </div>
-        {permissions.includes('transfers:create') ? (
+        {permissions.includes(P.TRANSFERS_CREATE) ? (
           <Button asChild className="w-full sm:w-auto">
             <Link href={APP_ROUTES.transferCreate}>
               <Plus aria-hidden="true" />

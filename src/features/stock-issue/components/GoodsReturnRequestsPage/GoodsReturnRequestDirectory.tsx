@@ -27,6 +27,7 @@ import {
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { StockIssueWorkspaceNavigation } from '@/components/operations/StockIssueWorkspaceNavigation'
+import { P } from '@/config/permissionCodes'
 import type {
   GoodsReturnRequestStatus,
   GoodsReturnRequestSummary,
@@ -89,7 +90,7 @@ export function GoodsReturnRequestDirectory({
   onReject,
   onRetry,
 }: GoodsReturnRequestDirectoryProps) {
-  const canApprove = permissions.includes('goods-return-requests:approve')
+  const canApprove = permissions.includes(P.GOODS_RETURN_REQUESTS_APPROVE)
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 items-start gap-3 border-b pb-4">

@@ -12,6 +12,7 @@ import {
   Undo2,
 } from 'lucide-react'
 import Link from 'next/link'
+import type { Route } from 'next'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import {
@@ -50,6 +51,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { P } from '@/config/permissionCodes'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type {
   StockIssueRequestStatus,
@@ -139,10 +141,10 @@ export function StockIssueRequestDirectory({
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0)
 
-  const canPick = permissions.includes('stock-issue-requests:pick')
-  const canDispatch = permissions.includes('stock-issue-requests:dispatch')
-  const canAuthorizeDispatch = permissions.includes('stock-issue-requests:authorize-dispatch')
-  const canGoodsReturnRequest = permissions.includes('stock-issue-requests:return')
+  const canPick = permissions.includes(P.STOCK_ISSUE_REQUESTS_PICK)
+  const canDispatch = permissions.includes(P.STOCK_ISSUE_REQUESTS_DISPATCH)
+  const canAuthorizeDispatch = permissions.includes(P.STOCK_ISSUE_REQUESTS_AUTHORIZE_DISPATCH)
+  const canGoodsReturnRequest = permissions.includes(P.STOCK_ISSUE_REQUESTS_RETURN)
 
   const renderRowActions = (order: StockIssueRequestSummary) => (
     <DropdownMenu>
@@ -204,9 +206,9 @@ export function StockIssueRequestDirectory({
             </p>
           </div>
         </div>
-        {permissions.includes('stock-issue-requests:create') ? (
+        {permissions.includes(P.STOCK_ISSUE_REQUESTS_CREATE) ? (
           <Button asChild className="w-full sm:w-auto">
-            <Link href={APP_ROUTES.stockIssueRequestCreate}>
+            <Link href={APP_ROUTES.stockIssueRequestCreate as Route}>
               <Plus aria-hidden="true" />
               Tạo yêu cầu xuất kho
             </Link>
