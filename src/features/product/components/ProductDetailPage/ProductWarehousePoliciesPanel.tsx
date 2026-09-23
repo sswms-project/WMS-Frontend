@@ -1,8 +1,13 @@
-import { RefreshCw, Settings2 } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { Power, RefreshCw, RotateCcw, Settings2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
 import {
   Table,
   TableBody,
@@ -20,6 +25,8 @@ interface ProductWarehousePoliciesPanelProps {
   readonly canManage: boolean
   readonly onRetry: () => void
   readonly onConfigure: () => void
+  readonly isChangingStatus: boolean
+  readonly onChangeStatus: (policy: ProductWarehousePolicy) => void
 }
 
 export function ProductWarehousePoliciesPanel({
@@ -29,7 +36,10 @@ export function ProductWarehousePoliciesPanel({
   canManage,
   onRetry,
   onConfigure,
+  isChangingStatus,
+  onChangeStatus,
 }: ProductWarehousePoliciesPanelProps) {
+  const [statusTarget, setStatusTarget] = useState<ProductWarehousePolicy | null>(null)
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -84,6 +94,8 @@ export function ProductWarehousePoliciesPanel({
                 <TableHead className="text-right">An toàn</TableHead>
                 <TableHead className="text-right">Cung ứng</TableHead>
                 <TableHead>ABC</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                {canManage ? <TableHead className="text-right">Thao tác</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -109,12 +121,47 @@ export function ProductWarehousePoliciesPanel({
                     {policy.leadTimeDays ? `${policy.leadTimeDays} ngày` : '—'}
                   </TableCell>
                   <TableCell>{policy.abcClass ?? '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant={policy.status === 'Active' ? 'default' : 'outline'}>
+                      {policy.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                    </Badge>
+                  </TableCell>
+                  {canManage ? (
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isChangingStatus}
+                        onClick={() => setStatusTarget(policy)}
+                      >
+                        {policy.status === 'Active' ? (
+                          <Power data-icon="inline-start" aria-hidden="true" />
+                        ) : (
+                          <RotateCcw data-icon="inline-start" aria-hidden="true" />
+                        )}
+                        {policy.status === 'Active' ? 'Ngừng' : 'Kích hoạt'}
+                      </Button>
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </CardContent>
+      <StatusChangeDialog
+        open={Boolean(statusTarget)}
+        subject={`chính sách tại kho “${statusTarget?.warehouseName ?? ''}”`}
+        nextStatus={statusTarget?.status === 'Active' ? 'Inactive' : 'Active'}
+        isPending={isChangingStatus}
+        onOpenChange={(open) => !open && setStatusTarget(null)}
+        onConfirm={() => {
+          if (!statusTarget) return
+          onChangeStatus(statusTarget)
+          setStatusTarget(null)
+        }}
+      />
     </Card>
   )
 }

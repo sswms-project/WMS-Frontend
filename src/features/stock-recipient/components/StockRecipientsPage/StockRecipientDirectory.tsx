@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import {
   Table,
@@ -109,6 +110,7 @@ export function StockRecipientDirectory({
                 <TableHead className="bg-card sticky top-0">Tên đơn vị nhận hàng</TableHead>
                 <TableHead className="bg-card sticky top-0">Điện thoại</TableHead>
                 <TableHead className="bg-card sticky top-0">Email</TableHead>
+                <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
                 <TableHead className="bg-card sticky top-0">
                   <span className="sr-only">Thao tác</span>
                 </TableHead>
@@ -121,6 +123,11 @@ export function StockRecipientDirectory({
                   <TableCell>{stockRecipient.recipientName}</TableCell>
                   <TableCell>{stockRecipient.phone}</TableCell>
                   <TableCell>{stockRecipient.email ?? '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant={stockRecipient.status === 'Active' ? 'default' : 'outline'}>
+                      {stockRecipient.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">
                       <Link href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}>

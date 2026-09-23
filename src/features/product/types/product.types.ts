@@ -1,11 +1,36 @@
 export interface UnitResponse {
   id: string
+  unitCode: string
   unitName: string
+  symbol: string | null
+  quantityPrecision: number
   description: string | null
+  status: MasterDataStatus
+  createdAt: string
+  modifiedAt: string | null
 }
 
 export interface CategoryResponse {
   id: string
+  categoryName: string
+  description: string | null
+  status: ProductStatus
+  createdAt: string
+  modifiedAt: string | null
+}
+
+export type MasterDataStatus = 'Active' | 'Inactive'
+export type ProductStatus = 'Active' | 'Inactive'
+
+export interface SaveUnitRequest {
+  unitCode: string
+  unitName: string
+  symbol: string | null
+  quantityPrecision: number
+  description: string | null
+}
+
+export interface SaveCategoryRequest {
   categoryName: string
   description: string | null
 }
@@ -18,10 +43,11 @@ export interface ProductResponse {
   unitName: string
   categoryId: string | null
   categoryName: string | null
-  status: string
+  status: ProductStatus
   barcodeValue: string | null
   isLotTracked: boolean
   shelfLifeDays: number | null
+  canChangeBaseUnit: boolean
   canChangeTrackingMode: boolean
   createdAt: string
 }
@@ -76,8 +102,32 @@ export interface ProductWarehousePolicy {
   leadTimeDays: number | null
   abcClass: string | null
   abcClassifiedAt: string | null
+  status: MasterDataStatus
   createdAt: string
   modifiedAt: string | null
+}
+
+export interface ProductUnitConversion {
+  id: string
+  productId: string
+  unitId: string
+  unitCode: string
+  unitName: string
+  unitSymbol: string | null
+  quantityPrecision: number
+  conversionFactor: number
+  status: MasterDataStatus
+  createdAt: string
+  modifiedAt: string | null
+}
+
+export interface CreateProductUnitConversionRequest {
+  unitId: string
+  conversionFactor: number
+}
+
+export interface UpdateProductUnitConversionRequest {
+  conversionFactor: number
 }
 
 export const PRODUCT_LOT_STATUSES = ['Active', 'Expired', 'Blocked'] as const
@@ -126,7 +176,6 @@ export interface ProductSupplier {
   supplierName: string
   supplierStatus: 'Active' | 'Inactive'
   supplierProductCode: string | null
-  unitPrice: number | null
   isPreferred: boolean
   createdAt: string
   modifiedAt: string | null
@@ -135,7 +184,6 @@ export interface ProductSupplier {
 export interface SaveProductSupplierRequest {
   supplierId: string
   supplierProductCode: string | null
-  unitPrice: number | null
   isPreferred: boolean
 }
 

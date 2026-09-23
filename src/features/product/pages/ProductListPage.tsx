@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Package, PackagePlus, Upload } from 'lucide-react'
+import { Package, PackagePlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
@@ -18,11 +18,9 @@ import {
   ProductListPagination,
 } from '../components/ProductListPage'
 import { CreateProductDialog } from '../components/ProductForm'
-import { ProductImportDialog } from '../components/ProductImportDialog'
 import {
   useCreateProductMutation,
   useCategoriesQuery,
-  useImportProductsMutation,
   useProductListQuery,
   useUnitsQuery,
 } from '../hooks/use-products'
@@ -36,7 +34,6 @@ export default function ProductListPage() {
   const [page, setPage] = useState(1)
   const [searchText, setSearchText] = useState('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isImportOpen, setIsImportOpen] = useState(false)
   const debouncedSearch = useDebouncedValue(searchText.trim(), 300)
 
   const listQuery = useProductListQuery({
@@ -47,15 +44,14 @@ export default function ProductListPage() {
   const meQuery = useMeQuery()
 
   const createMutation = useCreateProductMutation()
-  const importMutation = useImportProductsMutation()
-  const unitsQuery = useUnitsQuery(isCreateOpen)
-  const categoriesQuery = useCategoriesQuery(isCreateOpen)
+  const unitsQuery = useUnitsQuery(isCreateOpen, 'Active')
+  const categoriesQuery = useCategoriesQuery(isCreateOpen, 'Active')
 
   const products = listQuery.data?.items ?? []
   const permissions = new Set(meQuery.data?.permissions ?? [])
   const canCreate = permissions.has(P.PRODUCTS_CREATE)
   const canEdit = permissions.has(P.PRODUCTS_UPDATE)
-  const canImport = permissions.has(P.PRODUCTS_IMPORT)
+  const canManageUnits = permissions.has(P.UNITS_MANAGE)
 
   function handleSearchChange(value: string) {
     setSearchText(value)
@@ -73,15 +69,6 @@ export default function ProductListPage() {
       logger.error(formatApiError(error))
       toast.error(getApiErrorMessage(error, 'Không thể thêm sản phẩm. Vui lòng thử lại.'))
     }
-  }
-
-  async function handleImport(file: File) {
-    void file
-    // Parse xlsx client-side is complex; send as JSON after parse or as form-data
-    // For now we call the API with an empty items list and let the server handle the file
-    // A full implementation would use a library like xlsx to parse the file
-    toast.info('Tính năng nhập Excel đang được phát triển.')
-    setIsImportOpen(false)
   }
 
   function handleView(product: ProductResponse) {
@@ -109,19 +96,8 @@ export default function ProductListPage() {
             </p>
           </div>
         </div>
-        {(canImport || canCreate) && (
+        {canCreate && (
           <div className="flex items-center gap-2">
-            {canImport && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto"
-                onClick={() => setIsImportOpen(true)}
-              >
-                <Upload className="size-4" aria-hidden="true" />
-                Nhập Excel
-              </Button>
-            )}
             {canCreate && (
               <Button
                 type="button"
@@ -229,19 +205,11 @@ export default function ProductListPage() {
             void unitsQuery.refetch()
             void categoriesQuery.refetch()
           }}
+          canManageUnits={canManageUnits}
           open={isCreateOpen}
           isPending={createMutation.isPending}
           onOpenChange={setIsCreateOpen}
           onSubmit={(values) => void handleCreate(values)}
-        />
-      )}
-
-      {canImport && (
-        <ProductImportDialog
-          open={isImportOpen}
-          isPending={importMutation.isPending}
-          onOpenChange={setIsImportOpen}
-          onImport={handleImport}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ export interface StockRecipientListQuery {
   pageNumber: number
   pageSize: number
   searchTerm?: string
+  status?: 'Active' | 'Inactive'
 }
 
 export interface StockRecipient {
@@ -13,6 +14,7 @@ export interface StockRecipient {
   phone: string
   email: string | null
   address: string
+  status: 'Active' | 'Inactive'
   createdAt: string
   modifiedAt: string | null
 }

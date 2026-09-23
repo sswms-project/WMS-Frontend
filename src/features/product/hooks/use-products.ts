@@ -7,6 +7,7 @@ import { productService } from '../services/product.service'
 import type {
   CategoryResponse,
   ConfigureStockPolicyRequest,
+  CreateProductUnitConversionRequest,
   CreateProductRequest,
   ImportProductsRequest,
   ProductListQuery,
@@ -15,28 +16,87 @@ import type {
   ProductLotQuery,
   ProductResponse,
   ProductSupplier,
+  ProductUnitConversion,
   ProductWarehousePolicy,
+  SaveCategoryRequest,
   SaveProductSupplierRequest,
+  SaveUnitRequest,
   UnitResponse,
   UpdateProductSupplierRequest,
+  UpdateProductUnitConversionRequest,
   UpdateProductRequest,
 } from '../types/product.types'
 
-export function useUnitsQuery(enabled = true) {
+export function useUnitsQuery(enabled = true, status?: 'Active' | 'Inactive') {
   return useQuery<UnitResponse[], ApiErrorResponse>({
-    queryKey: queryKeys.units.list,
-    queryFn: () => productService.getUnits().then((r) => r.data),
+    queryKey: queryKeys.units.list(status),
+    queryFn: () => productService.getUnits(status).then((r) => r.data),
     staleTime: 5 * 60 * 1000,
     enabled,
   })
 }
 
-export function useCategoriesQuery(enabled = true) {
+export function useCategoriesQuery(enabled = true, status?: 'Active' | 'Inactive') {
   return useQuery<CategoryResponse[], ApiErrorResponse>({
-    queryKey: queryKeys.categories.list,
-    queryFn: () => productService.getCategories().then((r) => r.data),
+    queryKey: queryKeys.categories.list(status),
+    queryFn: () => productService.getCategories(status).then((r) => r.data),
     staleTime: 5 * 60 * 1000,
     enabled,
+  })
+}
+
+export function useCreateUnitMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<string, ApiErrorResponse, SaveUnitRequest>({
+    mutationFn: (request) => productService.createUnit(request).then((response) => response.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.units.all }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useUpdateUnitMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { id: string; request: SaveUnitRequest }>({
+    mutationFn: ({ id, request }) => productService.updateUnit(id, request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.units.all }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useChangeUnitStatusMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { id: string; status: 'Active' | 'Inactive' }>({
+    mutationFn: ({ id, status }) => productService.changeUnitStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.units.all }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useCreateCategoryMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<string, ApiErrorResponse, SaveCategoryRequest>({
+    mutationFn: (request) =>
+      productService.createCategory(request).then((response) => response.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useUpdateCategoryMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { id: string; request: SaveCategoryRequest }>({
+    mutationFn: ({ id, request }) => productService.updateCategory(id, request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useChangeCategoryStatusMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { id: string; status: 'Active' | 'Inactive' }>({
+    mutationFn: ({ id, status }) => productService.changeCategoryStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    onError: (error) => logger.error(formatApiError(error)),
   })
 }
 
@@ -79,6 +139,18 @@ export function useUpdateProductMutation(id: string) {
   })
 }
 
+export function useChangeProductStatusMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, 'Active' | 'Inactive'>({
+    mutationFn: (status) => productService.changeProductStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.detail(id) })
+    },
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
 export function useConfigureStockPolicyMutation(id: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiErrorResponse, ConfigureStockPolicyRequest>({
@@ -95,6 +167,70 @@ export function useProductStockPoliciesQuery(id: string) {
     queryKey: queryKeys.products.stockPolicies(id),
     queryFn: () => productService.getStockPolicies(id).then((response) => response.data),
     enabled: Boolean(id),
+  })
+}
+
+export function useChangeStockPolicyStatusMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<
+    unknown,
+    ApiErrorResponse,
+    { policyId: string; status: 'Active' | 'Inactive' }
+  >({
+    mutationFn: ({ policyId, status }) =>
+      productService.changeStockPolicyStatus(id, policyId, status),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.stockPolicies(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useProductUnitConversionsQuery(id: string) {
+  return useQuery<ProductUnitConversion[], ApiErrorResponse>({
+    queryKey: queryKeys.products.unitConversions(id),
+    queryFn: () => productService.getUnitConversions(id).then((response) => response.data),
+    enabled: Boolean(id),
+  })
+}
+
+export function useCreateProductUnitConversionMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<string, ApiErrorResponse, CreateProductUnitConversionRequest>({
+    mutationFn: (request) =>
+      productService.createUnitConversion(id, request).then((response) => response.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.unitConversions(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useUpdateProductUnitConversionMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<
+    unknown,
+    ApiErrorResponse,
+    { conversionId: string; request: UpdateProductUnitConversionRequest }
+  >({
+    mutationFn: ({ conversionId, request }) =>
+      productService.updateUnitConversion(id, conversionId, request),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.unitConversions(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
+export function useChangeProductUnitConversionStatusMutation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation<
+    unknown,
+    ApiErrorResponse,
+    { conversionId: string; status: 'Active' | 'Inactive' }
+  >({
+    mutationFn: ({ conversionId, status }) =>
+      productService.changeUnitConversionStatus(id, conversionId, status),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.unitConversions(id) }),
+    onError: (error) => logger.error(formatApiError(error)),
   })
 }
 

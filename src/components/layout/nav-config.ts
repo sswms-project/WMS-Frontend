@@ -14,6 +14,7 @@ import {
   PackageOpen,
   PackageSearch,
   ReceiptText,
+  Scale,
   ScrollText,
   Settings,
   Shield,
@@ -132,6 +133,8 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       separatorBefore: true,
       items: [
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.categories, 'Danh mục sản phẩm', Tags, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
         requiredNavItem(
           APP_ROUTES.stockRecipients,
@@ -247,6 +250,8 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           [APP_ROUTES.goodsReturnRequests]
         ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.categories, 'Danh mục sản phẩm', Tags, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
         requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
         requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, P.AUDIT_LOGS_VIEW),
       ],
@@ -284,6 +289,8 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           [APP_ROUTES.goodsReturnRequests]
         ),
         requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.categories, 'Danh mục sản phẩm', Tags, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
         requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
       ],
     },

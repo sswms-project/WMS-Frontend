@@ -204,17 +204,38 @@ export const API_ENDPOINTS = {
   },
   units: {
     list: '/units',
+    create: '/units',
+    update: (unitId: string) => `/units/${unitId}`,
+    deactivate: (unitId: string) => `/units/${unitId}/deactivate`,
+    reactivate: (unitId: string) => `/units/${unitId}/reactivate`,
   },
   categories: {
     list: '/categories',
+    create: '/categories',
+    update: (categoryId: string) => `/categories/${categoryId}`,
+    deactivate: (categoryId: string) => `/categories/${categoryId}/deactivate`,
+    reactivate: (categoryId: string) => `/categories/${categoryId}/reactivate`,
   },
   products: {
     list: '/products',
     create: '/products',
     detail: (id: string) => `/products/${id}`,
     update: (id: string) => `/products/${id}`,
+    deactivate: (id: string) => `/products/${id}/deactivate`,
+    reactivate: (id: string) => `/products/${id}/reactivate`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
     stockPolicies: (id: string) => `/products/${id}/stock-policies`,
+    deactivateStockPolicy: (productId: string, policyId: string) =>
+      `/products/${productId}/stock-policies/${policyId}/deactivate`,
+    reactivateStockPolicy: (productId: string, policyId: string) =>
+      `/products/${productId}/stock-policies/${policyId}/reactivate`,
+    unitConversions: (id: string) => `/products/${id}/unit-conversions`,
+    unitConversion: (productId: string, conversionId: string) =>
+      `/products/${productId}/unit-conversions/${conversionId}`,
+    deactivateUnitConversion: (productId: string, conversionId: string) =>
+      `/products/${productId}/unit-conversions/${conversionId}/deactivate`,
+    reactivateUnitConversion: (productId: string, conversionId: string) =>
+      `/products/${productId}/unit-conversions/${conversionId}/reactivate`,
     lots: (id: string) => `/products/${id}/lots`,
     lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
     barcode: (id: string) => `/products/${id}/barcode`,
@@ -265,6 +286,8 @@ export const API_ENDPOINTS = {
     create: '/stock-recipients',
     detail: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
     update: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
+    deactivate: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}/deactivate`,
+    reactivate: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}/reactivate`,
     issueHistory: (stockRecipientId: string) =>
       `/stock-recipients/${stockRecipientId}/issue-history`,
   },

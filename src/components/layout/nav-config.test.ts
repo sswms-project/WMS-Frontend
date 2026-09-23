@@ -103,7 +103,10 @@ describe('application navigation visibility', () => {
       { label: null, items: ['Dashboard'] },
       { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Nhân sự', 'Phân quyền'] },
       { label: null, items: ['Kho hàng'] },
-      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp', 'Đơn vị nhận hàng'] },
+      {
+        label: 'Danh mục',
+        items: ['Sản phẩm', 'Danh mục sản phẩm', 'Đơn vị tính', 'Nhà cung cấp', 'Đơn vị nhận hàng'],
+      },
       {
         label: 'Vận hành kho',
         items: [

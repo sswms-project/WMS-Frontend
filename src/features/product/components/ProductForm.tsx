@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Spinner } from '@/components/ui/spinner'
+import { APP_ROUTES } from '@/routes/app-routes'
 import { createProductSchema, updateProductSchema } from '../schemas/product.schema'
 import type { CreateProductFormValues, UpdateProductFormValues } from '../schemas/product.schema'
 import type { CategoryResponse, ProductResponse, UnitResponse } from '../types/product.types'
@@ -35,6 +36,7 @@ interface ProductReferenceOptionsProps {
   readonly areOptionsLoading: boolean
   readonly areOptionsError: boolean
   readonly onRetryOptions: () => void
+  readonly canManageUnits: boolean
 }
 
 interface CreateProductFormProps extends ProductReferenceOptionsProps {
@@ -49,6 +51,7 @@ export function CreateProductForm({
   areOptionsLoading,
   areOptionsError,
   onRetryOptions,
+  canManageUnits,
   isPending,
   onSubmit,
   onCancel,
@@ -113,7 +116,16 @@ export function CreateProductForm({
         </Field>
 
         <Field data-invalid={Boolean(form.formState.errors.unitId)}>
-          <FieldLabel htmlFor="unitId">Đơn vị tính *</FieldLabel>
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel htmlFor="unitId">Đơn vị tính *</FieldLabel>
+            {canManageUnits ? (
+              <Button asChild variant="link" size="sm" className="h-auto p-0">
+                <a href={APP_ROUTES.units} target="_blank" rel="noreferrer">
+                  Thêm đơn vị tính
+                </a>
+              </Button>
+            ) : null}
+          </div>
           <NativeSelect
             id="unitId"
             className="w-full"
@@ -244,6 +256,7 @@ export function CreateProductDialog({
   areOptionsLoading,
   areOptionsError,
   onRetryOptions,
+  canManageUnits,
   open,
   isPending,
   onOpenChange,
@@ -261,6 +274,7 @@ export function CreateProductDialog({
           areOptionsLoading={areOptionsLoading}
           areOptionsError={areOptionsError}
           onRetryOptions={onRetryOptions}
+          canManageUnits={canManageUnits}
           isPending={isPending}
           onSubmit={onSubmit}
           onCancel={() => onOpenChange(false)}
@@ -284,6 +298,7 @@ export function UpdateProductDialog({
   areOptionsLoading,
   areOptionsError,
   onRetryOptions,
+  canManageUnits,
   open,
   product,
   isPending,
@@ -343,12 +358,21 @@ export function UpdateProductDialog({
             </Field>
 
             <Field data-invalid={Boolean(form.formState.errors.unitId)}>
-              <FieldLabel htmlFor="edit-unitId">Đơn vị tính *</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="edit-unitId">Đơn vị tính *</FieldLabel>
+                {canManageUnits ? (
+                  <Button asChild variant="link" size="sm" className="h-auto p-0">
+                    <a href={APP_ROUTES.units} target="_blank" rel="noreferrer">
+                      Quản lý đơn vị tính
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
               <NativeSelect
                 id="edit-unitId"
                 className="w-full"
                 aria-invalid={Boolean(form.formState.errors.unitId)}
-                disabled={areOptionsLoading || areOptionsError}
+                disabled={areOptionsLoading || areOptionsError || !product.canChangeBaseUnit}
                 {...form.register('unitId')}
               >
                 <NativeSelectOption value="">
@@ -363,6 +387,11 @@ export function UpdateProductDialog({
               <FieldError
                 errors={form.formState.errors.unitId ? [form.formState.errors.unitId] : undefined}
               />
+              {!product.canChangeBaseUnit ? (
+                <FieldDescription>
+                  Không thể thay đổi đơn vị cơ sở vì sản phẩm đã phát sinh dữ liệu kho.
+                </FieldDescription>
+              ) : null}
             </Field>
 
             <Field data-invalid={Boolean(form.formState.errors.categoryId)}>

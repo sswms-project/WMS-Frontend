@@ -2,13 +2,17 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, Pencil, Power, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import { Button } from '@/components/ui/button'
+import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
+import { Badge } from '@/components/ui/badge'
+import { getApiErrorMessage } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -23,6 +27,7 @@ import { StockRecipientFormDialog } from '../components/StockRecipientsPage'
 import {
   useStockRecipientIssueHistoryQuery,
   useStockRecipientQuery,
+  useChangeStockRecipientStatusMutation,
   useUpdateStockRecipientMutation,
 } from '../hooks/use-stock-recipients'
 import {
@@ -37,6 +42,7 @@ export default function StockRecipientDetailPage({
 }) {
   const [page, setPage] = useState(1)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
   const stockRecipientQuery = useStockRecipientQuery(stockRecipientId)
   const historyQuery = useStockRecipientIssueHistoryQuery(stockRecipientId, {
     pageNumber: page,
@@ -44,6 +50,7 @@ export default function StockRecipientDetailPage({
   })
   const meQuery = useMeQuery()
   const updateMutation = useUpdateStockRecipientMutation()
+  const statusMutation = useChangeStockRecipientStatusMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
     defaultValues: { recipientName: '', phone: '', email: '', address: '' },
@@ -57,8 +64,24 @@ export default function StockRecipientDetailPage({
       })
       toast.success('Đã cập nhật đơn vị nhận hàng.')
       setIsEditOpen(false)
-    } catch {
-      toast.error('Không thể cập nhật đơn vị nhận hàng.')
+    } catch (error) {
+      logger.error(error)
+      toast.error(getApiErrorMessage(error, 'Không thể cập nhật đơn vị nhận hàng.'))
+    }
+  }
+
+  async function changeStatus() {
+    const recipient = stockRecipientQuery.data
+    if (!recipient) return
+    const status = recipient.status === 'Active' ? 'Inactive' : 'Active'
+    try {
+      await statusMutation.mutateAsync({ stockRecipientId, status })
+      toast.success(
+        status === 'Active' ? 'Đã kích hoạt đơn vị nhận hàng.' : 'Đã ngừng đơn vị nhận hàng.'
+      )
+    } catch (error) {
+      logger.error(error)
+      toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái đơn vị nhận hàng.'))
     }
   }
 
@@ -85,28 +108,51 @@ export default function StockRecipientDetailPage({
               {stockRecipient.recipientCode}
             </p>
             <h1 className="text-xl font-semibold">{stockRecipient.recipientName}</h1>
+            <Badge
+              className="mt-1"
+              variant={stockRecipient.status === 'Active' ? 'default' : 'outline'}
+            >
+              {stockRecipient.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+            </Badge>
             <p className="text-muted-foreground text-sm">
               {stockRecipient.phone} · {stockRecipient.email ?? 'Chưa có email'} ·{' '}
               {stockRecipient.address}
             </p>
           </div>
         </div>
-        {(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_UPDATE) ? (
-          <Button
-            onClick={() => {
-              form.reset({
-                recipientName: stockRecipient.recipientName,
-                phone: stockRecipient.phone,
-                email: stockRecipient.email ?? '',
-                address: stockRecipient.address,
-              })
-              setIsEditOpen(true)
-            }}
-          >
-            <Pencil />
-            Chỉnh sửa
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_MANAGE_STATUS) ? (
+            <Button
+              variant="outline"
+              disabled={statusMutation.isPending}
+              onClick={() => setIsStatusOpen(true)}
+            >
+              {stockRecipient.status === 'Active' ? (
+                <Power aria-hidden="true" />
+              ) : (
+                <RotateCcw aria-hidden="true" />
+              )}
+              {stockRecipient.status === 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
+            </Button>
+          ) : null}
+          {(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_UPDATE) ? (
+            <Button
+              disabled={stockRecipient.status !== 'Active'}
+              onClick={() => {
+                form.reset({
+                  recipientName: stockRecipient.recipientName,
+                  phone: stockRecipient.phone,
+                  email: stockRecipient.email ?? '',
+                  address: stockRecipient.address,
+                })
+                setIsEditOpen(true)
+              }}
+            >
+              <Pencil aria-hidden="true" />
+              Chỉnh sửa
+            </Button>
+          ) : null}
+        </div>
       </header>
       <section className="flex min-h-0 flex-1 flex-col border">
         <div className="border-b p-3">
@@ -171,6 +217,17 @@ export default function StockRecipientDetailPage({
         isPending={updateMutation.isPending}
         onOpenChange={setIsEditOpen}
         onSubmit={(values) => void update(values)}
+      />
+      <StatusChangeDialog
+        open={isStatusOpen}
+        subject={`đơn vị nhận hàng “${stockRecipient.recipientName}”`}
+        nextStatus={stockRecipient.status === 'Active' ? 'Inactive' : 'Active'}
+        isPending={statusMutation.isPending}
+        onOpenChange={setIsStatusOpen}
+        onConfirm={() => {
+          setIsStatusOpen(false)
+          void changeStatus()
+        }}
       />
     </div>
   )

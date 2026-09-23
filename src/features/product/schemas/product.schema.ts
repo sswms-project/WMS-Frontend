@@ -24,7 +24,7 @@ export const createProductSchema = z
     productName: z
       .string()
       .min(1, 'Tên sản phẩm không được để trống')
-      .max(500, 'Tên sản phẩm tối đa 500 ký tự'),
+      .max(255, 'Tên sản phẩm tối đa 255 ký tự'),
     unitId: z.string().min(1, 'Vui lòng chọn đơn vị tính'),
     categoryId: z.string().min(1, 'Vui lòng chọn danh mục'),
     ...trackingFields,
@@ -38,7 +38,7 @@ export const updateProductSchema = z
     productName: z
       .string()
       .min(1, 'Tên sản phẩm không được để trống')
-      .max(500, 'Tên sản phẩm tối đa 500 ký tự'),
+      .max(255, 'Tên sản phẩm tối đa 255 ký tự'),
     unitId: z.string().min(1, 'Vui lòng chọn đơn vị tính'),
     categoryId: z.string().min(1, 'Vui lòng chọn danh mục'),
     ...trackingFields,

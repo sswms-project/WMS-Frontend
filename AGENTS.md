@@ -37,4 +37,14 @@ Use the applicable skill before implementing or reviewing frontend work:
 
 These skills supplement, but never replace, `.rules`, `docs/CODING_GUIDELINES.md`, `docs/DESIGN_SYSTEM.md`, the feature-first architecture, Tailwind design tokens, and the `pnpm` package-manager rule.
 
+## Role and permission changes
+
+- Backend is the source of truth for permission definitions and security enforcement. Frontend permission checks only control navigation and user experience.
+- Declare frontend permission codes only in `src/config/permissionCodes.ts`; do not duplicate permission strings in pages, hooks, or components.
+- Keep route and navigation access rules under `src/config`, including `route-permissions.ts` and the existing centralized navigation configuration.
+- Pages may derive capability flags such as `canView`, `canCreate`, `canUpdate`, or `canManage` from effective permissions and pass those flags to presentational components.
+- Components must not compare hard-coded role names or permission strings. They should render from the capability props supplied by their page.
+- Do not treat a hidden button or route as authorization. Every protected operation must still be enforced by the corresponding Backend permission.
+- When adding or changing a permission, align the Backend permission constant and enforcement first, then update `permissionCodes.ts`, route/navigation configuration, and relevant visibility tests.
+
 <!-- END:nextjs-agent-rules -->
