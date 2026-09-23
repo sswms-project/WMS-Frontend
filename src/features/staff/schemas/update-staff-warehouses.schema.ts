@@ -13,6 +13,7 @@ const uniqueIds = z
   )
 
 export const updateStaffWarehousesSchema = z.object({
+  role: z.enum(['Warehouse Manager', 'Warehouse Staff']),
   warehouseIds: uniqueIds,
   expectedWarehouseIds: uniqueIds,
   replacements: z

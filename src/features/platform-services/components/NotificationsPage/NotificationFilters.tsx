@@ -27,6 +27,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   GoodsReturnRequestUpdate: 'Yêu cầu trả hàng',
   CycleCountUpdate: 'Kiểm kê',
   WarehouseUpdate: 'Kho hàng',
+  SessionRevoked: 'Phiên đăng nhập',
 }
 
 interface NotificationFiltersProps {

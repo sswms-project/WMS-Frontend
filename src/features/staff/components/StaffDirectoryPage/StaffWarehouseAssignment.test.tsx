@@ -69,9 +69,16 @@ describe('Staff warehouse assignment workflow', () => {
 
   it('adds a second staff warehouse in one request with the original snapshot', async () => {
     const onClose = vi.fn()
-    render(<StaffWarehouseAssignment person={person} onClose={onClose} />)
+    render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={onClose}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Lưu phân công' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
     expect(state.save).toHaveBeenCalledExactlyOnceWith({
       warehouseIds: [
@@ -80,22 +87,37 @@ describe('Staff warehouse assignment workflow', () => {
       ],
       expectedWarehouseIds: ['11111111-1111-1111-1111-111111111111'],
       replacements: [],
+      role: USER_ROLES.WarehouseStaff,
     })
   })
 
   it('blocks removing the last active staff warehouse', async () => {
-    render(<StaffWarehouseAssignment person={person} onClose={vi.fn()} />)
+    render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho A' }))
     expect(screen.getByText('Nhân viên cần ít nhất một kho đang hoạt động.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
     expect(state.save).not.toHaveBeenCalled()
   })
 
   it('does not silently adopt a refreshed assignment snapshot while editing', async () => {
     const onClose = vi.fn()
-    const view = render(<StaffWarehouseAssignment person={person} onClose={onClose} />)
+    const view = render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={onClose}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeEnabled()
     state.query.mockReturnValue({
       data: {
         assignedWarehouseIds: [
@@ -112,8 +134,15 @@ describe('Staff warehouse assignment workflow', () => {
       isError: false,
       refetch: state.refetch,
     })
-    view.rerender(<StaffWarehouseAssignment person={person} onClose={onClose} />)
-    const saveButton = screen.getByRole('button', { name: 'Lưu phân công' })
+    view.rerender(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={onClose}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
+    const saveButton = screen.getByRole('button', { name: 'Lưu thay đổi' })
     expect(saveButton).toBeDisabled()
     await userEvent.click(saveButton)
     expect(state.save).not.toHaveBeenCalled()
@@ -123,10 +152,17 @@ describe('Staff warehouse assignment workflow', () => {
   it('does not transfer confirmation to a different manager after a background refresh', async () => {
     const manager = { ...person, role: USER_ROLES.WarehouseManager }
     const onClose = vi.fn()
-    const view = render(<StaffWarehouseAssignment person={manager} onClose={onClose} />)
+    const view = render(
+      <StaffWarehouseAssignment
+        person={manager}
+        onClose={onClose}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
     await userEvent.click(screen.getByRole('checkbox', { name: /Tôi xác nhận/ }))
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeEnabled()
     state.query.mockReturnValue({
       data: {
         assignedWarehouseIds: ['11111111-1111-1111-1111-111111111111'],
@@ -143,8 +179,15 @@ describe('Staff warehouse assignment workflow', () => {
       isError: false,
       refetch: state.refetch,
     })
-    view.rerender(<StaffWarehouseAssignment person={manager} onClose={onClose} />)
-    const saveButton = screen.getByRole('button', { name: 'Lưu phân công' })
+    view.rerender(
+      <StaffWarehouseAssignment
+        person={manager}
+        onClose={onClose}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
+    const saveButton = screen.getByRole('button', { name: 'Lưu thay đổi' })
     expect(saveButton).toBeDisabled()
     expect(screen.getByRole('checkbox', { name: /Tôi xác nhận/ })).not.toBeChecked()
     await userEvent.click(saveButton)
@@ -153,10 +196,10 @@ describe('Staff warehouse assignment workflow', () => {
     state.refetch.mockResolvedValue({ isError: false, data: newData })
     await userEvent.click(screen.getByRole('button', { name: 'Tải lại dữ liệu' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
     expect(screen.getByText(/Manager khác →/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('checkbox', { name: /Tôi xác nhận/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Lưu phân công' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     await waitFor(() =>
       expect(state.save).toHaveBeenCalledExactlyOnceWith({
         warehouseIds: [warehouseA.id, warehouseB.id],
@@ -164,6 +207,7 @@ describe('Staff warehouse assignment workflow', () => {
         replacements: [
           { warehouseId: warehouseB.id, managerId: '55555555-5555-5555-5555-555555555555' },
         ],
+        role: USER_ROLES.WarehouseManager,
       })
     )
   })
@@ -176,11 +220,18 @@ describe('Staff warehouse assignment workflow', () => {
       error: { statusCode: 409, message: 'Assignments changed' },
     })
     state.refetch.mockResolvedValue({ isError: true, data: undefined })
-    render(<StaffWarehouseAssignment person={person} onClose={vi.fn()} />)
+    render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
     await userEvent.click(screen.getByRole('button', { name: 'Tải lại dữ liệu' }))
     expect(screen.getByRole('checkbox', { name: 'Kho B' })).toBeChecked()
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
     expect(state.reset).not.toHaveBeenCalled()
     expect(state.save).not.toHaveBeenCalled()
   })
@@ -190,12 +241,14 @@ describe('Staff warehouse assignment workflow', () => {
       <StaffWarehouseAssignment
         person={{ ...person, role: USER_ROLES.WarehouseManager }}
         onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
       />
     )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
     await userEvent.click(screen.getByRole('checkbox', { name: /Tôi xác nhận/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Lưu phân công' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     await waitFor(() =>
       expect(state.save).toHaveBeenCalledExactlyOnceWith({
         warehouseIds: [
@@ -209,6 +262,7 @@ describe('Staff warehouse assignment workflow', () => {
             managerId: '44444444-4444-4444-4444-444444444444',
           },
         ],
+        role: USER_ROLES.WarehouseManager,
       })
     )
   })
@@ -218,6 +272,8 @@ describe('Staff warehouse assignment workflow', () => {
       <StaffWarehouseAssignment
         person={{ ...person, role: USER_ROLES.WarehouseManager }}
         onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
       />
     )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
@@ -227,7 +283,14 @@ describe('Staff warehouse assignment workflow', () => {
   })
 
   it('filters locally without dropping selected warehouses', async () => {
-    render(<StaffWarehouseAssignment person={person} onClose={vi.fn()} />)
+    render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     fireEvent.change(screen.getByRole('textbox', { name: 'Tìm kho' }), {
       target: { value: 'Kho B' },
     })
@@ -245,8 +308,15 @@ describe('Staff warehouse assignment workflow', () => {
         isError: mode === 'error',
         refetch: state.refetch,
       })
-      render(<StaffWarehouseAssignment person={person} onClose={vi.fn()} />)
-      expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+      render(
+        <StaffWarehouseAssignment
+          person={person}
+          onClose={vi.fn()}
+          query={state.query()}
+          mutation={state.mutation()}
+        />
+      )
+      expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
       expect(
         screen.getByText(
           mode === 'loading'
@@ -266,9 +336,16 @@ describe('Staff warehouse assignment workflow', () => {
       isPending: false,
       error: { statusCode: 409, message: 'Assignments changed' },
     })
-    render(<StaffWarehouseAssignment person={person} onClose={vi.fn()} />)
+    render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     await userEvent.click(screen.getByRole('checkbox', { name: 'Kho B' }))
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
     await userEvent.click(screen.getByRole('button', { name: 'Tải lại dữ liệu' }))
     expect(state.refetch).toHaveBeenCalledOnce()
     expect(state.reset).toHaveBeenCalledOnce()
@@ -276,9 +353,16 @@ describe('Staff warehouse assignment workflow', () => {
 
   it('blocks a second submission while pending', async () => {
     state.mutation.mockReturnValue({ isPending: true, error: null, mutateAsync: state.save })
-    render(<StaffWarehouseAssignment person={person} onClose={vi.fn()} />)
+    render(
+      <StaffWarehouseAssignment
+        person={person}
+        onClose={vi.fn()}
+        query={state.query()}
+        mutation={state.mutation()}
+      />
+    )
     expect(screen.getByRole('checkbox', { name: 'Kho B' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Hủy' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Lưu phân công' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
   })
 })

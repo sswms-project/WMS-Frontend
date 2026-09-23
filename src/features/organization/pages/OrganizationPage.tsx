@@ -23,7 +23,6 @@ const serverFieldMap = {
   TenantName: 'tenantName',
   Phone: 'phone',
   Address: 'address',
-  DefaultCurrency: 'defaultCurrency',
 } as const
 
 function isServerField(field: string): field is keyof typeof serverFieldMap {
@@ -64,7 +63,6 @@ function buildUpdateRequest(
     ...(dirtyFields.tenantName ? { tenantName: values.tenantName } : {}),
     ...(dirtyFields.phone ? { phone: values.phone } : {}),
     ...(dirtyFields.address ? { address: values.address } : {}),
-    ...(dirtyFields.defaultCurrency ? { defaultCurrency: values.defaultCurrency } : {}),
   })
 }
 

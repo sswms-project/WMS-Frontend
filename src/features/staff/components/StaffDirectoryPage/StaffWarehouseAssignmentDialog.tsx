@@ -17,11 +17,16 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { UpdateStaffWarehousesRequest } from '../../schemas/update-staff-warehouses.schema'
 import type { StaffResponse } from '../../types/staff.types'
 import type { StaffWarehouseOption } from '../../types/manager-assignment.types'
+import { USER_ROLES } from '@/config/roles'
 import { StaffDirectoryPagination } from './StaffDirectoryPagination'
+
+type WarehouseRole = typeof USER_ROLES.WarehouseManager | typeof USER_ROLES.WarehouseStaff
 
 interface StaffWarehouseAssignmentDialogProps {
   readonly form: UseFormReturn<UpdateStaffWarehousesRequest>
   readonly person: StaffResponse
+  readonly role: WarehouseRole
+  readonly onRoleChange: (role: WarehouseRole) => void
   readonly warehouses: readonly StaffWarehouseOption[]
   readonly selectedIds: readonly string[]
   readonly replacements: readonly StaffWarehouseOption[]
@@ -47,6 +52,8 @@ interface StaffWarehouseAssignmentDialogProps {
 export function StaffWarehouseAssignmentDialog({
   form,
   person,
+  role,
+  onRoleChange,
   warehouses,
   selectedIds,
   replacements,
@@ -75,16 +82,39 @@ export function StaffWarehouseAssignmentDialog({
         <DialogHeader className="border-b pr-8 pb-4">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Warehouse className="text-primary size-4" aria-hidden="true" />
-            Phân công kho
+            Quản lý vai trò & kho
           </DialogTitle>
           <DialogDescription className="break-words">
             {person.fullName} · {person.email}
           </DialogDescription>
         </DialogHeader>
+        <div>
+          <p className="mb-2 text-sm font-medium">Vai trò</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={role === USER_ROLES.WarehouseManager ? 'default' : 'outline'}
+              disabled={isPending}
+              onClick={() => onRoleChange(USER_ROLES.WarehouseManager)}
+            >
+              Quản lý kho
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={role === USER_ROLES.WarehouseStaff ? 'default' : 'outline'}
+              disabled={isPending}
+              onClick={() => onRoleChange(USER_ROLES.WarehouseStaff)}
+            >
+              Nhân viên kho
+            </Button>
+          </div>
+        </div>
         {(errorMessage || isError) && (
           <Alert variant="destructive">
             <AlertTriangle aria-hidden="true" />
-            <AlertTitle>Chưa thể cập nhật phân công</AlertTitle>
+            <AlertTitle>Chưa thể cập nhật vai trò và phân công</AlertTitle>
             <AlertDescription>{errorMessage || 'Không thể tải danh sách kho.'}</AlertDescription>
             <Button
               type="button"
@@ -222,7 +252,7 @@ export function StaffWarehouseAssignmentDialog({
             ) : (
               <Save className="size-4" aria-hidden="true" />
             )}
-            Lưu phân công
+            Lưu thay đổi
           </Button>
         </DialogFooter>
       </DialogContent>

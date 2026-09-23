@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react'
-import { CheckCircle2, Mail, Pencil, Phone, XCircle } from 'lucide-react'
+import { CheckCircle2, Mail, Pencil, Phone, Warehouse, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -46,6 +46,10 @@ function InfoRow({ icon: Icon, label, value, suffix }: InfoRowProps) {
 }
 
 export function ProfileView({ profile, onEdit }: ProfileViewProps) {
+  const assignedWarehouses = (profile.assignedWarehouses ?? [])
+    .map((warehouse) => `${warehouse.warehouseCode} · ${warehouse.warehouseName}`)
+    .join(', ')
+
   return (
     <Card className="animate-in fade-in slide-in-from-right-4 gap-0 py-0 duration-400">
       <CardHeader className="flex flex-row items-center gap-2.5 border-b px-6 pt-5 pb-4">
@@ -93,6 +97,13 @@ export function ProfileView({ profile, onEdit }: ProfileViewProps) {
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-150 duration-300">
             <InfoRow icon={Phone} label="Số điện thoại" value={profile.phone} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-200 duration-300">
+            <InfoRow
+              icon={Warehouse}
+              label="Kho đang làm việc"
+              value={assignedWarehouses || 'Chưa được phân công kho'}
+            />
           </div>
         </div>
       </CardContent>
