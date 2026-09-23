@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
 import type {
@@ -38,7 +39,7 @@ const hooks = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
   meQuery: {
-    data: { permissions: ['warehouses:configure-layout'] },
+    data: { permissions: [] as string[] },
     isLoading: false,
     isError: false,
   },
@@ -130,7 +131,7 @@ describe('WarehouseDesignerPage', () => {
     hooks.sceneQuery.isLoading = false
     hooks.sceneQuery.isError = false
     hooks.sceneQuery.refetch.mockReset().mockResolvedValue({ data: scene })
-    hooks.meQuery.data = { permissions: ['warehouses:configure-layout'] }
+    hooks.meQuery.data = { permissions: [P.WAREHOUSES_CONFIGURE_LAYOUT] }
     hooks.meQuery.isLoading = false
     hooks.meQuery.isError = false
     hooks.saveMutation.mutateAsync.mockReset()
@@ -230,7 +231,14 @@ describe('WarehouseDesignerPage', () => {
       warehouseId: 'warehouse-1',
       zoneId: 'zone-1',
       rackId: 'rack-1',
-      request: { rackCode: 'R-01', rackName: 'Finished goods rack' },
+      request: {
+        rackCode: 'R-01',
+        rackName: 'Finished goods rack',
+        storageMode: 'SlotLevel',
+        allowsMixedProducts: true,
+        capacity: null,
+        expectedRowVersion: '',
+      },
     })
 
     await user.click(screen.getByRole('button', { name: 'Ngừng kệ' }))
@@ -238,6 +246,7 @@ describe('WarehouseDesignerPage', () => {
       warehouseId: 'warehouse-1',
       zoneId: 'zone-1',
       rackId: 'rack-1',
+      request: { reason: null, expectedRowVersion: '' },
     })
   })
 

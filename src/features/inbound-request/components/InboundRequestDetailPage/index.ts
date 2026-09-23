@@ -1,0 +1,1 @@
+export { InboundRequestDetail } from './InboundRequestDetail'

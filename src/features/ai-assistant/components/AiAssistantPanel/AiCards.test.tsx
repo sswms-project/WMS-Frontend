@@ -8,8 +8,8 @@ import { AiNavigationCard } from './AiNavigationCard'
 const actionCard: AiCard = {
   type: 'action_confirmation',
   draftId: 'draft-1',
-  action: 'create_purchase_order',
-  summary: 'Tạo đơn mua 200 chai SKU-001 từ ACME cho Kho Hà Nội',
+  action: 'create_inbound_request',
+  summary: 'Tạo yêu cầu nhập kho 200 chai SKU-001 từ ACME cho Kho Hà Nội',
   details: [
     { label: 'Kho nhận', value: 'Kho Hà Nội (WH-HN)' },
     { label: 'SKU-001 · Nước suối', value: '200 chai' },
@@ -57,14 +57,14 @@ describe('AiActionConfirmationCard', () => {
     expect(screen.getByRole('button', { name: 'Hủy' })).toBeDisabled()
   })
 
-  it('links to the created purchase order once executed', () => {
+  it('links to the created inbound request once executed', () => {
     renderActionCard({ status: 'Executed', resultEntityId: 'po-1' })
 
     expect(screen.getByText('Đã thực hiện')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Xác nhận' })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Xem đơn mua' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Xem yêu cầu nhập kho' })).toHaveAttribute(
       'href',
-      '/purchase-orders/po-1'
+      '/inbound-requests/po-1'
     )
   })
 

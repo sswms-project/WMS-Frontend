@@ -69,4 +69,17 @@ describe('PaymentResultPage', () => {
       })
     })
   })
+
+  it.each([
+    ['Failed', 'Thanh toán thất bại'],
+    ['Cancelled', 'Đã hủy thanh toán'],
+    ['Expired', 'Thanh toán đã hết hạn'],
+  ])('renders the persisted %s terminal state distinctly', (status, title) => {
+    mocks.syncResult.data = status
+
+    render(<PaymentResultPage />)
+
+    expect(screen.getByText(title)).toBeInTheDocument()
+    expect(screen.getByText(/Gói dịch vụ hiện tại không thay đổi/)).toBeInTheDocument()
+  })
 })

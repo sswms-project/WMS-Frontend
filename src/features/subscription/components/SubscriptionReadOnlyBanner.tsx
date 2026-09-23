@@ -19,7 +19,7 @@ export function SubscriptionReadOnlyBanner() {
   return (
     <Alert variant="destructive" className="mb-3">
       <ShieldAlert className="size-4" aria-hidden="true" />
-      <AlertTitle>Tenant đang ở chế độ chỉ đọc</AlertTitle>
+      <AlertTitle>Đơn vị đang ở chế độ chỉ đọc</AlertTitle>
       <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span>{reason}</span>
         {isTenantOwner && (

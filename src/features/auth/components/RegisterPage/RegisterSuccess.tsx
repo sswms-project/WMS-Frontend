@@ -17,11 +17,11 @@ export function RegisterSuccess({ message, onCreateAnother }: RegisterSuccessPro
           <div className="bg-accent text-primary flex size-20 items-center justify-center rounded-full">
             <CheckCircle2 className="size-10" aria-hidden="true" />
           </div>
-          <h2 className="text-foreground mt-6 text-2xl font-semibold">Đăng ký thành công</h2>
+          <h2 className="text-foreground mt-6 text-2xl font-semibold">Kiểm tra email của bạn</h2>
           <CardDescription className="mt-3 max-w-md text-sm leading-6">{message}</CardDescription>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="auth">
-              <Link href={APP_ROUTES.auth.login}>Đến trang đăng nhập</Link>
+              <Link href={APP_ROUTES.auth.login}>Quay lại đăng nhập</Link>
             </Button>
             <Button
               type="button"

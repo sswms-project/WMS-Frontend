@@ -44,8 +44,8 @@ export function SupplierDeactivateDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Ngừng hợp tác với “{supplierName}”?</AlertDialogTitle>
           <AlertDialogDescription>
-            Nhà cung cấp sẽ chuyển sang trạng thái ngừng hợp tác và không còn xuất hiện khi tạo đơn
-            mua mới. Các đơn mua đã tạo trước đó vẫn được giữ nguyên.
+            Nhà cung cấp sẽ chuyển sang trạng thái ngừng hợp tác và không còn xuất hiện khi tạo yêu
+            cầu nhập kho mới. Các yêu cầu nhập kho đã tạo trước đó vẫn được giữ nguyên.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

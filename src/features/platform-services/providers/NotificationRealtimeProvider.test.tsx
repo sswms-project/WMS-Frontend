@@ -83,7 +83,7 @@ describe('NotificationRealtimeProvider', () => {
 
     const event = {
       notificationId: '93ce9974-fe84-4372-92f1-e06a7a900001',
-      type: 'DeliveryUpdate',
+      type: 'StockIssueRequestUpdate',
       createdAt: '2026-09-01T12:00:00.000Z',
     }
     notificationCreated?.(event)

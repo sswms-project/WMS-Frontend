@@ -3,6 +3,8 @@ export interface InventoryListQuery {
   pageSize: number
   warehouseId?: string
   zoneId?: string
+  rackId?: string
+  slotId?: string
   productId?: string
   searchTerm?: string
 }
@@ -23,6 +25,7 @@ export interface InventoryStock {
   manufacturedDate: string | null
   expiryDate: string | null
   lotStatus: string | null
+  unitName?: string | null
   qualityStatus: QualityStatus
   quantityOnHand: number
   reservedQuantity: number
@@ -117,7 +120,7 @@ export interface InventoryReservation {
   lotId: string | null
   lotNumber: string | null
   qualityStatus: QualityStatus
-  referenceType: 'OutboundPick' | 'StockTransfer'
+  referenceType: 'StockIssuePick' | 'StockTransfer'
   referenceId: string
   referenceCode: string
   reservedQuantity: number
@@ -207,7 +210,7 @@ export interface ReplenishmentSuggestion {
   suggestedQuantity: number
   adjustedQuantity: number | null
   status: ForecastSuggestionStatus
-  purchaseOrderId: string | null
+  inboundRequestId: string | null
   acceptedByUserId: string | null
   acceptedAt: string | null
 }

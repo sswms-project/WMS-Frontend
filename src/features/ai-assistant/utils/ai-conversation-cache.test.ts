@@ -13,7 +13,7 @@ const message = (id: string, role: AiMessage['role'], content: string): AiMessag
 
 const draft = (draftId: string, status: AiDraftStatusInfo['status']): AiDraftStatusInfo => ({
   draftId,
-  action: 'create_purchase_order',
+  action: 'create_inbound_request',
   status,
   resultEntityId: null,
   expiresAt: '2026-09-12T08:15:00Z',

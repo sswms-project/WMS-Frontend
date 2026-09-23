@@ -21,6 +21,7 @@ const locations: LocationSearchResponse[] = [
     capacity: null,
     currentOccupancy: null,
     barcodeValue: 'Z-01',
+    isOutboundStaging: false,
   },
   {
     id: 'slot-1',
@@ -36,6 +37,7 @@ const locations: LocationSearchResponse[] = [
     capacity: 100,
     currentOccupancy: 25,
     barcodeValue: 'S-01',
+    isOutboundStaging: false,
   },
 ]
 

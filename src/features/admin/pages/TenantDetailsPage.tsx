@@ -1,25 +1,64 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
-import { TenantDetailsView, TenantStateDialog } from '../components/TenantDetails'
+import { useForm } from 'react-hook-form'
 import {
+  TenantDetailsView,
+  TenantRegistrationDialog,
+  TenantStateDialog,
+} from '../components/TenantDetails'
+import {
+  useApproveTenantRegistrationMutation,
   useReactivateTenantMutation,
+  useRejectTenantRegistrationMutation,
   useSuspendTenantMutation,
   useTenantQuery,
 } from '../hooks/use-admin'
+import {
+  tenantRegistrationRejectionSchema,
+  type TenantRegistrationRejectionFormValues,
+} from '../schemas/tenant-registration-rejection.schema'
 import type { TenantStateFormValues } from '../schemas/tenant-state.schema'
 
 export default function TenantDetailsPage({ tenantId }: { readonly tenantId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [registrationAction, setRegistrationAction] = useState<'approve' | 'reject' | null>(null)
   const query = useTenantQuery(tenantId)
   const suspend = useSuspendTenantMutation()
   const reactivate = useReactivateTenantMutation()
+  const approve = useApproveTenantRegistrationMutation()
+  const reject = useRejectTenantRegistrationMutation()
+  const registrationForm = useForm<TenantRegistrationRejectionFormValues>({
+    resolver: zodResolver(tenantRegistrationRejectionSchema),
+    defaultValues: { reason: '' },
+  })
   const action = query.data?.status === 'Active' ? 'suspend' : 'reactivate'
   const mutation = action === 'suspend' ? suspend : reactivate
 
   async function handleSubmit(values: TenantStateFormValues) {
     await mutation.mutateAsync({ tenantId, body: values })
     setDialogOpen(false)
+  }
+
+  async function handleRegistrationApproval() {
+    if (!query.data) return
+    await approve.mutateAsync({
+      tenantId,
+      body: { concurrencyToken: query.data.concurrencyToken },
+    })
+    registrationForm.reset()
+    setRegistrationAction(null)
+  }
+
+  async function handleRegistrationRejection(values: TenantRegistrationRejectionFormValues) {
+    if (!query.data) return
+    await reject.mutateAsync({
+      tenantId,
+      body: { concurrencyToken: query.data.concurrencyToken, reason: values.reason },
+    })
+    registrationForm.reset()
+    setRegistrationAction(null)
   }
 
   return (
@@ -29,9 +68,11 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
         isLoading={query.isLoading}
         isError={query.isError}
         isFetching={query.isFetching}
-        isPending={mutation.isPending}
+        isPending={mutation.isPending || approve.isPending || reject.isPending}
         onRetry={() => void query.refetch()}
         onStateAction={() => setDialogOpen(true)}
+        onApprove={() => setRegistrationAction('approve')}
+        onReject={() => setRegistrationAction('reject')}
       />
       {query.data ? (
         <TenantStateDialog
@@ -41,6 +82,23 @@ export default function TenantDetailsPage({ tenantId }: { readonly tenantId: str
           isPending={mutation.isPending}
           onOpenChange={setDialogOpen}
           onSubmit={handleSubmit}
+        />
+      ) : null}
+      {query.data && registrationAction ? (
+        <TenantRegistrationDialog
+          open
+          tenantName={query.data.tenantName}
+          action={registrationAction}
+          form={registrationForm}
+          isPending={approve.isPending || reject.isPending}
+          onOpenChange={(open) => {
+            if (!open) {
+              registrationForm.reset()
+              setRegistrationAction(null)
+            }
+          }}
+          onApprove={handleRegistrationApproval}
+          onReject={handleRegistrationRejection}
         />
       ) : null}
     </>

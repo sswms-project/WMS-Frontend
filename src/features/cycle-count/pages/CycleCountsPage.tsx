@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { CycleCountDirectory } from '../components/CycleCountDirectory'
@@ -42,7 +43,7 @@ export default function CycleCountsPage() {
       warehouseId={warehouseId}
       status={status}
       warehouses={options}
-      canCreate={me.data?.permissions.includes('cycle-counts:create') ?? false}
+      canCreate={me.data?.permissions.includes(P.CYCLE_COUNTS_CREATE) ?? false}
       isLoading={query.isLoading}
       isFetching={query.isFetching}
       isError={query.isError}

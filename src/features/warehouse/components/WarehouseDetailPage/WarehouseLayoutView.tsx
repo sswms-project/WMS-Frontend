@@ -8,6 +8,7 @@ import {
   Layers3,
   MapPin,
   Plus,
+  RotateCcw,
   Warehouse,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +33,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
+import type { InventoryStock } from '@/features/inventory/types/inventory.types'
+import { formatCapacityLimit, formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseLayoutViewProps {
   readonly zones: readonly ZoneResponse[]
@@ -44,6 +47,9 @@ interface WarehouseLayoutViewProps {
   readonly canConfigure: boolean
   readonly canGenerateBarcode: boolean
   readonly isWarehouseActive: boolean
+  readonly inventoryItems?: readonly InventoryStock[]
+  readonly isInventoryLoading?: boolean
+  readonly isInventoryError?: boolean
   readonly onCreateZone: () => void
   readonly onCreateRack: (zone: ZoneResponse) => void
   readonly onCreateSlot: (rack: RackResponse) => void
@@ -53,27 +59,88 @@ interface WarehouseLayoutViewProps {
   readonly onDeactivateZone: (zone: ZoneResponse) => void
   readonly onDeactivateRack: (zone: ZoneResponse, rack: RackResponse) => void
   readonly onDeactivateSlot: (rack: RackResponse, slot: SlotResponse) => void
+  readonly onReactivateZone: (zone: ZoneResponse) => void
+  readonly onReactivateRack: (zone: ZoneResponse, rack: RackResponse) => void
+  readonly onReactivateSlot: (rack: RackResponse, slot: SlotResponse) => void
   readonly onBarcode: (type: 'Zone' | 'Rack' | 'Slot', locationId: string) => void
 }
 
-function formatStatus(status: string) {
-  const labels: Record<string, string> = {
-    Active: 'Hoạt động',
-    Inactive: 'Ngừng hoạt động',
-    Vacant: 'Còn trống',
-    Occupied: 'Đang chứa hàng',
-    Reserved: 'Đã giữ chỗ',
-    Full: 'Đầy',
-    Empty: 'Trống',
-  }
+const quantityFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 })
 
-  return labels[status] ?? status
+function RackInventorySummary({
+  items,
+  isLoading,
+  isError,
+}: {
+  readonly items: readonly InventoryStock[]
+  readonly isLoading: boolean
+  readonly isError: boolean
+}) {
+  return (
+    <section className="m-3 mt-0 min-h-0 border" aria-labelledby="rack-inventory-title">
+      <div className="border-b px-3 py-2">
+        <h3 id="rack-inventory-title" className="text-sm font-semibold">
+          Hàng đang lưu
+        </h3>
+        <p className="text-muted-foreground text-xs">
+          Số lượng được tách theo sản phẩm, lô và tình trạng chất lượng.
+        </p>
+      </div>
+      {isLoading ? (
+        <p className="text-muted-foreground p-3 text-xs" aria-live="polite">
+          Đang tải tồn kho…
+        </p>
+      ) : isError ? (
+        <p className="text-destructive p-3 text-xs" role="alert">
+          Không thể tải hàng đang lưu. Hãy tải lại trang để thử lại.
+        </p>
+      ) : items.length === 0 ? (
+        <p className="text-muted-foreground p-3 text-xs">Kệ hàng chưa có tồn kho.</p>
+      ) : (
+        <div className="max-h-56 overflow-auto">
+          <div className="grid min-w-[34rem] grid-cols-[minmax(8rem,1fr)_6rem_6rem_6rem_5rem] gap-2 border-b px-3 py-2 text-xs font-medium">
+            <span>Sản phẩm / Lô</span>
+            <span className="text-right">Đang có</span>
+            <span className="text-right">Đã giữ</span>
+            <span className="text-right">Khả dụng</span>
+            <span>Đơn vị</span>
+          </div>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="grid min-w-[34rem] grid-cols-[minmax(8rem,1fr)_6rem_6rem_6rem_5rem] gap-2 border-b px-3 py-2 text-xs last:border-b-0"
+            >
+              <span className="min-w-0">
+                <span translate="no" className="block truncate font-mono font-medium">
+                  {item.sku}
+                </span>
+                <span className="text-muted-foreground block truncate">
+                  {item.productName}
+                  {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
+                </span>
+              </span>
+              <span className="text-right tabular-nums">
+                {quantityFormatter.format(item.quantityOnHand)}
+              </span>
+              <span className="text-right tabular-nums">
+                {quantityFormatter.format(item.reservedQuantity)}
+              </span>
+              <span className="text-right tabular-nums">
+                {quantityFormatter.format(item.availableQuantity)}
+              </span>
+              <span>{item.unitName || '—'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
 }
 
 function StatusBadge({ status }: { readonly status: string }) {
   return (
     <Badge variant={status === 'Inactive' ? 'destructive' : 'outline'}>
-      {formatStatus(status)}
+      {formatWarehouseStatus(status)}
     </Badge>
   )
 }
@@ -125,12 +192,14 @@ function ZoneList({
   canGenerateBarcode,
   onEdit,
   onDeactivate,
+  onReactivate,
   onBarcode,
 }: Pick<WarehouseLayoutViewProps, 'zones' | 'selectedZoneId' | 'onSelectZone'> & {
   readonly canManage: boolean
   readonly canGenerateBarcode: boolean
   readonly onEdit: (zone: ZoneResponse) => void
   readonly onDeactivate: (zone: ZoneResponse) => void
+  readonly onReactivate: (zone: ZoneResponse) => void
   readonly onBarcode: (locationId: string) => void
 }) {
   return (
@@ -140,7 +209,11 @@ function ZoneList({
           const isSelected = zone.id === selectedZoneId
 
           return (
-            <Item key={zone.id} variant={isSelected ? 'muted' : 'default'}>
+            <Item
+              key={zone.id}
+              variant={isSelected ? 'muted' : 'default'}
+              className={cn(isSelected && 'border-primary bg-primary/10 border-l-4')}
+            >
               <button
                 type="button"
                 aria-pressed={isSelected}
@@ -148,7 +221,9 @@ function ZoneList({
                 onClick={() => onSelectZone(zone.id)}
               >
                 <ItemContent className="min-w-0">
-                  <ItemTitle className="max-w-full truncate">{zone.zoneName}</ItemTitle>
+                  <ItemTitle className={cn('max-w-full truncate', isSelected && 'font-bold')}>
+                    {zone.zoneName}
+                  </ItemTitle>
                   <ItemDescription translate="no" className="font-mono">
                     {zone.zoneCode}
                   </ItemDescription>
@@ -162,6 +237,7 @@ function ZoneList({
                 canGenerateBarcode={canGenerateBarcode}
                 onEdit={() => onEdit(zone)}
                 onDeactivate={() => onDeactivate(zone)}
+                onReactivate={() => onReactivate(zone)}
                 onBarcode={() => onBarcode(zone.id)}
               />
             </Item>
@@ -181,6 +257,7 @@ function RackList({
   isParentActive,
   onEdit,
   onDeactivate,
+  onReactivate,
   onBarcode,
 }: {
   readonly racks: readonly RackResponse[]
@@ -191,6 +268,7 @@ function RackList({
   readonly isParentActive: boolean
   readonly onEdit: (rack: RackResponse) => void
   readonly onDeactivate: (rack: RackResponse) => void
+  readonly onReactivate: (rack: RackResponse) => void
   readonly onBarcode: (locationId: string) => void
 }) {
   if (racks.length === 0) {
@@ -210,7 +288,11 @@ function RackList({
           const isSelected = rack.id === selectedRackId
 
           return (
-            <Item key={rack.id} variant={isSelected ? 'muted' : 'default'}>
+            <Item
+              key={rack.id}
+              variant={isSelected ? 'muted' : 'default'}
+              className={cn(isSelected && 'border-primary bg-primary/10 border-l-4')}
+            >
               <button
                 type="button"
                 aria-pressed={isSelected}
@@ -218,7 +300,9 @@ function RackList({
                 onClick={() => onSelectRack(rack.id)}
               >
                 <ItemContent className="min-w-0">
-                  <ItemTitle className="max-w-full truncate">{rack.rackName}</ItemTitle>
+                  <ItemTitle className={cn('max-w-full truncate', isSelected && 'font-bold')}>
+                    {rack.rackName}
+                  </ItemTitle>
                   <ItemDescription translate="no" className="font-mono">
                     {rack.rackCode}
                   </ItemDescription>
@@ -232,6 +316,7 @@ function RackList({
                 canGenerateBarcode={canGenerateBarcode}
                 onEdit={() => onEdit(rack)}
                 onDeactivate={() => onDeactivate(rack)}
+                onReactivate={() => onReactivate(rack)}
                 onBarcode={() => onBarcode(rack.id)}
               />
             </Item>
@@ -249,6 +334,7 @@ function SlotItem({
   isParentActive,
   onEdit,
   onDeactivate,
+  onReactivate,
   onBarcode,
 }: {
   readonly slot: SlotResponse
@@ -257,9 +343,9 @@ function SlotItem({
   readonly isParentActive: boolean
   readonly onEdit: () => void
   readonly onDeactivate: () => void
+  readonly onReactivate: () => void
   readonly onBarcode: () => void
 }) {
-  const capacity = Math.max(0, slot.capacity)
   const currentOccupancy = Math.max(0, slot.currentOccupancy)
 
   return (
@@ -287,14 +373,17 @@ function SlotItem({
           canGenerateBarcode={canGenerateBarcode}
           onEdit={onEdit}
           onDeactivate={onDeactivate}
+          onReactivate={onReactivate}
           onBarcode={onBarcode}
         />
       </ItemActions>
 
       <dl className="col-span-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t pt-2.5">
-        <dt className="text-muted-foreground">Sức chứa</dt>
+        <dt className="text-muted-foreground">Giới hạn số lượng</dt>
         <dd className="font-medium tabular-nums">
-          {currentOccupancy} / {capacity}
+          {slot.capacity === null
+            ? 'Không áp dụng'
+            : `${quantityFormatter.format(currentOccupancy)} / ${formatCapacityLimit(slot.capacity)}`}
         </dd>
         {slot.barcodeValue && slot.barcodeValue !== slot.slotCode && (
           <div className="col-span-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-3">
@@ -316,6 +405,7 @@ function SlotList({
   isParentActive,
   onEdit,
   onDeactivate,
+  onReactivate,
   onBarcode,
 }: {
   readonly slots: readonly SlotResponse[]
@@ -324,6 +414,7 @@ function SlotList({
   readonly isParentActive: boolean
   readonly onEdit: (slot: SlotResponse) => void
   readonly onDeactivate: (slot: SlotResponse) => void
+  readonly onReactivate: (slot: SlotResponse) => void
   readonly onBarcode: (slot: SlotResponse) => void
 }) {
   if (slots.length === 0) {
@@ -348,6 +439,7 @@ function SlotList({
             isParentActive={isParentActive}
             onEdit={() => onEdit(slot)}
             onDeactivate={() => onDeactivate(slot)}
+            onReactivate={() => onReactivate(slot)}
             onBarcode={() => onBarcode(slot)}
           />
         ))}
@@ -363,6 +455,7 @@ function LocationActionMenu({
   canGenerateBarcode,
   onEdit,
   onDeactivate,
+  onReactivate,
   onBarcode,
 }: {
   readonly label: string
@@ -371,6 +464,7 @@ function LocationActionMenu({
   readonly canGenerateBarcode: boolean
   readonly onEdit: () => void
   readonly onDeactivate: () => void
+  readonly onReactivate: () => void
   readonly onBarcode: () => void
 }) {
   if (!canManage && !canGenerateBarcode) return null
@@ -388,6 +482,12 @@ function LocationActionMenu({
             <DropdownMenuItem onSelect={onEdit}>
               <Edit3 aria-hidden="true" />
               Chỉnh sửa
+            </DropdownMenuItem>
+          ) : null}
+          {canManage && !isActive ? (
+            <DropdownMenuItem onSelect={onReactivate}>
+              <RotateCcw aria-hidden="true" />
+              Kích hoạt lại
             </DropdownMenuItem>
           ) : null}
           {canGenerateBarcode && isActive ? (
@@ -441,6 +541,9 @@ export function WarehouseLayoutView({
   canConfigure,
   canGenerateBarcode,
   isWarehouseActive,
+  inventoryItems = [],
+  isInventoryLoading = false,
+  isInventoryError = false,
   onCreateZone,
   onCreateRack,
   onCreateSlot,
@@ -450,6 +553,9 @@ export function WarehouseLayoutView({
   onDeactivateZone,
   onDeactivateRack,
   onDeactivateSlot,
+  onReactivateZone,
+  onReactivateRack,
+  onReactivateSlot,
   onBarcode,
 }: WarehouseLayoutViewProps) {
   if (zones.length === 0) {
@@ -478,7 +584,7 @@ export function WarehouseLayoutView({
   const selectedRack = selectedZone?.racks.find((rack) => rack.id === selectedRackId) ?? null
 
   return (
-    <div className="grid min-h-[32rem] min-w-0 overflow-hidden border lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
+    <div className="mb-5 grid min-h-[32rem] min-w-0 overflow-hidden border lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
       <section className={cn('min-w-0 flex-col', selectedZone ? 'hidden lg:flex' : 'flex')}>
         <PaneHeader
           title="Khu vực"
@@ -494,6 +600,7 @@ export function WarehouseLayoutView({
           canGenerateBarcode={canGenerateBarcode}
           onEdit={onEditZone}
           onDeactivate={onDeactivateZone}
+          onReactivate={onReactivateZone}
           onBarcode={(locationId) => onBarcode('Zone', locationId)}
         />
       </section>
@@ -554,6 +661,7 @@ export function WarehouseLayoutView({
             isParentActive={selectedZone.status === 'Active'}
             onEdit={(rack) => onEditRack(selectedZone, rack)}
             onDeactivate={(rack) => onDeactivateRack(selectedZone, rack)}
+            onReactivate={(rack) => onReactivateRack(selectedZone, rack)}
             onBarcode={(locationId) => onBarcode('Rack', locationId)}
           />
         ) : (
@@ -582,7 +690,8 @@ export function WarehouseLayoutView({
           {canConfigure &&
           isWarehouseActive &&
           selectedZone?.status === 'Active' &&
-          selectedRack?.status === 'Active' ? (
+          selectedRack?.status === 'Active' &&
+          selectedRack.storageMode === 'SlotLevel' ? (
             <Button
               type="button"
               variant="ghost"
@@ -603,7 +712,8 @@ export function WarehouseLayoutView({
               canConfigure &&
               isWarehouseActive &&
               selectedZone?.status === 'Active' &&
-              selectedRack?.status === 'Active'
+              selectedRack?.status === 'Active' &&
+              selectedRack.storageMode === 'SlotLevel'
                 ? 'Thêm vị trí lưu trữ'
                 : undefined
             }
@@ -611,31 +721,72 @@ export function WarehouseLayoutView({
               canConfigure &&
               isWarehouseActive &&
               selectedZone?.status === 'Active' &&
-              selectedRack?.status === 'Active'
+              selectedRack?.status === 'Active' &&
+              selectedRack.storageMode === 'SlotLevel'
                 ? () => onCreateSlot(selectedRack)
                 : undefined
             }
           />
         </div>
-        {selectedRack ? (
-          <SlotList
-            slots={selectedRack.slots}
-            canManage={
-              canConfigure &&
-              isWarehouseActive &&
-              selectedZone?.status === 'Active' &&
-              selectedRack.status === 'Active'
-            }
-            canGenerateBarcode={
-              canGenerateBarcode &&
-              selectedZone?.status === 'Active' &&
-              selectedRack.status === 'Active'
-            }
-            isParentActive={selectedZone?.status === 'Active' && selectedRack.status === 'Active'}
-            onEdit={(slot) => onEditSlot(selectedRack, slot)}
-            onDeactivate={(slot) => onDeactivateSlot(selectedRack, slot)}
-            onBarcode={(slot) => onBarcode('Slot', slot.id)}
-          />
+        {selectedRack?.storageMode === 'RackLevel' ? (
+          <div className="min-h-0 overflow-auto">
+            <div className="m-3 grid gap-3 border p-4 text-sm">
+              <div>
+                <p className="font-medium">Quản lý theo kệ</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Nghiệp vụ tồn kho được ghi nhận trực tiếp tại kệ này.
+                </p>
+              </div>
+              <dl className="grid gap-2 border-t pt-3">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Cách chứa hàng</dt>
+                  <dd className="text-right font-medium">
+                    {selectedRack.allowsMixedProducts
+                      ? 'Cho phép nhiều sản phẩm'
+                      : 'Chỉ chứa một sản phẩm'}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Giới hạn số lượng</dt>
+                  <dd className="font-medium tabular-nums">
+                    {formatCapacityLimit(selectedRack.capacity)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <RackInventorySummary
+              items={inventoryItems}
+              isLoading={isInventoryLoading}
+              isError={isInventoryError}
+            />
+          </div>
+        ) : selectedRack ? (
+          <>
+            <SlotList
+              slots={selectedRack.slots}
+              canManage={
+                canConfigure &&
+                isWarehouseActive &&
+                selectedZone?.status === 'Active' &&
+                selectedRack.status === 'Active'
+              }
+              canGenerateBarcode={
+                canGenerateBarcode &&
+                selectedZone?.status === 'Active' &&
+                selectedRack.status === 'Active'
+              }
+              isParentActive={selectedZone?.status === 'Active' && selectedRack.status === 'Active'}
+              onEdit={(slot) => onEditSlot(selectedRack, slot)}
+              onDeactivate={(slot) => onDeactivateSlot(selectedRack, slot)}
+              onReactivate={(slot) => onReactivateSlot(selectedRack, slot)}
+              onBarcode={(slot) => onBarcode('Slot', slot.id)}
+            />
+            <RackInventorySummary
+              items={inventoryItems}
+              isLoading={isInventoryLoading}
+              isError={isInventoryError}
+            />
+          </>
         ) : (
           <PaneEmpty
             icon={MapPin}

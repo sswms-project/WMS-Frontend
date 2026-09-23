@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { ForecastRunPanel } from './ForecastRunPanel'
 
 const state = vi.hoisted(() => ({
@@ -70,7 +71,7 @@ vi.mock('../../hooks/use-inventory', () => ({
           suggestedQuantity: 10,
           adjustedQuantity: null,
           status: 'New',
-          purchaseOrderId: null,
+          inboundRequestId: null,
           acceptedByUserId: null,
           acceptedAt: null,
         },
@@ -94,7 +95,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['purchase-orders:create']}
+        permissions={[P.INBOUND_REQUESTS_CREATE]}
       />
     )
 
@@ -108,7 +109,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['purchase-orders:create']}
+        permissions={[P.INBOUND_REQUESTS_CREATE]}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Chấp nhận' }))
@@ -121,12 +122,12 @@ describe('ForecastRunPanel', () => {
       target: { value: '0' },
     })
     expect(screen.getByRole('alert')).toHaveTextContent('Số lượng điều chỉnh phải lớn hơn 0.')
-    expect(screen.getByRole('button', { name: 'Tạo đơn mua' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Tạo yêu cầu nhập kho' })).toBeDisabled()
 
     fireEvent.change(screen.getByLabelText('Số lượng bổ sung điều chỉnh'), {
       target: { value: '7.5' },
     })
-    await userEvent.click(screen.getByRole('button', { name: 'Tạo đơn mua' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo yêu cầu nhập kho' }))
     expect(state.acceptReplenishment).toHaveBeenCalledWith(
       {
         id: 'suggestion-1',
@@ -140,7 +141,7 @@ describe('ForecastRunPanel', () => {
     render(
       <ForecastRunPanel
         warehouseOptions={[{ value: 'warehouse-1', label: 'Kho trung tâm' }]}
-        permissions={['purchase-orders:create']}
+        permissions={[P.INBOUND_REQUESTS_CREATE]}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Chấp nhận' }))
@@ -148,7 +149,7 @@ describe('ForecastRunPanel', () => {
       screen.getByLabelText('Nhà cung cấp cho đề xuất bổ sung'),
       'supplier-active'
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Tạo đơn mua' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo yêu cầu nhập kho' }))
 
     const callbacks = state.acceptReplenishment.mock.calls[0]?.[1]
     act(() =>

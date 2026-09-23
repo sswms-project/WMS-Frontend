@@ -1,3 +1,4 @@
+import { P, type PermissionCode } from '@/config/permissionCodes'
 import { USER_ROLES, type UserRole } from '@/config/roles'
 
 export interface WarehouseCapabilities {
@@ -8,15 +9,19 @@ export interface WarehouseCapabilities {
   readonly canGenerateLocationBarcode: boolean
 }
 
-export function getWarehouseCapabilities(role: UserRole | null): WarehouseCapabilities {
+export function getWarehouseCapabilities(
+  role: UserRole | null,
+  permissions: readonly string[] = []
+): WarehouseCapabilities {
   const isTenantOwner = role === USER_ROLES.TenantOwner
-  const isWarehouseManager = role === USER_ROLES.WarehouseManager
+  const hasPermission = (permission: PermissionCode) =>
+    isTenantOwner || permissions.includes(permission)
 
   return {
     canCreateWarehouse: isTenantOwner,
-    canEditWarehouse: isTenantOwner || isWarehouseManager,
+    canEditWarehouse: hasPermission(P.WAREHOUSES_UPDATE),
     canDeactivateWarehouse: isTenantOwner,
-    canConfigureLayout: isTenantOwner || isWarehouseManager,
-    canGenerateLocationBarcode: isTenantOwner || isWarehouseManager,
+    canConfigureLayout: hasPermission(P.WAREHOUSES_CONFIGURE_LAYOUT),
+    canGenerateLocationBarcode: hasPermission(P.WAREHOUSES_GENERATE_BARCODE),
   }
 }

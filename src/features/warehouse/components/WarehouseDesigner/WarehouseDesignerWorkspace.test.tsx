@@ -320,7 +320,7 @@ describe('WarehouseDesignerWorkspace', () => {
 
     await user.click(screen.getByRole('button', { name: 'Mở khu vực A' }))
     await user.click(screen.getByRole('button', { name: /^R-01/ }))
-    expect(screen.getByText('Ngừng hoạt động')).toBeInTheDocument()
+    expect(screen.getAllByText('Ngừng hoạt động').length).toBeGreaterThan(0)
     expect(screen.getByText('Rack 01')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Lưu tên kệ' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ngừng hoạt động kệ' })).not.toBeInTheDocument()

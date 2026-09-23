@@ -8,6 +8,7 @@ import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { APP_ROUTES } from '@/routes/app-routes'
@@ -52,9 +53,9 @@ export default function ProductListPage() {
 
   const products = listQuery.data?.items ?? []
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const canCreate = permissions.has('products:create')
-  const canEdit = permissions.has('products:update')
-  const canImport = permissions.has('products:import')
+  const canCreate = permissions.has(P.PRODUCTS_CREATE)
+  const canEdit = permissions.has(P.PRODUCTS_UPDATE)
+  const canImport = permissions.has(P.PRODUCTS_IMPORT)
 
   function handleSearchChange(value: string) {
     setSearchText(value)

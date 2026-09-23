@@ -2,10 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Save } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Sheet,
   SheetContent,
@@ -116,6 +119,9 @@ export function RackFormSheet({
 }: LocationFormSheetProps<RackFormValues>) {
   const form = useForm<RackFormValues>({ resolver: zodResolver(rackSchema), defaultValues })
   const { errors } = form.formState
+  const storageMode = useWatch({ control: form.control, name: 'storageMode' })
+  const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
+  const capacity = useWatch({ control: form.control, name: 'capacity' })
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && !isPending) form.reset(defaultValues)
@@ -158,6 +164,79 @@ export function RackFormSheet({
               />
               <FieldError errors={[errors.rackName]} />
             </Field>
+            <Field>
+              <FieldLabel>Phương thức quản lý vị trí</FieldLabel>
+              <RadioGroup
+                aria-label="Phương thức quản lý vị trí"
+                value={storageMode}
+                onValueChange={(value) => {
+                  if (value !== 'RackLevel' && value !== 'SlotLevel') return
+                  form.setValue('storageMode', value, { shouldDirty: true, shouldValidate: true })
+                  if (value === 'SlotLevel') {
+                    form.setValue('allowsMixedProducts', true)
+                    form.setValue('capacity', null)
+                  }
+                }}
+                className="gap-2"
+              >
+                <Label className="flex cursor-pointer items-start gap-3 rounded-md border p-3">
+                  <RadioGroupItem value="RackLevel" />
+                  <span>
+                    <span className="block text-sm font-medium">Quản lý theo kệ</span>
+                    <span className="text-muted-foreground mt-1 block text-xs font-normal">
+                      Hàng được ghi nhận trực tiếp tại kệ, không cần tạo vị trí nhỏ hơn.
+                    </span>
+                  </span>
+                </Label>
+                <Label className="flex cursor-pointer items-start gap-3 rounded-md border p-3">
+                  <RadioGroupItem value="SlotLevel" />
+                  <span>
+                    <span className="block text-sm font-medium">Quản lý theo vị trí lưu trữ</span>
+                    <span className="text-muted-foreground mt-1 block text-xs font-normal">
+                      Người dùng tạo các vị trí lưu trữ riêng bên trong kệ.
+                    </span>
+                  </span>
+                </Label>
+              </RadioGroup>
+            </Field>
+            {storageMode === 'RackLevel' ? (
+              <>
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="rack-allows-mixed-products"
+                    checked={allowsMixedProducts}
+                    onCheckedChange={(checked) => {
+                      form.setValue('allowsMixedProducts', checked === true, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                      if (checked === true) form.setValue('capacity', null)
+                    }}
+                  />
+                  <FieldLabel htmlFor="rack-allows-mixed-products">
+                    Cho phép nhiều sản phẩm trong cùng kệ
+                  </FieldLabel>
+                </Field>
+                {!allowsMixedProducts ? (
+                  <CapacityField
+                    id="rack-capacity"
+                    value={capacity}
+                    errorMessage={errors.capacity?.message}
+                    onChange={(capacity) =>
+                      form.setValue('capacity', capacity, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    Không áp dụng giới hạn số lượng chung khi kệ chứa nhiều sản phẩm có thể khác đơn
+                    vị tính.
+                  </p>
+                )}
+              </>
+            ) : null}
           </FieldGroup>
           <FormFooter isPending={isPending} onCancel={() => handleOpenChange(false)} />
         </form>
@@ -176,6 +255,8 @@ export function SlotFormSheet({
 }: LocationFormSheetProps<SlotFormValues>) {
   const form = useForm<SlotFormValues>({ resolver: zodResolver(slotSchema), defaultValues })
   const { errors } = form.formState
+  const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
+  const capacity = useWatch({ control: form.control, name: 'capacity' })
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && !isPending) form.reset(defaultValues)
@@ -192,7 +273,7 @@ export function SlotFormSheet({
         <SheetHeader>
           <SheetTitle>{mode === 'create' ? 'Thêm vị trí lưu trữ' : 'Chỉnh sửa vị trí'}</SheetTitle>
           <SheetDescription>
-            Sức chứa không thể giảm thấp hơn lượng hàng hoặc lượng đã giữ chỗ.
+            Giới hạn số lượng không thể thấp hơn lượng hàng đang có hoặc lượng đã giữ.
           </SheetDescription>
         </SheetHeader>
         <form className="flex flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
@@ -210,25 +291,78 @@ export function SlotFormSheet({
               />
               <FieldError errors={[errors.slotCode]} />
             </Field>
-            <Field data-invalid={Boolean(errors.capacity)}>
-              <FieldLabel htmlFor="slot-capacity">Sức chứa</FieldLabel>
-              <Input
-                id="slot-capacity"
-                type="number"
-                min="0.01"
-                step="0.01"
-                inputMode="decimal"
-                autoComplete="off"
-                aria-invalid={Boolean(errors.capacity)}
-                {...form.register('capacity', { valueAsNumber: true })}
+            <Field orientation="horizontal">
+              <Checkbox
+                id="slot-allows-mixed-products"
+                checked={allowsMixedProducts}
+                onCheckedChange={(checked) => {
+                  form.setValue('allowsMixedProducts', checked === true, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                  if (checked === true) form.setValue('capacity', null)
+                }}
               />
-              <FieldError errors={[errors.capacity]} />
+              <FieldLabel htmlFor="slot-allows-mixed-products">
+                Cho phép nhiều sản phẩm trong cùng vị trí
+              </FieldLabel>
             </Field>
+            {!allowsMixedProducts ? (
+              <CapacityField
+                id="slot-capacity"
+                value={capacity}
+                errorMessage={errors.capacity?.message}
+                onChange={(capacity) =>
+                  form.setValue('capacity', capacity, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                Không áp dụng giới hạn số lượng chung khi vị trí chứa nhiều sản phẩm có thể khác đơn
+                vị tính.
+              </p>
+            )}
           </FieldGroup>
           <FormFooter isPending={isPending} onCancel={() => handleOpenChange(false)} />
         </form>
       </SheetContent>
     </Sheet>
+  )
+}
+
+function CapacityField({
+  id,
+  value,
+  errorMessage,
+  onChange,
+}: {
+  readonly id: string
+  readonly value: number | null
+  readonly errorMessage?: string
+  readonly onChange: (value: number | null) => void
+}) {
+  return (
+    <Field data-invalid={Boolean(errorMessage)}>
+      <FieldLabel htmlFor={id}>Giới hạn số lượng (không bắt buộc)</FieldLabel>
+      <Input
+        id={id}
+        name={id}
+        type="number"
+        min="0.01"
+        step="0.01"
+        inputMode="decimal"
+        autoComplete="off"
+        value={value ?? ''}
+        aria-invalid={Boolean(errorMessage)}
+        onChange={(event) =>
+          onChange(event.currentTarget.value === '' ? null : Number(event.currentTarget.value))
+        }
+      />
+      {errorMessage ? <p className="text-destructive text-xs">{errorMessage}</p> : null}
+    </Field>
   )
 }
 

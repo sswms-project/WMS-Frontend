@@ -4,6 +4,8 @@ export const API_ENDPOINTS = {
     login: '/auth/login',
     register: '/auth/register',
     verifyEmail: '/auth/verify-email',
+    resendVerification: '/auth/resend-verification',
+    captchaChallenge: '/auth/captcha/challenge',
     refreshToken: '/auth/refresh',
     logout: '/auth/logout',
     forgotPassword: '/auth/forgot-password',
@@ -32,7 +34,12 @@ export const API_ENDPOINTS = {
     tenantDetail: (tenantId: string) => `/admin/tenants/${tenantId}`,
     suspendTenant: (tenantId: string) => `/admin/tenants/${tenantId}/suspend`,
     reactivateTenant: (tenantId: string) => `/admin/tenants/${tenantId}/reactivate`,
+    approveTenantRegistration: (tenantId: string) =>
+      `/admin/tenants/${tenantId}/approve-registration`,
+    rejectTenantRegistration: (tenantId: string) =>
+      `/admin/tenants/${tenantId}/reject-registration`,
     subscriptionPlans: '/subscription-plans/admin',
+    activateSubscriptionPlan: (planId: string) => `/subscription-plans/${planId}/activate`,
   },
   tenantRolePermissions: {
     workspace: '/tenant-role-permissions',
@@ -68,22 +75,28 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/zones/${zoneId}`,
     deactivateZone: (warehouseId: string, zoneId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/deactivate`,
+    reactivateZone: (warehouseId: string, zoneId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/reactivate`,
     createRack: (warehouseId: string, zoneId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/racks`,
     updateRack: (warehouseId: string, zoneId: string, rackId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}`,
     deactivateRack: (warehouseId: string, zoneId: string, rackId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}/deactivate`,
+    reactivateRack: (warehouseId: string, zoneId: string, rackId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}/reactivate`,
     createSlot: (warehouseId: string, rackId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots`,
     updateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}`,
     deactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/deactivate`,
+    reactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/reactivate`,
     locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
-    quarantineSlot: (warehouseId: string) => `/warehouses/${warehouseId}/quarantine-slot`,
+    reactivate: (warehouseId: string) => `/warehouses/${warehouseId}/reactivate`,
   },
   inventory: {
     list: '/inventory',
@@ -130,29 +143,29 @@ export const API_ENDPOINTS = {
     deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
     reactivate: (supplierId: string) => `/suppliers/${supplierId}/reactivate`,
   },
-  purchaseOrders: {
-    list: '/purchase-orders',
-    create: '/purchase-orders',
-    detail: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
-    update: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}`,
-    submit: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/submit`,
-    approve: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/approve`,
-    reject: (purchaseOrderId: string) => `/purchase-orders/${purchaseOrderId}/reject`,
-    allowedActions: (purchaseOrderId: string) =>
-      `/purchase-orders/${purchaseOrderId}/allowed-actions`,
+  inboundRequests: {
+    list: '/inbound-requests',
+    create: '/inbound-requests',
+    detail: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}`,
+    update: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}`,
+    submit: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/submit`,
+    approve: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/approve`,
+    reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
+    allowedActions: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },
-  inboundReceipts: {
-    list: '/inbound-receipts',
-    create: '/inbound-receipts',
-    detail: (receiptId: string) => `/inbound-receipts/${receiptId}`,
-    update: (receiptId: string) => `/inbound-receipts/${receiptId}`,
-    receivingTasks: '/inbound-receipts/receiving-tasks',
-    putawayTasks: '/inbound-receipts/putaway-tasks',
-    submit: (receiptId: string) => `/inbound-receipts/${receiptId}/submit`,
-    approve: (receiptId: string) => `/inbound-receipts/${receiptId}/approve`,
-    reject: (receiptId: string) => `/inbound-receipts/${receiptId}/reject`,
-    allowedActions: (receiptId: string) => `/inbound-receipts/${receiptId}/allowed-actions`,
-    putaway: (receiptId: string) => `/inbound-receipts/${receiptId}/putaway`,
+  goodsReceipts: {
+    list: '/goods-receipts',
+    create: '/goods-receipts',
+    detail: (receiptId: string) => `/goods-receipts/${receiptId}`,
+    update: (receiptId: string) => `/goods-receipts/${receiptId}`,
+    receivingTasks: '/goods-receipts/receiving-tasks',
+    putawayTasks: '/goods-receipts/putaway-tasks',
+    submit: (receiptId: string) => `/goods-receipts/${receiptId}/submit`,
+    approve: (receiptId: string) => `/goods-receipts/${receiptId}/approve`,
+    reject: (receiptId: string) => `/goods-receipts/${receiptId}/reject`,
+    allowedActions: (receiptId: string) => `/goods-receipts/${receiptId}/allowed-actions`,
+    putaway: (receiptId: string) => `/goods-receipts/${receiptId}/putaway`,
   },
   inboundDocumentImports: {
     create: '/inbound-document-imports',
@@ -177,12 +190,12 @@ export const API_ENDPOINTS = {
   },
   subscription: {
     me: '/subscriptions/me',
+    entitlement: '/subscriptions/entitlement',
     plans: '/subscription-plans',
     planById: (id: string) => `/subscription-plans/${id}`,
-    upgrade: '/subscriptions/upgrade',
+    initialSelection: '/subscriptions/initial-selection',
+    changePlan: '/subscriptions/change-plan',
     renew: '/subscriptions/renew',
-    cancel: '/subscriptions/me',
-    paymentLink: '/subscriptions/payment-link',
     paymentStatus: (orderCode: string) => `/subscriptions/payments/${orderCode}/sync`,
   },
   public: {
@@ -204,9 +217,6 @@ export const API_ENDPOINTS = {
     stockPolicies: (id: string) => `/products/${id}/stock-policies`,
     lots: (id: string) => `/products/${id}/lots`,
     lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
-    lotImpact: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/impact`,
-    blockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/block`,
-    unlockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/unlock`,
     barcode: (id: string) => `/products/${id}/barcode`,
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
@@ -228,32 +238,35 @@ export const API_ENDPOINTS = {
     dispatch: (transferId: string) => `/transfers/${transferId}/dispatch`,
     receive: (transferId: string) => `/transfers/${transferId}/receive`,
   },
-  outboundOrders: {
-    list: '/outbound-orders',
-    create: '/outbound-orders',
-    detail: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}`,
-    issue: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/issue`,
-    removePickDetail: (outboundOrderId: string, pickDetailId: string) =>
-      `/outbound-orders/${outboundOrderId}/pick-details/${pickDetailId}`,
-    returns: (outboundOrderId: string) => `/outbound-orders/${outboundOrderId}/returns`,
+  stockIssueRequests: {
+    list: '/stock-issue-requests',
+    create: '/stock-issue-requests',
+    detail: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}`,
+    picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
+    dispatch: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
+    authorizeDispatch: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/authorize-dispatch`,
+    removePickDetail: (stockIssueRequestId: string, pickDetailId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/pick-details/${pickDetailId}`,
+    goodsReturnRequests: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/goods-return-requests`,
   },
-  returns: {
-    list: '/returns',
-    detail: (returnId: string) => `/returns/${returnId}`,
-    approve: (returnId: string) => `/returns/${returnId}/approve`,
-    reject: (returnId: string) => `/returns/${returnId}/reject`,
-    restock: (returnId: string) => `/returns/${returnId}/restock`,
+  goodsReturnRequests: {
+    list: '/goods-return-requests',
+    detail: (goodsReturnRequestId: string) => `/goods-return-requests/${goodsReturnRequestId}`,
+    approve: (goodsReturnRequestId: string) =>
+      `/goods-return-requests/${goodsReturnRequestId}/approve`,
+    reject: (goodsReturnRequestId: string) =>
+      `/goods-return-requests/${goodsReturnRequestId}/reject`,
   },
-  deliveries: {
-    list: '/deliveries',
-    updateStatus: (outboundOrderId: string) => `/deliveries/${outboundOrderId}/status`,
-  },
-  customers: {
-    list: '/customers',
-    create: '/customers',
-    detail: (customerId: string) => `/customers/${customerId}`,
-    update: (customerId: string) => `/customers/${customerId}`,
-    orderHistory: (customerId: string) => `/customers/${customerId}/orders`,
+  stockRecipients: {
+    list: '/stock-recipients',
+    create: '/stock-recipients',
+    detail: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
+    update: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
+    issueHistory: (stockRecipientId: string) =>
+      `/stock-recipients/${stockRecipientId}/issue-history`,
   },
   aiAssistant: {
     chat: '/ai/chat',

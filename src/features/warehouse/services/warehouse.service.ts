@@ -16,6 +16,7 @@ import type {
   WarehouseListQuery,
   WarehouseLocationQuery,
   WarehouseLocationType,
+  WarehouseLifecycleRequest,
 } from '../types/warehouse.types'
 
 export const warehouseService = {
@@ -36,9 +37,7 @@ export const warehouseService = {
 
   updateWarehouse: (warehouseId: string, request: UpdateWarehouseRequest) =>
     axiosClient
-      .put<
-        ApiResponse<WarehouseDetailResponse>
-      >(API_ENDPOINTS.warehouses.update(warehouseId), request)
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.update(warehouseId), request)
       .then((response) => response.data),
 
   getLayout: (warehouseId: string) =>
@@ -63,9 +62,18 @@ export const warehouseService = {
       .put<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.updateZone(warehouseId, zoneId), request)
       .then((response) => response.data),
 
-  deactivateZone: (warehouseId: string, zoneId: string) =>
+  deactivateZone: (warehouseId: string, zoneId: string, request: WarehouseLifecycleRequest) =>
     axiosClient
-      .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.deactivateZone(warehouseId, zoneId))
+      .patch<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.warehouses.deactivateZone(warehouseId, zoneId), request)
+      .then((response) => response.data),
+
+  reactivateZone: (warehouseId: string, zoneId: string, request: WarehouseLifecycleRequest) =>
+    axiosClient
+      .patch<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.warehouses.reactivateZone(warehouseId, zoneId), request)
       .then((response) => response.data),
 
   createRack: (warehouseId: string, zoneId: string, request: CreateRackRequest) =>
@@ -80,11 +88,28 @@ export const warehouseService = {
       >(API_ENDPOINTS.warehouses.updateRack(warehouseId, zoneId, rackId), request)
       .then((response) => response.data),
 
-  deactivateRack: (warehouseId: string, zoneId: string, rackId: string) =>
+  deactivateRack: (
+    warehouseId: string,
+    zoneId: string,
+    rackId: string,
+    request: WarehouseLifecycleRequest
+  ) =>
     axiosClient
       .patch<
         ApiResponse<unknown>
-      >(API_ENDPOINTS.warehouses.deactivateRack(warehouseId, zoneId, rackId))
+      >(API_ENDPOINTS.warehouses.deactivateRack(warehouseId, zoneId, rackId), request)
+      .then((response) => response.data),
+
+  reactivateRack: (
+    warehouseId: string,
+    zoneId: string,
+    rackId: string,
+    request: WarehouseLifecycleRequest
+  ) =>
+    axiosClient
+      .patch<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.warehouses.reactivateRack(warehouseId, zoneId, rackId), request)
       .then((response) => response.data),
 
   createSlot: (warehouseId: string, rackId: string, request: CreateSlotRequest) =>
@@ -99,11 +124,28 @@ export const warehouseService = {
       >(API_ENDPOINTS.warehouses.updateSlot(warehouseId, rackId, slotId), request)
       .then((response) => response.data),
 
-  deactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
+  deactivateSlot: (
+    warehouseId: string,
+    rackId: string,
+    slotId: string,
+    request: WarehouseLifecycleRequest
+  ) =>
     axiosClient
       .patch<
         ApiResponse<unknown>
-      >(API_ENDPOINTS.warehouses.deactivateSlot(warehouseId, rackId, slotId))
+      >(API_ENDPOINTS.warehouses.deactivateSlot(warehouseId, rackId, slotId), request)
+      .then((response) => response.data),
+
+  reactivateSlot: (
+    warehouseId: string,
+    rackId: string,
+    slotId: string,
+    request: WarehouseLifecycleRequest
+  ) =>
+    axiosClient
+      .patch<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.warehouses.reactivateSlot(warehouseId, rackId, slotId), request)
       .then((response) => response.data),
 
   getLocationBarcode: (
@@ -117,9 +159,14 @@ export const warehouseService = {
       >(API_ENDPOINTS.warehouses.locationBarcode(warehouseId, locationType, locationId))
       .then((response) => response.data),
 
-  deactivateWarehouse: (warehouseId: string) =>
+  deactivateWarehouse: (warehouseId: string, request: WarehouseLifecycleRequest) =>
     axiosClient
-      .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.deactivate(warehouseId))
+      .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.deactivate(warehouseId), request)
+      .then((response) => response.data),
+
+  reactivateWarehouse: (warehouseId: string, request: WarehouseLifecycleRequest) =>
+    axiosClient
+      .patch<ApiResponse<unknown>>(API_ENDPOINTS.warehouses.reactivate(warehouseId), request)
       .then((response) => response.data),
 
   configureQuarantineSlot: (warehouseId: string, slotId: string) =>

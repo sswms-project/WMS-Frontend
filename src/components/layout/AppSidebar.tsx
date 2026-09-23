@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, type ReactNode } from 'react'
+import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Boxes, ChevronDown, RefreshCw } from 'lucide-react'
@@ -168,7 +169,7 @@ function SidebarNavigationItem({
           className="min-h-10 touch-manipulation gap-2.5 rounded-md px-2 text-xs data-[active=true]:font-semibold md:min-h-8"
         >
           <Link
-            href={item.href}
+            href={item.href as Route}
             aria-current={isActive ? 'page' : undefined}
             onNavigate={onNavigate}
           >
@@ -193,7 +194,11 @@ function SidebarNavigationItem({
             : 'data-[active=true]:shadow-[inset_3px_0_0_var(--color-sidebar-primary)] [&_svg]:size-[18px]'
         )}
       >
-        <Link href={item.href} aria-current={isActive ? 'page' : undefined} onNavigate={onNavigate}>
+        <Link
+          href={item.href as Route}
+          aria-current={isActive ? 'page' : undefined}
+          onNavigate={onNavigate}
+        >
           <Icon aria-hidden="true" />
           <span>{item.label}</span>
         </Link>

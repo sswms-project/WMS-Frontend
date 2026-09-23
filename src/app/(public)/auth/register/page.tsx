@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: 'Đăng ký tenant owner cho Smart SaaS Warehouse Management System',
 }
 
-export default function Page() {
-  return <RegisterPage />
+export default async function Page({
+  searchParams,
+}: {
+  readonly searchParams: Promise<{ planId?: string; billingCycle?: string }>
+}) {
+  const { planId, billingCycle } = await searchParams
+  return <RegisterPage selectedPlanId={planId} selectedBillingCycle={billingCycle} />
 }

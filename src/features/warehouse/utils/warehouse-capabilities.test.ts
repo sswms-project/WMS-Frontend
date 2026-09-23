@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES } from '@/config/roles'
 import { getWarehouseCapabilities } from './warehouse-capabilities'
 
@@ -14,7 +15,13 @@ describe('getWarehouseCapabilities', () => {
   })
 
   it('allows a warehouse manager to configure layout without owner actions', () => {
-    expect(getWarehouseCapabilities(USER_ROLES.WarehouseManager)).toEqual({
+    expect(
+      getWarehouseCapabilities(USER_ROLES.WarehouseManager, [
+        P.WAREHOUSES_UPDATE,
+        P.WAREHOUSES_CONFIGURE_LAYOUT,
+        P.WAREHOUSES_GENERATE_BARCODE,
+      ])
+    ).toEqual({
       canCreateWarehouse: false,
       canEditWarehouse: true,
       canDeactivateWarehouse: false,

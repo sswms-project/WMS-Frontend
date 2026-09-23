@@ -12,6 +12,7 @@ import { adminService } from '../services/admin.service'
 import type {
   AdminSubscriptionPlanQuery,
   AssignPermissionsRequest,
+  TenantDetailsResponse,
   TenantQuery,
   TenantStateChangeRequest,
 } from '../types/admin.types'
@@ -135,6 +136,51 @@ export function useReactivateTenantMutation() {
   return useTenantStateMutation('reactivate')
 }
 
+interface TenantRegistrationDecisionVariables<TBody> {
+  readonly tenantId: string
+  readonly body: TBody
+}
+
+function useTenantRegistrationDecisionMutation<TBody>(
+  action: 'approve' | 'reject',
+  mutation: (tenantId: string, body: TBody) => Promise<ApiResponse<TenantDetailsResponse>>
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, body }: TenantRegistrationDecisionVariables<TBody>) =>
+      mutation(tenantId, body),
+    onSuccess: (response, variables) => {
+      queryClient.setQueryData(
+        queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+        response.data
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.tenants })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.dashboard })
+      queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs.all })
+      toast.success(
+        action === 'approve' ? 'Đã phê duyệt đăng ký tenant.' : 'Đã từ chối đăng ký tenant.'
+      )
+    },
+    onError: (error: ApiErrorResponse, variables) => {
+      logger.error(error)
+      if (error.statusCode === 409) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.platformAdmin.tenantDetail(variables.tenantId),
+        })
+      }
+      toast.error(error.message || 'Không thể xử lý đăng ký tenant.')
+    },
+  })
+}
+
+export function useApproveTenantRegistrationMutation() {
+  return useTenantRegistrationDecisionMutation('approve', adminService.approveTenantRegistration)
+}
+
+export function useRejectTenantRegistrationMutation() {
+  return useTenantRegistrationDecisionMutation('reject', adminService.rejectTenantRegistration)
+}
+
 export function useSubscriptionFeaturesQuery() {
   return useQuery<SubscriptionFeatureMetaResponse[], ApiErrorResponse>({
     queryKey: KEYS.subscriptionFeatures,
@@ -173,6 +219,18 @@ export function useDeactivateSubscriptionPlanMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: adminService.deactivateSubscriptionPlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.all })
+    },
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useActivateSubscriptionPlanMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
+    mutationFn: adminService.activateSubscriptionPlan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.all })

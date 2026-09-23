@@ -44,6 +44,7 @@ const slot: LocationSearchResponse = {
   capacity: 10,
   currentOccupancy: 0,
   barcodeValue: 'S-01',
+  isOutboundStaging: false,
 }
 
 describe('WarehouseLocationsPage', () => {

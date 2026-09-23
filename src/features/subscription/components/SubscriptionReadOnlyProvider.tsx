@@ -2,7 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
-import { useCurrentSubscriptionQuery } from '../hooks/use-subscription'
+import { useSubscriptionEntitlementQuery } from '../hooks/use-subscription'
 
 interface SubscriptionReadOnlyContextValue {
   readonly isReadOnly: boolean
@@ -10,8 +10,7 @@ interface SubscriptionReadOnlyContextValue {
   readonly reason: string
 }
 
-const READ_ONLY_REASON =
-  'Gói dịch vụ đã hết hạn. Vui lòng gia hạn để tiếp tục thao tác ghi dữ liệu.'
+const READ_ONLY_REASON = 'Gói dịch vụ hiện không cho phép thao tác ghi dữ liệu vận hành kho.'
 
 const SubscriptionReadOnlyContext = createContext<SubscriptionReadOnlyContextValue | null>(null)
 
@@ -21,15 +20,15 @@ interface SubscriptionReadOnlyProviderProps {
 
 export function SubscriptionReadOnlyProvider({ children }: SubscriptionReadOnlyProviderProps) {
   const user = useAuthStore((state) => state.user)
-  const subscriptionQuery = useCurrentSubscriptionQuery(!!user)
-  const isReadOnly = Boolean(subscriptionQuery.data?.isExpired)
+  const entitlementQuery = useSubscriptionEntitlementQuery(Boolean(user?.tenantId))
+  const isReadOnly = entitlementQuery.data?.isOperationalWriteAllowed === false
 
   return (
     <SubscriptionReadOnlyContext.Provider
       value={{
         isReadOnly,
-        isLoading: subscriptionQuery.isLoading,
-        reason: READ_ONLY_REASON,
+        isLoading: entitlementQuery.isLoading,
+        reason: entitlementQuery.data?.reason || READ_ONLY_REASON,
       }}
     >
       {children}

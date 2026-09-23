@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
@@ -18,6 +19,7 @@ import type {
   WarehouseListQuery,
   WarehouseLocationQuery,
   WarehouseLocationType,
+  WarehouseLifecycleRequest,
 } from '../types/warehouse.types'
 
 interface UpdateWarehouseVariables {
@@ -60,6 +62,7 @@ interface UpdateSlotVariables extends CreateSlotVariables {
 interface DeactivateZoneVariables {
   warehouseId: string
   zoneId: string
+  request: WarehouseLifecycleRequest
 }
 
 interface DeactivateRackVariables extends DeactivateZoneVariables {
@@ -70,6 +73,17 @@ interface DeactivateSlotVariables {
   warehouseId: string
   rackId: string
   slotId: string
+  request: WarehouseLifecycleRequest
+}
+
+function logWarehouseMutationError(error: unknown) {
+  const message = formatApiError(error)
+  if (isApiErrorResponse(error) && (error.statusCode === 400 || error.statusCode === 409)) {
+    logger.warn(message)
+    return
+  }
+
+  logger.error(message)
 }
 
 export function useWarehousesQuery(params: WarehouseListQuery) {
@@ -129,18 +143,14 @@ export function useCreateWarehouseMutation() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all })
     },
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
 export function useUpdateWarehouseMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation<
-    ApiResponse<WarehouseDetailResponse>,
-    ApiErrorResponse,
-    UpdateWarehouseVariables
-  >({
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateWarehouseVariables>({
     mutationFn: ({ warehouseId, request }) =>
       warehouseService.updateWarehouse(warehouseId, request),
     onSuccess: async (_, variables) => {
@@ -151,19 +161,45 @@ export function useUpdateWarehouseMutation() {
         }),
       ])
     },
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
 export function useDeactivateWarehouseMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn: warehouseService.deactivateWarehouse,
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    { warehouseId: string; request: WarehouseLifecycleRequest }
+  >({
+    mutationFn: ({ warehouseId, request }) =>
+      warehouseService.deactivateWarehouse(warehouseId, request),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all })
     },
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
+  })
+}
+
+export function useReactivateWarehouseMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    { warehouseId: string; request: WarehouseLifecycleRequest }
+  >({
+    mutationFn: ({ warehouseId, request }) =>
+      warehouseService.reactivateWarehouse(warehouseId, request),
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.warehouses.detail(variables.warehouseId),
+        }),
+      ])
+    },
+    onError: logWarehouseMutationError,
   })
 }
 
@@ -203,7 +239,7 @@ export function useCreateZoneMutation() {
   return useMutation<ApiResponse<string>, ApiErrorResponse, CreateZoneVariables>({
     mutationFn: ({ warehouseId, request }) => warehouseService.createZone(warehouseId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
@@ -213,16 +249,27 @@ export function useUpdateZoneMutation() {
     mutationFn: ({ warehouseId, zoneId, request }) =>
       warehouseService.updateZone(warehouseId, zoneId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
 export function useDeactivateZoneMutation() {
   const invalidateStructure = useInvalidateWarehouseStructure()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateZoneVariables>({
-    mutationFn: ({ warehouseId, zoneId }) => warehouseService.deactivateZone(warehouseId, zoneId),
+    mutationFn: ({ warehouseId, zoneId, request }) =>
+      warehouseService.deactivateZone(warehouseId, zoneId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
+  })
+}
+
+export function useReactivateZoneMutation() {
+  const invalidateStructure = useInvalidateWarehouseStructure()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateZoneVariables>({
+    mutationFn: ({ warehouseId, zoneId, request }) =>
+      warehouseService.reactivateZone(warehouseId, zoneId, request),
+    onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
+    onError: logWarehouseMutationError,
   })
 }
 
@@ -232,7 +279,7 @@ export function useCreateRackMutation() {
     mutationFn: ({ warehouseId, zoneId, request }) =>
       warehouseService.createRack(warehouseId, zoneId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
@@ -242,17 +289,27 @@ export function useUpdateRackMutation() {
     mutationFn: ({ warehouseId, zoneId, rackId, request }) =>
       warehouseService.updateRack(warehouseId, zoneId, rackId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
 export function useDeactivateRackMutation() {
   const invalidateStructure = useInvalidateWarehouseStructure()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateRackVariables>({
-    mutationFn: ({ warehouseId, zoneId, rackId }) =>
-      warehouseService.deactivateRack(warehouseId, zoneId, rackId),
+    mutationFn: ({ warehouseId, zoneId, rackId, request }) =>
+      warehouseService.deactivateRack(warehouseId, zoneId, rackId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
+  })
+}
+
+export function useReactivateRackMutation() {
+  const invalidateStructure = useInvalidateWarehouseStructure()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateRackVariables>({
+    mutationFn: ({ warehouseId, zoneId, rackId, request }) =>
+      warehouseService.reactivateRack(warehouseId, zoneId, rackId, request),
+    onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
+    onError: logWarehouseMutationError,
   })
 }
 
@@ -262,7 +319,7 @@ export function useCreateSlotMutation() {
     mutationFn: ({ warehouseId, rackId, request }) =>
       warehouseService.createSlot(warehouseId, rackId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
@@ -272,16 +329,26 @@ export function useUpdateSlotMutation() {
     mutationFn: ({ warehouseId, rackId, slotId, request }) =>
       warehouseService.updateSlot(warehouseId, rackId, slotId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
   })
 }
 
 export function useDeactivateSlotMutation() {
   const invalidateStructure = useInvalidateWarehouseStructure()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateSlotVariables>({
-    mutationFn: ({ warehouseId, rackId, slotId }) =>
-      warehouseService.deactivateSlot(warehouseId, rackId, slotId),
+    mutationFn: ({ warehouseId, rackId, slotId, request }) =>
+      warehouseService.deactivateSlot(warehouseId, rackId, slotId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: (error) => logger.error(error),
+    onError: logWarehouseMutationError,
+  })
+}
+
+export function useReactivateSlotMutation() {
+  const invalidateStructure = useInvalidateWarehouseStructure()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, DeactivateSlotVariables>({
+    mutationFn: ({ warehouseId, rackId, slotId, request }) =>
+      warehouseService.reactivateSlot(warehouseId, rackId, slotId, request),
+    onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
+    onError: logWarehouseMutationError,
   })
 }

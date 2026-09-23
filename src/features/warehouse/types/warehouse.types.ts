@@ -15,6 +15,13 @@ export interface CreateWarehouseRequest {
 export interface UpdateWarehouseRequest {
   warehouseName: string
   address: string
+  expectedRowVersion: string
+}
+
+export interface WarehouseLifecycleRequest {
+  reason: string | null
+  expectedRowVersion: string
+  cascadeToChildren?: boolean
 }
 
 export type WarehouseLocationType = 'Zone' | 'Rack' | 'Slot'
@@ -46,6 +53,8 @@ export interface LocationSearchResponse {
   capacity: number | null
   currentOccupancy: number | null
   barcodeValue: string | null
+  isOutboundStaging: boolean
+  rowVersion?: string | null
 }
 
 export interface LocationFilterState {
@@ -62,26 +71,39 @@ export interface CreateZoneRequest {
   description: string
 }
 
-export type UpdateZoneRequest = CreateZoneRequest
+export interface UpdateZoneRequest extends CreateZoneRequest {
+  expectedRowVersion: string
+}
+
+export type RackStorageMode = 'RackLevel' | 'SlotLevel'
 
 export interface CreateRackRequest {
   rackCode: string
   rackName: string
+  storageMode: RackStorageMode
+  allowsMixedProducts: boolean
+  capacity: number | null
 }
 
-export type UpdateRackRequest = CreateRackRequest
+export interface UpdateRackRequest extends CreateRackRequest {
+  expectedRowVersion: string
+}
 
 export interface CreateSlotRequest {
   slotCode: string
-  capacity: number
+  allowsMixedProducts: boolean
+  capacity: number | null
 }
 
-export type UpdateSlotRequest = CreateSlotRequest
+export interface UpdateSlotRequest extends CreateSlotRequest {
+  expectedRowVersion: string
+}
 
 export interface LocationBarcodeResponse {
   locationId: string
   locationType: WarehouseLocationType
   locationCode: string
   barcodeValue: string
+  displayPath?: string
   symbology: 'Code128'
 }

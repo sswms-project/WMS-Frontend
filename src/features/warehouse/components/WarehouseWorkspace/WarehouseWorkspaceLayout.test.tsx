@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES, type UserRole } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.store'
@@ -32,6 +33,21 @@ const deactivateMutation = {
   mutateAsync: vi.fn(),
 }
 
+const reactivateMutation = {
+  isPending: false,
+  mutateAsync: vi.fn(),
+}
+
+const authHooks = vi.hoisted(() => ({ permissions: [] as string[] }))
+
+vi.mock('@/features/auth/hooks/use-auth', () => ({
+  useMeQuery: () => ({
+    data: { permissions: authHooks.permissions },
+    isLoading: false,
+    isError: false,
+  }),
+}))
+
 vi.mock('next/navigation', () => ({
   usePathname: () => currentPathname,
   useRouter: () => ({ push: routerPush }),
@@ -46,9 +62,14 @@ vi.mock('../../hooks/use-warehouse', () => ({
   }),
   useUpdateWarehouseMutation: () => updateMutation,
   useDeactivateWarehouseMutation: () => deactivateMutation,
+  useReactivateWarehouseMutation: () => reactivateMutation,
 }))
 
 function setRole(role: UserRole) {
+  authHooks.permissions =
+    role === USER_ROLES.WarehouseManager
+      ? [P.WAREHOUSES_UPDATE, P.WAREHOUSES_CONFIGURE_LAYOUT, P.WAREHOUSES_GENERATE_BARCODE]
+      : []
   useAuthStore.setState({
     user: {
       id: 'user-1',
@@ -67,6 +88,7 @@ describe('WarehouseWorkspaceLayout', () => {
     warehouseData = warehouse
     updateMutation.mutateAsync.mockReset()
     deactivateMutation.mutateAsync.mockReset()
+    reactivateMutation.mutateAsync.mockReset()
     routerPush.mockReset()
     useWarehouseLayoutEditorStore.setState({ dirtyWarehouseIds: new Set() })
     setRole(USER_ROLES.TenantOwner)
@@ -114,7 +136,8 @@ describe('WarehouseWorkspaceLayout', () => {
     expect(screen.getByText('Bố cục')).toBeInTheDocument()
   })
 
-  it('hides owner actions for an inactive warehouse', () => {
+  it('offers reactivation but not editing for an inactive warehouse', async () => {
+    const user = userEvent.setup()
     warehouseData = { ...warehouse, status: 'Inactive' }
 
     render(
@@ -124,7 +147,8 @@ describe('WarehouseWorkspaceLayout', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Tác vụ kho' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Tác vụ kho' }))
+    expect(await screen.findByRole('menuitem', { name: 'Kích hoạt lại kho' })).toBeInTheDocument()
   })
 
   it('hides owner-only actions for warehouse staff', () => {
@@ -153,7 +177,10 @@ describe('WarehouseWorkspaceLayout', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Ngừng hoạt động kho' }))
     await user.click(screen.getByRole('button', { name: 'Xác nhận ngừng hoạt động' }))
 
-    expect(deactivateMutation.mutateAsync).toHaveBeenCalledWith(warehouse.id)
+    expect(deactivateMutation.mutateAsync).toHaveBeenCalledWith({
+      warehouseId: warehouse.id,
+      request: { reason: null, expectedRowVersion: '' },
+    })
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
   })
 

@@ -1,5 +1,5 @@
-import { InboundReceiptsPage } from '@/features/inbound/pages'
+import { GoodsReceiptsPage } from '@/features/inbound/pages'
 
-export default function InboundReceiptsRoutePage() {
-  return <InboundReceiptsPage />
+export default function GoodsReceiptsRoutePage() {
+  return <GoodsReceiptsPage />
 }

@@ -1,12 +1,12 @@
-import { InboundReceiptDetailPage } from '@/features/inbound/pages'
+import { GoodsReceiptDetailPage } from '@/features/inbound/pages'
 
-interface InboundReceiptDetailRoutePageProps {
+interface GoodsReceiptDetailRoutePageProps {
   readonly params: Promise<{ receiptId: string }>
 }
 
-export default async function InboundReceiptDetailRoutePage({
+export default async function GoodsReceiptDetailRoutePage({
   params,
-}: InboundReceiptDetailRoutePageProps) {
+}: GoodsReceiptDetailRoutePageProps) {
   const { receiptId } = await params
-  return <InboundReceiptDetailPage receiptId={receiptId} />
+  return <GoodsReceiptDetailPage receiptId={receiptId} />
 }

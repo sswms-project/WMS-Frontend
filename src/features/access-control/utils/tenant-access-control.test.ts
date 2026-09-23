@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import type { TenantAssignablePermission } from '../types/tenant-access-control.types'
 import {
   arePermissionSetsEqual,
@@ -11,7 +12,7 @@ import {
 
 const warehouseViewPermission: TenantAssignablePermission = {
   id: 'a73b60fa-0e18-49bc-936c-bc568b72b486',
-  permissionKey: 'warehouses:view',
+  permissionKey: P.WAREHOUSES_VIEW,
   module: 'warehouses',
   moduleDisplayName: 'Kho hàng',
   displayName: 'Xem kho hàng',
@@ -21,7 +22,7 @@ const warehouseViewPermission: TenantAssignablePermission = {
 
 const inventoryViewPermission: TenantAssignablePermission = {
   id: 'c0391037-32dc-4dd8-bc61-7cc04777dcff',
-  permissionKey: 'inventory:view',
+  permissionKey: P.INVENTORY_VIEW,
   module: 'inventory',
   moduleDisplayName: 'Tồn kho',
   displayName: 'Xem tồn kho',
@@ -45,7 +46,7 @@ describe('tenant access-control utilities', () => {
     expect(
       filterPermissionGroups(groups, 'số lượng').flatMap((group) => group.permissions)
     ).toEqual([inventoryViewPermission])
-    expect(filterPermissionGroups(groups, 'warehouses:view')).toHaveLength(1)
+    expect(filterPermissionGroups(groups, P.WAREHOUSES_VIEW)).toHaveLength(1)
     expect(filterPermissionGroups(groups, 'không tồn tại')).toEqual([])
   })
 

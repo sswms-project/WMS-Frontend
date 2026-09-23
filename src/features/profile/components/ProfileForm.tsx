@@ -42,7 +42,6 @@ export function ProfileForm({ profile, isPending, onCancel, onSubmit }: ProfileF
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       fullName: profile.fullName,
-      email: profile.email,
       phone: profile.phone ?? '',
     },
   })
@@ -108,19 +107,21 @@ export function ProfileForm({ profile, isPending, onCancel, onSubmit }: ProfileF
 
             <Field
               className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-150 duration-300 md:col-span-2"
-              data-invalid={Boolean(form.formState.errors.email)}
+              data-disabled
             >
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="Nhập địa chỉ email"
                 className="h-10 rounded-lg text-sm transition-shadow focus:shadow-sm"
-                aria-invalid={Boolean(form.formState.errors.email)}
-                {...form.register('email')}
+                value={profile.email}
+                disabled
+                readOnly
               />
-              <FieldError errors={fieldError(form.formState.errors, 'email')} />
+              <p className="text-muted-foreground text-xs">
+                Email được dùng để đăng nhập và hiện không thể thay đổi.
+              </p>
             </Field>
           </FieldGroup>
         </CardContent>

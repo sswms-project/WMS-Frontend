@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { InboundReceiptDetail } from '../../types/inbound.types'
+import type { GoodsReceiptDetail } from '../../types/inbound.types'
 import { ReceiptDetail } from './ReceiptDetail'
 
-const receipt: InboundReceiptDetail = {
+const receipt: GoodsReceiptDetail = {
   id: 'a7af68ae-91c8-4d1d-bff6-f175f20b6dcc',
   receiptCode: 'GRN-001',
-  purchaseOrderId: 'bd489a5d-7b0a-4eaf-b46d-760ad208175f',
-  poNumber: 'PO-001',
+  inboundRequestId: 'bd489a5d-7b0a-4eaf-b46d-760ad208175f',
+  inboundRequestCode: 'PO-001',
   warehouseId: '68dbb086-912a-4c87-91f7-079beb836d14',
   warehouseCode: 'WH-01',
   warehouseName: 'Kho trung tâm',

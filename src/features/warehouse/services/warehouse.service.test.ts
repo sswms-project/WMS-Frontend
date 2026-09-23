@@ -21,16 +21,19 @@ describe('warehouseService.deactivateWarehouse', () => {
     axios.put.mockReset()
   })
 
-  it('calls the warehouse deactivation endpoint without a request body', async () => {
+  it('calls the warehouse deactivation endpoint with lifecycle concurrency data', async () => {
     const response = { isSuccess: true, statusCode: 200, message: '', data: null }
     axios.patch.mockResolvedValue({ data: response })
 
-    await expect(warehouseService.deactivateWarehouse('warehouse-1')).resolves.toEqual(response)
+    const request = { reason: null, expectedRowVersion: 'row-version' }
+    await expect(warehouseService.deactivateWarehouse('warehouse-1', request)).resolves.toEqual(
+      response
+    )
 
     expect(API_ENDPOINTS.warehouses.deactivate('warehouse-1')).toBe(
       '/warehouses/warehouse-1/deactivate'
     )
-    expect(axios.patch).toHaveBeenCalledWith('/warehouses/warehouse-1/deactivate')
+    expect(axios.patch).toHaveBeenCalledWith('/warehouses/warehouse-1/deactivate', request)
   })
 
   it('passes generalized location search parameters to the warehouse route', async () => {
@@ -59,16 +62,21 @@ describe('warehouseService.deactivateWarehouse', () => {
     axios.put.mockResolvedValue({ data: response })
     axios.get.mockResolvedValue({ data: response })
 
-    await warehouseService.updateRack('warehouse-1', 'zone-1', 'rack-1', {
+    const request = {
       rackCode: 'R-01',
       rackName: 'Kệ 01',
-    })
+      storageMode: 'SlotLevel' as const,
+      allowsMixedProducts: true,
+      capacity: null,
+      expectedRowVersion: 'row-version',
+    }
+    await warehouseService.updateRack('warehouse-1', 'zone-1', 'rack-1', request)
     await warehouseService.getLocationBarcode('warehouse-1', 'Rack', 'rack-1')
 
-    expect(axios.put).toHaveBeenCalledWith('/warehouses/warehouse-1/zones/zone-1/racks/rack-1', {
-      rackCode: 'R-01',
-      rackName: 'Kệ 01',
-    })
+    expect(axios.put).toHaveBeenCalledWith(
+      '/warehouses/warehouse-1/zones/zone-1/racks/rack-1',
+      request
+    )
     expect(axios.get).toHaveBeenCalledWith('/warehouses/warehouse-1/locations/rack/rack-1/barcode')
   })
 })

@@ -425,8 +425,8 @@ function LocationDesktopTable({
             <TableHead>Loại</TableHead>
             <TableHead>Tên / cấp cha</TableHead>
             <TableHead>Hoạt động</TableHead>
-            <TableHead>Sức chứa</TableHead>
-            <TableHead className="text-right">Barcode</TableHead>
+            <TableHead>Giới hạn số lượng</TableHead>
+            <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -445,15 +445,19 @@ function LocationDesktopTable({
               <TableCell>{STATUS_LABELS[location.lifecycleStatus]}</TableCell>
               <TableCell className="tabular-nums">
                 {location.type === 'Slot'
-                  ? `${location.currentOccupancy ?? 0} / ${location.capacity ?? 0}`
+                  ? location.capacity == null
+                    ? 'Không áp dụng'
+                    : `${location.currentOccupancy ?? 0} / ${location.capacity}`
                   : '—'}
               </TableCell>
               <TableCell className="text-right">
-                <BarcodeButton
-                  warehouseId={warehouseId}
-                  location={location}
-                  enabled={canGenerateBarcode && location.lifecycleStatus === 'Active'}
-                />
+                <div className="flex justify-end gap-1">
+                  <BarcodeButton
+                    warehouseId={warehouseId}
+                    location={location}
+                    enabled={canGenerateBarcode && location.lifecycleStatus === 'Active'}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

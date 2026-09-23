@@ -18,14 +18,13 @@ const mocks = vi.hoisted(() => ({
     'warehouses:view',
     'products:view',
     'suppliers:view',
-    'purchase-orders:view',
-    'inbound-receipts:view',
+    'inbound-requests:view',
+    'goods-receipts:view',
     'inventory:view',
     'transfers:view',
-    'outbound-orders:view',
+    'stock-issue-requests:view',
     'returns:view',
-    'deliveries:view',
-    'customers:view',
+    'stock-recipients:view',
     'subscriptions:view',
     'subscription-plans:view',
   ],
@@ -183,9 +182,9 @@ describe('AppSidebar tenant navigation', () => {
       'href',
       '/transfers'
     )
-    expect(screen.getByRole('link', { name: 'Xuất kho & Giao hàng' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Xuất kho & Trả hàng' })).toHaveAttribute(
       'href',
-      '/orders'
+      '/stock-issue-requests'
     )
   })
 
@@ -223,7 +222,7 @@ describe('AppSidebar tenant navigation', () => {
     renderSidebar()
 
     const dashboardMenuButton = screen
-      .getByRole('link', { name: 'Dashboard' })
+      .getByRole('link', { name: 'Tổng quan' })
       .closest('[data-sidebar="menu-button"]')
     const brandName = screen.getByText('KOVIA')
 

@@ -17,20 +17,20 @@ import {
 } from '../components/ReceivingPage'
 import {
   useCreateDraftFromDocumentMutation,
-  useCreateInboundReceiptMutation,
+  useCreateGoodsReceiptMutation,
   useInboundDocumentImportQuery,
   useReceivingTasksQuery,
   useReviewInboundDocumentImportMutation,
   useStartInboundDocumentImportMutation,
-  useSubmitInboundReceiptMutation,
+  useSubmitGoodsReceiptMutation,
 } from '../hooks/use-inbound'
 import {
   inboundDocumentFileSchema,
   inboundDocumentReviewSchema,
   type InboundDocumentReviewFormValues,
 } from '../schemas/inbound-document-import.schema'
-import { inboundReceiptSchema, type InboundReceiptFormValues } from '../schemas/inbound.schema'
-import type { ReceivingTask, SaveInboundReceiptRequest } from '../types/inbound.types'
+import { goodsReceiptSchema, type GoodsReceiptFormValues } from '../schemas/inbound.schema'
+import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.types'
 
 const PAGE_SIZE = 10
 
@@ -50,32 +50,33 @@ export default function InboundReceivingPage() {
     pageSize: PAGE_SIZE,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
   })
-  const createMutation = useCreateInboundReceiptMutation()
-  const submitMutation = useSubmitInboundReceiptMutation()
+  const createMutation = useCreateGoodsReceiptMutation()
+  const submitMutation = useSubmitGoodsReceiptMutation()
   const importQuery = useInboundDocumentImportQuery(importId)
   const startImportMutation = useStartInboundDocumentImportMutation()
   const reviewImportMutation = useReviewInboundDocumentImportMutation()
   const createDraftMutation = useCreateDraftFromDocumentMutation()
-  const form = useForm<InboundReceiptFormValues>({
-    resolver: zodResolver(inboundReceiptSchema),
-    defaultValues: { purchaseOrderId: '', lines: [] },
+  const form = useForm<GoodsReceiptFormValues>({
+    resolver: zodResolver(goodsReceiptSchema),
+    defaultValues: { inboundRequestId: '', lines: [] },
   })
   const importForm = useForm<InboundDocumentReviewFormValues>({
     resolver: zodResolver(inboundDocumentReviewSchema),
-    defaultValues: { purchaseOrderId: '', acknowledgeWarehouseMismatch: false, lines: [] },
+    defaultValues: { inboundRequestId: '', acknowledgeWarehouseMismatch: false, lines: [] },
   })
 
   useEffect(() => {
     const review = importQuery.data?.review
-    if (!review?.purchaseOrderId || !importId || initializedImportIdRef.current === importId) return
+    if (!review?.inboundRequestId || !importId || initializedImportIdRef.current === importId)
+      return
 
     initializedImportIdRef.current = importId
     importForm.reset({
-      purchaseOrderId: review.purchaseOrderId,
+      inboundRequestId: review.inboundRequestId,
       acknowledgeWarehouseMismatch: review.warehouseMismatchAcknowledged,
       lines: review.lines.map((line) => ({
         sourceLineNumber: line.sourceLineNumber,
-        purchaseOrderItemId: line.purchaseOrderItemId ?? '',
+        inboundRequestItemId: line.inboundRequestItemId ?? '',
         confirmedQuantity: line.confirmedQuantity,
         damagedQuantity: line.damagedQuantity,
         exceptionReason: line.exceptionReason ?? '',
@@ -90,11 +91,11 @@ export default function InboundReceivingPage() {
   function openReceive(task: ReceivingTask) {
     setSelectedTask(task)
     form.reset({
-      purchaseOrderId: task.purchaseOrderId,
+      inboundRequestId: task.inboundRequestId,
       lines: task.lines
         .filter((line) => line.remainingQuantity > 0)
         .map((line) => ({
-          poLineId: line.purchaseOrderItemId,
+          inboundRequestItemId: line.inboundRequestItemId,
           receivedQty: line.remainingQuantity,
           damagedQty: 0,
           exceptionReason: '',
@@ -112,7 +113,7 @@ export default function InboundReceivingPage() {
     setImportId('')
     initializedImportIdRef.current = ''
     setDraftReceiptId(null)
-    importForm.reset({ purchaseOrderId: '', acknowledgeWarehouseMismatch: false, lines: [] })
+    importForm.reset({ inboundRequestId: '', acknowledgeWarehouseMismatch: false, lines: [] })
     importForm.clearErrors()
   }
 
@@ -148,7 +149,7 @@ export default function InboundReceivingPage() {
     try {
       const response = await startImportMutation.mutateAsync({
         file: importFile,
-        purchaseOrderId: importTask.purchaseOrderId,
+        inboundRequestId: importTask.inboundRequestId,
         warehouseId: importTask.warehouseId,
       })
       setImportId(response.data)
@@ -163,11 +164,11 @@ export default function InboundReceivingPage() {
 
     try {
       const normalizedValues = {
-        purchaseOrderId: values.purchaseOrderId,
+        inboundRequestId: values.inboundRequestId,
         acknowledgeWarehouseMismatch: values.acknowledgeWarehouseMismatch,
         lines: values.lines.map((line) => ({
           sourceLineNumber: line.sourceLineNumber,
-          purchaseOrderItemId: line.purchaseOrderItemId,
+          inboundRequestItemId: line.inboundRequestItemId,
           confirmedQuantity: line.confirmedQuantity,
           damagedQuantity: line.damagedQuantity,
           exceptionReason: line.exceptionReason.trim(),
@@ -179,11 +180,11 @@ export default function InboundReceivingPage() {
       }
       await reviewImportMutation.mutateAsync({
         id: importId,
-        purchaseOrderId: normalizedValues.purchaseOrderId,
+        inboundRequestId: normalizedValues.inboundRequestId,
         acknowledgeWarehouseMismatch: normalizedValues.acknowledgeWarehouseMismatch,
         lines: normalizedValues.lines.map((line) => ({
           sourceLineNumber: line.sourceLineNumber,
-          purchaseOrderItemId: line.purchaseOrderItemId,
+          inboundRequestItemId: line.inboundRequestItemId,
           confirmedQuantity: line.confirmedQuantity,
           damagedQuantity: line.damagedQuantity,
           exceptionReason: line.exceptionReason || null,
@@ -206,19 +207,19 @@ export default function InboundReceivingPage() {
     try {
       const response = await createDraftMutation.mutateAsync(importId)
       setDraftReceiptId(response.data)
-      toast.success('Đã tạo phiếu nhập nháp. Mở phiếu để gửi duyệt hoặc phê duyệt.')
+      toast.success('Đã tạo phiếu nhận hàng nháp. Mở phiếu để gửi duyệt hoặc phê duyệt.')
     } catch (error) {
       logger.error(error)
-      toast.error('Không thể tạo phiếu nhập nháp. Vui lòng kiểm tra lại dữ liệu mới nhất.')
+      toast.error('Không thể tạo phiếu nhận hàng nháp. Vui lòng kiểm tra lại dữ liệu mới nhất.')
     }
   }
 
-  async function save(values: InboundReceiptFormValues, shouldSubmit: boolean) {
+  async function save(values: GoodsReceiptFormValues, shouldSubmit: boolean) {
     try {
-      const request: SaveInboundReceiptRequest = {
-        purchaseOrderId: values.purchaseOrderId,
+      const request: SaveGoodsReceiptRequest = {
+        inboundRequestId: values.inboundRequestId,
         lines: values.lines.map((line) => ({
-          poLineId: line.poLineId,
+          inboundRequestItemId: line.inboundRequestItemId,
           receivedQty: line.receivedQty,
           damagedQty: line.damagedQty,
           exceptionReason: line.exceptionReason.trim() || null,
@@ -234,22 +235,24 @@ export default function InboundReceivingPage() {
         } catch (error) {
           logger.error(error)
           toast.error(
-            'Phiếu nhập đã được lưu nháp nhưng chưa gửi duyệt. Bạn có thể thử lại từ trang chi tiết.'
+            'Phiếu nhận hàng đã được lưu nháp nhưng chưa gửi duyệt. Bạn có thể thử lại từ trang chi tiết.'
           )
           setSelectedTask(null)
           form.reset()
-          router.push(APP_ROUTES.inboundReceiptDetail(response.data) as Route)
+          router.push(APP_ROUTES.goodsReceiptDetail(response.data) as Route)
           return
         }
       }
       toast.success(
-        shouldSubmit ? 'Đã tạo và gửi phiếu nhập để duyệt.' : 'Đã lưu bản nháp phiếu nhập.'
+        shouldSubmit
+          ? 'Đã tạo và gửi phiếu nhận hàng để duyệt.'
+          : 'Đã lưu bản nháp phiếu nhận hàng.'
       )
       setSelectedTask(null)
       form.reset()
     } catch (error) {
       logger.error(error)
-      toast.error('Không thể lưu phiếu nhập. Kiểm tra số lượng và thử lại.')
+      toast.error('Không thể lưu phiếu nhận hàng. Kiểm tra số lượng và thử lại.')
     }
   }
 
@@ -258,7 +261,7 @@ export default function InboundReceivingPage() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <InboundPageHeader
         title="Nhập kho"
-        description="Tiếp nhận hàng theo đơn mua đã được phê duyệt."
+        description="Tiếp nhận hàng theo yêu cầu nhập kho đã được phê duyệt."
       />
       <ReceivingTaskDirectory
         items={query.data?.items ?? []}
@@ -292,7 +295,7 @@ export default function InboundReceivingPage() {
         task={importTask}
         file={importFile}
         importData={importQuery.data ?? null}
-        draftReceiptId={draftReceiptId ?? importQuery.data?.inboundReceiptId ?? null}
+        draftReceiptId={draftReceiptId ?? importQuery.data?.goodsReceiptId ?? null}
         form={importForm}
         isStarting={startImportMutation.isPending}
         isLoadingImport={Boolean(importId) && importQuery.isLoading}

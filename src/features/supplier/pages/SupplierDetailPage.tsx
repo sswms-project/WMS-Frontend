@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
 import {
   OperationalErrorState,
   OperationalLoadingState,
@@ -107,9 +108,9 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailPagePro
     <>
       <SupplierDetail
         supplier={supplier}
-        canUpdate={permissions.includes('suppliers:update')}
-        canDeactivate={permissions.includes('suppliers:deactivate')}
-        canReactivate={permissions.includes('suppliers:reactivate')}
+        canUpdate={permissions.includes(P.SUPPLIERS_UPDATE)}
+        canDeactivate={permissions.includes(P.SUPPLIERS_DEACTIVATE)}
+        canReactivate={permissions.includes(P.SUPPLIERS_REACTIVATE)}
         onEdit={() => setIsEditOpen(true)}
         onDeactivate={() => {
           setDeactivateError(null)

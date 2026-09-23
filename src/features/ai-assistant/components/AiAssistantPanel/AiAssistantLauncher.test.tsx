@@ -50,17 +50,17 @@ const chatResponse: AiChatResponse = {
     cards: [
       {
         type: 'navigation_card',
-        routeKey: 'purchase_orders',
-        title: 'Mua hàng',
-        description: 'Danh sách đơn mua',
-        actionUrl: '/purchase-orders',
+        routeKey: 'inbound_requests',
+        title: 'Nhập kho',
+        description: 'Danh sách yêu cầu nhập kho',
+        actionUrl: '/inbound-requests',
         icon: 'clipboard-list',
       },
       {
         type: 'action_confirmation',
         draftId: 'draft-1',
-        action: 'create_purchase_order',
-        summary: 'Tạo đơn mua 200 chai SKU-001',
+        action: 'create_inbound_request',
+        summary: 'Tạo yêu cầu nhập kho 200 chai SKU-001',
         details: [{ label: 'Kho nhận', value: 'Kho Hà Nội' }],
         expiresAt: '2026-09-12T08:15:00Z',
       },
@@ -70,7 +70,7 @@ const chatResponse: AiChatResponse = {
   drafts: [
     {
       draftId: 'draft-1',
-      action: 'create_purchase_order',
+      action: 'create_inbound_request',
       status: 'Pending',
       resultEntityId: null,
       expiresAt: '2026-09-12T08:15:00Z',
@@ -107,7 +107,7 @@ describe('AiAssistantLauncher', () => {
     mocks.confirmAction.mockResolvedValue({
       data: {
         draftId: 'draft-1',
-        action: 'create_purchase_order',
+        action: 'create_inbound_request',
         status: 'Executed',
         resultEntityId: 'po-1',
       },
@@ -137,9 +137,9 @@ describe('AiAssistantLauncher', () => {
       message: 'Tạo PO 200 SKU-001',
     })
     expect(await screen.findByText('bản nháp')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Mua hàng/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Nhập kho/ })).toHaveAttribute(
       'href',
-      '/purchase-orders'
+      '/inbound-requests'
     )
     expect(screen.getByText('Chờ xác nhận')).toBeInTheDocument()
 
@@ -147,9 +147,9 @@ describe('AiAssistantLauncher', () => {
 
     await waitFor(() => expect(mocks.confirmAction).toHaveBeenCalledWith('draft-1'))
     expect(await screen.findByText('Đã thực hiện')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Xem đơn mua' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Xem yêu cầu nhập kho' })).toHaveAttribute(
       'href',
-      '/purchase-orders/po-1'
+      '/inbound-requests/po-1'
     )
     expect(mocks.toastSuccess).toHaveBeenCalledWith('Đã thực hiện thao tác.')
   })
