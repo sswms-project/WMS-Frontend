@@ -86,7 +86,6 @@ function renderDirectory(overrides?: DirectoryOverrides) {
     onPageChange: vi.fn(),
     onRetry: vi.fn(),
     onRetryFilterMetadata: vi.fn(),
-    onConfigureOutboundStaging: vi.fn(),
   }
 
   render(
@@ -107,8 +106,6 @@ function renderDirectory(overrides?: DirectoryOverrides) {
         isFilterMetadataLoading={overrides?.isFilterMetadataLoading ?? false}
         isFilterMetadataError={overrides?.isFilterMetadataError ?? false}
         canGenerateBarcode={overrides?.canGenerateBarcode ?? true}
-        canConfigureOutboundStaging={true}
-        configuringStagingSlotId={null}
         {...callbacks}
       />
     </TooltipProvider>

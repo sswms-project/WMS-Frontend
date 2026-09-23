@@ -23,17 +23,11 @@ const warehouseHooks = vi.hoisted(() => ({
     isError: false,
     refetch: vi.fn(),
   },
-  configureStagingMutation: {
-    mutateAsync: vi.fn(),
-    isPending: false,
-    variables: undefined as { slotId: string } | undefined,
-  },
 }))
 
 vi.mock('../hooks/use-warehouse', () => ({
   useWarehouseLocationsQuery: warehouseHooks.useWarehouseLocationsQuery,
   useWarehouseLayoutQuery: () => warehouseHooks.layoutQuery,
-  useConfigureOutboundStagingMutation: () => warehouseHooks.configureStagingMutation,
 }))
 
 const slot: LocationSearchResponse = {
@@ -68,9 +62,6 @@ describe('WarehouseLocationsPage', () => {
     warehouseHooks.layoutQuery.isLoading = false
     warehouseHooks.layoutQuery.isError = false
     warehouseHooks.layoutQuery.refetch.mockReset()
-    warehouseHooks.configureStagingMutation.mutateAsync.mockReset()
-    warehouseHooks.configureStagingMutation.isPending = false
-    warehouseHooks.configureStagingMutation.variables = undefined
     useAuthStore.setState({
       user: {
         id: 'owner-1',

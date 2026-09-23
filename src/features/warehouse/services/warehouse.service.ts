@@ -6,7 +6,6 @@ import type {
   CreateRackRequest,
   CreateSlotRequest,
   CreateZoneRequest,
-  ConfigureOutboundStagingRequest,
   CreateWarehouseRequest,
   LocationBarcodeResponse,
   LocationSearchResponse,
@@ -147,18 +146,6 @@ export const warehouseService = {
       .patch<
         ApiResponse<unknown>
       >(API_ENDPOINTS.warehouses.reactivateSlot(warehouseId, rackId, slotId), request)
-      .then((response) => response.data),
-
-  configureOutboundStaging: (
-    warehouseId: string,
-    rackId: string,
-    slotId: string,
-    request: ConfigureOutboundStagingRequest
-  ) =>
-    axiosClient
-      .patch<
-        ApiResponse<unknown>
-      >(API_ENDPOINTS.warehouses.configureOutboundStaging(warehouseId, rackId, slotId), request)
       .then((response) => response.data),
 
   getLocationBarcode: (

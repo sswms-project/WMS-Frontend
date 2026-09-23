@@ -37,7 +37,6 @@ describe('outbound schemas', () => {
       sku: 'A',
       remainingQuantity: 5,
       inventoryStockId: two,
-      stagingSlotId: one,
       availableQuantity: 5,
     }
     expect(
@@ -45,11 +44,6 @@ describe('outbound schemas', () => {
     ).toBe(true)
     expect(
       recordStockPickingSchema.safeParse({ lines: [{ ...base, pickedQuantity: 6 }] }).success
-    ).toBe(false)
-    expect(
-      recordStockPickingSchema.safeParse({
-        lines: [{ ...base, stagingSlotId: '', pickedQuantity: 3 }],
-      }).success
     ).toBe(false)
   })
 

@@ -42,7 +42,6 @@ function IssueDialogFixture() {
           sku: 'SKU-01',
           remainingQuantity: 10,
           inventoryStockId: '',
-          stagingSlotId: '',
           availableQuantity: 0,
           pickedQuantity: 0,
         },
@@ -59,7 +58,6 @@ function IssueDialogFixture() {
       onOpenChange={vi.fn()}
       onSubmit={vi.fn()}
       inventoryOptions={[]}
-      stagingSlotOptions={[{ id: 'staging-1', label: 'STAGE-01' }]}
     />
   )
 }

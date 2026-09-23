@@ -34,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils'
 import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
 import type { InventoryStock } from '@/features/inventory/types/inventory.types'
+import { formatCapacityLimit, formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseLayoutViewProps {
   readonly zones: readonly ZoneResponse[]
@@ -136,24 +137,10 @@ function RackInventorySummary({
   )
 }
 
-function formatStatus(status: string) {
-  const labels: Record<string, string> = {
-    Active: 'Hoạt động',
-    Inactive: 'Ngừng hoạt động',
-    Vacant: 'Còn trống',
-    Occupied: 'Đang chứa hàng',
-    Reserved: 'Đã giữ chỗ',
-    Full: 'Đầy',
-    Empty: 'Trống',
-  }
-
-  return labels[status] ?? status
-}
-
 function StatusBadge({ status }: { readonly status: string }) {
   return (
     <Badge variant={status === 'Inactive' ? 'destructive' : 'outline'}>
-      {formatStatus(status)}
+      {formatWarehouseStatus(status)}
     </Badge>
   )
 }
@@ -222,7 +209,11 @@ function ZoneList({
           const isSelected = zone.id === selectedZoneId
 
           return (
-            <Item key={zone.id} variant={isSelected ? 'muted' : 'default'}>
+            <Item
+              key={zone.id}
+              variant={isSelected ? 'muted' : 'default'}
+              className={cn(isSelected && 'border-primary bg-primary/10 border-l-4')}
+            >
               <button
                 type="button"
                 aria-pressed={isSelected}
@@ -230,7 +221,9 @@ function ZoneList({
                 onClick={() => onSelectZone(zone.id)}
               >
                 <ItemContent className="min-w-0">
-                  <ItemTitle className="max-w-full truncate">{zone.zoneName}</ItemTitle>
+                  <ItemTitle className={cn('max-w-full truncate', isSelected && 'font-bold')}>
+                    {zone.zoneName}
+                  </ItemTitle>
                   <ItemDescription translate="no" className="font-mono">
                     {zone.zoneCode}
                   </ItemDescription>
@@ -295,7 +288,11 @@ function RackList({
           const isSelected = rack.id === selectedRackId
 
           return (
-            <Item key={rack.id} variant={isSelected ? 'muted' : 'default'}>
+            <Item
+              key={rack.id}
+              variant={isSelected ? 'muted' : 'default'}
+              className={cn(isSelected && 'border-primary bg-primary/10 border-l-4')}
+            >
               <button
                 type="button"
                 aria-pressed={isSelected}
@@ -303,7 +300,9 @@ function RackList({
                 onClick={() => onSelectRack(rack.id)}
               >
                 <ItemContent className="min-w-0">
-                  <ItemTitle className="max-w-full truncate">{rack.rackName}</ItemTitle>
+                  <ItemTitle className={cn('max-w-full truncate', isSelected && 'font-bold')}>
+                    {rack.rackName}
+                  </ItemTitle>
                   <ItemDescription translate="no" className="font-mono">
                     {rack.rackCode}
                   </ItemDescription>
@@ -380,10 +379,11 @@ function SlotItem({
       </ItemActions>
 
       <dl className="col-span-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t pt-2.5">
-        <dt className="text-muted-foreground">Sức chứa</dt>
+        <dt className="text-muted-foreground">Giới hạn số lượng</dt>
         <dd className="font-medium tabular-nums">
-          {currentOccupancy} /{' '}
-          {slot.capacity === null ? 'Không giới hạn' : Math.max(0, slot.capacity)}
+          {slot.capacity === null
+            ? 'Không áp dụng'
+            : `${quantityFormatter.format(currentOccupancy)} / ${formatCapacityLimit(slot.capacity)}`}
         </dd>
         {slot.barcodeValue && slot.barcodeValue !== slot.slotCode && (
           <div className="col-span-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-3">
@@ -584,7 +584,7 @@ export function WarehouseLayoutView({
   const selectedRack = selectedZone?.racks.find((rack) => rack.id === selectedRackId) ?? null
 
   return (
-    <div className="grid min-h-[32rem] min-w-0 overflow-hidden border lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
+    <div className="mb-5 grid min-h-[32rem] min-w-0 overflow-hidden border lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
       <section className={cn('min-w-0 flex-col', selectedZone ? 'hidden lg:flex' : 'flex')}>
         <PaneHeader
           title="Khu vực"
@@ -749,7 +749,7 @@ export function WarehouseLayoutView({
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">Giới hạn số lượng</dt>
                   <dd className="font-medium tabular-nums">
-                    {selectedRack.capacity ?? 'Không giới hạn'}
+                    {formatCapacityLimit(selectedRack.capacity)}
                   </dd>
                 </div>
               </dl>

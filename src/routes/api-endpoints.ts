@@ -93,8 +93,6 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/deactivate`,
     reactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/reactivate`,
-    configureOutboundStaging: (warehouseId: string, rackId: string, slotId: string) =>
-      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/outbound-staging`,
     locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,

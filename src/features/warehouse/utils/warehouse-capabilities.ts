@@ -1,3 +1,4 @@
+import { P, type PermissionCode } from '@/config/permissionCodes'
 import { USER_ROLES, type UserRole } from '@/config/roles'
 
 export interface WarehouseCapabilities {
@@ -6,7 +7,6 @@ export interface WarehouseCapabilities {
   readonly canDeactivateWarehouse: boolean
   readonly canConfigureLayout: boolean
   readonly canGenerateLocationBarcode: boolean
-  readonly canConfigureOutboundStaging: boolean
 }
 
 export function getWarehouseCapabilities(
@@ -14,14 +14,14 @@ export function getWarehouseCapabilities(
   permissions: readonly string[] = []
 ): WarehouseCapabilities {
   const isTenantOwner = role === USER_ROLES.TenantOwner
-  const hasPermission = (permission: string) => isTenantOwner || permissions.includes(permission)
+  const hasPermission = (permission: PermissionCode) =>
+    isTenantOwner || permissions.includes(permission)
 
   return {
     canCreateWarehouse: isTenantOwner,
-    canEditWarehouse: hasPermission('warehouses:update'),
+    canEditWarehouse: hasPermission(P.WAREHOUSES_UPDATE),
     canDeactivateWarehouse: isTenantOwner,
-    canConfigureLayout: hasPermission('warehouses:configure-layout'),
-    canGenerateLocationBarcode: hasPermission('warehouses:generate-barcode'),
-    canConfigureOutboundStaging: hasPermission('warehouses:configure-staging'),
+    canConfigureLayout: hasPermission(P.WAREHOUSES_CONFIGURE_LAYOUT),
+    canGenerateLocationBarcode: hasPermission(P.WAREHOUSES_GENERATE_BARCODE),
   }
 }

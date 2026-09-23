@@ -53,6 +53,7 @@ import {
 } from '../../hooks/use-warehouse'
 import type { UpdateWarehouseFormValues } from '../../schemas/warehouse.schema'
 import { getWarehouseCapabilities } from '../../utils/warehouse-capabilities'
+import { formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseWorkspaceLayoutProps {
   readonly warehouseId: string
@@ -218,7 +219,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <p className="text-primary text-xs font-medium">Kho hàng</p>
               <Badge variant={isActive ? 'outline' : 'destructive'}>
-                {isActive ? 'Hoạt động' : warehouse.status}
+                {formatWarehouseStatus(warehouse.status)}
               </Badge>
             </div>
             <h1 className="mt-0.5 truncate text-xl font-semibold">{warehouse.warehouseName}</h1>

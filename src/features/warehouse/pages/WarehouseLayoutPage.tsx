@@ -10,7 +10,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
-import { logger } from '@/lib/logger'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
@@ -61,14 +61,6 @@ type DeactivateTarget =
   | { readonly type: 'Zone'; readonly zone: ZoneResponse }
   | { readonly type: 'Rack'; readonly zone: ZoneResponse; readonly rack: RackResponse }
   | { readonly type: 'Slot'; readonly rack: RackResponse; readonly slot: SlotResponse }
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    const message = error.message
-    if (typeof message === 'string' && message.trim()) return message
-  }
-  return fallback
-}
 
 export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   const router = useRouter()
@@ -168,8 +160,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setZoneFormTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error(getErrorMessage(error, 'Không thể lưu khu vực. Vui lòng thử lại.'))
+      toast.error(getApiErrorMessage(error, 'Không thể lưu khu vực. Vui lòng thử lại.'))
       return false
     }
   }
@@ -202,8 +193,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setRackFormTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error(getErrorMessage(error, 'Không thể lưu kệ hàng. Vui lòng thử lại.'))
+      toast.error(getApiErrorMessage(error, 'Không thể lưu kệ hàng. Vui lòng thử lại.'))
       return false
     }
   }
@@ -234,16 +224,16 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       setSlotFormTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error(getErrorMessage(error, 'Không thể lưu vị trí. Vui lòng thử lại.'))
+      toast.error(getApiErrorMessage(error, 'Không thể lưu vị trí. Vui lòng thử lại.'))
       return false
     }
   }
 
-  async function confirmLifecycle(reason: string | null) {
+  async function confirmLifecycle(reason: string | null, cascadeToChildren: boolean) {
     if (!deactivateTarget) return
     const request = {
       reason,
+      cascadeToChildren,
       expectedRowVersion:
         deactivateTarget.type === 'Zone'
           ? (deactivateTarget.zone.rowVersion ?? '')
@@ -284,13 +274,21 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           ? reactivateSlotMutation.mutateAsync(variables)
           : deactivateSlotMutation.mutateAsync(variables))
       }
-      toast.success(isReactivation ? 'Đã kích hoạt lại vị trí.' : 'Đã ngừng hoạt động vị trí.')
+      toast.success(
+        isReactivation
+          ? `Đã kích hoạt lại ${deactivateLabel}.`
+          : `Đã ngừng hoạt động ${deactivateLabel}.`
+      )
       setDeactivateTarget(null)
       setDeactivateErrorMessage(null)
     } catch (error) {
-      logger.error(error)
       setDeactivateErrorMessage(
-        getErrorMessage(error, 'Không thể ngừng hoạt động vị trí. Vui lòng thử lại.')
+        getApiErrorMessage(
+          error,
+          isReactivation
+            ? `Không thể kích hoạt lại ${deactivateLabel}. Vui lòng thử lại.`
+            : `Không thể ngừng hoạt động ${deactivateLabel}. Vui lòng thử lại.`
+        )
       )
     }
   }
@@ -322,6 +320,25 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       : deactivateTarget?.type === 'Rack'
         ? 'kệ hàng'
         : 'vị trí lưu trữ'
+  const cascadeDescription = (() => {
+    if (isReactivation || !deactivateTarget) return null
+    if (deactivateTarget.type === 'Rack') {
+      const activeSlotCount = deactivateTarget.rack.slots.filter((slot) => slot.isActive).length
+      return activeSlotCount > 0
+        ? `Kệ này có ${activeSlotCount} vị trí lưu trữ đang hoạt động.`
+        : null
+    }
+    if (deactivateTarget.type === 'Zone') {
+      const activeRacks = deactivateTarget.zone.racks.filter((rack) => rack.status === 'Active')
+      const activeSlotCount = deactivateTarget.zone.racks
+        .flatMap((rack) => rack.slots)
+        .filter((slot) => slot.isActive).length
+      return activeRacks.length > 0 || activeSlotCount > 0
+        ? `Khu vực này có ${activeRacks.length} kệ và ${activeSlotCount} vị trí lưu trữ đang hoạt động.`
+        : null
+    }
+    return null
+  })()
 
   return (
     <>
@@ -430,13 +447,14 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         isPending={isDeactivating}
         errorMessage={deactivateErrorMessage}
         isReactivation={isReactivation}
+        cascadeDescription={cascadeDescription}
         onOpenChange={(open) => {
           if (!open) {
             setDeactivateTarget(null)
             setDeactivateErrorMessage(null)
           }
         }}
-        onConfirm={(reason) => void confirmLifecycle(reason)}
+        onConfirm={(reason, cascadeToChildren) => void confirmLifecycle(reason, cascadeToChildren)}
       />
     </>
   )

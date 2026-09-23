@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES, type UserRole } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.store'
@@ -67,7 +68,7 @@ vi.mock('../../hooks/use-warehouse', () => ({
 function setRole(role: UserRole) {
   authHooks.permissions =
     role === USER_ROLES.WarehouseManager
-      ? ['warehouses:update', 'warehouses:configure-layout', 'warehouses:generate-barcode']
+      ? [P.WAREHOUSES_UPDATE, P.WAREHOUSES_CONFIGURE_LAYOUT, P.WAREHOUSES_GENERATE_BARCODE]
       : []
   useAuthStore.setState({
     user: {

@@ -21,6 +21,7 @@ export interface UpdateWarehouseRequest {
 export interface WarehouseLifecycleRequest {
   reason: string | null
   expectedRowVersion: string
+  cascadeToChildren?: boolean
 }
 
 export type WarehouseLocationType = 'Zone' | 'Rack' | 'Slot'
@@ -54,11 +55,6 @@ export interface LocationSearchResponse {
   barcodeValue: string | null
   isOutboundStaging: boolean
   rowVersion?: string | null
-}
-
-export interface ConfigureOutboundStagingRequest {
-  isOutboundStaging: boolean
-  expectedRowVersion: string
 }
 
 export interface LocationFilterState {
