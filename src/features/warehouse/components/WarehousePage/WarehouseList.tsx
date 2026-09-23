@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { WarehouseResponse } from '@/types/warehouse'
+import { formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseListProps {
   readonly warehouses: readonly WarehouseResponse[]
@@ -24,7 +25,7 @@ function formatDate(value: string) {
 function WarehouseStatusBadge({ status }: { readonly status: string }) {
   const isActive = status === 'Active'
   return (
-    <Badge variant={isActive ? 'outline' : 'destructive'}>{isActive ? 'Hoạt động' : status}</Badge>
+    <Badge variant={isActive ? 'outline' : 'destructive'}>{formatWarehouseStatus(status)}</Badge>
   )
 }
 

@@ -3,6 +3,8 @@ export interface InventoryListQuery {
   pageSize: number
   warehouseId?: string
   zoneId?: string
+  rackId?: string
+  slotId?: string
   productId?: string
   searchTerm?: string
 }
@@ -23,6 +25,7 @@ export interface InventoryStock {
   manufacturedDate: string | null
   expiryDate: string | null
   lotStatus: string | null
+  unitName?: string | null
   qualityStatus: QualityStatus
   quantityOnHand: number
   reservedQuantity: number

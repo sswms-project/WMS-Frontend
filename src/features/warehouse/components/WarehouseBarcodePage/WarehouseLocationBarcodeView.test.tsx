@@ -33,7 +33,7 @@ describe('WarehouseLocationBarcodeView', () => {
       'R-01',
       expect.objectContaining({ format: 'CODE128' })
     )
-    expect(screen.getByRole('img', { name: 'Barcode R-01' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Mã vạch R-01' })).toBeInTheDocument()
     expect(screen.getByText('Code128')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'In nhãn' }))

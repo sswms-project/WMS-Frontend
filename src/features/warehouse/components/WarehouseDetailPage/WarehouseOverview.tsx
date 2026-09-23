@@ -1,6 +1,7 @@
 import { CalendarDays, MapPin, Warehouse } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { WarehouseDetailResponse } from '@/types/warehouse'
+import { formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseOverviewProps {
   readonly warehouse: WarehouseDetailResponse
@@ -45,7 +46,7 @@ export function WarehouseOverview({ warehouse }: WarehouseOverviewProps) {
       <div className="flex min-w-0 items-center justify-between gap-3 border-t px-3 py-2.5 sm:px-4">
         <span className="text-muted-foreground text-xs">Trạng thái vận hành</span>
         <Badge variant={warehouse.status === 'Active' ? 'outline' : 'destructive'}>
-          {warehouse.status === 'Active' ? 'Hoạt động' : warehouse.status}
+          {formatWarehouseStatus(warehouse.status)}
         </Badge>
       </div>
     </div>
