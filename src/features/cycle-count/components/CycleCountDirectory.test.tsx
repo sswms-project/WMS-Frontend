@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { CycleCountDirectory } from './CycleCountDirectory'
 import type { CycleCountSummary } from '../types/cycle-count.types'
 
@@ -22,7 +23,7 @@ const item: CycleCountSummary = {
 function renderDirectory(overrides: Partial<ComponentProps<typeof CycleCountDirectory>> = {}) {
   render(
     <CycleCountDirectory
-      permissions={['cycle-counts:view', 'stock-adjustments:view']}
+      permissions={[P.CYCLE_COUNTS_VIEW, P.STOCK_ADJUSTMENTS_VIEW]}
       items={[]}
       totalCount={0}
       page={1}

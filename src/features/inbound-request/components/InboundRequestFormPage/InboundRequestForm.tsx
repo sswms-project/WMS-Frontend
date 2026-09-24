@@ -1,12 +1,9 @@
 'use client'
 
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
-import { ArrowLeft, CalendarIcon, Plus, Save, Send, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import {
   Card,
   CardAction,
@@ -19,12 +16,11 @@ import {
   Field,
   FieldError,
   FieldGroup,
-  FieldLabel,
   FieldSet,
+  FieldLabel,
   FieldLegend,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Table,
   TableBody,
@@ -35,9 +31,12 @@ import {
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { cn } from '@/lib/utils'
 import type { InboundRequestFormValues } from '../../schemas/inbound-request.schema'
-import { LookupCombobox, type LookupOption } from './LookupCombobox'
+import type { LookupOption } from '../../types/inbound-request.types'
+import { DatePickerField } from './DatePickerField'
+import { FormActions } from './FormActions'
+import { LookupCombobox } from './LookupCombobox'
+import { ProductSelect } from './ProductSelect'
 
 interface InboundRequestFormProps {
   readonly title: string
@@ -52,6 +51,7 @@ interface InboundRequestFormProps {
   readonly isSupplierSearchLoading: boolean
   readonly isProductSearchLoading: boolean
   readonly isPending: boolean
+  readonly disablePastDates?: boolean
   readonly onAddLine: () => void
   readonly onRemoveLine: (index: number) => void
   readonly onCancel: () => void
@@ -75,6 +75,7 @@ export function InboundRequestForm({
   isSupplierSearchLoading,
   isProductSearchLoading,
   isPending,
+  disablePastDates,
   onAddLine,
   onRemoveLine,
   onCancel,
@@ -104,7 +105,6 @@ export function InboundRequestForm({
         if (existing?.value === option.value && existing.label === option.label) return current
         return { ...current, [scope]: option }
       }
-
       if (!current[scope]) return current
       const next = { ...current }
       delete next[scope]
@@ -165,10 +165,7 @@ export function InboundRequestForm({
                     isInvalid={Boolean(errors.warehouseId)}
                     onSearchChange={onWarehouseSearchChange}
                     onChange={(value) =>
-                      setValue('warehouseId', value, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
+                      setValue('warehouseId', value, { shouldDirty: true, shouldValidate: true })
                     }
                   />
                   <FieldError>{errors.warehouseId?.message}</FieldError>
@@ -186,10 +183,7 @@ export function InboundRequestForm({
                     isInvalid={Boolean(errors.supplierId)}
                     onSearchChange={onSupplierSearchChange}
                     onChange={(value) =>
-                      setValue('supplierId', value, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
+                      setValue('supplierId', value, { shouldDirty: true, shouldValidate: true })
                     }
                   />
                   <FieldError>{errors.supplierId?.message}</FieldError>
@@ -197,6 +191,7 @@ export function InboundRequestForm({
                 <DatePickerField
                   id="expectedDate"
                   label="Ngày nhận dự kiến"
+                  disablePastDates={disablePastDates}
                   value={watch('expectedDate')}
                   onChange={(value) =>
                     setValue('expectedDate', value, { shouldDirty: true, shouldValidate: true })
@@ -371,140 +366,5 @@ export function InboundRequestForm({
         </Card>
       </form>
     </div>
-  )
-}
-
-function DatePickerField({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  readonly id: string
-  readonly label: string
-  readonly value: string
-  readonly onChange: (value: string) => void
-}) {
-  const selectedDate = parseDateInputValue(value)
-
-  return (
-    <Field>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            type="button"
-            variant="outline"
-            className={cn(
-              'w-full justify-start gap-2 font-normal',
-              !selectedDate && 'text-muted-foreground'
-            )}
-            aria-label={label}
-          >
-            <CalendarIcon data-icon="inline-start" aria-hidden="true" />
-            {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: vi }) : 'Chọn ngày'}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => onChange(date ? toDateInputValue(date) : '')}
-            locale={vi}
-          />
-        </PopoverContent>
-      </Popover>
-    </Field>
-  )
-}
-
-function parseDateInputValue(value: string): Date | undefined {
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) return undefined
-
-  return new Date(year, month - 1, day)
-}
-
-function toDateInputValue(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-function FormActions({
-  isPending,
-  onSaveDraft,
-  onSaveAndSubmit,
-}: {
-  readonly isPending: boolean
-  readonly onSaveDraft: () => void
-  readonly onSaveAndSubmit?: () => void
-}) {
-  return (
-    <div className="flex flex-col gap-2 sm:flex-row">
-      <Button type="button" variant="outline" disabled={isPending} onClick={onSaveDraft}>
-        <Save aria-hidden="true" />
-        Lưu nháp
-      </Button>
-      <Button
-        type={onSaveAndSubmit ? 'button' : 'submit'}
-        disabled={isPending}
-        onClick={onSaveAndSubmit}
-      >
-        <Send aria-hidden="true" />
-        Lưu và gửi duyệt
-      </Button>
-    </div>
-  )
-}
-
-function ProductSelect({
-  inputId,
-  searchScope,
-  selectedOption,
-  onSelectedOptionChange,
-  index,
-  form,
-  options,
-  isLoading,
-  onSearchChange,
-}: {
-  readonly inputId: string
-  readonly searchScope: string
-  readonly selectedOption?: LookupOption
-  readonly onSelectedOptionChange: (scope: string, option?: LookupOption) => void
-  readonly index: number
-  readonly form: UseFormReturn<InboundRequestFormValues>
-  readonly options: readonly LookupOption[]
-  readonly isLoading: boolean
-  readonly onSearchChange: (scope: string, value: string) => void
-}) {
-  const error = form.formState.errors.lines?.[index]?.productId
-  return (
-    <Field data-invalid={Boolean(error)}>
-      <LookupCombobox
-        id={inputId}
-        value={form.watch(`lines.${index}.productId`)}
-        options={options}
-        selectedOption={selectedOption}
-        placeholder="Chọn hoặc tìm sản phẩm"
-        emptyMessage="Không tìm thấy sản phẩm phù hợp."
-        ariaLabel={`Sản phẩm dòng ${index + 1}`}
-        isLoading={isLoading}
-        isInvalid={Boolean(error)}
-        onSearchChange={(value) => onSearchChange(searchScope, value)}
-        onChange={(value, option) => {
-          onSelectedOptionChange(searchScope, option)
-          form.setValue(`lines.${index}.productId`, value, {
-            shouldDirty: true,
-            shouldValidate: true,
-          })
-        }}
-      />
-      <FieldError>{error?.message}</FieldError>
-    </Field>
   )
 }
