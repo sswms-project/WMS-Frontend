@@ -25,11 +25,17 @@ export const unitSchema = z.object({
 export type UnitFormValues = z.infer<typeof unitSchema>
 
 export const categorySchema = z.object({
+  categoryCode: z
+    .string()
+    .trim()
+    .min(1, 'Mã nhóm không được để trống')
+    .max(50, 'Mã nhóm tối đa 50 ký tự'),
   categoryName: z
     .string()
     .trim()
     .min(1, 'Tên danh mục không được để trống')
     .max(255, 'Tên danh mục tối đa 255 ký tự'),
+  parentCategoryId: z.string().nullable(),
   description: optionalText(500, 'Mô tả tối đa 500 ký tự'),
 })
 

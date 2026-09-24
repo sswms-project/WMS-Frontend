@@ -77,6 +77,10 @@ export const P = {
   PRODUCTS_GENERATE_BARCODE: 'products:generate-barcode',
   PRODUCTS_IMPORT: 'products:import',
 
+  // Product categories
+  CATEGORIES_VIEW: 'categories:view',
+  CATEGORIES_MANAGE: 'categories:manage',
+
   // Units
   UNITS_VIEW: 'units:view',
   UNITS_MANAGE: 'units:manage',

@@ -5,6 +5,7 @@ import { Pencil, Plus, Power, RotateCcw, Scale } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import type { UnitFormValues } from '../../schemas/master-data.schema'
 import type { UnitResponse } from '../../types/product.types'
 
@@ -48,6 +50,7 @@ interface UnitCatalogProps {
   readonly onFormOpenChange: (open: boolean) => void
   readonly onSubmit: (values: UnitFormValues) => void
   readonly onChangeStatus: (unit: UnitResponse) => void
+  readonly onBulkDeactivate?: (units: readonly UnitResponse[]) => void
 }
 
 export function UnitCatalog({
@@ -65,8 +68,16 @@ export function UnitCatalog({
   onFormOpenChange,
   onSubmit,
   onChangeStatus,
+  onBulkDeactivate = () => undefined,
 }: UnitCatalogProps) {
   const [statusTarget, setStatusTarget] = useState<UnitResponse | null>(null)
+  const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize)
+  const selectedUnits = items.filter((unit) => selectedIds.has(unit.id))
+  const allSelected = pagedItems.length > 0 && pagedItems.every((unit) => selectedIds.has(unit.id))
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b pb-4">
@@ -78,15 +89,26 @@ export function UnitCatalog({
             <p className="text-primary text-xs font-medium">Danh mục</p>
             <h1 className="text-xl font-semibold">Đơn vị tính</h1>
             <p className="text-muted-foreground text-sm">
-              Quản lý đơn vị cơ sở và độ chính xác số lượng trong phạm vi đơn vị thuê.
+              Quản lý tên, ký hiệu và trạng thái của đơn vị dùng cho hàng hóa.
             </p>
           </div>
         </div>
         {canManage ? (
-          <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" aria-hidden="true" />
-            Thêm đơn vị tính
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedUnits.length > 0 ? (
+              <Button
+                variant="outline"
+                disabled={isPending || selectedUnits.every((unit) => unit.status !== 'Active')}
+                onClick={() => setIsBulkStatusOpen(true)}
+              >
+                Ngừng sử dụng ({selectedUnits.length})
+              </Button>
+            ) : null}
+            <Button onClick={onCreate}>
+              <Plus data-icon="inline-start" aria-hidden="true" />
+              Thêm đơn vị tính
+            </Button>
+          </div>
         ) : null}
       </header>
 
@@ -107,21 +129,48 @@ export function UnitCatalog({
           <Table>
             <TableHeader className="bg-card sticky top-0 z-10">
               <TableRow>
-                <TableHead>Mã</TableHead>
+                <TableHead className="w-12">
+                  <Checkbox
+                    aria-label="Chọn tất cả đơn vị tính"
+                    checked={allSelected ? true : selectedIds.size > 0 ? 'indeterminate' : false}
+                    onCheckedChange={(checked) =>
+                      setSelectedIds((current) =>
+                        checked
+                          ? new Set([...current, ...pagedItems.map((unit) => unit.id)])
+                          : new Set(
+                              [...current].filter(
+                                (id) => !pagedItems.some((unit) => unit.id === id)
+                              )
+                            )
+                      )
+                    }
+                  />
+                </TableHead>
                 <TableHead>Tên đơn vị</TableHead>
                 <TableHead>Ký hiệu</TableHead>
-                <TableHead>Số chữ số thập phân</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 {canManage ? <TableHead className="text-right">Thao tác</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((unit) => (
+              {pagedItems.map((unit) => (
                 <TableRow key={unit.id}>
-                  <TableCell className="font-mono font-medium">{unit.unitCode}</TableCell>
+                  <TableCell>
+                    <Checkbox
+                      aria-label={`Chọn ${unit.unitName}`}
+                      checked={selectedIds.has(unit.id)}
+                      onCheckedChange={(checked) =>
+                        setSelectedIds((current) => {
+                          const next = new Set(current)
+                          if (checked) next.add(unit.id)
+                          else next.delete(unit.id)
+                          return next
+                        })
+                      }
+                    />
+                  </TableCell>
                   <TableCell>{unit.unitName}</TableCell>
                   <TableCell>{unit.symbol ?? '—'}</TableCell>
-                  <TableCell>{unit.quantityPrecision}</TableCell>
                   <TableCell>
                     <Badge variant={unit.status === 'Active' ? 'default' : 'outline'}>
                       {unit.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
@@ -160,6 +209,19 @@ export function UnitCatalog({
             </TableBody>
           </Table>
         )}
+        {items.length > 0 ? (
+          <OperationalPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={items.length}
+            isPending={isPending}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value)
+              setPage(1)
+            }}
+          />
+        ) : null}
       </section>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
@@ -167,7 +229,8 @@ export function UnitCatalog({
           <DialogHeader>
             <DialogTitle>{editingUnit ? 'Chỉnh sửa đơn vị tính' : 'Thêm đơn vị tính'}</DialogTitle>
             <DialogDescription>
-              Số chữ số thập phân quyết định độ chính xác cho số lượng theo đơn vị này.
+              Đơn vị quy đổi của từng hàng hóa được thiết lập trong form tạo hoặc chỉnh sửa hàng
+              hóa.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -198,14 +261,17 @@ export function UnitCatalog({
                 />
               </Field>
               <Field data-invalid={Boolean(form.formState.errors.quantityPrecision)}>
-                <FieldLabel htmlFor="quantityPrecision">Số chữ số thập phân</FieldLabel>
-                <Input
+                <FieldLabel htmlFor="quantityPrecision">Cách nhập số lượng</FieldLabel>
+                <select
                   id="quantityPrecision"
-                  type="number"
-                  min={0}
-                  max={6}
+                  className="border-input bg-background h-9 w-full border px-3 text-sm"
                   {...form.register('quantityPrecision', { valueAsNumber: true })}
-                />
+                >
+                  <option value={0}>Chỉ số nguyên — ví dụ 1, 2, 3</option>
+                  <option value={1}>Cho phép 1 số lẻ — ví dụ 1,5</option>
+                  <option value={2}>Cho phép 2 số lẻ — ví dụ 1,25</option>
+                  <option value={3}>Cho phép 3 số lẻ — ví dụ 1,125</option>
+                </select>
                 <FieldError
                   errors={
                     form.formState.errors.quantityPrecision
@@ -260,6 +326,18 @@ export function UnitCatalog({
           if (!statusTarget) return
           onChangeStatus(statusTarget)
           setStatusTarget(null)
+        }}
+      />
+      <StatusChangeDialog
+        open={isBulkStatusOpen}
+        subject={`${selectedUnits.length} đơn vị tính đã chọn`}
+        nextStatus="Inactive"
+        isPending={isPending}
+        onOpenChange={setIsBulkStatusOpen}
+        onConfirm={() => {
+          onBulkDeactivate(selectedUnits)
+          setIsBulkStatusOpen(false)
+          setSelectedIds(new Set())
         }}
       />
     </div>

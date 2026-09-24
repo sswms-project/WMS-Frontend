@@ -24,7 +24,14 @@ describe('master data schemas', () => {
   })
 
   it('requires category name and a positive conversion factor', () => {
-    expect(categorySchema.safeParse({ categoryName: '', description: '' }).success).toBe(false)
+    expect(
+      categorySchema.safeParse({
+        categoryCode: '',
+        categoryName: '',
+        parentCategoryId: null,
+        description: '',
+      }).success
+    ).toBe(false)
     expect(
       productUnitConversionSchema.safeParse({ unitId: 'unit-id', conversionFactor: 0 }).success
     ).toBe(false)

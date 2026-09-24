@@ -25,6 +25,8 @@ const policy: ProductWarehousePolicy = {
   warehouseId: 'warehouse-1',
   warehouseCode: 'WH-01',
   warehouseName: 'Kho trung tâm',
+  preferredSlotId: 'slot-1',
+  preferredSlotCode: 'A-01-01',
   minStockThreshold: 10,
   maxStockThreshold: 100,
   reorderPoint: 20,

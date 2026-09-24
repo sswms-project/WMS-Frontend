@@ -22,7 +22,12 @@ export default function CategoryCatalogPage() {
   const [editingCategory, setEditingCategory] = useState<CategoryResponse | null>(null)
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { categoryName: '', description: '' },
+    defaultValues: {
+      categoryCode: '',
+      categoryName: '',
+      parentCategoryId: null,
+      description: '',
+    },
   })
   const categoriesQuery = useCategoriesQuery()
   const meQuery = useMeQuery()
@@ -30,18 +35,23 @@ export default function CategoryCatalogPage() {
   const updateMutation = useUpdateCategoryMutation()
   const statusMutation = useChangeCategoryStatusMutation()
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const canCreate = permissions.has(P.PRODUCTS_CREATE)
-  const canUpdate = permissions.has(P.PRODUCTS_UPDATE)
+  const canCreate = permissions.has(P.CATEGORIES_MANAGE)
+  const canUpdate = permissions.has(P.CATEGORIES_MANAGE)
 
-  function openCreate() {
+  function openCreate(parentCategoryId: string | null = null) {
     setEditingCategory(null)
-    form.reset({ categoryName: '', description: '' })
+    form.reset({ categoryCode: '', categoryName: '', parentCategoryId, description: '' })
     setIsFormOpen(true)
   }
 
   function openEdit(category: CategoryResponse) {
     setEditingCategory(category)
-    form.reset({ categoryName: category.categoryName, description: category.description ?? '' })
+    form.reset({
+      categoryCode: category.categoryCode,
+      categoryName: category.categoryName,
+      parentCategoryId: category.parentCategoryId,
+      description: category.description ?? '',
+    })
     setIsFormOpen(true)
   }
 
@@ -71,6 +81,20 @@ export default function CategoryCatalogPage() {
     }
   }
 
+  async function bulkDeactivate(categories: readonly CategoryResponse[]) {
+    const activeCategories = categories.filter((category) => category.status === 'Active')
+    try {
+      await Promise.all(
+        activeCategories.map((category) =>
+          statusMutation.mutateAsync({ id: category.id, status: 'Inactive' })
+        )
+      )
+      toast.success(`Đã ngừng sử dụng ${activeCategories.length} nhóm vật tư hàng hóa.`)
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Một số nhóm chưa thể ngừng sử dụng.'))
+    }
+  }
+
   return (
     <CategoryCatalog
       items={categoriesQuery.data ?? []}
@@ -83,11 +107,12 @@ export default function CategoryCatalogPage() {
       isError={categoriesQuery.isError}
       isPending={createMutation.isPending || updateMutation.isPending || statusMutation.isPending}
       onRetry={() => void categoriesQuery.refetch()}
-      onCreate={openCreate}
+      onCreate={(parentCategoryId) => openCreate(parentCategoryId)}
       onEdit={openEdit}
       onFormOpenChange={setIsFormOpen}
       onSubmit={(values) => void save(values)}
       onChangeStatus={(category) => void changeStatus(category)}
+      onBulkDeactivate={(categories) => void bulkDeactivate(categories)}
     />
   )
 }

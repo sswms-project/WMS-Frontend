@@ -21,11 +21,11 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.warehouses, label: 'Kho hàng' },
   { prefix: APP_ROUTES.suppliers, label: 'Nhà cung cấp' },
   { prefix: APP_ROUTES.units, label: 'Đơn vị tính' },
-  { prefix: APP_ROUTES.categories, label: 'Danh mục sản phẩm' },
+  { prefix: APP_ROUTES.categories, label: 'Nhóm vật tư hàng hóa' },
   { prefix: APP_ROUTES.inboundRequests, label: 'Yêu cầu nhập kho' },
   { prefix: APP_ROUTES.inbound, label: 'Nhập kho' },
   { prefix: APP_ROUTES.inventory, label: 'Tồn kho' },
-  { prefix: APP_ROUTES.products, label: 'Sản phẩm' },
+  { prefix: APP_ROUTES.products, label: 'Danh mục vật tư hàng hóa' },
   { prefix: APP_ROUTES.stockIssueRequests, label: 'Yêu cầu xuất kho' },
   { prefix: APP_ROUTES.goodsReturnRequests, label: 'Yêu cầu trả hàng' },
 ]

@@ -4,8 +4,10 @@ import { createProductSchema, stockPolicySchema, updateProductSchema } from './p
 const baseProduct = {
   sku: 'SKU-001',
   productName: 'Bộ điều khiển',
+  description: null,
   unitId: 'unit-1',
   categoryId: 'category-1',
+  unitConversions: [],
 }
 
 describe('product schemas', () => {
@@ -37,6 +39,7 @@ describe('product schemas', () => {
     expect(
       updateProductSchema.safeParse({
         productName: baseProduct.productName,
+        description: null,
         unitId: baseProduct.unitId,
         categoryId: baseProduct.categoryId,
         isLotTracked: true,
@@ -48,6 +51,7 @@ describe('product schemas', () => {
   it('validates warehouse policy bounds', () => {
     const policy = {
       warehouseId: 'warehouse-1',
+      preferredSlotId: null,
       minStockThreshold: 10,
       maxStockThreshold: 5,
       reorderPoint: 8,

@@ -12,9 +12,14 @@ export interface UnitResponse {
 
 export interface CategoryResponse {
   id: string
+  parentCategoryId: string | null
+  categoryCode: string
   categoryName: string
   description: string | null
   status: ProductStatus
+  level: number
+  categoryPath: string
+  hasChildren: boolean
   createdAt: string
   modifiedAt: string | null
 }
@@ -31,7 +36,9 @@ export interface SaveUnitRequest {
 }
 
 export interface SaveCategoryRequest {
+  categoryCode: string
   categoryName: string
+  parentCategoryId: string | null
   description: string | null
 }
 
@@ -39,41 +46,59 @@ export interface ProductResponse {
   id: string
   sku: string
   productName: string
+  description: string | null
   unitId: string
   unitName: string
   categoryId: string | null
   categoryName: string | null
+  categoryCode: string | null
+  categoryPath: string | null
   status: ProductStatus
   barcodeValue: string | null
   isLotTracked: boolean
   shelfLifeDays: number | null
   canChangeBaseUnit: boolean
   canChangeTrackingMode: boolean
+  quantityOnHand: number
+  reservedQuantity: number
+  availableQuantity: number
   createdAt: string
 }
 
 export interface ProductListResponse {
-  items: ProductResponse[]
+  items: ProductListItem[]
   totalCount: number
 }
+
+export type ProductListItem = Omit<ProductResponse, 'canChangeBaseUnit' | 'canChangeTrackingMode'>
 
 export interface ProductListQuery {
   pageNumber?: number
   pageSize?: number
   searchTerm?: string
+  categoryId?: string
+  warehouseId?: string
+  status?: ProductStatus
+  isLotTracked?: boolean
 }
 
 export interface CreateProductRequest {
   sku: string
   productName: string
+  description: string | null
   unitId: string
   categoryId: string
   isLotTracked: boolean
   shelfLifeDays: number | null
 }
 
+export interface CreateProductWithConversionsRequest extends CreateProductRequest {
+  unitConversions: CreateProductUnitConversionRequest[]
+}
+
 export interface UpdateProductRequest {
   productName: string
+  description: string | null
   unitId: string
   categoryId: string
   isLotTracked: boolean
@@ -82,6 +107,7 @@ export interface UpdateProductRequest {
 
 export interface ConfigureStockPolicyRequest {
   warehouseId: string
+  preferredSlotId: string | null
   minStockThreshold: number
   maxStockThreshold: number | null
   reorderPoint: number | null
@@ -95,6 +121,8 @@ export interface ProductWarehousePolicy {
   warehouseId: string
   warehouseCode: string
   warehouseName: string
+  preferredSlotId: string | null
+  preferredSlotCode: string | null
   minStockThreshold: number
   maxStockThreshold: number | null
   reorderPoint: number | null
@@ -157,6 +185,7 @@ export interface ProductLot {
 export interface ImportProductItemRequest {
   sku: string
   productName: string
+  description?: string | null
   unitId: string
   categoryId: string
   isLotTracked?: boolean

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Plus, Search, Users } from 'lucide-react'
+import { Eye, Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -34,6 +34,7 @@ interface StockRecipientDirectoryProps {
   readonly isError: boolean
   readonly onSearchChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
   readonly onRetry: () => void
 }
@@ -50,6 +51,7 @@ export function StockRecipientDirectory({
   isError,
   onSearchChange,
   onPageChange,
+  onPageSizeChange,
   onCreate,
   onRetry,
 }: StockRecipientDirectoryProps) {
@@ -120,7 +122,14 @@ export function StockRecipientDirectory({
               {items.map((stockRecipient) => (
                 <TableRow key={stockRecipient.id}>
                   <TableCell className="font-mono">{stockRecipient.recipientCode}</TableCell>
-                  <TableCell>{stockRecipient.recipientName}</TableCell>
+                  <TableCell>
+                    <Link
+                      className="text-primary font-medium underline-offset-4 hover:underline focus-visible:underline"
+                      href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}
+                    >
+                      {stockRecipient.recipientName}
+                    </Link>
+                  </TableCell>
                   <TableCell>{stockRecipient.phone}</TableCell>
                   <TableCell>{stockRecipient.email ?? '—'}</TableCell>
                   <TableCell>
@@ -129,9 +138,10 @@ export function StockRecipientDirectory({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="ghost" size="sm">
+                    <Button asChild variant="ghost" size="icon-sm">
                       <Link href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}>
-                        Chi tiết
+                        <Eye aria-hidden="true" />
+                        <span className="sr-only">Xem chi tiết {stockRecipient.recipientName}</span>
                       </Link>
                     </Button>
                   </TableCell>
@@ -146,6 +156,7 @@ export function StockRecipientDirectory({
           totalCount={totalCount}
           isPending={isFetching}
           onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       </section>
     </div>

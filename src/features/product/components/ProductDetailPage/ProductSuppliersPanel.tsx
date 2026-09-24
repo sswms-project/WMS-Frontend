@@ -281,7 +281,7 @@ export function ProductSuppliersPanel({
                     }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={4} className="z-[70] max-h-64">
                   <SelectGroup>
                     {suppliers.map((supplier) => (
                       <SelectItem

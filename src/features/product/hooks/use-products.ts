@@ -8,7 +8,7 @@ import type {
   CategoryResponse,
   ConfigureStockPolicyRequest,
   CreateProductUnitConversionRequest,
-  CreateProductRequest,
+  CreateProductWithConversionsRequest,
   ImportProductsRequest,
   ProductListQuery,
   ProductListResponse,
@@ -118,7 +118,7 @@ export function useProductDetailQuery(id: string | null) {
 
 export function useCreateProductMutation() {
   const queryClient = useQueryClient()
-  return useMutation<string, ApiErrorResponse, CreateProductRequest>({
+  return useMutation<string, ApiErrorResponse, CreateProductWithConversionsRequest>({
     mutationFn: (request) => productService.createProduct(request).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all })

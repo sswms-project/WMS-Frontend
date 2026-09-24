@@ -93,6 +93,7 @@ export function ProductWarehousePoliciesPanel({
                 <TableHead className="text-right">Điểm đặt hàng lại</TableHead>
                 <TableHead className="text-right">An toàn</TableHead>
                 <TableHead className="text-right">Cung ứng</TableHead>
+                <TableHead>Vị trí ưu tiên</TableHead>
                 <TableHead>ABC</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 {canManage ? <TableHead className="text-right">Thao tác</TableHead> : null}
@@ -120,6 +121,7 @@ export function ProductWarehousePoliciesPanel({
                   <TableCell className="text-right tabular-nums">
                     {policy.leadTimeDays ? `${policy.leadTimeDays} ngày` : '—'}
                   </TableCell>
+                  <TableCell>{policy.preferredSlotCode ?? '—'}</TableCell>
                   <TableCell>{policy.abcClass ?? '—'}</TableCell>
                   <TableCell>
                     <Badge variant={policy.status === 'Active' ? 'default' : 'outline'}>

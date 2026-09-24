@@ -20,9 +20,14 @@ const unit: UnitResponse = {
 
 const category: CategoryResponse = {
   id: 'category-1',
+  parentCategoryId: null,
+  categoryCode: 'LK',
   categoryName: 'Linh kiện',
   description: null,
   status: 'Inactive',
+  level: 1,
+  categoryPath: 'Linh kiện',
+  hasChildren: false,
   createdAt: '2026-09-23T00:00:00Z',
   modifiedAt: null,
 }
@@ -65,7 +70,7 @@ function UnitHarness({ isLoading = false, isError = false, empty = false }: Cata
 
 function CategoryHarness({ isLoading = false, isError = false, empty = false }: CatalogState) {
   const form = useForm<CategoryFormValues>({
-    defaultValues: { categoryName: '', description: '' },
+    defaultValues: { categoryCode: '', categoryName: '', parentCategoryId: null, description: '' },
   })
   return (
     <CategoryCatalog
@@ -105,8 +110,8 @@ describe('master data catalogs', () => {
 
   it.each([
     ['loading', { isLoading: true }, 'Đang tải dữ liệu'],
-    ['error', { isError: true }, 'Không thể tải danh mục sản phẩm'],
-    ['empty', { empty: true }, 'Chưa có danh mục sản phẩm'],
+    ['error', { isError: true }, 'Không thể tải nhóm vật tư hàng hóa'],
+    ['empty', { empty: true }, 'Chưa có nhóm vật tư hàng hóa'],
     ['success', {}, 'Ngừng hoạt động'],
   ])('renders category %s state', (_, state, expectedText) => {
     render(<CategoryHarness {...state} />)

@@ -91,6 +91,18 @@ export default function UnitCatalogPage() {
     }
   }
 
+  async function bulkDeactivate(units: readonly UnitResponse[]) {
+    const activeUnits = units.filter((unit) => unit.status === 'Active')
+    try {
+      await Promise.all(
+        activeUnits.map((unit) => statusMutation.mutateAsync({ id: unit.id, status: 'Inactive' }))
+      )
+      toast.success(`Đã ngừng sử dụng ${activeUnits.length} đơn vị tính.`)
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Một số đơn vị tính chưa thể ngừng sử dụng.'))
+    }
+  }
+
   return (
     <UnitCatalog
       items={unitsQuery.data ?? []}
@@ -107,6 +119,7 @@ export default function UnitCatalogPage() {
       onFormOpenChange={setIsFormOpen}
       onSubmit={(values) => void save(values)}
       onChangeStatus={(unit) => void changeStatus(unit)}
+      onBulkDeactivate={(units) => void bulkDeactivate(units)}
     />
   )
 }

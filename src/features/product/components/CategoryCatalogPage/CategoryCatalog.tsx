@@ -5,6 +5,7 @@ import { FolderTree, Pencil, Plus, Power, RotateCcw } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
@@ -30,6 +32,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import type { CategoryFormValues } from '../../schemas/master-data.schema'
 import type { CategoryResponse } from '../../types/product.types'
 
@@ -44,11 +47,12 @@ interface CategoryCatalogProps {
   readonly isError: boolean
   readonly isPending: boolean
   readonly onRetry: () => void
-  readonly onCreate: () => void
+  readonly onCreate: (parentCategoryId: string | null) => void
   readonly onEdit: (category: CategoryResponse) => void
   readonly onFormOpenChange: (open: boolean) => void
   readonly onSubmit: (values: CategoryFormValues) => void
   readonly onChangeStatus: (category: CategoryResponse) => void
+  readonly onBulkDeactivate?: (categories: readonly CategoryResponse[]) => void
 }
 
 export function CategoryCatalog({
@@ -67,8 +71,16 @@ export function CategoryCatalog({
   onFormOpenChange,
   onSubmit,
   onChangeStatus,
+  onBulkDeactivate = () => undefined,
 }: CategoryCatalogProps) {
   const [statusTarget, setStatusTarget] = useState<CategoryResponse | null>(null)
+  const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize)
+  const selectedCategories = items.filter((category) => selectedIds.has(category.id))
+  const allSelected = pagedItems.length > 0 && pagedItems.every((item) => selectedIds.has(item.id))
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b pb-4">
@@ -78,47 +90,100 @@ export function CategoryCatalog({
           </span>
           <div>
             <p className="text-primary text-xs font-medium">Danh mục</p>
-            <h1 className="text-xl font-semibold">Danh mục sản phẩm</h1>
+            <h1 className="text-xl font-semibold">Nhóm vật tư hàng hóa</h1>
             <p className="text-muted-foreground text-sm">
               Phân nhóm sản phẩm để tìm kiếm, báo cáo và vận hành kho nhất quán.
             </p>
           </div>
         </div>
         {canCreate ? (
-          <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" aria-hidden="true" />
-            Thêm danh mục
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedCategories.length > 0 ? (
+              <Button
+                variant="outline"
+                disabled={isPending || selectedCategories.every((item) => item.status !== 'Active')}
+                onClick={() => setIsBulkStatusOpen(true)}
+              >
+                Ngừng sử dụng ({selectedCategories.length})
+              </Button>
+            ) : null}
+            <Button onClick={() => onCreate(null)}>
+              <Plus data-icon="inline-start" aria-hidden="true" />
+              Thêm nhóm
+            </Button>
+          </div>
         ) : null}
       </header>
 
       <section
         className="bg-card min-h-0 flex-1 overflow-auto border"
-        aria-label="Danh sách danh mục sản phẩm"
+        aria-label="Danh sách nhóm vật tư hàng hóa"
       >
         {isLoading ? (
           <OperationalLoadingState />
         ) : isError ? (
-          <OperationalErrorState title="Không thể tải danh mục sản phẩm" onRetry={onRetry} />
+          <OperationalErrorState title="Không thể tải nhóm vật tư hàng hóa" onRetry={onRetry} />
         ) : items.length === 0 ? (
           <OperationalEmptyState
-            title="Chưa có danh mục sản phẩm"
-            description="Thêm danh mục đầu tiên trước khi tạo sản phẩm."
+            title="Chưa có nhóm vật tư hàng hóa"
+            description="Thêm nhóm cấp cao đầu tiên trước khi tạo sản phẩm."
           />
         ) : (
           <Table>
             <TableHeader className="bg-card sticky top-0 z-10">
               <TableRow>
-                <TableHead>Tên danh mục</TableHead>
+                <TableHead className="w-12">
+                  <Checkbox
+                    aria-label="Chọn tất cả nhóm vật tư hàng hóa"
+                    checked={allSelected ? true : selectedIds.size > 0 ? 'indeterminate' : false}
+                    onCheckedChange={(checked) =>
+                      setSelectedIds((current) =>
+                        checked
+                          ? new Set([...current, ...pagedItems.map((item) => item.id)])
+                          : new Set(
+                              [...current].filter(
+                                (id) => !pagedItems.some((item) => item.id === id)
+                              )
+                            )
+                      )
+                    }
+                  />
+                </TableHead>
+                <TableHead>Tên nhóm</TableHead>
                 <TableHead>Mô tả</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 {canUpdate ? <TableHead className="text-right">Thao tác</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((category) => (
+              {pagedItems.map((category) => (
                 <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.categoryName}</TableCell>
+                  <TableCell>
+                    <Checkbox
+                      aria-label={`Chọn ${category.categoryName}`}
+                      checked={selectedIds.has(category.id)}
+                      onCheckedChange={(checked) =>
+                        setSelectedIds((current) => {
+                          const next = new Set(current)
+                          if (checked) next.add(category.id)
+                          else next.delete(category.id)
+                          return next
+                        })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div
+                      className="flex items-center gap-2"
+                      style={{ paddingLeft: `${(category.level - 1) * 20}px` }}
+                    >
+                      <span className="font-medium">{category.categoryName}</span>
+                      {category.level > 1 ? (
+                        <span className="text-muted-foreground text-xs">Cấp {category.level}</span>
+                      ) : null}
+                    </div>
+                    <p className="text-muted-foreground mt-1 text-xs">{category.categoryPath}</p>
+                  </TableCell>
                   <TableCell className="max-w-lg break-words">
                     {category.description ?? '—'}
                   </TableCell>
@@ -130,6 +195,12 @@ export function CategoryCatalog({
                   {canUpdate ? (
                     <TableCell>
                       <div className="flex justify-end gap-1">
+                        {category.status === 'Active' && category.level < 5 ? (
+                          <Button variant="ghost" size="sm" onClick={() => onCreate(category.id)}>
+                            <Plus data-icon="inline-start" aria-hidden="true" />
+                            Nhóm con
+                          </Button>
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -160,20 +231,44 @@ export function CategoryCatalog({
             </TableBody>
           </Table>
         )}
+        {items.length > 0 ? (
+          <OperationalPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={items.length}
+            isPending={isPending}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value)
+              setPage(1)
+            }}
+          />
+        ) : null}
       </section>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục'}</DialogTitle>
+            <DialogTitle>{editingCategory ? 'Chỉnh sửa nhóm' : 'Thêm nhóm'}</DialogTitle>
             <DialogDescription>
               Danh mục đang được sản phẩm sử dụng không thể ngừng hoạt động.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
+              <Field data-invalid={Boolean(form.formState.errors.categoryCode)}>
+                <FieldLabel htmlFor="categoryCode">Mã nhóm *</FieldLabel>
+                <Input id="categoryCode" autoComplete="off" {...form.register('categoryCode')} />
+                <FieldError
+                  errors={
+                    form.formState.errors.categoryCode
+                      ? [form.formState.errors.categoryCode]
+                      : undefined
+                  }
+                />
+              </Field>
               <Field data-invalid={Boolean(form.formState.errors.categoryName)}>
-                <FieldLabel htmlFor="categoryName">Tên danh mục</FieldLabel>
+                <FieldLabel htmlFor="categoryName">Tên nhóm *</FieldLabel>
                 <Input id="categoryName" autoComplete="off" {...form.register('categoryName')} />
                 <FieldError
                   errors={
@@ -182,6 +277,34 @@ export function CategoryCatalog({
                       : undefined
                   }
                 />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="parentCategoryId">Nhóm cha</FieldLabel>
+                <NativeSelect
+                  id="parentCategoryId"
+                  value={form.watch('parentCategoryId') ?? ''}
+                  onChange={(event) =>
+                    form.setValue('parentCategoryId', event.target.value || null, {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  <NativeSelectOption value="">Không có — nhóm cấp cao</NativeSelectOption>
+                  {items
+                    .filter((category) => {
+                      if (category.status !== 'Active' || category.level >= 5) return false
+                      if (!editingCategory) return true
+                      return (
+                        category.id !== editingCategory.id &&
+                        !category.categoryPath.startsWith(`${editingCategory.categoryPath} /`)
+                      )
+                    })
+                    .map((category) => (
+                      <NativeSelectOption key={category.id} value={category.id}>
+                        {category.categoryPath}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelect>
               </Field>
               <Field data-invalid={Boolean(form.formState.errors.description)}>
                 <FieldLabel htmlFor="categoryDescription">Mô tả</FieldLabel>
@@ -218,7 +341,7 @@ export function CategoryCatalog({
       </Dialog>
       <StatusChangeDialog
         open={Boolean(statusTarget)}
-        subject={`danh mục “${statusTarget?.categoryName ?? ''}”`}
+        subject={`nhóm “${statusTarget?.categoryName ?? ''}”`}
         nextStatus={statusTarget?.status === 'Active' ? 'Inactive' : 'Active'}
         isPending={isPending}
         onOpenChange={(open) => !open && setStatusTarget(null)}
@@ -226,6 +349,18 @@ export function CategoryCatalog({
           if (!statusTarget) return
           onChangeStatus(statusTarget)
           setStatusTarget(null)
+        }}
+      />
+      <StatusChangeDialog
+        open={isBulkStatusOpen}
+        subject={`${selectedCategories.length} nhóm vật tư hàng hóa đã chọn`}
+        nextStatus="Inactive"
+        isPending={isPending}
+        onOpenChange={setIsBulkStatusOpen}
+        onConfirm={() => {
+          onBulkDeactivate(selectedCategories)
+          setIsBulkStatusOpen(false)
+          setSelectedIds(new Set())
         }}
       />
     </div>

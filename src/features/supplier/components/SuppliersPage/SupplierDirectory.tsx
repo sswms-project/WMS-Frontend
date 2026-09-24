@@ -64,6 +64,7 @@ interface SupplierDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: SupplierStatus | '') => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
   readonly onEdit: (supplier: Supplier) => void
   readonly onDeactivate: (supplier: Supplier) => void
@@ -88,6 +89,7 @@ export function SupplierDirectory({
   onSearchChange,
   onStatusChange,
   onPageChange,
+  onPageSizeChange,
   onCreate,
   onEdit,
   onDeactivate,
@@ -193,6 +195,7 @@ export function SupplierDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}

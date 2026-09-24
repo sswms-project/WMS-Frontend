@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import {
@@ -21,9 +21,13 @@ import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
+import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import {
+  useWarehouseLocationsQuery,
+  useWarehousesQuery,
+} from '@/features/warehouse/hooks/use-warehouse'
 import { useSuppliersQuery } from '@/features/supplier/hooks/use-suppliers'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -63,7 +67,12 @@ import {
   productUnitConversionSchema,
   type ProductUnitConversionFormValues,
 } from '../schemas/master-data.schema'
-import type { StockPolicyFormValues, UpdateProductFormValues } from '../schemas/product.schema'
+import {
+  stockPolicySchema,
+  updateProductSchema,
+  type StockPolicyFormValues,
+  type UpdateProductFormValues,
+} from '../schemas/product.schema'
 import type { ProductLot, ProductLotStatus, ProductUnitConversion } from '../types/product.types'
 
 interface ProductDetailPageProps {
@@ -74,10 +83,12 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(() => searchParams.get('edit') === '1')
   const [isStockPolicyOpen, setIsStockPolicyOpen] = useState(false)
+  const [policyWarehouseId, setPolicyWarehouseId] = useState('')
   const [isConversionOpen, setIsConversionOpen] = useState(false)
   const [isProductStatusOpen, setIsProductStatusOpen] = useState(false)
+  const [discardTarget, setDiscardTarget] = useState<'product' | 'policy' | null>(null)
   const [editingConversion, setEditingConversion] = useState<ProductUnitConversion | null>(null)
   const [lotWarehouseId, setLotWarehouseId] = useState('')
   const [lotStatus, setLotStatus] = useState<ProductLotStatus | ''>('')
@@ -97,6 +108,13 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const updateConversionMutation = useUpdateProductUnitConversionMutation(productId)
   const conversionStatusMutation = useChangeProductUnitConversionStatusMutation(productId)
   const warehousesQuery = useWarehousesQuery({ top: 100, skip: 0, needTotalCount: true })
+  const policyLocationsQuery = useWarehouseLocationsQuery(policyWarehouseId, {
+    top: 1000,
+    skip: 0,
+    needTotalCount: true,
+    type: 'Slot',
+    lifecycleStatus: 'Active',
+  })
   const suppliersQuery = useSuppliersQuery({ pageNumber: 1, pageSize: 100, status: 'Active' })
   const productSuppliersQuery = useProductSuppliersQuery(productId)
   const addSupplierMutation = useAddProductSupplierMutation(productId)
@@ -119,6 +137,29 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     resolver: zodResolver(productUnitConversionSchema),
     defaultValues: { unitId: '', conversionFactor: 1 },
   })
+  const updateProductForm = useForm<UpdateProductFormValues>({
+    resolver: zodResolver(updateProductSchema),
+    defaultValues: {
+      productName: '',
+      description: null,
+      unitId: '',
+      categoryId: '',
+      isLotTracked: false,
+      shelfLifeDays: null,
+    },
+  })
+  const stockPolicyForm = useForm<StockPolicyFormValues>({
+    resolver: zodResolver(stockPolicySchema),
+    defaultValues: {
+      warehouseId: '',
+      preferredSlotId: null,
+      minStockThreshold: 0,
+      maxStockThreshold: null,
+      reorderPoint: null,
+      safetyStock: 0,
+      leadTimeDays: null,
+    },
+  })
 
   const product = detailQuery.data
   const permissions = new Set(meQuery.data?.permissions ?? [])
@@ -126,6 +167,19 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const canConfigureStockPolicy = permissions.has(P.PRODUCTS_CONFIGURE_POLICY)
   const canGenerateBarcode = permissions.has(P.PRODUCTS_GENERATE_BARCODE)
   const canManageConversions = permissions.has(P.UNITS_MANAGE)
+  const canManageCategories = permissions.has(P.CATEGORIES_MANAGE)
+
+  useEffect(() => {
+    if (searchParams.get('edit') !== '1' || !product || !canUpdate || !isEditOpen) return
+    updateProductForm.reset({
+      productName: product.productName,
+      description: product.description,
+      unitId: product.unitId,
+      categoryId: product.categoryId ?? '',
+      isLotTracked: product.isLotTracked,
+      shelfLifeDays: product.shelfLifeDays,
+    })
+  }, [canUpdate, isEditOpen, product, searchParams, updateProductForm])
 
   async function handleProductStatus() {
     if (!product) return
@@ -188,6 +242,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     try {
       await updateMutation.mutateAsync(values)
       toast.success('Đã cập nhật sản phẩm.')
+      updateProductForm.reset(values)
       setIsEditOpen(false)
     } catch (error) {
       logger.error(formatApiError(error))
@@ -200,6 +255,27 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
         await detailQuery.refetch()
       }
     }
+  }
+
+  function openProductEditor() {
+    if (!product) return
+    updateProductForm.reset({
+      productName: product.productName,
+      description: product.description,
+      unitId: product.unitId,
+      categoryId: product.categoryId ?? '',
+      isLotTracked: product.isLotTracked,
+      shelfLifeDays: product.shelfLifeDays,
+    })
+    setIsEditOpen(true)
+  }
+
+  function changeProductEditorOpen(open: boolean) {
+    if (!open && updateProductForm.formState.isDirty) {
+      setDiscardTarget('product')
+      return
+    }
+    setIsEditOpen(open)
   }
 
   async function handleLotStatusUpdate(lot: ProductLot, status: 'Active' | 'Blocked') {
@@ -216,11 +292,37 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     try {
       await stockPolicyMutation.mutateAsync(values)
       toast.success('Đã cập nhật chính sách tồn kho.')
+      stockPolicyForm.reset(values)
       setIsStockPolicyOpen(false)
     } catch (error) {
       logger.error(formatApiError(error))
       toast.error(getApiErrorMessage(error, 'Không thể cập nhật chính sách tồn kho.'))
     }
+  }
+
+  function openStockPolicyEditor() {
+    const warehouseId =
+      policiesQuery.data?.[0]?.warehouseId ?? warehousesQuery.data?.items[0]?.id ?? ''
+    const policy = policiesQuery.data?.find((item) => item.warehouseId === warehouseId)
+    setPolicyWarehouseId(warehouseId)
+    stockPolicyForm.reset({
+      warehouseId,
+      preferredSlotId: policy?.preferredSlotId ?? null,
+      minStockThreshold: policy?.minStockThreshold ?? 0,
+      maxStockThreshold: policy?.maxStockThreshold ?? null,
+      reorderPoint: policy?.reorderPoint ?? null,
+      safetyStock: policy?.safetyStock ?? 0,
+      leadTimeDays: policy?.leadTimeDays ?? null,
+    })
+    setIsStockPolicyOpen(true)
+  }
+
+  function changeStockPolicyOpen(open: boolean) {
+    if (!open && stockPolicyForm.formState.isDirty) {
+      setDiscardTarget('policy')
+      return
+    }
+    setIsStockPolicyOpen(open)
   }
 
   async function handlePolicyStatus(policyId: string, currentStatus: 'Active' | 'Inactive') {
@@ -289,7 +391,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
 
   if (detailQuery.isLoading) {
     return (
-      <div className="mx-auto w-full max-w-[1200px] space-y-4">
+      <div className="mx-auto w-full max-w-[1440px] space-y-4">
         <Skeleton className="h-8 w-32" />
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <Skeleton className="h-64 rounded-lg" />
@@ -338,7 +440,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-5">
+    <div className="mx-auto w-full max-w-[1440px] space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -374,7 +476,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
               type="button"
               size="sm"
               disabled={product.status !== 'Active'}
-              onClick={() => setIsEditOpen(true)}
+              onClick={openProductEditor}
             >
               <Pencil data-icon="inline-start" aria-hidden="true" />
               Chỉnh sửa
@@ -435,15 +537,15 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    Mã SKU
+                    Mã hàng hóa
                   </p>
                   <p className="mt-1 font-mono text-sm">{product.sku}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    Danh mục
+                    Nhóm vật tư hàng hóa
                   </p>
-                  <p className="mt-1 text-sm">{product.categoryName ?? '—'}</p>
+                  <p className="mt-1 text-sm">{product.categoryPath ?? '—'}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -467,6 +569,26 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
                     <p className="mt-1 text-sm">{product.shelfLifeDays ?? 'Không cấu hình'}</p>
                   </div>
                 ) : null}
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    Mô tả
+                  </p>
+                  <p className="mt-1 text-sm whitespace-pre-wrap">{product.description ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    Tồn thực tế
+                  </p>
+                  <p className="mt-1 text-sm font-medium tabular-nums">{product.quantityOnHand}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    Đang giữ / Khả dụng
+                  </p>
+                  <p className="mt-1 text-sm tabular-nums">
+                    {product.reservedQuantity} / {product.availableQuantity}
+                  </p>
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -478,7 +600,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
               isError={policiesQuery.isError}
               canManage={canConfigureStockPolicy}
               onRetry={() => void policiesQuery.refetch()}
-              onConfigure={() => setIsStockPolicyOpen(true)}
+              onConfigure={openStockPolicyEditor}
               isChangingStatus={policyStatusMutation.isPending}
               onChangeStatus={(policy) => void handlePolicyStatus(policy.id, policy.status)}
             />
@@ -576,6 +698,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
 
       {canUpdate && isEditOpen && (
         <UpdateProductDialog
+          form={updateProductForm}
           units={unitsQuery.data ?? []}
           categories={categoriesQuery.data ?? []}
           areOptionsLoading={unitsQuery.isLoading || categoriesQuery.isLoading}
@@ -585,23 +708,37 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
             void categoriesQuery.refetch()
           }}
           canManageUnits={canManageConversions}
+          canManageCategories={canManageCategories}
           open={isEditOpen}
           product={product}
           isPending={updateMutation.isPending}
-          onOpenChange={setIsEditOpen}
+          onOpenChange={changeProductEditorOpen}
           onSubmit={(values) => void handleUpdate(values)}
         />
       )}
+      <UnsavedChangesDialog
+        open={discardTarget !== null}
+        onOpenChange={(open) => !open && setDiscardTarget(null)}
+        onDiscard={() => {
+          if (discardTarget === 'product') setIsEditOpen(false)
+          if (discardTarget === 'policy') setIsStockPolicyOpen(false)
+          setDiscardTarget(null)
+        }}
+      />
 
       {canConfigureStockPolicy && isStockPolicyOpen && (
         <ProductStockPolicyDialog
+          form={stockPolicyForm}
           open={isStockPolicyOpen}
           warehouses={(warehousesQuery.data?.items ?? []).filter(
             (warehouse) => warehouse.status === 'Active'
           )}
           policies={policiesQuery.data ?? []}
+          locations={policyLocationsQuery.data?.items ?? []}
+          areLocationsLoading={policyLocationsQuery.isFetching}
           isPending={stockPolicyMutation.isPending}
-          onOpenChange={setIsStockPolicyOpen}
+          onWarehouseChange={setPolicyWarehouseId}
+          onOpenChange={changeStockPolicyOpen}
           onSubmit={(values) => void handleStockPolicy(values)}
         />
       )}

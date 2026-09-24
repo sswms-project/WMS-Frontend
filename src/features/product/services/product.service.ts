@@ -5,7 +5,7 @@ import type {
   CategoryResponse,
   ConfigureStockPolicyRequest,
   CreateProductUnitConversionRequest,
-  CreateProductRequest,
+  CreateProductWithConversionsRequest,
   ImportProductsRequest,
   ProductListQuery,
   ProductListResponse,
@@ -77,7 +77,7 @@ export const productService = {
       .get<ApiResponse<ProductResponse>>(API_ENDPOINTS.products.detail(id))
       .then((r) => r.data),
 
-  createProduct: (request: CreateProductRequest) =>
+  createProduct: (request: CreateProductWithConversionsRequest) =>
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.products.create, request)
       .then((r) => r.data),
