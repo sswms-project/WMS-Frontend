@@ -1,44 +1,38 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Boxes, ChevronDown, RefreshCw } from 'lucide-react'
-import { toast } from 'sonner'
+import { ChevronDown, RefreshCw } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
-  Sidebar,
-  SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarMenuSkeleton,
-  SidebarSeparator,
-  useSidebar,
 } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { USER_ROLES } from '@/config/roles'
-import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/stores/auth.store'
-import {
-  getVisibleNavSections,
-  isNavItemActive,
-  isNavSectionActive,
-  type NavItem,
-  type NavSection,
-} from './nav-config'
+import { isNavItemActive, isNavSectionActive, type NavItem, type NavSection } from '../nav-config'
 
-type SidebarAppearance = 'default' | 'tenant'
+export type SidebarAppearance = 'default' | 'tenant'
+
+interface SidebarNavigationProps {
+  readonly pathname: string
+  readonly sections: readonly NavSection[]
+  readonly isPending: boolean
+  readonly isError: boolean
+  readonly hasPermissionData: boolean
+  readonly onRetry: () => void
+  readonly onNavigate: () => void
+  readonly appearance: SidebarAppearance
+}
 
 interface SidebarNavigationItemProps {
   readonly item: NavItem
@@ -57,10 +51,6 @@ interface SidebarNavigationSectionProps {
 
 interface PlannedNavigationTooltipProps {
   readonly children: ReactNode
-}
-
-interface SidebarNavigationErrorStateProps {
-  readonly onRetry: () => void
 }
 
 const NAVIGATION_SKELETON_ITEMS = [
@@ -86,11 +76,11 @@ function PlannedNavigationTooltip({ children }: PlannedNavigationTooltipProps) {
 
 function SidebarNavigationLoadingState() {
   return (
-    <SidebarGroup className="px-3 py-2">
+    <SidebarGroup className="px-2 py-2">
       <p role="status" className="sr-only">
         Đang tải điều hướng…
       </p>
-      <SidebarMenu className="gap-1">
+      <SidebarMenu className="gap-1.5">
         {NAVIGATION_SKELETON_ITEMS.map((item) => (
           <SidebarMenuItem key={item}>
             <SidebarMenuSkeleton showIcon />
@@ -101,10 +91,13 @@ function SidebarNavigationLoadingState() {
   )
 }
 
-function SidebarNavigationErrorState({ onRetry }: SidebarNavigationErrorStateProps) {
+function SidebarNavigationErrorState({ onRetry }: Pick<SidebarNavigationProps, 'onRetry'>) {
   return (
-    <SidebarGroup className="px-3 py-2">
-      <div role="alert" className="text-sidebar-foreground flex flex-col gap-2 px-2 text-xs">
+    <SidebarGroup className="px-2 py-2">
+      <div
+        role="alert"
+        className="text-sidebar-foreground border-sidebar-border bg-sidebar-accent/30 flex flex-col gap-2 rounded-lg border px-3 py-3 text-xs"
+      >
         <p>Không thể tải quyền điều hướng.</p>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -130,30 +123,26 @@ function SidebarNavigationItem({
 
   if (!item.href || item.status === 'planned') {
     const unavailableLabel = `${item.label} - Chức năng đang phát triển`
+    const button = (
+      <button type="button" disabled aria-label={unavailableLabel} className="opacity-45">
+        <Icon aria-hidden="true" />
+        <span>{item.label}</span>
+      </button>
+    )
 
-    if (isNested) {
-      return (
-        <SidebarMenuSubItem>
-          <PlannedNavigationTooltip>
-            <SidebarMenuSubButton asChild className="min-h-10 touch-manipulation md:min-h-8">
-              <button type="button" disabled aria-label={unavailableLabel} className="opacity-45">
-                <Icon aria-hidden="true" />
-                <span>{item.label}</span>
-              </button>
-            </SidebarMenuSubButton>
-          </PlannedNavigationTooltip>
-        </SidebarMenuSubItem>
-      )
-    }
-
-    return (
+    return isNested ? (
+      <SidebarMenuSubItem>
+        <PlannedNavigationTooltip>
+          <SidebarMenuSubButton asChild className="min-h-10 touch-manipulation text-sm md:min-h-8">
+            {button}
+          </SidebarMenuSubButton>
+        </PlannedNavigationTooltip>
+      </SidebarMenuSubItem>
+    ) : (
       <SidebarMenuItem>
         <PlannedNavigationTooltip>
-          <SidebarMenuButton asChild className="h-10 touch-manipulation">
-            <button type="button" disabled aria-label={unavailableLabel} className="opacity-45">
-              <Icon aria-hidden="true" />
-              <span>{item.label}</span>
-            </button>
+          <SidebarMenuButton asChild className="h-10 touch-manipulation text-sm">
+            {button}
           </SidebarMenuButton>
         </PlannedNavigationTooltip>
       </SidebarMenuItem>
@@ -166,7 +155,7 @@ function SidebarNavigationItem({
         <SidebarMenuSubButton
           asChild
           isActive={isActive}
-          className="min-h-10 touch-manipulation gap-2.5 rounded-md px-2 text-xs data-[active=true]:font-semibold md:min-h-8"
+          className="hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground min-h-10 touch-manipulation gap-2.5 rounded-md px-2 text-sm data-[active=true]:font-semibold md:min-h-8"
         >
           <Link
             href={item.href as Route}
@@ -188,10 +177,10 @@ function SidebarNavigationItem({
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          'h-10 min-w-0 touch-manipulation gap-3 rounded-md px-3 text-sm font-medium',
+          'hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground h-10 min-w-0 touch-manipulation gap-3 rounded-md px-3 text-sm font-medium',
           appearance === 'tenant'
             ? 'data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground'
-            : 'data-[active=true]:shadow-[inset_3px_0_0_var(--color-sidebar-primary)] [&_svg]:size-[18px]'
+            : 'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground'
         )}
       >
         <Link
@@ -224,26 +213,25 @@ function CollapsibleNavigationSection({
       defaultOpen={isActive}
       className="group/collapsible"
     >
-      <SidebarGroup className="px-3 py-1.5">
+      <SidebarGroup className="px-2 py-1">
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton
                   isActive={isActive}
-                  className="data-[active=true]:text-sidebar-primary h-10 touch-manipulation gap-3 rounded-md px-3 text-sm font-semibold data-[active=true]:bg-transparent"
+                  className="text-sidebar-foreground/90 hover:text-sidebar-foreground/90 data-[active=true]:text-sidebar-foreground/90 h-11 touch-manipulation gap-3 rounded-lg border border-transparent px-3 text-sm font-semibold hover:bg-transparent data-[active=true]:bg-transparent"
                 >
                   <Icon aria-hidden="true" />
                   <span>{section.label}</span>
                   <ChevronDown
-                    className="ml-auto transition-transform duration-150 group-data-[state=open]/collapsible:rotate-180 motion-reduce:transition-none"
+                    className="text-sidebar-foreground/50 ml-auto size-4 transition-transform duration-150 group-data-[state=open]/collapsible:rotate-180 motion-reduce:transition-none"
                     aria-hidden="true"
                   />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
-
               <CollapsibleContent className="data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-1 animation-duration-200 motion-reduce:data-[state=closed]:animate-none motion-reduce:data-[state=open]:animate-none">
-                <SidebarMenuSub className="border-sidebar-border/80 mx-4 gap-0.5 px-2.5 py-1">
+                <SidebarMenuSub className="border-sidebar-border/80 mx-3 gap-0.5 px-3 py-1.5">
                   {section.items.map((item) => (
                     <SidebarNavigationItem
                       key={item.href ?? `${section.id}-${item.label}`}
@@ -271,14 +259,14 @@ function StandardNavigationSection({
   appearance,
 }: SidebarNavigationSectionProps) {
   return (
-    <SidebarGroup className="px-3 py-1.5">
+    <SidebarGroup className="px-2 py-1">
       {section.label ? (
-        <SidebarGroupLabel className="h-8 px-2 text-[11px] font-semibold uppercase">
+        <SidebarGroupLabel className="text-sidebar-foreground/45 h-7 px-3 text-[10px] font-semibold tracking-[0.12em] uppercase">
           {section.label}
         </SidebarGroupLabel>
       ) : null}
       <SidebarGroupContent className="min-w-0">
-        <SidebarMenu className="gap-1">
+        <SidebarMenu className="gap-1.5">
           {section.items.map((item) => (
             <SidebarNavigationItem
               key={item.href ?? `${section.id}-${item.label}`}
@@ -295,88 +283,39 @@ function StandardNavigationSection({
 }
 
 function SidebarNavigationSection(props: SidebarNavigationSectionProps) {
-  if (props.section.collapsible) {
-    return <CollapsibleNavigationSection {...props} />
-  }
-
-  return <StandardNavigationSection {...props} />
+  return props.section.collapsible ? (
+    <CollapsibleNavigationSection {...props} />
+  ) : (
+    <StandardNavigationSection {...props} />
+  )
 }
 
-export function AppSidebar() {
-  const user = useAuthStore((state) => state.user)
-  const meQuery = useMeQuery()
-  const pathname = usePathname()
-  const { isMobile, setOpenMobile } = useSidebar()
-  const permissions = new Set(meQuery.data?.permissions ?? [])
-  const hasPermissionData = meQuery.data !== undefined
-  const sections =
-    user?.role && hasPermissionData ? getVisibleNavSections(user.role, permissions) : []
-  const appearance: SidebarAppearance = user?.role === USER_ROLES.TenantOwner ? 'tenant' : 'default'
-  const closeMobileSidebar = () => {
-    if (isMobile) setOpenMobile(false)
-  }
-
-  useEffect(() => {
-    if (!meQuery.isError) return
-
-    logger.error(meQuery.error)
-    toast.error('Không thể tải quyền điều hướng. Vui lòng thử lại.')
-  }, [meQuery.error, meQuery.isError])
-
+export function SidebarNavigation({
+  pathname,
+  sections,
+  isPending,
+  isError,
+  hasPermissionData,
+  onRetry,
+  onNavigate,
+  appearance,
+}: SidebarNavigationProps) {
   return (
-    <Sidebar collapsible="offcanvas" className="border-sidebar-border min-w-0 overflow-hidden">
-      <SidebarHeader className="border-sidebar-border min-w-0 shrink-0 overflow-hidden border-b px-4 py-4">
-        <div className="flex min-h-10 min-w-0 items-center gap-3">
-          <span
-            className={cn(
-              'bg-sidebar-accent flex shrink-0 items-center justify-center rounded-md',
-              appearance === 'tenant' ? 'border-sidebar-primary/40 size-10 border' : 'size-9'
-            )}
-          >
-            <Boxes className="text-sidebar-accent-foreground size-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p
-              className={cn(
-                'text-sidebar-foreground truncate font-bold',
-                appearance === 'tenant'
-                  ? 'font-logo text-xl leading-6 tracking-wide'
-                  : 'text-sm leading-5'
-              )}
-              translate="no"
-            >
-              KOVIA
-            </p>
-            <p className="text-sidebar-foreground/65 truncate text-xs leading-4">
-              Hệ thống vận hành kho
-            </p>
-          </div>
-        </div>
-      </SidebarHeader>
-
-      <SidebarContent className="min-w-0 overscroll-contain py-2">
-        <nav aria-label="Điều hướng chính" className="min-w-0">
-          {meQuery.isPending && !hasPermissionData ? <SidebarNavigationLoadingState /> : null}
-          {meQuery.isError && !hasPermissionData ? (
-            <SidebarNavigationErrorState onRetry={() => void meQuery.refetch()} />
-          ) : null}
-          {hasPermissionData
-            ? sections.map((section, sectionIndex) => (
-                <div key={section.id} className="min-w-0">
-                  {(section.separatorBefore ?? sectionIndex > 0) ? (
-                    <SidebarSeparator className="mx-3" />
-                  ) : null}
-                  <SidebarNavigationSection
-                    pathname={pathname}
-                    section={section}
-                    onNavigate={closeMobileSidebar}
-                    appearance={appearance}
-                  />
-                </div>
-              ))
-            : null}
-        </nav>
-      </SidebarContent>
-    </Sidebar>
+    <nav aria-label="Điều hướng chính" className="min-w-0">
+      {isPending && !hasPermissionData ? <SidebarNavigationLoadingState /> : null}
+      {isError && !hasPermissionData ? <SidebarNavigationErrorState onRetry={onRetry} /> : null}
+      {hasPermissionData
+        ? sections.map((section) => (
+            <div key={section.id} className="min-w-0">
+              <SidebarNavigationSection
+                pathname={pathname}
+                section={section}
+                onNavigate={onNavigate}
+                appearance={appearance}
+              />
+            </div>
+          ))
+        : null}
+    </nav>
   )
 }

@@ -110,7 +110,6 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       collapsible: true,
       items: [
         requiredNavItem(APP_ROUTES.organization, 'Tổ chức', Building2, P.ORGANIZATION_VIEW),
-        requiredNavItem(APP_ROUTES.staff, 'Nhân sự', Users, P.STAFF_VIEW),
         requiredNavItem(
           APP_ROUTES.settings.accessControl,
           'Phân quyền',
@@ -120,9 +119,24 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       ],
     },
     {
-      id: 'warehouses',
+      id: 'warehouse-management',
+      label: 'Quản Lý Kho',
+      icon: Warehouse,
+      collapsible: true,
       separatorBefore: true,
       items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
+    },
+    {
+      id: 'subjects',
+      label: 'Đối tượng',
+      icon: Users,
+      collapsible: true,
+      separatorBefore: true,
+      items: [
+        requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
+        requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
+        requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW),
+      ],
     },
     {
       id: 'catalog',
@@ -130,20 +144,11 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       icon: Tags,
       collapsible: true,
       separatorBefore: true,
-      items: [
-        requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW),
-        requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
-        requiredNavItem(
-          APP_ROUTES.stockRecipients,
-          'Đơn vị nhận hàng',
-          Users,
-          P.STOCK_RECIPIENTS_VIEW
-        ),
-      ],
+      items: [requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW)],
     },
     {
       id: 'warehouse-operations',
-      label: 'Vận hành kho',
+      label: 'Hoạt Động Kho',
       icon: PackageOpen,
       collapsible: true,
       separatorBefore: true,
@@ -221,15 +226,39 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.manager,
         ]),
-        requiredNavItem(APP_ROUTES.staff, 'Nhân sự', Users, P.STAFF_VIEW),
-        requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW),
+      ],
+    },
+    {
+      id: 'subjects',
+      label: 'Đối tượng',
+      icon: Users,
+      collapsible: true,
+      items: [
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
-        requiredNavItem(
-          APP_ROUTES.stockRecipients,
-          'Đơn vị nhận hàng',
-          Users,
-          P.STOCK_RECIPIENTS_VIEW
-        ),
+        requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
+        requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW),
+      ],
+    },
+    {
+      id: 'catalog',
+      label: 'Danh mục',
+      icon: Tags,
+      collapsible: true,
+      items: [requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW)],
+    },
+    {
+      id: 'warehouse-management',
+      label: 'Quản Lý Kho',
+      icon: Warehouse,
+      collapsible: true,
+      items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
+    },
+    {
+      id: 'warehouse-operations',
+      label: 'Hoạt Động Kho',
+      icon: PackageOpen,
+      collapsible: true,
+      items: [
         requiredNavItem(
           APP_ROUTES.inboundRequests,
           'Yêu cầu nhập kho',
@@ -246,7 +275,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           P.STOCK_ISSUE_REQUESTS_VIEW,
           [APP_ROUTES.goodsReturnRequests]
         ),
-        requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW),
+      ],
+    },
+    {
+      id: 'system',
+      label: 'Hệ thống',
+      icon: Settings,
+      collapsible: true,
+      items: [
         requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
         requiredNavItem(APP_ROUTES.auditLogs, 'Audit Log', ScrollText, P.AUDIT_LOGS_VIEW),
       ],
@@ -259,14 +295,38 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.staff,
         ]),
-        requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW),
+      ],
+    },
+    {
+      id: 'catalog',
+      label: 'Danh mục',
+      icon: Tags,
+      collapsible: true,
+      items: [requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW)],
+    },
+    {
+      id: 'subjects',
+      label: 'Đối tượng',
+      icon: Users,
+      collapsible: true,
+      items: [
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
-        requiredNavItem(
-          APP_ROUTES.stockRecipients,
-          'Đơn vị nhận hàng',
-          Users,
-          P.STOCK_RECIPIENTS_VIEW
-        ),
+        requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
+      ],
+    },
+    {
+      id: 'warehouse-management',
+      label: 'Quản Lý Kho',
+      icon: Warehouse,
+      collapsible: true,
+      items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
+    },
+    {
+      id: 'warehouse-operations',
+      label: 'Hoạt Động Kho',
+      icon: PackageOpen,
+      collapsible: true,
+      items: [
         requiredNavItem(
           APP_ROUTES.inboundRequests,
           'Yêu cầu nhập kho',
@@ -283,9 +343,14 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           P.STOCK_ISSUE_REQUESTS_VIEW,
           [APP_ROUTES.goodsReturnRequests]
         ),
-        requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW),
-        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
       ],
+    },
+    {
+      id: 'system',
+      label: 'Hệ thống',
+      icon: Settings,
+      collapsible: true,
+      items: [requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW)],
     },
   ],
 }

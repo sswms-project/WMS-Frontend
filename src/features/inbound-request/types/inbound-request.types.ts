@@ -134,3 +134,13 @@ export interface LookupListResponse<T> {
   pageNumber: number
   pageSize: number
 }
+
+export interface LookupOption {
+  value: string
+  label: string
+}
+
+export interface ProductSearchState {
+  readonly scope: string
+  readonly value: string
+}

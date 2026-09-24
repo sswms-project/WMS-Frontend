@@ -11,11 +11,9 @@ import {
   ComboboxList,
 } from '@/components/ui/combobox'
 import { Spinner } from '@/components/ui/spinner'
+import type { LookupOption } from '../../types/inbound-request.types'
 
-export interface LookupOption {
-  value: string
-  label: string
-}
+export type { LookupOption }
 
 interface LookupComboboxProps {
   readonly id?: string
