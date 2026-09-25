@@ -96,9 +96,6 @@ export function UnitCatalog({
           <div>
             <p className="text-primary text-xs font-medium">Danh mục</p>
             <h1 className="text-xl font-semibold">Đơn vị tính</h1>
-            <p className="text-muted-foreground text-sm">
-              Quản lý tên, ký hiệu và trạng thái của đơn vị dùng cho hàng hóa.
-            </p>
           </div>
         </div>
         {canManage ? (

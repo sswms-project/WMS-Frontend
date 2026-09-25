@@ -22,10 +22,7 @@ export default function GoodsReceiptsPage() {
   })
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader
-        title="Phiếu nhận hàng"
-        description="Theo dõi bản nháp, phiếu chờ duyệt và lịch sử nhập kho."
-      />
+      <InboundPageHeader title="Phiếu nhận hàng" />
       <ReceiptDirectory
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}

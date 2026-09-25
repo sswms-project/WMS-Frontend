@@ -85,9 +85,6 @@ export function InboundRequestDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Nhập kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Yêu cầu nhập kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi yêu cầu nhập kho từ bản nháp đến khi nhận đủ hàng.
-            </p>
           </div>
         </div>
         <Button asChild className="w-full sm:w-auto">

@@ -201,9 +201,6 @@ export function StockIssueRequestDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Xuất kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Yêu cầu xuất kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi yêu cầu xuất kho từ lúc tạo, lấy hàng cho tới khi xác nhận hàng rời kho.
-            </p>
           </div>
         </div>
         {permissions.includes(P.STOCK_ISSUE_REQUESTS_CREATE) ? (

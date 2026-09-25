@@ -100,9 +100,6 @@ export function GoodsReturnRequestDirectory({
         <div>
           <p className="text-primary text-xs font-medium">Xuất kho</p>
           <h1 className="text-xl font-semibold">Yêu cầu trả hàng</h1>
-          <p className="text-muted-foreground text-sm">
-            Duyệt và theo dõi hàng trả theo yêu cầu xuất kho.
-          </p>
         </div>
       </header>
       <StockIssueWorkspaceNavigation currentView="goodsReturnRequests" permissions={permissions} />

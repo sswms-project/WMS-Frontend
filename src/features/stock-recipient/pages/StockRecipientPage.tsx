@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
 import { P } from '@/config/permissionCodes'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
@@ -20,7 +21,9 @@ import {
   useUpdateStockRecipientMutation,
 } from '../hooks/use-stock-recipients'
 import {
+  emptyStockRecipientFormValues,
   stockRecipientSchema,
+  toStockRecipientRequest,
   type StockRecipientFormValues,
 } from '../schemas/stock-recipient.schema'
 import type { StockRecipient } from '../types/stock-recipient.types'
@@ -46,14 +49,7 @@ export default function StockRecipientPage() {
   const statusMutation = useChangeStockRecipientStatusMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: {
-      recipientCode: '',
-      recipientName: '',
-      taxCode: '',
-      phone: '',
-      email: '',
-      address: '',
-    },
+    defaultValues: emptyStockRecipientFormValues,
   })
   const nextCodeQuery = useNextStockRecipientCodeQuery(isCreateOpen)
   const isFormOpen = isCreateOpen || Boolean(editingRecipient)
@@ -67,12 +63,8 @@ export default function StockRecipientPage() {
     }
   }, [form, isCreateOpen, nextCodeQuery.data?.data])
 
-  async function handleSave(values: StockRecipientFormValues) {
-    const request = {
-      ...values,
-      taxCode: values.taxCode || null,
-      email: values.email || null,
-    }
+  async function handleSave(values: StockRecipientFormValues, keepOpen = false) {
+    const request = toStockRecipientRequest(values)
     try {
       if (editingRecipient) {
         await updateMutation.mutateAsync({ stockRecipientId: editingRecipient.id, request })
@@ -81,14 +73,20 @@ export default function StockRecipientPage() {
         await createMutation.mutateAsync(request)
         toast.success('Đã thêm khách hàng.')
       }
+      if (keepOpen && !editingRecipient) {
+        const nextCode = await nextCodeQuery.refetch()
+        form.reset({ ...emptyStockRecipientFormValues, recipientCode: nextCode.data?.data ?? '' })
+        return
+      }
       setIsCreateOpen(false)
       setEditingRecipient(null)
       form.reset()
-    } catch {
+    } catch (error) {
       toast.error(
-        editingRecipient
-          ? 'Không thể cập nhật khách hàng. Vui lòng thử lại.'
-          : 'Không thể thêm khách hàng. Vui lòng thử lại.'
+        getApiErrorMessage(
+          error,
+          editingRecipient ? 'Không thể cập nhật khách hàng.' : 'Không thể thêm khách hàng.'
+        )
       )
     }
   }
@@ -141,14 +139,7 @@ export default function StockRecipientPage() {
         }}
         onCreate={() => {
           setEditingRecipient(null)
-          form.reset({
-            recipientCode: '',
-            recipientName: '',
-            taxCode: '',
-            phone: '',
-            email: '',
-            address: '',
-          })
+          form.reset(emptyStockRecipientFormValues)
           setIsCreateOpen(true)
         }}
         onEdit={(stockRecipient) => {
@@ -157,10 +148,17 @@ export default function StockRecipientPage() {
           form.reset({
             recipientCode: stockRecipient.recipientCode,
             recipientName: stockRecipient.recipientName,
+            recipientType: stockRecipient.recipientType,
             taxCode: stockRecipient.taxCode ?? '',
             phone: stockRecipient.phone,
             email: stockRecipient.email ?? '',
             address: stockRecipient.address,
+            shippingAddress: stockRecipient.shippingAddress ?? '',
+            contactSalutation: stockRecipient.contactSalutation ?? '',
+            contactName: stockRecipient.contactName ?? '',
+            contactMobile: stockRecipient.contactMobile ?? '',
+            contactChannel: stockRecipient.contactChannel ?? '',
+            contactChannelName: stockRecipient.contactChannelName ?? '',
           })
         }}
         onChangeStatus={setStatusTarget}
@@ -176,6 +174,7 @@ export default function StockRecipientPage() {
         }
         form={form}
         isPending={createMutation.isPending || updateMutation.isPending}
+        isCreate={isCreateOpen}
         onOpenChange={(open) => {
           if (!open) {
             setIsCreateOpen(false)
@@ -184,6 +183,7 @@ export default function StockRecipientPage() {
           }
         }}
         onSubmit={(values) => void handleSave(values)}
+        onSubmitAndAdd={(values) => void handleSave(values, true)}
       />
       <StatusChangeDialog
         open={Boolean(statusTarget)}

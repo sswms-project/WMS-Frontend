@@ -83,9 +83,6 @@ export function ForgotPasswordForm({
               <h1 className="text-foreground text-2xl leading-[1.2] font-semibold tracking-tight">
                 Quên mật khẩu
               </h1>
-              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                Nhập email tài khoản để nhận hướng dẫn đặt lại mật khẩu.
-              </p>
             </header>
 
             {submittedEmail ? (

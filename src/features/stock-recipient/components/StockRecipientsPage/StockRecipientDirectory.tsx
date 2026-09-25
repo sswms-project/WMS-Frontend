@@ -81,9 +81,6 @@ export function StockRecipientDirectory({
           <div>
             <p className="text-primary text-xs font-medium">Danh mục</p>
             <h1 className="text-xl font-semibold">Khách hàng</h1>
-            <p className="text-muted-foreground text-sm">
-              Quản lý khách hàng nhận hàng và lịch sử yêu cầu xuất kho.
-            </p>
           </div>
         </div>
         {canCreate ? (

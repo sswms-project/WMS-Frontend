@@ -205,9 +205,6 @@ export default function ProductListPage() {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Kho hàng</p>
             <h1 className="mt-0.5 text-xl font-semibold">Danh mục vật tư hàng hóa</h1>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-              Quản lý toàn bộ sản phẩm, đơn vị tính và chính sách tồn kho.
-            </p>
           </div>
         </div>
         {canCreate && (

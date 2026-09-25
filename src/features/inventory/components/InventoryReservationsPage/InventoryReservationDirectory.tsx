@@ -80,9 +80,6 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
           <div>
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="text-xl font-semibold">Lịch sử giữ hàng</h1>
-            <p className="text-muted-foreground text-sm">
-              Theo dõi lượng hàng được giữ, đã giải phóng hoặc đã dùng bởi chứng từ kho.
-            </p>
           </div>
         </div>
         <Badge variant="outline">

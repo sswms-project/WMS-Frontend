@@ -19,10 +19,7 @@ export default function InboundPutawayPage() {
   })
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader
-        title="Cất hàng"
-        description="Phân bổ hàng khả dụng vào các vị trí còn sức chứa."
-      />
+      <InboundPageHeader title="Cất hàng" />
       <PutawayDirectory
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}

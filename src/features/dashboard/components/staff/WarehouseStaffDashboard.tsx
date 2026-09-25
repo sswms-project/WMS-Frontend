@@ -25,7 +25,6 @@ export function WarehouseStaffDashboard() {
       <FadeIn>
         <DashboardHeader
           title="Bảng điều khiển công việc của tôi"
-          description="Nhiệm vụ và công việc được giao hôm nay"
           actions={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
         />
       </FadeIn>

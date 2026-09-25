@@ -55,9 +55,6 @@ export function CycleCountDirectory(props: Props) {
           <div>
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="text-xl font-semibold">Kiểm kê định kỳ</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Theo dõi số đếm thực tế, đếm lại và chênh lệch tồn kho.
-            </p>
           </div>
         </div>
         {props.canCreate ? (

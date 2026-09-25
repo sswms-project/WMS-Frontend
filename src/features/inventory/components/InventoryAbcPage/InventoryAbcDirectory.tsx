@@ -80,9 +80,6 @@ export function InventoryAbcDirectory({
           <div>
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Phân loại tồn kho ABC</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Phân nhóm sản phẩm theo tỷ trọng số lượng tồn hiện tại.
-            </p>
           </div>
         </div>
         <div className="border-primary/20 bg-primary/5 flex min-h-10 items-center gap-2 border px-3">

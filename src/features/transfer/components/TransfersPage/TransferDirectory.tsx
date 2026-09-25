@@ -203,9 +203,6 @@ export function TransferDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Điều chuyển</p>
             <h1 className="mt-0.5 text-xl font-semibold">Phiếu điều chuyển kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi phiếu điều chuyển từ lúc tạo, duyệt, xuất hàng cho tới khi kho nhận xác nhận.
-            </p>
           </div>
         </div>
         {permissions.includes(P.TRANSFERS_CREATE) ? (
