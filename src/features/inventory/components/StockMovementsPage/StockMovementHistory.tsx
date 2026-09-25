@@ -73,9 +73,6 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Lịch sử biến động</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi mọi lần nhập, xuất, chuyển, trả và điều chỉnh tồn kho.
-            </p>
           </div>
         </div>
         <div className="border-primary/20 bg-primary/5 flex min-h-10 items-center gap-2 border px-3">

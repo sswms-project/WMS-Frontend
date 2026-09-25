@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
 import { P } from '@/config/permissionCodes'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { logger } from '@/lib/logger'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
@@ -83,7 +82,6 @@ export default function StockRecipientPage() {
       setEditingRecipient(null)
       form.reset()
     } catch (error) {
-      logger.error(error)
       toast.error(
         getApiErrorMessage(
           error,

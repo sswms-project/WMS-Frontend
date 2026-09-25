@@ -70,37 +70,41 @@ export function StockRecipientFormDialog({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
           showCloseButton={false}
-          className="flex max-h-[calc(100dvh-1rem)] min-h-0 w-[min(100%-1rem,64rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-h-[calc(100dvh-2rem)] sm:w-[min(100%-2rem,64rem)]"
+          className="flex max-h-[calc(100dvh-1rem)] min-h-0 w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:max-w-5xl"
         >
           <form
             className="flex min-h-0 flex-1 flex-col"
             onSubmit={form.handleSubmit(onSubmit)}
             noValidate
           >
-            <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6">
-              <div className="min-w-0">
-                <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
-                <DialogDescription className="mt-1">{description}</DialogDescription>
-              </div>
+            <DialogHeader className="shrink-0 flex-row flex-wrap items-center gap-x-6 gap-y-3 border-b px-5 py-4 pr-12 sm:px-6">
+              <DialogTitle className="shrink-0 text-base font-semibold">{title}</DialogTitle>
+              <DialogDescription className="sr-only">{description}</DialogDescription>
               <Controller
                 control={form.control}
                 name="recipientType"
                 render={({ field }) => (
                   <RadioGroup
                     aria-label="Loại khách hàng"
-                    className="mt-2 flex w-auto shrink-0 flex-row gap-5 sm:mt-0"
+                    className="flex w-fit flex-row flex-wrap gap-x-6 gap-y-2"
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    <Field className="flex-row items-center gap-2">
+                    <Field orientation="horizontal" className="w-auto shrink-0 gap-2">
                       <RadioGroupItem id="stockRecipient-organization" value="Organization" />
-                      <FieldLabel htmlFor="stockRecipient-organization" className="font-normal">
+                      <FieldLabel
+                        htmlFor="stockRecipient-organization"
+                        className="w-auto font-normal whitespace-nowrap"
+                      >
                         Tổ chức
                       </FieldLabel>
                     </Field>
-                    <Field className="flex-row items-center gap-2">
+                    <Field orientation="horizontal" className="w-auto shrink-0 gap-2">
                       <RadioGroupItem id="stockRecipient-individual" value="Individual" />
-                      <FieldLabel htmlFor="stockRecipient-individual" className="font-normal">
+                      <FieldLabel
+                        htmlFor="stockRecipient-individual"
+                        className="w-auto font-normal whitespace-nowrap"
+                      >
                         Cá nhân
                       </FieldLabel>
                     </Field>

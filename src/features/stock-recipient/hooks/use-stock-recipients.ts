@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
@@ -16,6 +17,16 @@ import type {
 interface UpdateStockRecipientVariables {
   stockRecipientId: string
   request: UpdateStockRecipientRequest
+}
+
+function logStockRecipientMutationError(error: unknown) {
+  const message = formatApiError(error)
+  if (isApiErrorResponse(error) && (error.statusCode === 400 || error.statusCode === 409)) {
+    logger.warn(message)
+    return
+  }
+
+  logger.error(message)
 }
 
 export function useStockRecipientsQuery(params: StockRecipientListQuery) {
@@ -61,7 +72,7 @@ export function useCreateStockRecipientMutation() {
   return useMutation<ApiResponse<string>, ApiErrorResponse, CreateStockRecipientRequest>({
     mutationFn: stockRecipientService.createStockRecipient,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockRecipients.all }),
-    onError: (error) => logger.error(error),
+    onError: logStockRecipientMutationError,
   })
 }
 
@@ -77,7 +88,7 @@ export function useUpdateStockRecipientMutation() {
           queryKey: queryKeys.stockRecipients.detail(stockRecipientId),
         }),
       ]),
-    onError: (error) => logger.error(error),
+    onError: logStockRecipientMutationError,
   })
 }
 
@@ -97,6 +108,6 @@ export function useChangeStockRecipientStatusMutation() {
           queryKey: queryKeys.stockRecipients.detail(stockRecipientId),
         }),
       ]),
-    onError: (error) => logger.error(error),
+    onError: logStockRecipientMutationError,
   })
 }

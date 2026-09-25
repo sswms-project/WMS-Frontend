@@ -71,9 +71,6 @@ export function InventoryForecastDirectory({
           <div>
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Dự báo tồn kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Dự báo mức tồn kho theo sản phẩm dựa trên lịch sử biến động, do dịch vụ AI tính toán.
-            </p>
           </div>
         </div>
       </header>

@@ -113,9 +113,6 @@ export default function ProfilePage() {
         <SectionIconBadge icon={UserRound} tone="primary" size="lg" />
         <div>
           <h1 className="text-foreground text-2xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
-          <p className="text-muted-foreground mt-1 max-w-xl text-sm leading-6">
-            Quản lý thông tin cá nhân và liên hệ của tài khoản
-          </p>
         </div>
       </header>
 

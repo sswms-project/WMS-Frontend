@@ -46,9 +46,6 @@ export function SupplierDetail({
               <h1 className="text-xl font-semibold">{supplier.supplierName}</h1>
               <SupplierStatusBadge status={supplier.status} />
             </div>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Thông tin liên hệ và trạng thái hợp tác của nhà cung cấp.
-            </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

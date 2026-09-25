@@ -40,7 +40,6 @@ export function WarehouseManagerDashboard() {
       <FadeIn>
         <DashboardHeader
           title="Bảng điều khiển vận hành kho"
-          description="Tổng quan vận hành theo thời gian thực tại Kho Chính"
           actions={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
         />
       </FadeIn>

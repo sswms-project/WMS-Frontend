@@ -101,9 +101,6 @@ export function InventoryDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Tồn kho khả dụng</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi tồn thực tế, lượng đã giữ và lượng có thể sử dụng tại từng vị trí.
-            </p>
           </div>
         </div>
         <div className="border-primary/20 bg-primary/5 flex min-h-10 items-center gap-2 border px-3">

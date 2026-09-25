@@ -96,9 +96,6 @@ export function WarehousePage() {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Vận hành kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Kho hàng</h1>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-              Quản lý các địa điểm lưu trữ thuộc tổ chức của bạn.
-            </p>
           </div>
         </div>
         {capabilities.canCreateWarehouse ? (

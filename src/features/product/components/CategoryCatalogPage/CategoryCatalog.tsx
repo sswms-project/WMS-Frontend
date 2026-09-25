@@ -196,9 +196,6 @@ export function CategoryCatalog({
           <div>
             <p className="text-primary text-xs font-medium">Danh mục</p>
             <h1 className="text-xl font-semibold">Nhóm vật tư hàng hóa</h1>
-            <p className="text-muted-foreground text-sm">
-              Phân nhóm sản phẩm để tìm kiếm, báo cáo và vận hành kho nhất quán.
-            </p>
           </div>
         </div>
         {canCreate ? (

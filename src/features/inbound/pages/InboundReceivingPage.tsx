@@ -261,10 +261,7 @@ export default function InboundReceivingPage() {
   const isPending = createMutation.isPending || submitMutation.isPending
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader
-        title="Nhập kho"
-        description="Tiếp nhận hàng theo yêu cầu nhập kho đã được phê duyệt."
-      />
+      <InboundPageHeader title="Nhập kho" />
       <ReceivingTaskDirectory
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}

@@ -110,9 +110,6 @@ export function OrganizationPage() {
         <div className="min-w-0">
           <p className="text-primary text-xs font-medium">Không gian tenant</p>
           <h1 className="mt-0.5 text-xl font-semibold">Hồ sơ tổ chức</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-            Thông tin liên hệ và nhận diện được sử dụng xuyên suốt hoạt động kho.
-          </p>
         </div>
       </header>
 

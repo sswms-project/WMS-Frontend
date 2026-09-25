@@ -94,9 +94,6 @@ export function ResetPasswordForm({
               <h1 className="text-foreground text-2xl leading-[1.2] font-semibold tracking-tight">
                 Đặt lại mật khẩu
               </h1>
-              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                Tạo mật khẩu mới mạnh hơn để tiếp tục sử dụng KOVIA.
-              </p>
             </header>
 
             {!token ? (

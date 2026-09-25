@@ -113,9 +113,6 @@ export function SubscriptionPaymentHistoryPage() {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <header className="flex min-w-0 flex-col gap-1">
         <h1 className="text-foreground text-xl font-semibold">Lịch sử thanh toán</h1>
-        <p className="text-muted-foreground max-w-2xl text-sm">
-          Tra cứu giao dịch, theo dõi trạng thái và tải hóa đơn PDF khi cần đối soát.
-        </p>
       </header>
 
       <PaymentHistoryTable

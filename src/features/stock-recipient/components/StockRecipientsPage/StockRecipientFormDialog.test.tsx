@@ -32,7 +32,14 @@ describe('StockRecipientFormDialog', () => {
 
     render(<TestDialog />)
 
-    expect(screen.getByRole('radio', { name: 'Tổ chức' })).toBeChecked()
+    expect(screen.getByRole('dialog')).toHaveClass('sm:max-w-5xl')
+    expect(screen.getByRole('dialog')).toHaveClass('w-[calc(100vw-1rem)]')
+    const organizationRadio = screen.getByRole('radio', { name: 'Tổ chức' })
+    expect(organizationRadio).toBeChecked()
+    expect(organizationRadio.closest('[role="group"]')).toHaveAttribute(
+      'data-orientation',
+      'horizontal'
+    )
     expect(screen.getByRole('radio', { name: 'Cá nhân' })).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Tên khách hàng *'), 'Khách hàng A')

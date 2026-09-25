@@ -66,9 +66,6 @@ export function StockAdjustmentDirectory(props: DirectoryProps) {
         <div>
           <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
           <h1 className="text-xl font-semibold">Điều chỉnh tồn kho</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Duyệt chênh lệch đã xác minh từ phiếu kiểm kê hoàn tất.
-          </p>
         </div>
       </header>
       <InventoryWorkspaceNavigation currentView="adjustments" permissions={props.permissions} />
