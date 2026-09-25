@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+import { Skeleton } from '@/components/ui/skeleton'
 import { BenefitsPanel } from '@/features/auth/components/RegisterPage'
 import type { Verify2FAErrorKind } from '@/features/auth/hooks/use-auth'
 import {
@@ -121,7 +122,9 @@ export function VerifyTwoFactorForm({
                 kiện, state lỗi vừa set sẽ bị đè lại bởi nhánh 'missing' ngay sau đó. */}
             {step.status === 'form' && tempTokenStatus === 'loading' && (
               <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <Loader2 className="text-primary size-6 animate-spin" aria-hidden="true" />
+                <Skeleton className="size-10 rounded-full" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
               </div>
             )}
 

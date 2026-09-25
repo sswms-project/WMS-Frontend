@@ -4,7 +4,8 @@ export function decodeJwtPayload(token: string): Record<string, unknown> | null 
 
   try {
     const base64 = part.replace(/-/g, '+').replace(/_/g, '/')
-    const json = new TextDecoder().decode(Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)))
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')
+    const json = new TextDecoder().decode(Uint8Array.from(atob(padded), (c) => c.charCodeAt(0)))
     const payload: unknown = JSON.parse(json)
     if (typeof payload !== 'object' || payload === null) return null
     return payload as Record<string, unknown>

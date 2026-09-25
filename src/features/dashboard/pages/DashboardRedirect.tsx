@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
+import { AppRouteSkeleton } from '@/components/AppRouteSkeleton'
 import { getDashboardRouteForRole } from '../utils/role-routes'
 
 export function DashboardRedirect() {
@@ -13,9 +14,5 @@ export function DashboardRedirect() {
     if (user) router.replace(getDashboardRouteForRole(user.role))
   }, [user, router])
 
-  return (
-    <div className="flex h-64 items-center justify-center">
-      <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-    </div>
-  )
+  return <AppRouteSkeleton />
 }

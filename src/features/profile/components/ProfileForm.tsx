@@ -1,8 +1,7 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Save, UserPen, X } from 'lucide-react'
-import { useForm, type FieldErrors, type UseFormSetError } from 'react-hook-form'
+import type { FieldErrors, UseFormReturn, UseFormSetError } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,7 +15,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import type { UserProfileResponse } from '@/features/auth/types/auth.types'
 import { SectionIconBadge } from '@/features/settings/components/SecurityPage'
-import { profileFormSchema, type ProfileFormValues } from '../schemas/profile.schema'
+import type { ProfileFormValues } from '../schemas/profile.schema'
 
 export interface ProfileFormSubmitContext {
   readonly dirtyFields: Partial<Record<keyof ProfileFormValues, boolean>>
@@ -25,6 +24,7 @@ export interface ProfileFormSubmitContext {
 
 interface ProfileFormProps {
   readonly profile: UserProfileResponse
+  readonly form: UseFormReturn<ProfileFormValues>
   readonly isPending: boolean
   readonly onCancel: () => void
   readonly onSubmit: (
@@ -37,15 +37,7 @@ function fieldError(errors: FieldErrors<ProfileFormValues>, field: keyof Profile
   return errors[field] ? [errors[field]] : undefined
 }
 
-export function ProfileForm({ profile, isPending, onCancel, onSubmit }: ProfileFormProps) {
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      fullName: profile.fullName,
-      phone: profile.phone ?? '',
-    },
-  })
-
+export function ProfileForm({ profile, form, isPending, onCancel, onSubmit }: ProfileFormProps) {
   async function handleSubmit(values: ProfileFormValues) {
     await onSubmit(values, {
       dirtyFields: form.formState.dirtyFields,
