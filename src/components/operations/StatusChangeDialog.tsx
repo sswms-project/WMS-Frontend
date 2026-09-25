@@ -15,6 +15,8 @@ interface StatusChangeDialogProps {
   readonly open: boolean
   readonly subject: string
   readonly nextStatus: 'Active' | 'Inactive'
+  readonly inactiveActionLabel?: string
+  readonly activeActionLabel?: string
   readonly isPending: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly onConfirm: () => void
@@ -24,6 +26,8 @@ export function StatusChangeDialog({
   open,
   subject,
   nextStatus,
+  inactiveActionLabel = 'Ngừng hoạt động',
+  activeActionLabel = 'Kích hoạt lại',
   isPending,
   onOpenChange,
   onConfirm,
@@ -34,7 +38,9 @@ export function StatusChangeDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {isDeactivate ? `Ngừng hoạt động ${subject}?` : `Kích hoạt lại ${subject}?`}
+            {isDeactivate
+              ? `${inactiveActionLabel} ${subject}?`
+              : `${activeActionLabel} ${subject}?`}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {isDeactivate
@@ -45,7 +51,7 @@ export function StatusChangeDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
           <AlertDialogAction disabled={isPending} onClick={onConfirm}>
-            {isPending ? 'Đang xử lý…' : isDeactivate ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
+            {isPending ? 'Đang xử lý…' : isDeactivate ? inactiveActionLabel : activeActionLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

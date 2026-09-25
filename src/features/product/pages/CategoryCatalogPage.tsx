@@ -16,6 +16,7 @@ import {
 } from '../hooks/use-products'
 import { categorySchema, type CategoryFormValues } from '../schemas/master-data.schema'
 import type { CategoryResponse } from '../types/product.types'
+import { suggestCategoryCode } from '../utils/category-code'
 
 export default function CategoryCatalogPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -56,7 +57,13 @@ export default function CategoryCatalogPage() {
   }
 
   async function save(values: CategoryFormValues) {
-    const request = { ...values, description: values.description || null }
+    const request = {
+      ...values,
+      categoryCode: editingCategory
+        ? values.categoryCode
+        : suggestCategoryCode(values.categoryName, categoriesQuery.data ?? []),
+      description: values.description || null,
+    }
     try {
       if (editingCategory) {
         await updateMutation.mutateAsync({ id: editingCategory.id, request })

@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
-import { ArrowLeft, Pencil, Power, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Building2, Mail, MapPin, Pencil, Phone, Power, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -53,20 +53,27 @@ export default function StockRecipientDetailPage({
   const statusMutation = useChangeStockRecipientStatusMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: { recipientCode: '', recipientName: '', phone: '', email: '', address: '' },
+    defaultValues: {
+      recipientCode: '',
+      recipientName: '',
+      taxCode: '',
+      phone: '',
+      email: '',
+      address: '',
+    },
   })
 
   async function update(values: StockRecipientFormValues) {
     try {
       await updateMutation.mutateAsync({
         stockRecipientId,
-        request: { ...values, email: values.email || null },
+        request: { ...values, taxCode: values.taxCode || null, email: values.email || null },
       })
-      toast.success('Đã cập nhật đơn vị nhận hàng.')
+      toast.success('Đã cập nhật khách hàng.')
       setIsEditOpen(false)
     } catch (error) {
       logger.error(error)
-      toast.error(getApiErrorMessage(error, 'Không thể cập nhật đơn vị nhận hàng.'))
+      toast.error(getApiErrorMessage(error, 'Không thể cập nhật khách hàng.'))
     }
   }
 
@@ -76,12 +83,10 @@ export default function StockRecipientDetailPage({
     const status = recipient.status === 'Active' ? 'Inactive' : 'Active'
     try {
       await statusMutation.mutateAsync({ stockRecipientId, status })
-      toast.success(
-        status === 'Active' ? 'Đã kích hoạt đơn vị nhận hàng.' : 'Đã ngừng đơn vị nhận hàng.'
-      )
+      toast.success(status === 'Active' ? 'Đã kích hoạt khách hàng.' : 'Đã ngừng khách hàng.')
     } catch (error) {
       logger.error(error)
-      toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái đơn vị nhận hàng.'))
+      toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái khách hàng.'))
     }
   }
 
@@ -89,41 +94,40 @@ export default function StockRecipientDetailPage({
   if (stockRecipientQuery.isError || !stockRecipientQuery.data)
     return (
       <OperationalErrorState
-        title="Không thể tải đơn vị nhận hàng"
+        title="Không thể tải khách hàng"
         onRetry={() => void stockRecipientQuery.refetch()}
       />
     )
   const stockRecipient = stockRecipientQuery.data
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <header className="flex shrink-0 items-start justify-between gap-3 border-b pb-4">
-        <div className="flex gap-3">
+      <header className="flex shrink-0 flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 gap-3">
           <Button asChild variant="outline" size="icon">
             <Link href={APP_ROUTES.stockRecipients as Route} aria-label="Quay lại">
               <ArrowLeft />
             </Link>
           </Button>
-          <div>
+          <div className="min-w-0">
             <p className="text-primary font-mono text-xs" translate="no">
               {stockRecipient.recipientCode}
             </p>
             <h1 className="text-xl font-semibold">{stockRecipient.recipientName}</h1>
             <Badge
-              className="mt-1"
+              className="mt-2"
               variant={stockRecipient.status === 'Active' ? 'default' : 'outline'}
             >
-              {stockRecipient.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+              {stockRecipient.status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
             </Badge>
-            <p className="text-muted-foreground text-sm">
-              {stockRecipient.phone} · {stockRecipient.email ?? 'Chưa có email'} ·{' '}
-              {stockRecipient.address}
-            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
           {(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_MANAGE_STATUS) ? (
             <Button
               variant="outline"
+              size="icon"
+              aria-label={stockRecipient.status === 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
+              title={stockRecipient.status === 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
               disabled={statusMutation.isPending}
               onClick={() => setIsStatusOpen(true)}
             >
@@ -132,16 +136,19 @@ export default function StockRecipientDetailPage({
               ) : (
                 <RotateCcw aria-hidden="true" />
               )}
-              {stockRecipient.status === 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
             </Button>
           ) : null}
           {(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_UPDATE) ? (
             <Button
+              size="icon"
+              aria-label="Chỉnh sửa khách hàng"
+              title="Chỉnh sửa khách hàng"
               disabled={stockRecipient.status !== 'Active'}
               onClick={() => {
                 form.reset({
                   recipientCode: stockRecipient.recipientCode,
                   recipientName: stockRecipient.recipientName,
+                  taxCode: stockRecipient.taxCode ?? '',
                   phone: stockRecipient.phone,
                   email: stockRecipient.email ?? '',
                   address: stockRecipient.address,
@@ -150,11 +157,67 @@ export default function StockRecipientDetailPage({
               }}
             >
               <Pencil aria-hidden="true" />
-              Chỉnh sửa
             </Button>
           ) : null}
         </div>
       </header>
+      <section aria-labelledby="recipient-contact-heading" className="bg-card shrink-0 border">
+        <div className="border-b px-4 py-3">
+          <h2 id="recipient-contact-heading" className="text-sm font-semibold">
+            Thông tin khách hàng
+          </h2>
+        </div>
+        <dl className="grid grid-cols-1 divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
+          <div className="flex min-w-0 gap-3 p-4">
+            <Building2
+              className="text-muted-foreground mt-0.5 size-4 shrink-0"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <dt className="text-muted-foreground text-xs">Mã số thuế</dt>
+              <dd className="mt-1 truncate text-sm font-medium">
+                {stockRecipient.taxCode ?? 'Chưa có'}
+              </dd>
+            </div>
+          </div>
+          <div className="flex min-w-0 gap-3 p-4">
+            <Phone className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <dt className="text-muted-foreground text-xs">Số điện thoại</dt>
+              <dd className="mt-1 truncate text-sm font-medium">
+                {stockRecipient.phone || 'Chưa có'}
+              </dd>
+            </div>
+          </div>
+          <div className="flex min-w-0 gap-3 p-4">
+            <Mail className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <dt className="text-muted-foreground text-xs">Email</dt>
+              <dd className="mt-1 truncate text-sm font-medium">
+                {stockRecipient.email ? (
+                  <a
+                    className="hover:text-primary hover:underline"
+                    href={`mailto:${stockRecipient.email}`}
+                  >
+                    {stockRecipient.email}
+                  </a>
+                ) : (
+                  'Chưa có'
+                )}
+              </dd>
+            </div>
+          </div>
+          <div className="flex min-w-0 gap-3 p-4">
+            <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <dt className="text-muted-foreground text-xs">Địa chỉ</dt>
+              <dd className="mt-1 line-clamp-2 text-sm font-medium">
+                {stockRecipient.address || 'Chưa có'}
+              </dd>
+            </div>
+          </div>
+        </dl>
+      </section>
       <section className="flex min-h-0 flex-1 flex-col border">
         <div className="border-b p-3">
           <h2 className="text-sm font-semibold">Lịch sử yêu cầu xuất kho</h2>
@@ -169,7 +232,7 @@ export default function StockRecipientDetailPage({
           />
         ) : (historyQuery.data?.items.length ?? 0) === 0 ? (
           <OperationalEmptyState
-            title="Đơn vị nhận hàng chưa có yêu cầu xuất kho"
+            title="Khách hàng chưa có yêu cầu xuất kho"
             description="Các yêu cầu xuất kho mới sẽ xuất hiện tại đây."
           />
         ) : (
@@ -212,7 +275,7 @@ export default function StockRecipientDetailPage({
       </section>
       <StockRecipientFormDialog
         open={isEditOpen}
-        title="Chỉnh sửa đơn vị nhận hàng"
+        title="Chỉnh sửa khách hàng"
         description="Cập nhật thông tin liên hệ và địa chỉ mặc định."
         form={form}
         isPending={updateMutation.isPending}
@@ -221,7 +284,7 @@ export default function StockRecipientDetailPage({
       />
       <StatusChangeDialog
         open={isStatusOpen}
-        subject={`đơn vị nhận hàng “${stockRecipient.recipientName}”`}
+        subject={`khách hàng “${stockRecipient.recipientName}”`}
         nextStatus={stockRecipient.status === 'Active' ? 'Inactive' : 'Active'}
         isPending={statusMutation.isPending}
         onOpenChange={setIsStatusOpen}

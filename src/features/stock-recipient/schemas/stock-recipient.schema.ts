@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 export const stockRecipientSchema = z.object({
   recipientCode: z.string().trim().min(1, 'Vui lòng nhập mã khách hàng.').max(50),
-  recipientName: z.string().trim().min(1, 'Vui lòng nhập tên đơn vị nhận hàng.').max(255),
+  recipientName: z.string().trim().min(1, 'Vui lòng nhập tên khách hàng.').max(255),
+  taxCode: z.string().trim().max(50, 'Mã số thuế tối đa 50 ký tự.'),
   phone: z.string().trim().max(30),
   email: z
     .string()

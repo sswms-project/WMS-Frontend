@@ -1,7 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { FolderTree, Pencil, Plus, Power, RotateCcw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  ChevronRight,
+  ChevronsUpDown,
+  FolderTree,
+  Pencil,
+  Plus,
+  Power,
+  RotateCcw,
+} from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -40,6 +48,71 @@ import {
 } from '@/components/operations/status-filter'
 import type { CategoryFormValues } from '../../schemas/master-data.schema'
 import type { CategoryResponse } from '../../types/product.types'
+import { cn } from '@/lib/utils'
+
+interface CategoryTree {
+  readonly roots: readonly CategoryResponse[]
+  readonly childrenByParent: ReadonlyMap<string, readonly CategoryResponse[]>
+}
+
+function buildCategoryTree(items: readonly CategoryResponse[]): CategoryTree {
+  const itemIds = new Set(items.map((item) => item.id))
+  const roots: CategoryResponse[] = []
+  const childrenByParent = new Map<string, CategoryResponse[]>()
+  const sortedItems = [...items].sort((left, right) =>
+    left.categoryPath.localeCompare(right.categoryPath, 'vi')
+  )
+
+  for (const item of sortedItems) {
+    if (!item.parentCategoryId || !itemIds.has(item.parentCategoryId)) {
+      roots.push(item)
+      continue
+    }
+
+    const siblings = childrenByParent.get(item.parentCategoryId) ?? []
+    siblings.push(item)
+    childrenByParent.set(item.parentCategoryId, siblings)
+  }
+
+  return { roots, childrenByParent }
+}
+
+function getVisibleCategories(
+  roots: readonly CategoryResponse[],
+  childrenByParent: ReadonlyMap<string, readonly CategoryResponse[]>,
+  expandedIds: ReadonlySet<string>,
+  includedIds?: ReadonlySet<string>
+): CategoryResponse[] {
+  const visible: CategoryResponse[] = []
+
+  function appendBranch(category: CategoryResponse) {
+    if (includedIds && !includedIds.has(category.id)) return
+    visible.push(category)
+    if (!expandedIds.has(category.id)) return
+    for (const child of childrenByParent.get(category.id) ?? []) appendBranch(child)
+  }
+
+  for (const root of roots) appendBranch(root)
+  return visible
+}
+
+function getIdsWithAncestors(
+  matchingItems: readonly CategoryResponse[],
+  allItems: readonly CategoryResponse[]
+): Set<string> {
+  const includedIds = new Set<string>()
+  const categoriesById = new Map(allItems.map((category) => [category.id, category]))
+
+  for (const category of matchingItems) {
+    let current: CategoryResponse | undefined = category
+    while (current && !includedIds.has(current.id)) {
+      includedIds.add(current.id)
+      current = current.parentCategoryId ? categoriesById.get(current.parentCategoryId) : undefined
+    }
+  }
+
+  return includedIds
+}
 
 interface CategoryCatalogProps {
   readonly items: readonly CategoryResponse[]
@@ -81,15 +154,38 @@ export function CategoryCatalog({
   const [statusTarget, setStatusTarget] = useState<CategoryResponse | null>(null)
   const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState<ActiveStatusFilter>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const filteredItems = statusFilter
     ? items.filter((category) => category.status === statusFilter)
     : items
-  const pagedItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
+  const categoryTree = useMemo(() => buildCategoryTree(items), [items])
+  const includedIds = useMemo(
+    () => getIdsWithAncestors(filteredItems, items),
+    [filteredItems, items]
+  )
+  const filteredRoots = categoryTree.roots.filter((root) => includedIds.has(root.id))
+  const pagedRoots = filteredRoots.slice((page - 1) * pageSize, page * pageSize)
+  const visibleItems = getVisibleCategories(
+    pagedRoots,
+    categoryTree.childrenByParent,
+    expandedIds,
+    includedIds
+  )
+  const expandableIds = items
+    .filter((category) =>
+      (categoryTree.childrenByParent.get(category.id) ?? []).some((child) =>
+        includedIds.has(child.id)
+      )
+    )
+    .map((category) => category.id)
+  const areAllExpanded =
+    expandableIds.length > 0 && expandableIds.every((id) => expandedIds.has(id))
   const selectedCategories = items.filter((category) => selectedIds.has(category.id))
-  const allSelected = pagedItems.length > 0 && pagedItems.every((item) => selectedIds.has(item.id))
+  const allSelected =
+    visibleItems.length > 0 && visibleItems.every((item) => selectedIds.has(item.id))
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b pb-4">
@@ -107,15 +203,6 @@ export function CategoryCatalog({
         </div>
         {canCreate ? (
           <div className="flex items-center gap-2">
-            {selectedCategories.length > 0 ? (
-              <Button
-                variant="outline"
-                disabled={isPending || selectedCategories.every((item) => item.status !== 'Active')}
-                onClick={() => setIsBulkStatusOpen(true)}
-              >
-                Ngừng sử dụng ({selectedCategories.length})
-              </Button>
-            ) : null}
             <Button onClick={() => onCreate(null)}>
               <Plus data-icon="inline-start" aria-hidden="true" />
               Thêm nhóm
@@ -130,20 +217,52 @@ export function CategoryCatalog({
             <h2 className="text-sm font-semibold">Danh sách nhóm vật tư hàng hóa</h2>
             <p className="text-muted-foreground text-xs">{filteredItems.length} nhóm</p>
           </div>
-          <NativeSelect
-            aria-label="Lọc nhóm vật tư hàng hóa theo trạng thái"
-            className="w-44"
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(parseActiveStatusFilter(event.target.value))
-              setSelectedIds(new Set())
-              setPage(1)
-            }}
-          >
-            <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
-            <NativeSelectOption value="Active">Đang hoạt động</NativeSelectOption>
-            <NativeSelectOption value="Inactive">Ngừng hoạt động</NativeSelectOption>
-          </NativeSelect>
+          <div className="flex flex-wrap items-center gap-2">
+            {expandableIds.length > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setExpandedIds(areAllExpanded ? new Set() : new Set(expandableIds))}
+              >
+                <ChevronsUpDown data-icon="inline-start" aria-hidden="true" />
+                {areAllExpanded ? 'Thu gọn tất cả' : 'Mở rộng tất cả'}
+              </Button>
+            ) : null}
+            {canUpdate && selectedCategories.length > 0 ? (
+              <Button
+                variant="outline"
+                disabled={isPending || selectedCategories.every((item) => item.status !== 'Active')}
+                onClick={() => setIsBulkStatusOpen(true)}
+              >
+                Ngừng sử dụng ({selectedCategories.length})
+              </Button>
+            ) : null}
+            <NativeSelect
+              aria-label="Lọc nhóm vật tư hàng hóa theo trạng thái"
+              className="w-44"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(parseActiveStatusFilter(event.target.value))
+                setSelectedIds(new Set())
+                setExpandedIds(
+                  new Set(
+                    items
+                      .filter(
+                        (category) =>
+                          (categoryTree.childrenByParent.get(category.id) ?? []).length > 0
+                      )
+                      .map((category) => category.id)
+                  )
+                )
+                setPage(1)
+              }}
+            >
+              <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+              <NativeSelectOption value="Active">Đang hoạt động</NativeSelectOption>
+              <NativeSelectOption value="Inactive">Ngừng hoạt động</NativeSelectOption>
+            </NativeSelect>
+          </div>
         </div>
         {isLoading ? (
           <OperationalLoadingState />
@@ -162,23 +281,25 @@ export function CategoryCatalog({
           <Table>
             <TableHeader className="bg-card sticky top-0 z-10">
               <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    aria-label="Chọn tất cả nhóm vật tư hàng hóa"
-                    checked={allSelected ? true : selectedIds.size > 0 ? 'indeterminate' : false}
-                    onCheckedChange={(checked) =>
-                      setSelectedIds((current) =>
-                        checked
-                          ? new Set([...current, ...pagedItems.map((item) => item.id)])
-                          : new Set(
-                              [...current].filter(
-                                (id) => !pagedItems.some((item) => item.id === id)
+                {canUpdate ? (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      aria-label="Chọn tất cả nhóm vật tư hàng hóa"
+                      checked={allSelected ? true : selectedIds.size > 0 ? 'indeterminate' : false}
+                      onCheckedChange={(checked) =>
+                        setSelectedIds((current) =>
+                          checked
+                            ? new Set([...current, ...visibleItems.map((item) => item.id)])
+                            : new Set(
+                                [...current].filter(
+                                  (id) => !visibleItems.some((item) => item.id === id)
+                                )
                               )
-                            )
-                      )
-                    }
-                  />
-                </TableHead>
+                        )
+                      }
+                    />
+                  </TableHead>
+                ) : null}
                 <TableHead>Tên nhóm</TableHead>
                 <TableHead>Mô tả</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -186,78 +307,106 @@ export function CategoryCatalog({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pagedItems.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>
-                    <Checkbox
-                      aria-label={`Chọn ${category.categoryName}`}
-                      checked={selectedIds.has(category.id)}
-                      onCheckedChange={(checked) =>
-                        setSelectedIds((current) => {
-                          const next = new Set(current)
-                          if (checked) next.add(category.id)
-                          else next.delete(category.id)
-                          return next
-                        })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div
-                      className="flex items-center gap-2"
-                      style={{ paddingLeft: `${(category.level - 1) * 20}px` }}
-                    >
-                      <span className="font-medium">{category.categoryName}</span>
-                      {category.level > 1 ? (
-                        <span className="text-muted-foreground text-xs">Cấp {category.level}</span>
-                      ) : null}
-                    </div>
-                    <p className="text-muted-foreground mt-1 text-xs">{category.categoryPath}</p>
-                  </TableCell>
-                  <TableCell className="max-w-lg break-words">
-                    {category.description ?? '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={category.status === 'Active' ? 'default' : 'outline'}>
-                      {category.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
-                    </Badge>
-                  </TableCell>
-                  {canUpdate ? (
+              {visibleItems.map((category) => {
+                const children = categoryTree.childrenByParent.get(category.id) ?? []
+                const hasVisibleChildren = children.some((child) => includedIds.has(child.id))
+                const isExpanded = expandedIds.has(category.id)
+                return (
+                  <TableRow key={category.id} className={cn(category.level > 1 && 'bg-muted/20')}>
+                    {canUpdate ? (
+                      <TableCell>
+                        <Checkbox
+                          aria-label={`Chọn ${category.categoryName}`}
+                          checked={selectedIds.has(category.id)}
+                          onCheckedChange={(checked) =>
+                            setSelectedIds((current) => {
+                              const next = new Set(current)
+                              if (checked) next.add(category.id)
+                              else next.delete(category.id)
+                              return next
+                            })
+                          }
+                        />
+                      </TableCell>
+                    ) : null}
                     <TableCell>
-                      <div className="flex justify-end gap-1">
-                        {category.status === 'Active' && category.level < 5 ? (
-                          <Button variant="ghost" size="sm" onClick={() => onCreate(category.id)}>
-                            <Plus data-icon="inline-start" aria-hidden="true" />
-                            Nhóm con
+                      <div
+                        className="flex min-w-0 items-center gap-1.5"
+                        style={{ paddingLeft: `${(category.level - 1) * 24}px` }}
+                      >
+                        {hasVisibleChildren ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-7 shrink-0"
+                            aria-label={`${isExpanded ? 'Thu gọn' : 'Mở rộng'} nhóm ${category.categoryName}`}
+                            aria-expanded={isExpanded}
+                            onClick={() =>
+                              setExpandedIds((current) => {
+                                const next = new Set(current)
+                                if (isExpanded) next.delete(category.id)
+                                else next.add(category.id)
+                                return next
+                              })
+                            }
+                          >
+                            <ChevronRight
+                              aria-hidden="true"
+                              className={cn('transition-transform', isExpanded && 'rotate-90')}
+                            />
                           </Button>
-                        ) : null}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={category.status !== 'Active'}
-                          onClick={() => onEdit(category)}
-                        >
-                          <Pencil data-icon="inline-start" aria-hidden="true" />
-                          Sửa
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={isPending}
-                          onClick={() => setStatusTarget(category)}
-                        >
-                          {category.status === 'Active' ? (
-                            <Power data-icon="inline-start" aria-hidden="true" />
-                          ) : (
-                            <RotateCcw data-icon="inline-start" aria-hidden="true" />
-                          )}
-                          {category.status === 'Active' ? 'Ngừng' : 'Kích hoạt'}
-                        </Button>
+                        ) : (
+                          <span className="size-7 shrink-0" aria-hidden="true" />
+                        )}
+                        <span className="truncate font-medium">{category.categoryName}</span>
                       </div>
                     </TableCell>
-                  ) : null}
-                </TableRow>
-              ))}
+                    <TableCell className="max-w-lg break-words">
+                      {category.description ?? '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={category.status === 'Active' ? 'default' : 'outline'}>
+                        {category.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                      </Badge>
+                    </TableCell>
+                    {canUpdate ? (
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          {category.status === 'Active' && category.level < 5 ? (
+                            <Button variant="ghost" size="sm" onClick={() => onCreate(category.id)}>
+                              <Plus data-icon="inline-start" aria-hidden="true" />
+                              Nhóm con
+                            </Button>
+                          ) : null}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={category.status !== 'Active'}
+                            onClick={() => onEdit(category)}
+                          >
+                            <Pencil data-icon="inline-start" aria-hidden="true" />
+                            Sửa
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() => setStatusTarget(category)}
+                          >
+                            {category.status === 'Active' ? (
+                              <Power data-icon="inline-start" aria-hidden="true" />
+                            ) : (
+                              <RotateCcw data-icon="inline-start" aria-hidden="true" />
+                            )}
+                            {category.status === 'Active' ? 'Ngừng' : 'Kích hoạt'}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         )}
@@ -265,7 +414,7 @@ export function CategoryCatalog({
           <OperationalPagination
             page={page}
             pageSize={pageSize}
-            totalCount={filteredItems.length}
+            totalCount={filteredRoots.length}
             isPending={isPending}
             onPageChange={setPage}
             onPageSizeChange={(value) => {
@@ -286,17 +435,6 @@ export function CategoryCatalog({
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
-              <Field data-invalid={Boolean(form.formState.errors.categoryCode)}>
-                <FieldLabel htmlFor="categoryCode">Mã nhóm *</FieldLabel>
-                <Input id="categoryCode" autoComplete="off" {...form.register('categoryCode')} />
-                <FieldError
-                  errors={
-                    form.formState.errors.categoryCode
-                      ? [form.formState.errors.categoryCode]
-                      : undefined
-                  }
-                />
-              </Field>
               <Field data-invalid={Boolean(form.formState.errors.categoryName)}>
                 <FieldLabel htmlFor="categoryName">Tên nhóm *</FieldLabel>
                 <Input id="categoryName" autoComplete="off" {...form.register('categoryName')} />
@@ -331,7 +469,7 @@ export function CategoryCatalog({
                     })
                     .map((category) => (
                       <NativeSelectOption key={category.id} value={category.id}>
-                        {category.categoryPath}
+                        {`${'\u00A0\u00A0'.repeat(Math.max(category.level - 1, 0))}${category.level > 1 ? '└─ ' : ''}${category.categoryName}`}
                       </NativeSelectOption>
                     ))}
                 </NativeSelect>

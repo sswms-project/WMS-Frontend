@@ -91,6 +91,17 @@ describe('application navigation visibility', () => {
     ])
   })
 
+  it('places staff management under organization management for warehouse managers', () => {
+    const managerSections = NAV_CONFIG[USER_ROLES.WarehouseManager]
+    const organizationSection = managerSections.find(
+      (section) => section.id === 'organization-management'
+    )
+    const subjectsSection = managerSections.find((section) => section.id === 'subjects')
+
+    expect(organizationSection?.items.some((item) => item.href === APP_ROUTES.staff)).toBe(true)
+    expect(subjectsSection?.items.some((item) => item.href === APP_ROUTES.staff)).toBe(false)
+  })
+
   it('uses the requested tenant sidebar hierarchy and order', () => {
     const tenantSections = NAV_CONFIG[USER_ROLES.TenantOwner]
 

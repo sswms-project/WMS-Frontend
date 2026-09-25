@@ -127,6 +127,19 @@ export function useCreateProductMutation() {
   })
 }
 
+export function useUploadProductImageMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, { id: string; file: File }>({
+    mutationFn: ({ id, file }) =>
+      productService.uploadProductImage(id, file).then((response) => response.data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.detail(id) })
+    },
+    onError: (error) => logger.error(formatApiError(error)),
+  })
+}
+
 export function useUpdateProductMutation(id: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiErrorResponse, UpdateProductRequest>({

@@ -103,15 +103,6 @@ export function UnitCatalog({
         </div>
         {canManage ? (
           <div className="flex items-center gap-2">
-            {selectedUnits.length > 0 ? (
-              <Button
-                variant="outline"
-                disabled={isPending || selectedUnits.every((unit) => unit.status !== 'Active')}
-                onClick={() => setIsBulkStatusOpen(true)}
-              >
-                Ngừng sử dụng ({selectedUnits.length})
-              </Button>
-            ) : null}
             <Button onClick={onCreate}>
               <Plus data-icon="inline-start" aria-hidden="true" />
               Thêm đơn vị tính
@@ -126,20 +117,31 @@ export function UnitCatalog({
             <h2 className="text-sm font-semibold">Danh sách đơn vị tính</h2>
             <p className="text-muted-foreground text-xs">{filteredItems.length} đơn vị tính</p>
           </div>
-          <NativeSelect
-            aria-label="Lọc đơn vị tính theo trạng thái"
-            className="w-44"
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(parseActiveStatusFilter(event.target.value))
-              setSelectedIds(new Set())
-              setPage(1)
-            }}
-          >
-            <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
-            <NativeSelectOption value="Active">Đang hoạt động</NativeSelectOption>
-            <NativeSelectOption value="Inactive">Ngừng hoạt động</NativeSelectOption>
-          </NativeSelect>
+          <div className="flex flex-wrap items-center gap-2">
+            {canManage && selectedUnits.length > 0 ? (
+              <Button
+                variant="outline"
+                disabled={isPending || selectedUnits.every((unit) => unit.status !== 'Active')}
+                onClick={() => setIsBulkStatusOpen(true)}
+              >
+                Ngừng sử dụng ({selectedUnits.length})
+              </Button>
+            ) : null}
+            <NativeSelect
+              aria-label="Lọc đơn vị tính theo trạng thái"
+              className="w-44"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(parseActiveStatusFilter(event.target.value))
+                setSelectedIds(new Set())
+                setPage(1)
+              }}
+            >
+              <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+              <NativeSelectOption value="Active">Đang hoạt động</NativeSelectOption>
+              <NativeSelectOption value="Inactive">Ngừng hoạt động</NativeSelectOption>
+            </NativeSelect>
+          </div>
         </div>
         {isLoading ? (
           <OperationalLoadingState />
@@ -158,23 +160,25 @@ export function UnitCatalog({
           <Table>
             <TableHeader className="bg-card sticky top-0 z-10">
               <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    aria-label="Chọn tất cả đơn vị tính"
-                    checked={allSelected ? true : selectedIds.size > 0 ? 'indeterminate' : false}
-                    onCheckedChange={(checked) =>
-                      setSelectedIds((current) =>
-                        checked
-                          ? new Set([...current, ...pagedItems.map((unit) => unit.id)])
-                          : new Set(
-                              [...current].filter(
-                                (id) => !pagedItems.some((unit) => unit.id === id)
+                {canManage ? (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      aria-label="Chọn tất cả đơn vị tính"
+                      checked={allSelected ? true : selectedIds.size > 0 ? 'indeterminate' : false}
+                      onCheckedChange={(checked) =>
+                        setSelectedIds((current) =>
+                          checked
+                            ? new Set([...current, ...pagedItems.map((unit) => unit.id)])
+                            : new Set(
+                                [...current].filter(
+                                  (id) => !pagedItems.some((unit) => unit.id === id)
+                                )
                               )
-                            )
-                      )
-                    }
-                  />
-                </TableHead>
+                        )
+                      }
+                    />
+                  </TableHead>
+                ) : null}
                 <TableHead>Tên đơn vị</TableHead>
                 <TableHead>Ký hiệu</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -184,20 +188,22 @@ export function UnitCatalog({
             <TableBody>
               {pagedItems.map((unit) => (
                 <TableRow key={unit.id}>
-                  <TableCell>
-                    <Checkbox
-                      aria-label={`Chọn ${unit.unitName}`}
-                      checked={selectedIds.has(unit.id)}
-                      onCheckedChange={(checked) =>
-                        setSelectedIds((current) => {
-                          const next = new Set(current)
-                          if (checked) next.add(unit.id)
-                          else next.delete(unit.id)
-                          return next
-                        })
-                      }
-                    />
-                  </TableCell>
+                  {canManage ? (
+                    <TableCell>
+                      <Checkbox
+                        aria-label={`Chọn ${unit.unitName}`}
+                        checked={selectedIds.has(unit.id)}
+                        onCheckedChange={(checked) =>
+                          setSelectedIds((current) => {
+                            const next = new Set(current)
+                            if (checked) next.add(unit.id)
+                            else next.delete(unit.id)
+                            return next
+                          })
+                        }
+                      />
+                    </TableCell>
+                  ) : null}
                   <TableCell>{unit.unitName}</TableCell>
                   <TableCell>{unit.symbol ?? '—'}</TableCell>
                   <TableCell>

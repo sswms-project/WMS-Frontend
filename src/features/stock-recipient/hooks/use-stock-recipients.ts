@@ -27,6 +27,14 @@ export function useStockRecipientsQuery(params: StockRecipientListQuery) {
   })
 }
 
+export function useNextStockRecipientCodeQuery(enabled: boolean) {
+  return useQuery<ApiResponse<string>, ApiErrorResponse>({
+    queryKey: queryKeys.stockRecipients.nextCode,
+    queryFn: stockRecipientService.getNextCode,
+    enabled,
+  })
+}
+
 export function useStockRecipientQuery(stockRecipientId: string) {
   return useQuery<StockRecipient, ApiErrorResponse>({
     queryKey: queryKeys.stockRecipients.detail(stockRecipientId),

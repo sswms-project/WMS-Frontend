@@ -138,6 +138,7 @@ export const API_ENDPOINTS = {
   suppliers: {
     list: '/suppliers',
     create: '/suppliers',
+    nextCode: '/suppliers/next-code',
     detail: (supplierId: string) => `/suppliers/${supplierId}`,
     update: (supplierId: string) => `/suppliers/${supplierId}`,
     deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
@@ -221,6 +222,7 @@ export const API_ENDPOINTS = {
     create: '/products',
     detail: (id: string) => `/products/${id}`,
     update: (id: string) => `/products/${id}`,
+    image: (id: string) => `/products/${id}/image`,
     deactivate: (id: string) => `/products/${id}/deactivate`,
     reactivate: (id: string) => `/products/${id}/reactivate`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
@@ -284,6 +286,7 @@ export const API_ENDPOINTS = {
   stockRecipients: {
     list: '/stock-recipients',
     create: '/stock-recipients',
+    nextCode: '/stock-recipients/next-code',
     detail: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
     update: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
     deactivate: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}/deactivate`,

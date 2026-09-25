@@ -39,19 +39,20 @@ export function StockRecipientFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="grid gap-4 sm:grid-cols-2">
+          <FieldGroup className="bg-card grid gap-4 rounded-lg border p-4 md:grid-cols-2">
             <Field data-invalid={Boolean(errors.recipientCode)}>
               <FieldLabel htmlFor="stockRecipient-code">Mã khách hàng *</FieldLabel>
               <Input
                 id="stockRecipient-code"
                 autoComplete="off"
-                placeholder="VD: KH00001"
+                spellCheck={false}
+                placeholder="Ví dụ: KH000001…"
                 aria-invalid={Boolean(errors.recipientCode)}
                 {...form.register('recipientCode')}
               />
@@ -65,6 +66,16 @@ export function StockRecipientFormDialog({
                 {...form.register('recipientName')}
               />
               <FieldError errors={[errors.recipientName]} />
+            </Field>
+            <Field data-invalid={Boolean(errors.taxCode)}>
+              <FieldLabel htmlFor="stockRecipient-taxCode">Mã số thuế</FieldLabel>
+              <Input
+                id="stockRecipient-taxCode"
+                autoComplete="off"
+                aria-invalid={Boolean(errors.taxCode)}
+                {...form.register('taxCode')}
+              />
+              <FieldError errors={[errors.taxCode]} />
             </Field>
             <Field data-invalid={Boolean(errors.phone)}>
               <FieldLabel htmlFor="stockRecipient-phone">Số điện thoại</FieldLabel>
@@ -90,7 +101,7 @@ export function StockRecipientFormDialog({
               />
               <FieldError errors={[errors.email]} />
             </Field>
-            <Field className="sm:col-span-2" data-invalid={Boolean(errors.address)}>
+            <Field className="md:col-span-2" data-invalid={Boolean(errors.address)}>
               <FieldLabel htmlFor="stockRecipient-address">Địa chỉ</FieldLabel>
               <Textarea
                 rows={2}
@@ -107,7 +118,7 @@ export function StockRecipientFormDialog({
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? <Spinner data-icon="inline-start" /> : null}
-              Lưu đơn vị nhận hàng
+              Lưu khách hàng
             </Button>
           </DialogFooter>
         </form>

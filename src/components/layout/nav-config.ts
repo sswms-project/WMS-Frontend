@@ -234,6 +234,13 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       ],
     },
     {
+      id: 'organization-management',
+      label: 'Quản trị tổ chức',
+      icon: Building2,
+      collapsible: true,
+      items: [requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW)],
+    },
+    {
       id: 'subjects',
       label: 'Đối tượng',
       icon: Users,
@@ -241,7 +248,6 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
         requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
-        requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW),
       ],
     },
     {
