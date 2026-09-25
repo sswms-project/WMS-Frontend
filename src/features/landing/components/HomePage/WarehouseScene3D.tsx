@@ -3,6 +3,7 @@
 import { ContactShadows, Float, RoundedBox } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useReducedMotion } from 'framer-motion'
+import { useTheme } from 'next-themes'
 import { useRef } from 'react'
 import * as THREE from 'three'
 
@@ -25,37 +26,62 @@ const BRAND = {
   white: '#f9fff6',
 } as const
 
+const DARK_BRAND = {
+  deep: '#07100b',
+  deepSoft: '#1e3927',
+  lime: '#9be564',
+  limeDim: '#5e9d43',
+  mint: '#8cae8b',
+  mintSoft: '#1c3022',
+  gridLine: '#36533b',
+  white: '#e8f5e5',
+} as const
+
+type BrandPalette = {
+  readonly deep: string
+  readonly deepSoft: string
+  readonly lime: string
+  readonly limeDim: string
+  readonly mint: string
+  readonly mintSoft: string
+  readonly gridLine: string
+  readonly white: string
+}
+
 /* Turns the whole composition toward the hero copy on the left */
 const BASE_ROTATION_Y = 0.5
 
 function Crate({
   position,
   size = 1,
-  color = BRAND.mint,
+  palette,
+  color,
   lime = false,
 }: {
   position: [number, number, number]
   size?: number
+  palette: BrandPalette
   color?: string
   lime?: boolean
 }) {
+  const crateColor = color ?? palette.mint
   return (
     <RoundedBox args={[size, size, size]} radius={0.05} position={position} castShadow>
       {lime ? (
         <meshStandardMaterial
-          color={BRAND.lime}
-          emissive={BRAND.limeDim}
+          color={palette.lime}
+          emissive={palette.limeDim}
           emissiveIntensity={0.35}
           roughness={0.3}
         />
       ) : (
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.08} />
+        <meshStandardMaterial color={crateColor} roughness={0.55} metalness={0.08} />
       )}
     </RoundedBox>
   )
 }
 
-function StorageRack() {
+function StorageRack({ palette }: { palette: BrandPalette }) {
   const postPositions: [number, number][] = [
     [-1.7, -0.55],
     [-1.7, 0.55],
@@ -67,25 +93,25 @@ function StorageRack() {
       {postPositions.map(([x, z]) => (
         <mesh key={`${x}-${z}`} position={[x, 1.5, z]} castShadow>
           <boxGeometry args={[0.12, 3, 0.12]} />
-          <meshStandardMaterial color={BRAND.deep} roughness={0.35} metalness={0.45} />
+          <meshStandardMaterial color={palette.deep} roughness={0.35} metalness={0.45} />
         </mesh>
       ))}
       {[1.05, 2.1].map((shelfY) => (
         <mesh key={shelfY} position={[0, shelfY, 0]} castShadow receiveShadow>
           <boxGeometry args={[3.55, 0.1, 1.25]} />
-          <meshStandardMaterial color={BRAND.deep} roughness={0.4} metalness={0.35} />
+          <meshStandardMaterial color={palette.deep} roughness={0.4} metalness={0.35} />
         </mesh>
       ))}
       {/* Crates resting on the shelves */}
-      <Crate position={[-1.05, 1.44, 0]} size={0.66} />
-      <Crate position={[0.15, 1.42, 0.1]} size={0.6} lime />
-      <Crate position={[1.1, 2.48, -0.05]} size={0.64} color={BRAND.mintSoft} />
-      <Crate position={[-0.6, 0.34, 0.15]} size={0.68} color={BRAND.mintSoft} />
+      <Crate palette={palette} position={[-1.05, 1.44, 0]} size={0.66} />
+      <Crate palette={palette} position={[0.15, 1.42, 0.1]} size={0.6} lime />
+      <Crate palette={palette} position={[1.1, 2.48, -0.05]} size={0.64} color={palette.mintSoft} />
+      <Crate palette={palette} position={[-0.6, 0.34, 0.15]} size={0.68} color={palette.mintSoft} />
     </group>
   )
 }
 
-function ScanBeam({ animate }: { animate: boolean }) {
+function ScanBeam({ animate, palette }: { animate: boolean; palette: BrandPalette }) {
   const beamRef = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     if (!animate || !beamRef.current) return
@@ -97,12 +123,12 @@ function ScanBeam({ animate }: { animate: boolean }) {
   return (
     <mesh ref={beamRef} position={[-2.1, 1.2, -1.6]}>
       <boxGeometry args={[3.8, 0.02, 1.45]} />
-      <meshBasicMaterial color={BRAND.lime} transparent opacity={0.3} toneMapped={false} />
+      <meshBasicMaterial color={palette.lime} transparent opacity={0.3} toneMapped={false} />
     </mesh>
   )
 }
 
-function LimeSphere({ animate }: { animate: boolean }) {
+function LimeSphere({ animate, palette }: { animate: boolean; palette: BrandPalette }) {
   return (
     <Float
       speed={animate ? 1.4 : 0}
@@ -113,8 +139,8 @@ function LimeSphere({ animate }: { animate: boolean }) {
       <mesh castShadow>
         <sphereGeometry args={[0.85, 48, 48]} />
         <meshPhysicalMaterial
-          color={BRAND.lime}
-          emissive={BRAND.limeDim}
+          color={palette.lime}
+          emissive={palette.limeDim}
           emissiveIntensity={0.15}
           roughness={0.15}
           clearcoat={1}
@@ -137,7 +163,7 @@ function CameraRig({ animate }: { animate: boolean }) {
   return null
 }
 
-function WarehouseGroup({ animate }: { animate: boolean }) {
+function WarehouseGroup({ animate, palette }: { animate: boolean; palette: BrandPalette }) {
   const groupRef = useRef<THREE.Group>(null)
   useFrame(({ pointer }) => {
     if (!animate || !groupRef.current) return
@@ -158,18 +184,18 @@ function WarehouseGroup({ animate }: { animate: boolean }) {
       {/* Floor kept close to the page background so the scene blends in */}
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[16, 12]} />
-        <meshStandardMaterial color={BRAND.mintSoft} roughness={0.95} />
+        <meshStandardMaterial color={palette.mintSoft} roughness={0.95} />
       </mesh>
-      <gridHelper args={[14, 22, BRAND.limeDim, BRAND.gridLine]} position={[0, 0.001, 0]} />
+      <gridHelper args={[14, 22, palette.limeDim, palette.gridLine]} position={[0, 0.001, 0]} />
 
-      <StorageRack />
-      <ScanBeam animate={animate} />
-      <LimeSphere animate={animate} />
+      <StorageRack palette={palette} />
+      <ScanBeam animate={animate} palette={palette} />
+      <LimeSphere animate={animate} palette={palette} />
 
       {/* Floor crates */}
-      <Crate position={[1.6, 0.5, 0.6]} size={1} color={BRAND.deepSoft} />
-      <Crate position={[1.5, 1.32, 0.55]} size={0.64} />
-      <Crate position={[0.2, 0.42, 1.7]} size={0.84} />
+      <Crate palette={palette} position={[1.6, 0.5, 0.6]} size={1} color={palette.deepSoft} />
+      <Crate palette={palette} position={[1.5, 1.32, 0.55]} size={0.64} />
+      <Crate palette={palette} position={[0.2, 0.42, 1.7]} size={0.84} />
 
       {/* Floating lime crate */}
       <Float
@@ -178,7 +204,7 @@ function WarehouseGroup({ animate }: { animate: boolean }) {
         floatIntensity={animate ? 1.2 : 0}
         position={[2.9, 1.5, 1.4]}
       >
-        <Crate position={[0, 0, 0]} size={0.72} lime />
+        <Crate palette={palette} position={[0, 0, 0]} size={0.72} lime />
       </Float>
 
       <ContactShadows position={[0, 0.002, 0]} opacity={0.28} scale={13} blur={2.6} far={4.2} />
@@ -188,7 +214,9 @@ function WarehouseGroup({ animate }: { animate: boolean }) {
 
 export function WarehouseScene3D() {
   const prefersReducedMotion = useReducedMotion()
+  const { resolvedTheme } = useTheme()
   const animate = !prefersReducedMotion
+  const palette = resolvedTheme === 'dark' ? DARK_BRAND : BRAND
 
   return (
     <div
@@ -203,17 +231,17 @@ export function WarehouseScene3D() {
         frameloop={animate ? 'always' : 'demand'}
         onCreated={({ camera }) => camera.lookAt(0, 1.05, 0)}
       >
-        <ambientLight intensity={0.9} color={BRAND.white} />
+        <ambientLight intensity={0.9} color={palette.white} />
         <directionalLight
           position={[6, 9, 5]}
           intensity={1.3}
-          color={BRAND.white}
+          color={palette.white}
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
-        <pointLight position={[2.4, 3.4, -1.2]} intensity={9} color={BRAND.lime} distance={7} />
+        <pointLight position={[2.4, 3.4, -1.2]} intensity={9} color={palette.lime} distance={7} />
         <CameraRig animate={animate} />
-        <WarehouseGroup animate={animate} />
+        <WarehouseGroup animate={animate} palette={palette} />
       </Canvas>
     </div>
   )
