@@ -75,23 +75,28 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/zones/${zoneId}`,
     deactivateZone: (warehouseId: string, zoneId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/deactivate`,
+    reactivateZone: (warehouseId: string, zoneId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/reactivate`,
     createRack: (warehouseId: string, zoneId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/racks`,
     updateRack: (warehouseId: string, zoneId: string, rackId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}`,
     deactivateRack: (warehouseId: string, zoneId: string, rackId: string) =>
       `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}/deactivate`,
+    reactivateRack: (warehouseId: string, zoneId: string, rackId: string) =>
+      `/warehouses/${warehouseId}/zones/${zoneId}/racks/${rackId}/reactivate`,
     createSlot: (warehouseId: string, rackId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots`,
     updateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}`,
     deactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
       `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/deactivate`,
-    configureOutboundStaging: (warehouseId: string, rackId: string, slotId: string) =>
-      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/outbound-staging`,
+    reactivateSlot: (warehouseId: string, rackId: string, slotId: string) =>
+      `/warehouses/${warehouseId}/racks/${rackId}/slots/${slotId}/reactivate`,
     locationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
+    reactivate: (warehouseId: string) => `/warehouses/${warehouseId}/reactivate`,
   },
   inventory: {
     list: '/inventory',

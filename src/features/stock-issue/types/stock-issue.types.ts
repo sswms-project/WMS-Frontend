@@ -107,7 +107,6 @@ export interface CreateStockIssueRequestRequest {
 export interface RecordStockPickingItemRequest {
   stockIssueRequestItemId: string
   inventoryStockId: string
-  stagingSlotId: string
   pickedQuantity: number
 }
 

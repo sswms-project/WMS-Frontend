@@ -37,7 +37,6 @@ export const recordStockPickingLineSchema = z.object({
   sku: z.string(),
   remainingQuantity: z.number(),
   inventoryStockId: z.string(),
-  stagingSlotId: z.string(),
   availableQuantity: z.number().min(0),
   pickedQuantity: z.number().min(0, 'Số lượng lấy hàng không được âm.'),
 })
@@ -64,14 +63,6 @@ export const recordStockPickingSchema = z
           code: 'custom',
           path: ['lines', index, 'inventoryStockId'],
           message: 'Vui lòng chọn đúng dòng tồn kho để lấy hàng.',
-        })
-      }
-
-      if (line.pickedQuantity > 0 && !line.stagingSlotId) {
-        context.addIssue({
-          code: 'custom',
-          path: ['lines', index, 'stagingSlotId'],
-          message: 'Vui lòng chọn khu chờ xuất.',
         })
       }
 

@@ -59,7 +59,6 @@ function toRecordStockPickingLines(
     sku: item.sku,
     remainingQuantity: Math.max(0, item.quantity - item.pickedQuantity),
     inventoryStockId: '',
-    stagingSlotId: '',
     availableQuantity: 0,
     pickedQuantity: 0,
   }))
@@ -120,13 +119,6 @@ export default function StockIssueRequestPage() {
     ...(debouncedGoodsReturnRequestSlotSearch.trim()
       ? { searchText: debouncedGoodsReturnRequestSlotSearch.trim() }
       : {}),
-  })
-  const stagingSlotsQuery = useWarehouseLocationsQuery(issuingOrder?.warehouseId ?? '', {
-    top: 200,
-    skip: 0,
-    needTotalCount: true,
-    type: 'Slot',
-    lifecycleStatus: 'Active',
   })
   const warehousesQuery = useWarehousesQuery({
     top: 100,
@@ -192,7 +184,6 @@ export default function StockIssueRequestPage() {
             .map((line) => ({
               stockIssueRequestItemId: line.stockIssueRequestItemId,
               inventoryStockId: line.inventoryStockId,
-              stagingSlotId: line.stagingSlotId,
               pickedQuantity: line.pickedQuantity,
             })),
         },
@@ -367,9 +358,6 @@ export default function StockIssueRequestPage() {
           }))}
         inventorySearch={issueInventorySearch}
         onInventorySearchChange={setIssueInventorySearch}
-        stagingSlotOptions={(stagingSlotsQuery.data?.items ?? [])
-          .filter((slot) => slot.isOutboundStaging)
-          .map((slot) => ({ id: slot.id, label: slot.code }))}
       />
       <CreateGoodsReturnRequestDialog
         order={returningOrder}
@@ -403,8 +391,8 @@ export default function StockIssueRequestPage() {
             </AlertDialogMedia>
             <AlertDialogTitle>Cho phép xuất kho?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hàng đã được lấy và đưa tới khu chờ xuất. Sau khi bạn cho phép, nhân viên kho mới có
-              thể quét và xác nhận hàng rời kho.
+              Hàng đã được lấy đủ và đang được giữ tại các vị trí đã chọn. Sau khi bạn cho phép,
+              nhân viên kho mới có thể quét và xác nhận hàng rời kho.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -33,7 +33,7 @@ export function WarehouseLocationBarcodeView({
       // Printed logistics labels require fixed black bars on a white substrate.
       JsBarcode(svgRef.current, barcode.barcodeValue, {
         format: 'CODE128',
-        displayValue: true,
+        displayValue: false,
         font: 'JetBrains Mono, monospace',
         fontSize: 16,
         height: 88,
@@ -45,7 +45,7 @@ export function WarehouseLocationBarcodeView({
       logger.error(error)
       queueMicrotask(() => {
         if (!isCancelled) {
-          setRenderError('Giá trị barcode không thể hiển thị bằng chuẩn Code 128.')
+          setRenderError('Giá trị mã vạch không thể hiển thị bằng chuẩn Code 128.')
         }
       })
     }
@@ -84,11 +84,11 @@ export function WarehouseLocationBarcodeView({
           </Button>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold">Barcode vị trí</h2>
+              <h2 className="text-lg font-semibold">Mã vạch vị trí</h2>
               <Badge variant="outline">{TYPE_LABELS[barcode.locationType]}</Badge>
             </div>
             <p translate="no" className="text-muted-foreground mt-1 font-mono text-xs">
-              {barcode.locationCode}
+              {barcode.displayPath ?? barcode.locationCode}
             </p>
           </div>
         </div>
@@ -118,13 +118,19 @@ export function WarehouseLocationBarcodeView({
       {renderError ? (
         <Alert variant="destructive">
           <TriangleAlert aria-hidden="true" />
-          <AlertTitle>Không thể tạo barcode</AlertTitle>
+          <AlertTitle>Không thể tạo mã vạch</AlertTitle>
           <AlertDescription>{renderError}</AlertDescription>
         </Alert>
       ) : null}
 
       <div className="flex min-h-64 items-center justify-center overflow-x-auto bg-white p-4">
-        <svg ref={svgRef} role="img" aria-label={`Barcode ${barcode.locationCode}`} />
+        <div className="grid justify-items-center gap-3 text-center">
+          <p className="font-medium">{barcode.displayPath ?? barcode.locationCode}</p>
+          <svg ref={svgRef} role="img" aria-label={`Mã vạch ${barcode.locationCode}`} />
+          <p translate="no" className="font-mono text-sm font-semibold">
+            {barcode.locationCode}
+          </p>
+        </div>
       </div>
 
       <dl className="grid grid-cols-2 gap-4 text-xs sm:grid-cols-3">
@@ -137,10 +143,8 @@ export function WarehouseLocationBarcodeView({
           <dd>{barcode.symbology}</dd>
         </div>
         <div className="col-span-2 flex min-w-0 flex-col gap-1 sm:col-span-1">
-          <dt className="text-muted-foreground">Giá trị</dt>
-          <dd translate="no" className="font-mono break-all">
-            {barcode.barcodeValue}
-          </dd>
+          <dt className="text-muted-foreground">Đường dẫn vị trí</dt>
+          <dd>{barcode.displayPath ?? barcode.locationCode}</dd>
         </div>
       </dl>
     </section>

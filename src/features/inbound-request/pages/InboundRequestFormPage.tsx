@@ -7,6 +7,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
@@ -14,7 +24,7 @@ import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
-import { InboundRequestForm, type LookupOption } from '../components/InboundRequestFormPage'
+import { InboundRequestForm } from '../components/InboundRequestFormPage'
 import {
   useCreateInboundRequestMutation,
   useProductOptionsQuery,
@@ -27,28 +37,19 @@ import {
   inboundRequestSchema,
   type InboundRequestFormValues,
 } from '../schemas/inbound-request.schema'
-import type { SaveInboundRequestRequest } from '../types/inbound-request.types'
+import type {
+  LookupOption,
+  ProductSearchState,
+  SaveInboundRequestRequest,
+} from '../types/inbound-request.types'
 import {
+  mergeLookupOptions,
   toOperationalDateApiValue,
   toOperationalDateInputValue,
 } from '../utils/inbound-request-format'
 
 const EMPTY_LINE = { productId: '', quantity: 1, unitPrice: null }
 const LOOKUP_PAGE_SIZE = 20
-
-interface ProductSearchState {
-  readonly scope: string
-  readonly value: string
-}
-
-function mergeLookupOptions(
-  options: readonly LookupOption[],
-  fallbackOptions: readonly LookupOption[]
-): LookupOption[] {
-  return Array.from(
-    new Map([...fallbackOptions, ...options].map((option) => [option.value, option])).values()
-  )
-}
 
 export default function InboundRequestFormPage({
   inboundRequestId,
@@ -61,6 +62,7 @@ export default function InboundRequestFormPage({
   const [warehouseSearchText, setWarehouseSearchText] = useState('')
   const [supplierSearchText, setSupplierSearchText] = useState('')
   const [productSearch, setProductSearch] = useState<ProductSearchState | null>(null)
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false)
   const debouncedWarehouseSearch = useDebouncedValue(warehouseSearchText.trim(), 300)
   const debouncedSupplierSearch = useDebouncedValue(supplierSearchText.trim(), 300)
   const debouncedProductSearch = useDebouncedValue(productSearch?.value.trim() ?? '', 300)
@@ -164,17 +166,20 @@ export default function InboundRequestFormPage({
     }
   }
 
-  function handleCancel() {
-    if (
-      form.formState.isDirty &&
-      !window.confirm('Dữ liệu chưa lưu sẽ bị mất. Bạn vẫn muốn rời trang?')
-    )
-      return
+  function leavePage() {
     router.push(
       (inboundRequestId
         ? APP_ROUTES.inboundRequestDetail(inboundRequestId)
         : APP_ROUTES.inboundRequests) as Route
     )
+  }
+
+  function handleCancel() {
+    if (form.formState.isDirty) {
+      setShowLeaveDialog(true)
+      return
+    }
+    leavePage()
   }
 
   function handleProductSearchChange(scope: string, value: string) {
@@ -199,10 +204,12 @@ export default function InboundRequestFormPage({
   const warehouseOptions = useMemo(
     () =>
       mergeLookupOptions(
-        (warehousesQuery.data?.items ?? []).map((warehouse) => ({
-          value: warehouse.id,
-          label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
-        })),
+        (warehousesQuery.data?.items ?? []).map(
+          (warehouse): LookupOption => ({
+            value: warehouse.id,
+            label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
+          })
+        ),
         detail?.warehouseId
           ? [
               {
@@ -217,10 +224,12 @@ export default function InboundRequestFormPage({
   const supplierOptions = useMemo(
     () =>
       mergeLookupOptions(
-        (suppliersQuery.data?.items ?? []).map((supplier) => ({
-          value: supplier.id,
-          label: `${supplier.supplierName} · ${supplier.phone}`,
-        })),
+        (suppliersQuery.data?.items ?? []).map(
+          (supplier): LookupOption => ({
+            value: supplier.id,
+            label: `${supplier.supplierName} · ${supplier.phone}`,
+          })
+        ),
         detail ? [{ value: detail.supplierId, label: detail.supplierName }] : []
       ),
     [detail, suppliersQuery.data?.items]
@@ -228,14 +237,18 @@ export default function InboundRequestFormPage({
   const productOptions = useMemo(
     () =>
       mergeLookupOptions(
-        (productsQuery.data?.items ?? []).map((product) => ({
-          value: product.id,
-          label: `${product.sku} - ${product.productName}`,
-        })),
-        detail?.lines.map((line) => ({
-          value: line.productId,
-          label: `${line.productSKU} - ${line.productName}`,
-        })) ?? []
+        (productsQuery.data?.items ?? []).map(
+          (product): LookupOption => ({
+            value: product.id,
+            label: `${product.sku} - ${product.productName}`,
+          })
+        ),
+        detail?.lines.map(
+          (line): LookupOption => ({
+            value: line.productId,
+            label: `${line.productSKU} - ${line.productName}`,
+          })
+        ) ?? []
       ),
     [detail?.lines, productsQuery.data?.items]
   )
@@ -256,31 +269,48 @@ export default function InboundRequestFormPage({
   }
 
   return (
-    <InboundRequestForm
-      currency={detailQuery.data?.currency ?? 'VND'}
-      title={
-        isEditing
-          ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`
-          : 'Tạo yêu cầu nhập kho'
-      }
-      description="Chọn kho, nhà cung cấp và các sản phẩm cần nhập."
-      form={form}
-      fields={fieldArray.fields}
-      warehouseOptions={warehouseOptions}
-      supplierOptions={supplierOptions}
-      productOptions={productOptions}
-      isWarehouseSearchLoading={warehousesQuery.isFetching}
-      isSupplierSearchLoading={suppliersQuery.isFetching}
-      isProductSearchLoading={productsQuery.isFetching}
-      isPending={isPending}
-      onAddLine={() => fieldArray.append(EMPTY_LINE)}
-      onRemoveLine={fieldArray.remove}
-      onCancel={handleCancel}
-      onSaveDraft={() => void form.handleSubmit((values) => save(values, false))()}
-      onSaveAndSubmit={() => void form.handleSubmit((values) => save(values, true))()}
-      onWarehouseSearchChange={setWarehouseSearchText}
-      onSupplierSearchChange={setSupplierSearchText}
-      onProductSearchChange={handleProductSearchChange}
-    />
+    <>
+      <InboundRequestForm
+        currency={detailQuery.data?.currency ?? 'VND'}
+        title={
+          isEditing
+            ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`
+            : 'Tạo yêu cầu nhập kho'
+        }
+        description="Chọn kho, nhà cung cấp và các sản phẩm cần nhập."
+        form={form}
+        fields={fieldArray.fields}
+        warehouseOptions={warehouseOptions}
+        supplierOptions={supplierOptions}
+        productOptions={productOptions}
+        isWarehouseSearchLoading={warehousesQuery.isFetching}
+        isSupplierSearchLoading={suppliersQuery.isFetching}
+        isProductSearchLoading={productsQuery.isFetching}
+        isPending={isPending}
+        disablePastDates={!isEditing}
+        onAddLine={() => fieldArray.append(EMPTY_LINE)}
+        onRemoveLine={fieldArray.remove}
+        onCancel={handleCancel}
+        onSaveDraft={() => void form.handleSubmit((values) => save(values, false))()}
+        onSaveAndSubmit={() => void form.handleSubmit((values) => save(values, true))()}
+        onWarehouseSearchChange={setWarehouseSearchText}
+        onSupplierSearchChange={setSupplierSearchText}
+        onProductSearchChange={handleProductSearchChange}
+      />
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rời khỏi trang?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dữ liệu chưa lưu sẽ bị mất. Bạn vẫn muốn rời trang?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Ở lại</AlertDialogCancel>
+            <AlertDialogAction onClick={leavePage}>Rời trang</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

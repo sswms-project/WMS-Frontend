@@ -36,7 +36,6 @@ describe('stockIssueService', () => {
         {
           stockIssueRequestItemId: 'line',
           inventoryStockId: 'stock',
-          stagingSlotId: 'staging',
           pickedQuantity: 2,
         },
       ],

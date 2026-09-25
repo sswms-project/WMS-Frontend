@@ -10,6 +10,7 @@ import {
   LayoutPanelTop,
   MapPinned,
   RefreshCw,
+  RotateCcw,
   TriangleAlert,
   Warehouse,
 } from 'lucide-react'
@@ -37,6 +38,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
@@ -45,11 +47,13 @@ import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.
 import { WarehouseDeactivateDialog, WarehouseEditDialog } from '../WarehouseDetailPage'
 import {
   useDeactivateWarehouseMutation,
+  useReactivateWarehouseMutation,
   useUpdateWarehouseMutation,
   useWarehouseQuery,
 } from '../../hooks/use-warehouse'
 import type { UpdateWarehouseFormValues } from '../../schemas/warehouse.schema'
 import { getWarehouseCapabilities } from '../../utils/warehouse-capabilities'
+import { formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseWorkspaceLayoutProps {
   readonly warehouseId: string
@@ -65,6 +69,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const pathname = usePathname()
   const router = useRouter()
   const role = useAuthStore((state) => state.user?.role ?? null)
+  const meQuery = useMeQuery()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false)
   const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
@@ -75,11 +80,15 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const warehouseQuery = useWarehouseQuery(warehouseId)
   const updateMutation = useUpdateWarehouseMutation()
   const deactivateMutation = useDeactivateWarehouseMutation()
-  const capabilities = getWarehouseCapabilities(role)
+  const reactivateMutation = useReactivateWarehouseMutation()
+  const capabilities = getWarehouseCapabilities(role, meQuery.data?.permissions)
 
   async function handleUpdate(values: UpdateWarehouseFormValues): Promise<boolean> {
     try {
-      await updateMutation.mutateAsync({ warehouseId, request: values })
+      await updateMutation.mutateAsync({
+        warehouseId,
+        request: { ...values, expectedRowVersion: warehouseQuery.data?.rowVersion ?? '' },
+      })
       toast.success('Đã cập nhật thông tin kho.')
       setIsEditDialogOpen(false)
       return true
@@ -112,10 +121,20 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
     setPendingNavigation(href)
   }
 
-  async function handleDeactivate() {
+  async function handleLifecycle(reason: string | null) {
     try {
-      await deactivateMutation.mutateAsync(warehouseId)
-      toast.success('Đã ngừng hoạt động kho.')
+      const variables = {
+        warehouseId,
+        request: { reason, expectedRowVersion: warehouseQuery.data?.rowVersion ?? '' },
+      }
+      await (warehouseQuery.data?.status === 'Active'
+        ? deactivateMutation.mutateAsync(variables)
+        : reactivateMutation.mutateAsync(variables))
+      toast.success(
+        warehouseQuery.data?.status === 'Active'
+          ? 'Đã ngừng hoạt động kho.'
+          : 'Đã kích hoạt lại kho.'
+      )
       setDeactivateErrorMessage(null)
       setIsDeactivateDialogOpen(false)
     } catch (error) {
@@ -125,7 +144,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
     }
   }
 
-  if (warehouseQuery.isLoading) {
+  if (warehouseQuery.isLoading || meQuery.isLoading) {
     return (
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
         <Skeleton className="h-10 w-48" />
@@ -135,7 +154,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
     )
   }
 
-  if (warehouseQuery.isError || !warehouseQuery.data) {
+  if (warehouseQuery.isError || meQuery.isError || !warehouseQuery.data) {
     return (
       <div className="mx-auto w-full max-w-[1180px]">
         <Empty className="min-h-80 border">
@@ -175,8 +194,8 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const isLayoutActive = pathname === layoutHref
   const isDesignerActive = pathname === designerHref
   const isLocationsActive = pathname === locationsHref || pathname.startsWith(`${locationsHref}/`)
-  const canDeactivate = capabilities.canDeactivateWarehouse && isActive && isOverviewActive
-  const hasHeaderActions = isActive && (capabilities.canEditWarehouse || canDeactivate)
+  const canChangeLifecycle = capabilities.canDeactivateWarehouse && isOverviewActive
+  const hasHeaderActions = (isActive && capabilities.canEditWarehouse) || canChangeLifecycle
 
   return (
     <div
@@ -200,7 +219,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <p className="text-primary text-xs font-medium">Kho hàng</p>
               <Badge variant={isActive ? 'outline' : 'destructive'}>
-                {isActive ? 'Hoạt động' : warehouse.status}
+                {formatWarehouseStatus(warehouse.status)}
               </Badge>
             </div>
             <h1 className="mt-0.5 truncate text-xl font-semibold">{warehouse.warehouseName}</h1>
@@ -212,7 +231,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
 
         {hasHeaderActions ? (
           <div className="flex w-full gap-2 sm:w-auto">
-            {capabilities.canEditWarehouse ? (
+            {isActive && capabilities.canEditWarehouse ? (
               <Button
                 type="button"
                 className="min-w-0 flex-1 sm:flex-none"
@@ -223,7 +242,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
               </Button>
             ) : null}
 
-            {canDeactivate ? (
+            {canChangeLifecycle ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button type="button" variant="outline" className="min-w-0 flex-1 sm:flex-none">
@@ -233,14 +252,14 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    variant="destructive"
+                    variant={isActive ? 'destructive' : 'default'}
                     onSelect={() => {
                       setDeactivateErrorMessage(null)
                       setIsDeactivateDialogOpen(true)
                     }}
                   >
-                    <CircleOff aria-hidden="true" />
-                    Ngừng hoạt động kho
+                    {isActive ? <CircleOff aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
+                    {isActive ? 'Ngừng hoạt động kho' : 'Kích hoạt lại kho'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -306,10 +325,11 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
         warehouseName={warehouse.warehouseName}
         warehouseCode={warehouse.warehouseCode}
         open={isDeactivateDialogOpen}
-        isPending={deactivateMutation.isPending}
+        isPending={deactivateMutation.isPending || reactivateMutation.isPending}
         errorMessage={deactivateErrorMessage}
+        isReactivation={!isActive}
         onOpenChange={handleDeactivateDialogOpenChange}
-        onConfirm={() => void handleDeactivate()}
+        onConfirm={(reason) => void handleLifecycle(reason)}
       />
 
       <AlertDialog

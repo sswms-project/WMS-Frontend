@@ -36,6 +36,14 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => navigation.searchParams,
 }))
 
+vi.mock('@/features/auth/hooks/use-auth', () => ({
+  useMeQuery: () => ({ data: { permissions: [] }, isLoading: false, isError: false }),
+}))
+
+vi.mock('@/features/inventory/hooks/use-inventory', () => ({
+  useInventoryQuery: () => ({ data: { items: [] }, isLoading: false, isError: false }),
+}))
+
 vi.mock('../hooks/use-warehouse', () => ({
   useWarehouseQuery: () => warehouseHooks.warehouseQuery,
   useWarehouseLayoutQuery: () => warehouseHooks.layoutQuery,
@@ -48,6 +56,9 @@ vi.mock('../hooks/use-warehouse', () => ({
   useCreateSlotMutation: () => warehouseHooks.mutation,
   useUpdateSlotMutation: () => warehouseHooks.mutation,
   useDeactivateSlotMutation: () => warehouseHooks.mutation,
+  useReactivateZoneMutation: () => warehouseHooks.mutation,
+  useReactivateRackMutation: () => warehouseHooks.mutation,
+  useReactivateSlotMutation: () => warehouseHooks.mutation,
 }))
 
 const zones: ZoneResponse[] = [

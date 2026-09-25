@@ -6,7 +6,6 @@ import {
   Layers3,
   ListFilter,
   MapPin,
-  PackageCheck,
   RefreshCw,
   Search,
   TriangleAlert,
@@ -61,8 +60,6 @@ interface WarehouseLocationDirectoryProps {
   readonly isFilterMetadataLoading: boolean
   readonly isFilterMetadataError: boolean
   readonly canGenerateBarcode: boolean
-  readonly canConfigureOutboundStaging: boolean
-  readonly configuringStagingSlotId: string | null
   readonly onSearchTextChange: (value: string) => void
   readonly onFiltersChange: (filters: LocationFilterState) => void
   readonly onApplyFilters: () => void
@@ -70,7 +67,6 @@ interface WarehouseLocationDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onRetryFilterMetadata: () => void
-  readonly onConfigureOutboundStaging: (location: LocationSearchResponse) => void
 }
 
 const TYPE_LABELS = { Zone: 'Khu vực', Rack: 'Kệ hàng', Slot: 'Vị trí' } as const
@@ -112,8 +108,6 @@ export function WarehouseLocationDirectory({
   isFilterMetadataLoading,
   isFilterMetadataError,
   canGenerateBarcode,
-  canConfigureOutboundStaging,
-  configuringStagingSlotId,
   onSearchTextChange,
   onFiltersChange,
   onApplyFilters,
@@ -121,7 +115,6 @@ export function WarehouseLocationDirectory({
   onPageChange,
   onRetry,
   onRetryFilterMetadata,
-  onConfigureOutboundStaging,
 }: WarehouseLocationDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const selectedZone = zones.find((zone) => zone.id === filters.zoneId)
@@ -221,17 +214,11 @@ export function WarehouseLocationDirectory({
             warehouseId={warehouseId}
             locations={locations}
             canGenerateBarcode={canGenerateBarcode}
-            canConfigureOutboundStaging={canConfigureOutboundStaging}
-            configuringStagingSlotId={configuringStagingSlotId}
-            onConfigureOutboundStaging={onConfigureOutboundStaging}
           />
           <LocationDesktopTable
             warehouseId={warehouseId}
             locations={locations}
             canGenerateBarcode={canGenerateBarcode}
-            canConfigureOutboundStaging={canConfigureOutboundStaging}
-            configuringStagingSlotId={configuringStagingSlotId}
-            onConfigureOutboundStaging={onConfigureOutboundStaging}
           />
           <WarehousePagination
             page={page}
@@ -386,14 +373,7 @@ function FilterSelect({ id, label, value, disabled, children, onChange }: Filter
   )
 }
 
-function LocationMobileList({
-  warehouseId,
-  locations,
-  canGenerateBarcode,
-  canConfigureOutboundStaging,
-  configuringStagingSlotId,
-  onConfigureOutboundStaging,
-}: LocationResultsProps) {
+function LocationMobileList({ warehouseId, locations, canGenerateBarcode }: LocationResultsProps) {
   return (
     <ItemGroup className="gap-0 md:hidden">
       {locations.map((location) => {
@@ -407,7 +387,6 @@ function LocationMobileList({
                   {location.code}
                 </span>
                 <Badge variant="outline">{TYPE_LABELS[location.type]}</Badge>
-                {location.isOutboundStaging ? <Badge>Khu chờ xuất</Badge> : null}
               </ItemTitle>
               <ItemDescription>{location.name ?? getParentLabel(location)}</ItemDescription>
               <ItemDescription>
@@ -418,12 +397,6 @@ function LocationMobileList({
               warehouseId={warehouseId}
               location={location}
               enabled={canGenerateBarcode && location.lifecycleStatus === 'Active'}
-            />
-            <StagingButton
-              location={location}
-              enabled={canConfigureOutboundStaging}
-              isPending={configuringStagingSlotId === location.id}
-              onConfigure={onConfigureOutboundStaging}
             />
           </Item>
         )
@@ -436,18 +409,12 @@ interface LocationResultsProps {
   readonly warehouseId: string
   readonly locations: readonly LocationSearchResponse[]
   readonly canGenerateBarcode: boolean
-  readonly canConfigureOutboundStaging: boolean
-  readonly configuringStagingSlotId: string | null
-  readonly onConfigureOutboundStaging: (location: LocationSearchResponse) => void
 }
 
 function LocationDesktopTable({
   warehouseId,
   locations,
   canGenerateBarcode,
-  canConfigureOutboundStaging,
-  configuringStagingSlotId,
-  onConfigureOutboundStaging,
 }: LocationResultsProps) {
   return (
     <div className="hidden min-w-0 overflow-x-auto md:block">
@@ -458,8 +425,7 @@ function LocationDesktopTable({
             <TableHead>Loại</TableHead>
             <TableHead>Tên / cấp cha</TableHead>
             <TableHead>Hoạt động</TableHead>
-            <TableHead>Sức chứa</TableHead>
-            <TableHead>Khu chờ xuất</TableHead>
+            <TableHead>Giới hạn số lượng</TableHead>
             <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
@@ -479,24 +445,13 @@ function LocationDesktopTable({
               <TableCell>{STATUS_LABELS[location.lifecycleStatus]}</TableCell>
               <TableCell className="tabular-nums">
                 {location.type === 'Slot'
-                  ? `${location.currentOccupancy ?? 0} / ${location.capacity ?? 0}`
+                  ? location.capacity == null
+                    ? 'Không áp dụng'
+                    : `${location.currentOccupancy ?? 0} / ${location.capacity}`
                   : '—'}
-              </TableCell>
-              <TableCell>
-                {location.type === 'Slot' && location.isOutboundStaging ? (
-                  <Badge>Khu chờ xuất</Badge>
-                ) : (
-                  '—'
-                )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <StagingButton
-                    location={location}
-                    enabled={canConfigureOutboundStaging}
-                    isPending={configuringStagingSlotId === location.id}
-                    onConfigure={onConfigureOutboundStaging}
-                  />
                   <BarcodeButton
                     warehouseId={warehouseId}
                     location={location}
@@ -509,40 +464,6 @@ function LocationDesktopTable({
         </TableBody>
       </Table>
     </div>
-  )
-}
-
-function StagingButton({
-  location,
-  enabled,
-  isPending,
-  onConfigure,
-}: {
-  readonly location: LocationSearchResponse
-  readonly enabled: boolean
-  readonly isPending: boolean
-  readonly onConfigure: (location: LocationSearchResponse) => void
-}) {
-  if (!enabled || location.type !== 'Slot' || location.lifecycleStatus !== 'Active') return null
-  const label = location.isOutboundStaging
-    ? `Bỏ chỉ định khu chờ xuất ${location.code}`
-    : `Chọn ${location.code} làm khu chờ xuất`
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant={location.isOutboundStaging ? 'secondary' : 'ghost'}
-          size="icon-sm"
-          aria-label={label}
-          disabled={isPending}
-          onClick={() => onConfigure(location)}
-        >
-          <PackageCheck aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
   )
 }
 
