@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Eye, Plus, Search, Users } from 'lucide-react'
+import { CircleOff, Eye, Pencil, Plus, RotateCcw, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -22,6 +22,7 @@ import { OperationalPagination } from '@/components/operations/OperationalPagina
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { parseActiveStatusFilter } from '@/components/operations/status-filter'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { StockRecipient } from '../../types/stock-recipient.types'
 
@@ -33,6 +34,8 @@ interface StockRecipientDirectoryProps {
   readonly searchText: string
   readonly status: 'Active' | 'Inactive' | ''
   readonly canCreate: boolean
+  readonly canUpdate: boolean
+  readonly canManageStatus: boolean
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
@@ -41,6 +44,8 @@ interface StockRecipientDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
+  readonly onEdit: (stockRecipient: StockRecipient) => void
+  readonly onChangeStatus: (stockRecipient: StockRecipient) => void
   readonly onRetry: () => void
 }
 
@@ -52,6 +57,8 @@ export function StockRecipientDirectory({
   searchText,
   status,
   canCreate,
+  canUpdate,
+  canManageStatus,
   isLoading,
   isFetching,
   isError,
@@ -60,6 +67,8 @@ export function StockRecipientDirectory({
   onPageChange,
   onPageSizeChange,
   onCreate,
+  onEdit,
+  onChangeStatus,
   onRetry,
 }: StockRecipientDirectoryProps) {
   return (
@@ -127,12 +136,12 @@ export function StockRecipientDirectory({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky top-0">Mã</TableHead>
-                <TableHead className="bg-card sticky top-0">Tên khách hàng</TableHead>
-                <TableHead className="bg-card sticky top-0">Điện thoại</TableHead>
-                <TableHead className="bg-card sticky top-0">Email</TableHead>
-                <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
-                <TableHead className="bg-card sticky top-0">
+                <TableHead className="bg-card sticky top-0 z-10">Mã</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Tên khách hàng</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Điện thoại</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Email</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">
                   <span className="sr-only">Thao tác</span>
                 </TableHead>
               </TableRow>
@@ -154,19 +163,69 @@ export function StockRecipientDirectory({
                   <TableCell>{stockRecipient.email ?? '—'}</TableCell>
                   <TableCell>
                     <Badge variant={stockRecipient.status === 'Active' ? 'default' : 'outline'}>
-                      {stockRecipient.status === 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                      {stockRecipient.status === 'Active' ? 'Đang hợp tác' : 'Ngừng hợp tác'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="ghost" size="icon-sm">
-                      <Link
-                        href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}
-                        aria-label={`Xem chi tiết khách hàng ${stockRecipient.recipientName}`}
-                      >
-                        <Eye aria-hidden="true" />
-                        <span className="sr-only">Xem chi tiết {stockRecipient.recipientName}</span>
-                      </Link>
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button asChild variant="ghost" size="icon-sm">
+                            <Link
+                              href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}
+                              aria-label={`Xem chi tiết khách hàng ${stockRecipient.recipientName}`}
+                            >
+                              <Eye aria-hidden="true" />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Xem chi tiết</TooltipContent>
+                      </Tooltip>
+                      {canUpdate ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Chỉnh sửa ${stockRecipient.recipientName}`}
+                              onClick={() => onEdit(stockRecipient)}
+                            >
+                              <Pencil aria-hidden="true" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Chỉnh sửa</TooltipContent>
+                        </Tooltip>
+                      ) : null}
+                      {canManageStatus ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={
+                                stockRecipient.status === 'Active'
+                                  ? `Ngừng hợp tác ${stockRecipient.recipientName}`
+                                  : `Tiếp tục hợp tác với ${stockRecipient.recipientName}`
+                              }
+                              onClick={() => onChangeStatus(stockRecipient)}
+                            >
+                              {stockRecipient.status === 'Active' ? (
+                                <CircleOff aria-hidden="true" />
+                              ) : (
+                                <RotateCcw aria-hidden="true" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {stockRecipient.status === 'Active'
+                              ? 'Ngừng hợp tác'
+                              : 'Tiếp tục hợp tác'}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

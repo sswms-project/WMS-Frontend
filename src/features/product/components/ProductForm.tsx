@@ -1,7 +1,8 @@
 'use client'
 
-import { ImagePlus, Plus, Save, Trash2, X } from 'lucide-react'
-import { useState } from 'react'
+import { ImagePlus, Plus, Save, Trash2, Upload, X } from 'lucide-react'
+import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useWatch } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -86,7 +87,9 @@ export function CreateProductForm({
 }: CreateProductFormProps) {
   const isLotTracked = useWatch({ control: form.control, name: 'isLotTracked' })
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const [imageError, setImageError] = useState<string | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const baseUnitId = useWatch({ control: form.control, name: 'unitId' })
   const {
     fields: conversionFields,
@@ -97,11 +100,28 @@ export function CreateProductForm({
     name: 'unitConversions',
   })
 
+  useEffect(() => {
+    if (!imagePreviewUrl) return
+    return () => URL.revokeObjectURL(imagePreviewUrl)
+  }, [imagePreviewUrl])
+
+  function clearImage() {
+    setImageFile(null)
+    setImagePreviewUrl(null)
+    setImageError(null)
+  }
+
+  function openImagePicker() {
+    const input = imageInputRef.current
+    if (!input) return
+    input.value = ''
+    input.click()
+  }
+
   async function save(values: CreateProductFormValues, createAnother: boolean) {
     const saved = await onSubmit(values, createAnother, imageFile)
     if (saved) {
-      setImageFile(null)
-      setImageError(null)
+      clearImage()
       if (createAnother) form.reset()
     }
   }
@@ -120,48 +140,6 @@ export function CreateProductForm({
         </Alert>
       ) : null}
       <FieldGroup className="bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-2">
-        <Field className="md:col-span-2" data-invalid={Boolean(imageError)}>
-          <FieldLabel htmlFor="productImage">Ảnh sản phẩm</FieldLabel>
-          <div className="bg-muted/20 flex flex-col gap-3 rounded-md border border-dashed p-4 sm:flex-row sm:items-center">
-            <div className="bg-background flex size-12 shrink-0 items-center justify-center rounded-md border">
-              <ImagePlus className="text-muted-foreground size-5" aria-hidden="true" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Input
-                id="productImage"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                aria-invalid={Boolean(imageError)}
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null
-                  if (!file) {
-                    setImageFile(null)
-                    setImageError(null)
-                    return
-                  }
-                  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-                    event.target.value = ''
-                    setImageFile(null)
-                    setImageError('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP')
-                    return
-                  }
-                  if (file.size > 5 * 1024 * 1024) {
-                    event.target.value = ''
-                    setImageFile(null)
-                    setImageError('Ảnh sản phẩm không được vượt quá 5 MB')
-                    return
-                  }
-                  setImageFile(file)
-                  setImageError(null)
-                }}
-              />
-              <p className="text-muted-foreground mt-1 text-xs">
-                {imageFile?.name ?? 'Không bắt buộc. Hỗ trợ JPG, PNG hoặc WebP, tối đa 5 MB.'}
-              </p>
-            </div>
-          </div>
-          {imageError ? <p className="text-destructive text-xs">{imageError}</p> : null}
-        </Field>
         <Field data-invalid={Boolean(form.formState.errors.productName)} className="md:col-span-2">
           <FieldLabel htmlFor="productName">Tên sản phẩm *</FieldLabel>
           <Input
@@ -225,73 +203,151 @@ export function CreateProductForm({
           />
         </Field>
 
-        <Field data-invalid={Boolean(form.formState.errors.categoryId)}>
-          <div className="flex items-center justify-between gap-2">
-            <FieldLabel htmlFor="categoryId">Nhóm vật tư hàng hóa *</FieldLabel>
-            {canManageCategories ? (
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto p-0"
-                onClick={() => onCategoryDialogOpenChange(true)}
-              >
-                <Plus aria-hidden="true" />
-                Tạo nhóm
-              </Button>
-            ) : null}
-          </div>
-          <NativeSelect
-            id="categoryId"
-            className="w-full"
-            aria-invalid={Boolean(form.formState.errors.categoryId)}
-            disabled={areOptionsLoading || areOptionsError}
-            {...form.register('categoryId')}
-          >
-            <NativeSelectOption value="">
-              {areOptionsLoading ? 'Đang tải…' : 'Chọn nhóm…'}
-            </NativeSelectOption>
-            {categories.map((c) => (
-              <NativeSelectOption key={c.id} value={c.id}>
-                {c.categoryPath}
+        <div className="flex flex-col gap-4">
+          <Field data-invalid={Boolean(form.formState.errors.categoryId)}>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel htmlFor="categoryId">Nhóm vật tư hàng hóa *</FieldLabel>
+              {canManageCategories ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0"
+                  onClick={() => onCategoryDialogOpenChange(true)}
+                >
+                  <Plus aria-hidden="true" />
+                  Tạo nhóm
+                </Button>
+              ) : null}
+            </div>
+            <NativeSelect
+              id="categoryId"
+              className="w-full"
+              aria-invalid={Boolean(form.formState.errors.categoryId)}
+              disabled={areOptionsLoading || areOptionsError}
+              {...form.register('categoryId')}
+            >
+              <NativeSelectOption value="">
+                {areOptionsLoading ? 'Đang tải…' : 'Chọn nhóm…'}
               </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <FieldError
-            errors={
-              form.formState.errors.categoryId ? [form.formState.errors.categoryId] : undefined
-            }
-          />
-        </Field>
+              {categories.map((c) => (
+                <NativeSelectOption key={c.id} value={c.id}>
+                  {c.categoryPath}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <FieldError
+              errors={
+                form.formState.errors.categoryId ? [form.formState.errors.categoryId] : undefined
+              }
+            />
+          </Field>
 
-        <FieldSet className="bg-muted/30 rounded-md border p-4 md:col-span-2">
-          <FieldLegend variant="label">Phương thức quản lý tồn kho</FieldLegend>
-          <RadioGroup
-            aria-label="Phương thức quản lý tồn kho"
-            value={isLotTracked ? 'lot' : 'quantity'}
-            onValueChange={(value) => {
-              const isLotTracked = value === 'lot'
-              form.setValue('isLotTracked', isLotTracked, { shouldDirty: true })
-              if (!isLotTracked) form.setValue('shelfLifeDays', null)
+          <FieldSet className="bg-muted/30 rounded-md border p-4">
+            <FieldLegend variant="label">Phương thức quản lý tồn kho</FieldLegend>
+            <RadioGroup
+              aria-label="Phương thức quản lý tồn kho"
+              value={isLotTracked ? 'lot' : 'quantity'}
+              onValueChange={(value) => {
+                const isLotTracked = value === 'lot'
+                form.setValue('isLotTracked', isLotTracked, { shouldDirty: true })
+                if (!isLotTracked) form.setValue('shelfLifeDays', null)
+              }}
+            >
+              <Field orientation="horizontal">
+                <RadioGroupItem id="create-tracking-quantity" value="quantity" />
+                <FieldLabel htmlFor="create-tracking-quantity" className="font-normal">
+                  Theo số lượng
+                </FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <RadioGroupItem id="create-tracking-lot" value="lot" />
+                <FieldLabel htmlFor="create-tracking-lot" className="font-normal">
+                  Theo lô
+                </FieldLabel>
+              </Field>
+            </RadioGroup>
+            <FieldDescription>
+              Theo lô hỗ trợ truy xuất nguồn gốc và hạn sử dụng của từng lô hàng.
+            </FieldDescription>
+          </FieldSet>
+        </div>
+
+        <Field className="md:col-start-2" data-invalid={Boolean(imageError)}>
+          <FieldLabel htmlFor="productImage">Ảnh sản phẩm</FieldLabel>
+          <input
+            ref={imageInputRef}
+            id="productImage"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Chọn ảnh sản phẩm từ thiết bị"
+            className="sr-only"
+            tabIndex={-1}
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null
+              event.target.value = ''
+              if (!file) return
+              if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                setImageError('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.')
+                return
+              }
+              if (file.size > 5 * 1024 * 1024) {
+                setImageError('Ảnh sản phẩm không được vượt quá 5 MB.')
+                return
+              }
+              setImageFile(file)
+              setImagePreviewUrl(URL.createObjectURL(file))
+              setImageError(null)
             }}
+          />
+          <button
+            type="button"
+            aria-label={imageFile ? 'Thay đổi ảnh sản phẩm' : 'Chọn ảnh sản phẩm'}
+            onClick={openImagePicker}
+            className="bg-muted/20 hover:bg-muted/50 focus-visible:ring-ring relative flex size-28 items-center justify-center overflow-hidden border border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 sm:size-32"
           >
-            <Field orientation="horizontal">
-              <RadioGroupItem id="create-tracking-quantity" value="quantity" />
-              <FieldLabel htmlFor="create-tracking-quantity" className="font-normal">
-                Theo số lượng
-              </FieldLabel>
-            </Field>
-            <Field orientation="horizontal">
-              <RadioGroupItem id="create-tracking-lot" value="lot" />
-              <FieldLabel htmlFor="create-tracking-lot" className="font-normal">
-                Theo lô
-              </FieldLabel>
-            </Field>
-          </RadioGroup>
+            {imagePreviewUrl ? (
+              <Image
+                src={imagePreviewUrl}
+                alt={`Xem trước ảnh ${imageFile?.name ?? 'sản phẩm'}`}
+                fill
+                unoptimized
+                sizes="128px"
+                className="object-cover"
+              />
+            ) : (
+              <span className="text-muted-foreground flex flex-col items-center gap-2 text-xs">
+                <ImagePlus aria-hidden="true" />
+                Chọn ảnh
+              </span>
+            )}
+          </button>
+          <div className="mt-2 flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={openImagePicker}>
+              <Upload data-icon="inline-start" aria-hidden="true" />
+              Tải ảnh lên
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Xóa ảnh sản phẩm"
+              title="Xóa ảnh"
+              disabled={!imageFile}
+              onClick={clearImage}
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
+          </div>
           <FieldDescription>
-            Theo lô hỗ trợ truy xuất nguồn gốc và hạn sử dụng của từng lô hàng.
+            Ảnh được tải lên khi lưu sản phẩm. JPG, PNG hoặc WebP, tối đa 5 MB.
           </FieldDescription>
-        </FieldSet>
+          {imageError ? (
+            <p role="alert" className="text-destructive text-xs">
+              {imageError}
+            </p>
+          ) : null}
+        </Field>
 
         {isLotTracked ? (
           <Field
@@ -338,25 +394,40 @@ export function CreateProductForm({
       <Accordion type="multiple" className="mt-4 rounded-lg border px-4">
         <AccordionItem value="conversions">
           <AccordionTrigger>Đơn vị chuyển đổi</AccordionTrigger>
-          <AccordionContent className="space-y-3">
+          <AccordionContent className="flex flex-col gap-3">
             <p className="text-muted-foreground text-xs">
               Khai báo khi hàng hóa được nhập, xuất bằng đơn vị khác đơn vị tính chính.
             </p>
-            {conversionFields.length > 0 ? (
-              <div className="overflow-x-auto border">
-                <table className="w-full min-w-[560px] text-sm">
-                  <thead className="bg-muted/60">
+            <div className="max-h-64 overflow-auto border">
+              <table className="w-full min-w-[600px] table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[30%]" />
+                  <col className="w-[20%]" />
+                  <col />
+                  <col className="w-12" />
+                </colgroup>
+                <thead className="bg-muted/60 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Đơn vị chuyển đổi</th>
+                    <th className="px-3 py-2 text-left font-medium">Tỷ lệ quy đổi</th>
+                    <th className="px-3 py-2 text-left font-medium">Mô tả quy đổi</th>
+                    <th className="px-2">
+                      <span className="sr-only">Xóa</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conversionFields.length === 0 ? (
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium">Đơn vị chuyển đổi</th>
-                      <th className="px-3 py-2 text-left font-medium">Tỷ lệ quy đổi</th>
-                      <th className="px-3 py-2 text-left font-medium">Mô tả quy đổi</th>
-                      <th className="w-12">
-                        <span className="sr-only">Xóa</span>
-                      </th>
+                      <td
+                        colSpan={4}
+                        className="text-muted-foreground px-3 py-3 text-center text-xs"
+                      >
+                        Chưa khai báo đơn vị chuyển đổi.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {conversionFields.map((field, index) => {
+                  ) : (
+                    conversionFields.map((field, index) => {
                       const conversionUnitId = form.watch(`unitConversions.${index}.unitId`)
                       const factor = form.watch(`unitConversions.${index}.conversionFactor`)
                       const conversionUnit = units.find((unit) => unit.id === conversionUnitId)
@@ -365,6 +436,7 @@ export function CreateProductForm({
                         <tr key={field.id} className="border-t align-top">
                           <td className="p-2">
                             <NativeSelect
+                              className="w-full min-w-0"
                               aria-label={`Đơn vị chuyển đổi dòng ${index + 1}`}
                               {...form.register(`unitConversions.${index}.unitId`)}
                             >
@@ -381,6 +453,7 @@ export function CreateProductForm({
                           </td>
                           <td className="p-2">
                             <Input
+                              className="w-full min-w-0"
                               aria-label={`Tỷ lệ quy đổi dòng ${index + 1}`}
                               type="number"
                               min="0.000001"
@@ -390,7 +463,7 @@ export function CreateProductForm({
                               })}
                             />
                           </td>
-                          <td className="text-muted-foreground px-3 py-3">
+                          <td className="text-muted-foreground px-3 py-3 break-words whitespace-normal">
                             {conversionUnit && baseUnit && factor > 0
                               ? `1 ${conversionUnit.unitName} = ${factor} ${baseUnit.unitName}`
                               : 'Chọn đơn vị và nhập tỷ lệ'}
@@ -408,11 +481,11 @@ export function CreateProductForm({
                           </td>
                         </tr>
                       )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -521,6 +594,7 @@ export function CreateProductDialog({
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           <CreateProductForm
+            key={open ? 'open' : 'closed'}
             form={form}
             categoryForm={categoryForm}
             isCategoryDialogOpen={isCategoryDialogOpen}
