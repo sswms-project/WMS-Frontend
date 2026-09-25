@@ -31,7 +31,9 @@ import {
   useUpdateStockRecipientMutation,
 } from '../hooks/use-stock-recipients'
 import {
+  emptyStockRecipientFormValues,
   stockRecipientSchema,
+  toStockRecipientRequest,
   type StockRecipientFormValues,
 } from '../schemas/stock-recipient.schema'
 
@@ -53,21 +55,14 @@ export default function StockRecipientDetailPage({
   const statusMutation = useChangeStockRecipientStatusMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: {
-      recipientCode: '',
-      recipientName: '',
-      taxCode: '',
-      phone: '',
-      email: '',
-      address: '',
-    },
+    defaultValues: emptyStockRecipientFormValues,
   })
 
   async function update(values: StockRecipientFormValues) {
     try {
       await updateMutation.mutateAsync({
         stockRecipientId,
-        request: { ...values, taxCode: values.taxCode || null, email: values.email || null },
+        request: toStockRecipientRequest(values),
       })
       toast.success('Đã cập nhật khách hàng.')
       setIsEditOpen(false)
@@ -148,10 +143,17 @@ export default function StockRecipientDetailPage({
                 form.reset({
                   recipientCode: stockRecipient.recipientCode,
                   recipientName: stockRecipient.recipientName,
+                  recipientType: stockRecipient.recipientType,
                   taxCode: stockRecipient.taxCode ?? '',
                   phone: stockRecipient.phone,
                   email: stockRecipient.email ?? '',
                   address: stockRecipient.address,
+                  shippingAddress: stockRecipient.shippingAddress ?? '',
+                  contactSalutation: stockRecipient.contactSalutation ?? '',
+                  contactName: stockRecipient.contactName ?? '',
+                  contactMobile: stockRecipient.contactMobile ?? '',
+                  contactChannel: stockRecipient.contactChannel ?? '',
+                  contactChannelName: stockRecipient.contactChannelName ?? '',
                 })
                 setIsEditOpen(true)
               }}
