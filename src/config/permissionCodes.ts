@@ -128,6 +128,7 @@ export const P = {
   WAREHOUSES_UPDATE: 'warehouses:update',
   WAREHOUSES_DEACTIVATE: 'warehouses:deactivate',
   WAREHOUSES_CONFIGURE_LAYOUT: 'warehouses:configure-layout',
+  WAREHOUSES_CONFIGURE_STAGING: 'warehouses:configure-staging',
   WAREHOUSES_GENERATE_BARCODE: 'warehouses:generate-barcode',
 } as const
 

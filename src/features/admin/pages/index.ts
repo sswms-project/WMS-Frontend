@@ -1,4 +1,4 @@
-export { RolesPage } from './RolesPage'
+export { default as RolesPage } from './RolesPage'
 export { default as SubscriptionPlansPage } from './SubscriptionPlansPage'
 export { default as PlatformDashboardPage } from './PlatformDashboardPage'
 export { default as TenantDirectoryPage } from './TenantDirectoryPage'

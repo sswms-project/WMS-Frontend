@@ -3,12 +3,18 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { useSyncExternalStore } from 'react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { APP_ROUTES } from '@/routes/app-routes'
 
+const subscribeToYear = () => () => undefined
+const getClientYear = () => new Date().getFullYear()
+const getServerYear = () => null
+
 export function HomeFooter() {
   const prefersReducedMotion = useReducedMotion()
+  const currentYear = useSyncExternalStore(subscribeToYear, getClientYear, getServerYear)
 
   return (
     <footer id="contact" className="border-border/60 scroll-mt-14 border-t">
@@ -43,7 +49,7 @@ export function HomeFooter() {
           <span className="flex items-center gap-2">
             <Logo href={null} size="sm" /> — Smart SaaS Warehouse Management System
           </span>
-          <span>© {new Date().getFullYear()} KOVIA. All rights reserved.</span>
+          <span>© {currentYear ?? ''} KOVIA. All rights reserved.</span>
         </div>
       </div>
     </footer>

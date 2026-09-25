@@ -40,7 +40,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetBrainsMono.variable} ${baloo2.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col" suppressHydrationWarning>
+      <body className="flex min-h-full flex-col">
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
