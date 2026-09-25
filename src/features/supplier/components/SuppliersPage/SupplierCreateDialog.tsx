@@ -16,6 +16,7 @@ import { saveSupplierSchema, type SaveSupplierFormValues } from '../../schemas/s
 import { SupplierFormFields } from './SupplierFormFields'
 
 const defaultValues: SaveSupplierFormValues = {
+  supplierCode: '',
   supplierName: '',
   phone: '',
   email: '',
@@ -53,11 +54,11 @@ export function SupplierCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Thêm nhà cung cấp</DialogTitle>
           <DialogDescription>
-            Nhập thông tin liên hệ để bắt đầu tạo yêu cầu nhập kho với nhà cung cấp này.
+            Nhập thông tin nhà cung cấp phục vụ hoạt động nhập kho.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

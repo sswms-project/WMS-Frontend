@@ -104,7 +104,7 @@ describe('InventoryDirectory states', () => {
       target: { value: 'SKU-01' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Làm mới tồn kho' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Sau' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Trang sau' }))
     fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }))
     fireEvent.change(screen.getByLabelText('Kho'), { target: { value: 'warehouse-1' } })
     fireEvent.change(screen.getByLabelText('Sản phẩm'), { target: { value: 'product-1' } })

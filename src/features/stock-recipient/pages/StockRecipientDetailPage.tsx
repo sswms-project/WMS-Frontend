@@ -53,7 +53,7 @@ export default function StockRecipientDetailPage({
   const statusMutation = useChangeStockRecipientStatusMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: { recipientName: '', phone: '', email: '', address: '' },
+    defaultValues: { recipientCode: '', recipientName: '', phone: '', email: '', address: '' },
   })
 
   async function update(values: StockRecipientFormValues) {
@@ -140,6 +140,7 @@ export default function StockRecipientDetailPage({
               disabled={stockRecipient.status !== 'Active'}
               onClick={() => {
                 form.reset({
+                  recipientCode: stockRecipient.recipientCode,
                   recipientName: stockRecipient.recipientName,
                   phone: stockRecipient.phone,
                   email: stockRecipient.email ?? '',

@@ -39,15 +39,26 @@ export function StockRecipientFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup>
+          <FieldGroup className="grid gap-4 sm:grid-cols-2">
+            <Field data-invalid={Boolean(errors.recipientCode)}>
+              <FieldLabel htmlFor="stockRecipient-code">Mã khách hàng *</FieldLabel>
+              <Input
+                id="stockRecipient-code"
+                autoComplete="off"
+                placeholder="VD: KH00001"
+                aria-invalid={Boolean(errors.recipientCode)}
+                {...form.register('recipientCode')}
+              />
+              <FieldError errors={[errors.recipientCode]} />
+            </Field>
             <Field data-invalid={Boolean(errors.recipientName)}>
-              <FieldLabel htmlFor="stockRecipient-name">Tên đơn vị nhận hàng</FieldLabel>
+              <FieldLabel htmlFor="stockRecipient-name">Tên khách hàng *</FieldLabel>
               <Input
                 id="stockRecipient-name"
                 aria-invalid={Boolean(errors.recipientName)}
@@ -55,35 +66,34 @@ export function StockRecipientFormDialog({
               />
               <FieldError errors={[errors.recipientName]} />
             </Field>
-            <FieldGroup className="grid gap-4 sm:grid-cols-2">
-              <Field data-invalid={Boolean(errors.phone)}>
-                <FieldLabel htmlFor="stockRecipient-phone">Số điện thoại</FieldLabel>
-                <Input
-                  id="stockRecipient-phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="off"
-                  aria-invalid={Boolean(errors.phone)}
-                  {...form.register('phone')}
-                />
-                <FieldError errors={[errors.phone]} />
-              </Field>
-              <Field data-invalid={Boolean(errors.email)}>
-                <FieldLabel htmlFor="stockRecipient-email">Email</FieldLabel>
-                <Input
-                  id="stockRecipient-email"
-                  type="email"
-                  spellCheck={false}
-                  autoComplete="off"
-                  aria-invalid={Boolean(errors.email)}
-                  {...form.register('email')}
-                />
-                <FieldError errors={[errors.email]} />
-              </Field>
-            </FieldGroup>
-            <Field data-invalid={Boolean(errors.address)}>
+            <Field data-invalid={Boolean(errors.phone)}>
+              <FieldLabel htmlFor="stockRecipient-phone">Số điện thoại</FieldLabel>
+              <Input
+                id="stockRecipient-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                aria-invalid={Boolean(errors.phone)}
+                {...form.register('phone')}
+              />
+              <FieldError errors={[errors.phone]} />
+            </Field>
+            <Field data-invalid={Boolean(errors.email)}>
+              <FieldLabel htmlFor="stockRecipient-email">Email</FieldLabel>
+              <Input
+                id="stockRecipient-email"
+                type="email"
+                spellCheck={false}
+                autoComplete="email"
+                aria-invalid={Boolean(errors.email)}
+                {...form.register('email')}
+              />
+              <FieldError errors={[errors.email]} />
+            </Field>
+            <Field className="sm:col-span-2" data-invalid={Boolean(errors.address)}>
               <FieldLabel htmlFor="stockRecipient-address">Địa chỉ</FieldLabel>
               <Textarea
+                rows={2}
                 id="stockRecipient-address"
                 aria-invalid={Boolean(errors.address)}
                 {...form.register('address')}

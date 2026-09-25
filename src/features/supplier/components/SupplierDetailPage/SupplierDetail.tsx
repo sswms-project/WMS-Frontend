@@ -80,6 +80,7 @@ export function SupplierDetail({
           </h2>
         </div>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-4 lg:grid-cols-4">
+          <Metadata label="Mã nhà cung cấp" value={supplier.supplierCode} />
           <Metadata label="Tên nhà cung cấp" value={supplier.supplierName} />
           <Metadata label="Số điện thoại" value={supplier.phone} />
           <Metadata label="Email" value={formatSupplierText(supplier.email)} />

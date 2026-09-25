@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
@@ -32,6 +33,11 @@ import {
 } from '@/components/operations/OperationalState'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import {
+  parseActiveStatusFilter,
+  type ActiveStatusFilter,
+} from '@/components/operations/status-filter'
 import type { UnitFormValues } from '../../schemas/master-data.schema'
 import type { UnitResponse } from '../../types/product.types'
 
@@ -73,9 +79,11 @@ export function UnitCatalog({
   const [statusTarget, setStatusTarget] = useState<UnitResponse | null>(null)
   const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [statusFilter, setStatusFilter] = useState<ActiveStatusFilter>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
-  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize)
+  const filteredItems = statusFilter ? items.filter((unit) => unit.status === statusFilter) : items
+  const pagedItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
   const selectedUnits = items.filter((unit) => selectedIds.has(unit.id))
   const allSelected = pagedItems.length > 0 && pagedItems.every((unit) => selectedIds.has(unit.id))
   return (
@@ -112,18 +120,39 @@ export function UnitCatalog({
         ) : null}
       </header>
 
-      <section
-        className="bg-card min-h-0 flex-1 overflow-auto border"
-        aria-label="Danh sách đơn vị tính"
-      >
+      <OperationalListPanel aria-label="Danh sách đơn vị tính">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
+          <div>
+            <h2 className="text-sm font-semibold">Danh sách đơn vị tính</h2>
+            <p className="text-muted-foreground text-xs">{filteredItems.length} đơn vị tính</p>
+          </div>
+          <NativeSelect
+            aria-label="Lọc đơn vị tính theo trạng thái"
+            className="w-44"
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(parseActiveStatusFilter(event.target.value))
+              setSelectedIds(new Set())
+              setPage(1)
+            }}
+          >
+            <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+            <NativeSelectOption value="Active">Đang hoạt động</NativeSelectOption>
+            <NativeSelectOption value="Inactive">Ngừng hoạt động</NativeSelectOption>
+          </NativeSelect>
+        </div>
         {isLoading ? (
           <OperationalLoadingState />
         ) : isError ? (
           <OperationalErrorState title="Không thể tải đơn vị tính" onRetry={onRetry} />
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <OperationalEmptyState
-            title="Chưa có đơn vị tính"
-            description="Thêm đơn vị tính đầu tiên để sử dụng khi tạo sản phẩm."
+            title={items.length === 0 ? 'Chưa có đơn vị tính' : 'Không có đơn vị tính phù hợp'}
+            description={
+              items.length === 0
+                ? 'Thêm đơn vị tính đầu tiên để sử dụng khi tạo sản phẩm.'
+                : 'Thử chọn trạng thái khác để xem các đơn vị tính còn lại.'
+            }
           />
         ) : (
           <Table>
@@ -209,11 +238,11 @@ export function UnitCatalog({
             </TableBody>
           </Table>
         )}
-        {items.length > 0 ? (
+        {filteredItems.length > 0 ? (
           <OperationalPagination
             page={page}
             pageSize={pageSize}
-            totalCount={items.length}
+            totalCount={filteredItems.length}
             isPending={isPending}
             onPageChange={setPage}
             onPageSizeChange={(value) => {
@@ -222,7 +251,7 @@ export function UnitCatalog({
             }}
           />
         ) : null}
-      </section>
+      </OperationalListPanel>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
         <DialogContent>

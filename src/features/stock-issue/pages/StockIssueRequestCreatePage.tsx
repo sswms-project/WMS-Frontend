@@ -57,7 +57,7 @@ export default function StockIssueRequestCreatePage() {
   })
   const stockRecipientForm = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: { recipientName: '', phone: '', email: '', address: '' },
+    defaultValues: { recipientCode: '', recipientName: '', phone: '', email: '', address: '' },
   })
   const selectedStockRecipientId = useWatch({ control: form.control, name: 'stockRecipientId' })
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'lines' })
@@ -163,7 +163,13 @@ export default function StockIssueRequestCreatePage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  stockRecipientForm.reset({ recipientName: '', phone: '', email: '', address: '' })
+                  stockRecipientForm.reset({
+                    recipientCode: '',
+                    recipientName: '',
+                    phone: '',
+                    email: '',
+                    address: '',
+                  })
                   setQuickStockRecipientOpen(true)
                 }}
               >

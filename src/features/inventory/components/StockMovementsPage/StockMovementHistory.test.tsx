@@ -100,7 +100,7 @@ describe('StockMovementHistory states', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Làm mới lịch sử biến động' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Sau' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Trang sau' }))
     fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }))
     fireEvent.change(screen.getByLabelText('Sản phẩm'), { target: { value: 'product-1' } })
     fireEvent.change(screen.getByLabelText('Loại biến động'), { target: { value: 'Inbound' } })

@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
@@ -204,10 +205,7 @@ export default function ProductListPage() {
         )}
       </header>
 
-      <section
-        className="bg-card flex min-h-0 min-w-0 flex-col overflow-hidden border [&>[data-slot=table-container]]:max-h-[calc(100vh-300px)] [&>[data-slot=table-container]]:overflow-y-auto"
-        aria-label="Danh sách sản phẩm"
-      >
+      <OperationalListPanel aria-label="Danh sách sản phẩm">
         <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-3 sm:px-4">
           <div>
             <h2 className="text-sm font-semibold">Tất cả sản phẩm</h2>
@@ -249,7 +247,7 @@ export default function ProductListPage() {
         />
 
         {listQuery.isLoading && (
-          <div className="divide-y">
+          <div className="flex-1 divide-y overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex h-14 items-center gap-3 px-4">
                 <Skeleton className="h-4 w-24" />
@@ -261,7 +259,7 @@ export default function ProductListPage() {
         )}
 
         {listQuery.isError && (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-3 px-4 text-center">
+          <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
             <Package className="text-destructive size-10" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium">Không thể tải danh sách sản phẩm</p>
@@ -279,7 +277,7 @@ export default function ProductListPage() {
         )}
 
         {!listQuery.isLoading && !listQuery.isError && products.length === 0 && (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-3 px-4 text-center">
+          <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
             <div className="bg-muted flex size-12 items-center justify-center">
               <Package className="text-muted-foreground size-5" aria-hidden="true" />
             </div>
@@ -318,7 +316,7 @@ export default function ProductListPage() {
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       {canCreate && (
         <CreateProductDialog

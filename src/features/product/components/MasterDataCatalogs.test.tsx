@@ -104,7 +104,7 @@ describe('master data catalogs', () => {
     expect(
       expectedText === 'Đang tải dữ liệu'
         ? screen.getByLabelText(expectedText)
-        : screen.getByText(expectedText)
+        : screen.getAllByText(expectedText)[0]
     ).toBeInTheDocument()
   })
 
@@ -112,13 +112,13 @@ describe('master data catalogs', () => {
     ['loading', { isLoading: true }, 'Đang tải dữ liệu'],
     ['error', { isError: true }, 'Không thể tải nhóm vật tư hàng hóa'],
     ['empty', { empty: true }, 'Chưa có nhóm vật tư hàng hóa'],
-    ['success', {}, 'Ngừng hoạt động'],
+    ['success', {}, 'Linh kiện'],
   ])('renders category %s state', (_, state, expectedText) => {
     render(<CategoryHarness {...state} />)
     expect(
       expectedText === 'Đang tải dữ liệu'
         ? screen.getByLabelText(expectedText)
-        : screen.getByText(expectedText)
+        : screen.getAllByText(expectedText)[0]
     ).toBeInTheDocument()
   })
 })

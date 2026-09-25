@@ -33,6 +33,11 @@ import {
 } from '@/components/operations/OperationalState'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import {
+  parseActiveStatusFilter,
+  type ActiveStatusFilter,
+} from '@/components/operations/status-filter'
 import type { CategoryFormValues } from '../../schemas/master-data.schema'
 import type { CategoryResponse } from '../../types/product.types'
 
@@ -76,9 +81,13 @@ export function CategoryCatalog({
   const [statusTarget, setStatusTarget] = useState<CategoryResponse | null>(null)
   const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [statusFilter, setStatusFilter] = useState<ActiveStatusFilter>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
-  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize)
+  const filteredItems = statusFilter
+    ? items.filter((category) => category.status === statusFilter)
+    : items
+  const pagedItems = filteredItems.slice((page - 1) * pageSize, page * pageSize)
   const selectedCategories = items.filter((category) => selectedIds.has(category.id))
   const allSelected = pagedItems.length > 0 && pagedItems.every((item) => selectedIds.has(item.id))
   return (
@@ -115,18 +124,39 @@ export function CategoryCatalog({
         ) : null}
       </header>
 
-      <section
-        className="bg-card min-h-0 flex-1 overflow-auto border"
-        aria-label="Danh sách nhóm vật tư hàng hóa"
-      >
+      <OperationalListPanel aria-label="Danh sách nhóm vật tư hàng hóa">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
+          <div>
+            <h2 className="text-sm font-semibold">Danh sách nhóm vật tư hàng hóa</h2>
+            <p className="text-muted-foreground text-xs">{filteredItems.length} nhóm</p>
+          </div>
+          <NativeSelect
+            aria-label="Lọc nhóm vật tư hàng hóa theo trạng thái"
+            className="w-44"
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(parseActiveStatusFilter(event.target.value))
+              setSelectedIds(new Set())
+              setPage(1)
+            }}
+          >
+            <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+            <NativeSelectOption value="Active">Đang hoạt động</NativeSelectOption>
+            <NativeSelectOption value="Inactive">Ngừng hoạt động</NativeSelectOption>
+          </NativeSelect>
+        </div>
         {isLoading ? (
           <OperationalLoadingState />
         ) : isError ? (
           <OperationalErrorState title="Không thể tải nhóm vật tư hàng hóa" onRetry={onRetry} />
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <OperationalEmptyState
-            title="Chưa có nhóm vật tư hàng hóa"
-            description="Thêm nhóm cấp cao đầu tiên trước khi tạo sản phẩm."
+            title={items.length === 0 ? 'Chưa có nhóm vật tư hàng hóa' : 'Không có nhóm phù hợp'}
+            description={
+              items.length === 0
+                ? 'Thêm nhóm cấp cao đầu tiên trước khi tạo sản phẩm.'
+                : 'Thử chọn trạng thái khác để xem các nhóm còn lại.'
+            }
           />
         ) : (
           <Table>
@@ -231,11 +261,11 @@ export function CategoryCatalog({
             </TableBody>
           </Table>
         )}
-        {items.length > 0 ? (
+        {filteredItems.length > 0 ? (
           <OperationalPagination
             page={page}
             pageSize={pageSize}
-            totalCount={items.length}
+            totalCount={filteredItems.length}
             isPending={isPending}
             onPageChange={setPage}
             onPageSizeChange={(value) => {
@@ -244,7 +274,7 @@ export function CategoryCatalog({
             }}
           />
         ) : null}
-      </section>
+      </OperationalListPanel>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
         <DialogContent>

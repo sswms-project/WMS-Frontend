@@ -26,6 +26,7 @@ import { getApiErrorMessage } from '../utils/supplier-error'
 
 function toSaveRequest(values: SaveSupplierFormValues): SaveSupplierRequest {
   return {
+    supplierCode: values.supplierCode,
     supplierName: values.supplierName,
     phone: values.phone,
     email: values.email || null,

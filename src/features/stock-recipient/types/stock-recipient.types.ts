@@ -34,6 +34,7 @@ export interface StockRecipientIssueHistoryQuery {
 export type StockRecipientIssueHistoryResponse = StockIssueRequestListResponse
 
 export interface CreateStockRecipientRequest {
+  recipientCode: string
   recipientName: string
   phone: string
   email: string | null

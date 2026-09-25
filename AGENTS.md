@@ -8,6 +8,8 @@ Before coding, read `.rules` for baseline React rules and `docs/CODING_GUIDELINE
 
 Before implementing UI, read `docs/DESIGN_SYSTEM.md` and follow its visual system.
 
+Before implementing or changing a list/table screen, read `docs/LIST_TABLE_DESIGN_GUIDELINES.md`. Use the shared `OperationalListPanel` and `OperationalPagination` patterns so the list fills the remaining viewport height, only its body scrolls, and pagination stays pinned at the bottom. Do not duplicate fixed `calc(100vh - ...)` height formulas in feature code.
+
 Before styling UI, read `src/app/index.css` and use Tailwind design tokens instead of hard-coded color values.
 
 Before implementing or refactoring code, read `docs/CODING_GUIDELINES.md` and follow its structure, reuse, clean code, and abstraction rules.

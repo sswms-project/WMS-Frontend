@@ -1,16 +1,17 @@
 import { z } from 'zod'
 
 export const saveSupplierSchema = z.object({
+  supplierCode: z
+    .string()
+    .trim()
+    .min(1, 'Mã nhà cung cấp là bắt buộc.')
+    .max(50, 'Mã nhà cung cấp tối đa 50 ký tự.'),
   supplierName: z
     .string()
     .trim()
     .min(1, 'Tên nhà cung cấp là bắt buộc.')
     .max(255, 'Tên nhà cung cấp tối đa 255 ký tự.'),
-  phone: z
-    .string()
-    .trim()
-    .min(1, 'Số điện thoại là bắt buộc.')
-    .max(30, 'Số điện thoại tối đa 30 ký tự.'),
+  phone: z.string().trim().max(30, 'Số điện thoại tối đa 30 ký tự.'),
   email: z
     .string()
     .trim()

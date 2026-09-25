@@ -32,7 +32,7 @@ export function OperationalPagination({
   const end = Math.min(page * pageSize, totalCount)
 
   return (
-    <footer className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-t px-3 py-2 sm:px-4">
+    <footer className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-3 border-t px-3 py-2 sm:px-4">
       <p className="text-sm tabular-nums">
         Tổng số: <span className="font-medium">{totalCount}</span>
       </p>
