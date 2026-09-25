@@ -15,12 +15,24 @@ export function SupplierFormFields({ idPrefix, form }: SupplierFormFieldsProps) 
   const { errors } = form.formState
 
   return (
-    <FieldGroup>
+    <FieldGroup className="grid gap-4 sm:grid-cols-2">
+      <Field data-invalid={Boolean(errors.supplierCode)}>
+        <FieldLabel htmlFor={`${idPrefix}-supplier-code`}>Mã nhà cung cấp *</FieldLabel>
+        <Input
+          id={`${idPrefix}-supplier-code`}
+          autoComplete="off"
+          aria-invalid={Boolean(errors.supplierCode)}
+          placeholder="VD: NCC0001"
+          {...form.register('supplierCode')}
+        />
+        <FieldError errors={[errors.supplierCode]} />
+      </Field>
+
       <Field data-invalid={Boolean(errors.supplierName)}>
-        <FieldLabel htmlFor={`${idPrefix}-supplier-name`}>Tên nhà cung cấp</FieldLabel>
+        <FieldLabel htmlFor={`${idPrefix}-supplier-name`}>Tên nhà cung cấp *</FieldLabel>
         <Input
           id={`${idPrefix}-supplier-name`}
-          autoComplete="off"
+          autoComplete="organization"
           aria-invalid={Boolean(errors.supplierName)}
           placeholder="VD: Công ty TNHH Thiên Phúc"
           {...form.register('supplierName')}
@@ -32,7 +44,7 @@ export function SupplierFormFields({ idPrefix, form }: SupplierFormFieldsProps) 
         <FieldLabel htmlFor={`${idPrefix}-supplier-phone`}>Số điện thoại</FieldLabel>
         <Input
           id={`${idPrefix}-supplier-phone`}
-          autoComplete="off"
+          autoComplete="tel"
           inputMode="tel"
           aria-invalid={Boolean(errors.phone)}
           placeholder="VD: 0901234567"
@@ -46,7 +58,7 @@ export function SupplierFormFields({ idPrefix, form }: SupplierFormFieldsProps) 
         <Input
           id={`${idPrefix}-supplier-email`}
           type="email"
-          autoComplete="off"
+          autoComplete="email"
           aria-invalid={Boolean(errors.email)}
           placeholder="VD: lienhe@thienphuc.vn"
           {...form.register('email')}
@@ -54,11 +66,11 @@ export function SupplierFormFields({ idPrefix, form }: SupplierFormFieldsProps) 
         <FieldError errors={[errors.email]} />
       </Field>
 
-      <Field data-invalid={Boolean(errors.address)}>
+      <Field className="sm:col-span-2" data-invalid={Boolean(errors.address)}>
         <FieldLabel htmlFor={`${idPrefix}-supplier-address`}>Địa chỉ (tùy chọn)</FieldLabel>
         <Textarea
           id={`${idPrefix}-supplier-address`}
-          rows={3}
+          rows={2}
           aria-invalid={Boolean(errors.address)}
           placeholder="VD: 12 Nguyễn Văn Bảo, Gò Vấp, TP.HCM"
           {...form.register('address')}

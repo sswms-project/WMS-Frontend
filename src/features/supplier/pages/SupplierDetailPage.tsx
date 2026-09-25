@@ -47,6 +47,7 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailPagePro
       await updateMutation.mutateAsync({
         supplierId,
         request: {
+          supplierCode: values.supplierCode,
           supplierName: values.supplierName,
           phone: values.phone,
           email: values.email || null,

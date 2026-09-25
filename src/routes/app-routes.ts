@@ -29,6 +29,8 @@ export const APP_ROUTES = {
   },
   warehouses: '/warehouses',
   suppliers: '/suppliers',
+  units: '/units',
+  categories: '/categories',
   supplierDetail: (supplierId: string) => `/suppliers/${supplierId}`,
   inboundRequests: '/inbound-requests',
   inboundRequestCreate: '/inbound-requests/new',

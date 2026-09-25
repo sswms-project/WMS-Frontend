@@ -133,11 +133,11 @@ export const queryKeys = {
   },
   units: {
     all: ['units'] as const,
-    list: ['units', 'list'] as const,
+    list: (status?: 'Active' | 'Inactive') => ['units', 'list', status] as const,
   },
   categories: {
     all: ['categories'] as const,
-    list: ['categories', 'list'] as const,
+    list: (status?: 'Active' | 'Inactive') => ['categories', 'list', status] as const,
   },
   cycleCounts: {
     all: ['cycle-counts'] as const,
@@ -157,6 +157,7 @@ export const queryKeys = {
     detail: (id: string) => ['products', 'detail', id] as const,
     suppliers: (id: string) => ['products', 'detail', id, 'suppliers'] as const,
     stockPolicies: (id: string) => ['products', 'detail', id, 'stock-policies'] as const,
+    unitConversions: (id: string) => ['products', 'detail', id, 'unit-conversions'] as const,
     lots: (id: string, params: ProductLotQuery) =>
       ['products', 'detail', id, 'lots', params] as const,
   },

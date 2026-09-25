@@ -14,6 +14,7 @@ import {
   PackageOpen,
   PackageSearch,
   ReceiptText,
+  Scale,
   ScrollText,
   Settings,
   Shield,
@@ -116,6 +117,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           ShieldCheck,
           P.TENANT_ROLE_PERMISSIONS_VIEW
         ),
+        requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW),
       ],
     },
     {
@@ -135,7 +137,6 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       items: [
         requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
         requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
-        requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW),
       ],
     },
     {
@@ -144,7 +145,11 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       icon: Tags,
       collapsible: true,
       separatorBefore: true,
-      items: [requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW)],
+      items: [
+        requiredNavItem(APP_ROUTES.products, 'Danh mục VTHH', Package, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.categories, 'Nhóm VTHH', Tags, P.CATEGORIES_VIEW),
+        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
+      ],
     },
     {
       id: 'warehouse-operations',
@@ -244,7 +249,11 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       label: 'Danh mục',
       icon: Tags,
       collapsible: true,
-      items: [requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW)],
+      items: [
+        requiredNavItem(APP_ROUTES.products, 'Danh mục VTHH', Package, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.categories, 'Nhóm VTHH', Tags, P.CATEGORIES_VIEW),
+        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
+      ],
     },
     {
       id: 'warehouse-management',
@@ -302,7 +311,11 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       label: 'Danh mục',
       icon: Tags,
       collapsible: true,
-      items: [requiredNavItem(APP_ROUTES.products, 'Sản phẩm', Package, P.PRODUCTS_VIEW)],
+      items: [
+        requiredNavItem(APP_ROUTES.products, 'Danh mục VTHH', Package, P.PRODUCTS_VIEW),
+        requiredNavItem(APP_ROUTES.categories, 'Nhóm VTHH', Tags, P.CATEGORIES_VIEW),
+        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
+      ],
     },
     {
       id: 'subjects',

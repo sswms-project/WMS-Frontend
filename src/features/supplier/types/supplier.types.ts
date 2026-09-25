@@ -9,6 +9,7 @@ export interface SupplierListQuery {
 
 export interface Supplier {
   readonly id: string
+  readonly supplierCode: string
   readonly supplierName: string
   readonly phone: string
   readonly email: string | null
@@ -26,6 +27,7 @@ export interface SupplierListResponse {
 }
 
 export interface SaveSupplierRequest {
+  readonly supplierCode: string
   readonly supplierName: string
   readonly phone: string
   readonly email: string | null

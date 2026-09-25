@@ -77,6 +77,14 @@ export const P = {
   PRODUCTS_GENERATE_BARCODE: 'products:generate-barcode',
   PRODUCTS_IMPORT: 'products:import',
 
+  // Product categories
+  CATEGORIES_VIEW: 'categories:view',
+  CATEGORIES_MANAGE: 'categories:manage',
+
+  // Units
+  UNITS_VIEW: 'units:view',
+  UNITS_MANAGE: 'units:manage',
+
   // RBAC
   ROLES_VIEW: 'roles:view',
   ROLES_ASSIGN_PERMISSION: 'roles:assign-permission',
@@ -107,6 +115,7 @@ export const P = {
   STOCK_RECIPIENTS_VIEW: 'stock-recipients:view',
   STOCK_RECIPIENTS_CREATE: 'stock-recipients:create',
   STOCK_RECIPIENTS_UPDATE: 'stock-recipients:update',
+  STOCK_RECIPIENTS_MANAGE_STATUS: 'stock-recipients:manage-status',
 
   // Suppliers
   SUPPLIERS_VIEW: 'suppliers:view',

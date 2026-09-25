@@ -1,38 +1,20 @@
 'use client'
 
-import {
-  CircleOff,
-  Eye,
-  ListFilter,
-  Pencil,
-  Plus,
-  RefreshCw,
-  RotateCcw,
-  Search,
-  Truck,
-} from 'lucide-react'
+import { CircleOff, Eye, Pencil, Plus, RefreshCw, RotateCcw, Search, Truck } from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { useState } from 'react'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { parseActiveStatusFilter } from '@/components/operations/status-filter'
 import {
   OperationalEmptyState,
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { Button } from '@/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import {
   Table,
   TableBody,
@@ -64,6 +46,7 @@ interface SupplierDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: SupplierStatus | '') => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
   readonly onEdit: (supplier: Supplier) => void
   readonly onDeactivate: (supplier: Supplier) => void
@@ -88,14 +71,13 @@ export function SupplierDirectory({
   onSearchChange,
   onStatusChange,
   onPageChange,
+  onPageSizeChange,
   onCreate,
   onEdit,
   onDeactivate,
   onReactivate,
   onRetry,
 }: SupplierDirectoryProps) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -119,10 +101,7 @@ export function SupplierDirectory({
         ) : null}
       </header>
 
-      <section
-        className="bg-card @container flex min-h-0 flex-col border"
-        aria-labelledby="supplier-directory-title"
-      >
+      <OperationalListPanel className="@container" aria-labelledby="supplier-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="supplier-directory-title" className="text-sm font-semibold">
@@ -137,15 +116,24 @@ export function SupplierDirectory({
               </InputGroupAddon>
               <InputGroupInput
                 aria-label="Tìm nhà cung cấp"
-                placeholder="Tìm theo tên, số điện thoại, email hoặc địa chỉ"
+                placeholder="Tìm theo mã, tên, số điện thoại hoặc email"
                 value={searchText}
                 onChange={(event) => onSearchChange(event.target.value)}
               />
             </InputGroup>
-            <Button type="button" variant="outline" onClick={() => setIsFilterOpen(true)}>
-              <ListFilter aria-hidden="true" />
-              Bộ lọc{status ? ' (1)' : ''}
-            </Button>
+            <NativeSelect
+              aria-label="Lọc nhà cung cấp theo trạng thái"
+              className="w-44"
+              value={status}
+              onChange={(event) => onStatusChange(parseActiveStatusFilter(event.target.value))}
+            >
+              <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+              {SUPPLIER_STATUS_OPTIONS.map((option) => (
+                <NativeSelectOption key={option.value} value={option.value}>
+                  {option.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -193,72 +181,41 @@ export function SupplierDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
-
-      <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-        <SheetContent className="w-full sm:max-w-sm">
-          <SheetHeader>
-            <SheetTitle>Bộ lọc nhà cung cấp</SheetTitle>
-            <SheetDescription>Thu hẹp danh sách theo trạng thái hợp tác.</SheetDescription>
-          </SheetHeader>
-          <FieldGroup className="flex-1 p-4">
-            <Field>
-              <FieldLabel htmlFor="supplier-filter-status">Trạng thái</FieldLabel>
-              <NativeSelect
-                id="supplier-filter-status"
-                className="w-full"
-                value={status}
-                onChange={(event) => onStatusChange(event.target.value as SupplierStatus | '')}
-              >
-                <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
-                {SUPPLIER_STATUS_OPTIONS.map((option) => (
-                  <NativeSelectOption key={option.value} value={option.value}>
-                    {option.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </Field>
-          </FieldGroup>
-          <SheetFooter>
-            <Button type="button" onClick={() => setIsFilterOpen(false)}>
-              Xem kết quả
-            </Button>
-            <Button type="button" variant="outline" onClick={() => onStatusChange('')}>
-              Đặt lại
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      </OperationalListPanel>
     </div>
   )
 }
 
 function SupplierMobileList({ items }: { readonly items: readonly Supplier[] }) {
   return (
-    <ItemGroup className="gap-0 @min-[1040px]:hidden">
-      {items.map((item) => (
-        <Item key={item.id} className="border-b last:border-b-0">
-          <ItemContent className="min-w-0">
-            <ItemTitle className="flex flex-wrap items-center gap-2">
-              <Link
-                href={APP_ROUTES.supplierDetail(item.id) as Route}
-                className="max-w-full min-w-0 truncate font-semibold hover:underline"
-              >
-                {item.supplierName}
-              </Link>
-              <SupplierStatusBadge status={item.status} />
-            </ItemTitle>
-            <ItemDescription>
-              {item.phone} · {formatSupplierText(item.email)}
-            </ItemDescription>
-            <ItemDescription>{formatSupplierText(item.address)}</ItemDescription>
-          </ItemContent>
-        </Item>
-      ))}
-    </ItemGroup>
+    <div data-slot="operational-list-body" className="@min-[1040px]:hidden">
+      <ItemGroup className="gap-0">
+        {items.map((item) => (
+          <Item key={item.id} className="border-b last:border-b-0">
+            <ItemContent className="min-w-0">
+              <ItemTitle className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={APP_ROUTES.supplierDetail(item.id) as Route}
+                  className="max-w-full min-w-0 truncate font-semibold hover:underline"
+                >
+                  {item.supplierName}
+                </Link>
+                <SupplierStatusBadge status={item.status} />
+              </ItemTitle>
+              <ItemDescription className="font-mono">{item.supplierCode}</ItemDescription>
+              <ItemDescription>
+                {item.phone} · {formatSupplierText(item.email)}
+              </ItemDescription>
+              <ItemDescription>{formatSupplierText(item.address)}</ItemDescription>
+            </ItemContent>
+          </Item>
+        ))}
+      </ItemGroup>
+    </div>
   )
 }
 
@@ -282,10 +239,11 @@ function SupplierDesktopTable({
   onReactivate,
 }: SupplierDesktopTableProps) {
   return (
-    <div className="hidden min-h-0 flex-1 overflow-y-auto @min-[1040px]:block">
+    <div data-slot="operational-list-body" className="hidden @min-[1040px]:block">
       <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
+            <TableHead className="bg-card sticky top-0 z-10 w-32">Mã NCC</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-60">Nhà cung cấp</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-32">Số điện thoại</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-48">Email</TableHead>
@@ -299,6 +257,7 @@ function SupplierDesktopTable({
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.id}>
+              <TableCell className="truncate font-mono">{item.supplierCode}</TableCell>
               <TableCell className="min-w-0">
                 <Tooltip>
                   <TooltipTrigger asChild>

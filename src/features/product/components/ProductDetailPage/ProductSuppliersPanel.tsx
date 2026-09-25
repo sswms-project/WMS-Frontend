@@ -2,7 +2,6 @@
 
 import { LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -46,61 +45,67 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useOrganizationQuery } from '@/features/organization/hooks/use-organization'
-import { useSuppliersQuery } from '@/features/supplier/hooks/use-suppliers'
-import { getApiErrorMessage } from '@/lib/api-error'
-import {
-  useAddProductSupplierMutation,
-  useDeleteProductSupplierMutation,
-  useProductSuppliersQuery,
-  useUpdateProductSupplierMutation,
-} from '../../hooks/use-products'
+import type { Supplier } from '@/features/supplier/types/supplier.types'
 import type { ProductSupplier } from '../../types/product.types'
 
 interface ProductSuppliersPanelProps {
-  readonly productId: string
   readonly canManage: boolean
+  readonly links: readonly ProductSupplier[]
+  readonly suppliers: readonly Supplier[]
+  readonly isLoading: boolean
+  readonly isError: boolean
+  readonly isSuppliersLoading: boolean
+  readonly isSuppliersError: boolean
+  readonly isSaving: boolean
+  readonly isDeleting: boolean
+  readonly onRetry: () => void
+  readonly onRetrySuppliers: () => void
+  readonly onAdd: (request: {
+    supplierId: string
+    supplierProductCode: string | null
+    isPreferred: boolean
+  }) => Promise<boolean>
+  readonly onUpdate: (
+    linkId: string,
+    request: { supplierProductCode: string | null; isPreferred: boolean }
+  ) => Promise<boolean>
+  readonly onDelete: (linkId: string) => Promise<boolean>
 }
 
 interface FormState {
   supplierId: string
   supplierProductCode: string
-  unitPrice: string
   isPreferred: boolean
 }
 
 const emptyForm: FormState = {
   supplierId: '',
   supplierProductCode: '',
-  unitPrice: '',
   isPreferred: false,
 }
 
-function formatMoney(value: number | null, currency: string) {
-  if (value === null) return 'Chưa nhập'
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: currency === 'VND' ? 0 : 2,
-  }).format(value)
-}
-
-export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliersPanelProps) {
-  const productSuppliersQuery = useProductSuppliersQuery(productId)
-  const suppliersQuery = useSuppliersQuery({ pageNumber: 1, pageSize: 100, status: 'Active' })
-  const organizationQuery = useOrganizationQuery()
-  const addMutation = useAddProductSupplierMutation(productId)
-  const updateMutation = useUpdateProductSupplierMutation(productId)
-  const deleteMutation = useDeleteProductSupplierMutation(productId)
+export function ProductSuppliersPanel({
+  canManage,
+  links,
+  suppliers,
+  isLoading,
+  isError,
+  isSuppliersLoading,
+  isSuppliersError,
+  isSaving,
+  isDeleting,
+  onRetry,
+  onRetrySuppliers,
+  onAdd,
+  onUpdate,
+  onDelete,
+}: ProductSuppliersPanelProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingLink, setEditingLink] = useState<ProductSupplier | null>(null)
   const [deletingLink, setDeletingLink] = useState<ProductSupplier | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
 
-  const currency = organizationQuery.data?.defaultCurrency ?? 'VND'
-  const links = productSuppliersQuery.data ?? []
   const linkedSupplierIds = new Set(links.map((link) => link.supplierId))
-  const isSaving = addMutation.isPending || updateMutation.isPending
 
   function openCreate() {
     setEditingLink(null)
@@ -113,7 +118,6 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
     setForm({
       supplierId: link.supplierId,
       supplierProductCode: link.supplierProductCode ?? '',
-      unitPrice: link.unitPrice?.toString() ?? '',
       isPreferred: link.isPreferred,
     })
     setIsDialogOpen(true)
@@ -121,50 +125,25 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
 
   async function save() {
     if (!form.supplierId) {
-      toast.error('Vui lòng chọn nhà cung cấp.')
       return
     }
 
-    const unitPrice = form.unitPrice.trim() === '' ? null : Number(form.unitPrice)
-    if (unitPrice !== null && (!Number.isFinite(unitPrice) || unitPrice < 0)) {
-      toast.error('Đơn giá phải là số không âm.')
-      return
-    }
-
-    try {
-      if (editingLink) {
-        await updateMutation.mutateAsync({
-          linkId: editingLink.id,
-          request: {
-            supplierProductCode: form.supplierProductCode.trim() || null,
-            unitPrice,
-            isPreferred: form.isPreferred,
-          },
-        })
-      } else {
-        await addMutation.mutateAsync({
-          supplierId: form.supplierId,
+    const saved = editingLink
+      ? await onUpdate(editingLink.id, {
           supplierProductCode: form.supplierProductCode.trim() || null,
-          unitPrice,
           isPreferred: form.isPreferred,
         })
-      }
-      toast.success(editingLink ? 'Đã cập nhật nhà cung cấp.' : 'Đã liên kết nhà cung cấp.')
-      setIsDialogOpen(false)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể lưu nhà cung cấp cho sản phẩm.'))
-    }
+      : await onAdd({
+          supplierId: form.supplierId,
+          supplierProductCode: form.supplierProductCode.trim() || null,
+          isPreferred: form.isPreferred,
+        })
+    if (saved) setIsDialogOpen(false)
   }
 
   async function remove() {
     if (!deletingLink) return
-    try {
-      await deleteMutation.mutateAsync(deletingLink.id)
-      toast.success('Đã xóa liên kết nhà cung cấp.')
-      setDeletingLink(null)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể xóa liên kết nhà cung cấp.'))
-    }
+    if (await onDelete(deletingLink.id)) setDeletingLink(null)
   }
 
   return (
@@ -174,7 +153,7 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
           <div className="flex flex-col gap-1">
             <CardTitle>Nhà cung cấp</CardTitle>
             <CardDescription>
-              Quản lý mã hàng, đơn giá tham khảo và nhà cung cấp ưu tiên.
+              Quản lý mã hàng riêng và nhà cung cấp ưu tiên của sản phẩm.
             </CardDescription>
           </div>
           {canManage && (
@@ -185,12 +164,12 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
           )}
         </CardHeader>
         <CardContent>
-          {productSuppliersQuery.isLoading ? (
+          {isLoading ? (
             <div className="flex flex-col gap-2">
               <Skeleton className="h-9 w-full" />
               <Skeleton className="h-9 w-full" />
             </div>
-          ) : productSuppliersQuery.isError ? (
+          ) : isError ? (
             <Alert variant="destructive">
               <TriangleAlert aria-hidden="true" />
               <AlertTitle>Không thể tải danh sách nhà cung cấp</AlertTitle>
@@ -198,12 +177,7 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
                 Vui lòng kiểm tra kết nối hoặc thử tải lại dữ liệu.
               </AlertDescription>
               <AlertAction>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void productSuppliersQuery.refetch()}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={onRetry}>
                   <RefreshCw data-icon="inline-start" aria-hidden="true" />
                   Thử lại
                 </Button>
@@ -217,7 +191,7 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
                 </EmptyMedia>
                 <EmptyTitle>Chưa có nhà cung cấp</EmptyTitle>
                 <EmptyDescription>
-                  Liên kết ít nhất một nhà cung cấp để lưu mã hàng và đơn giá tham khảo.
+                  Liên kết nhà cung cấp để lưu mã hàng riêng và đánh dấu nguồn cung ưu tiên.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -227,7 +201,6 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
                 <TableRow>
                   <TableHead>Nhà cung cấp</TableHead>
                   <TableHead>Mã của nhà cung cấp</TableHead>
-                  <TableHead className="text-right">Đơn giá</TableHead>
                   <TableHead>Ưu tiên</TableHead>
                   {canManage && <TableHead className="w-24 text-right">Thao tác</TableHead>}
                 </TableRow>
@@ -237,9 +210,6 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
                   <TableRow key={link.id}>
                     <TableCell className="font-medium">{link.supplierName}</TableCell>
                     <TableCell>{link.supplierProductCode ?? '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatMoney(link.unitPrice, currency)}
-                    </TableCell>
                     <TableCell>
                       {link.isPreferred ? <Badge>Ưu tiên</Badge> : <span>—</span>}
                     </TableCell>
@@ -280,21 +250,16 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
           <DialogHeader>
             <DialogTitle>{editingLink ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</DialogTitle>
             <DialogDescription>
-              Đơn giá được ghi nhận theo tiền tệ mặc định của đơn vị ({currency}).
+              Lưu mã sản phẩm do nhà cung cấp sử dụng và nguồn cung ưu tiên.
             </DialogDescription>
           </DialogHeader>
-          {!editingLink && suppliersQuery.isError && (
+          {!editingLink && isSuppliersError && (
             <Alert variant="destructive">
               <TriangleAlert aria-hidden="true" />
               <AlertTitle>Không thể tải danh sách nhà cung cấp</AlertTitle>
               <AlertDescription>Hãy tải lại dữ liệu trước khi tạo liên kết.</AlertDescription>
               <AlertAction>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void suppliersQuery.refetch()}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={onRetrySuppliers}>
                   <RefreshCw data-icon="inline-start" aria-hidden="true" />
                   Thử lại
                 </Button>
@@ -306,21 +271,19 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
               <FieldLabel htmlFor="productSupplierSelect">Nhà cung cấp</FieldLabel>
               <Select
                 value={form.supplierId}
-                disabled={
-                  Boolean(editingLink) || suppliersQuery.isLoading || suppliersQuery.isError
-                }
+                disabled={Boolean(editingLink) || isSuppliersLoading || isSuppliersError}
                 onValueChange={(supplierId) => setForm((current) => ({ ...current, supplierId }))}
               >
                 <SelectTrigger id="productSupplierSelect" className="w-full">
                   <SelectValue
                     placeholder={
-                      suppliersQuery.isLoading ? 'Đang tải nhà cung cấp...' : 'Chọn nhà cung cấp'
+                      isSuppliersLoading ? 'Đang tải nhà cung cấp...' : 'Chọn nhà cung cấp'
                     }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={4} className="z-[70] max-h-64">
                   <SelectGroup>
-                    {(suppliersQuery.data?.items ?? []).map((supplier) => (
+                    {suppliers.map((supplier) => (
                       <SelectItem
                         key={supplier.id}
                         value={supplier.id}
@@ -341,19 +304,6 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
                 value={form.supplierProductCode}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, supplierProductCode: event.target.value }))
-                }
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="supplierUnitPrice">Đơn giá tham khảo ({currency})</FieldLabel>
-              <Input
-                id="supplierUnitPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.unitPrice}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, unitPrice: event.target.value }))
                 }
               />
             </Field>
@@ -384,7 +334,7 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
             </Button>
             <Button
               type="button"
-              disabled={isSaving || (!editingLink && suppliersQuery.isError)}
+              disabled={isSaving || (!editingLink && isSuppliersError) || !form.supplierId}
               onClick={() => void save()}
             >
               {isSaving && <LoaderCircle data-icon="inline-start" className="animate-spin" />}
@@ -406,8 +356,8 @@ export function ProductSuppliersPanel({ productId, canManage }: ProductSuppliers
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Hủy</AlertDialogCancel>
-            <AlertDialogAction disabled={deleteMutation.isPending} onClick={() => void remove()}>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction disabled={isDeleting} onClick={() => void remove()}>
               Xóa liên kết
             </AlertDialogAction>
           </AlertDialogFooter>
