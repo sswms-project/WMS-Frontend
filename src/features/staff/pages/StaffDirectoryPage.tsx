@@ -205,9 +205,6 @@ export function StaffDirectoryPage() {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Tổ chức và nhân sự</p>
             <h1 className="mt-0.5 text-xl font-semibold">Danh bạ nhân sự</h1>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-              Tra cứu hồ sơ và quản lý trạng thái tài khoản theo quyền được cấp.
-            </p>
           </div>
         </div>
         {canInvite && (
@@ -231,13 +228,22 @@ export function StaffDirectoryPage() {
         className="min-w-0 flex-col gap-4"
         onValueChange={(value) => isStaffPageView(value) && setActiveView(value)}
       >
-        <TabsList variant="line" className="h-10 w-full justify-start border-b p-0">
-          <TabsTrigger value={STAFF_PAGE_VIEWS.directory} className="h-10 flex-none px-3">
+        <TabsList
+          variant="workspace"
+          className="w-full justify-start overflow-x-auto border-b px-1 pt-0 pb-1"
+        >
+          <TabsTrigger
+            value={STAFF_PAGE_VIEWS.directory}
+            className="h-9 flex-none shrink-0 touch-manipulation rounded-sm px-3 text-xs"
+          >
             <Users className="size-4" aria-hidden="true" />
             Nhân sự
           </TabsTrigger>
           {canInvite && (
-            <TabsTrigger value={STAFF_PAGE_VIEWS.invitations} className="h-10 flex-none px-3">
+            <TabsTrigger
+              value={STAFF_PAGE_VIEWS.invitations}
+              className="h-9 flex-none shrink-0 touch-manipulation rounded-sm px-3 text-xs"
+            >
               <Mail className="size-4" aria-hidden="true" />
               Lời mời
             </TabsTrigger>
