@@ -1,11 +1,19 @@
 'use client'
 
-import { Plus, Save, Trash2, X } from 'lucide-react'
+import { ImagePlus, Plus, Save, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { useFieldArray, useWatch } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import {
   Accordion,
   AccordionContent,
@@ -49,7 +57,11 @@ interface CreateProductFormProps extends ProductReferenceOptionsProps {
   readonly isPending: boolean
   readonly isCreatingCategory: boolean
   readonly onCreateCategory: (values: CategoryFormValues) => Promise<string | null>
-  readonly onSubmit: (values: CreateProductFormValues, createAnother: boolean) => Promise<boolean>
+  readonly onSubmit: (
+    values: CreateProductFormValues,
+    createAnother: boolean,
+    imageFile: File | null
+  ) => Promise<boolean>
   readonly onCancel: () => void
   readonly onCategoryDialogOpenChange: (open: boolean) => void
 }
@@ -73,6 +85,8 @@ export function CreateProductForm({
   onCategoryDialogOpenChange,
 }: CreateProductFormProps) {
   const isLotTracked = useWatch({ control: form.control, name: 'isLotTracked' })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
   const baseUnitId = useWatch({ control: form.control, name: 'unitId' })
   const {
     fields: conversionFields,
@@ -84,9 +98,11 @@ export function CreateProductForm({
   })
 
   async function save(values: CreateProductFormValues, createAnother: boolean) {
-    const saved = await onSubmit(values, createAnother)
-    if (saved && createAnother) {
-      form.reset()
+    const saved = await onSubmit(values, createAnother, imageFile)
+    if (saved) {
+      setImageFile(null)
+      setImageError(null)
+      if (createAnother) form.reset()
     }
   }
 
@@ -103,14 +119,55 @@ export function CreateProductForm({
           </AlertDescription>
         </Alert>
       ) : null}
-      <FieldGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field data-invalid={Boolean(form.formState.errors.productName)} className="sm:col-span-2">
+      <FieldGroup className="bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-2">
+        <Field className="md:col-span-2" data-invalid={Boolean(imageError)}>
+          <FieldLabel htmlFor="productImage">Ảnh sản phẩm</FieldLabel>
+          <div className="bg-muted/20 flex flex-col gap-3 rounded-md border border-dashed p-4 sm:flex-row sm:items-center">
+            <div className="bg-background flex size-12 shrink-0 items-center justify-center rounded-md border">
+              <ImagePlus className="text-muted-foreground size-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                id="productImage"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-invalid={Boolean(imageError)}
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null
+                  if (!file) {
+                    setImageFile(null)
+                    setImageError(null)
+                    return
+                  }
+                  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                    event.target.value = ''
+                    setImageFile(null)
+                    setImageError('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP')
+                    return
+                  }
+                  if (file.size > 5 * 1024 * 1024) {
+                    event.target.value = ''
+                    setImageFile(null)
+                    setImageError('Ảnh sản phẩm không được vượt quá 5 MB')
+                    return
+                  }
+                  setImageFile(file)
+                  setImageError(null)
+                }}
+              />
+              <p className="text-muted-foreground mt-1 text-xs">
+                {imageFile?.name ?? 'Không bắt buộc. Hỗ trợ JPG, PNG hoặc WebP, tối đa 5 MB.'}
+              </p>
+            </div>
+          </div>
+          {imageError ? <p className="text-destructive text-xs">{imageError}</p> : null}
+        </Field>
+        <Field data-invalid={Boolean(form.formState.errors.productName)} className="md:col-span-2">
           <FieldLabel htmlFor="productName">Tên sản phẩm *</FieldLabel>
           <Input
             id="productName"
             aria-invalid={Boolean(form.formState.errors.productName)}
             placeholder="Ví dụ: Pin AA…"
-            className="h-10 rounded-lg text-sm"
             {...form.register('productName')}
           />
           <FieldError
@@ -128,7 +185,7 @@ export function CreateProductForm({
             autoComplete="off"
             spellCheck={false}
             placeholder="Ví dụ: SKU-A001…"
-            className="h-10 rounded-lg font-mono text-sm"
+            className="font-mono"
             {...form.register('sku')}
           />
           <FieldError
@@ -207,7 +264,7 @@ export function CreateProductForm({
           />
         </Field>
 
-        <FieldSet className="sm:col-span-2">
+        <FieldSet className="bg-muted/30 rounded-md border p-4 md:col-span-2">
           <FieldLegend variant="label">Phương thức quản lý tồn kho</FieldLegend>
           <RadioGroup
             aria-label="Phương thức quản lý tồn kho"
@@ -239,7 +296,7 @@ export function CreateProductForm({
         {isLotTracked ? (
           <Field
             data-invalid={Boolean(form.formState.errors.shelfLifeDays)}
-            className="sm:col-span-2"
+            className="md:col-span-2"
           >
             <FieldLabel htmlFor="shelfLifeDays">Số ngày sử dụng dự kiến</FieldLabel>
             <Input
@@ -262,7 +319,7 @@ export function CreateProductForm({
             />
           </Field>
         ) : null}
-        <Field className="sm:col-span-2" data-invalid={Boolean(form.formState.errors.description)}>
+        <Field className="md:col-span-2" data-invalid={Boolean(form.formState.errors.description)}>
           <FieldLabel htmlFor="description">Mô tả</FieldLabel>
           <Textarea
             id="description"
@@ -278,7 +335,7 @@ export function CreateProductForm({
         </Field>
       </FieldGroup>
 
-      <Accordion type="multiple" className="mt-4 border-y">
+      <Accordion type="multiple" className="mt-4 rounded-lg border px-4">
         <AccordionItem value="conversions">
           <AccordionTrigger>Đơn vị chuyển đổi</AccordionTrigger>
           <AccordionContent className="space-y-3">
@@ -380,7 +437,7 @@ export function CreateProductForm({
         </AccordionItem>
       </Accordion>
 
-      <SheetFooter className="mt-6">
+      <SheetFooter className="bg-popover sticky -bottom-5 z-10 -mx-5 mt-6 border-t px-5 py-4 sm:flex-row sm:justify-end">
         <Button type="button" variant="ghost" disabled={isPending} onClick={onCancel}>
           <X data-icon="inline-start" aria-hidden="true" />
           Hủy
@@ -426,7 +483,11 @@ interface CreateProductDialogProps extends ProductReferenceOptionsProps {
   readonly isCreatingCategory: boolean
   readonly onCreateCategory: (values: CategoryFormValues) => Promise<string | null>
   readonly onOpenChange: (open: boolean) => void
-  readonly onSubmit: (values: CreateProductFormValues, createAnother: boolean) => Promise<boolean>
+  readonly onSubmit: (
+    values: CreateProductFormValues,
+    createAnother: boolean,
+    imageFile: File | null
+  ) => Promise<boolean>
   readonly onCategoryDialogOpenChange: (open: boolean) => void
 }
 
@@ -451,11 +512,14 @@ export function CreateProductDialog({
 }: CreateProductDialogProps) {
   return (
     <Sheet open={open} onOpenChange={(o) => !isPending && onOpenChange(o)}>
-      <SheetContent className="w-full max-w-full overflow-y-auto overscroll-contain sm:max-w-[50vw]">
-        <SheetHeader>
-          <SheetTitle>Thêm sản phẩm mới</SheetTitle>
+      <SheetContent className="w-full max-w-full overflow-hidden overscroll-contain data-[side=right]:w-full data-[side=right]:sm:w-full data-[side=right]:sm:max-w-none data-[side=right]:md:w-4/5 data-[side=right]:lg:w-2/3 data-[side=right]:xl:w-1/2">
+        <SheetHeader className="shrink-0 border-b px-5 py-4 pr-12">
+          <SheetTitle className="text-base font-semibold">Thêm sản phẩm mới</SheetTitle>
+          <SheetDescription>
+            Khai báo thông tin nhận diện, đơn vị tính và phương thức quản lý tồn kho.
+          </SheetDescription>
         </SheetHeader>
-        <div className="px-4 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           <CreateProductForm
             form={form}
             categoryForm={categoryForm}
@@ -508,11 +572,14 @@ export function UpdateProductDialog({
 
   return (
     <Sheet open={open} onOpenChange={(o) => !isPending && onOpenChange(o)}>
-      <SheetContent className="w-full max-w-full overflow-y-auto overscroll-contain sm:max-w-xl lg:max-w-3xl">
-        <SheetHeader>
-          <SheetTitle>Chỉnh sửa sản phẩm</SheetTitle>
+      <SheetContent className="w-full max-w-full overflow-hidden overscroll-contain data-[side=right]:w-full data-[side=right]:sm:max-w-none data-[side=right]:md:w-4/5 data-[side=right]:lg:w-2/3 data-[side=right]:xl:w-1/2">
+        <SheetHeader className="shrink-0 border-b px-5 py-4 pr-12">
+          <SheetTitle className="text-base font-semibold">Chỉnh sửa sản phẩm</SheetTitle>
+          <SheetDescription>
+            Cập nhật thông tin sản phẩm và phương thức quản lý tồn kho.
+          </SheetDescription>
         </SheetHeader>
-        <div className="px-4 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
             {areOptionsError ? (
               <Alert variant="destructive" className="mb-4">
@@ -525,17 +592,16 @@ export function UpdateProductDialog({
                 </AlertDescription>
               </Alert>
             ) : null}
-            <FieldGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FieldGroup className="bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-2">
               <Field
                 data-invalid={Boolean(form.formState.errors.productName)}
-                className="sm:col-span-2"
+                className="md:col-span-2"
               >
                 <FieldLabel htmlFor="edit-productName">Tên sản phẩm *</FieldLabel>
                 <Input
                   id="edit-productName"
                   aria-invalid={Boolean(form.formState.errors.productName)}
                   placeholder="Ví dụ: Pin AA…"
-                  className="h-10 rounded-lg text-sm"
                   {...form.register('productName')}
                 />
                 <FieldError
@@ -620,7 +686,10 @@ export function UpdateProductDialog({
                 />
               </Field>
 
-              <FieldSet className="sm:col-span-2" data-disabled={!product.canChangeTrackingMode}>
+              <FieldSet
+                className="bg-muted/30 rounded-md border p-4 md:col-span-2"
+                data-disabled={!product.canChangeTrackingMode}
+              >
                 <FieldLegend variant="label">Phương thức quản lý tồn kho</FieldLegend>
                 <RadioGroup
                   aria-label="Phương thức quản lý tồn kho"
@@ -656,7 +725,7 @@ export function UpdateProductDialog({
               {isLotTracked ? (
                 <Field
                   data-invalid={Boolean(form.formState.errors.shelfLifeDays)}
-                  className="sm:col-span-2"
+                  className="md:col-span-2"
                 >
                   <FieldLabel htmlFor="edit-shelfLifeDays">Số ngày sử dụng dự kiến</FieldLabel>
                   <Input
@@ -680,7 +749,7 @@ export function UpdateProductDialog({
                 </Field>
               ) : null}
               <Field
-                className="sm:col-span-2"
+                className="md:col-span-2"
                 data-invalid={Boolean(form.formState.errors.description)}
               >
                 <FieldLabel htmlFor="edit-description">Mô tả</FieldLabel>
@@ -699,7 +768,7 @@ export function UpdateProductDialog({
               </Field>
             </FieldGroup>
 
-            <SheetFooter className="mt-6">
+            <SheetFooter className="bg-popover sticky -bottom-5 z-10 -mx-5 mt-6 border-t px-5 py-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="ghost"

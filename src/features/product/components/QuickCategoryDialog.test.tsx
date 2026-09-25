@@ -65,14 +65,14 @@ describe('QuickCategoryDialog', () => {
     expect(screen.getByRole('option', { name: 'Linh kiện' })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Linh kiện / Nhóm cấp 5' })).not.toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('Mã nhóm *'), 'BULONG')
+    expect(screen.queryByLabelText('Mã nhóm *')).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('Tên nhóm *'), 'Bu lông')
     await user.selectOptions(screen.getByLabelText('Nhóm cha'), 'root')
     await user.click(screen.getByRole('button', { name: 'Tạo và chọn nhóm' }))
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
-        categoryCode: 'BULONG',
+        categoryCode: '',
         categoryName: 'Bu lông',
         parentCategoryId: 'root',
       }),

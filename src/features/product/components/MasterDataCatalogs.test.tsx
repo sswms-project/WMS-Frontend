@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 import { describe, expect, it, vi } from 'vitest'
 import type { CategoryFormValues, UnitFormValues } from '../schemas/master-data.schema'
@@ -36,6 +36,7 @@ interface CatalogState {
   readonly isLoading?: boolean
   readonly isError?: boolean
   readonly empty?: boolean
+  readonly categoryItems?: readonly CategoryResponse[]
 }
 
 function UnitHarness({ isLoading = false, isError = false, empty = false }: CatalogState) {
@@ -68,13 +69,18 @@ function UnitHarness({ isLoading = false, isError = false, empty = false }: Cata
   )
 }
 
-function CategoryHarness({ isLoading = false, isError = false, empty = false }: CatalogState) {
+function CategoryHarness({
+  isLoading = false,
+  isError = false,
+  empty = false,
+  categoryItems = [category],
+}: CatalogState) {
   const form = useForm<CategoryFormValues>({
     defaultValues: { categoryCode: '', categoryName: '', parentCategoryId: null, description: '' },
   })
   return (
     <CategoryCatalog
-      items={empty ? [] : [category]}
+      items={empty ? [] : categoryItems}
       editingCategory={null}
       form={form}
       isFormOpen={false}
@@ -120,5 +126,25 @@ describe('master data catalogs', () => {
         ? screen.getByLabelText(expectedText)
         : screen.getAllByText(expectedText)[0]
     ).toBeInTheDocument()
+  })
+
+  it('keeps child categories under an expandable parent', () => {
+    const parent = { ...category, status: 'Active' as const, hasChildren: true }
+    const child: CategoryResponse = {
+      ...category,
+      id: 'category-2',
+      parentCategoryId: parent.id,
+      categoryCode: 'OC-VIT',
+      categoryName: 'Ốc vít',
+      status: 'Active',
+      level: 2,
+      categoryPath: 'Linh kiện / Ốc vít',
+    }
+
+    render(<CategoryHarness categoryItems={[parent, child]} />)
+
+    expect(screen.queryByText('Ốc vít')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Mở rộng nhóm Linh kiện' }))
+    expect(screen.getByText('Ốc vít')).toBeInTheDocument()
   })
 })

@@ -11,6 +11,7 @@ export interface StockRecipient {
   id: string
   recipientCode: string
   recipientName: string
+  taxCode: string | null
   phone: string
   email: string | null
   address: string
@@ -36,6 +37,7 @@ export type StockRecipientIssueHistoryResponse = StockIssueRequestListResponse
 export interface CreateStockRecipientRequest {
   recipientCode: string
   recipientName: string
+  taxCode: string | null
   phone: string
   email: string | null
   address: string

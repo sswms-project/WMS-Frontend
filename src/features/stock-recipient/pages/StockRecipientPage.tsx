@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -13,6 +13,7 @@ import {
 } from '../components/StockRecipientsPage'
 import {
   useCreateStockRecipientMutation,
+  useNextStockRecipientCodeQuery,
   useStockRecipientsQuery,
 } from '../hooks/use-stock-recipients'
 import {
@@ -37,17 +38,38 @@ export default function StockRecipientPage() {
   const createMutation = useCreateStockRecipientMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: { recipientCode: '', recipientName: '', phone: '', email: '', address: '' },
+    defaultValues: {
+      recipientCode: '',
+      recipientName: '',
+      taxCode: '',
+      phone: '',
+      email: '',
+      address: '',
+    },
   })
+  const nextCodeQuery = useNextStockRecipientCodeQuery(isCreateOpen)
+
+  useEffect(() => {
+    if (!isCreateOpen || !nextCodeQuery.data?.data || form.getFieldState('recipientCode').isDirty) {
+      return
+    }
+    if (!form.getValues('recipientCode')) {
+      form.setValue('recipientCode', nextCodeQuery.data.data, { shouldDirty: false })
+    }
+  }, [form, isCreateOpen, nextCodeQuery.data?.data])
 
   async function handleCreate(values: StockRecipientFormValues) {
     try {
-      await createMutation.mutateAsync({ ...values, email: values.email || null })
-      toast.success('Đã thêm đơn vị nhận hàng.')
+      await createMutation.mutateAsync({
+        ...values,
+        taxCode: values.taxCode || null,
+        email: values.email || null,
+      })
+      toast.success('Đã thêm khách hàng.')
       setIsCreateOpen(false)
       form.reset()
     } catch {
-      toast.error('Không thể thêm đơn vị nhận hàng. Vui lòng thử lại.')
+      toast.error('Không thể thêm khách hàng. Vui lòng thử lại.')
     }
   }
 
@@ -77,13 +99,23 @@ export default function StockRecipientPage() {
           setPageSize(value)
           setPage(1)
         }}
-        onCreate={() => setIsCreateOpen(true)}
+        onCreate={() => {
+          form.reset({
+            recipientCode: '',
+            recipientName: '',
+            taxCode: '',
+            phone: '',
+            email: '',
+            address: '',
+          })
+          setIsCreateOpen(true)
+        }}
         onRetry={() => void stockRecipientsQuery.refetch()}
       />
       <StockRecipientFormDialog
         open={isCreateOpen}
-        title="Thêm đơn vị nhận hàng"
-        description="Thông tin này được dùng làm người nhận mặc định cho yêu cầu xuất kho."
+        title="Thêm khách hàng"
+        description="Thông tin khách hàng được dùng trong các yêu cầu xuất kho."
         form={form}
         isPending={createMutation.isPending}
         onOpenChange={setIsCreateOpen}

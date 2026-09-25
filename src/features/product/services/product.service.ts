@@ -87,6 +87,14 @@ export const productService = {
       .put<ApiResponse<unknown>>(API_ENDPOINTS.products.update(id), request)
       .then((r) => r.data),
 
+  uploadProductImage: (id: string, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.products.image(id), formData)
+      .then((response) => response.data)
+  },
+
   changeProductStatus: (id: string, status: 'Active' | 'Inactive') =>
     axiosClient
       .patch<

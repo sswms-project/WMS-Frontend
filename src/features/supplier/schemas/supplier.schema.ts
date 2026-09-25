@@ -11,6 +11,7 @@ export const saveSupplierSchema = z.object({
     .trim()
     .min(1, 'Tên nhà cung cấp là bắt buộc.')
     .max(255, 'Tên nhà cung cấp tối đa 255 ký tự.'),
+  taxCode: z.string().trim().max(50, 'Mã số thuế tối đa 50 ký tự.'),
   phone: z.string().trim().max(30, 'Số điện thoại tối đa 30 ký tự.'),
   email: z
     .string()
@@ -20,6 +21,18 @@ export const saveSupplierSchema = z.object({
       message: 'Email không hợp lệ.',
     }),
   address: z.string().trim().max(500, 'Địa chỉ tối đa 500 ký tự.'),
+  contactSalutation: z.string().trim().max(30, 'Xưng hô tối đa 30 ký tự.'),
+  contactName: z.string().trim().max(255, 'Tên người liên hệ tối đa 255 ký tự.'),
+  contactEmail: z
+    .string()
+    .trim()
+    .max(255, 'Email người liên hệ tối đa 255 ký tự.')
+    .refine((value) => value === '' || z.string().email().safeParse(value).success, {
+      message: 'Email người liên hệ không hợp lệ.',
+    }),
+  contactMobile: z.string().trim().max(30, 'Số điện thoại người liên hệ tối đa 30 ký tự.'),
+  contactChannel: z.string().trim().max(50, 'Kênh liên hệ tối đa 50 ký tự.'),
+  contactChannelName: z.string().trim().max(255, 'Tên kênh tối đa 255 ký tự.'),
 })
 
 export type SaveSupplierFormValues = z.infer<typeof saveSupplierSchema>

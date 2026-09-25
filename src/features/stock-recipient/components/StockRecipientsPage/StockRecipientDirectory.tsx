@@ -71,24 +71,24 @@ export function StockRecipientDirectory({
           </span>
           <div>
             <p className="text-primary text-xs font-medium">Danh mục</p>
-            <h1 className="text-xl font-semibold">Đơn vị nhận hàng</h1>
+            <h1 className="text-xl font-semibold">Khách hàng</h1>
             <p className="text-muted-foreground text-sm">
-              Quản lý người nhận hàng và lịch sử yêu cầu xuất kho.
+              Quản lý khách hàng nhận hàng và lịch sử yêu cầu xuất kho.
             </p>
           </div>
         </div>
         {canCreate ? (
           <Button onClick={onCreate}>
             <Plus data-icon="inline-start" />
-            Thêm đơn vị nhận hàng
+            Thêm khách hàng
           </Button>
         ) : null}
       </header>
-      <OperationalListPanel aria-label="Danh sách đơn vị nhận hàng">
+      <OperationalListPanel aria-label="Danh sách khách hàng">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>
-            <h2 className="text-sm font-semibold">Danh sách đơn vị nhận hàng</h2>
-            <p className="text-muted-foreground text-xs">{totalCount} đơn vị nhận hàng</p>
+            <h2 className="text-sm font-semibold">Danh sách khách hàng</h2>
+            <p className="text-muted-foreground text-xs">{totalCount} khách hàng</p>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <InputGroup className="min-w-56 flex-1 sm:w-72">
@@ -96,14 +96,14 @@ export function StockRecipientDirectory({
                 <Search aria-hidden="true" />
               </InputGroupAddon>
               <InputGroupInput
-                aria-label="Tìm đơn vị nhận hàng"
+                aria-label="Tìm khách hàng"
                 value={searchText}
                 placeholder="Mã, tên hoặc số điện thoại…"
                 onChange={(event) => onSearchChange(event.target.value)}
               />
             </InputGroup>
             <NativeSelect
-              aria-label="Lọc đơn vị nhận hàng theo trạng thái"
+              aria-label="Lọc khách hàng theo trạng thái"
               className="w-44"
               value={status}
               onChange={(event) => onStatusChange(parseActiveStatusFilter(event.target.value))}
@@ -117,18 +117,18 @@ export function StockRecipientDirectory({
         {isLoading ? (
           <OperationalLoadingState />
         ) : isError ? (
-          <OperationalErrorState title="Không thể tải đơn vị nhận hàng" onRetry={onRetry} />
+          <OperationalErrorState title="Không thể tải khách hàng" onRetry={onRetry} />
         ) : items.length === 0 ? (
           <OperationalEmptyState
-            title="Chưa có đơn vị nhận hàng phù hợp"
-            description="Thử đổi từ khóa hoặc thêm đơn vị nhận hàng mới."
+            title="Chưa có khách hàng phù hợp"
+            description="Thử đổi từ khóa hoặc thêm khách hàng mới."
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="bg-card sticky top-0">Mã</TableHead>
-                <TableHead className="bg-card sticky top-0">Tên đơn vị nhận hàng</TableHead>
+                <TableHead className="bg-card sticky top-0">Tên khách hàng</TableHead>
                 <TableHead className="bg-card sticky top-0">Điện thoại</TableHead>
                 <TableHead className="bg-card sticky top-0">Email</TableHead>
                 <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
@@ -143,6 +143,7 @@ export function StockRecipientDirectory({
                   <TableCell className="font-mono">{stockRecipient.recipientCode}</TableCell>
                   <TableCell>
                     <Link
+                      title={`Xem chi tiết khách hàng ${stockRecipient.recipientName}`}
                       className="text-primary font-medium underline-offset-4 hover:underline focus-visible:underline"
                       href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}
                     >
@@ -158,7 +159,10 @@ export function StockRecipientDirectory({
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="icon-sm">
-                      <Link href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}>
+                      <Link
+                        href={APP_ROUTES.stockRecipientDetail(stockRecipient.id)}
+                        aria-label={`Xem chi tiết khách hàng ${stockRecipient.recipientName}`}
+                      >
                         <Eye aria-hidden="true" />
                         <span className="sr-only">Xem chi tiết {stockRecipient.recipientName}</span>
                       </Link>

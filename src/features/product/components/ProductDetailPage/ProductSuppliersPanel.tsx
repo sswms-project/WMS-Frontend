@@ -106,6 +106,9 @@ export function ProductSuppliersPanel({
   const [form, setForm] = useState<FormState>(emptyForm)
 
   const linkedSupplierIds = new Set(links.map((link) => link.supplierId))
+  const selectedSupplier =
+    suppliers.find((supplier) => supplier.id === form.supplierId) ??
+    links.find((link) => link.supplierId === form.supplierId)
 
   function openCreate() {
     setEditingLink(null)
@@ -281,7 +284,14 @@ export function ProductSuppliersPanel({
                     }
                   />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={4} className="z-[70] max-h-64">
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  sideOffset={6}
+                  collisionPadding={8}
+                  className="z-[70] max-h-64"
+                >
                   <SelectGroup>
                     {suppliers.map((supplier) => (
                       <SelectItem
@@ -289,7 +299,7 @@ export function ProductSuppliersPanel({
                         value={supplier.id}
                         disabled={!editingLink && linkedSupplierIds.has(supplier.id)}
                       >
-                        {supplier.supplierName}
+                        {supplier.supplierName} · {supplier.supplierCode}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -297,7 +307,17 @@ export function ProductSuppliersPanel({
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="supplierProductCode">Mã hàng của nhà cung cấp</FieldLabel>
+              <FieldLabel htmlFor="productSupplierCode">Mã nhà cung cấp</FieldLabel>
+              <Input
+                id="productSupplierCode"
+                value={selectedSupplier?.supplierCode ?? ''}
+                readOnly
+                aria-readonly="true"
+                placeholder="Tự điền theo nhà cung cấp đã chọn"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="supplierProductCode">Mã sản phẩm của nhà cung cấp</FieldLabel>
               <Input
                 id="supplierProductCode"
                 maxLength={100}

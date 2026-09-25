@@ -22,6 +22,7 @@ import { ProductListTable, ProductListToolbar } from '../components/ProductListP
 import { CreateProductDialog } from '../components/ProductForm'
 import {
   useCreateProductMutation,
+  useUploadProductImageMutation,
   useCreateCategoryMutation,
   useCategoriesQuery,
   useProductListQuery,
@@ -30,6 +31,7 @@ import {
 import { createProductSchema, type CreateProductFormValues } from '../schemas/product.schema'
 import { categorySchema, type CategoryFormValues } from '../schemas/master-data.schema'
 import type { ProductListItem, ProductStatus } from '../types/product.types'
+import { suggestCategoryCode } from '../utils/category-code'
 
 function parseProductStatus(value: string): ProductStatus | '' {
   return value === 'Active' || value === 'Inactive' ? value : ''
@@ -92,6 +94,7 @@ export default function ProductListPage() {
   })
 
   const createMutation = useCreateProductMutation()
+  const uploadImageMutation = useUploadProductImageMutation()
   const createCategoryMutation = useCreateCategoryMutation()
   const unitsQuery = useUnitsQuery(isCreateOpen, 'Active')
   const categoriesQuery = useCategoriesQuery(true, 'Active')
@@ -107,22 +110,39 @@ export default function ProductListPage() {
     setPage(1)
   }
 
-  async function handleCreate(values: CreateProductFormValues, createAnother: boolean) {
+  async function handleCreate(
+    values: CreateProductFormValues,
+    createAnother: boolean,
+    imageFile: File | null
+  ) {
+    let id: string
     try {
-      const id = await createMutation.mutateAsync(values)
-      toast.success('Đã thêm sản phẩm mới.')
-      if (!createAnother) {
-        productForm.reset()
-        setIsCreateOpen(false)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        router.push(APP_ROUTES.productDetail(id) as any)
-      }
-      return true
+      id = await createMutation.mutateAsync(values)
     } catch (error) {
       logger.error(formatApiError(error))
       toast.error(getApiErrorMessage(error, 'Không thể thêm sản phẩm. Vui lòng thử lại.'))
       return false
     }
+
+    let imageUploadFailed = false
+    if (imageFile) {
+      try {
+        await uploadImageMutation.mutateAsync({ id, file: imageFile })
+      } catch (error) {
+        logger.error(formatApiError(error))
+        imageUploadFailed = true
+        toast.error('Sản phẩm đã được tạo nhưng chưa tải được ảnh. Bạn có thể cập nhật ảnh sau.')
+      }
+    }
+
+    if (!imageUploadFailed) toast.success('Đã thêm sản phẩm mới.')
+    if (!createAnother) {
+      productForm.reset()
+      setIsCreateOpen(false)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      router.push(APP_ROUTES.productDetail(id) as any)
+    }
+    return true
   }
 
   function handleCreateOpenChange(open: boolean) {
@@ -154,6 +174,7 @@ export default function ProductListPage() {
     try {
       const categoryId = await createCategoryMutation.mutateAsync({
         ...values,
+        categoryCode: suggestCategoryCode(values.categoryName, categoriesQuery.data ?? []),
         description: values.description || null,
       })
       toast.success('Đã tạo và chọn nhóm vật tư hàng hóa.')
@@ -336,7 +357,7 @@ export default function ProductListPage() {
           isCreatingCategory={createCategoryMutation.isPending}
           onCreateCategory={handleCreateCategory}
           open={isCreateOpen}
-          isPending={createMutation.isPending}
+          isPending={createMutation.isPending || uploadImageMutation.isPending}
           onOpenChange={handleCreateOpenChange}
           onCategoryDialogOpenChange={handleCategoryDialogOpenChange}
           onSubmit={handleCreate}

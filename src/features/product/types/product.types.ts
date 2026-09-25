@@ -47,6 +47,7 @@ export interface ProductResponse {
   sku: string
   productName: string
   description: string | null
+  imageUrl: string | null
   unitId: string
   unitName: string
   categoryId: string | null
@@ -202,6 +203,7 @@ export interface ProductSupplier {
   productSKU: string
   productName: string
   supplierId: string
+  supplierCode: string
   supplierName: string
   supplierStatus: 'Active' | 'Inactive'
   supplierProductCode: string | null

@@ -166,6 +166,7 @@ export const queryKeys = {
     lists: ['suppliers', 'list'] as const,
     list: (params: LookupQuery | SupplierListQuery) => ['suppliers', 'list', params] as const,
     detail: (id: string) => ['suppliers', 'detail', id] as const,
+    nextCode: ['suppliers', 'next-code'] as const,
   },
   inboundRequests: {
     all: ['inbound-requests'] as const,
@@ -218,6 +219,7 @@ export const queryKeys = {
     lists: ['stock-recipients', 'list'] as const,
     list: (params: StockRecipientListQuery) => ['stock-recipients', 'list', params] as const,
     detail: (id: string) => ['stock-recipients', 'detail', id] as const,
+    nextCode: ['stock-recipients', 'next-code'] as const,
     issueHistory: (id: string, params: StockRecipientIssueHistoryQuery) =>
       ['stock-recipients', 'detail', id, 'issue-history', params] as const,
   },
