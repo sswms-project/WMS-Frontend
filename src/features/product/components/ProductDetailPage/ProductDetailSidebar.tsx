@@ -42,12 +42,12 @@ export function ProductDetailSidebar({ product }: ProductDetailSidebarProps) {
       {/* Meta rows */}
       <div className="rounded-lg border px-4">
         <DetailRow
-          label="Danh mục"
+          label="Nhóm VTHH"
           value={
             product.categoryName ? (
               <span className="flex items-center gap-1.5">
                 <FolderOpen className="text-muted-foreground size-3.5" aria-hidden="true" />
-                {product.categoryName}
+                <span title={product.categoryPath ?? undefined}>{product.categoryName}</span>
               </span>
             ) : (
               <span className="text-muted-foreground text-xs">Chưa phân loại</span>

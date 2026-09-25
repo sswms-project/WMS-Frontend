@@ -38,4 +38,11 @@ export const stockRecipientService = {
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.stockRecipients.update(stockRecipientId), request)
       .then((response) => response.data),
+
+  changeStatus: (stockRecipientId: string, status: 'Active' | 'Inactive') =>
+    axiosClient
+      .patch<
+        ApiResponse<unknown>
+      >(status === 'Active' ? API_ENDPOINTS.stockRecipients.reactivate(stockRecipientId) : API_ENDPOINTS.stockRecipients.deactivate(stockRecipientId))
+      .then((response) => response.data),
 }

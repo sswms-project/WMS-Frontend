@@ -19,6 +19,7 @@ import { SupplierFormFields } from './SupplierFormFields'
 
 function toFormValues(supplier: Supplier | null): SaveSupplierFormValues {
   return {
+    supplierCode: supplier?.supplierCode ?? '',
     supplierName: supplier?.supplierName ?? '',
     phone: supplier?.phone ?? '',
     email: supplier?.email ?? '',
@@ -62,7 +63,7 @@ export function SupplierEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Cập nhật nhà cung cấp</DialogTitle>
           <DialogDescription>

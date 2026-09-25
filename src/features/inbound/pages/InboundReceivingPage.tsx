@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
+import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import {
   InboundDocumentImportDialog,
@@ -43,6 +44,7 @@ export default function InboundReceivingPage() {
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importId, setImportId] = useState('')
   const [draftReceiptId, setDraftReceiptId] = useState<string | null>(null)
+  const [isDiscardImportOpen, setIsDiscardImportOpen] = useState(false)
   const initializedImportIdRef = useRef('')
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useReceivingTasksQuery({
@@ -318,9 +320,20 @@ export default function InboundReceivingPage() {
             !reviewImportMutation.isPending &&
             !createDraftMutation.isPending
           ) {
-            if (importForm.formState.isDirty && !window.confirm('Bỏ các thay đổi chưa lưu?')) return
+            if (importForm.formState.isDirty) {
+              setIsDiscardImportOpen(true)
+              return
+            }
             resetImport()
           }
+        }}
+      />
+      <UnsavedChangesDialog
+        open={isDiscardImportOpen}
+        onOpenChange={setIsDiscardImportOpen}
+        onDiscard={() => {
+          resetImport()
+          setIsDiscardImportOpen(false)
         }}
       />
     </div>

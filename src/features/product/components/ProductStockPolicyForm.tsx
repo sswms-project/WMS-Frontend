@@ -1,9 +1,9 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Save, X } from 'lucide-react'
 import type { ComponentProps } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useWatch } from 'react-hook-form'
+import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,14 +16,19 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import type { WarehouseResponse } from '@/types/warehouse'
-import { stockPolicySchema, type StockPolicyFormValues } from '../schemas/product.schema'
+import type { LocationSearchResponse } from '@/features/warehouse/types/warehouse.types'
+import type { StockPolicyFormValues } from '../schemas/product.schema'
 import type { ProductWarehousePolicy } from '../types/product.types'
 
 interface ProductStockPolicyDialogProps {
+  readonly form: UseFormReturn<StockPolicyFormValues>
   readonly open: boolean
   readonly warehouses: readonly WarehouseResponse[]
   readonly policies: readonly ProductWarehousePolicy[]
+  readonly locations: readonly LocationSearchResponse[]
+  readonly areLocationsLoading: boolean
   readonly isPending: boolean
+  readonly onWarehouseChange: (warehouseId: string) => void
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: (values: StockPolicyFormValues) => void
 }
@@ -33,43 +38,37 @@ function optionalNumber(value: string) {
 }
 
 export function ProductStockPolicyDialog({
+  form,
   open,
   warehouses,
   policies,
+  locations,
+  areLocationsLoading,
   isPending,
+  onWarehouseChange,
   onOpenChange,
   onSubmit,
 }: ProductStockPolicyDialogProps) {
-  const initialWarehouseId = policies[0]?.warehouseId ?? warehouses[0]?.id ?? ''
-  const initialPolicy = policies.find((policy) => policy.warehouseId === initialWarehouseId)
-  const form = useForm<StockPolicyFormValues>({
-    resolver: zodResolver(stockPolicySchema),
-    defaultValues: {
-      warehouseId: initialWarehouseId,
-      minStockThreshold: initialPolicy?.minStockThreshold ?? 0,
-      maxStockThreshold: initialPolicy?.maxStockThreshold ?? null,
-      reorderPoint: initialPolicy?.reorderPoint ?? null,
-      safetyStock: initialPolicy?.safetyStock ?? 0,
-      leadTimeDays: initialPolicy?.leadTimeDays ?? null,
-    },
-  })
   const warehouseId = useWatch({ control: form.control, name: 'warehouseId' })
+  const preferredSlotId = useWatch({ control: form.control, name: 'preferredSlotId' })
 
   function selectWarehouse(warehouseId: string) {
     const policy = policies.find((item) => item.warehouseId === warehouseId)
     form.reset({
       warehouseId,
+      preferredSlotId: policy?.preferredSlotId ?? null,
       minStockThreshold: policy?.minStockThreshold ?? 0,
       maxStockThreshold: policy?.maxStockThreshold ?? null,
       reorderPoint: policy?.reorderPoint ?? null,
       safetyStock: policy?.safetyStock ?? 0,
       leadTimeDays: policy?.leadTimeDays ?? null,
     })
+    onWarehouseChange(warehouseId)
   }
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Chính sách tồn kho theo kho</DialogTitle>
         </DialogHeader>
@@ -100,6 +99,36 @@ export function ProductStockPolicyDialog({
                     : undefined
                 }
               />
+            </Field>
+
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="policy-preferred-slot">
+                Vị trí cất ưu tiên <span className="text-muted-foreground">(tùy chọn)</span>
+              </FieldLabel>
+              <NativeSelect
+                id="policy-preferred-slot"
+                value={preferredSlotId ?? ''}
+                disabled={!warehouseId || areLocationsLoading || isPending}
+                onChange={(event) =>
+                  form.setValue('preferredSlotId', event.target.value || null, {
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <NativeSelectOption value="">
+                  {areLocationsLoading ? 'Đang tải vị trí…' : 'Không đặt vị trí ưu tiên'}
+                </NativeSelectOption>
+                {locations.map((location) => (
+                  <NativeSelectOption key={location.id} value={location.id}>
+                    {[location.zoneCode, location.rackCode, location.code]
+                      .filter(Boolean)
+                      .join(' / ')}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              <p className="text-muted-foreground text-xs">
+                Đây là gợi ý cất hàng; hệ thống vẫn kiểm tra trạng thái và sức chứa thực tế.
+              </p>
             </Field>
 
             <PolicyNumberField

@@ -86,11 +86,12 @@ function logWarehouseMutationError(error: unknown) {
   logger.error(message)
 }
 
-export function useWarehousesQuery(params: WarehouseListQuery) {
+export function useWarehousesQuery(params: WarehouseListQuery, enabled = true) {
   return useQuery<QueryResult<WarehouseResponse>, ApiErrorResponse>({
     queryKey: queryKeys.warehouses.list(params),
     queryFn: () => warehouseService.getWarehouses(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
+    enabled,
   })
 }
 

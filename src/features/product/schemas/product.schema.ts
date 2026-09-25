@@ -20,16 +20,43 @@ function validateTrackingMode(
 
 export const createProductSchema = z
   .object({
-    sku: z.string().min(1, 'Mã SKU không được để trống').max(100, 'Mã SKU tối đa 100 ký tự'),
+    sku: z
+      .string()
+      .min(1, 'Mã hàng hóa không được để trống')
+      .max(100, 'Mã hàng hóa tối đa 100 ký tự'),
     productName: z
       .string()
       .min(1, 'Tên sản phẩm không được để trống')
-      .max(500, 'Tên sản phẩm tối đa 500 ký tự'),
+      .max(255, 'Tên sản phẩm tối đa 255 ký tự'),
+    description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự').nullable(),
     unitId: z.string().min(1, 'Vui lòng chọn đơn vị tính'),
     categoryId: z.string().min(1, 'Vui lòng chọn danh mục'),
+    unitConversions: z.array(
+      z.object({
+        unitId: z.string().min(1, 'Vui lòng chọn đơn vị quy đổi'),
+        conversionFactor: z.number().positive('Tỷ lệ quy đổi phải lớn hơn 0'),
+      })
+    ),
     ...trackingFields,
   })
   .superRefine(validateTrackingMode)
+  .superRefine((values, context) => {
+    const ids = values.unitConversions.map((item) => item.unitId)
+    if (ids.some((id) => id === values.unitId)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['unitConversions'],
+        message: 'Đơn vị quy đổi phải khác đơn vị tính chính',
+      })
+    }
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['unitConversions'],
+        message: 'Không được chọn trùng đơn vị quy đổi',
+      })
+    }
+  })
 
 export type CreateProductFormValues = z.infer<typeof createProductSchema>
 
@@ -38,7 +65,8 @@ export const updateProductSchema = z
     productName: z
       .string()
       .min(1, 'Tên sản phẩm không được để trống')
-      .max(500, 'Tên sản phẩm tối đa 500 ký tự'),
+      .max(255, 'Tên sản phẩm tối đa 255 ký tự'),
+    description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự').nullable(),
     unitId: z.string().min(1, 'Vui lòng chọn đơn vị tính'),
     categoryId: z.string().min(1, 'Vui lòng chọn danh mục'),
     ...trackingFields,
@@ -50,6 +78,7 @@ export type UpdateProductFormValues = z.infer<typeof updateProductSchema>
 export const stockPolicySchema = z
   .object({
     warehouseId: z.string().min(1, 'Vui lòng chọn kho'),
+    preferredSlotId: z.string().nullable(),
     minStockThreshold: z.number().min(0, 'Ngưỡng tồn kho tối thiểu phải >= 0'),
     maxStockThreshold: z.number().min(0, 'Ngưỡng tồn kho tối đa phải >= 0').nullable(),
     reorderPoint: z.number().min(0, 'Điểm đặt hàng lại phải >= 0').nullable(),

@@ -1,0 +1,79 @@
+# List and Table Screen Design Guidelines
+
+This document is the required layout contract for every list or table screen in Kovia.
+
+## Goals
+
+- Use the full width and the full remaining height of the application content area.
+- Keep the page heading and list toolbar visible above the data region.
+- Keep pagination anchored to the bottom of the list container.
+- Scroll only the table/list body when rows exceed the available height.
+- Keep the layout stable across common viewport sizes and browser zoom levels.
+- Preserve a full-height data surface even when there are only a few rows.
+
+## Required structure
+
+```tsx
+<div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4">
+  <header className="shrink-0">...</header>
+
+  <OperationalListPanel aria-label="Danh sách ...">
+    <div className="shrink-0 border-b">...</div> {/* title and filters */}
+    <Table>...</Table>                            {/* flexible scrolling body */}
+    <OperationalPagination ... />                 {/* pinned footer */}
+  </OperationalListPanel>
+</div>
+```
+
+Use `OperationalListPanel` from `src/components/operations/OperationalListPanel.tsx`. Do not copy its height or overflow classes into feature screens.
+
+## Height and scrolling rules
+
+1. Every ancestor between the application content shell and the list panel must allow flex children to shrink with `min-h-0`.
+2. The page root uses `h-full min-h-0 flex-1 flex-col`.
+3. The list panel uses `flex-1 min-h-0 overflow-hidden` so it always occupies the remaining height.
+4. The direct table container or an element marked `data-slot="operational-list-body"` owns vertical scrolling.
+5. Do not use hard-coded `calc(100vh - ...)` values. They break under browser zoom, different headers, and responsive wrapping.
+6. Do not let `body` or the whole page become the table scroll container.
+7. Pagination must be a direct, non-scrolling child of the list panel.
+
+## Header, toolbar, and filters
+
+- Keep the list title, result count, search, and common filters in the non-scrolling top region.
+- When there are only one or two simple filters, show their `Select`/`NativeSelect` controls directly in the toolbar.
+- Use a filter sheet only when the filter set is too large for the toolbar or contains advanced dependent fields.
+- Changing search, filters, or page size resets the current page to `1`.
+- Toolbar controls must wrap on narrow screens without causing horizontal page overflow.
+
+## Table behavior
+
+- Use the shared shadcn `Table` components.
+- Table header cells use `sticky top-0 z-10 bg-card`.
+- Long text is truncated only when the full value remains available through a detail link or tooltip.
+- Mobile layouts may switch to an item list, but the item-list wrapper must use `data-slot="operational-list-body"` so it receives the same flexible scrolling behavior.
+- Empty, loading, and error states must occupy the flexible body area rather than collapsing the panel.
+
+## Pagination
+
+- Use `OperationalPagination` for list screens.
+- The default choices are `10`, `20`, `30`, and `50` rows per page.
+- `page` and `pageSize` belong to the page/container component and must be sent to paginated APIs.
+- “Select all” applies only to the currently visible page unless the UI explicitly confirms selecting all filtered results.
+
+## Accessibility
+
+- Every list panel needs `aria-label` or `aria-labelledby`.
+- Search and filter controls need visible labels or `aria-label`.
+- Icon-only actions need an accessible name and tooltip where helpful.
+- Sticky headers, keyboard focus, status text, and row actions must remain usable at 200% browser zoom.
+
+## Review checklist
+
+- [ ] Page root fills available height and includes `min-h-0`.
+- [ ] List panel uses `OperationalListPanel`.
+- [ ] Header and toolbar do not scroll with rows.
+- [ ] Only the list/table body scrolls vertically.
+- [ ] Pagination stays at the bottom with few and many rows.
+- [ ] No fixed viewport-height calculation is duplicated in the feature.
+- [ ] Simple filters are directly accessible in the toolbar.
+- [ ] Layout works at narrow desktop widths and common zoom levels.

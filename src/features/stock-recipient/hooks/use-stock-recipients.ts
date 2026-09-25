@@ -72,3 +72,23 @@ export function useUpdateStockRecipientMutation() {
     onError: (error) => logger.error(error),
   })
 }
+
+export function useChangeStockRecipientStatusMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    { stockRecipientId: string; status: 'Active' | 'Inactive' }
+  >({
+    mutationFn: ({ stockRecipientId, status }) =>
+      stockRecipientService.changeStatus(stockRecipientId, status),
+    onSuccess: (_, { stockRecipientId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.stockRecipients.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.stockRecipients.detail(stockRecipientId),
+        }),
+      ]),
+    onError: (error) => logger.error(error),
+  })
+}

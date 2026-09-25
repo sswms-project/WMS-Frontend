@@ -20,23 +20,24 @@ import {
   type StockRecipientFormValues,
 } from '../schemas/stock-recipient.schema'
 
-const PAGE_SIZE = 10
-
 export default function StockRecipientPage() {
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [searchText, setSearchText] = useState('')
+  const [status, setStatus] = useState<'Active' | 'Inactive' | ''>('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const meQuery = useMeQuery()
   const stockRecipientsQuery = useStockRecipientsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText.trim() ? { searchTerm: debouncedSearchText.trim() } : {}),
+    ...(status ? { status } : {}),
   })
   const createMutation = useCreateStockRecipientMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: { recipientName: '', phone: '', email: '', address: '' },
+    defaultValues: { recipientCode: '', recipientName: '', phone: '', email: '', address: '' },
   })
 
   async function handleCreate(values: StockRecipientFormValues) {
@@ -56,8 +57,9 @@ export default function StockRecipientPage() {
         items={stockRecipientsQuery.data?.items ?? []}
         totalCount={stockRecipientsQuery.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
+        status={status}
         canCreate={(meQuery.data?.permissions ?? []).includes(P.STOCK_RECIPIENTS_CREATE)}
         isLoading={stockRecipientsQuery.isLoading}
         isFetching={stockRecipientsQuery.isFetching}
@@ -66,7 +68,15 @@ export default function StockRecipientPage() {
           setSearchText(value)
           setPage(1)
         }}
+        onStatusChange={(value) => {
+          setStatus(value)
+          setPage(1)
+        }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onCreate={() => setIsCreateOpen(true)}
         onRetry={() => void stockRecipientsQuery.refetch()}
       />

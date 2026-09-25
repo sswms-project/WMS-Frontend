@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function OperationalLoadingState({ rows = 6 }: { readonly rows?: number }) {
   return (
-    <div className="flex flex-col gap-2 p-4" aria-label="Đang tải dữ liệu">
+    <div className="flex flex-1 flex-col gap-2 p-4" aria-label="Đang tải dữ liệu">
       {Array.from({ length: rows }).map((_, index) => (
         <Skeleton key={index} className="h-12" />
       ))}
@@ -25,7 +25,7 @@ export function OperationalErrorState({
   onRetry,
 }: OperationalErrorStateProps) {
   return (
-    <Empty className="min-h-64 border-0">
+    <Empty className="min-h-64 flex-1 border-0">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <TriangleAlert className="text-destructive" aria-hidden="true" />
@@ -49,7 +49,7 @@ export function OperationalEmptyState({
   readonly description: string
 }) {
   return (
-    <Empty className="min-h-64 border-0">
+    <Empty className="min-h-64 flex-1 border-0">
       <EmptyHeader>
         <EmptyTitle>{title}</EmptyTitle>
         <EmptyDescription>{description}</EmptyDescription>
