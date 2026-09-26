@@ -21,7 +21,7 @@ export const personnelImportService = {
       params: { format },
       responseType: 'blob',
     })
-    downloadBlob(response.data, `kovia-personnel-import-template.${format}`)
+    downloadBlob(response.data, `kovia-mau-nhap-nhan-su.${format}`)
   },
 
   preview: (file: File) => {

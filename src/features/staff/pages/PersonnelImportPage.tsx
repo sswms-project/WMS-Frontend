@@ -60,6 +60,10 @@ const deliveryLabels: Record<string, string> = {
   Failed: 'Gửi thất bại',
   Superseded: 'Đã thay thế',
 }
+const roleLabels: Record<string, string> = {
+  WarehouseManager: 'Quản lý kho',
+  WarehouseStaff: 'Nhân viên kho',
+}
 
 export function PersonnelImportPage({
   initialImportId = '',
@@ -190,14 +194,6 @@ export function PersonnelImportPage({
             <Download aria-hidden="true" />
             Mẫu XLSX
           </Button>
-          <Button
-            variant="outline"
-            disabled={templateMutation.isPending}
-            onClick={() => templateMutation.mutate('csv')}
-          >
-            <Download aria-hidden="true" />
-            Mẫu CSV
-          </Button>
         </div>
       </header>
 
@@ -210,7 +206,7 @@ export function PersonnelImportPage({
             <div>
               <h2 className="font-semibold">Chọn tệp nhân sự</h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                CSV hoặc XLSX theo mẫu, tối đa 500 dòng và 5 MiB.
+                XLSX theo mẫu (cũng nhận CSV cùng các cột), tối đa 500 dòng và 5 MiB.
               </p>
             </div>
             <Button asChild disabled={previewMutation.isPending}>
@@ -377,7 +373,7 @@ export function PersonnelImportPage({
                             <p className="font-medium">{row.fullName}</p>
                             <p className="text-muted-foreground text-xs">{row.email}</p>
                           </TableCell>
-                          <TableCell>{row.roleCode}</TableCell>
+                          <TableCell>{roleLabels[row.roleCode] ?? row.roleCode}</TableCell>
                           <TableCell className="min-w-52">
                             {row.resolvedWarehouses
                               .map((warehouse) => warehouse.warehouseCode)
@@ -537,7 +533,7 @@ function exportResults(
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = 'kovia-personnel-import-results.csv'
+  anchor.download = 'kovia-ket-qua-nhap-nhan-su.csv'
   anchor.click()
   URL.revokeObjectURL(url)
 }
@@ -551,7 +547,11 @@ export function personnelImportResultsCsv(
     return `"${spreadsheetSafe.replaceAll('"', '""')}"`
   }
   return [
-    'RowNumber,Email,DeliveryStatus',
-    ...results.map((row) => [row.rowNumber, row.email, row.deliveryStatus].map(escape).join(',')),
+    'Dòng,Email,Trạng thái gửi',
+    ...results.map((row) =>
+      [row.rowNumber, row.email, deliveryLabels[row.deliveryStatus] ?? row.deliveryStatus]
+        .map(escape)
+        .join(',')
+    ),
   ].join('\r\n')
 }
