@@ -15,6 +15,7 @@ import type {
   GoodsReturnRequestListResponse,
   GoodsReturnRequestSummary,
   ReleaseStockIssueRequestRequest,
+  RestockGoodsReturnRequest,
 } from '../types/stock-issue.types'
 import type {
   StockRecipientListQuery,
@@ -40,6 +41,11 @@ interface RemovePickDetailVariables {
 interface RejectGoodsReturnRequestVariables {
   goodsReturnRequestId: string
   request: RejectGoodsReturnRequestRequest
+}
+
+interface RestockGoodsReturnRequestVariables {
+  goodsReturnRequestId: string
+  request: RestockGoodsReturnRequest
 }
 
 export function useStockIssueRequestsQuery(params: StockIssueRequestListQuery, enabled = true) {
@@ -196,6 +202,21 @@ export function useRejectGoodsReturnRequestMutation() {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.goodsReturnRequests.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+      ]),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useRestockGoodsReturnRequestMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, RestockGoodsReturnRequestVariables>({
+    mutationFn: ({ goodsReturnRequestId, request }) =>
+      stockIssueService.restockGoodsReturnRequest(goodsReturnRequestId, request),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.goodsReturnRequests.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
       ]),
     onError: (error) => logger.error(error),

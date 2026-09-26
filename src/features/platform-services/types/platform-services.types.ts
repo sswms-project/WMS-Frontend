@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = [
   'GoodsReturnRequestUpdate',
   'CycleCountUpdate',
   'WarehouseUpdate',
+  'SessionRevoked',
 ] as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]

@@ -1,4 +1,12 @@
-import { Eye, MoreHorizontal, ShieldCheck, UserRoundX, Warehouse } from 'lucide-react'
+import {
+  Eye,
+  LockKeyhole,
+  LockKeyholeOpen,
+  MoreHorizontal,
+  ShieldCheck,
+  UserRoundX,
+  Warehouse,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -25,9 +33,11 @@ interface StaffDirectoryTableProps {
   readonly isWarehouseScopeLoading: boolean
   readonly canAssignWarehouse?: boolean
   readonly canTerminate?: boolean
+  readonly canManageStatus?: boolean
   readonly onView: (person: StaffResponse) => void
   readonly onAssignWarehouse: (person: StaffResponse) => void
   readonly onTerminate: (person: StaffResponse) => void
+  readonly onChangeStatus?: (person: StaffResponse) => void
 }
 
 function formatLastLogin(value: string | null) {
@@ -52,9 +62,11 @@ export function StaffDirectoryTable({
   isWarehouseScopeLoading,
   canAssignWarehouse = false,
   canTerminate = false,
+  canManageStatus = false,
   onView,
   onAssignWarehouse,
   onTerminate,
+  onChangeStatus = () => undefined,
 }: StaffDirectoryTableProps) {
   function warehouseScopeLabel(person: StaffResponse) {
     const assignedWarehouseIds = getAssignedWarehouseIds(person)
@@ -96,7 +108,19 @@ export function StaffDirectoryTable({
           {canAssignWarehouse && person.status === 'Active' && (
             <DropdownMenuItem onSelect={() => onAssignWarehouse(person)}>
               <Warehouse className="size-4" aria-hidden="true" />
-              Sửa phân công kho
+              Quản lý vai trò & kho
+            </DropdownMenuItem>
+          )}
+          {canManageStatus && person.status === 'Active' && (
+            <DropdownMenuItem variant="destructive" onSelect={() => onChangeStatus(person)}>
+              <LockKeyhole aria-hidden="true" />
+              Khóa tài khoản
+            </DropdownMenuItem>
+          )}
+          {canManageStatus && person.status === 'Inactive' && (
+            <DropdownMenuItem onSelect={() => onChangeStatus(person)}>
+              <LockKeyholeOpen aria-hidden="true" />
+              Mở khóa tài khoản
             </DropdownMenuItem>
           )}
           {canTerminatePerson && terminationItem(person)}

@@ -26,6 +26,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
+  StaffAccountStatusDialog,
   StaffInvitation,
   InvitationManagementPanel,
   InvitationRevokeDialog,
@@ -40,8 +41,13 @@ import {
   useResendInvitationMutation,
   useRevokeInvitationMutation,
 } from '../hooks/use-invitations'
-import { useAssignmentWarehousesQuery } from '../hooks/use-manager-assignment'
 import {
+  useAssignmentWarehousesQuery,
+  useStaffWarehouseAssignmentsQuery,
+  useUpdateStaffWarehousesMutation,
+} from '../hooks/use-manager-assignment'
+import {
+  useChangeStaffAccountStatusMutation,
   useTerminateStaffMutation,
   useStaffDetailsQuery,
   useStaffListQuery,
@@ -93,6 +99,7 @@ export function StaffDirectoryPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [managerToAssign, setManagerToAssign] = useState<StaffResponse | null>(null)
   const [staffToTerminate, setStaffToTerminate] = useState<StaffResponse | null>(null)
+  const [staffToChangeStatus, setStaffToChangeStatus] = useState<StaffResponse | null>(null)
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
   const [invitationToRevoke, setInvitationToRevoke] = useState<InvitationResponse | null>(null)
   const debouncedSearchText = useDebouncedValue(searchText.trim(), 300)
@@ -118,7 +125,13 @@ export function StaffDirectoryPage() {
     canInvite && activeView === STAFF_PAGE_VIEWS.invitations
   )
   const detailsQuery = useStaffDetailsQuery(selectedUserId)
+  const warehouseAssignmentsQuery = useStaffWarehouseAssignmentsQuery(
+    managerToAssign?.id ?? '',
+    Boolean(managerToAssign)
+  )
+  const updateWarehousesMutation = useUpdateStaffWarehousesMutation(managerToAssign?.id ?? '')
   const terminateMutation = useTerminateStaffMutation()
+  const changeStatusMutation = useChangeStaffAccountStatusMutation()
   const resendInvitationMutation = useResendInvitationMutation()
   const revokeInvitationMutation = useRevokeInvitationMutation()
 
@@ -149,6 +162,29 @@ export function StaffDirectoryPage() {
           typeof error.message === 'string'
           ? error.message
           : 'Không thể chấm dứt quyền truy cập của nhân viên.'
+      )
+    }
+  }
+
+  async function confirmStatusChange() {
+    if (!staffToChangeStatus || !permissions.has(P.STAFF_TERMINATE)) return
+    const activate = staffToChangeStatus.status !== 'Active'
+
+    try {
+      await changeStatusMutation.mutateAsync({ userId: staffToChangeStatus.id, activate })
+      toast.success(activate ? 'Đã mở khóa tài khoản nhân sự.' : 'Đã khóa tài khoản nhân sự.')
+      setStaffToChangeStatus(null)
+    } catch (error) {
+      logger.error(error)
+      toast.error(
+        typeof error === 'object' &&
+          error !== null &&
+          'message' in error &&
+          typeof error.message === 'string'
+          ? error.message
+          : activate
+            ? 'Không thể mở khóa tài khoản nhân sự.'
+            : 'Không thể khóa tài khoản nhân sự.'
       )
     }
   }
@@ -268,8 +304,18 @@ export function StaffDirectoryPage() {
                   onValueChange={(value) => isStaffDirectoryKind(value) && changeKind(value)}
                 >
                   <TabsList>
-                    <TabsTrigger value={STAFF_DIRECTORY_KINDS.managers}>Quản lý kho</TabsTrigger>
-                    <TabsTrigger value={STAFF_DIRECTORY_KINDS.staff}>Nhân viên kho</TabsTrigger>
+                    <TabsTrigger
+                      value={STAFF_DIRECTORY_KINDS.managers}
+                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary data-[state=active]:hover:text-primary-foreground"
+                    >
+                      Quản lý kho
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value={STAFF_DIRECTORY_KINDS.staff}
+                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary data-[state=active]:hover:text-primary-foreground"
+                    >
+                      Nhân viên kho
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
               )}
@@ -371,9 +417,11 @@ export function StaffDirectoryPage() {
                   isWarehouseScopeLoading={warehousesQuery.isLoading}
                   canAssignWarehouse={permissions.has(P.STAFF_ASSIGN_WAREHOUSE)}
                   canTerminate={permissions.has(P.STAFF_TERMINATE)}
+                  canManageStatus={permissions.has(P.STAFF_TERMINATE)}
                   onView={(person) => setSelectedUserId(person.id)}
                   onAssignWarehouse={setManagerToAssign}
                   onTerminate={setStaffToTerminate}
+                  onChangeStatus={setStaffToChangeStatus}
                 />
                 <OperationalPagination
                   page={page}
@@ -437,6 +485,15 @@ export function StaffDirectoryPage() {
         />
       )}
 
+      {staffToChangeStatus && permissions.has(P.STAFF_TERMINATE) && (
+        <StaffAccountStatusDialog
+          person={staffToChangeStatus}
+          isPending={changeStatusMutation.isPending}
+          onOpenChange={(open) => !open && setStaffToChangeStatus(null)}
+          onConfirm={() => void confirmStatusChange()}
+        />
+      )}
+
       {canInvite && isInviteDialogOpen && (
         <StaffInvitation
           canInviteManagers={isTenantOwner}
@@ -456,6 +513,8 @@ export function StaffDirectoryPage() {
       {managerToAssign && permissions.has(P.STAFF_ASSIGN_WAREHOUSE) && (
         <StaffWarehouseAssignment
           person={managerToAssign}
+          query={warehouseAssignmentsQuery}
+          mutation={updateWarehousesMutation}
           onClose={() => setManagerToAssign(null)}
         />
       )}

@@ -93,4 +93,11 @@ export interface UserProfileResponse {
   phoneVerified: boolean
   isTwoFactorEnabled: boolean
   permissions: string[]
+  assignedWarehouses: AssignedWarehouse[]
+}
+
+export interface AssignedWarehouse {
+  id: string
+  warehouseCode: string
+  warehouseName: string
 }

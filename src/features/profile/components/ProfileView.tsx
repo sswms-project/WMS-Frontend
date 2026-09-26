@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react'
-import { CheckCircle2, Mail, Pencil, Phone, XCircle } from 'lucide-react'
+import { CheckCircle2, Mail, Pencil, Phone, Warehouse, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -41,6 +41,7 @@ export function ProfileViewSkeleton() {
       <CardContent className="grid gap-3 px-6 py-5 md:grid-cols-2">
         <Skeleton className="bg-muted-foreground/20 h-[92px] rounded-lg" />
         <Skeleton className="bg-muted-foreground/20 h-[92px] rounded-lg" />
+        <Skeleton className="bg-muted-foreground/20 h-[92px] rounded-lg md:col-span-2" />
       </CardContent>
     </Card>
   )
@@ -68,6 +69,10 @@ function InfoRow({ icon: Icon, label, value, suffix }: InfoRowProps) {
 }
 
 export function ProfileView({ profile, onEdit }: ProfileViewProps) {
+  const assignedWarehouses = (profile.assignedWarehouses ?? [])
+    .map((warehouse) => `${warehouse.warehouseCode} · ${warehouse.warehouseName}`)
+    .join(', ')
+
   return (
     <Card className="animate-in fade-in slide-in-from-right-4 gap-0 rounded-xl py-0 duration-400">
       <CardHeader className="grid grid-cols-1 items-start gap-x-4 border-b px-6 pt-5 pb-4 sm:grid-cols-[minmax(0,1fr)_auto]">
@@ -116,6 +121,13 @@ export function ProfileView({ profile, onEdit }: ProfileViewProps) {
         </div>
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-150 duration-300">
           <InfoRow icon={Phone} label="Số điện thoại" value={profile.phone} />
+        </div>
+        <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-200 duration-300 md:col-span-2">
+          <InfoRow
+            icon={Warehouse}
+            label="Kho đang làm việc"
+            value={assignedWarehouses || 'Chưa được phân công kho'}
+          />
         </div>
       </CardContent>
     </Card>

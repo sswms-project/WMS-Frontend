@@ -10,6 +10,7 @@ import type {
   ProductListQuery,
   ProductListResponse,
   ProductLot,
+  ProductLotImpact,
   ProductLotQuery,
   ProductResponse,
   ProductSupplier,
@@ -156,9 +157,19 @@ export const productService = {
       .get<ApiResponse<ProductLot[]>>(API_ENDPOINTS.products.lots(id), { params })
       .then((r) => r.data),
 
-  updateProductLotStatus: (productId: string, lotId: string, status: 'Active' | 'Blocked') =>
+  getProductLotImpact: (productId: string, lotId: string) =>
     axiosClient
-      .patch<ApiResponse<unknown>>(API_ENDPOINTS.products.lotStatus(productId, lotId), { status })
+      .get<ApiResponse<ProductLotImpact>>(API_ENDPOINTS.products.lotImpact(productId, lotId))
+      .then((r) => r.data),
+
+  blockProductLot: (productId: string, lotId: string, reason: string) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.products.blockLot(productId, lotId), { reason })
+      .then((r) => r.data),
+
+  unlockProductLot: (productId: string, lotId: string, reason: string) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.products.unlockLot(productId, lotId), { reason })
       .then((r) => r.data),
 
   generateBarcode: (id: string) =>

@@ -184,6 +184,16 @@ export interface RejectGoodsReturnRequestRequest {
   reason: string
 }
 
+export interface RestockGoodsReturnRequestItem {
+  returnItemId: string
+  condition: GoodsReturnRequestItemCondition
+  restockSlotId: string | null
+}
+
+export interface RestockGoodsReturnRequest {
+  items: RestockGoodsReturnRequestItem[]
+}
+
 export interface StockIssueRequestFilters {
   status: StockIssueRequestStatus | ''
   warehouseId: string

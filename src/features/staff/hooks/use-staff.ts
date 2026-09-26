@@ -45,3 +45,19 @@ export function useTerminateStaffMutation() {
     onError: (error) => logger.error(error),
   })
 }
+
+export function useChangeStaffAccountStatusMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, { userId: string; activate: boolean }>(
+    {
+      mutationFn: ({ userId, activate }) =>
+        activate ? staffService.activateStaff(userId) : staffService.deactivateStaff(userId),
+      onSuccess: (_, { userId }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.all })
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(userId) })
+      },
+      onError: (error) => logger.error(error),
+    }
+  )
+}

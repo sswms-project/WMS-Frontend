@@ -62,6 +62,7 @@ interface GoodsReturnRequestDirectoryProps {
   readonly onInspect: (item: GoodsReturnRequestSummary) => void
   readonly onApprove: (item: GoodsReturnRequestSummary) => void
   readonly onReject: (item: GoodsReturnRequestSummary) => void
+  readonly onRestock: (item: GoodsReturnRequestSummary) => void
   readonly onRetry: () => void
 }
 
@@ -91,6 +92,7 @@ export function GoodsReturnRequestDirectory({
   onInspect,
   onApprove,
   onReject,
+  onRestock,
   onRetry,
 }: GoodsReturnRequestDirectoryProps) {
   const canApprove = permissions.includes(P.GOODS_RETURN_REQUESTS_APPROVE)
@@ -231,6 +233,12 @@ export function GoodsReturnRequestDirectory({
                                 Từ chối
                               </DropdownMenuItem>
                             </>
+                          ) : null}
+                          {canApprove && item.status === 'Approved' ? (
+                            <DropdownMenuItem onSelect={() => onRestock(item)}>
+                              <Undo2 />
+                              Nhập lại kho
+                            </DropdownMenuItem>
                           ) : null}
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
