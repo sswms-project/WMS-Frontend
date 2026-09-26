@@ -7,16 +7,15 @@ import { ReceiptDirectory } from '../components/ReceiptsPage'
 import { useGoodsReceiptsQuery } from '../hooks/use-inbound'
 import type { GoodsReceiptStatus } from '../types/inbound.types'
 
-const PAGE_SIZE = 10
-
 export default function GoodsReceiptsPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<GoodsReceiptStatus | ''>('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useGoodsReceiptsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
   })
@@ -27,7 +26,7 @@ export default function GoodsReceiptsPage() {
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         status={status}
         isLoading={query.isLoading}
@@ -42,6 +41,10 @@ export default function GoodsReceiptsPage() {
           setPage(1)
         }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onRetry={() => void query.refetch()}
       />
     </div>

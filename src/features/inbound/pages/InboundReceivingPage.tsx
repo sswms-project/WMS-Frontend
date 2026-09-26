@@ -33,12 +33,11 @@ import {
 import { goodsReceiptSchema, type GoodsReceiptFormValues } from '../schemas/inbound.schema'
 import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.types'
 
-const PAGE_SIZE = 10
-
 export default function InboundReceivingPage() {
   const router = useRouter()
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [selectedTask, setSelectedTask] = useState<ReceivingTask | null>(null)
   const [importTask, setImportTask] = useState<ReceivingTask | null>(null)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -49,7 +48,7 @@ export default function InboundReceivingPage() {
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useReceivingTasksQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
   })
   const createMutation = useCreateGoodsReceiptMutation()
@@ -266,7 +265,7 @@ export default function InboundReceivingPage() {
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         isLoading={query.isLoading}
         isFetching={query.isFetching}
@@ -276,6 +275,10 @@ export default function InboundReceivingPage() {
           setPage(1)
         }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onReceive={openReceive}
         onImportDocument={openDocumentImport}
         onRetry={() => void query.refetch()}

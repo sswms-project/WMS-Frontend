@@ -8,6 +8,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -58,6 +59,7 @@ interface InventoryDirectoryProps {
   readonly onResetFilters: () => void
   readonly onRetryFilters: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onReportDamaged: (item: InventoryStock) => void
 }
@@ -86,13 +88,14 @@ export function InventoryDirectory({
   onResetFilters,
   onRetryFilters,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onReportDamaged,
 }: InventoryDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -111,10 +114,7 @@ export function InventoryDirectory({
 
       <InventoryWorkspaceNavigation currentView="availability" permissions={permissions} />
 
-      <section
-        className="bg-card @container flex min-h-0 flex-col border"
-        aria-labelledby="inventory-title"
-      >
+      <OperationalListPanel className="@container" aria-labelledby="inventory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="inventory-title" className="text-sm font-semibold">
@@ -213,10 +213,11 @@ export function InventoryDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

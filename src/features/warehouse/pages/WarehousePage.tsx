@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Building2, Plus, RefreshCw, TriangleAlert, Warehouse } from 'lucide-react'
 import { toast } from 'sonner'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,19 +12,12 @@ import { logger } from '@/lib/logger'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAuthStore } from '@/stores/auth.store'
 import type { ApiErrorResponse } from '@/types/api'
-import {
-  WarehouseCreateDialog,
-  WarehouseList,
-  WarehousePagination,
-  WarehouseToolbar,
-} from '../components/WarehousePage'
+import { WarehouseCreateDialog, WarehouseList, WarehouseToolbar } from '../components/WarehousePage'
 import { useCreateWarehouseMutation, useWarehousesQuery } from '../hooks/use-warehouse'
 import type { CreateWarehouseFormValues } from '../schemas/warehouse.schema'
 import { getWarehouseCodeError } from '../utils/get-warehouse-code-error'
 import { buildWarehouseQuery } from '../utils/warehouse-query'
 import { getWarehouseCapabilities } from '../utils/warehouse-capabilities'
-
-const PAGE_SIZE = 10
 
 function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
   return (
@@ -41,10 +36,11 @@ export function WarehousePage() {
   const [warehouseCodeError, setWarehouseCodeError] = useState<string>()
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const createMutation = useCreateWarehouseMutation()
   const warehousesQuery = useWarehousesQuery(
-    buildWarehouseQuery(debouncedSearchText, page, PAGE_SIZE)
+    buildWarehouseQuery(debouncedSearchText, page, pageSize)
   )
   const warehouses = warehousesQuery.data?.items ?? []
   const capabilities = getWarehouseCapabilities(role)
@@ -87,7 +83,7 @@ export function WarehousePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1180px] space-y-5">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -110,7 +106,7 @@ export function WarehousePage() {
         ) : null}
       </header>
 
-      <section className="bg-card min-w-0 border" aria-labelledby="warehouse-list-title">
+      <OperationalListPanel aria-labelledby="warehouse-list-title">
         <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-3 sm:px-4">
           <div className="min-w-0">
             <h2 id="warehouse-list-title" className="text-sm font-semibold">
@@ -191,15 +187,19 @@ export function WarehousePage() {
         {!warehousesQuery.isLoading && !warehousesQuery.isError && warehouses.length > 0 && (
           <>
             <WarehouseList warehouses={warehouses} />
-            <WarehousePagination
+            <OperationalPagination
               page={page}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               totalCount={warehousesQuery.data?.totalCount ?? 0}
               onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value)
+                setPage(1)
+              }}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       {capabilities.canCreateWarehouse ? (
         <WarehouseCreateDialog

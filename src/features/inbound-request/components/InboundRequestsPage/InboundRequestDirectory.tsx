@@ -10,6 +10,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -55,6 +56,7 @@ interface InboundRequestDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: InboundRequestStatus | '') => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
@@ -71,12 +73,13 @@ export function InboundRequestDirectory({
   onSearchChange,
   onStatusChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
 }: InboundRequestDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -95,10 +98,7 @@ export function InboundRequestDirectory({
         </Button>
       </header>
 
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="po-directory-title"
-      >
+      <OperationalListPanel aria-labelledby="po-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="po-directory-title" className="text-sm font-semibold">
@@ -161,10 +161,11 @@ export function InboundRequestDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

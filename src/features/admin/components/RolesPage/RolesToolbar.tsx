@@ -30,13 +30,13 @@ export function RolesToolbar({
 }: RolesToolbarProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-muted-foreground text-xs">
+      <div className="text-muted-foreground text-xs">
         {isLoading ? (
           <Skeleton className="bg-muted/70 inline-block h-3.5 w-28 align-middle" />
         ) : (
           `${count} vai trò trong hệ thống`
         )}
-      </p>
+      </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative min-w-0 sm:w-64">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />

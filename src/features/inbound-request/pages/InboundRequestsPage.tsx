@@ -6,16 +6,15 @@ import { InboundRequestDirectory } from '../components/InboundRequestsPage'
 import { useInboundRequestsQuery } from '../hooks/use-inbound-requests'
 import type { InboundRequestStatus } from '../types/inbound-request.types'
 
-const PAGE_SIZE = 10
-
 export default function InboundRequestsPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<InboundRequestStatus | ''>('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useInboundRequestsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
   })
@@ -25,7 +24,7 @@ export default function InboundRequestsPage() {
       items={query.data?.items ?? []}
       totalCount={query.data?.totalCount ?? 0}
       page={page}
-      pageSize={PAGE_SIZE}
+      pageSize={pageSize}
       searchText={searchText}
       status={status}
       isLoading={query.isLoading}
@@ -40,6 +39,10 @@ export default function InboundRequestsPage() {
         setPage(1)
       }}
       onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onRetry={() => void query.refetch()}
     />
   )

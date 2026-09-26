@@ -165,7 +165,7 @@ export function PersonnelImportPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-col gap-4">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           <Button asChild variant="outline" size="icon">

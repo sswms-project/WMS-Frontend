@@ -52,6 +52,7 @@ function createProps(
     onResetFilters: vi.fn(),
     onRetryFilters: vi.fn(),
     onPageChange: vi.fn(),
+    onPageSizeChange: vi.fn(),
     onRetry: vi.fn(),
     onReportDamaged: vi.fn(),
     ...overrides,

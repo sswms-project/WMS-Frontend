@@ -8,6 +8,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type {
@@ -44,6 +45,7 @@ interface StockMovementHistoryProps {
   readonly onResetFilters: () => void
   readonly onRetryProducts: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
@@ -64,7 +66,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
   } = props
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -81,10 +83,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
         </div>
       </header>
       <InventoryWorkspaceNavigation currentView="movements" permissions={props.permissions} />
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="movement-history-title"
-      >
+      <OperationalListPanel aria-labelledby="movement-history-title">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 id="movement-history-title" className="text-sm font-semibold">
@@ -154,10 +153,11 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={props.onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
       <StockMovementFilters {...props} open={isFilterOpen} onOpenChange={setIsFilterOpen} />
     </div>
   )
