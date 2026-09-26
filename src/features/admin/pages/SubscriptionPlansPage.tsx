@@ -370,9 +370,6 @@ export default function SubscriptionPlansPage() {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Danh mục nền tảng</p>
             <h2 className="text-foreground mt-0.5 text-xl font-semibold">Gói đăng ký</h2>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-              Quản lý mức giá, giới hạn sử dụng và tính năng dành cho tenant.
-            </p>
           </div>
         </div>
         <Button className="h-10 w-full gap-1.5 sm:h-8 sm:w-auto" onClick={openCreateDialog}>

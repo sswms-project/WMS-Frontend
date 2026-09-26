@@ -18,20 +18,17 @@ export function AuditLogDirectory(props: AuditLogDirectoryProps) {
     >
       <div>
         <h2 id="audit-title" className="text-xl font-semibold">
-          Audit Log
+          Nhật ký hoạt động
         </h2>
-        <p className="text-muted-foreground text-sm">
-          Tra cứu lịch sử các hành động nghiệp vụ quan trọng.
-        </p>
       </div>
       <AuditLogFilters
         filters={props.filters}
         onApply={props.onApplyFilters}
         onClear={props.onClearFilters}
       />
-      <OperationalListPanel aria-label="Nhật ký hệ thống">
+      <OperationalListPanel aria-label="Nhật ký hoạt động">
         <div className="shrink-0 border-b px-4 py-3">
-          <h3 className="text-sm font-semibold">Nhật ký hệ thống</h3>
+          <h3 className="text-sm font-semibold">Nhật ký hoạt động</h3>
         </div>
         <div data-slot="operational-list-body" className="min-h-0">
           <AuditLogList

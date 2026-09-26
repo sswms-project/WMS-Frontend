@@ -134,7 +134,7 @@ describe('application navigation visibility', () => {
         items: ['Dashboard kho', 'Báo cáo vận hành', 'Dự báo & Bổ sung hàng'],
       },
       { label: 'Dịch vụ', items: ['Gói dịch vụ', 'Lịch sử thanh toán'] },
-      { label: 'Hệ thống', items: ['Thông báo', 'Audit Log', 'Cài đặt'] },
+      { label: 'Hệ thống', items: ['Thông báo', 'Nhật ký hoạt động', 'Cài đặt'] },
     ])
   })
 

@@ -110,7 +110,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
         value={props.status ?? 'all'}
         onValueChange={(value) => props.onStatusChange(isTenantStatus(value) ? value : undefined)}
       >
-        <SelectTrigger aria-label="Trạng thái tenant">
+        <SelectTrigger aria-label="Trạng thái đơn vị thuê">
           <SelectValue placeholder="Trạng thái" />
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
@@ -165,7 +165,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
           <SelectItem value="createdAt">Mới tạo trước</SelectItem>
-          <SelectItem value="tenantName">Tên tenant</SelectItem>
+          <SelectItem value="tenantName">Tên đơn vị thuê</SelectItem>
           <SelectItem value="status">Trạng thái</SelectItem>
           <SelectItem value="subscriptionEndDate">Ngày hết hạn</SelectItem>
         </SelectContent>
@@ -193,10 +193,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
           </span>
           <div>
             <p className="text-primary text-xs font-medium">Quản trị nền tảng</p>
-            <h2 className="text-xl font-semibold">Tenant</h2>
-            <p className="text-muted-foreground text-sm">
-              Tìm kiếm và quản lý tổ chức trên toàn hệ thống.
-            </p>
+            <h2 className="text-xl font-semibold">Đơn vị thuê</h2>
           </div>
         </div>
         <Button
@@ -219,7 +216,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 id="tenant-list-title" className="text-sm font-semibold">
-                Danh sách tenant
+                Danh sách đơn vị thuê
               </h2>
               <p className="text-muted-foreground text-xs" aria-live="polite">
                 {props.totalCount} kết quả
@@ -238,24 +235,24 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
                 <Search aria-hidden="true" />
               </InputGroupAddon>
               <InputGroupInput
-                aria-label="Tìm tenant"
+                aria-label="Tìm đơn vị thuê"
                 name="tenantSearch"
                 autoComplete="off"
                 value={props.search}
-                placeholder="Tên, email tenant hoặc chủ sở hữu…"
+                placeholder="Tên, email đơn vị thuê hoặc chủ sở hữu…"
                 onChange={(event) => props.onSearchChange(event.target.value)}
               />
             </InputGroup>
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" aria-label="Mở bộ lọc tenant">
+                <Button variant="outline" aria-label="Mở bộ lọc đơn vị thuê">
                   <SlidersHorizontal aria-hidden="true" />
                   {secondaryFilterCount > 0 ? secondaryFilterCount : null}
                 </Button>
               </SheetTrigger>
               <SheetContent className="w-full overflow-y-auto overscroll-contain duration-300 sm:max-w-sm">
                 <SheetHeader>
-                  <SheetTitle>Bộ lọc tenant</SheetTitle>
+                  <SheetTitle>Bộ lọc đơn vị thuê</SheetTitle>
                   <SheetDescription>
                     Thu hẹp danh sách theo trạng thái, gói và ngày.
                   </SheetDescription>
@@ -277,11 +274,11 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
                 <Search aria-hidden="true" />
               </InputGroupAddon>
               <InputGroupInput
-                aria-label="Tìm tenant"
+                aria-label="Tìm đơn vị thuê"
                 name="tenantSearch"
                 autoComplete="off"
                 value={props.search}
-                placeholder="Tên, email tenant hoặc chủ sở hữu…"
+                placeholder="Tên, email đơn vị thuê hoặc chủ sở hữu…"
                 onChange={(event) => props.onSearchChange(event.target.value)}
               />
             </InputGroup>
@@ -292,10 +289,13 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
         {props.isLoading ? (
           <OperationalLoadingState />
         ) : props.isError ? (
-          <OperationalErrorState title="Không thể tải tenant" onRetry={props.onRetry} />
+          <OperationalErrorState
+            title="Không thể tải danh sách đơn vị thuê"
+            onRetry={props.onRetry}
+          />
         ) : props.items.length === 0 ? (
           <OperationalEmptyState
-            title="Không có tenant phù hợp"
+            title="Không có đơn vị thuê phù hợp"
             description="Thử thay đổi từ khóa hoặc bộ lọc."
           />
         ) : (
@@ -304,7 +304,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="bg-card sticky top-0 z-10">Tenant</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Đơn vị thuê</TableHead>
                     <TableHead className="bg-card sticky top-0 z-10">Chủ sở hữu</TableHead>
                     <TableHead className="bg-card sticky top-0 z-10">Gói</TableHead>
                     <TableHead className="bg-card sticky top-0 z-10 text-center">

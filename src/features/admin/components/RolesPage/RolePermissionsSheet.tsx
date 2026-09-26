@@ -115,7 +115,7 @@ export function RolePermissionsSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="flex w-[min(680px,95vw)] flex-col gap-0 p-0 sm:max-w-[680px]"
+        className="flex w-full flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-none lg:data-[side=right]:w-1/2"
         side="right"
       >
         <SheetHeader className="shrink-0 border-b px-5 py-4 pr-12">

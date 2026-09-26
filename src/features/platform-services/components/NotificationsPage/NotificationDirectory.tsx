@@ -17,9 +17,6 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
           <h2 id="notifications-title" className="text-xl font-semibold">
             Thông báo
           </h2>
-          <p className="text-muted-foreground text-sm">
-            Theo dõi các sự kiện liên quan đến tài khoản của bạn.
-          </p>
         </div>
         <Button
           type="button"

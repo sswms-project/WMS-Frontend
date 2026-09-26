@@ -9,9 +9,6 @@ export default function SettingsSecurityPage() {
         <SectionIconBadge icon={ShieldCheck} tone="primary" size="lg" />
         <div>
           <h2 className="text-foreground text-[22px] font-bold">Mật khẩu và bảo mật</h2>
-          <p className="text-muted-foreground mt-0.5 text-[13.5px]">
-            Quản lý mật khẩu và xác thực hai yếu tố cho tài khoản của bạn
-          </p>
         </div>
       </div>
       <SecurityPage />
