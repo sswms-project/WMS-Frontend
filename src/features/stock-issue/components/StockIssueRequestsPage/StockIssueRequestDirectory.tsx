@@ -96,6 +96,7 @@ interface StockIssueRequestDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onInspect: (order: StockIssueRequestSummary) => void
+  readonly onReleaseForPicking: (order: StockIssueRequestSummary) => void
   readonly onRecordStockPicking: (order: StockIssueRequestSummary) => void
   readonly onAuthorizeDispatch: (order: StockIssueRequestSummary) => void
   readonly onConfirmDispatch: (order: StockIssueRequestSummary) => void
@@ -128,6 +129,7 @@ export function StockIssueRequestDirectory({
   onPageChange,
   onRetry,
   onInspect,
+  onReleaseForPicking,
   onRecordStockPicking,
   onAuthorizeDispatch,
   onConfirmDispatch,
@@ -163,6 +165,12 @@ export function StockIssueRequestDirectory({
           <Eye className="size-4" aria-hidden="true" />
           Xem chi tiết
         </DropdownMenuItem>
+        {canAuthorizeDispatch && order.status === 'Pending' ? (
+          <DropdownMenuItem onSelect={() => onReleaseForPicking(order)}>
+            <Send className="size-4" aria-hidden="true" />
+            Duyệt và giữ hàng
+          </DropdownMenuItem>
+        ) : null}
         {canPick && canRecordStockPicking(order.status) ? (
           <DropdownMenuItem onSelect={() => onRecordStockPicking(order)}>
             <Undo2 className="size-4" aria-hidden="true" />

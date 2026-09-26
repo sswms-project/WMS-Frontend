@@ -5,7 +5,7 @@ import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inventoryService } from '../services/inventory.service'
 import type {
   InventoryStockListResponse,
-  InventoryReservation,
+  InventoryReservationListResponse,
   InventoryAbcItem,
   InventoryAbcQuery,
   InventoryForecastQuery,
@@ -16,6 +16,7 @@ import type {
   InventoryStockHistoryResponse,
   ReportDamagedStockRequest,
   RunInventoryAbcRequest,
+  ApplyInventoryAbcRequest,
   StockMovementListQuery,
   StockMovementListResponse,
   CreateForecastRunRequest,
@@ -23,7 +24,42 @@ import type {
   AcceptReplenishmentSuggestionRequest,
   AcceptRebalancingSuggestionRequest,
   ForecastSuggestionType,
+  DamageCaseQuery,
+  DamageCaseListResponse,
+  DecideDamageCaseDispositionRequest,
+  OpeningStockQuery,
+  StockDiscrepancyQuery,
+  OpeningStockListResponse,
+  CreateOpeningStockRequest,
+  UpdateOpeningStockRequest,
+  InventoryEvidence,
+  StockDiscrepancyListResponse,
+  CreateStockDiscrepancyRequest,
+  ReviewStockDiscrepancyRequest,
+  AddStockDiscrepancyEvidenceRequest,
+  AddDamageCaseEvidenceRequest,
+  MyWarehouseTaskListResponse,
 } from '../types/inventory.types'
+
+export function useMyWarehouseTasksQuery(warehouseId?: string, enabled = true) {
+  return useQuery<MyWarehouseTaskListResponse, ApiErrorResponse>({
+    queryKey: ['my-warehouse-tasks', warehouseId ?? 'all'],
+    queryFn: () =>
+      inventoryService.getMyWarehouseTasks(warehouseId).then((response) => response.data),
+    enabled,
+  })
+}
+
+export function useUploadInventoryEvidenceMutation() {
+  return useMutation<
+    ApiResponse<InventoryEvidence>,
+    ApiErrorResponse,
+    { warehouseId: string; file: File }
+  >({
+    mutationFn: ({ warehouseId, file }) => inventoryService.uploadEvidence(warehouseId, file),
+    onError: (error) => logger.error(error),
+  })
+}
 
 export function useInventoryQuery(params: InventoryListQuery, enabled = true) {
   return useQuery<InventoryStockListResponse, ApiErrorResponse>({
@@ -43,10 +79,11 @@ export function useStockMovementsQuery(params: StockMovementListQuery, enabled =
   })
 }
 
-export function useInventoryReservationsQuery(params: InventoryReservationQuery) {
-  return useQuery<InventoryReservation[], ApiErrorResponse>({
+export function useInventoryReservationsQuery(params: InventoryReservationQuery, enabled = true) {
+  return useQuery<InventoryReservationListResponse, ApiErrorResponse>({
     queryKey: queryKeys.inventory.reservations(params),
     queryFn: () => inventoryService.getReservations(params).then((response) => response.data),
+    enabled,
     placeholderData: (previousData) => previousData,
   })
 }
@@ -55,6 +92,142 @@ export function useReportDamagedStockMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<string>, ApiErrorResponse, ReportDamagedStockRequest>({
     mutationFn: inventoryService.reportDamagedStock,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useDamageCasesQuery(params: DamageCaseQuery) {
+  return useQuery<DamageCaseListResponse, ApiErrorResponse>({
+    queryKey: ['inventory', 'damage-cases', params],
+    queryFn: () => inventoryService.getDamageCases(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useStockDiscrepanciesQuery(params: StockDiscrepancyQuery) {
+  return useQuery<StockDiscrepancyListResponse, ApiErrorResponse>({
+    queryKey: ['inventory', 'discrepancies', params],
+    queryFn: () => inventoryService.getDiscrepancies(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useCreateStockDiscrepancyMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<string>, ApiErrorResponse, CreateStockDiscrepancyRequest>({
+    mutationFn: inventoryService.createDiscrepancy,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory', 'discrepancies'] }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReviewStockDiscrepancyMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<string | null>, ApiErrorResponse, ReviewStockDiscrepancyRequest>({
+    mutationFn: inventoryService.reviewDiscrepancy,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory', 'discrepancies'] }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useAddStockDiscrepancyEvidenceMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, AddStockDiscrepancyEvidenceRequest>({
+    mutationFn: inventoryService.addDiscrepancyEvidence,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory', 'discrepancies'] }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useDecideDamageCaseDispositionMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<string | null>,
+    ApiErrorResponse,
+    DecideDamageCaseDispositionRequest
+  >({
+    mutationFn: inventoryService.decideDamageCaseDisposition,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useAddDamageCaseEvidenceMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, AddDamageCaseEvidenceRequest>({
+    mutationFn: inventoryService.addDamageCaseEvidence,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useOpeningStocksQuery(params: OpeningStockQuery) {
+  return useQuery<OpeningStockListResponse, ApiErrorResponse>({
+    queryKey: ['inventory', 'opening-stocks', params],
+    queryFn: () => inventoryService.getOpeningStocks(params).then((response) => response.data),
+    placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useCreateOpeningStockMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<string>, ApiErrorResponse, CreateOpeningStockRequest>({
+    mutationFn: inventoryService.createOpeningStock,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useUpdateOpeningStockMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateOpeningStockRequest>({
+    mutationFn: inventoryService.updateOpeningStock,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useOpeningStockActionMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    | { action: 'submit'; id: string; expectedVersion: string }
+    | { action: 'approve'; id: string; expectedVersion: string }
+    | { action: 'withdraw'; id: string; expectedVersion: string; reason: string }
+    | { action: 'cancel'; id: string; expectedVersion: string; reason: string }
+    | {
+        action: 'review'
+        id: string
+        expectedVersion: string
+        decision: 'Returned' | 'Rejected' | 'Cancelled'
+        reason: string
+      }
+  >({
+    mutationFn: (request) => {
+      if (request.action === 'submit')
+        return inventoryService.submitOpeningStock(request.id, request.expectedVersion)
+      if (request.action === 'approve')
+        return inventoryService.approveOpeningStock(request.id, request.expectedVersion)
+      if (request.action === 'withdraw')
+        return inventoryService.withdrawOpeningStock(
+          request.id,
+          request.reason,
+          request.expectedVersion
+        )
+      if (request.action === 'cancel')
+        return inventoryService.cancelOpeningStock(
+          request.id,
+          request.reason,
+          request.expectedVersion
+        )
+      return inventoryService.reviewOpeningStock(request.id, {
+        decision: request.decision,
+        reason: request.reason,
+        expectedVersion: request.expectedVersion,
+      })
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
     onError: (error) => logger.error(error),
   })
@@ -73,6 +246,19 @@ export function useRunInventoryAbcMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<InventoryAbcItem[]>, ApiErrorResponse, RunInventoryAbcRequest>({
     mutationFn: inventoryService.runAbcClassification,
+    onSuccess: (response, variables) =>
+      queryClient.setQueryData(
+        queryKeys.inventory.abc({ warehouseId: variables.warehouseId }),
+        response.data
+      ),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useApplyInventoryAbcMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<string>, ApiErrorResponse, ApplyInventoryAbcRequest>({
+    mutationFn: inventoryService.applyAbcAnalysis,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
     onError: (error) => logger.error(error),
   })

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import type { ReportDamagedStockFormValues } from '../../schemas/report-damaged-stock.schema'
 import type { InventoryStock } from '../../types/inventory.types'
@@ -20,6 +21,7 @@ interface ReportDamagedStockDialogProps {
   readonly item: InventoryStock | null
   readonly form: UseFormReturn<ReportDamagedStockFormValues>
   readonly isPending: boolean
+  readonly taskOptions: readonly { value: string; label: string }[]
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: (values: ReportDamagedStockFormValues) => Promise<void>
 }
@@ -28,18 +30,21 @@ export function ReportDamagedStockDialog({
   item,
   form,
   isPending,
+  taskOptions,
   onOpenChange,
   onSubmit,
 }: ReportDamagedStockDialogProps) {
   const quantityError = form.formState.errors.quantity
   const reasonError = form.formState.errors.reason
+  const evidenceError = form.formState.errors.evidenceFile
+  const reportMode = form.watch('reportMode')
   return (
     <Dialog open={Boolean(item)} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Báo hàng hỏng</DialogTitle>
           <DialogDescription>
-            Ghi nhận hàng không còn sử dụng được và trừ khỏi tồn kho.
+            Chọn báo số lượng đã xác nhận hoặc chỉ ghi nhận quan sát để kiểm tra thêm.
           </DialogDescription>
         </DialogHeader>
         {item ? (
@@ -62,21 +67,41 @@ export function ReportDamagedStockDialog({
                 </p>
               </div>
             </div>
-            <Field data-invalid={Boolean(quantityError)}>
-              <FieldLabel htmlFor="damaged-quantity">Số lượng hàng hỏng</FieldLabel>
-              <Input
-                id="damaged-quantity"
-                type="number"
-                inputMode="decimal"
-                min="0.001"
-                step="0.001"
-                max={item.availableQuantity}
-                aria-invalid={Boolean(quantityError)}
+            <Field>
+              <FieldLabel htmlFor="damage-report-mode">Mức độ xác nhận</FieldLabel>
+              <NativeSelect
+                id="damage-report-mode"
                 disabled={isPending}
-                {...form.register('quantity', { valueAsNumber: true })}
-              />
-              <FieldError errors={quantityError ? [quantityError] : undefined} />
+                {...form.register('reportMode')}
+              >
+                <NativeSelectOption value="Confirmed">Đã xác nhận số lượng hỏng</NativeSelectOption>
+                <NativeSelectOption value="Observation">
+                  Chỉ ghi nhận quan sát, chưa chốt số lượng
+                </NativeSelectOption>
+              </NativeSelect>
             </Field>
+            {reportMode === 'Confirmed' ? (
+              <Field data-invalid={Boolean(quantityError)}>
+                <FieldLabel htmlFor="damaged-quantity">Số lượng hàng hỏng</FieldLabel>
+                <Input
+                  id="damaged-quantity"
+                  type="number"
+                  inputMode="decimal"
+                  min="0.001"
+                  step="0.001"
+                  max={item.availableQuantity}
+                  aria-invalid={Boolean(quantityError)}
+                  disabled={isPending}
+                  {...form.register('quantity', { valueAsNumber: true })}
+                />
+                <FieldError errors={quantityError ? [quantityError] : undefined} />
+              </Field>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                Quan sát này chưa làm thay đổi tồn kho. Người duyệt có thể yêu cầu kiểm tra và bổ
+                sung số lượng sau.
+              </p>
+            )}
             <Field data-invalid={Boolean(reasonError)}>
               <FieldLabel htmlFor="damaged-reason">Lý do</FieldLabel>
               <Textarea
@@ -88,6 +113,40 @@ export function ReportDamagedStockDialog({
                 {...form.register('reason')}
               />
               <FieldError errors={reasonError ? [reasonError] : undefined} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="damage-related-task">
+                Công việc liên quan (không bắt buộc)
+              </FieldLabel>
+              <NativeSelect
+                id="damage-related-task"
+                disabled={isPending}
+                {...form.register('relatedTaskKey')}
+              >
+                <NativeSelectOption value="">Không liên kết công việc</NativeSelectOption>
+                {taskOptions.map((option) => (
+                  <NativeSelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field data-invalid={Boolean(evidenceError)}>
+              <FieldLabel htmlFor="damaged-evidence">Tệp bằng chứng</FieldLabel>
+              <Input
+                id="damaged-evidence"
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx"
+                aria-invalid={Boolean(evidenceError)}
+                disabled={isPending}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file)
+                    form.setValue('evidenceFile', file, { shouldValidate: true, shouldDirty: true })
+                  else form.resetField('evidenceFile')
+                }}
+              />
+              <FieldError errors={evidenceError ? [evidenceError] : undefined} />
             </Field>
             <DialogFooter>
               <Button

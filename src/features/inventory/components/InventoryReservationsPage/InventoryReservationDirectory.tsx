@@ -25,12 +25,19 @@ import type {
   InventoryReservation,
   InventoryReservationStatus,
 } from '../../types/inventory.types'
-import { formatInventoryDate, formatInventoryQuantity } from '../../utils/inventory-format'
+import {
+  formatEligibilityStatus,
+  formatInventoryDate,
+  formatInventoryQuantity,
+} from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryReservationDirectoryProps {
   readonly permissions: readonly string[]
   readonly items: readonly InventoryReservation[]
+  readonly page: number
+  readonly pageSize: number
+  readonly totalCount: number
   readonly warehouseId: string
   readonly productId: string
   readonly status: InventoryReservationStatus
@@ -45,6 +52,7 @@ interface InventoryReservationDirectoryProps {
   readonly onWarehouseChange: (value: string) => void
   readonly onProductChange: (value: string) => void
   readonly onStatusChange: (value: InventoryReservationStatus) => void
+  readonly onPageChange: (value: number) => void
   readonly onResetFilters: () => void
   readonly onRetryFilters: () => void
   readonly onRetry: () => void
@@ -136,7 +144,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
                 <TableRow>
                   <TableHead className="bg-card sticky top-0">Sản phẩm</TableHead>
                   <TableHead className="bg-card sticky top-0">Kho / Vị trí</TableHead>
-                  <TableHead className="bg-card sticky top-0">Lô / Chất lượng</TableHead>
+                  <TableHead className="bg-card sticky top-0">Lô / Trạng thái</TableHead>
                   <TableHead className="bg-card sticky top-0">Chứng từ</TableHead>
                   <TableHead className="bg-card sticky top-0">Người tạo</TableHead>
                   <TableHead className="bg-card sticky top-0 text-right">Số lượng</TableHead>
@@ -164,14 +172,17 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
                         {item.lotNumber ?? 'Không theo lô'}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {qualityStatusLabel(item.qualityStatus)}
+                        {qualityStatusLabel(item.qualityStatus)} ·{' '}
+                        {formatEligibilityStatus(item.eligibilityStatus)}
                       </p>
                     </TableCell>
                     <TableCell>
                       <p>
-                        {item.referenceType === 'StockIssuePick'
-                          ? 'Lấy hàng xuất kho'
-                          : 'Điều chuyển kho'}
+                        {item.referenceType === 'StockIssueRequestLine'
+                          ? 'Phiếu xuất đã phát hành'
+                          : item.referenceType === 'StockIssuePick'
+                            ? 'Lấy hàng xuất kho'
+                            : 'Điều chuyển kho'}
                       </p>
                       <p className="text-muted-foreground font-mono text-xs" translate="no">
                         {item.referenceCode || 'Không xác định'}
@@ -198,6 +209,33 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
             </Table>
           </div>
         )}
+        {props.totalCount > props.pageSize ? (
+          <div className="flex shrink-0 items-center justify-between border-t px-4 py-2.5 text-sm">
+            <span className="text-muted-foreground">
+              Trang {props.page} / {Math.ceil(props.totalCount / props.pageSize)}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={props.page <= 1}
+                onClick={() => props.onPageChange(props.page - 1)}
+              >
+                Trước
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={props.page * props.pageSize >= props.totalCount}
+                onClick={() => props.onPageChange(props.page + 1)}
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>

@@ -7,6 +7,9 @@ import {
   ClipboardCheck,
   History,
   LockKeyhole,
+  ShieldAlert,
+  PackagePlus,
+  Scale,
   SlidersHorizontal,
   TrendingUp,
 } from 'lucide-react'
@@ -23,6 +26,9 @@ type InventoryWorkspaceView =
   | 'forecast'
   | 'cycle-counts'
   | 'adjustments'
+  | 'damage-cases'
+  | 'opening-stocks'
+  | 'discrepancies'
 
 interface InventoryWorkspaceNavigationProps {
   readonly currentView: InventoryWorkspaceView
@@ -104,12 +110,36 @@ export function InventoryWorkspaceNavigation({
             Tồn đang giữ
           </Link>
           <Link
+            href={APP_ROUTES.inventoryDamageCases}
+            aria-current={currentView === 'damage-cases' ? 'page' : undefined}
+            className={linkClassName('damage-cases')}
+          >
+            <ShieldAlert className="size-4" aria-hidden="true" />
+            Hàng hỏng
+          </Link>
+          <Link
+            href={APP_ROUTES.inventoryOpeningStocks}
+            aria-current={currentView === 'opening-stocks' ? 'page' : undefined}
+            className={linkClassName('opening-stocks')}
+          >
+            <PackagePlus className="size-4" aria-hidden="true" />
+            Tồn đầu
+          </Link>
+          <Link
             href={APP_ROUTES.inventoryAbcClassification}
             aria-current={currentView === 'abc' ? 'page' : undefined}
             className={linkClassName('abc')}
           >
             <ChartNoAxesColumnIncreasing className="size-4" aria-hidden="true" />
             Phân loại ABC
+          </Link>
+          <Link
+            href={APP_ROUTES.inventoryDiscrepancies}
+            aria-current={currentView === 'discrepancies' ? 'page' : undefined}
+            className={linkClassName('discrepancies')}
+          >
+            <Scale className="size-4" aria-hidden="true" />
+            Chênh lệch
           </Link>
           <Link
             href={APP_ROUTES.inventoryForecast}

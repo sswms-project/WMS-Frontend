@@ -1,5 +1,25 @@
+import type { InventoryEligibilityStatus, QualityStatus } from '../types/inventory.types'
+
 export function formatInventoryQuantity(value: number): string {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 }).format(value)
+}
+
+export function formatQualityStatus(value: QualityStatus): string {
+  return {
+    Good: 'Tốt',
+    Damaged: 'Hư hỏng',
+    Quarantine: 'Cách ly',
+  }[value]
+}
+
+export function formatEligibilityStatus(value: InventoryEligibilityStatus): string {
+  return {
+    Available: 'Khả dụng',
+    ReceivingHold: 'Chờ hoàn tất nhập',
+    InspectionHold: 'Chờ kiểm tra',
+    DamageHold: 'Giữ do hư hỏng',
+    Quarantine: 'Cách ly',
+  }[value]
 }
 
 export function formatInventoryDate(value: string | null): string {

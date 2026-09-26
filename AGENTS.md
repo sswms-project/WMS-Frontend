@@ -24,7 +24,9 @@ When implementing Stitch designs, always reuse existing components from `src/com
 
 Before creating branches, commits, merges, or pushes, read `docs/GIT_WORKFLOW.md` and follow the repository Git workflow.
 
-When merging feature branches or PRs, prefer squash merge to keep `main` history clean unless the team explicitly requests preserving individual commits.
+Start working branches from freshly fetched `origin/dev` and target PRs to `dev`. Only the leader promotes `dev` to `main`. Prefer squash merge for feature PRs when merge is authorized.
+
+Use pnpm as pinned in package.json for all package operations. Codex implements when asked to fix/implement; review-only requests do not authorize source edits. Existing task authorization persists across continuations. Read `../AGENTS.md` and `../docs/BUSINESS_RULES.md` in the Kovia workspace for shared workflow and confirmed organization invariants.
 
 Before using frontend design skills or implementing screens from Stitch, read `docs/AI_WORKFLOW.md` and follow its skill selection rules.
 
