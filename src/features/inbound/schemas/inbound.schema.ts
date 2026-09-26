@@ -86,5 +86,15 @@ export const putawaySchema = z
     })
   })
 
+export const cancelPutawayTaskSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập lý do hủy phần cất hàng còn lại.')
+    .max(500, 'Lý do không được vượt quá 500 ký tự.'),
+  hasUnrecordedPhysicalMovement: z.boolean(),
+})
+
 export type GoodsReceiptFormValues = z.infer<typeof goodsReceiptSchema>
 export type PutawayFormValues = z.infer<typeof putawaySchema>
+export type CancelPutawayTaskFormValues = z.infer<typeof cancelPutawayTaskSchema>

@@ -1,5 +1,8 @@
 export { default as InventoryPage } from './InventoryPage'
+export { default as DamageCasesPage } from './DamageCasesPage'
+export { default as OpeningStocksPage } from './OpeningStocksPage'
 export { default as StockMovementsPage } from './StockMovementsPage'
 export { default as InventoryReservationsPage } from './InventoryReservationsPage'
 export { default as InventoryAbcPage } from './InventoryAbcPage'
+export { default as StockDiscrepanciesPage } from './StockDiscrepanciesPage'
 export { default as InventoryForecastPage } from './InventoryForecastPage'

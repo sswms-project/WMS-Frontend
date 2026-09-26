@@ -26,24 +26,35 @@ interface StockMovementHistoryProps {
   readonly totalCount: number
   readonly page: number
   readonly pageSize: number
+  readonly searchText: string
+  readonly warehouseId: string
+  readonly slotId: string
   readonly productId: string
   readonly movementType: StockMovementType | ''
   readonly dateFrom: string
   readonly dateTo: string
   readonly productOptions: readonly InventoryFilterOption[]
+  readonly warehouseOptions: readonly InventoryFilterOption[]
+  readonly slotOptions: readonly InventoryFilterOption[]
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
   readonly isDateRangeValid: boolean
   readonly areProductsLoading: boolean
   readonly areProductsError: boolean
+  readonly areLocationsLoading: boolean
+  readonly areLocationsError: boolean
   readonly activeFilterCount: number
   readonly onProductChange: (value: string) => void
+  readonly onSearchChange: (value: string) => void
+  readonly onWarehouseChange: (value: string) => void
+  readonly onSlotChange: (value: string) => void
   readonly onMovementTypeChange: (value: StockMovementType | '') => void
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onResetFilters: () => void
   readonly onRetryProducts: () => void
+  readonly onRetryLocations: () => void
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
@@ -125,6 +136,14 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
         <p className="sr-only" aria-live="polite">
           {isFetching ? 'Đang cập nhật lịch sử biến động' : 'Lịch sử biến động đã cập nhật'}
         </p>
+        {isError && items.length > 0 ? (
+          <div
+            className="border-destructive/30 bg-destructive/5 text-destructive border-b px-3 py-2 text-xs"
+            role="alert"
+          >
+            Không thể tải dữ liệu mới. Bảng đang giữ kết quả gần nhất; hãy thử làm mới lại.
+          </div>
+        ) : null}
         {!isDateRangeValid ? (
           <OperationalEmptyState
             title="Khoảng thời gian không hợp lệ"
@@ -132,7 +151,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
           />
         ) : isLoading ? (
           <OperationalLoadingState rows={8} />
-        ) : isError ? (
+        ) : isError && items.length === 0 ? (
           <OperationalErrorState title="Không thể tải lịch sử biến động" onRetry={onRetry} />
         ) : items.length === 0 ? (
           <OperationalEmptyState

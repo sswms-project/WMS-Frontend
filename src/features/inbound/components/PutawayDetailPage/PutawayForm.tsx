@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, PackageCheck, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Ban, PackageCheck, Plus, Trash2 } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
@@ -26,6 +26,9 @@ interface PutawayFormProps {
   readonly fields: readonly FieldArrayWithId<PutawayFormValues, 'lines', 'id'>[]
   readonly slots: readonly SlotOption[]
   readonly isPending: boolean
+  readonly canCancel: boolean
+  readonly cancelLabel?: string
+  readonly onCancel: () => void
   readonly onAdd: () => void
   readonly onRemove: (index: number) => void
   readonly onSubmit: () => void
@@ -37,6 +40,9 @@ export function PutawayForm({
   fields,
   slots,
   isPending,
+  canCancel,
+  cancelLabel = 'Hủy phần còn lại',
+  onCancel,
   onAdd,
   onRemove,
   onSubmit,
@@ -70,10 +76,18 @@ export function PutawayForm({
             </p>
           </div>
         </div>
-        <Button type="button" disabled={isPending || fields.length === 0} onClick={onSubmit}>
-          <PackageCheck aria-hidden="true" />
-          Xác nhận cất hàng
-        </Button>
+        <div className="flex gap-2">
+          {canCancel ? (
+            <Button type="button" variant="destructive" disabled={isPending} onClick={onCancel}>
+              <Ban aria-hidden="true" />
+              {cancelLabel}
+            </Button>
+          ) : null}
+          <Button type="button" disabled={isPending || fields.length === 0} onClick={onSubmit}>
+            <PackageCheck aria-hidden="true" />
+            Xác nhận cất hàng
+          </Button>
+        </div>
       </header>
       <section className="bg-card border">
         <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3">

@@ -10,15 +10,15 @@ import type { InventoryReservationStatus } from '../types/inventory.types'
 import { buildInventoryReservationQuery } from '../utils/inventory-reservation-query'
 
 export default function InventoryReservationsPage() {
+  const [page, setPage] = useState(1)
   const [warehouseId, setWarehouseId] = useState('')
   const [productId, setProductId] = useState('')
   const [status, setStatus] = useState<InventoryReservationStatus>('Active')
-  const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const meQuery = useMeQuery()
   const params = useMemo(
-    () => buildInventoryReservationQuery(warehouseId, productId, status),
-    [productId, status, warehouseId]
+    () => buildInventoryReservationQuery(warehouseId, productId, status, page, pageSize),
+    [page, pageSize, productId, status, warehouseId]
   )
   const reservationsQuery = useInventoryReservationsQuery(params)
   const warehousesQuery = useWarehousesQuery({
@@ -48,9 +48,10 @@ export default function InventoryReservationsPage() {
   return (
     <InventoryReservationDirectory
       permissions={meQuery.data?.permissions ?? []}
-      items={reservationsQuery.data ?? []}
+      items={reservationsQuery.data?.items ?? []}
       page={page}
       pageSize={pageSize}
+      totalCount={reservationsQuery.data?.totalCount ?? 0}
       warehouseId={warehouseId}
       productId={productId}
       status={status}

@@ -27,7 +27,11 @@ import type {
   InventoryReservation,
   InventoryReservationStatus,
 } from '../../types/inventory.types'
-import { formatInventoryDate, formatInventoryQuantity } from '../../utils/inventory-format'
+import {
+  formatEligibilityStatus,
+  formatInventoryDate,
+  formatInventoryQuantity,
+} from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryReservationDirectoryProps {
@@ -35,6 +39,7 @@ interface InventoryReservationDirectoryProps {
   readonly items: readonly InventoryReservation[]
   readonly page: number
   readonly pageSize: number
+  readonly totalCount: number
   readonly warehouseId: string
   readonly productId: string
   readonly status: InventoryReservationStatus
@@ -75,10 +80,6 @@ function qualityStatusLabel(status: InventoryReservation['qualityStatus']) {
 export function InventoryReservationDirectory(props: InventoryReservationDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const totalReserved = props.items.reduce((total, item) => total + item.reservedQuantity, 0)
-  const pageItems = props.items.slice(
-    (props.page - 1) * props.pageSize,
-    props.page * props.pageSize
-  )
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
@@ -155,7 +156,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pageItems.map((item) => (
+                {props.items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <p className="font-medium">{item.productName}</p>
@@ -174,14 +175,17 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
                         {item.lotNumber ?? 'Không theo lô'}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {qualityStatusLabel(item.qualityStatus)}
+                        {qualityStatusLabel(item.qualityStatus)} ·{' '}
+                        {formatEligibilityStatus(item.eligibilityStatus)}
                       </p>
                     </TableCell>
                     <TableCell>
                       <p>
-                        {item.referenceType === 'StockIssuePick'
-                          ? 'Lấy hàng xuất kho'
-                          : 'Điều chuyển kho'}
+                        {item.referenceType === 'StockIssueRequestLine'
+                          ? 'Phiếu xuất đã phát hành'
+                          : item.referenceType === 'StockIssuePick'
+                            ? 'Lấy hàng xuất kho'
+                            : 'Điều chuyển kho'}
                       </p>
                       <p className="text-muted-foreground font-mono text-xs" translate="no">
                         {item.referenceCode || 'Không xác định'}
@@ -211,7 +215,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
         <OperationalPagination
           page={props.page}
           pageSize={props.pageSize}
-          totalCount={props.items.length}
+          totalCount={props.totalCount}
           isPending={props.isFetching}
           onPageChange={props.onPageChange}
           onPageSizeChange={props.onPageSizeChange}

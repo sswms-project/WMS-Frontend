@@ -4,14 +4,14 @@ This document defines the Git workflow for SSWMS Frontend. Follow it when creati
 
 ## Branching Rules
 
-- Do not develop new features directly on `main`.
+- Do not develop new features directly on `dev`.
 - Create a new branch for every feature, bug fix, UI screen, refactor, documentation change, or experiment.
-- Start new branches from the latest `main`.
+- Start new branches from the latest `dev`.
 - Before creating a branch, run:
 
 ```bash
-git checkout main
-git pull origin main
+git fetch origin dev
+git switch -c <type>/<scope> origin/dev
 ```
 
 ## Branch Naming
@@ -96,8 +96,8 @@ git remote -v
 For code changes, run the relevant checks when dependencies are installed:
 
 ```bash
-npm run lint
-npm run build
+pnpm run lint
+pnpm run build
 ```
 
 For documentation-only changes, tests are not required, but the changed files should still be reviewed.
@@ -105,8 +105,8 @@ For documentation-only changes, tests are not required, but the changed files sh
 ## Pull Request And Merge Rules
 
 - Push feature branches to `origin`.
-- Open a pull request from the feature branch into `main`.
-- Do not merge directly into `main` without review unless the team explicitly allows it.
+- Open a pull request from the feature branch into `dev`.
+- PRs target `dev`. Only the leader promotes `dev` to `main`; agents never perform that promotion.
 - Use a pull request title in this format:
 
 ```text
@@ -119,9 +119,9 @@ Example:
 feat(wms-12): add register screen
 ```
 
-- Before merge, confirm the branch is up to date with `main`.
+- Before merge, confirm the branch is up to date with `dev`.
 - Prefer squash merge for feature branches when the team wants a clean history.
-- Delete merged feature branches after the pull request is merged.
+- Delete merged branches only when cleanup is requested.
 
 ## Safety Rules
 
@@ -144,7 +144,7 @@ git push --force
 When an AI agent works in this repository:
 
 - Read this file before creating branches, commits, merges, or pushes.
-- Ask for confirmation before creating a branch if the user did not specify the task code.
+- For authorized work without a ticket, use a descriptive scope; do not invent a ticket or ask only for branch naming.
 - Use the branch format `feat/wms-xx-short-description` for new features unless the user specifies another type.
 - Use commit messages like `feat(wms-xx): short summary`.
 - Run `git status --short --branch` before and after Git operations.
