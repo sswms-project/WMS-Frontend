@@ -21,6 +21,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { StockIssueWorkspaceNavigation } from '@/components/operations/StockIssueWorkspaceNavigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -94,6 +95,7 @@ interface StockIssueRequestDirectoryProps {
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onInspect: (order: StockIssueRequestSummary) => void
   readonly onReleaseForPicking: (order: StockIssueRequestSummary) => void
@@ -127,6 +129,7 @@ export function StockIssueRequestDirectory({
   onDateFromChange,
   onDateToChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onInspect,
   onReleaseForPicking,
@@ -200,7 +203,7 @@ export function StockIssueRequestDirectory({
   )
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -223,10 +226,7 @@ export function StockIssueRequestDirectory({
 
       <StockIssueWorkspaceNavigation currentView="stockIssueRequests" permissions={permissions} />
 
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="stock-issue-request-directory-title"
-      >
+      <OperationalListPanel aria-labelledby="stock-issue-request-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="stock-issue-request-directory-title" className="text-sm font-semibold">
@@ -289,10 +289,11 @@ export function StockIssueRequestDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

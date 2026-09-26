@@ -22,6 +22,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -93,6 +94,7 @@ interface TransferDirectoryProps {
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onInspect: (transfer: TransferSummary) => void
   readonly onApprove: (transfer: TransferSummary) => void
@@ -125,6 +127,7 @@ export function TransferDirectory({
   onDateFromChange,
   onDateToChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onInspect,
   onApprove,
@@ -194,7 +197,7 @@ export function TransferDirectory({
   )
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -215,10 +218,7 @@ export function TransferDirectory({
         ) : null}
       </header>
 
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="transfer-directory-title"
-      >
+      <OperationalListPanel aria-labelledby="transfer-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="transfer-directory-title" className="text-sm font-semibold">
@@ -281,10 +281,11 @@ export function TransferDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

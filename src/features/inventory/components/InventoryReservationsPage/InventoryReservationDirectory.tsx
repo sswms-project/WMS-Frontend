@@ -20,6 +20,8 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import type {
   InventoryFilterOption,
   InventoryReservation,
@@ -52,7 +54,8 @@ interface InventoryReservationDirectoryProps {
   readonly onWarehouseChange: (value: string) => void
   readonly onProductChange: (value: string) => void
   readonly onStatusChange: (value: InventoryReservationStatus) => void
-  readonly onPageChange: (value: number) => void
+  readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onResetFilters: () => void
   readonly onRetryFilters: () => void
   readonly onRetry: () => void
@@ -79,7 +82,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
   const totalReserved = props.items.reduce((total, item) => total + item.reservedQuantity, 0)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -97,7 +100,7 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
 
       <InventoryWorkspaceNavigation currentView="reservations" permissions={props.permissions} />
 
-      <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="reservation-title">
+      <OperationalListPanel aria-labelledby="reservation-title">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 id="reservation-title" className="text-sm font-semibold">
@@ -142,14 +145,14 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
             <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0">Sản phẩm</TableHead>
-                  <TableHead className="bg-card sticky top-0">Kho / Vị trí</TableHead>
-                  <TableHead className="bg-card sticky top-0">Lô / Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0">Chứng từ</TableHead>
-                  <TableHead className="bg-card sticky top-0">Người tạo</TableHead>
-                  <TableHead className="bg-card sticky top-0 text-right">Số lượng</TableHead>
-                  <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0">Thời điểm</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Sản phẩm</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Kho / Vị trí</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Lô / Chất lượng</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Chứng từ</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Người tạo</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 text-right">Số lượng</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Thời điểm</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,34 +212,15 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
             </Table>
           </div>
         )}
-        {props.totalCount > props.pageSize ? (
-          <div className="flex shrink-0 items-center justify-between border-t px-4 py-2.5 text-sm">
-            <span className="text-muted-foreground">
-              Trang {props.page} / {Math.ceil(props.totalCount / props.pageSize)}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={props.page <= 1}
-                onClick={() => props.onPageChange(props.page - 1)}
-              >
-                Trước
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={props.page * props.pageSize >= props.totalCount}
-                onClick={() => props.onPageChange(props.page + 1)}
-              >
-                Sau
-              </Button>
-            </div>
-          </div>
-        ) : null}
-      </section>
+        <OperationalPagination
+          page={props.page}
+          pageSize={props.pageSize}
+          totalCount={props.totalCount}
+          isPending={props.isFetching}
+          onPageChange={props.onPageChange}
+          onPageSizeChange={props.onPageSizeChange}
+        />
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

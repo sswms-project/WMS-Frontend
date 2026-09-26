@@ -24,14 +24,13 @@ import {
 import type { InventoryStock } from '../types/inventory.types'
 import { buildInventoryQuery } from '../utils/inventory-query'
 
-const PAGE_SIZE = 20
-
 export default function InventoryPage() {
   const [searchText, setSearchText] = useState('')
   const [warehouseId, setWarehouseId] = useState('')
   const [productId, setProductId] = useState('')
   const [slotId, setSlotId] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [damagedStock, setDamagedStock] = useState<InventoryStock | null>(null)
   const meQuery = useMeQuery()
   const damagedMutation = useReportDamagedStockMutation()
@@ -47,9 +46,9 @@ export default function InventoryPage() {
       buildInventoryQuery(
         { searchTerm: debouncedSearchText, warehouseId, productId, slotId },
         page,
-        PAGE_SIZE
+        pageSize
       ),
-    [debouncedSearchText, page, productId, slotId, warehouseId]
+    [debouncedSearchText, page, pageSize, productId, slotId, warehouseId]
   )
   const inventoryQuery = useInventoryQuery(inventoryParams)
   const warehousesQuery = useWarehousesQuery({
@@ -165,7 +164,7 @@ export default function InventoryPage() {
         items={inventoryQuery.data?.items ?? []}
         totalCount={inventoryQuery.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         warehouseId={warehouseId}
         productId={productId}
@@ -206,6 +205,10 @@ export default function InventoryPage() {
           ])
         }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onRetry={() => void inventoryQuery.refetch()}
         onReportDamaged={setDamagedStock}
       />

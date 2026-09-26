@@ -43,12 +43,13 @@ export default function StockRecipientDetailPage({
   readonly stockRecipientId: string
 }) {
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const stockRecipientQuery = useStockRecipientQuery(stockRecipientId)
   const historyQuery = useStockRecipientIssueHistoryQuery(stockRecipientId, {
     pageNumber: page,
-    pageSize: 10,
+    pageSize,
   })
   const meQuery = useMeQuery()
   const updateMutation = useUpdateStockRecipientMutation()
@@ -241,7 +242,7 @@ export default function StockRecipientDetailPage({
           <>
             <div className="min-h-0 flex-1 overflow-auto">
               <table className="w-full min-w-[720px] text-sm">
-                <thead className="bg-card sticky top-0">
+                <thead className="bg-card sticky top-0 z-10">
                   <tr className="border-b text-left">
                     <th className="p-3">Mã đơn</th>
                     <th className="p-3">Kho</th>
@@ -267,10 +268,14 @@ export default function StockRecipientDetailPage({
             </div>
             <OperationalPagination
               page={page}
-              pageSize={10}
+              pageSize={pageSize}
               totalCount={historyQuery.data?.totalCount ?? 0}
               isPending={historyQuery.isFetching}
               onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value)
+                setPage(1)
+              }}
             />
           </>
         )}

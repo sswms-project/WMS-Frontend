@@ -31,6 +31,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { inventoryService } from '../../services/inventory.service'
 import type {
@@ -126,7 +127,7 @@ export function DamageCaseDirectory(props: DamageCaseDirectoryProps) {
         </div>
       </header>
       <InventoryWorkspaceNavigation currentView="damage-cases" permissions={props.permissions} />
-      <section className="bg-card flex min-h-0 flex-col border">
+      <OperationalListPanel aria-label="Danh sách sự cố hư hỏng">
         <div className="grid gap-3 border-b p-3 sm:grid-cols-5">
           <NativeSelect
             aria-label="Lọc theo kho"
@@ -188,12 +189,12 @@ export function DamageCaseDirectory(props: DamageCaseDirectoryProps) {
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0">Sản phẩm</TableHead>
-                  <TableHead className="bg-card sticky top-0">Kho / vị trí</TableHead>
-                  <TableHead className="bg-card sticky top-0 text-right">Số lượng</TableHead>
-                  <TableHead className="bg-card sticky top-0">Lý do / bằng chứng</TableHead>
-                  <TableHead className="bg-card sticky top-0">Người báo</TableHead>
-                  <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Sản phẩm</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Kho / vị trí</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 text-right">Số lượng</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Lý do / bằng chứng</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Người báo</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -295,7 +296,7 @@ export function DamageCaseDirectory(props: DamageCaseDirectoryProps) {
           isPending={props.isLoading}
           onPageChange={props.onPageChange}
         />
-      </section>
+      </OperationalListPanel>
       <Dialog
         open={Boolean(detailItem)}
         onOpenChange={(open) => {

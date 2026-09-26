@@ -68,6 +68,7 @@ function createProps(
     onRetryProducts: vi.fn(),
     onRetryLocations: vi.fn(),
     onPageChange: vi.fn(),
+    onPageSizeChange: vi.fn(),
     onRetry: vi.fn(),
     ...overrides,
   }

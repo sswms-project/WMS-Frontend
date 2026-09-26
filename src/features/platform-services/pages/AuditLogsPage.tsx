@@ -53,6 +53,7 @@ export default function AuditLogsPage() {
       return
     }
     const next = new URLSearchParams()
+    next.set('pageSize', String(queryParams.pageSize))
     for (const [key, value] of Object.entries(result.data)) {
       if (value) next.set(key, value)
     }
@@ -90,10 +91,20 @@ export default function AuditLogsPage() {
       isError={auditLogsQuery.isError}
       hasActiveFilters={hasActiveFilters}
       onApplyFilters={applyFilters}
-      onClearFilters={() => navigate(new URLSearchParams())}
+      onClearFilters={() => {
+        const next = new URLSearchParams()
+        next.set('pageSize', String(queryParams.pageSize))
+        navigate(next)
+      }}
       onPageChange={(page) => {
         const next = new URLSearchParams(params)
         next.set('page', String(page))
+        navigate(next)
+      }}
+      onPageSizeChange={(pageSize) => {
+        const next = new URLSearchParams(params)
+        next.set('page', '1')
+        next.set('pageSize', String(pageSize))
         navigate(next)
       }}
       onRetry={() => void auditLogsQuery.refetch()}

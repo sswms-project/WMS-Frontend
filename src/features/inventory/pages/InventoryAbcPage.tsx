@@ -20,6 +20,8 @@ export default function InventoryAbcPage() {
   const meQuery = useMeQuery()
   const router = useRouter()
   const [warehouseId, setWarehouseId] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [historicalPeriodDays, setHistoricalPeriodDays] = useState(90)
   const [metric, setMetric] = useState<'Quantity' | 'Activity'>('Quantity')
   const [aThreshold, setAThreshold] = useState(80)
@@ -65,6 +67,8 @@ export default function InventoryAbcPage() {
     <InventoryAbcDirectory
       permissions={meQuery.data?.permissions ?? []}
       items={abcQuery.data ?? []}
+      page={page}
+      pageSize={pageSize}
       warehouseId={warehouseId}
       warehouseOptions={warehouseOptions}
       isLoading={abcQuery.isLoading}
@@ -72,7 +76,15 @@ export default function InventoryAbcPage() {
       isError={abcQuery.isError}
       areWarehousesLoading={warehousesQuery.isLoading}
       areWarehousesError={warehousesQuery.isError}
-      onWarehouseChange={setWarehouseId}
+      onWarehouseChange={(value) => {
+        setWarehouseId(value)
+        setPage(1)
+      }}
+      onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onRetryWarehouses={() => void warehousesQuery.refetch()}
       onRetry={() => void abcQuery.refetch()}
       historicalPeriodDays={historicalPeriodDays}

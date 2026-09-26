@@ -102,7 +102,7 @@ export function OrganizationPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1180px] space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       <header className="flex items-start gap-3 border-b pb-4">
         <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
           <Building2 className="size-5" aria-hidden="true" />

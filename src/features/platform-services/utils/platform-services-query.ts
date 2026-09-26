@@ -41,7 +41,7 @@ export function buildNotificationQuery(params: URLSearchParams): NotificationQue
   const type = isNotificationType(typeValue) ? typeValue : undefined
   return {
     pageNumber: positivePage(params.get('page')),
-    pageSize: PLATFORM_SERVICES_PAGE_SIZE,
+    pageSize: positivePageSize(params.get('pageSize')),
     ...(trimmed(params.get('search')) ? { search: trimmed(params.get('search')) } : {}),
     ...(readState === 'read' ? { isRead: true } : {}),
     ...(readState === 'unread' ? { isRead: false } : {}),
@@ -58,7 +58,7 @@ export function buildAuditLogQuery(params: URLSearchParams): AuditLogQuery {
   const userId = trimmed(params.get('userId'))
   return {
     pageNumber: positivePage(params.get('page')),
-    pageSize: PLATFORM_SERVICES_PAGE_SIZE,
+    pageSize: positivePageSize(params.get('pageSize')),
     ...stringFilter(params, 'search'),
     ...stringFilter(params, 'action'),
     ...stringFilter(params, 'entityType'),
@@ -74,6 +74,13 @@ export function buildAuditLogQuery(params: URLSearchParams): AuditLogQuery {
 function positivePage(value: string | null): number {
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
+function positivePageSize(value: string | null): number {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= 100
+    ? parsed
+    : PLATFORM_SERVICES_PAGE_SIZE
 }
 
 function trimmed(value: string | null): string | undefined {

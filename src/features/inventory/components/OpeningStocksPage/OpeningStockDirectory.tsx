@@ -31,6 +31,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import type { CreateOpeningStockFormValues } from '../../schemas/create-opening-stock.schema'
 import type {
   InventoryFilterOption,
@@ -279,7 +280,7 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
         {props.canCreate ? <Button onClick={openCreate}>Tạo chứng từ</Button> : null}
       </header>
       <InventoryWorkspaceNavigation currentView="opening-stocks" permissions={props.permissions} />
-      <section className="bg-card flex min-h-0 flex-col border">
+      <OperationalListPanel aria-label="Danh sách chứng từ tồn đầu kỳ">
         <div className="grid gap-3 border-b p-3 sm:grid-cols-4">
           <NativeSelect
             aria-label="Lọc theo kho"
@@ -336,12 +337,12 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
             <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0">Chứng từ</TableHead>
-                  <TableHead className="bg-card sticky top-0">Kho</TableHead>
-                  <TableHead className="bg-card sticky top-0">Dòng hàng</TableHead>
-                  <TableHead className="bg-card sticky top-0">Bằng chứng</TableHead>
-                  <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0">Thao tác</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Chứng từ</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Dòng hàng</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Bằng chứng</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -480,7 +481,7 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
           isPending={props.isLoading}
           onPageChange={props.onPageChange}
         />
-      </section>
+      </OperationalListPanel>
       <Dialog
         open={Boolean(detailItem)}
         onOpenChange={(open) => {

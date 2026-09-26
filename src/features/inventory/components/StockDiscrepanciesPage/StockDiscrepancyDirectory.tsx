@@ -30,6 +30,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { inventoryService } from '../../services/inventory.service'
 import type {
@@ -136,7 +137,7 @@ export function StockDiscrepancyDirectory(props: Props) {
         ) : null}
       </header>
       <InventoryWorkspaceNavigation currentView="discrepancies" permissions={props.permissions} />
-      <section className="bg-card flex min-h-0 flex-1 flex-col border">
+      <OperationalListPanel aria-label="Danh sách chênh lệch tồn kho">
         <div className="grid gap-3 border-b p-3 sm:grid-cols-5">
           <NativeSelect
             aria-label="Lọc theo kho"
@@ -260,7 +261,7 @@ export function StockDiscrepancyDirectory(props: Props) {
           isPending={props.isLoading}
           onPageChange={props.onPageChange}
         />
-      </section>
+      </OperationalListPanel>
       <Dialog
         open={Boolean(detailItem)}
         onOpenChange={(open) => {

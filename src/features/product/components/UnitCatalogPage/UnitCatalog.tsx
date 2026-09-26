@@ -87,7 +87,7 @@ export function UnitCatalog({
   const selectedUnits = items.filter((unit) => selectedIds.has(unit.id))
   const allSelected = pagedItems.length > 0 && pagedItems.every((unit) => selectedIds.has(unit.id))
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b pb-4">
         <div className="flex items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">

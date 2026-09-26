@@ -48,8 +48,6 @@ import {
 } from '../schemas/stock-issue.schema'
 import type { StockIssueRequestStatus, StockIssueRequestSummary } from '../types/stock-issue.types'
 
-const PAGE_SIZE = 10
-
 function toRecordStockPickingLines(
   order: StockIssueRequestSummary
 ): RecordStockPickingFormValues['lines'] {
@@ -73,6 +71,7 @@ export default function StockIssueRequestPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [inspectedOrder, setInspectedOrder] = useState<StockIssueRequestSummary | null>(null)
   const [issuingOrder, setIssuingOrder] = useState<StockIssueRequestSummary | null>(null)
   const [returningOrder, setGoodsReturnRequestingOrder] = useState<StockIssueRequestSummary | null>(
@@ -90,7 +89,7 @@ export default function StockIssueRequestPage() {
   const meQuery = useMeQuery()
   const ordersQuery = useStockIssueRequestsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(status ? { status } : {}),
     ...(warehouseId ? { warehouseId } : {}),
     ...(debouncedSearchText.trim() ? { searchTerm: debouncedSearchText.trim() } : {}),
@@ -306,7 +305,7 @@ export default function StockIssueRequestPage() {
         items={items}
         totalCount={ordersQuery.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         status={status}
         warehouseId={warehouseId}
@@ -331,6 +330,10 @@ export default function StockIssueRequestPage() {
         onDateFromChange={(value) => updateFilter(setDateFrom, value)}
         onDateToChange={(value) => updateFilter(setDateTo, value)}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onRetry={() => void ordersQuery.refetch()}
         onInspect={setInspectedOrder}
         onReleaseForPicking={setReleasingOrder}

@@ -16,8 +16,6 @@ import {
   isStockMovementDateRangeValid,
 } from '../utils/stock-movement-query'
 
-const PAGE_SIZE = 20
-
 export default function StockMovementsPage() {
   const meQuery = useMeQuery()
   const [searchText, setSearchText] = useState('')
@@ -28,6 +26,7 @@ export default function StockMovementsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const debouncedSearchText = useDebouncedValue(searchText.trim(), 350)
   const isDateRangeValid = isStockMovementDateRangeValid(dateFrom, dateTo)
   const movementParams = useMemo(
@@ -43,9 +42,19 @@ export default function StockMovementsPage() {
           dateTo,
         },
         page,
-        PAGE_SIZE
+        pageSize
       ),
-    [dateFrom, dateTo, debouncedSearchText, movementType, page, productId, slotId, warehouseId]
+    [
+      dateFrom,
+      dateTo,
+      debouncedSearchText,
+      movementType,
+      page,
+      pageSize,
+      productId,
+      slotId,
+      warehouseId,
+    ]
   )
   const movementsQuery = useStockMovementsQuery(movementParams, isDateRangeValid)
   const warehousesQuery = useWarehousesQuery({
@@ -94,7 +103,7 @@ export default function StockMovementsPage() {
       items={movementsQuery.data?.items ?? []}
       totalCount={movementsQuery.data?.totalCount ?? 0}
       page={page}
-      pageSize={PAGE_SIZE}
+      pageSize={pageSize}
       searchText={searchText}
       warehouseId={warehouseId}
       slotId={slotId}
@@ -148,6 +157,10 @@ export default function StockMovementsPage() {
         void slotsQuery.refetch()
       }}
       onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onRetry={() => void movementsQuery.refetch()}
     />
   )

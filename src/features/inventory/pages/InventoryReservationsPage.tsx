@@ -14,10 +14,11 @@ export default function InventoryReservationsPage() {
   const [warehouseId, setWarehouseId] = useState('')
   const [productId, setProductId] = useState('')
   const [status, setStatus] = useState<InventoryReservationStatus>('Active')
+  const [pageSize, setPageSize] = useState(20)
   const meQuery = useMeQuery()
   const params = useMemo(
-    () => buildInventoryReservationQuery(warehouseId, productId, status, page, 20),
-    [page, productId, status, warehouseId]
+    () => buildInventoryReservationQuery(warehouseId, productId, status, page, pageSize),
+    [page, pageSize, productId, status, warehouseId]
   )
   const reservationsQuery = useInventoryReservationsQuery(params)
   const warehousesQuery = useWarehousesQuery({
@@ -49,7 +50,7 @@ export default function InventoryReservationsPage() {
       permissions={meQuery.data?.permissions ?? []}
       items={reservationsQuery.data?.items ?? []}
       page={page}
-      pageSize={20}
+      pageSize={pageSize}
       totalCount={reservationsQuery.data?.totalCount ?? 0}
       warehouseId={warehouseId}
       productId={productId}
@@ -75,6 +76,10 @@ export default function InventoryReservationsPage() {
         setPage(1)
       }}
       onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onResetFilters={() => {
         setWarehouseId('')
         setProductId('')

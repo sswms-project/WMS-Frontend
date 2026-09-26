@@ -24,6 +24,7 @@ export interface NotificationDirectoryProps {
   readonly onApplyFilters: (filters: NotificationFilterValues) => void
   readonly onClearFilters: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onMarkRead: (notification: NotificationItem) => void
   readonly onMarkAllRead: () => void
   readonly onRetry: () => void
