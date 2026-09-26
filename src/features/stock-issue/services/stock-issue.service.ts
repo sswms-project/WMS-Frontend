@@ -12,6 +12,8 @@ import type {
   GoodsReturnRequestListQuery,
   GoodsReturnRequestListResponse,
   GoodsReturnRequestSummary,
+  ReleaseStockIssueRequestRequest,
+  RestockGoodsReturnRequest,
 } from '../types/stock-issue.types'
 
 export const stockIssueService = {
@@ -32,6 +34,13 @@ export const stockIssueService = {
   createStockIssueRequest: (request: CreateStockIssueRequestRequest) =>
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.stockIssueRequests.create, request)
+      .then((response) => response.data),
+
+  releaseForPicking: (request: ReleaseStockIssueRequestRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.stockIssueRequests.releaseForPicking(request.stockIssueRequestId), request)
       .then((response) => response.data),
 
   recordStockPicking: (stockIssueRequestId: string, request: RecordStockPickingRequest) =>
@@ -97,5 +106,12 @@ export const stockIssueService = {
       .post<
         ApiResponse<unknown>
       >(API_ENDPOINTS.goodsReturnRequests.reject(goodsReturnRequestId), request)
+      .then((response) => response.data),
+
+  restockGoodsReturnRequest: (goodsReturnRequestId: string, request: RestockGoodsReturnRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.goodsReturnRequests.restock(goodsReturnRequestId), request)
       .then((response) => response.data),
 }

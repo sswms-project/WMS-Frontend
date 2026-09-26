@@ -3,6 +3,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
+import { AppRouteSkeleton } from './AppRouteSkeleton'
 
 function subscribeToHydration(onStoreChange: () => void) {
   if (useAuthStore.persist.hasHydrated()) return () => undefined
@@ -35,11 +36,7 @@ export function ProtectedRoute({ children }: { readonly children: React.ReactNod
   }, [clearAuth, hasHydrated, user, router])
 
   if (!hasHydrated) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-      </div>
-    )
+    return <AppRouteSkeleton />
   }
 
   if (!user) return null

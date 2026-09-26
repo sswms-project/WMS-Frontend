@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CheckCircle2, Clock, Shield, ShieldOff, Warehouse, XCircle } from 'lucide-react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -57,18 +58,18 @@ function StatusRow({ icon, label, value, delay = 'delay-0' }: StatusRowProps) {
 export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardProps) {
   if (isLoading) {
     return (
-      <Card className="gap-0 py-0 lg:sticky lg:top-20">
+      <Card className="gap-0 rounded-xl py-0 xl:sticky xl:top-20">
         <CardContent className="flex flex-col items-center gap-4 px-4 py-6">
-          <Skeleton className="size-16 rounded-full" />
+          <Skeleton className="bg-muted-foreground/20 size-16 rounded-full" />
           <div className="w-full space-y-2 text-center">
-            <Skeleton className="mx-auto h-4 w-32" />
-            <Skeleton className="mx-auto h-3 w-20" />
+            <Skeleton className="bg-muted-foreground/20 mx-auto h-4 w-32" />
+            <Skeleton className="bg-muted-foreground/20 mx-auto h-3 w-20" />
           </div>
           <div className="bg-border h-px w-full" />
           <div className="w-full space-y-3">
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-full" />
+            <Skeleton className="bg-muted-foreground/20 h-3 w-full" />
+            <Skeleton className="bg-muted-foreground/20 h-3 w-full" />
+            <Skeleton className="bg-muted-foreground/20 h-3 w-full" />
           </div>
         </CardContent>
       </Card>
@@ -81,7 +82,7 @@ export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardP
   const isActive = profile.status?.toLowerCase() === 'active'
 
   return (
-    <Card className="animate-in fade-in slide-in-from-left-4 gap-0 py-0 duration-500 lg:sticky lg:top-20">
+    <Card className="animate-in fade-in slide-in-from-left-4 gap-0 rounded-xl py-0 duration-500 xl:sticky xl:top-20">
       <CardHeader className="border-b px-4.5 py-4">
         <p className="text-foreground text-[13px] font-bold">Tổng quan tài khoản</p>
       </CardHeader>
@@ -89,9 +90,11 @@ export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardP
       <CardContent className="flex flex-col gap-5 px-4.5 py-5">
         {/* Avatar + Name */}
         <div className="animate-in fade-in zoom-in-90 fill-mode-both flex flex-col items-center gap-3 text-center delay-100 duration-500">
-          <div className="bg-primary/10 text-primary animate-in zoom-in-75 fill-mode-both flex size-16 items-center justify-center rounded-full text-xl font-bold tracking-tight delay-150 duration-500 select-none">
-            {getInitials(profile.fullName)}
-          </div>
+          <Avatar size="lg" className="bg-primary/10 text-primary size-20 rounded-2xl">
+            <AvatarFallback className="bg-primary/10 text-primary rounded-2xl text-xl font-bold tracking-tight">
+              {getInitials(profile.fullName)}
+            </AvatarFallback>
+          </Avatar>
           <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-200 duration-400">
             <p className="text-foreground text-sm leading-tight font-semibold">
               {profile.fullName}

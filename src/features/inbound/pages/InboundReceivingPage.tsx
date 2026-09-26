@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
+import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import {
   InboundDocumentImportDialog,
@@ -32,22 +33,22 @@ import {
 import { goodsReceiptSchema, type GoodsReceiptFormValues } from '../schemas/inbound.schema'
 import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.types'
 
-const PAGE_SIZE = 10
-
 export default function InboundReceivingPage() {
   const router = useRouter()
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [selectedTask, setSelectedTask] = useState<ReceivingTask | null>(null)
   const [importTask, setImportTask] = useState<ReceivingTask | null>(null)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importId, setImportId] = useState('')
   const [draftReceiptId, setDraftReceiptId] = useState<string | null>(null)
+  const [isDiscardImportOpen, setIsDiscardImportOpen] = useState(false)
   const initializedImportIdRef = useRef('')
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useReceivingTasksQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
   })
   const createMutation = useCreateGoodsReceiptMutation()
@@ -259,15 +260,12 @@ export default function InboundReceivingPage() {
   const isPending = createMutation.isPending || submitMutation.isPending
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader
-        title="Nhập kho"
-        description="Tiếp nhận hàng theo yêu cầu nhập kho đã được phê duyệt."
-      />
+      <InboundPageHeader title="Nhập kho" />
       <ReceivingTaskDirectory
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         isLoading={query.isLoading}
         isFetching={query.isFetching}
@@ -277,6 +275,10 @@ export default function InboundReceivingPage() {
           setPage(1)
         }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onReceive={openReceive}
         onImportDocument={openDocumentImport}
         onRetry={() => void query.refetch()}
@@ -318,9 +320,20 @@ export default function InboundReceivingPage() {
             !reviewImportMutation.isPending &&
             !createDraftMutation.isPending
           ) {
-            if (importForm.formState.isDirty && !window.confirm('Bỏ các thay đổi chưa lưu?')) return
+            if (importForm.formState.isDirty) {
+              setIsDiscardImportOpen(true)
+              return
+            }
             resetImport()
           }
+        }}
+      />
+      <UnsavedChangesDialog
+        open={isDiscardImportOpen}
+        onOpenChange={setIsDiscardImportOpen}
+        onDiscard={() => {
+          resetImport()
+          setIsDiscardImportOpen(false)
         }}
       />
     </div>

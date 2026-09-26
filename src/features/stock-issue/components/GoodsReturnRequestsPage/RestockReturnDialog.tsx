@@ -18,8 +18,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { RestockReturnFormValues } from '../../schemas/restock-return.schema'
-import { RETURN_ITEM_CONDITIONS, type ReturnSummary } from '../../types/outbound.types'
-import { RETURN_ITEM_CONDITION_LABELS, formatOutboundQuantity } from '../../utils/outbound-format'
+import {
+  GOODS_RETURN_REQUEST_ITEM_CONDITIONS,
+  type GoodsReturnRequestSummary,
+} from '../../types/stock-issue.types'
+import {
+  RETURN_ITEM_CONDITION_LABELS,
+  formatStockIssueQuantity,
+} from '../../utils/stock-issue-format'
 
 interface RestockSlotOption {
   readonly id: string
@@ -27,7 +33,7 @@ interface RestockSlotOption {
 }
 
 interface RestockReturnDialogProps {
-  readonly item: ReturnSummary | null
+  readonly item: GoodsReturnRequestSummary | null
   readonly form: UseFormReturn<RestockReturnFormValues>
   readonly slots: readonly RestockSlotOption[]
   readonly quarantineSlotId: string | null
@@ -54,7 +60,7 @@ export function RestockReturnDialog({
     <Dialog open={Boolean(item)} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Nhập lại kho {item?.returnCode}</DialogTitle>
+          <DialogTitle>Nhập lại kho {item?.goodsReturnRequestCode}</DialogTitle>
           <DialogDescription>
             Xác nhận tình trạng thực tế. Hàng lỗi, hết hạn hoặc thuộc lô bị khóa phải được đưa vào
             vị trí quarantine.
@@ -89,14 +95,14 @@ export function RestockReturnDialog({
                           <p className="text-muted-foreground font-mono text-xs">{line.sku}</p>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {formatOutboundQuantity(line.quantity)}
+                          {formatStockIssueQuantity(line.quantity)}
                         </TableCell>
                         <TableCell>
                           <NativeSelect
                             aria-label={`Tình trạng ${line.productName}`}
                             value={condition ?? line.condition}
                             onChange={(event) => {
-                              const nextCondition = RETURN_ITEM_CONDITIONS.find(
+                              const nextCondition = GOODS_RETURN_REQUEST_ITEM_CONDITIONS.find(
                                 (option) => option === event.target.value
                               )
 
@@ -119,7 +125,7 @@ export function RestockReturnDialog({
                               }
                             }}
                           >
-                            {RETURN_ITEM_CONDITIONS.map((value) => (
+                            {GOODS_RETURN_REQUEST_ITEM_CONDITIONS.map((value) => (
                               <NativeSelectOption key={value} value={value}>
                                 {RETURN_ITEM_CONDITION_LABELS[value]}
                               </NativeSelectOption>

@@ -89,9 +89,6 @@ export function RegisterForm({
         <h1 className="text-foreground text-2xl leading-[1.2] font-semibold tracking-tight">
           Đăng ký tài khoản
         </h1>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          Cung cấp thông tin doanh nghiệp và người đại diện để khởi tạo workspace KOVIA.
-        </p>
       </header>
 
       {isPlanLoading ? (

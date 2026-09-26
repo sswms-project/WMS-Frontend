@@ -19,10 +19,18 @@ import { SupplierFormFields } from './SupplierFormFields'
 
 function toFormValues(supplier: Supplier | null): SaveSupplierFormValues {
   return {
+    supplierCode: supplier?.supplierCode ?? '',
     supplierName: supplier?.supplierName ?? '',
+    taxCode: supplier?.taxCode ?? '',
     phone: supplier?.phone ?? '',
     email: supplier?.email ?? '',
     address: supplier?.address ?? '',
+    contactSalutation: supplier?.contactSalutation ?? '',
+    contactName: supplier?.contactName ?? '',
+    contactEmail: supplier?.contactEmail ?? '',
+    contactMobile: supplier?.contactMobile ?? '',
+    contactChannel: supplier?.contactChannel ?? '',
+    contactChannelName: supplier?.contactChannelName ?? '',
   }
 }
 
@@ -62,7 +70,7 @@ export function SupplierEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Cập nhật nhà cung cấp</DialogTitle>
           <DialogDescription>

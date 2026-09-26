@@ -7,6 +7,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -42,6 +43,7 @@ interface ReceiptDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: GoodsReceiptStatus | '') => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
@@ -58,10 +60,11 @@ export function ReceiptDirectory({
   onSearchChange,
   onStatusChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
 }: ReceiptDirectoryProps) {
   return (
-    <section className="bg-card flex min-h-0 flex-col border">
+    <OperationalListPanel aria-label="Danh sách phiếu nhận hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-sm font-semibold">Danh sách phiếu nhận hàng</h2>
@@ -203,9 +206,10 @@ export function ReceiptDirectory({
             totalCount={totalCount}
             isPending={isFetching}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
           />
         </>
       )}
-    </section>
+    </OperationalListPanel>
   )
 }

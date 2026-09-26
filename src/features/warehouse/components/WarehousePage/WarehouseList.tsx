@@ -31,17 +31,17 @@ function WarehouseStatusBadge({ status }: { readonly status: string }) {
 
 export function WarehouseList({ warehouses }: WarehouseListProps) {
   return (
-    <>
+    <div data-slot="operational-list-body" className="min-h-0 min-w-0">
       <div className="hidden min-w-0 md:block">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Mã kho</TableHead>
-              <TableHead>Tên kho</TableHead>
-              <TableHead>Địa chỉ</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="w-12">
+              <TableHead className="bg-card sticky top-0 z-10 pl-4">Mã kho</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Tên kho</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Địa chỉ</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Ngày tạo</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-12">
                 <span className="sr-only">Thao tác</span>
               </TableHead>
             </TableRow>
@@ -117,6 +117,6 @@ export function WarehouseList({ warehouses }: WarehouseListProps) {
           </article>
         ))}
       </div>
-    </>
+    </div>
   )
 }

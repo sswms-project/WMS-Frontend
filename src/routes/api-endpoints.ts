@@ -54,11 +54,20 @@ export const API_ENDPOINTS = {
   organization: {
     me: '/organization',
   },
+  myWarehouseTasks: {
+    current: '/my-warehouse-tasks',
+    list: '/my-warehouse-tasks',
+    history: '/my-warehouse-tasks/history',
+    action: (taskType: string, taskId: string) =>
+      `/my-warehouse-tasks/${taskType}/${taskId}/actions`,
+  },
   staff: {
     managers: '/managers',
     list: '/staff',
     detail: (userId: string) => `/staff/${userId}`,
     terminate: (userId: string) => `/staff/${userId}/terminate`,
+    activate: (userId: string) => `/staff/${userId}/activate`,
+    deactivate: (userId: string) => `/staff/${userId}/deactivate`,
     assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
     warehouseAssignments: (userId: string) => `/staff/${userId}/warehouses`,
   },
@@ -97,14 +106,31 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
     reactivate: (warehouseId: string) => `/warehouses/${warehouseId}/reactivate`,
+    quarantineSlot: (warehouseId: string) => `/warehouses/${warehouseId}/quarantine-slot`,
   },
   inventory: {
     list: '/inventory',
+    evidence: '/inventory/evidence',
+    evidenceFile: (id: string) => `/inventory/evidence/${id}`,
     movements: '/inventory/movements',
     reservations: '/inventory/reservations',
     damaged: '/inventory/damaged',
+    damageCases: '/inventory/damage-cases',
+    discrepancies: '/inventory/discrepancies',
+    reviewDiscrepancy: (id: string) => `/inventory/discrepancies/${id}/review`,
+    addDiscrepancyEvidence: (id: string) => `/inventory/discrepancies/${id}/evidence`,
+    damageCaseDisposition: (id: string) => `/inventory/damage-cases/${id}/disposition`,
+    addDamageCaseEvidence: (id: string) => `/inventory/damage-cases/${id}/evidence`,
+    openingStocks: '/inventory/opening-stocks',
+    updateOpeningStock: (id: string) => `/inventory/opening-stocks/${id}`,
+    submitOpeningStock: (id: string) => `/inventory/opening-stocks/${id}/submit`,
+    withdrawOpeningStock: (id: string) => `/inventory/opening-stocks/${id}/withdraw`,
+    approveOpeningStock: (id: string) => `/inventory/opening-stocks/${id}/approve`,
+    reviewOpeningStock: (id: string) => `/inventory/opening-stocks/${id}/review`,
+    cancelOpeningStock: (id: string) => `/inventory/opening-stocks/${id}/cancel`,
     abcClassification: '/inventory/abc-classification',
     runAbcClassification: '/inventory/abc-classification/run',
+    applyAbcAnalysis: (id: string) => `/inventory/abc-classification/${id}/create-cycle-count`,
     forecast: '/inventory/forecast',
     forecastRuns: '/inventory/forecast-runs',
     forecastRun: (id: string) => `/inventory/forecast-runs/${id}`,
@@ -138,6 +164,7 @@ export const API_ENDPOINTS = {
   suppliers: {
     list: '/suppliers',
     create: '/suppliers',
+    nextCode: '/suppliers/next-code',
     detail: (supplierId: string) => `/suppliers/${supplierId}`,
     update: (supplierId: string) => `/suppliers/${supplierId}`,
     deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
@@ -166,6 +193,9 @@ export const API_ENDPOINTS = {
     reject: (receiptId: string) => `/goods-receipts/${receiptId}/reject`,
     allowedActions: (receiptId: string) => `/goods-receipts/${receiptId}/allowed-actions`,
     putaway: (receiptId: string) => `/goods-receipts/${receiptId}/putaway`,
+    cancelPutawayTask: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-task/cancel`,
+    reconcilePutawayCancellation: (receiptId: string) =>
+      `/goods-receipts/${receiptId}/putaway-task/reconcile-cancellation`,
   },
   inboundDocumentImports: {
     create: '/inbound-document-imports',
@@ -204,19 +234,44 @@ export const API_ENDPOINTS = {
   },
   units: {
     list: '/units',
+    create: '/units',
+    update: (unitId: string) => `/units/${unitId}`,
+    deactivate: (unitId: string) => `/units/${unitId}/deactivate`,
+    reactivate: (unitId: string) => `/units/${unitId}/reactivate`,
   },
   categories: {
     list: '/categories',
+    create: '/categories',
+    update: (categoryId: string) => `/categories/${categoryId}`,
+    deactivate: (categoryId: string) => `/categories/${categoryId}/deactivate`,
+    reactivate: (categoryId: string) => `/categories/${categoryId}/reactivate`,
   },
   products: {
     list: '/products',
     create: '/products',
     detail: (id: string) => `/products/${id}`,
     update: (id: string) => `/products/${id}`,
+    image: (id: string) => `/products/${id}/image`,
+    deactivate: (id: string) => `/products/${id}/deactivate`,
+    reactivate: (id: string) => `/products/${id}/reactivate`,
     stockPolicy: (id: string) => `/products/${id}/stock-policy`,
     stockPolicies: (id: string) => `/products/${id}/stock-policies`,
+    deactivateStockPolicy: (productId: string, policyId: string) =>
+      `/products/${productId}/stock-policies/${policyId}/deactivate`,
+    reactivateStockPolicy: (productId: string, policyId: string) =>
+      `/products/${productId}/stock-policies/${policyId}/reactivate`,
+    unitConversions: (id: string) => `/products/${id}/unit-conversions`,
+    unitConversion: (productId: string, conversionId: string) =>
+      `/products/${productId}/unit-conversions/${conversionId}`,
+    deactivateUnitConversion: (productId: string, conversionId: string) =>
+      `/products/${productId}/unit-conversions/${conversionId}/deactivate`,
+    reactivateUnitConversion: (productId: string, conversionId: string) =>
+      `/products/${productId}/unit-conversions/${conversionId}/reactivate`,
     lots: (id: string) => `/products/${id}/lots`,
     lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
+    lotImpact: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/impact`,
+    blockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/block`,
+    unlockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/unlock`,
     barcode: (id: string) => `/products/${id}/barcode`,
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
@@ -242,6 +297,8 @@ export const API_ENDPOINTS = {
     list: '/stock-issue-requests',
     create: '/stock-issue-requests',
     detail: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}`,
+    releaseForPicking: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/release-for-picking`,
     picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
     dispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
@@ -259,12 +316,17 @@ export const API_ENDPOINTS = {
       `/goods-return-requests/${goodsReturnRequestId}/approve`,
     reject: (goodsReturnRequestId: string) =>
       `/goods-return-requests/${goodsReturnRequestId}/reject`,
+    restock: (goodsReturnRequestId: string) =>
+      `/goods-return-requests/${goodsReturnRequestId}/restock`,
   },
   stockRecipients: {
     list: '/stock-recipients',
     create: '/stock-recipients',
+    nextCode: '/stock-recipients/next-code',
     detail: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
     update: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
+    deactivate: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}/deactivate`,
+    reactivate: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}/reactivate`,
     issueHistory: (stockRecipientId: string) =>
       `/stock-recipients/${stockRecipientId}/issue-history`,
   },

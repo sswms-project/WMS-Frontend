@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { logger } from '@/lib/logger'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -29,7 +31,6 @@ import {
   InvitationRevokeDialog,
   StaffWarehouseAssignment,
   StaffDetailsSheet,
-  StaffDirectoryPagination,
   StaffDirectoryTable,
   StaffDirectoryToolbar,
   StaffTerminationDialog,
@@ -39,7 +40,11 @@ import {
   useResendInvitationMutation,
   useRevokeInvitationMutation,
 } from '../hooks/use-invitations'
-import { useAssignmentWarehousesQuery } from '../hooks/use-manager-assignment'
+import {
+  useAssignmentWarehousesQuery,
+  useStaffWarehouseAssignmentsQuery,
+  useUpdateStaffWarehousesMutation,
+} from '../hooks/use-manager-assignment'
 import {
   useTerminateStaffMutation,
   useStaffDetailsQuery,
@@ -54,7 +59,6 @@ import {
   type StaffResponse,
 } from '../types/staff.types'
 
-const pageSize = 10
 const warehouseScopeQuery: WarehouseAssignmentQuery = {
   top: 1000,
   skip: 0,
@@ -89,6 +93,7 @@ export function StaffDirectoryPage() {
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
   const [invitationPage, setInvitationPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [managerToAssign, setManagerToAssign] = useState<StaffResponse | null>(null)
   const [staffToTerminate, setStaffToTerminate] = useState<StaffResponse | null>(null)
@@ -117,6 +122,11 @@ export function StaffDirectoryPage() {
     canInvite && activeView === STAFF_PAGE_VIEWS.invitations
   )
   const detailsQuery = useStaffDetailsQuery(selectedUserId)
+  const warehouseAssignmentsQuery = useStaffWarehouseAssignmentsQuery(
+    managerToAssign?.id ?? '',
+    Boolean(managerToAssign)
+  )
+  const updateWarehousesMutation = useUpdateStaffWarehousesMutation(managerToAssign?.id ?? '')
   const terminateMutation = useTerminateStaffMutation()
   const resendInvitationMutation = useResendInvitationMutation()
   const revokeInvitationMutation = useRevokeInvitationMutation()
@@ -196,7 +206,7 @@ export function StaffDirectoryPage() {
   const directoryLabel = kind === STAFF_DIRECTORY_KINDS.managers ? 'quản lý kho' : 'nhân viên kho'
 
   return (
-    <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex flex-col gap-3 pb-1 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -205,9 +215,6 @@ export function StaffDirectoryPage() {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Tổ chức và nhân sự</p>
             <h1 className="mt-0.5 text-xl font-semibold">Danh bạ nhân sự</h1>
-            <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-              Tra cứu hồ sơ và quản lý trạng thái tài khoản theo quyền được cấp.
-            </p>
           </div>
         </div>
         {canInvite && (
@@ -228,27 +235,33 @@ export function StaffDirectoryPage() {
 
       <Tabs
         value={activeView}
-        className="min-w-0 flex-col gap-4"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-4"
         onValueChange={(value) => isStaffPageView(value) && setActiveView(value)}
       >
-        <TabsList variant="line" className="h-10 w-full justify-start border-b p-0">
-          <TabsTrigger value={STAFF_PAGE_VIEWS.directory} className="h-10 flex-none px-3">
+        <TabsList
+          variant="workspace"
+          className="w-full justify-start overflow-x-auto border-b px-1 pt-0 pb-1"
+        >
+          <TabsTrigger
+            value={STAFF_PAGE_VIEWS.directory}
+            className="h-9 flex-none shrink-0 touch-manipulation rounded-sm px-3 text-xs"
+          >
             <Users className="size-4" aria-hidden="true" />
             Nhân sự
           </TabsTrigger>
           {canInvite && (
-            <TabsTrigger value={STAFF_PAGE_VIEWS.invitations} className="h-10 flex-none px-3">
+            <TabsTrigger
+              value={STAFF_PAGE_VIEWS.invitations}
+              className="h-9 flex-none shrink-0 touch-manipulation rounded-sm px-3 text-xs"
+            >
               <Mail className="size-4" aria-hidden="true" />
               Lời mời
             </TabsTrigger>
           )}
         </TabsList>
 
-        <TabsContent value={STAFF_PAGE_VIEWS.directory} className="min-w-0">
-          <section
-            className="bg-card min-w-0 overflow-hidden border"
-            aria-labelledby="staff-directory-title"
-          >
+        <TabsContent value={STAFF_PAGE_VIEWS.directory} className="min-h-0 min-w-0 flex-1">
+          <OperationalListPanel aria-labelledby="staff-directory-title">
             <div className="flex min-h-12 flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div>
                 <h2 id="staff-directory-title" className="text-sm font-semibold">
@@ -371,19 +384,24 @@ export function StaffDirectoryPage() {
                   onAssignWarehouse={setManagerToAssign}
                   onTerminate={setStaffToTerminate}
                 />
-                <StaffDirectoryPagination
+                <OperationalPagination
                   page={page}
                   pageSize={pageSize}
                   totalCount={listQuery.data?.totalCount ?? 0}
                   onPageChange={setPage}
+                  onPageSizeChange={(value) => {
+                    setPageSize(value)
+                    setPage(1)
+                    setInvitationPage(1)
+                  }}
                 />
               </>
             )}
-          </section>
+          </OperationalListPanel>
         </TabsContent>
 
         {canInvite && (
-          <TabsContent value={STAFF_PAGE_VIEWS.invitations} className="min-w-0">
+          <TabsContent value={STAFF_PAGE_VIEWS.invitations} className="min-h-0 min-w-0 flex-1">
             <InvitationManagementPanel
               invitations={invitations}
               totalCount={invitationsQuery.data?.totalCount ?? 0}
@@ -398,6 +416,11 @@ export function StaffDirectoryPage() {
                   : null
               }
               onPageChange={setInvitationPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value)
+                setPage(1)
+                setInvitationPage(1)
+              }}
               onRefresh={() => void invitationsQuery.refetch()}
               onResend={(invitation) => void resendInvitation(invitation)}
               onRevoke={setInvitationToRevoke}
@@ -442,6 +465,8 @@ export function StaffDirectoryPage() {
       {managerToAssign && permissions.has(P.STAFF_ASSIGN_WAREHOUSE) && (
         <StaffWarehouseAssignment
           person={managerToAssign}
+          query={warehouseAssignmentsQuery}
+          mutation={updateWarehousesMutation}
           onClose={() => setManagerToAssign(null)}
         />
       )}

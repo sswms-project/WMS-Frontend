@@ -158,6 +158,8 @@ animation-duration-300
 
 ## Fixed Viewport Layout (bắt buộc cho trang có bảng)
 
+`docs/LIST_TABLE_DESIGN_GUIDELINES.md` và `OperationalListPanel` là source of truth cho bố cục list/table. Mọi màn hình mới hoặc được refactor phải dùng pattern này; không sao chép công thức chiều cao viewport vào feature.
+
 Mọi page có bảng dữ liệu phải dùng cấu trúc sau — không để browser scroll toàn trang:
 
 ```tsx
@@ -165,59 +167,42 @@ Mọi page có bảng dữ liệu phải dùng cấu trúc sau — không để 
 <div className="h-full flex flex-col bg-background text-foreground">
   <HRPageHeader … />                         {/* shrink-0 tự động */}
 
-  <div className="flex flex-col flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 md:px-8 py-5 gap-4">
+  <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 px-4 py-5 md:px-8">
     <div className="… shrink-0">             {/* title + actions */}
     <div className="… shrink-0">             {/* search / filters */}
 
-    {/* Table card — shrink theo content, cap tại viewport, scroll nội bộ */}
-    <div className="rounded-lg border bg-card overflow-auto max-h-full min-h-0">
+    {/* Table card — luôn chiếm toàn bộ chiều cao còn lại */}
+    <OperationalListPanel>
       <Table>
         <TableHeader className="sticky top-0 z-10 bg-card">…</TableHeader>
         <TableBody>…</TableBody>
       </Table>
-    </div>
+    </OperationalListPanel>
   </div>
 </div>
 ```
 
 - Root: `h-full flex flex-col` (không dùng `min-h-full`)
-- Content wrapper: `flex-1 min-h-0` — bắt buộc cả hai, thiếu `min-h-0` thì overflow không hoạt động
+- Content wrapper: `w-full min-w-0 flex-1 min-h-0` — bắt buộc; không dùng `mx-auto`, `container` hoặc `max-w-*` cho workspace/list nghiệp vụ
 - Toolbar/header: `shrink-0` — không bị co lại
 - Scroll chỉ xảy ra bên trong table card, không phải toàn trang
-- `overflow-auto` phải đặt trực tiếp trên card (không nested div) — `sticky` chỉ work khi scroll container là direct ancestor
-- `max-h-full` (không phải `flex-1`) trên card: ít row → shrink to content; nhiều row → cap tại viewport và scroll
-- `TableHeader` luôn có `sticky top-0 z-10 bg-card`
-- **KHÔNG dùng `overflow-hidden`** trên table card — phá vỡ sticky header và không cho scroll
+- `OperationalListPanel` quản lý `flex-1 min-h-0 overflow-hidden`; không chép các class này vào feature.
+- Direct child `[data-slot=table-container]` hoặc `[data-slot=operational-list-body]` là vùng `overflow-auto` duy nhất.
+- `TableHead` dùng `sticky top-0 z-10 bg-card` để header đứng yên khi body cuộn.
 
 ### Bảng có pagination (Pattern C)
 
-Khi bảng có pagination footer bên dưới, dùng `[data-slot=table-container]` thay vì `overflow-auto` trực tiếp:
+Đặt `Table` và `OperationalPagination` làm con trực tiếp của `OperationalListPanel`:
 
 ```tsx
-<div className="rounded-lg border bg-card flex flex-col overflow-hidden
-  [&>[data-slot=table-container]]:overflow-y-auto
-  [&>[data-slot=table-container]]:max-h-[calc(100vh-280px)]">
-  <div className="contents">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="sticky top-0 z-10 bg-card">…</TableHead>
-          {/* sticky per-cell, không phải trên <TableHeader> */}
-        </TableRow>
-      </TableHeader>
-      <TableBody>…</TableBody>
-    </Table>
-  </div>
-
-  {/* Pagination footer */}
-  <div className="shrink-0 border-t px-4 py-2.5 flex items-center justify-between">
-    …
-  </div>
-</div>
+<OperationalListPanel>
+  <Table>…</Table>
+  <OperationalPagination … />
+</OperationalListPanel>
 ```
 
-- `max-h-[calc(100vh-280px)]` — điều chỉnh `280px` theo chiều cao thực tế của header + toolbar
-- Sticky dùng per-cell (`<TableHead className="sticky top-0 z-10 bg-card">`) — không đặt trên `<TableHeader>`
+- Không dùng `calc(100vh - ...)`; flex layout tự tính chiều cao còn lại và ổn định khi zoom
+- Sticky dùng per-cell (`<TableHead className="sticky top-0 z-10 bg-card">`).
 - Pagination state (`page`, `pageSize`) luôn nằm ở Page, truyền xuống component qua props
 
 ## TypeScript

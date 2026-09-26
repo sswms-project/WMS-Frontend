@@ -8,6 +8,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type {
@@ -25,25 +26,37 @@ interface StockMovementHistoryProps {
   readonly totalCount: number
   readonly page: number
   readonly pageSize: number
+  readonly searchText: string
+  readonly warehouseId: string
+  readonly slotId: string
   readonly productId: string
   readonly movementType: StockMovementType | ''
   readonly dateFrom: string
   readonly dateTo: string
   readonly productOptions: readonly InventoryFilterOption[]
+  readonly warehouseOptions: readonly InventoryFilterOption[]
+  readonly slotOptions: readonly InventoryFilterOption[]
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
   readonly isDateRangeValid: boolean
   readonly areProductsLoading: boolean
   readonly areProductsError: boolean
+  readonly areLocationsLoading: boolean
+  readonly areLocationsError: boolean
   readonly activeFilterCount: number
   readonly onProductChange: (value: string) => void
+  readonly onSearchChange: (value: string) => void
+  readonly onWarehouseChange: (value: string) => void
+  readonly onSlotChange: (value: string) => void
   readonly onMovementTypeChange: (value: StockMovementType | '') => void
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onResetFilters: () => void
   readonly onRetryProducts: () => void
+  readonly onRetryLocations: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
@@ -64,7 +77,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
   } = props
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -73,9 +86,6 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Lịch sử biến động</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi mọi lần nhập, xuất, chuyển, trả và điều chỉnh tồn kho.
-            </p>
           </div>
         </div>
         <div className="border-primary/20 bg-primary/5 flex min-h-10 items-center gap-2 border px-3">
@@ -84,10 +94,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
         </div>
       </header>
       <InventoryWorkspaceNavigation currentView="movements" permissions={props.permissions} />
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="movement-history-title"
-      >
+      <OperationalListPanel aria-labelledby="movement-history-title">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 id="movement-history-title" className="text-sm font-semibold">
@@ -129,6 +136,14 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
         <p className="sr-only" aria-live="polite">
           {isFetching ? 'Đang cập nhật lịch sử biến động' : 'Lịch sử biến động đã cập nhật'}
         </p>
+        {isError && items.length > 0 ? (
+          <div
+            className="border-destructive/30 bg-destructive/5 text-destructive border-b px-3 py-2 text-xs"
+            role="alert"
+          >
+            Không thể tải dữ liệu mới. Bảng đang giữ kết quả gần nhất; hãy thử làm mới lại.
+          </div>
+        ) : null}
         {!isDateRangeValid ? (
           <OperationalEmptyState
             title="Khoảng thời gian không hợp lệ"
@@ -136,7 +151,7 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
           />
         ) : isLoading ? (
           <OperationalLoadingState rows={8} />
-        ) : isError ? (
+        ) : isError && items.length === 0 ? (
           <OperationalErrorState title="Không thể tải lịch sử biến động" onRetry={onRetry} />
         ) : items.length === 0 ? (
           <OperationalEmptyState
@@ -157,10 +172,11 @@ export function StockMovementHistory(props: StockMovementHistoryProps) {
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={props.onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
       <StockMovementFilters {...props} open={isFilterOpen} onOpenChange={setIsFilterOpen} />
     </div>
   )

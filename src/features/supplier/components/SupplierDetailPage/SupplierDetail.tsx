@@ -46,9 +46,6 @@ export function SupplierDetail({
               <h1 className="text-xl font-semibold">{supplier.supplierName}</h1>
               <SupplierStatusBadge status={supplier.status} />
             </div>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Thông tin liên hệ và trạng thái hợp tác của nhà cung cấp.
-            </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -80,7 +77,9 @@ export function SupplierDetail({
           </h2>
         </div>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-4 lg:grid-cols-4">
+          <Metadata label="Mã nhà cung cấp" value={supplier.supplierCode} />
           <Metadata label="Tên nhà cung cấp" value={supplier.supplierName} />
+          <Metadata label="Mã số thuế" value={formatSupplierText(supplier.taxCode)} />
           <Metadata label="Số điện thoại" value={supplier.phone} />
           <Metadata label="Email" value={formatSupplierText(supplier.email)} />
           <Metadata label="Trạng thái" value={SUPPLIER_STATUS_LABELS[supplier.status]} />
@@ -90,6 +89,33 @@ export function SupplierDetail({
         <div className="border-t px-4 py-3">
           <p className="text-muted-foreground text-xs">Địa chỉ</p>
           <p className="mt-1 text-sm break-words">{formatSupplierText(supplier.address)}</p>
+        </div>
+        <div className="border-t p-4">
+          <h3 className="text-sm font-semibold">Thông tin liên hệ</h3>
+          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4 lg:grid-cols-4">
+            <Metadata
+              label="Người liên hệ"
+              value={
+                [supplier.contactSalutation, supplier.contactName].filter(Boolean).join(' ') || '—'
+              }
+            />
+            <Metadata
+              label="Email người liên hệ"
+              value={formatSupplierText(supplier.contactEmail)}
+            />
+            <Metadata
+              label="Điện thoại di động"
+              value={formatSupplierText(supplier.contactMobile)}
+            />
+            <Metadata
+              label="Kênh liên hệ"
+              value={
+                [supplier.contactChannel, supplier.contactChannelName]
+                  .filter(Boolean)
+                  .join(' · ') || '—'
+              }
+            />
+          </dl>
         </div>
       </section>
     </div>

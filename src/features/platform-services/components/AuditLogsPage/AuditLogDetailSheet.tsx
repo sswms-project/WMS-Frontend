@@ -20,7 +20,7 @@ export function AuditLogDetailSheet({ log, onOpenChange }: AuditLogDetailSheetPr
         {log ? (
           <>
             <SheetHeader>
-              <SheetTitle>Chi tiết Audit Log</SheetTitle>
+              <SheetTitle>Chi tiết nhật ký hoạt động</SheetTitle>
               <SheetDescription>
                 {log.action} · {formatPlatformDateTime(log.createdAt)}
               </SheetDescription>

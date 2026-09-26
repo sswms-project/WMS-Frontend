@@ -1,22 +1,22 @@
 import { CheckCheck } from 'lucide-react'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PaginationControls } from '../shared/PaginationControls'
 import { NotificationFilters } from './NotificationFilters'
 import { NotificationList } from './NotificationList'
 import type { NotificationDirectoryProps } from './types'
 
 export function NotificationDirectory(props: NotificationDirectoryProps) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col gap-3" aria-labelledby="notifications-title">
+    <section
+      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3"
+      aria-labelledby="notifications-title"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="notifications-title" className="text-xl font-semibold">
             Thông báo
           </h2>
-          <p className="text-muted-foreground text-sm">
-            Theo dõi các sự kiện liên quan đến tài khoản của bạn.
-          </p>
         </div>
         <Button
           type="button"
@@ -33,11 +33,11 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
         onApply={props.onApplyFilters}
         onClear={props.onClearFilters}
       />
-      <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden py-0">
-        <CardHeader className="border-b px-4 py-3">
-          <CardTitle className="text-sm">Danh sách thông báo</CardTitle>
-        </CardHeader>
-        <CardContent className="min-h-0 flex-1 overflow-y-auto p-0">
+      <OperationalListPanel aria-label="Danh sách thông báo">
+        <div className="shrink-0 border-b px-4 py-3">
+          <h3 className="text-sm font-semibold">Danh sách thông báo</h3>
+        </div>
+        <div data-slot="operational-list-body" className="min-h-0">
           <NotificationList
             items={props.items}
             isLoading={props.isLoading}
@@ -48,17 +48,18 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
             onMarkRead={props.onMarkRead}
             onRetry={props.onRetry}
           />
-        </CardContent>
+        </div>
         {!props.isLoading && !props.isError && props.totalCount > 0 ? (
-          <PaginationControls
+          <OperationalPagination
             page={props.page}
             pageSize={props.pageSize}
             totalCount={props.totalCount}
-            isFetching={props.isFetching}
+            isPending={props.isFetching}
             onPageChange={props.onPageChange}
+            onPageSizeChange={props.onPageSizeChange}
           />
         ) : null}
-      </Card>
+      </OperationalListPanel>
     </section>
   )
 }

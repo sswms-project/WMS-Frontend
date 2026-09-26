@@ -21,6 +21,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { StockIssueWorkspaceNavigation } from '@/components/operations/StockIssueWorkspaceNavigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -94,8 +95,10 @@ interface StockIssueRequestDirectoryProps {
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onInspect: (order: StockIssueRequestSummary) => void
+  readonly onReleaseForPicking: (order: StockIssueRequestSummary) => void
   readonly onRecordStockPicking: (order: StockIssueRequestSummary) => void
   readonly onAuthorizeDispatch: (order: StockIssueRequestSummary) => void
   readonly onConfirmDispatch: (order: StockIssueRequestSummary) => void
@@ -126,8 +129,10 @@ export function StockIssueRequestDirectory({
   onDateFromChange,
   onDateToChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onInspect,
+  onReleaseForPicking,
   onRecordStockPicking,
   onAuthorizeDispatch,
   onConfirmDispatch,
@@ -163,6 +168,12 @@ export function StockIssueRequestDirectory({
           <Eye className="size-4" aria-hidden="true" />
           Xem chi tiết
         </DropdownMenuItem>
+        {canAuthorizeDispatch && order.status === 'Pending' ? (
+          <DropdownMenuItem onSelect={() => onReleaseForPicking(order)}>
+            <Send className="size-4" aria-hidden="true" />
+            Duyệt và giữ hàng
+          </DropdownMenuItem>
+        ) : null}
         {canPick && canRecordStockPicking(order.status) ? (
           <DropdownMenuItem onSelect={() => onRecordStockPicking(order)}>
             <Undo2 className="size-4" aria-hidden="true" />
@@ -192,7 +203,7 @@ export function StockIssueRequestDirectory({
   )
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -201,9 +212,6 @@ export function StockIssueRequestDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Xuất kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Yêu cầu xuất kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi yêu cầu xuất kho từ lúc tạo, lấy hàng cho tới khi xác nhận hàng rời kho.
-            </p>
           </div>
         </div>
         {permissions.includes(P.STOCK_ISSUE_REQUESTS_CREATE) ? (
@@ -218,10 +226,7 @@ export function StockIssueRequestDirectory({
 
       <StockIssueWorkspaceNavigation currentView="stockIssueRequests" permissions={permissions} />
 
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="stock-issue-request-directory-title"
-      >
+      <OperationalListPanel aria-labelledby="stock-issue-request-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="stock-issue-request-directory-title" className="text-sm font-semibold">
@@ -284,10 +289,11 @@ export function StockIssueRequestDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

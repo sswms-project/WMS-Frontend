@@ -3,6 +3,7 @@ import type { SubscriptionPlanResponse as SubscriptionPlanApiResponse } from '@/
 export interface RoleResponse {
   id: string
   roleName: string
+  description: string | null
   isSystemRole: boolean
   parentRoleId: string | null
   permissions: PermissionResponse[]
@@ -12,6 +13,9 @@ export interface PermissionResponse {
   id: string
   permissionKey: string
   module: string
+  displayName: string
+  moduleDisplayName: string
+  description: string | null
 }
 
 export interface AssignPermissionsRequest {

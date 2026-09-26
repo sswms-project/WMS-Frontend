@@ -17,6 +17,8 @@ const PUBLIC_PATHS = [
   APP_ROUTES.subscriptionPaymentResult,
 ]
 
+const AUTH_PATHS = Object.values(APP_ROUTES.auth)
+
 const KNOWN_ROLES = Object.values(USER_ROLES)
 
 function getRoleFromToken(token: string): UserRole | null {
@@ -30,6 +32,7 @@ export function proxy(request: NextRequest) {
   const role = token ? getRoleFromToken(token) : null
 
   const isPublic = pathname === APP_ROUTES.home || PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  const isAuthPath = AUTH_PATHS.some((p) => pathname.startsWith(p))
 
   if (!isPublic && !token) {
     return NextResponse.redirect(new URL(APP_ROUTES.auth.login, request.url))
@@ -41,7 +44,7 @@ export function proxy(request: NextRequest) {
     return response
   }
 
-  if (pathname === APP_ROUTES.auth.login && role) {
+  if ((isAuthPath || pathname === APP_ROUTES.home) && role) {
     return NextResponse.redirect(new URL(APP_ROUTES.dashboard, request.url))
   }
 

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { RETURN_ITEM_CONDITIONS } from '../types/outbound.types'
+import { GOODS_RETURN_REQUEST_ITEM_CONDITIONS } from '../types/stock-issue.types'
 
 export const restockReturnSchema = z.object({
   items: z
@@ -7,7 +7,7 @@ export const restockReturnSchema = z.object({
       z
         .object({
           returnItemId: z.string().uuid(),
-          condition: z.enum(RETURN_ITEM_CONDITIONS),
+          condition: z.enum(GOODS_RETURN_REQUEST_ITEM_CONDITIONS),
           restockSlotId: z.string().uuid().nullable(),
         })
         .superRefine((item, context) => {
