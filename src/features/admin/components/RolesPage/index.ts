@@ -1,2 +1,6 @@
-export { RoleCard } from './RoleCard'
-export { RolePermissionEditor } from './RolePermissionEditor'
+export { PermissionsCatalog } from './PermissionsCatalog'
+export { PermissionModuleGroup } from './PermissionModuleGroup'
+export { RolePermissionsSheet } from './RolePermissionsSheet'
+export { RolesTable } from './RolesTable'
+export { RolesToolbar } from './RolesToolbar'
+export type { RoleFilter } from './RolesToolbar'

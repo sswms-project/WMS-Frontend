@@ -1,9 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { UserRound } from 'lucide-react'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import type { ApiErrorResponse } from '@/types/api'
 import { useMeQuery, useUpdateProfileMutation } from '@/features/auth/hooks/use-auth'
 import { SectionIconBadge } from '@/features/settings/components/SecurityPage'
@@ -11,10 +15,12 @@ import {
   ProfileForm,
   ProfileOverviewCard,
   ProfileView,
+  ProfileViewSkeleton,
   type ProfileFormSubmitContext,
 } from '../components'
 import {
   updateProfileRequestSchema,
+  profileFormSchema,
   type ProfileFormValues,
   type UpdateProfileFormRequest,
 } from '../schemas/profile.schema'
@@ -63,10 +69,19 @@ function buildUpdateRequest(
   })
 }
 
-export function ProfilePage() {
+export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const meQuery = useMeQuery()
   const updateMutation = useUpdateProfileMutation()
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: { fullName: '', phone: '' },
+  })
+
+  useEffect(() => {
+    if (!meQuery.data) return
+    form.reset({ fullName: meQuery.data.fullName, phone: meQuery.data.phone ?? '' })
+  }, [form, meQuery.data])
 
   async function handleSubmit(values: ProfileFormValues, context: ProfileFormSubmitContext) {
     const request = buildUpdateRequest(values, context.dirtyFields)
@@ -93,42 +108,43 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="space-y-7">
-      <div className="animate-in fade-in slide-in-from-top-3 flex items-center gap-3.5 duration-400">
+    <div className="space-y-8">
+      <header className="animate-in fade-in slide-in-from-top-3 flex items-start gap-4 duration-400">
         <SectionIconBadge icon={UserRound} tone="primary" size="lg" />
         <div>
-          <h2 className="text-foreground text-[22px] font-bold">Hồ sơ cá nhân</h2>
-          <p className="text-muted-foreground mt-0.5 text-[13.5px]">
-            Quản lý thông tin cá nhân và liên hệ của tài khoản
-          </p>
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
         </div>
-      </div>
+      </header>
 
-      <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 items-start gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:gap-8">
         <ProfileOverviewCard profile={meQuery.data} isLoading={meQuery.isLoading} />
 
         <div className="min-w-0">
+          {meQuery.isLoading && <ProfileViewSkeleton />}
+
           {meQuery.isError && (
-            <div className="bg-card ring-foreground/10 flex min-h-48 flex-col items-center justify-center gap-3 rounded-none px-4 text-center ring-1">
-              <p className="text-sm font-medium">Không thể tải thông tin hồ sơ</p>
-              <p className="text-muted-foreground text-xs">
-                Vui lòng kiểm tra kết nối rồi thử lại.
-              </p>
-              <button
+            <Alert
+              variant="destructive"
+              className="min-h-48 content-center justify-items-center text-center"
+            >
+              <AlertTitle>Không thể tải thông tin hồ sơ</AlertTitle>
+              <AlertDescription>Vui lòng kiểm tra kết nối rồi thử lại.</AlertDescription>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => void meQuery.refetch()}
-                className="text-primary text-xs font-medium hover:underline"
               >
                 Thử lại
-              </button>
-            </div>
+              </Button>
+            </Alert>
           )}
 
           {meQuery.data &&
             (isEditing ? (
               <ProfileForm
-                key={`${meQuery.data.id}-edit`}
                 profile={meQuery.data}
+                form={form}
                 isPending={updateMutation.isPending}
                 onCancel={() => {
                   updateMutation.reset()

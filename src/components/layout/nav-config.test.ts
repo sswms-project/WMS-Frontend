@@ -91,6 +91,17 @@ describe('application navigation visibility', () => {
     ])
   })
 
+  it('places staff management under organization management for warehouse managers', () => {
+    const managerSections = NAV_CONFIG[USER_ROLES.WarehouseManager]
+    const organizationSection = managerSections.find(
+      (section) => section.id === 'organization-management'
+    )
+    const subjectsSection = managerSections.find((section) => section.id === 'subjects')
+
+    expect(organizationSection?.items.some((item) => item.href === APP_ROUTES.staff)).toBe(true)
+    expect(subjectsSection?.items.some((item) => item.href === APP_ROUTES.staff)).toBe(false)
+  })
+
   it('uses the requested tenant sidebar hierarchy and order', () => {
     const tenantSections = NAV_CONFIG[USER_ROLES.TenantOwner]
 
@@ -101,11 +112,15 @@ describe('application navigation visibility', () => {
       }))
     ).toEqual([
       { label: null, items: ['Dashboard'] },
-      { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Nhân sự', 'Phân quyền'] },
-      { label: null, items: ['Kho hàng'] },
-      { label: 'Danh mục', items: ['Sản phẩm', 'Nhà cung cấp', 'Đơn vị nhận hàng'] },
+      { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Phân quyền', 'Nhân viên'] },
+      { label: 'Quản Lý Kho', items: ['Kho hàng'] },
+      { label: 'Đối tượng', items: ['Nhà cung cấp', 'Khách hàng'] },
       {
-        label: 'Vận hành kho',
+        label: 'Danh mục',
+        items: ['Danh mục VTHH', 'Nhóm VTHH', 'Đơn vị tính'],
+      },
+      {
+        label: 'Hoạt Động Kho',
         items: [
           'Yêu cầu nhập kho',
           'Nhập kho',
@@ -119,7 +134,7 @@ describe('application navigation visibility', () => {
         items: ['Dashboard kho', 'Báo cáo vận hành', 'Dự báo & Bổ sung hàng'],
       },
       { label: 'Dịch vụ', items: ['Gói dịch vụ', 'Lịch sử thanh toán'] },
-      { label: 'Hệ thống', items: ['Thông báo', 'Audit Log', 'Cài đặt'] },
+      { label: 'Hệ thống', items: ['Thông báo', 'Nhật ký hoạt động', 'Cài đặt'] },
     ])
   })
 
@@ -167,7 +182,7 @@ describe('application navigation visibility', () => {
 
     expect(catalogSection).toBeDefined()
     expect(isNavSectionActive('/products/product-1', catalogSection!)).toBe(true)
-    expect(isNavSectionActive('/suppliers', catalogSection!)).toBe(true)
+    expect(isNavSectionActive(APP_ROUTES.categories, catalogSection!)).toBe(true)
     expect(isNavSectionActive('/inventory', catalogSection!)).toBe(false)
   })
 

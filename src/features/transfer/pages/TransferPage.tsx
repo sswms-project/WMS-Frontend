@@ -33,8 +33,6 @@ import {
 } from '../schemas/transfer.schema'
 import type { TransferStatus, TransferSummary } from '../types/transfer.types'
 
-const PAGE_SIZE = 10
-
 function resolveErrorMessage(error: unknown, fallback: string): string {
   return typeof error === 'object' &&
     error !== null &&
@@ -52,6 +50,7 @@ export default function TransferPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [inspectedTransfer, setInspectedTransfer] = useState<TransferSummary | null>(null)
   const [rejectingTransfer, setRejectingTransfer] = useState<TransferSummary | null>(null)
   const [approvingTransfer, setApprovingTransfer] = useState<TransferSummary | null>(null)
@@ -63,7 +62,7 @@ export default function TransferPage() {
   const meQuery = useMeQuery()
   const transfersQuery = useTransfersQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(status ? { status } : {}),
     ...(sourceWarehouseId ? { sourceWarehouseId } : {}),
     ...(destinationWarehouseId ? { destinationWarehouseId } : {}),
@@ -236,7 +235,7 @@ export default function TransferPage() {
         items={items}
         totalCount={transfersQuery.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         status={status}
         sourceWarehouseId={sourceWarehouseId}
@@ -256,6 +255,10 @@ export default function TransferPage() {
         onDateFromChange={(value) => updateFilter(setDateFrom, value)}
         onDateToChange={(value) => updateFilter(setDateTo, value)}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onRetry={() => void transfersQuery.refetch()}
         onInspect={setInspectedTransfer}
         onApprove={openApprove}

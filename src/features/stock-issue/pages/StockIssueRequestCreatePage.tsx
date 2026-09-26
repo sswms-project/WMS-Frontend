@@ -1,9 +1,10 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { Route } from 'next'
 import { ArrowLeft, Plus, Trash2, UserPlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -12,15 +13,22 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import { StockRecipientFormDialog } from '@/features/stock-recipient/components/StockRecipientsPage'
-import { useCreateStockRecipientMutation } from '@/features/stock-recipient/hooks/use-stock-recipients'
 import {
+  useCreateStockRecipientMutation,
+  useNextStockRecipientCodeQuery,
+} from '@/features/stock-recipient/hooks/use-stock-recipients'
+import {
+  emptyStockRecipientFormValues,
   stockRecipientSchema,
+  toStockRecipientRequest,
   type StockRecipientFormValues,
 } from '@/features/stock-recipient/schemas/stock-recipient.schema'
 import { useProductListQuery } from '@/features/product/hooks/use-products'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { getApiErrorMessage } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 import {
   useCreateStockIssueRequestMutation,
   useStockRecipientOptionsQuery,
@@ -56,8 +64,9 @@ export default function StockIssueRequestCreatePage() {
   })
   const stockRecipientForm = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
-    defaultValues: { recipientName: '', phone: '', email: '', address: '' },
+    defaultValues: emptyStockRecipientFormValues,
   })
+  const nextRecipientCode = useNextStockRecipientCodeQuery(quickStockRecipientOpen)
   const selectedStockRecipientId = useWatch({ control: form.control, name: 'stockRecipientId' })
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'lines' })
   const warehouses = useWarehousesQuery({ top: 100, skip: 0, needTotalCount: true, isActive: true })
@@ -81,6 +90,21 @@ export default function StockIssueRequestCreatePage() {
   const createOrder = useCreateStockIssueRequestMutation()
   const createStockRecipient = useCreateStockRecipientMutation()
 
+  useEffect(() => {
+    if (
+      !quickStockRecipientOpen ||
+      !nextRecipientCode.data?.data ||
+      stockRecipientForm.getFieldState('recipientCode').isDirty
+    ) {
+      return
+    }
+    if (!stockRecipientForm.getValues('recipientCode')) {
+      stockRecipientForm.setValue('recipientCode', nextRecipientCode.data.data, {
+        shouldDirty: false,
+      })
+    }
+  }, [quickStockRecipientOpen, nextRecipientCode.data?.data, stockRecipientForm])
+
   async function submit(values: CreateStockIssueRequestFormValues) {
     try {
       await createOrder.mutateAsync({
@@ -90,7 +114,7 @@ export default function StockIssueRequestCreatePage() {
         items: values.lines,
       })
       toast.success('Đã tạo yêu cầu xuất kho.')
-      router.push(APP_ROUTES.stockIssueRequests)
+      router.push(APP_ROUTES.stockIssueRequests as Route)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể tạo yêu cầu xuất kho.')
     }
@@ -98,10 +122,7 @@ export default function StockIssueRequestCreatePage() {
 
   async function quickCreate(values: StockRecipientFormValues) {
     try {
-      const response = await createStockRecipient.mutateAsync({
-        ...values,
-        email: values.email || null,
-      })
+      const response = await createStockRecipient.mutateAsync(toStockRecipientRequest(values))
       setCreatedStockRecipient({
         id: response.data,
         recipientName: values.recipientName,
@@ -112,8 +133,9 @@ export default function StockIssueRequestCreatePage() {
       setQuickStockRecipientOpen(false)
       stockRecipientForm.reset()
       toast.success('Đã tạo và chọn đơn vị nhận hàng.')
-    } catch {
-      toast.error('Không thể tạo đơn vị nhận hàng.')
+    } catch (error) {
+      logger.error(error)
+      toast.error(getApiErrorMessage(error, 'Không thể tạo đơn vị nhận hàng.'))
     }
   }
 
@@ -124,7 +146,7 @@ export default function StockIssueRequestCreatePage() {
           type="button"
           variant="outline"
           size="icon"
-          onClick={() => router.push(APP_ROUTES.stockIssueRequests)}
+          onClick={() => router.push(APP_ROUTES.stockIssueRequests as Route)}
           aria-label="Quay lại"
         >
           <ArrowLeft />
@@ -162,7 +184,7 @@ export default function StockIssueRequestCreatePage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  stockRecipientForm.reset({ recipientName: '', phone: '', email: '', address: '' })
+                  stockRecipientForm.reset(emptyStockRecipientFormValues)
                   setQuickStockRecipientOpen(true)
                 }}
               >
@@ -285,7 +307,7 @@ export default function StockIssueRequestCreatePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(APP_ROUTES.stockIssueRequests)}
+            onClick={() => router.push(APP_ROUTES.stockIssueRequests as Route)}
           >
             Hủy
           </Button>
@@ -300,6 +322,7 @@ export default function StockIssueRequestCreatePage() {
         description="Đơn vị nhận hàng mới sẽ được chọn ngay trong yêu cầu hiện tại."
         form={stockRecipientForm}
         isPending={createStockRecipient.isPending}
+        isCreate
         onOpenChange={setQuickStockRecipientOpen}
         onSubmit={(values) => void quickCreate(values)}
       />

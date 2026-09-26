@@ -45,6 +45,7 @@ import type {
   WarehouseLayoutGeometry,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
+import { formatWarehouseStatus } from '../../utils/warehouse-labels'
 import { DECORATION_OPTIONS, getDecorationLabel, LAYOUT_COLOR_SWATCHES } from './designer-constants'
 
 interface DesignerInspectorProps {
@@ -83,7 +84,7 @@ function InspectorHeader({
             {code}
           </h2>
         </div>
-        {status ? <Badge variant="outline">{status}</Badge> : null}
+        {status ? <Badge variant="outline">{formatWarehouseStatus(status)}</Badge> : null}
       </div>
     </div>
   )

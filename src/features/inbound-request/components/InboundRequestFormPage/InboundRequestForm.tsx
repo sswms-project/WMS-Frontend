@@ -1,15 +1,23 @@
 'use client'
 
-import { ArrowLeft, Plus, Save, Send, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
+  Card,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
   Field,
   FieldError,
   FieldGroup,
-  FieldLabel,
   FieldSet,
+  FieldLabel,
   FieldLegend,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -24,7 +32,11 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import type { InboundRequestFormValues } from '../../schemas/inbound-request.schema'
-import { LookupCombobox, type LookupOption } from './LookupCombobox'
+import type { LookupOption } from '../../types/inbound-request.types'
+import { DatePickerField } from './DatePickerField'
+import { FormActions } from './FormActions'
+import { LookupCombobox } from './LookupCombobox'
+import { ProductSelect } from './ProductSelect'
 
 interface InboundRequestFormProps {
   readonly title: string
@@ -39,6 +51,7 @@ interface InboundRequestFormProps {
   readonly isSupplierSearchLoading: boolean
   readonly isProductSearchLoading: boolean
   readonly isPending: boolean
+  readonly disablePastDates?: boolean
   readonly onAddLine: () => void
   readonly onRemoveLine: (index: number) => void
   readonly onCancel: () => void
@@ -62,6 +75,7 @@ export function InboundRequestForm({
   isSupplierSearchLoading,
   isProductSearchLoading,
   isPending,
+  disablePastDates,
   onAddLine,
   onRemoveLine,
   onCancel,
@@ -81,6 +95,8 @@ export function InboundRequestForm({
     watch,
     formState: { errors },
   } = form
+  const lines = watch('lines')
+  const totalQuantity = lines.reduce((total, line) => total + (Number(line.quantity) || 0), 0)
 
   function rememberProductOption(scope: string, option?: LookupOption) {
     setSelectedProductOptions((current) => {
@@ -89,7 +105,6 @@ export function InboundRequestForm({
         if (existing?.value === option.value && existing.label === option.label) return current
         return { ...current, [scope]: option }
       }
-
       if (!current[scope]) return current
       const next = { ...current }
       delete next[scope]
@@ -116,144 +131,153 @@ export function InboundRequestForm({
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">{description}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="button" variant="outline" disabled={isPending} onClick={onSaveDraft}>
-            <Save aria-hidden="true" />
-            Lưu nháp
-          </Button>
-          <Button type="button" disabled={isPending} onClick={onSaveAndSubmit}>
-            <Send aria-hidden="true" />
-            Lưu và gửi duyệt
-          </Button>
-        </div>
+        <FormActions
+          isPending={isPending}
+          onSaveDraft={onSaveDraft}
+          onSaveAndSubmit={onSaveAndSubmit}
+        />
       </header>
 
-      <form className="flex flex-col gap-6" onSubmit={(event) => event.preventDefault()}>
-        <FieldSet>
-          <FieldLegend>Thông tin yêu cầu nhập kho</FieldLegend>
-          <FieldGroup className="grid gap-4 md:grid-cols-3">
-            <Field data-invalid={Boolean(errors.warehouseId)}>
-              <FieldLabel htmlFor="warehouseId">Kho nhận hàng</FieldLabel>
-              <LookupCombobox
-                id="warehouseId"
-                value={watch('warehouseId')}
-                options={warehouseOptions}
-                placeholder="Chọn hoặc tìm kho"
-                emptyMessage="Không tìm thấy kho phù hợp."
-                ariaLabel="Kho nhận hàng"
-                isLoading={isWarehouseSearchLoading}
-                isInvalid={Boolean(errors.warehouseId)}
-                onSearchChange={onWarehouseSearchChange}
-                onChange={(value) =>
-                  setValue('warehouseId', value, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
-              />
-              <FieldError>{errors.warehouseId?.message}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(errors.supplierId)}>
-              <FieldLabel htmlFor="supplierId">Nhà cung cấp</FieldLabel>
-              <LookupCombobox
-                id="supplierId"
-                value={watch('supplierId')}
-                options={supplierOptions}
-                placeholder="Chọn hoặc tìm nhà cung cấp"
-                emptyMessage="Không tìm thấy nhà cung cấp phù hợp."
-                ariaLabel="Nhà cung cấp"
-                isLoading={isSupplierSearchLoading}
-                isInvalid={Boolean(errors.supplierId)}
-                onSearchChange={onSupplierSearchChange}
-                onChange={(value) =>
-                  setValue('supplierId', value, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
-              />
-              <FieldError>{errors.supplierId?.message}</FieldError>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="expectedDate">Ngày nhận dự kiến</FieldLabel>
-              <Input id="expectedDate" type="date" {...register('expectedDate')} />
-            </Field>
-          </FieldGroup>
-        </FieldSet>
+      <form
+        className="flex flex-col gap-5"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSaveAndSubmit()
+        }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin yêu cầu nhập kho</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FieldSet>
+              <FieldGroup className="grid gap-4 md:grid-cols-3">
+                <Field data-invalid={Boolean(errors.warehouseId)}>
+                  <FieldLabel htmlFor="warehouseId">Kho nhận hàng</FieldLabel>
+                  <LookupCombobox
+                    id="warehouseId"
+                    value={watch('warehouseId')}
+                    options={warehouseOptions}
+                    placeholder="Chọn hoặc tìm kho"
+                    emptyMessage="Không tìm thấy kho phù hợp."
+                    ariaLabel="Kho nhận hàng"
+                    isLoading={isWarehouseSearchLoading}
+                    isInvalid={Boolean(errors.warehouseId)}
+                    onSearchChange={onWarehouseSearchChange}
+                    onChange={(value) =>
+                      setValue('warehouseId', value, { shouldDirty: true, shouldValidate: true })
+                    }
+                  />
+                  <FieldError>{errors.warehouseId?.message}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors.supplierId)}>
+                  <FieldLabel htmlFor="supplierId">Nhà cung cấp</FieldLabel>
+                  <LookupCombobox
+                    id="supplierId"
+                    value={watch('supplierId')}
+                    options={supplierOptions}
+                    placeholder="Chọn hoặc tìm nhà cung cấp"
+                    emptyMessage="Không tìm thấy nhà cung cấp phù hợp."
+                    ariaLabel="Nhà cung cấp"
+                    isLoading={isSupplierSearchLoading}
+                    isInvalid={Boolean(errors.supplierId)}
+                    onSearchChange={onSupplierSearchChange}
+                    onChange={(value) =>
+                      setValue('supplierId', value, { shouldDirty: true, shouldValidate: true })
+                    }
+                  />
+                  <FieldError>{errors.supplierId?.message}</FieldError>
+                </Field>
+                <DatePickerField
+                  id="expectedDate"
+                  label="Ngày nhận dự kiến"
+                  disablePastDates={disablePastDates}
+                  value={watch('expectedDate')}
+                  onChange={(value) =>
+                    setValue('expectedDate', value, { shouldDirty: true, shouldValidate: true })
+                  }
+                />
+              </FieldGroup>
+            </FieldSet>
+          </CardContent>
+        </Card>
 
-        <FieldSet>
-          <div className="flex items-center justify-between gap-3">
-            <FieldLegend className="mb-0">Sản phẩm</FieldLegend>
-            <Button type="button" variant="outline" size="sm" onClick={onAddLine}>
-              <Plus aria-hidden="true" />
-              Thêm dòng
-            </Button>
-          </div>
-          {errors.lines?.root?.message ? (
-            <FieldError>{errors.lines.root.message}</FieldError>
-          ) : null}
-          <div className="bg-card border">
-            {isMobile ? (
-              <div className="divide-y">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex flex-col gap-3 p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">Dòng {index + 1}</p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Xóa dòng ${index + 1}`}
-                        disabled={fields.length === 1}
-                        onClick={() => onRemoveLine(index)}
-                      >
-                        <Trash2 aria-hidden="true" />
-                      </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sản phẩm</CardTitle>
+            <CardAction>
+              <Button type="button" variant="outline" size="sm" onClick={onAddLine}>
+                <Plus aria-hidden="true" />
+                Thêm dòng
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <FieldSet>
+              <FieldLegend className="sr-only">Sản phẩm</FieldLegend>
+              {errors.lines?.root?.message ? (
+                <FieldError>{errors.lines.root.message}</FieldError>
+              ) : null}
+              {isMobile ? (
+                <div className="divide-y border">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex flex-col gap-3 p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">Dòng {index + 1}</p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Xóa dòng ${index + 1}`}
+                          disabled={fields.length === 1}
+                          onClick={() => onRemoveLine(index)}
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
+                      </div>
+                      <ProductSelect
+                        inputId={`mobile-product-${index}`}
+                        searchScope={field.id}
+                        selectedOption={selectedProductOptions[field.id]}
+                        onSelectedOptionChange={rememberProductOption}
+                        index={index}
+                        form={form}
+                        options={productOptions}
+                        isLoading={isProductSearchLoading}
+                        onSearchChange={onProductSearchChange}
+                      />
+                      <Field>
+                        <FieldLabel htmlFor={`mobile-quantity-${index}`}>Số lượng</FieldLabel>
+                        <Input
+                          id={`mobile-quantity-${index}`}
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
+                          {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+                        />
+                        <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor={`mobile-unit-price-${index}`}>
+                          Đơn giá ({currency})
+                        </FieldLabel>
+                        <Input
+                          id={`mobile-unit-price-${index}`}
+                          type="number"
+                          min="0"
+                          step="1000"
+                          aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
+                          {...register(`lines.${index}.unitPrice`, {
+                            setValueAs: (value: string) => (value === '' ? null : Number(value)),
+                          })}
+                        />
+                        <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
+                      </Field>
                     </div>
-                    <ProductSelect
-                      inputId={`mobile-product-${index}`}
-                      searchScope={field.id}
-                      selectedOption={selectedProductOptions[field.id]}
-                      onSelectedOptionChange={rememberProductOption}
-                      index={index}
-                      form={form}
-                      options={productOptions}
-                      isLoading={isProductSearchLoading}
-                      onSearchChange={onProductSearchChange}
-                    />
-                    <Field>
-                      <FieldLabel htmlFor={`mobile-quantity-${index}`}>Số lượng</FieldLabel>
-                      <Input
-                        id={`mobile-quantity-${index}`}
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
-                        {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-                      />
-                      <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor={`mobile-unit-price-${index}`}>
-                        Đơn giá ({currency})
-                      </FieldLabel>
-                      <Input
-                        id={`mobile-unit-price-${index}`}
-                        type="number"
-                        min="0"
-                        step="1000"
-                        aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
-                        {...register(`lines.${index}.unitPrice`, {
-                          setValueAs: (value: string) => (value === '' ? null : Number(value)),
-                        })}
-                      />
-                      <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
-                    </Field>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
+                  ))}
+                </div>
+              ) : (
                 <Table className="min-w-[760px]">
                   <TableHeader>
                     <TableRow>
@@ -326,59 +350,21 @@ export function InboundRequestForm({
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            )}
-          </div>
-        </FieldSet>
+              )}
+            </FieldSet>
+          </CardContent>
+          <CardFooter className="text-muted-foreground justify-between gap-3">
+            <span>{fields.length} dòng sản phẩm</span>
+            <span>Tổng SL: {totalQuantity}</span>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardFooter className="justify-end gap-2">
+            <FormActions isPending={isPending} onSaveDraft={onSaveDraft} />
+          </CardFooter>
+        </Card>
       </form>
     </div>
-  )
-}
-
-function ProductSelect({
-  inputId,
-  searchScope,
-  selectedOption,
-  onSelectedOptionChange,
-  index,
-  form,
-  options,
-  isLoading,
-  onSearchChange,
-}: {
-  readonly inputId: string
-  readonly searchScope: string
-  readonly selectedOption?: LookupOption
-  readonly onSelectedOptionChange: (scope: string, option?: LookupOption) => void
-  readonly index: number
-  readonly form: UseFormReturn<InboundRequestFormValues>
-  readonly options: readonly LookupOption[]
-  readonly isLoading: boolean
-  readonly onSearchChange: (scope: string, value: string) => void
-}) {
-  const error = form.formState.errors.lines?.[index]?.productId
-  return (
-    <Field data-invalid={Boolean(error)}>
-      <LookupCombobox
-        id={inputId}
-        value={form.watch(`lines.${index}.productId`)}
-        options={options}
-        selectedOption={selectedOption}
-        placeholder="Chọn hoặc tìm sản phẩm"
-        emptyMessage="Không tìm thấy sản phẩm phù hợp."
-        ariaLabel={`Sản phẩm dòng ${index + 1}`}
-        isLoading={isLoading}
-        isInvalid={Boolean(error)}
-        onSearchChange={(value) => onSearchChange(searchScope, value)}
-        onChange={(value, option) => {
-          onSelectedOptionChange(searchScope, option)
-          form.setValue(`lines.${index}.productId`, value, {
-            shouldDirty: true,
-            shouldValidate: true,
-          })
-        }}
-      />
-      <FieldError>{error?.message}</FieldError>
-    </Field>
   )
 }

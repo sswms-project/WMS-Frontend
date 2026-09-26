@@ -5,6 +5,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -34,6 +35,7 @@ interface ReceivingTaskDirectoryProps {
   readonly isError: boolean
   readonly onSearchChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onReceive: (task: ReceivingTask) => void
   readonly onImportDocument: (task: ReceivingTask) => void
   readonly onRetry: () => void
@@ -50,12 +52,13 @@ export function ReceivingTaskDirectory({
   isError,
   onSearchChange,
   onPageChange,
+  onPageSizeChange,
   onReceive,
   onImportDocument,
   onRetry,
 }: ReceivingTaskDirectoryProps) {
   return (
-    <section className="bg-card flex min-h-0 flex-col border">
+    <OperationalListPanel aria-label="Đơn chờ nhận hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold">Đơn chờ nhận hàng</h2>
@@ -186,9 +189,10 @@ export function ReceivingTaskDirectory({
             totalCount={totalCount}
             isPending={isFetching}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
           />
         </>
       )}
-    </section>
+    </OperationalListPanel>
   )
 }

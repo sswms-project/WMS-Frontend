@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { logger } from '@/lib/logger'
@@ -15,6 +16,7 @@ import {
 import {
   useCreateSupplierMutation,
   useDeactivateSupplierMutation,
+  useNextSupplierCodeQuery,
   useReactivateSupplierMutation,
   useSuppliersQuery,
   useUpdateSupplierMutation,
@@ -23,14 +25,20 @@ import type { SaveSupplierFormValues } from '../schemas/supplier.schema'
 import type { SaveSupplierRequest, Supplier, SupplierStatus } from '../types/supplier.types'
 import { getApiErrorMessage } from '../utils/supplier-error'
 
-const PAGE_SIZE = 10
-
 function toSaveRequest(values: SaveSupplierFormValues): SaveSupplierRequest {
   return {
+    supplierCode: values.supplierCode,
     supplierName: values.supplierName,
+    taxCode: values.taxCode || null,
     phone: values.phone,
     email: values.email || null,
     address: values.address || null,
+    contactSalutation: values.contactSalutation || null,
+    contactName: values.contactName || null,
+    contactEmail: values.contactEmail || null,
+    contactMobile: values.contactMobile || null,
+    contactChannel: values.contactChannel || null,
+    contactChannelName: values.contactChannelName || null,
   }
 }
 
@@ -38,6 +46,7 @@ export default function SuppliersPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<SupplierStatus | ''>('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [supplierToEdit, setSupplierToEdit] = useState<Supplier | null>(null)
   const [supplierToDeactivate, setSupplierToDeactivate] = useState<Supplier | null>(null)
@@ -51,10 +60,11 @@ export default function SuppliersPage() {
 
   const query = useSuppliersQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
   })
+  const nextCodeQuery = useNextSupplierCodeQuery(isCreateOpen)
 
   const createMutation = useCreateSupplierMutation()
   const updateMutation = useUpdateSupplierMutation()
@@ -128,16 +138,16 @@ export default function SuppliersPage() {
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         status={status}
         isLoading={query.isLoading}
         isFetching={query.isFetching}
         isError={query.isError}
-        canCreate={permissions.includes('suppliers:create')}
-        canUpdate={permissions.includes('suppliers:update')}
-        canDeactivate={permissions.includes('suppliers:deactivate')}
-        canReactivate={permissions.includes('suppliers:reactivate')}
+        canCreate={permissions.includes(P.SUPPLIERS_CREATE)}
+        canUpdate={permissions.includes(P.SUPPLIERS_UPDATE)}
+        canDeactivate={permissions.includes(P.SUPPLIERS_DEACTIVATE)}
+        canReactivate={permissions.includes(P.SUPPLIERS_REACTIVATE)}
         onSearchChange={(value) => {
           setSearchText(value)
           setPage(1)
@@ -147,6 +157,10 @@ export default function SuppliersPage() {
           setPage(1)
         }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onCreate={() => setIsCreateOpen(true)}
         onEdit={setSupplierToEdit}
         onDeactivate={(supplier) => {
@@ -163,6 +177,7 @@ export default function SuppliersPage() {
       <SupplierCreateDialog
         open={isCreateOpen}
         isPending={createMutation.isPending}
+        suggestedCode={nextCodeQuery.data?.data}
         onOpenChange={setIsCreateOpen}
         onSubmit={handleCreate}
       />

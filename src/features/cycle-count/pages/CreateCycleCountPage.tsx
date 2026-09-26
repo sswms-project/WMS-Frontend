@@ -22,6 +22,7 @@ import {
 
 export default function CreateCycleCountPage() {
   const [inventoryPage, setInventoryPage] = useState(1)
+  const [inventoryPageSize, setInventoryPageSize] = useState(50)
   const router = useRouter()
   const mutation = useCreateCycleCountMutation()
   const form = useForm<CreateCycleCountFormValues>({
@@ -47,7 +48,7 @@ export default function CreateCycleCountPage() {
   const inventory = useInventoryQuery(
     {
       pageNumber: inventoryPage,
-      pageSize: 50,
+      pageSize: inventoryPageSize,
       warehouseId,
       ...(zoneId ? { zoneId } : {}),
     },
@@ -96,11 +97,15 @@ export default function CreateCycleCountPage() {
       staff={staffOptions}
       inventory={inventory.data?.items ?? []}
       inventoryPage={inventoryPage}
-      inventoryPageSize={50}
+      inventoryPageSize={inventoryPageSize}
       inventoryTotalCount={inventory.data?.totalCount ?? 0}
       isInventoryLoading={inventory.isLoading}
       isPending={mutation.isPending}
       onInventoryPageChange={setInventoryPage}
+      onInventoryPageSizeChange={(value) => {
+        setInventoryPageSize(value)
+        setInventoryPage(1)
+      }}
       onSubmit={submit}
     />
   )

@@ -1,46 +1,133 @@
 'use client'
 
-import { ShieldAlert } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useRolesQuery } from '../hooks/use-admin'
-import { RoleCard } from '../components/RolesPage'
+import { useState } from 'react'
+import { AlertCircle } from 'lucide-react'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  PermissionsCatalog,
+  RolePermissionsSheet,
+  RolesTable,
+  RolesToolbar,
+  type RoleFilter,
+} from '../components/RolesPage'
+import {
+  useAssignPermissionsMutation,
+  usePermissionsQuery,
+  useRolesQuery,
+} from '../hooks/use-admin'
+import type { RoleResponse } from '../types/admin.types'
 
-export function RolesPage() {
-  const { data: roles, isLoading, isError } = useRolesQuery()
+export default function RolesPage() {
+  const rolesQuery = useRolesQuery()
+  const permissionsQuery = usePermissionsQuery()
+  const assignMutation = useAssignPermissionsMutation()
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<RoleFilter>('all')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [selectedRole, setSelectedRole] = useState<RoleResponse | null>(null)
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
-        ))}
-      </div>
-    )
-  }
+  const query = search.trim().toLocaleLowerCase('vi-VN')
+  const roles = (rolesQuery.data ?? []).filter((role) => {
+    const matchesSearch =
+      !query ||
+      [role.roleName, role.description]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('vi-VN')
+        .includes(query)
+    const matchesFilter =
+      filter === 'all' || (filter === 'system' ? role.isSystemRole : !role.isSystemRole)
+    return matchesSearch && matchesFilter
+  })
+  const visibleRoles = roles.slice((page - 1) * pageSize, page * pageSize)
 
-  if (isError) {
-    return (
-      <div className="text-muted-foreground flex flex-col items-center gap-2 py-16">
-        <ShieldAlert className="text-destructive size-10" aria-hidden="true" />
-        <p className="text-sm">Không thể tải danh sách vai trò. Vui lòng thử lại.</p>
-      </div>
-    )
-  }
-
-  if (!roles?.length) {
-    return (
-      <div className="text-muted-foreground flex flex-col items-center gap-2 py-16">
-        <ShieldAlert className="size-10" aria-hidden="true" />
-        <p className="text-sm">Chưa có vai trò nào trong hệ thống.</p>
-      </div>
-    )
+  async function savePermissions(permissionIds: string[]) {
+    if (!selectedRole) return
+    await assignMutation.mutateAsync({ roleId: selectedRole.id, body: { permissionIds } })
   }
 
   return (
-    <div className="space-y-3">
-      {roles.map((role) => (
-        <RoleCard key={role.id} role={role} />
-      ))}
-    </div>
+    <Tabs defaultValue="roles" className="h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
+      <TabsList variant="line" className="w-full shrink-0 justify-start gap-1 border-b">
+        <TabsTrigger value="roles" className="cursor-pointer px-3 pb-2.5">
+          Vai trò
+        </TabsTrigger>
+        <TabsTrigger value="permissions" className="cursor-pointer px-3 pb-2.5">
+          Danh mục quyền
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="roles" className="mt-0 flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <RolesToolbar
+          search={search}
+          filter={filter}
+          count={roles.length}
+          isLoading={rolesQuery.isLoading}
+          onSearchChange={(value) => {
+            setSearch(value)
+            setPage(1)
+          }}
+          onFilterChange={(value) => {
+            setFilter(value)
+            setPage(1)
+          }}
+        />
+        <OperationalListPanel aria-label="Danh sách vai trò">
+          {rolesQuery.isError ? (
+            <div
+              data-slot="operational-list-body"
+              className="flex min-h-48 items-center justify-center p-4"
+            >
+              <Alert variant="destructive">
+                <AlertCircle className="size-4" aria-hidden="true" />
+                <AlertTitle>Không thể tải danh sách vai trò</AlertTitle>
+                <AlertDescription>Vui lòng thử tải lại trang.</AlertDescription>
+              </Alert>
+            </div>
+          ) : (
+            <RolesTable
+              roles={visibleRoles}
+              isLoading={rolesQuery.isLoading}
+              onManagePermissions={setSelectedRole}
+            />
+          )}
+          <OperationalPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={roles.length}
+            isPending={rolesQuery.isFetching}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value)
+              setPage(1)
+            }}
+          />
+        </OperationalListPanel>
+      </TabsContent>
+
+      <TabsContent value="permissions" className="mt-0 min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <PermissionsCatalog
+          permissions={permissionsQuery.data ?? []}
+          isLoading={permissionsQuery.isLoading}
+        />
+      </TabsContent>
+
+      <RolePermissionsSheet
+        key={selectedRole?.id ?? 'closed'}
+        open={Boolean(selectedRole)}
+        role={selectedRole}
+        permissions={permissionsQuery.data ?? []}
+        isLoading={permissionsQuery.isLoading}
+        isSaving={assignMutation.isPending}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRole(null)
+        }}
+        onSave={savePermissions}
+      />
+    </Tabs>
   )
 }

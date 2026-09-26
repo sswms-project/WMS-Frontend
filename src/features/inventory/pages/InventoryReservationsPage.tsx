@@ -10,13 +10,15 @@ import type { InventoryReservationStatus } from '../types/inventory.types'
 import { buildInventoryReservationQuery } from '../utils/inventory-reservation-query'
 
 export default function InventoryReservationsPage() {
+  const [page, setPage] = useState(1)
   const [warehouseId, setWarehouseId] = useState('')
   const [productId, setProductId] = useState('')
   const [status, setStatus] = useState<InventoryReservationStatus>('Active')
+  const [pageSize, setPageSize] = useState(20)
   const meQuery = useMeQuery()
   const params = useMemo(
-    () => buildInventoryReservationQuery(warehouseId, productId, status),
-    [productId, status, warehouseId]
+    () => buildInventoryReservationQuery(warehouseId, productId, status, page, pageSize),
+    [page, pageSize, productId, status, warehouseId]
   )
   const reservationsQuery = useInventoryReservationsQuery(params)
   const warehousesQuery = useWarehousesQuery({
@@ -46,7 +48,10 @@ export default function InventoryReservationsPage() {
   return (
     <InventoryReservationDirectory
       permissions={meQuery.data?.permissions ?? []}
-      items={reservationsQuery.data ?? []}
+      items={reservationsQuery.data?.items ?? []}
+      page={page}
+      pageSize={pageSize}
+      totalCount={reservationsQuery.data?.totalCount ?? 0}
       warehouseId={warehouseId}
       productId={productId}
       status={status}
@@ -58,12 +63,27 @@ export default function InventoryReservationsPage() {
       areFiltersLoading={warehousesQuery.isLoading || productsQuery.isLoading}
       areFiltersError={warehousesQuery.isError || productsQuery.isError}
       activeFilterCount={Number(Boolean(warehouseId)) + Number(Boolean(productId))}
-      onWarehouseChange={setWarehouseId}
-      onProductChange={setProductId}
-      onStatusChange={setStatus}
+      onWarehouseChange={(value) => {
+        setWarehouseId(value)
+        setPage(1)
+      }}
+      onProductChange={(value) => {
+        setProductId(value)
+        setPage(1)
+      }}
+      onStatusChange={(value) => {
+        setStatus(value)
+        setPage(1)
+      }}
+      onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onResetFilters={() => {
         setWarehouseId('')
         setProductId('')
+        setPage(1)
       }}
       onRetryFilters={() => void Promise.all([warehousesQuery.refetch(), productsQuery.refetch()])}
       onRetry={() => void reservationsQuery.refetch()}

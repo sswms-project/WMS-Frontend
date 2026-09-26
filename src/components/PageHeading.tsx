@@ -6,12 +6,12 @@ import { APP_ROUTES } from '@/routes/app-routes'
 
 const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.notifications, label: 'Thông báo' },
-  { prefix: APP_ROUTES.auditLogs, label: 'Audit Log' },
+  { prefix: APP_ROUTES.auditLogs, label: 'Nhật ký hoạt động' },
   { prefix: APP_ROUTES.settings.accessControl, label: 'Phân quyền' },
   { prefix: APP_ROUTES.settings.security, label: 'Cài đặt' },
   { prefix: APP_ROUTES.organization, label: 'Tổ chức' },
   { prefix: APP_ROUTES.staff, label: 'Nhân sự' },
-  { prefix: APP_ROUTES.admin.tenants, label: 'Quản lý tenant' },
+  { prefix: APP_ROUTES.admin.tenants, label: 'Quản lý đơn vị thuê' },
   { prefix: APP_ROUTES.admin.subscriptionPlans, label: 'Gói đăng ký' },
   { prefix: APP_ROUTES.admin.roles, label: 'Phân quyền' },
   { prefix: APP_ROUTES.dashboard, label: 'Dashboard' },
@@ -20,10 +20,12 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.subscription, label: 'Gói dịch vụ' },
   { prefix: APP_ROUTES.warehouses, label: 'Kho hàng' },
   { prefix: APP_ROUTES.suppliers, label: 'Nhà cung cấp' },
+  { prefix: APP_ROUTES.units, label: 'Đơn vị tính' },
+  { prefix: APP_ROUTES.categories, label: 'Nhóm vật tư hàng hóa' },
   { prefix: APP_ROUTES.inboundRequests, label: 'Yêu cầu nhập kho' },
   { prefix: APP_ROUTES.inbound, label: 'Nhập kho' },
   { prefix: APP_ROUTES.inventory, label: 'Tồn kho' },
-  { prefix: APP_ROUTES.products, label: 'Sản phẩm' },
+  { prefix: APP_ROUTES.products, label: 'Danh mục vật tư hàng hóa' },
   { prefix: APP_ROUTES.stockIssueRequests, label: 'Yêu cầu xuất kho' },
   { prefix: APP_ROUTES.goodsReturnRequests, label: 'Yêu cầu trả hàng' },
 ]

@@ -8,6 +8,8 @@ Before coding, read `.rules` for baseline React rules and `docs/CODING_GUIDELINE
 
 Before implementing UI, read `docs/DESIGN_SYSTEM.md` and follow its visual system.
 
+Before implementing or changing a list/table screen, read `docs/LIST_TABLE_DESIGN_GUIDELINES.md`. Use the shared `OperationalListPanel` and `OperationalPagination` patterns so the list fills the remaining viewport height, only its body scrolls, and pagination stays pinned at the bottom. Do not duplicate fixed `calc(100vh - ...)` height formulas in feature code.
+
 Before styling UI, read `src/app/index.css` and use Tailwind design tokens instead of hard-coded color values.
 
 Before implementing or refactoring code, read `docs/CODING_GUIDELINES.md` and follow its structure, reuse, clean code, and abstraction rules.
@@ -22,7 +24,9 @@ When implementing Stitch designs, always reuse existing components from `src/com
 
 Before creating branches, commits, merges, or pushes, read `docs/GIT_WORKFLOW.md` and follow the repository Git workflow.
 
-When merging feature branches or PRs, prefer squash merge to keep `main` history clean unless the team explicitly requests preserving individual commits.
+Start working branches from freshly fetched `origin/dev` and target PRs to `dev`. Only the leader promotes `dev` to `main`. Prefer squash merge for feature PRs when merge is authorized.
+
+Use pnpm as pinned in package.json for all package operations. Codex implements when asked to fix/implement; review-only requests do not authorize source edits. Existing task authorization persists across continuations. Read `../AGENTS.md` and `../docs/BUSINESS_RULES.md` in the Kovia workspace for shared workflow and confirmed organization invariants.
 
 Before using frontend design skills or implementing screens from Stitch, read `docs/AI_WORKFLOW.md` and follow its skill selection rules.
 
@@ -36,5 +40,15 @@ Use the applicable skill before implementing or reviewing frontend work:
 - `web-design-guidelines`: apply before completing UI work to review UX, accessibility, and responsive behavior.
 
 These skills supplement, but never replace, `.rules`, `docs/CODING_GUIDELINES.md`, `docs/DESIGN_SYSTEM.md`, the feature-first architecture, Tailwind design tokens, and the `pnpm` package-manager rule.
+
+## Role and permission changes
+
+- Backend is the source of truth for permission definitions and security enforcement. Frontend permission checks only control navigation and user experience.
+- Declare frontend permission codes only in `src/config/permissionCodes.ts`; do not duplicate permission strings in pages, hooks, or components.
+- Keep route and navigation access rules under `src/config`, including `route-permissions.ts` and the existing centralized navigation configuration.
+- Pages may derive capability flags such as `canView`, `canCreate`, `canUpdate`, or `canManage` from effective permissions and pass those flags to presentational components.
+- Components must not compare hard-coded role names or permission strings. They should render from the capability props supplied by their page.
+- Do not treat a hidden button or route as authorization. Every protected operation must still be enforced by the corresponding Backend permission.
+- When adding or changing a permission, align the Backend permission constant and enforcement first, then update `permissionCodes.ts`, route/navigation configuration, and relevant visibility tests.
 
 <!-- END:nextjs-agent-rules -->

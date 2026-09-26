@@ -28,6 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -65,6 +66,7 @@ interface TenantDirectoryViewProps {
     value: 'createdAt' | 'tenantName' | 'status' | 'subscriptionEndDate'
   ) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onClear: () => void
   readonly onRetry: () => void
 }
@@ -108,7 +110,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
         value={props.status ?? 'all'}
         onValueChange={(value) => props.onStatusChange(isTenantStatus(value) ? value : undefined)}
       >
-        <SelectTrigger aria-label="Trạng thái tenant">
+        <SelectTrigger aria-label="Trạng thái đơn vị thuê">
           <SelectValue placeholder="Trạng thái" />
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
@@ -163,7 +165,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
           <SelectItem value="createdAt">Mới tạo trước</SelectItem>
-          <SelectItem value="tenantName">Tên tenant</SelectItem>
+          <SelectItem value="tenantName">Tên đơn vị thuê</SelectItem>
           <SelectItem value="status">Trạng thái</SelectItem>
           <SelectItem value="subscriptionEndDate">Ngày hết hạn</SelectItem>
         </SelectContent>
@@ -183,7 +185,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
     Number(props.sortBy !== 'createdAt')
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-end">
         <div className="flex items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
@@ -191,10 +193,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
           </span>
           <div>
             <p className="text-primary text-xs font-medium">Quản trị nền tảng</p>
-            <h2 className="text-xl font-semibold">Tenant</h2>
-            <p className="text-muted-foreground text-sm">
-              Tìm kiếm và quản lý tổ chức trên toàn hệ thống.
-            </p>
+            <h2 className="text-xl font-semibold">Đơn vị thuê</h2>
           </div>
         </div>
         <Button
@@ -212,15 +211,12 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
         </Button>
       </header>
 
-      <section
-        className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden border"
-        aria-labelledby="tenant-list-title"
-      >
+      <OperationalListPanel aria-labelledby="tenant-list-title">
         <div className="shrink-0 border-b p-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 id="tenant-list-title" className="text-sm font-semibold">
-                Danh sách tenant
+                Danh sách đơn vị thuê
               </h2>
               <p className="text-muted-foreground text-xs" aria-live="polite">
                 {props.totalCount} kết quả
@@ -239,24 +235,24 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
                 <Search aria-hidden="true" />
               </InputGroupAddon>
               <InputGroupInput
-                aria-label="Tìm tenant"
+                aria-label="Tìm đơn vị thuê"
                 name="tenantSearch"
                 autoComplete="off"
                 value={props.search}
-                placeholder="Tên, email tenant hoặc chủ sở hữu…"
+                placeholder="Tên, email đơn vị thuê hoặc chủ sở hữu…"
                 onChange={(event) => props.onSearchChange(event.target.value)}
               />
             </InputGroup>
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" aria-label="Mở bộ lọc tenant">
+                <Button variant="outline" aria-label="Mở bộ lọc đơn vị thuê">
                   <SlidersHorizontal aria-hidden="true" />
                   {secondaryFilterCount > 0 ? secondaryFilterCount : null}
                 </Button>
               </SheetTrigger>
               <SheetContent className="w-full overflow-y-auto overscroll-contain duration-300 sm:max-w-sm">
                 <SheetHeader>
-                  <SheetTitle>Bộ lọc tenant</SheetTitle>
+                  <SheetTitle>Bộ lọc đơn vị thuê</SheetTitle>
                   <SheetDescription>
                     Thu hẹp danh sách theo trạng thái, gói và ngày.
                   </SheetDescription>
@@ -278,11 +274,11 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
                 <Search aria-hidden="true" />
               </InputGroupAddon>
               <InputGroupInput
-                aria-label="Tìm tenant"
+                aria-label="Tìm đơn vị thuê"
                 name="tenantSearch"
                 autoComplete="off"
                 value={props.search}
-                placeholder="Tên, email tenant hoặc chủ sở hữu…"
+                placeholder="Tên, email đơn vị thuê hoặc chủ sở hữu…"
                 onChange={(event) => props.onSearchChange(event.target.value)}
               />
             </InputGroup>
@@ -293,10 +289,13 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
         {props.isLoading ? (
           <OperationalLoadingState />
         ) : props.isError ? (
-          <OperationalErrorState title="Không thể tải tenant" onRetry={props.onRetry} />
+          <OperationalErrorState
+            title="Không thể tải danh sách đơn vị thuê"
+            onRetry={props.onRetry}
+          />
         ) : props.items.length === 0 ? (
           <OperationalEmptyState
-            title="Không có tenant phù hợp"
+            title="Không có đơn vị thuê phù hợp"
             description="Thử thay đổi từ khóa hoặc bộ lọc."
           />
         ) : (
@@ -305,12 +304,14 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="bg-card sticky top-0">Tenant</TableHead>
-                    <TableHead className="bg-card sticky top-0">Chủ sở hữu</TableHead>
-                    <TableHead className="bg-card sticky top-0">Gói</TableHead>
-                    <TableHead className="bg-card sticky top-0 text-center">Người dùng</TableHead>
-                    <TableHead className="bg-card sticky top-0 text-center">Kho</TableHead>
-                    <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Đơn vị thuê</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Chủ sở hữu</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Gói</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10 text-center">
+                      Người dùng
+                    </TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10 text-center">Kho</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -387,8 +388,9 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
           totalCount={props.totalCount}
           isPending={props.isFetching}
           onPageChange={props.onPageChange}
+          onPageSizeChange={props.onPageSizeChange}
         />
-      </section>
+      </OperationalListPanel>
     </div>
   )
 }

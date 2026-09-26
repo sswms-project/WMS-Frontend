@@ -22,6 +22,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -51,6 +52,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { P } from '@/config/permissionCodes'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { TransferStatus, TransferSummary } from '../../types/transfer.types'
 import {
@@ -92,6 +94,7 @@ interface TransferDirectoryProps {
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onInspect: (transfer: TransferSummary) => void
   readonly onApprove: (transfer: TransferSummary) => void
@@ -124,6 +127,7 @@ export function TransferDirectory({
   onDateFromChange,
   onDateToChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onInspect,
   onApprove,
@@ -139,9 +143,9 @@ export function TransferDirectory({
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0)
 
-  const canApprove = permissions.includes('transfers:approve')
-  const canDispatch = permissions.includes('transfers:dispatch')
-  const canReceive = permissions.includes('transfers:receive')
+  const canApprove = permissions.includes(P.TRANSFERS_APPROVE)
+  const canDispatch = permissions.includes(P.TRANSFERS_DISPATCH)
+  const canReceive = permissions.includes(P.TRANSFERS_RECEIVE)
 
   const renderRowActions = (transfer: TransferSummary) => (
     <DropdownMenu>
@@ -193,7 +197,7 @@ export function TransferDirectory({
   )
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -202,12 +206,9 @@ export function TransferDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Điều chuyển</p>
             <h1 className="mt-0.5 text-xl font-semibold">Phiếu điều chuyển kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi phiếu điều chuyển từ lúc tạo, duyệt, xuất hàng cho tới khi kho nhận xác nhận.
-            </p>
           </div>
         </div>
-        {permissions.includes('transfers:create') ? (
+        {permissions.includes(P.TRANSFERS_CREATE) ? (
           <Button asChild className="w-full sm:w-auto">
             <Link href={APP_ROUTES.transferCreate}>
               <Plus aria-hidden="true" />
@@ -217,10 +218,7 @@ export function TransferDirectory({
         ) : null}
       </header>
 
-      <section
-        className="bg-card flex min-h-0 flex-col border"
-        aria-labelledby="transfer-directory-title"
-      >
+      <OperationalListPanel aria-labelledby="transfer-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="transfer-directory-title" className="text-sm font-semibold">
@@ -283,10 +281,11 @@ export function TransferDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">

@@ -89,10 +89,10 @@ function Crate({
         filter: tone === 'neon' ? `drop-shadow(${neonGlow})` : undefined,
       }}
     >
-      {floating && !prefersReducedMotion ? (
+      {floating ? (
         <motion.div
           style={{ width: size, height: size, transformStyle: 'preserve-3d' }}
-          animate={{ y: [0, -12, 0] }}
+          animate={prefersReducedMotion ? undefined : { y: [0, -12, 0] }}
           transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
         >
           {faces}
@@ -179,27 +179,27 @@ export function WarehouseScene() {
         <div style={glassPanelStyle(230, 96, 'translate3d(-115px, -20px, -60px) rotateX(90deg)')} />
 
         {/* Scan beam sweeping vertically across the rack */}
-        {!prefersReducedMotion && (
-          <motion.div
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              width: 250,
-              height: 96,
-              margin: '-48px 0 0 -125px',
-              transform: 'translate3d(-115px, 70px, -60px) rotateX(90deg)',
-              background:
-                'linear-gradient(color-mix(in oklab, var(--primary-container) 45%, transparent), transparent)',
-              borderTop: '2px solid var(--primary-container)',
-              borderRadius: 10,
-              filter: 'blur(0.5px)',
-              transformStyle: 'preserve-3d',
-            }}
-            animate={{ y: [0, -130, 0], opacity: [0.9, 0.35, 0.9] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
+        <motion.div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            width: 250,
+            height: 96,
+            margin: '-48px 0 0 -125px',
+            transform: 'translate3d(-115px, 70px, -60px) rotateX(90deg)',
+            background:
+              'linear-gradient(color-mix(in oklab, var(--primary-container) 45%, transparent), transparent)',
+            borderTop: '2px solid var(--primary-container)',
+            borderRadius: 10,
+            filter: 'blur(0.5px)',
+            transformStyle: 'preserve-3d',
+          }}
+          animate={
+            prefersReducedMotion ? undefined : { y: [0, -130, 0], opacity: [0.9, 0.35, 0.9] }
+          }
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+        />
 
         {/* Crates on the rack shelves */}
         <Crate size={40} x={-170} y={36} z={-60} tone="mint" />

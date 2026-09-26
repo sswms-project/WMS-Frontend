@@ -44,6 +44,10 @@ export interface WarehouseLayoutRackSceneResponse {
   rackCode: string
   rackName: string
   status: string
+  storageMode?: 'RackLevel' | 'SlotLevel'
+  allowsMixedProducts?: boolean
+  capacity?: number | null
+  rowVersion?: string | null
   x: number | null
   y: number | null
   width: number | null
@@ -60,7 +64,9 @@ export interface WarehouseLayoutSlotSceneResponse {
   slotCode: string
   occupancyStatus: string
   isActive: boolean
-  capacity: number
+  isOutboundStaging?: boolean
+  allowsMixedProducts?: boolean
+  capacity: number | null
   currentOccupancy: number
 }
 

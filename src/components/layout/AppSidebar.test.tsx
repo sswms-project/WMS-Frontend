@@ -116,7 +116,10 @@ describe('AppSidebar tenant navigation', () => {
       'true'
     )
     expect(screen.getByRole('button', { name: 'Danh mục' })).toHaveAttribute('data-active', 'true')
-    expect(screen.getByRole('link', { name: 'Sản phẩm' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Danh mục VTHH' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
   })
 
   it('supports keyboard-accessible group collapse without removing the group trigger', async () => {
@@ -149,7 +152,7 @@ describe('AppSidebar tenant navigation', () => {
       'aria-expanded',
       'false'
     )
-    expect(screen.getByRole('button', { name: 'Vận hành kho' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Hoạt Động Kho' })).toHaveAttribute(
       'aria-expanded',
       'true'
     )
@@ -161,7 +164,7 @@ describe('AppSidebar tenant navigation', () => {
 
     renderSidebar()
 
-    expect(screen.getByRole('button', { name: 'Vận hành kho' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Hoạt Động Kho' })).toHaveAttribute(
       'aria-expanded',
       'true'
     )
@@ -176,7 +179,7 @@ describe('AppSidebar tenant navigation', () => {
   it('renders completed operation destinations as links', async () => {
     const user = userEvent.setup()
     renderSidebar()
-    await user.click(screen.getByRole('button', { name: 'Vận hành kho' }))
+    await user.click(screen.getByRole('button', { name: 'Hoạt Động Kho' }))
 
     expect(screen.getByRole('link', { name: 'Điều chuyển kho' })).toHaveAttribute(
       'href',

@@ -1,4 +1,4 @@
-import type { InboundRequestStatus } from '../types/inbound-request.types'
+import type { InboundRequestStatus, LookupOption } from '../types/inbound-request.types'
 
 const OPERATIONAL_TIME_ZONE = 'Asia/Ho_Chi_Minh'
 const OPERATIONAL_DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
@@ -75,4 +75,13 @@ export function formatCurrency(value: number | null, currency = 'VND') {
     currency,
     maximumFractionDigits: currency === 'VND' ? 0 : 2,
   }).format(value)
+}
+
+export function mergeLookupOptions(
+  options: readonly LookupOption[],
+  fallbackOptions: readonly LookupOption[]
+): LookupOption[] {
+  return Array.from(
+    new Map([...fallbackOptions, ...options].map((option) => [option.value, option])).values()
+  )
 }

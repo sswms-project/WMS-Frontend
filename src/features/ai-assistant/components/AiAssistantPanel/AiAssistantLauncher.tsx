@@ -92,7 +92,9 @@ function getDraggedPosition(
 export function AiAssistantLauncher() {
   const user = useAuthStore((state) => state.user)
   const [open, setOpen] = useState(false)
-  const [position, setPosition] = useState<LauncherPosition | null>(null)
+  const [position, setPosition] = useState<LauncherPosition | null>(() =>
+    typeof window !== 'undefined' ? (getStoredPosition() ?? getDefaultPosition()) : null
+  )
   const dragState = useRef<DragState | null>(null)
   const hasDragged = useRef(false)
   // Kept here so closing the sheet does not lose the current conversation.

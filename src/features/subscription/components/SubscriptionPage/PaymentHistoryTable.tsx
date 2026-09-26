@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, ListFilter, Printer, Search } from 'lucide-react'
+import { Download, ListFilter, Printer, Search } from 'lucide-react'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import {
   InputGroup,
@@ -58,8 +59,8 @@ interface PaymentHistoryTableProps {
   readonly onFiltersChange: (filters: PaymentHistoryFilterState) => void
   readonly onFiltersSubmit: () => void
   readonly onFiltersReset: () => void
-  readonly onPreviousPage: () => void
-  readonly onNextPage: () => void
+  readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onDownloadInvoice: (payment: PaymentResponse) => void
   readonly onPrintInvoice: (payment: PaymentResponse) => void
@@ -79,22 +80,21 @@ export function PaymentHistoryTable({
   onFiltersChange,
   onFiltersSubmit,
   onFiltersReset,
-  onPreviousPage,
-  onNextPage,
+  onPageChange,
+  onPageSizeChange,
   onRetry,
   onDownloadInvoice,
   onPrintInvoice,
 }: PaymentHistoryTableProps) {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
-  const hasPrevious = pageIndex > 0
-  const hasNext = (pageIndex + 1) * pageSize < totalCount
-
   return (
-    <Card className="border-border min-w-0">
-      <CardHeader className="flex flex-col gap-3 border-b sm:flex-row sm:items-end sm:justify-between">
+    <OperationalListPanel aria-label="Lịch sử thanh toán">
+      <div className="flex shrink-0 flex-col gap-3 border-b p-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <CardTitle className="text-base font-semibold">Danh sách giao dịch</CardTitle>
-          <CardDescription>Tra cứu trạng thái và tải hóa đơn PDF khi cần đối soát.</CardDescription>
+          <h2 className="text-base font-semibold">Danh sách giao dịch</h2>
+          <p className="text-muted-foreground text-sm">
+            Tra cứu trạng thái và tải hóa đơn PDF khi cần đối soát.
+          </p>
         </div>
 
         <form
@@ -125,9 +125,9 @@ export function PaymentHistoryTable({
             Bộ lọc
           </Button>
         </form>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex flex-col gap-4">
+      <div data-slot="operational-list-body" className="flex min-h-0 flex-col gap-4 p-4">
         {isLoading ? (
           <div className="flex flex-col gap-2">
             {Array.from({ length: 5 }).map((_, index) => (
@@ -172,37 +172,16 @@ export function PaymentHistoryTable({
             />
           </>
         )}
+      </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted-foreground text-xs tabular-nums">
-            {totalCount > 0
-              ? `Hiển thị ${pageIndex * pageSize + 1}-${Math.min((pageIndex + 1) * pageSize, totalCount)} trong ${totalCount} hóa đơn`
-              : 'Không có hóa đơn'}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasPrevious}
-              onClick={onPreviousPage}
-            >
-              <ChevronLeft data-icon="inline-start" aria-hidden="true" />
-              Trước
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasNext}
-              onClick={onNextPage}
-            >
-              Sau
-              <ChevronRight data-icon="inline-end" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
+      <OperationalPagination
+        page={pageIndex + 1}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        isPending={isLoading}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
 
       <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
         <SheetContent className="w-full sm:max-w-md">
@@ -224,7 +203,7 @@ export function PaymentHistoryTable({
           </div>
         </SheetContent>
       </Sheet>
-    </Card>
+    </OperationalListPanel>
   )
 }
 

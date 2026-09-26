@@ -7,10 +7,14 @@ import {
   ClipboardCheck,
   History,
   LockKeyhole,
+  ShieldAlert,
+  PackagePlus,
+  Scale,
   SlidersHorizontal,
   TrendingUp,
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import { P } from '@/config/permissionCodes'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +26,9 @@ type InventoryWorkspaceView =
   | 'forecast'
   | 'cycle-counts'
   | 'adjustments'
+  | 'damage-cases'
+  | 'opening-stocks'
+  | 'discrepancies'
 
 interface InventoryWorkspaceNavigationProps {
   readonly currentView: InventoryWorkspaceView
@@ -54,7 +61,7 @@ export function InventoryWorkspaceNavigation({
       className="flex shrink-0 gap-1 overflow-x-auto border-b px-1 pb-1"
       aria-label="Không gian kiểm soát tồn kho"
     >
-      {permissions.includes('inventory:view') ? (
+      {permissions.includes(P.INVENTORY_VIEW) ? (
         <Link
           href={APP_ROUTES.inventory}
           aria-current={currentView === 'availability' ? 'page' : undefined}
@@ -64,7 +71,7 @@ export function InventoryWorkspaceNavigation({
           Tồn kho khả dụng
         </Link>
       ) : null}
-      {permissions.includes('cycle-counts:view') ? (
+      {permissions.includes(P.CYCLE_COUNTS_VIEW) ? (
         <Link
           href={APP_ROUTES.cycleCounts}
           aria-current={currentView === 'cycle-counts' ? 'page' : undefined}
@@ -74,7 +81,7 @@ export function InventoryWorkspaceNavigation({
           Kiểm kê
         </Link>
       ) : null}
-      {permissions.includes('stock-adjustments:view') ? (
+      {permissions.includes(P.STOCK_ADJUSTMENTS_VIEW) ? (
         <Link
           href={APP_ROUTES.stockAdjustments}
           aria-current={currentView === 'adjustments' ? 'page' : undefined}
@@ -84,7 +91,7 @@ export function InventoryWorkspaceNavigation({
           Điều chỉnh
         </Link>
       ) : null}
-      {permissions.includes('inventory:view') ? (
+      {permissions.includes(P.INVENTORY_VIEW) ? (
         <>
           <Link
             href={APP_ROUTES.inventoryMovements}
@@ -103,12 +110,36 @@ export function InventoryWorkspaceNavigation({
             Tồn đang giữ
           </Link>
           <Link
+            href={APP_ROUTES.inventoryDamageCases}
+            aria-current={currentView === 'damage-cases' ? 'page' : undefined}
+            className={linkClassName('damage-cases')}
+          >
+            <ShieldAlert className="size-4" aria-hidden="true" />
+            Hàng hỏng
+          </Link>
+          <Link
+            href={APP_ROUTES.inventoryOpeningStocks}
+            aria-current={currentView === 'opening-stocks' ? 'page' : undefined}
+            className={linkClassName('opening-stocks')}
+          >
+            <PackagePlus className="size-4" aria-hidden="true" />
+            Tồn đầu
+          </Link>
+          <Link
             href={APP_ROUTES.inventoryAbcClassification}
             aria-current={currentView === 'abc' ? 'page' : undefined}
             className={linkClassName('abc')}
           >
             <ChartNoAxesColumnIncreasing className="size-4" aria-hidden="true" />
             Phân loại ABC
+          </Link>
+          <Link
+            href={APP_ROUTES.inventoryDiscrepancies}
+            aria-current={currentView === 'discrepancies' ? 'page' : undefined}
+            className={linkClassName('discrepancies')}
+          >
+            <Scale className="size-4" aria-hidden="true" />
+            Chênh lệch
           </Link>
           <Link
             href={APP_ROUTES.inventoryForecast}

@@ -26,7 +26,9 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { StockIssueWorkspaceNavigation } from '@/components/operations/StockIssueWorkspaceNavigation'
+import { P } from '@/config/permissionCodes'
 import type {
   GoodsReturnRequestStatus,
   GoodsReturnRequestSummary,
@@ -56,6 +58,7 @@ interface GoodsReturnRequestDirectoryProps {
   readonly onDateFromChange: (value: string) => void
   readonly onDateToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onInspect: (item: GoodsReturnRequestSummary) => void
   readonly onApprove: (item: GoodsReturnRequestSummary) => void
   readonly onReject: (item: GoodsReturnRequestSummary) => void
@@ -84,14 +87,15 @@ export function GoodsReturnRequestDirectory({
   onDateFromChange,
   onDateToChange,
   onPageChange,
+  onPageSizeChange,
   onInspect,
   onApprove,
   onReject,
   onRetry,
 }: GoodsReturnRequestDirectoryProps) {
-  const canApprove = permissions.includes('goods-return-requests:approve')
+  const canApprove = permissions.includes(P.GOODS_RETURN_REQUESTS_APPROVE)
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 items-start gap-3 border-b pb-4">
         <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
           <Undo2 aria-hidden="true" />
@@ -99,13 +103,10 @@ export function GoodsReturnRequestDirectory({
         <div>
           <p className="text-primary text-xs font-medium">Xuất kho</p>
           <h1 className="text-xl font-semibold">Yêu cầu trả hàng</h1>
-          <p className="text-muted-foreground text-sm">
-            Duyệt và theo dõi hàng trả theo yêu cầu xuất kho.
-          </p>
         </div>
       </header>
       <StockIssueWorkspaceNavigation currentView="goodsReturnRequests" permissions={permissions} />
-      <section className="bg-card flex min-h-0 flex-col overflow-hidden border [&>[data-slot=table-container]]:overflow-y-auto">
+      <OperationalListPanel aria-label="Danh sách phiếu hoàn hàng">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 className="text-sm font-semibold">Danh sách yêu cầu trả hàng</h2>
@@ -177,12 +178,12 @@ export function GoodsReturnRequestDirectory({
           <Table className="min-w-[760px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky top-0">Mã phiếu</TableHead>
-                <TableHead className="bg-card sticky top-0">Yêu cầu xuất kho</TableHead>
-                <TableHead className="bg-card sticky top-0">Lý do</TableHead>
-                <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
-                <TableHead className="bg-card sticky top-0">Ngày tạo</TableHead>
-                <TableHead className="bg-card sticky top-0">
+                <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Yêu cầu xuất kho</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Lý do</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Ngày tạo</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">
                   <span className="sr-only">Thao tác</span>
                 </TableHead>
               </TableRow>
@@ -246,8 +247,9 @@ export function GoodsReturnRequestDirectory({
           totalCount={totalCount}
           isPending={isFetching}
           onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
-      </section>
+      </OperationalListPanel>
     </div>
   )
 }

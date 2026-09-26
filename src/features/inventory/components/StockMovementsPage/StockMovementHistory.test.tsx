@@ -14,12 +14,15 @@ const movement = {
   lotId: null,
   lotNumber: null,
   qualityStatus: 'Good' as const,
+  eligibilityStatus: 'Available' as const,
   quantityChange: -4.5,
   balanceAfter: 15.5,
   unitCost: null,
   movementType: 'Issue' as const,
   referenceType: 'StockIssueRequest',
   referenceId: '12345678-1234-1234-1234-123456789abc',
+  correctsMovementId: null,
+  correctionReason: null,
   performedByUserId: 'user-1',
   performedByName: 'Nguyễn Văn Kho',
   occurredAt: '2026-08-24T10:00:00+07:00',
@@ -35,25 +38,37 @@ function createProps(
     totalCount: 0,
     page: 1,
     pageSize: 20,
+    searchText: '',
+    warehouseId: '',
+    slotId: '',
     productId: '',
     movementType: '',
     dateFrom: '',
     dateTo: '',
     productOptions: [{ value: 'product-1', label: 'SKU-01 · Bộ điều khiển nhiệt độ' }],
+    warehouseOptions: [],
+    slotOptions: [],
     isLoading: false,
     isFetching: false,
     isError: false,
     isDateRangeValid: true,
     areProductsLoading: false,
     areProductsError: false,
+    areLocationsLoading: false,
+    areLocationsError: false,
     activeFilterCount: 0,
     onProductChange: vi.fn(),
+    onSearchChange: vi.fn(),
+    onWarehouseChange: vi.fn(),
+    onSlotChange: vi.fn(),
     onMovementTypeChange: vi.fn(),
     onDateFromChange: vi.fn(),
     onDateToChange: vi.fn(),
     onResetFilters: vi.fn(),
     onRetryProducts: vi.fn(),
+    onRetryLocations: vi.fn(),
     onPageChange: vi.fn(),
+    onPageSizeChange: vi.fn(),
     onRetry: vi.fn(),
     ...overrides,
   }
@@ -100,7 +115,7 @@ describe('StockMovementHistory states', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Làm mới lịch sử biến động' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Sau' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Trang sau' }))
     fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }))
     fireEvent.change(screen.getByLabelText('Sản phẩm'), { target: { value: 'product-1' } })
     fireEvent.change(screen.getByLabelText('Loại biến động'), { target: { value: 'Inbound' } })

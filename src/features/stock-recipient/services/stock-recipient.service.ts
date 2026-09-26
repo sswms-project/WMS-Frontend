@@ -12,6 +12,11 @@ import type {
 } from '../types/stock-recipient.types'
 
 export const stockRecipientService = {
+  getNextCode: () =>
+    axiosClient
+      .get<ApiResponse<string>>(API_ENDPOINTS.stockRecipients.nextCode)
+      .then((response) => response.data),
+
   getStockRecipients: (params: StockRecipientListQuery) =>
     axiosClient
       .get<ApiResponse<StockRecipientListResponse>>(API_ENDPOINTS.stockRecipients.list, { params })
@@ -37,5 +42,12 @@ export const stockRecipientService = {
   updateStockRecipient: (stockRecipientId: string, request: UpdateStockRecipientRequest) =>
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.stockRecipients.update(stockRecipientId), request)
+      .then((response) => response.data),
+
+  changeStatus: (stockRecipientId: string, status: 'Active' | 'Inactive') =>
+    axiosClient
+      .patch<
+        ApiResponse<unknown>
+      >(status === 'Active' ? API_ENDPOINTS.stockRecipients.reactivate(stockRecipientId) : API_ENDPOINTS.stockRecipients.deactivate(stockRecipientId))
       .then((response) => response.data),
 }

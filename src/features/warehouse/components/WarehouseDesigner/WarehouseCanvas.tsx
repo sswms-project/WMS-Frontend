@@ -152,9 +152,13 @@ function getFitViewport(
 }
 
 function getOccupancyLabel(slots: WarehouseLayoutEditorScene['slots']) {
-  const occupancy = slots.reduce((total, slot) => total + slot.currentOccupancy, 0)
-  const capacity = slots.reduce((total, slot) => total + slot.capacity, 0)
-  return slots.length > 0 ? `${occupancy} / ${capacity}` : 'Chưa có vị trí'
+  if (slots.length === 0) return 'Chưa có vị trí'
+  if (slots.length > 1) return `${slots.length} vị trí lưu trữ`
+
+  const slot = slots[0]!
+  return slot.capacity === null
+    ? 'Không áp dụng giới hạn số lượng'
+    : `${slot.currentOccupancy} / ${slot.capacity}`
 }
 
 function isSelected(

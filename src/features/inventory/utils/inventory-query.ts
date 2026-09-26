@@ -4,6 +4,7 @@ interface InventoryFilters {
   readonly searchTerm: string
   readonly warehouseId: string
   readonly productId: string
+  readonly slotId?: string
 }
 
 export function buildInventoryQuery(
@@ -19,5 +20,6 @@ export function buildInventoryQuery(
     ...(searchTerm ? { searchTerm } : {}),
     ...(filters.warehouseId ? { warehouseId: filters.warehouseId } : {}),
     ...(filters.productId ? { productId: filters.productId } : {}),
+    ...(filters.slotId ? { slotId: filters.slotId } : {}),
   }
 }

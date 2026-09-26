@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useProductListQuery } from '@/features/product/hooks/use-products'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
@@ -90,7 +91,7 @@ export default function InventoryForecastPage() {
           void historyQuery.refetch()
         }}
       />
-      {permissions.includes('products:configure-policy') ? (
+      {permissions.includes(P.PRODUCTS_CONFIGURE_POLICY) ? (
         <ForecastRunPanel warehouseOptions={warehouseOptions} permissions={permissions} />
       ) : null}
     </div>

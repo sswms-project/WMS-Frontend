@@ -8,6 +8,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -31,7 +32,12 @@ import {
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { InventoryFilterOption, InventoryStock } from '../../types/inventory.types'
-import { formatInventoryDate, formatInventoryQuantity } from '../../utils/inventory-format'
+import {
+  formatEligibilityStatus,
+  formatInventoryDate,
+  formatInventoryQuantity,
+  formatQualityStatus,
+} from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 
 interface InventoryDirectoryProps {
@@ -43,8 +49,11 @@ interface InventoryDirectoryProps {
   readonly searchText: string
   readonly warehouseId: string
   readonly productId: string
+  readonly slotId: string
   readonly warehouseOptions: readonly InventoryFilterOption[]
   readonly productOptions: readonly InventoryFilterOption[]
+  readonly slotOptions: readonly InventoryFilterOption[]
+  readonly snapshotAt: string | null
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
@@ -55,9 +64,11 @@ interface InventoryDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onWarehouseChange: (value: string) => void
   readonly onProductChange: (value: string) => void
+  readonly onSlotChange: (value: string) => void
   readonly onResetFilters: () => void
   readonly onRetryFilters: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onReportDamaged: (item: InventoryStock) => void
 }
@@ -71,8 +82,11 @@ export function InventoryDirectory({
   searchText,
   warehouseId,
   productId,
+  slotId,
   warehouseOptions,
   productOptions,
+  slotOptions,
+  snapshotAt,
   isLoading,
   isFetching,
   isError,
@@ -83,16 +97,18 @@ export function InventoryDirectory({
   onSearchChange,
   onWarehouseChange,
   onProductChange,
+  onSlotChange,
   onResetFilters,
   onRetryFilters,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onReportDamaged,
 }: InventoryDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -101,9 +117,6 @@ export function InventoryDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Tồn kho khả dụng</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi tồn thực tế, lượng đã giữ và lượng có thể sử dụng tại từng vị trí.
-            </p>
           </div>
         </div>
         <div className="border-primary/20 bg-primary/5 flex min-h-10 items-center gap-2 border px-3">
@@ -114,16 +127,15 @@ export function InventoryDirectory({
 
       <InventoryWorkspaceNavigation currentView="availability" permissions={permissions} />
 
-      <section
-        className="bg-card @container flex min-h-0 flex-col border"
-        aria-labelledby="inventory-title"
-      >
+      <OperationalListPanel className="@container" aria-labelledby="inventory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="inventory-title" className="text-sm font-semibold">
               Danh sách tồn kho
             </h2>
-            <p className="text-muted-foreground text-xs">Dữ liệu được hiển thị theo từng slot.</p>
+            <p className="text-muted-foreground text-xs">
+              Dữ liệu theo từng slot · Ảnh chụp {formatInventoryDate(snapshotAt)}
+            </p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
             <InputGroup className="h-11 min-w-0 flex-1 sm:h-8 sm:w-72">
@@ -185,9 +197,18 @@ export function InventoryDirectory({
           {isFetching ? 'Đang cập nhật tồn kho' : 'Tồn kho đã cập nhật'}
         </p>
 
+        {isError && items.length > 0 ? (
+          <div
+            className="border-b border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"
+            role="alert"
+          >
+            Chưa thể tải dữ liệu mới. Vui lòng kiểm tra thời điểm cập nhật và thử lại.
+          </div>
+        ) : null}
+
         {isLoading ? (
           <OperationalLoadingState rows={8} />
-        ) : isError ? (
+        ) : isError && items.length === 0 ? (
           <OperationalErrorState title="Không thể tải tồn kho" onRetry={onRetry} />
         ) : items.length === 0 ? (
           <OperationalEmptyState
@@ -216,16 +237,17 @@ export function InventoryDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}
-      </section>
+      </OperationalListPanel>
 
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent className="w-full sm:max-w-sm">
           <SheetHeader>
             <SheetTitle>Lọc tồn kho</SheetTitle>
-            <SheetDescription>Thu hẹp dữ liệu theo kho hoặc sản phẩm.</SheetDescription>
+            <SheetDescription>Thu hẹp dữ liệu theo kho, vị trí hoặc sản phẩm.</SheetDescription>
           </SheetHeader>
           <FieldGroup className="flex-1 p-4">
             {areFiltersError ? (
@@ -258,6 +280,25 @@ export function InventoryDirectory({
               >
                 <NativeSelectOption value="">Tất cả kho</NativeSelectOption>
                 {warehouseOptions.map((option) => (
+                  <NativeSelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="inventory-slot">Vị trí</FieldLabel>
+              <NativeSelect
+                id="inventory-slot"
+                className="h-11 sm:h-8"
+                value={slotId}
+                disabled={areFiltersLoading || !warehouseId}
+                onChange={(event) => onSlotChange(event.target.value)}
+              >
+                <NativeSelectOption value="">
+                  {warehouseId ? 'Tất cả vị trí' : 'Chọn kho trước'}
+                </NativeSelectOption>
+                {slotOptions.map((option) => (
                   <NativeSelectOption key={option.value} value={option.value}>
                     {option.label}
                   </NativeSelectOption>
@@ -311,7 +352,7 @@ function InventoryMobileList({
   readonly onReportDamaged: (item: InventoryStock) => void
 }) {
   return (
-    <ItemGroup className="gap-0 @min-[980px]:hidden">
+    <ItemGroup className="min-h-0 flex-1 gap-0 overflow-y-auto @min-[980px]:hidden">
       {items.map((item) => (
         <Item key={item.id} className="border-b last:border-b-0">
           <ItemContent className="min-w-0">
@@ -329,7 +370,8 @@ function InventoryMobileList({
             </ItemDescription>
             <ItemDescription>
               {item.lotNumber ? `Lô ${item.lotNumber} · ` : ''}
-              {item.qualityStatus}
+              {formatQualityStatus(item.qualityStatus)} ·{' '}
+              {formatEligibilityStatus(item.eligibilityStatus)}
             </ItemDescription>
             {canReportDamaged && item.availableQuantity > 0 ? (
               <Button
@@ -343,8 +385,9 @@ function InventoryMobileList({
               </Button>
             ) : null}
             <ItemDescription>
-              Thực tế {formatInventoryQuantity(item.quantityOnHand)} · Đã giữ{' '}
-              {formatInventoryQuantity(item.reservedQuantity)}
+              Thực tế {formatInventoryQuantity(item.quantityOnHand)} · Đã đặt trước{' '}
+              {formatInventoryQuantity(item.reservedQuantity)} · Đang giữ{' '}
+              {formatInventoryQuantity(item.holdQuantity)}
             </ItemDescription>
           </ItemContent>
         </Item>
@@ -369,9 +412,10 @@ function InventoryDesktopTable({
           <TableRow>
             <TableHead className="bg-card sticky top-0 z-10 w-56">Sản phẩm</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-40">Kho / Slot</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36">Lô / Chất lượng</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-40">Lô / Trạng thái</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đã giữ</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đặt trước</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đang giữ</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Khả dụng</TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-32">Cập nhật</TableHead>
             {canReportDamaged ? (
@@ -396,13 +440,19 @@ function InventoryDesktopTable({
               </TableCell>
               <TableCell>
                 <p className="truncate font-mono text-xs">{item.lotNumber ?? 'Không theo lô'}</p>
-                <p className="text-muted-foreground text-xs">{item.qualityStatus}</p>
+                <p className="text-muted-foreground text-xs">
+                  {formatQualityStatus(item.qualityStatus)} ·{' '}
+                  {formatEligibilityStatus(item.eligibilityStatus)}
+                </p>
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
                 {formatInventoryQuantity(item.quantityOnHand)}
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
                 {formatInventoryQuantity(item.reservedQuantity)}
+              </TableCell>
+              <TableCell className="text-right font-mono tabular-nums">
+                {formatInventoryQuantity(item.holdQuantity)}
               </TableCell>
               <TableCell className="text-primary text-right font-mono font-semibold tabular-nums">
                 {formatInventoryQuantity(item.availableQuantity)}

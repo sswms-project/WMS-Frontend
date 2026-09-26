@@ -1,14 +1,34 @@
 'use client'
 
-import { useState } from 'react'
-import { ArrowLeft, Boxes, Pencil, QrCode, RefreshCw, Settings2, Store } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import {
+  ArrowLeft,
+  Boxes,
+  Pencil,
+  Power,
+  QrCode,
+  RefreshCw,
+  RotateCcw,
+  Scale,
+  Settings2,
+  Store,
+} from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
+import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
+import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
+import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import {
+  useWarehouseLocationsQuery,
+  useWarehousesQuery,
+} from '@/features/warehouse/hooks/use-warehouse'
+import { useSuppliersQuery } from '@/features/supplier/hooks/use-suppliers'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { APP_ROUTES } from '@/routes/app-routes'
@@ -18,22 +38,42 @@ import {
   ProductSuppliersPanel,
   ProductLotsPanel,
   ProductWarehousePoliciesPanel,
+  ProductUnitConversionsPanel,
 } from '../components/ProductDetailPage'
 import { UpdateProductDialog } from '../components/ProductForm'
 import { ProductStockPolicyDialog } from '../components/ProductStockPolicyForm'
 import {
   useProductDetailQuery,
+  useChangeProductStatusMutation,
+  useChangeStockPolicyStatusMutation,
+  useChangeProductUnitConversionStatusMutation,
+  useAddProductSupplierMutation,
+  useCreateProductUnitConversionMutation,
   useCategoriesQuery,
   useUpdateProductMutation,
   useConfigureStockPolicyMutation,
   useGenerateBarcodeMutation,
   useProductLotsQuery,
   useProductStockPoliciesQuery,
+  useProductSuppliersQuery,
+  useProductUnitConversionsQuery,
+  useUpdateProductUnitConversionMutation,
+  useUpdateProductSupplierMutation,
+  useDeleteProductSupplierMutation,
   useUpdateProductLotStatusMutation,
   useUnitsQuery,
 } from '../hooks/use-products'
-import type { StockPolicyFormValues, UpdateProductFormValues } from '../schemas/product.schema'
-import type { ProductLot, ProductLotStatus } from '../types/product.types'
+import {
+  productUnitConversionSchema,
+  type ProductUnitConversionFormValues,
+} from '../schemas/master-data.schema'
+import {
+  stockPolicySchema,
+  updateProductSchema,
+  type StockPolicyFormValues,
+  type UpdateProductFormValues,
+} from '../schemas/product.schema'
+import type { ProductLot, ProductLotStatus, ProductUnitConversion } from '../types/product.types'
 
 interface ProductDetailPageProps {
   readonly productId: string
@@ -43,8 +83,13 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(() => searchParams.get('edit') === '1')
   const [isStockPolicyOpen, setIsStockPolicyOpen] = useState(false)
+  const [policyWarehouseId, setPolicyWarehouseId] = useState('')
+  const [isConversionOpen, setIsConversionOpen] = useState(false)
+  const [isProductStatusOpen, setIsProductStatusOpen] = useState(false)
+  const [discardTarget, setDiscardTarget] = useState<'product' | 'policy' | null>(null)
+  const [editingConversion, setEditingConversion] = useState<ProductUnitConversion | null>(null)
   const [lotWarehouseId, setLotWarehouseId] = useState('')
   const [lotStatus, setLotStatus] = useState<ProductLotStatus | ''>('')
   const [onlyAvailableLots, setOnlyAvailableLots] = useState(false)
@@ -53,10 +98,28 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const detailQuery = useProductDetailQuery(productId)
   const meQuery = useMeQuery()
   const updateMutation = useUpdateProductMutation(productId)
+  const productStatusMutation = useChangeProductStatusMutation(productId)
   const stockPolicyMutation = useConfigureStockPolicyMutation(productId)
   const barcodeMutation = useGenerateBarcodeMutation(productId)
   const policiesQuery = useProductStockPoliciesQuery(productId)
+  const policyStatusMutation = useChangeStockPolicyStatusMutation(productId)
+  const conversionsQuery = useProductUnitConversionsQuery(productId)
+  const createConversionMutation = useCreateProductUnitConversionMutation(productId)
+  const updateConversionMutation = useUpdateProductUnitConversionMutation(productId)
+  const conversionStatusMutation = useChangeProductUnitConversionStatusMutation(productId)
   const warehousesQuery = useWarehousesQuery({ top: 100, skip: 0, needTotalCount: true })
+  const policyLocationsQuery = useWarehouseLocationsQuery(policyWarehouseId, {
+    top: 1000,
+    skip: 0,
+    needTotalCount: true,
+    type: 'Slot',
+    lifecycleStatus: 'Active',
+  })
+  const suppliersQuery = useSuppliersQuery({ pageNumber: 1, pageSize: 100, status: 'Active' })
+  const productSuppliersQuery = useProductSuppliersQuery(productId)
+  const addSupplierMutation = useAddProductSupplierMutation(productId)
+  const updateSupplierMutation = useUpdateProductSupplierMutation(productId)
+  const deleteSupplierMutation = useDeleteProductSupplierMutation(productId)
   const lotsQuery = useProductLotsQuery(
     productId,
     {
@@ -68,20 +131,119 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     Boolean(detailQuery.data?.isLotTracked)
   )
   const lotStatusMutation = useUpdateProductLotStatusMutation(productId)
-  const unitsQuery = useUnitsQuery(isEditOpen)
-  const categoriesQuery = useCategoriesQuery(isEditOpen)
+  const unitsQuery = useUnitsQuery(isEditOpen || isConversionOpen, 'Active')
+  const categoriesQuery = useCategoriesQuery(isEditOpen, 'Active')
+  const conversionForm = useForm<ProductUnitConversionFormValues>({
+    resolver: zodResolver(productUnitConversionSchema),
+    defaultValues: { unitId: '', conversionFactor: 1 },
+  })
+  const updateProductForm = useForm<UpdateProductFormValues>({
+    resolver: zodResolver(updateProductSchema),
+    defaultValues: {
+      productName: '',
+      description: null,
+      unitId: '',
+      categoryId: '',
+      isLotTracked: false,
+      shelfLifeDays: null,
+    },
+  })
+  const stockPolicyForm = useForm<StockPolicyFormValues>({
+    resolver: zodResolver(stockPolicySchema),
+    defaultValues: {
+      warehouseId: '',
+      preferredSlotId: null,
+      minStockThreshold: 0,
+      maxStockThreshold: null,
+      reorderPoint: null,
+      safetyStock: 0,
+      leadTimeDays: null,
+    },
+  })
 
   const product = detailQuery.data
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const canUpdate = permissions.has('products:update')
-  const canConfigureStockPolicy = permissions.has('products:configure-policy')
-  const canGenerateBarcode = permissions.has('products:generate-barcode')
+  const canUpdate = permissions.has(P.PRODUCTS_UPDATE)
+  const canConfigureStockPolicy = permissions.has(P.PRODUCTS_CONFIGURE_POLICY)
+  const canGenerateBarcode = permissions.has(P.PRODUCTS_GENERATE_BARCODE)
+  const canManageConversions = permissions.has(P.UNITS_MANAGE)
+  const canManageCategories = permissions.has(P.CATEGORIES_MANAGE)
+
+  useEffect(() => {
+    if (searchParams.get('edit') !== '1' || !product || !canUpdate || !isEditOpen) return
+    updateProductForm.reset({
+      productName: product.productName,
+      description: product.description,
+      unitId: product.unitId,
+      categoryId: product.categoryId ?? '',
+      isLotTracked: product.isLotTracked,
+      shelfLifeDays: product.shelfLifeDays,
+    })
+  }, [canUpdate, isEditOpen, product, searchParams, updateProductForm])
+
+  async function handleProductStatus() {
+    if (!product) return
+    const status = product.status === 'Active' ? 'Inactive' : 'Active'
+    try {
+      await productStatusMutation.mutateAsync(status)
+      toast.success(status === 'Active' ? 'Đã kích hoạt sản phẩm.' : 'Đã ngừng sản phẩm.')
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái sản phẩm.'))
+    }
+  }
+
+  function openCreateConversion() {
+    setEditingConversion(null)
+    conversionForm.reset({ unitId: '', conversionFactor: 1 })
+    setIsConversionOpen(true)
+  }
+
+  function openEditConversion(conversion: ProductUnitConversion) {
+    setEditingConversion(conversion)
+    conversionForm.reset({
+      unitId: conversion.unitId,
+      conversionFactor: conversion.conversionFactor,
+    })
+    setIsConversionOpen(true)
+  }
+
+  async function saveConversion(values: ProductUnitConversionFormValues) {
+    try {
+      if (editingConversion) {
+        await updateConversionMutation.mutateAsync({
+          conversionId: editingConversion.id,
+          request: { conversionFactor: values.conversionFactor },
+        })
+        toast.success('Đã cập nhật quy đổi đơn vị.')
+      } else {
+        await createConversionMutation.mutateAsync(values)
+        toast.success('Đã thêm quy đổi đơn vị.')
+      }
+      setIsConversionOpen(false)
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể lưu quy đổi đơn vị.'))
+    }
+  }
+
+  async function changeConversionStatus(conversion: ProductUnitConversion) {
+    const status = conversion.status === 'Active' ? 'Inactive' : 'Active'
+    try {
+      await conversionStatusMutation.mutateAsync({ conversionId: conversion.id, status })
+      toast.success(status === 'Active' ? 'Đã kích hoạt quy đổi.' : 'Đã ngừng quy đổi.')
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái quy đổi.'))
+    }
+  }
 
   async function handleUpdate(values: UpdateProductFormValues) {
     try {
       await updateMutation.mutateAsync(values)
       toast.success('Đã cập nhật sản phẩm.')
-      setIsEditOpen(false)
+      updateProductForm.reset(values)
+      closeProductEditor()
     } catch (error) {
       logger.error(formatApiError(error))
       const message = getApiErrorMessage(error, 'Không thể cập nhật sản phẩm.')
@@ -93,6 +255,40 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
         await detailQuery.refetch()
       }
     }
+  }
+
+  function openProductEditor() {
+    if (!product) return
+    updateProductForm.reset({
+      productName: product.productName,
+      description: product.description,
+      unitId: product.unitId,
+      categoryId: product.categoryId ?? '',
+      isLotTracked: product.isLotTracked,
+      shelfLifeDays: product.shelfLifeDays,
+    })
+    setIsEditOpen(true)
+  }
+
+  function changeProductEditorOpen(open: boolean) {
+    if (open) {
+      setIsEditOpen(true)
+      return
+    }
+    if (updateProductForm.formState.isDirty) {
+      setDiscardTarget('product')
+      return
+    }
+    closeProductEditor()
+  }
+
+  function closeProductEditor() {
+    setIsEditOpen(false)
+    if (searchParams.get('edit') !== '1') return
+    const next = new URLSearchParams(searchParams.toString())
+    next.delete('edit')
+    const query = next.toString()
+    router.replace((query ? `${pathname}?${query}` : pathname) as never)
   }
 
   async function handleLotStatusUpdate(lot: ProductLot, status: 'Active' | 'Blocked') {
@@ -109,10 +305,49 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     try {
       await stockPolicyMutation.mutateAsync(values)
       toast.success('Đã cập nhật chính sách tồn kho.')
+      stockPolicyForm.reset(values)
       setIsStockPolicyOpen(false)
     } catch (error) {
       logger.error(formatApiError(error))
       toast.error(getApiErrorMessage(error, 'Không thể cập nhật chính sách tồn kho.'))
+    }
+  }
+
+  function openStockPolicyEditor() {
+    const warehouseId =
+      policiesQuery.data?.[0]?.warehouseId ?? warehousesQuery.data?.items[0]?.id ?? ''
+    const policy = policiesQuery.data?.find((item) => item.warehouseId === warehouseId)
+    setPolicyWarehouseId(warehouseId)
+    stockPolicyForm.reset({
+      warehouseId,
+      preferredSlotId: policy?.preferredSlotId ?? null,
+      minStockThreshold: policy?.minStockThreshold ?? 0,
+      maxStockThreshold: policy?.maxStockThreshold ?? null,
+      reorderPoint: policy?.reorderPoint ?? null,
+      safetyStock: policy?.safetyStock ?? 0,
+      leadTimeDays: policy?.leadTimeDays ?? null,
+    })
+    setIsStockPolicyOpen(true)
+  }
+
+  function changeStockPolicyOpen(open: boolean) {
+    if (!open && stockPolicyForm.formState.isDirty) {
+      setDiscardTarget('policy')
+      return
+    }
+    setIsStockPolicyOpen(open)
+  }
+
+  async function handlePolicyStatus(policyId: string, currentStatus: 'Active' | 'Inactive') {
+    const status = currentStatus === 'Active' ? 'Inactive' : 'Active'
+    try {
+      await policyStatusMutation.mutateAsync({ policyId, status })
+      toast.success(
+        status === 'Active' ? 'Đã kích hoạt chính sách tồn kho.' : 'Đã ngừng chính sách tồn kho.'
+      )
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái chính sách tồn kho.'))
     }
   }
 
@@ -126,9 +361,50 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     }
   }
 
+  async function addProductSupplier(
+    request: Parameters<typeof addSupplierMutation.mutateAsync>[0]
+  ) {
+    try {
+      await addSupplierMutation.mutateAsync(request)
+      toast.success('Đã liên kết nhà cung cấp.')
+      return true
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể liên kết nhà cung cấp.'))
+      return false
+    }
+  }
+
+  async function updateProductSupplier(
+    linkId: string,
+    request: Parameters<typeof updateSupplierMutation.mutateAsync>[0]['request']
+  ) {
+    try {
+      await updateSupplierMutation.mutateAsync({ linkId, request })
+      toast.success('Đã cập nhật nhà cung cấp.')
+      return true
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể cập nhật nhà cung cấp.'))
+      return false
+    }
+  }
+
+  async function deleteProductSupplier(linkId: string) {
+    try {
+      await deleteSupplierMutation.mutateAsync(linkId)
+      toast.success('Đã xóa liên kết nhà cung cấp.')
+      return true
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể xóa liên kết nhà cung cấp.'))
+      return false
+    }
+  }
+
   if (detailQuery.isLoading) {
     return (
-      <div className="mx-auto w-full max-w-[1200px] space-y-4">
+      <div className="mx-auto w-full max-w-[1440px] space-y-4">
         <Skeleton className="h-8 w-32" />
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <Skeleton className="h-64 rounded-lg" />
@@ -161,6 +437,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const requestedTab = searchParams.get('tab')
   const activeTab =
     requestedTab === 'stock' ||
+    requestedTab === 'conversions' ||
     requestedTab === 'barcode' ||
     requestedTab === 'suppliers' ||
     (requestedTab === 'lots' && product.isLotTracked)
@@ -176,7 +453,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -194,7 +471,26 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
         </div>
         {canUpdate ? (
           <div className="flex items-center gap-2">
-            <Button type="button" size="sm" onClick={() => setIsEditOpen(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={productStatusMutation.isPending}
+              onClick={() => setIsProductStatusOpen(true)}
+            >
+              {product.status === 'Active' ? (
+                <Power data-icon="inline-start" aria-hidden="true" />
+              ) : (
+                <RotateCcw data-icon="inline-start" aria-hidden="true" />
+              )}
+              {product.status === 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={product.status !== 'Active'}
+              onClick={openProductEditor}
+            >
               <Pencil data-icon="inline-start" aria-hidden="true" />
               Chỉnh sửa
             </Button>
@@ -214,7 +510,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
           <TabsList
             variant="line"
             aria-label="Các phần thông tin sản phẩm"
-            className="scroll-fade-x h-10 w-full max-w-full justify-start overflow-x-auto border-b p-0"
+            className="scroll-fade-x h-10 w-full max-w-full min-w-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain border-b p-0"
           >
             <TabsTrigger value="info" className="h-10 flex-none px-3">
               Thông tin cơ bản
@@ -222,6 +518,10 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
             <TabsTrigger value="stock" className="h-10 flex-none px-3">
               <Settings2 aria-hidden="true" />
               Chính sách tồn kho
+            </TabsTrigger>
+            <TabsTrigger value="conversions" className="h-10 flex-none px-3">
+              <Scale aria-hidden="true" />
+              Quy đổi đơn vị
             </TabsTrigger>
             <TabsTrigger value="barcode" className="h-10 flex-none px-3">
               <QrCode aria-hidden="true" />
@@ -250,15 +550,15 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    Mã SKU
+                    Mã hàng hóa
                   </p>
                   <p className="mt-1 font-mono text-sm">{product.sku}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    Danh mục
+                    Nhóm vật tư hàng hóa
                   </p>
-                  <p className="mt-1 text-sm">{product.categoryName ?? '—'}</p>
+                  <p className="mt-1 text-sm">{product.categoryPath ?? '—'}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -282,6 +582,26 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
                     <p className="mt-1 text-sm">{product.shelfLifeDays ?? 'Không cấu hình'}</p>
                   </div>
                 ) : null}
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    Mô tả
+                  </p>
+                  <p className="mt-1 text-sm whitespace-pre-wrap">{product.description ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    Tồn thực tế
+                  </p>
+                  <p className="mt-1 text-sm font-medium tabular-nums">{product.quantityOnHand}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    Đang giữ / Khả dụng
+                  </p>
+                  <p className="mt-1 text-sm tabular-nums">
+                    {product.reservedQuantity} / {product.availableQuantity}
+                  </p>
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -293,7 +613,41 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
               isError={policiesQuery.isError}
               canManage={canConfigureStockPolicy}
               onRetry={() => void policiesQuery.refetch()}
-              onConfigure={() => setIsStockPolicyOpen(true)}
+              onConfigure={openStockPolicyEditor}
+              isChangingStatus={policyStatusMutation.isPending}
+              onChangeStatus={(policy) => void handlePolicyStatus(policy.id, policy.status)}
+            />
+          </TabsContent>
+
+          <TabsContent value="conversions" className="mt-4">
+            <ProductUnitConversionsPanel
+              baseUnitName={product.unitName}
+              conversions={conversionsQuery.data ?? []}
+              units={(unitsQuery.data ?? []).filter(
+                (unit) =>
+                  unit.id !== product.unitId &&
+                  !conversionsQuery.data?.some(
+                    (conversion) =>
+                      conversion.unitId === unit.id && conversion.id !== editingConversion?.id
+                  )
+              )}
+              editingConversion={editingConversion}
+              form={conversionForm}
+              isDialogOpen={isConversionOpen}
+              isLoading={conversionsQuery.isLoading}
+              isError={conversionsQuery.isError}
+              isPending={
+                createConversionMutation.isPending ||
+                updateConversionMutation.isPending ||
+                conversionStatusMutation.isPending
+              }
+              canManage={canManageConversions}
+              onRetry={() => void conversionsQuery.refetch()}
+              onCreate={openCreateConversion}
+              onEdit={openEditConversion}
+              onDialogOpenChange={setIsConversionOpen}
+              onSubmit={(values) => void saveConversion(values)}
+              onChangeStatus={(conversion) => void changeConversionStatus(conversion)}
             />
           </TabsContent>
 
@@ -310,7 +664,22 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
           </TabsContent>
 
           <TabsContent value="suppliers" className="mt-4">
-            <ProductSuppliersPanel productId={productId} canManage={canUpdate} />
+            <ProductSuppliersPanel
+              canManage={canUpdate}
+              links={productSuppliersQuery.data ?? []}
+              suppliers={suppliersQuery.data?.items ?? []}
+              isLoading={productSuppliersQuery.isLoading}
+              isError={productSuppliersQuery.isError}
+              isSuppliersLoading={suppliersQuery.isLoading}
+              isSuppliersError={suppliersQuery.isError}
+              isSaving={addSupplierMutation.isPending || updateSupplierMutation.isPending}
+              isDeleting={deleteSupplierMutation.isPending}
+              onRetry={() => void productSuppliersQuery.refetch()}
+              onRetrySuppliers={() => void suppliersQuery.refetch()}
+              onAdd={addProductSupplier}
+              onUpdate={updateProductSupplier}
+              onDelete={deleteProductSupplier}
+            />
           </TabsContent>
 
           {product.isLotTracked ? (
@@ -342,6 +711,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
 
       {canUpdate && isEditOpen && (
         <UpdateProductDialog
+          form={updateProductForm}
           units={unitsQuery.data ?? []}
           categories={categoriesQuery.data ?? []}
           areOptionsLoading={unitsQuery.isLoading || categoriesQuery.isLoading}
@@ -350,26 +720,52 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
             void unitsQuery.refetch()
             void categoriesQuery.refetch()
           }}
+          canManageUnits={canManageConversions}
+          canManageCategories={canManageCategories}
           open={isEditOpen}
           product={product}
           isPending={updateMutation.isPending}
-          onOpenChange={setIsEditOpen}
+          onOpenChange={changeProductEditorOpen}
           onSubmit={(values) => void handleUpdate(values)}
         />
       )}
+      <UnsavedChangesDialog
+        open={discardTarget !== null}
+        onOpenChange={(open) => !open && setDiscardTarget(null)}
+        onDiscard={() => {
+          if (discardTarget === 'product') closeProductEditor()
+          if (discardTarget === 'policy') setIsStockPolicyOpen(false)
+          setDiscardTarget(null)
+        }}
+      />
 
       {canConfigureStockPolicy && isStockPolicyOpen && (
         <ProductStockPolicyDialog
+          form={stockPolicyForm}
           open={isStockPolicyOpen}
           warehouses={(warehousesQuery.data?.items ?? []).filter(
             (warehouse) => warehouse.status === 'Active'
           )}
           policies={policiesQuery.data ?? []}
+          locations={policyLocationsQuery.data?.items ?? []}
+          areLocationsLoading={policyLocationsQuery.isFetching}
           isPending={stockPolicyMutation.isPending}
-          onOpenChange={setIsStockPolicyOpen}
+          onWarehouseChange={setPolicyWarehouseId}
+          onOpenChange={changeStockPolicyOpen}
           onSubmit={(values) => void handleStockPolicy(values)}
         />
       )}
+      <StatusChangeDialog
+        open={isProductStatusOpen}
+        subject={`sản phẩm “${product.productName}”`}
+        nextStatus={product.status === 'Active' ? 'Inactive' : 'Active'}
+        isPending={productStatusMutation.isPending}
+        onOpenChange={setIsProductStatusOpen}
+        onConfirm={() => {
+          setIsProductStatusOpen(false)
+          void handleProductStatus()
+        }}
+      />
     </div>
   )
 }

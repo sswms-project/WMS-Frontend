@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
 import {
   OperationalErrorState,
   OperationalLoadingState,
@@ -46,10 +47,18 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailPagePro
       await updateMutation.mutateAsync({
         supplierId,
         request: {
+          supplierCode: values.supplierCode,
           supplierName: values.supplierName,
+          taxCode: values.taxCode || null,
           phone: values.phone,
           email: values.email || null,
           address: values.address || null,
+          contactSalutation: values.contactSalutation || null,
+          contactName: values.contactName || null,
+          contactEmail: values.contactEmail || null,
+          contactMobile: values.contactMobile || null,
+          contactChannel: values.contactChannel || null,
+          contactChannelName: values.contactChannelName || null,
         },
       })
       toast.success('Đã cập nhật nhà cung cấp.')
@@ -107,9 +116,9 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailPagePro
     <>
       <SupplierDetail
         supplier={supplier}
-        canUpdate={permissions.includes('suppliers:update')}
-        canDeactivate={permissions.includes('suppliers:deactivate')}
-        canReactivate={permissions.includes('suppliers:reactivate')}
+        canUpdate={permissions.includes(P.SUPPLIERS_UPDATE)}
+        canDeactivate={permissions.includes(P.SUPPLIERS_DEACTIVATE)}
+        canReactivate={permissions.includes(P.SUPPLIERS_REACTIVATE)}
         onEdit={() => setIsEditOpen(true)}
         onDeactivate={() => {
           setDeactivateError(null)

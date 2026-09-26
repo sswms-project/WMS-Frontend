@@ -25,6 +25,8 @@ const policy: ProductWarehousePolicy = {
   warehouseId: 'warehouse-1',
   warehouseCode: 'WH-01',
   warehouseName: 'Kho trung tâm',
+  preferredSlotId: 'slot-1',
+  preferredSlotCode: 'A-01-01',
   minStockThreshold: 10,
   maxStockThreshold: 100,
   reorderPoint: 20,
@@ -32,6 +34,7 @@ const policy: ProductWarehousePolicy = {
   leadTimeDays: 3,
   abcClass: 'A',
   abcClassifiedAt: null,
+  status: 'Active',
   createdAt: '2026-09-16T00:00:00Z',
   modifiedAt: null,
 }
@@ -89,6 +92,8 @@ describe('product inventory panels', () => {
         canManage={false}
         onRetry={vi.fn()}
         onConfigure={vi.fn()}
+        isChangingStatus={false}
+        onChangeStatus={vi.fn()}
       />
     )
     expect(screen.queryByRole('button', { name: 'Cấu hình' })).not.toBeInTheDocument()
@@ -101,6 +106,8 @@ describe('product inventory panels', () => {
         canManage
         onRetry={vi.fn()}
         onConfigure={vi.fn()}
+        isChangingStatus={false}
+        onChangeStatus={vi.fn()}
       />
     )
     expect(screen.getByRole('button', { name: 'Cấu hình' })).toBeInTheDocument()

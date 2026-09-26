@@ -153,6 +153,55 @@
   --ring: var(--primary);
 }
 
+/* Keep the landing page tokens in the same color mode as its html.dark parent. */
+.dark .theme-home {
+  --surface: #0b1510;
+  --surface-dim: #07100b;
+  --surface-bright: #1c3022;
+  --surface-container-lowest: #101b14;
+  --surface-container-low: #122219;
+  --surface-container: #172d20;
+  --surface-container-high: #1e3927;
+  --surface-container-highest: #26462e;
+  --on-surface: #e8f5e5;
+  --on-surface-variant: #a7bda5;
+  --inverse-surface: #e8f5e5;
+  --inverse-on-surface: #122219;
+  --outline: #6b8d6d;
+  --outline-variant: #36533b;
+  --surface-tint: #9be564;
+  --primary: #9be564;
+  --on-primary: #10210f;
+  --primary-container: #315b2a;
+  --on-primary-container: #d2f5b7;
+  --inverse-primary: #315b2a;
+  --secondary: #9fbfa0;
+  --on-secondary: #122014;
+  --secondary-container: #24432c;
+  --on-secondary-container: #d2ebce;
+  --tertiary: #caa2e0;
+  --on-tertiary: #25132e;
+  --tertiary-container: #553665;
+  --on-tertiary-container: #f2dcff;
+  --background: #0b1510;
+  --foreground: #e8f5e5;
+  --surface-variant: #1e3927;
+
+  --card: var(--surface-container-lowest);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-high);
+  --popover-foreground: var(--on-surface);
+  --primary-foreground: var(--on-primary);
+  --secondary-foreground: var(--on-secondary);
+  --muted: var(--surface-container-low);
+  --muted-foreground: var(--on-surface-variant);
+  --accent: var(--secondary-container);
+  --accent-foreground: var(--on-secondary-container);
+  --border: var(--outline-variant);
+  --input: var(--outline-variant);
+  --ring: var(--primary);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

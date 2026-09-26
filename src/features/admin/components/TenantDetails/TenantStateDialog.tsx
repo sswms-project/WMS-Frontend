@@ -73,7 +73,7 @@ export function TenantStateDialog({
               maxLength={500}
               autoComplete="off"
               aria-invalid={Boolean(form.formState.errors.reason)}
-              placeholder="Nhập lý do để lưu trong Audit Log…"
+              placeholder="Nhập lý do để lưu trong nhật ký hoạt động…"
               {...form.register('reason')}
             />
             <FieldError errors={[form.formState.errors.reason]} />

@@ -19,9 +19,12 @@ const inventoryItem = {
   expiryDate: null,
   lotStatus: null,
   qualityStatus: 'Good' as const,
+  eligibilityStatus: 'Available' as const,
   quantityOnHand: 125.5,
   reservedQuantity: 20,
+  holdQuantity: 0,
   availableQuantity: 105.5,
+  version: 'AQID',
   updatedAt: '2026-08-24T10:00:00+07:00',
 }
 
@@ -37,8 +40,11 @@ function createProps(
     searchText: '',
     warehouseId: '',
     productId: '',
+    slotId: '',
     warehouseOptions: [{ value: 'warehouse-1', label: 'WH-01 · Kho trung tâm' }],
     productOptions: [{ value: 'product-1', label: 'SKU-01 · Bộ điều khiển nhiệt độ' }],
+    slotOptions: [],
+    snapshotAt: null,
     isLoading: false,
     isFetching: false,
     isError: false,
@@ -49,9 +55,11 @@ function createProps(
     onSearchChange: vi.fn(),
     onWarehouseChange: vi.fn(),
     onProductChange: vi.fn(),
+    onSlotChange: vi.fn(),
     onResetFilters: vi.fn(),
     onRetryFilters: vi.fn(),
     onPageChange: vi.fn(),
+    onPageSizeChange: vi.fn(),
     onRetry: vi.fn(),
     onReportDamaged: vi.fn(),
     ...overrides,
@@ -104,7 +112,7 @@ describe('InventoryDirectory states', () => {
       target: { value: 'SKU-01' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Làm mới tồn kho' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Sau' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Trang sau' }))
     fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }))
     fireEvent.change(screen.getByLabelText('Kho'), { target: { value: 'warehouse-1' } })
     fireEvent.change(screen.getByLabelText('Sản phẩm'), { target: { value: 'product-1' } })
