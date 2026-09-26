@@ -1,7 +1,6 @@
 import { ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -22,14 +21,16 @@ interface RolesTableProps {
 export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTableProps) {
   if (isLoading) {
     return (
-      <Card className="overflow-hidden rounded-xl py-0">
+      <div data-slot="operational-list-body" className="min-h-0">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead>Vai trò</TableHead>
-              <TableHead className="hidden lg:table-cell">Mô tả</TableHead>
-              <TableHead className="w-28 text-center">Quyền</TableHead>
-              <TableHead className="w-32 text-right">Thao tác</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10">Vai trò</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 hidden lg:table-cell">
+                Mô tả
+              </TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-28 text-center">Quyền</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -57,29 +58,30 @@ export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTable
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 
   if (!roles.length) {
     return (
-      <Card className="rounded-xl">
-        <CardContent className="text-muted-foreground py-14 text-center text-sm">
-          Không tìm thấy vai trò phù hợp.
-        </CardContent>
-      </Card>
+      <div
+        data-slot="operational-list-body"
+        className="text-muted-foreground flex min-h-48 items-center justify-center p-6 text-center text-sm"
+      >
+        Không tìm thấy vai trò phù hợp.
+      </div>
     )
   }
 
   return (
-    <Card className="overflow-hidden rounded-xl py-0">
+    <div data-slot="operational-list-body" className="min-h-0">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30">
-            <TableHead>Vai trò</TableHead>
-            <TableHead className="hidden lg:table-cell">Mô tả</TableHead>
-            <TableHead className="w-28 text-center">Quyền</TableHead>
-            <TableHead className="w-32 text-right">Thao tác</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10">Vai trò</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 hidden lg:table-cell">Mô tả</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-28 text-center">Quyền</TableHead>
+            <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -128,6 +130,6 @@ export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTable
           ))}
         </TableBody>
       </Table>
-    </Card>
+    </div>
   )
 }

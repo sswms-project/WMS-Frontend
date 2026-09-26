@@ -12,7 +12,6 @@ interface WarehouseLocationsPageProps {
   readonly warehouseId: string
 }
 
-const PAGE_SIZE = 10
 const EMPTY_FILTERS: LocationFilterState = {
   type: '',
   lifecycleStatus: '',
@@ -26,13 +25,14 @@ export function WarehouseLocationsPage({ warehouseId }: WarehouseLocationsPagePr
   const capabilities = getWarehouseCapabilities(role)
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [filters, setFilters] = useState<LocationFilterState>(EMPTY_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<LocationFilterState>(EMPTY_FILTERS)
   const debouncedSearchText = useDebouncedValue(searchText.trim(), 350)
   const query = useMemo<WarehouseLocationQuery>(
     () => ({
-      top: PAGE_SIZE,
-      skip: (page - 1) * PAGE_SIZE,
+      top: pageSize,
+      skip: (page - 1) * pageSize,
       needTotalCount: true,
       ...(debouncedSearchText ? { searchText: debouncedSearchText } : {}),
       ...(appliedFilters.type ? { type: appliedFilters.type } : {}),
@@ -45,7 +45,7 @@ export function WarehouseLocationsPage({ warehouseId }: WarehouseLocationsPagePr
       ...(appliedFilters.zoneId ? { zoneId: appliedFilters.zoneId } : {}),
       ...(appliedFilters.rackId ? { rackId: appliedFilters.rackId } : {}),
     }),
-    [appliedFilters, debouncedSearchText, page]
+    [appliedFilters, debouncedSearchText, page, pageSize]
   )
   const locationsQuery = useWarehouseLocationsQuery(warehouseId, query)
   const layoutQuery = useWarehouseLayoutQuery(warehouseId, true)
@@ -64,7 +64,7 @@ export function WarehouseLocationsPage({ warehouseId }: WarehouseLocationsPagePr
       zones={layoutQuery.data ?? []}
       totalCount={locationsQuery.data?.totalCount ?? 0}
       page={page}
-      pageSize={PAGE_SIZE}
+      pageSize={pageSize}
       searchText={searchText}
       filters={filters}
       activeFilterCount={activeFilterCount}
@@ -85,6 +85,10 @@ export function WarehouseLocationsPage({ warehouseId }: WarehouseLocationsPagePr
       }}
       onResetFilters={resetFilters}
       onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onRetry={() => void Promise.all([locationsQuery.refetch(), layoutQuery.refetch()])}
       onRetryFilterMetadata={() => void layoutQuery.refetch()}
     />

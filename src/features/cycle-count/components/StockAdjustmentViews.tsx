@@ -10,6 +10,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field'
 import {
@@ -53,12 +54,13 @@ interface DirectoryProps {
   readonly onWarehouseChange: (value: string) => void
   readonly onStatusChange: (value: '' | StockAdjustmentStatus) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
 export function StockAdjustmentDirectory(props: DirectoryProps) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 items-start gap-3 border-b pb-4">
         <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
           <SlidersHorizontal />
@@ -69,7 +71,7 @@ export function StockAdjustmentDirectory(props: DirectoryProps) {
         </div>
       </header>
       <InventoryWorkspaceNavigation currentView="adjustments" permissions={props.permissions} />
-      <section className="bg-card flex min-h-0 flex-1 flex-col border">
+      <OperationalListPanel aria-label="Danh sách điều chỉnh tồn kho">
         <div className="flex flex-wrap items-end gap-3 border-b p-3">
           <label className="grid gap-1 text-xs font-medium">
             Kho
@@ -186,8 +188,9 @@ export function StockAdjustmentDirectory(props: DirectoryProps) {
           totalCount={props.totalCount}
           isPending={props.isFetching}
           onPageChange={props.onPageChange}
+          onPageSizeChange={props.onPageSizeChange}
         />
-      </section>
+      </OperationalListPanel>
     </div>
   )
 }

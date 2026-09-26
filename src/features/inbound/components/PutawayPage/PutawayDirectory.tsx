@@ -7,6 +7,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -36,6 +37,7 @@ interface PutawayDirectoryProps {
   readonly isError: boolean
   readonly onSearchChange: (value: string) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
@@ -54,10 +56,11 @@ export function PutawayDirectory({
   isError,
   onSearchChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
 }: PutawayDirectoryProps) {
   return (
-    <section className="bg-card flex min-h-0 flex-col border">
+    <OperationalListPanel aria-label="Danh sách chờ cất hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold">Phiếu chờ cất hàng</h2>
@@ -164,9 +167,10 @@ export function PutawayDirectory({
             totalCount={totalCount}
             isPending={isFetching}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
           />
         </>
       )}
-    </section>
+    </OperationalListPanel>
   )
 }

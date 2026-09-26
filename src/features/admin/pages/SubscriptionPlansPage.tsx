@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -113,6 +114,7 @@ export default function SubscriptionPlansPage() {
   const [deactivatingPlan, setDeactivatingPlan] = useState<SubscriptionPlanResponse | null>(null)
   const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'Active' | 'Inactive'>()
   const debouncedSearch = useDebouncedValue(search, 350).trim()
@@ -125,7 +127,7 @@ export default function SubscriptionPlansPage() {
     refetch,
   } = useAdminSubscriptionPlansQuery({
     pageNumber: page,
-    pageSize: 20,
+    pageSize,
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(status ? { status } : {}),
   })
@@ -355,7 +357,7 @@ export default function SubscriptionPlansPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-5">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
       <header className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="bg-primary text-primary-foreground relative flex size-10 shrink-0 items-center justify-center">
@@ -381,10 +383,7 @@ export default function SubscriptionPlansPage() {
 
       {!isError && <PlanCatalogSummary plans={plans} isLoading={isLoading} />}
 
-      <section
-        className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden border"
-        aria-labelledby="subscription-plans-list-title"
-      >
+      <OperationalListPanel aria-labelledby="subscription-plans-list-title">
         <div className="flex min-h-11 items-center justify-between gap-4 border-b px-3 sm:px-4">
           <div className="flex items-baseline gap-2">
             <h3
@@ -478,12 +477,16 @@ export default function SubscriptionPlansPage() {
         </AnimatePresence>
         <OperationalPagination
           page={page}
-          pageSize={20}
+          pageSize={pageSize}
           totalCount={result?.totalCount ?? 0}
           isPending={isFetching}
           onPageChange={setPage}
+          onPageSizeChange={(value) => {
+            setPageSize(value)
+            setPage(1)
+          }}
         />
-      </section>
+      </OperationalListPanel>
 
       <SubscriptionPlanFormDialog
         key={editingPlan?.id ?? 'create'}

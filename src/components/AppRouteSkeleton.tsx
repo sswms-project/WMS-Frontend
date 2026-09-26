@@ -52,8 +52,8 @@ export function AppRouteSkeleton({ variant = 'app' }: AppRouteSkeletonProps) {
   }
 
   return (
-    <main className="bg-background min-h-full p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <main className="bg-background min-h-full w-full min-w-0 p-4 sm:p-6 lg:p-8">
+      <div className="w-full min-w-0 space-y-8">
         <header className="flex items-center justify-between">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />

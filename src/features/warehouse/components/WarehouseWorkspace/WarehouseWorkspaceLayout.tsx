@@ -40,7 +40,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { logger } from '@/lib/logger'
-import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.store'
@@ -146,7 +145,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
 
   if (warehouseQuery.isLoading || meQuery.isLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
+      <div className="flex w-full min-w-0 flex-col gap-5">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-24" />
         <Skeleton className="h-72" />
@@ -156,7 +155,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
 
   if (warehouseQuery.isError || meQuery.isError || !warehouseQuery.data) {
     return (
-      <div className="mx-auto w-full max-w-[1180px]">
+      <div className="w-full min-w-0">
         <Empty className="min-h-80 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -198,12 +197,7 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const hasHeaderActions = (isActive && capabilities.canEditWarehouse) || canChangeLifecycle
 
   return (
-    <div
-      className={cn(
-        'mx-auto flex w-full flex-col gap-5',
-        isDesignerActive ? 'max-w-none' : 'max-w-[1180px]'
-      )}
-    >
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon-sm">

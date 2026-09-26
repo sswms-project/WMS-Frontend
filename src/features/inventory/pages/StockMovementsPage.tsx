@@ -11,8 +11,6 @@ import {
   isStockMovementDateRangeValid,
 } from '../utils/stock-movement-query'
 
-const PAGE_SIZE = 20
-
 export default function StockMovementsPage() {
   const meQuery = useMeQuery()
   const [productId, setProductId] = useState('')
@@ -20,10 +18,11 @@ export default function StockMovementsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const isDateRangeValid = isStockMovementDateRangeValid(dateFrom, dateTo)
   const movementParams = useMemo(
-    () => buildStockMovementQuery({ productId, movementType, dateFrom, dateTo }, page, PAGE_SIZE),
-    [dateFrom, dateTo, movementType, page, productId]
+    () => buildStockMovementQuery({ productId, movementType, dateFrom, dateTo }, page, pageSize),
+    [dateFrom, dateTo, movementType, page, pageSize, productId]
   )
   const movementsQuery = useStockMovementsQuery(movementParams, isDateRangeValid)
   const productsQuery = useProductOptionsQuery({ pageNumber: 1, pageSize: 100, status: 'Active' })
@@ -47,7 +46,7 @@ export default function StockMovementsPage() {
       items={movementsQuery.data?.items ?? []}
       totalCount={movementsQuery.data?.totalCount ?? 0}
       page={page}
-      pageSize={PAGE_SIZE}
+      pageSize={pageSize}
       productId={productId}
       movementType={movementType}
       dateFrom={dateFrom}
@@ -78,6 +77,10 @@ export default function StockMovementsPage() {
       }}
       onRetryProducts={() => void productsQuery.refetch()}
       onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onRetry={() => void movementsQuery.refetch()}
     />
   )

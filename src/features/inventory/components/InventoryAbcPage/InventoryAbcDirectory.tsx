@@ -4,6 +4,8 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -25,6 +27,8 @@ import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 interface InventoryAbcDirectoryProps {
   readonly permissions: readonly string[]
   readonly items: readonly InventoryAbcItem[]
+  readonly page: number
+  readonly pageSize: number
   readonly warehouseId: string
   readonly warehouseOptions: readonly InventoryFilterOption[]
   readonly isLoading: boolean
@@ -33,6 +37,8 @@ interface InventoryAbcDirectoryProps {
   readonly areWarehousesLoading: boolean
   readonly areWarehousesError: boolean
   readonly onWarehouseChange: (value: string) => void
+  readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetryWarehouses: () => void
   readonly onRetry: () => void
   readonly historicalPeriodDays: number
@@ -50,6 +56,8 @@ const classStyles: Record<string, string> = {
 export function InventoryAbcDirectory({
   permissions,
   items,
+  page,
+  pageSize,
   warehouseId,
   warehouseOptions,
   isLoading,
@@ -58,6 +66,8 @@ export function InventoryAbcDirectory({
   areWarehousesLoading,
   areWarehousesError,
   onWarehouseChange,
+  onPageChange,
+  onPageSizeChange,
   onRetryWarehouses,
   onRetry,
   historicalPeriodDays,
@@ -70,8 +80,9 @@ export function InventoryAbcDirectory({
     B: items.filter((item) => item.class === 'B').length,
     C: items.filter((item) => item.class === 'C').length,
   }
+  const pageItems = items.slice((page - 1) * pageSize, page * pageSize)
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -101,7 +112,7 @@ export function InventoryAbcDirectory({
           </div>
         ))}
       </section>
-      <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="abc-title">
+      <OperationalListPanel aria-labelledby="abc-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="abc-title" className="text-sm font-semibold">
@@ -198,9 +209,17 @@ export function InventoryAbcDirectory({
             }
           />
         ) : (
-          <AbcResults items={items} />
+          <AbcResults items={pageItems} />
         )}
-      </section>
+        <OperationalPagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={items.length}
+          isPending={isFetching}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
+      </OperationalListPanel>
     </div>
   )
 }

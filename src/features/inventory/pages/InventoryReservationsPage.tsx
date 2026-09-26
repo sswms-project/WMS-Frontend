@@ -13,6 +13,8 @@ export default function InventoryReservationsPage() {
   const [warehouseId, setWarehouseId] = useState('')
   const [productId, setProductId] = useState('')
   const [status, setStatus] = useState<InventoryReservationStatus>('Active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const meQuery = useMeQuery()
   const params = useMemo(
     () => buildInventoryReservationQuery(warehouseId, productId, status),
@@ -47,6 +49,8 @@ export default function InventoryReservationsPage() {
     <InventoryReservationDirectory
       permissions={meQuery.data?.permissions ?? []}
       items={reservationsQuery.data ?? []}
+      page={page}
+      pageSize={pageSize}
       warehouseId={warehouseId}
       productId={productId}
       status={status}
@@ -58,12 +62,27 @@ export default function InventoryReservationsPage() {
       areFiltersLoading={warehousesQuery.isLoading || productsQuery.isLoading}
       areFiltersError={warehousesQuery.isError || productsQuery.isError}
       activeFilterCount={Number(Boolean(warehouseId)) + Number(Boolean(productId))}
-      onWarehouseChange={setWarehouseId}
-      onProductChange={setProductId}
-      onStatusChange={setStatus}
+      onWarehouseChange={(value) => {
+        setWarehouseId(value)
+        setPage(1)
+      }}
+      onProductChange={(value) => {
+        setProductId(value)
+        setPage(1)
+      }}
+      onStatusChange={(value) => {
+        setStatus(value)
+        setPage(1)
+      }}
+      onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onResetFilters={() => {
         setWarehouseId('')
         setProductId('')
+        setPage(1)
       }}
       onRetryFilters={() => void Promise.all([warehousesQuery.refetch(), productsQuery.refetch()])}
       onRetry={() => void reservationsQuery.refetch()}

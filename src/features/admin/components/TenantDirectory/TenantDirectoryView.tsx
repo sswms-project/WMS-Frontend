@@ -28,6 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -65,6 +66,7 @@ interface TenantDirectoryViewProps {
     value: 'createdAt' | 'tenantName' | 'status' | 'subscriptionEndDate'
   ) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onClear: () => void
   readonly onRetry: () => void
 }
@@ -183,7 +185,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
     Number(props.sortBy !== 'createdAt')
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-end">
         <div className="flex items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
@@ -212,10 +214,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
         </Button>
       </header>
 
-      <section
-        className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden border"
-        aria-labelledby="tenant-list-title"
-      >
+      <OperationalListPanel aria-labelledby="tenant-list-title">
         <div className="shrink-0 border-b p-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -305,12 +304,14 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="bg-card sticky top-0">Tenant</TableHead>
-                    <TableHead className="bg-card sticky top-0">Chủ sở hữu</TableHead>
-                    <TableHead className="bg-card sticky top-0">Gói</TableHead>
-                    <TableHead className="bg-card sticky top-0 text-center">Người dùng</TableHead>
-                    <TableHead className="bg-card sticky top-0 text-center">Kho</TableHead>
-                    <TableHead className="bg-card sticky top-0">Trạng thái</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Tenant</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Chủ sở hữu</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Gói</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10 text-center">
+                      Người dùng
+                    </TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10 text-center">Kho</TableHead>
+                    <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -387,8 +388,9 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
           totalCount={props.totalCount}
           isPending={props.isFetching}
           onPageChange={props.onPageChange}
+          onPageSizeChange={props.onPageSizeChange}
         />
-      </section>
+      </OperationalListPanel>
     </div>
   )
 }

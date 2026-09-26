@@ -8,6 +8,7 @@ import {
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
@@ -41,12 +42,13 @@ interface Props {
   readonly onWarehouseChange: (value: string) => void
   readonly onStatusChange: (value: '' | CycleCountStatus) => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }
 
 export function CycleCountDirectory(props: Props) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b pb-4">
         <div className="flex items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
@@ -67,7 +69,7 @@ export function CycleCountDirectory(props: Props) {
         ) : null}
       </header>
       <InventoryWorkspaceNavigation currentView="cycle-counts" permissions={props.permissions} />
-      <section className="bg-card flex min-h-0 flex-1 flex-col border">
+      <OperationalListPanel aria-label="Danh sách kiểm kê">
         <div className="flex flex-wrap items-end gap-3 border-b p-3">
           <label className="grid gap-1 text-xs font-medium">
             Kho
@@ -125,12 +127,12 @@ export function CycleCountDirectory(props: Props) {
             <Table className="min-w-[920px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 w-64">Kho / Khu vực</TableHead>
-                  <TableHead className="bg-card sticky top-0 w-44">Lịch kiểm kê</TableHead>
-                  <TableHead className="bg-card sticky top-0 w-44">Phụ trách</TableHead>
-                  <TableHead className="bg-card sticky top-0 w-36">Tiến độ</TableHead>
-                  <TableHead className="bg-card sticky top-0 w-40">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0 w-20" />
+                  <TableHead className="bg-card sticky top-0 z-10 w-64">Kho / Khu vực</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 w-44">Lịch kiểm kê</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 w-44">Phụ trách</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 w-36">Tiến độ</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 w-40">Trạng thái</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10 w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,8 +182,9 @@ export function CycleCountDirectory(props: Props) {
           totalCount={props.totalCount}
           isPending={props.isFetching}
           onPageChange={props.onPageChange}
+          onPageSizeChange={props.onPageSizeChange}
         />
-      </section>
+      </OperationalListPanel>
     </div>
   )
 }

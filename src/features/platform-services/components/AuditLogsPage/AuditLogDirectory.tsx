@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import type { AuditLogItem } from '../../types/platform-services.types'
-import { PaginationControls } from '../shared/PaginationControls'
 import { AuditLogDetailSheet } from './AuditLogDetailSheet'
 import { AuditLogFilters } from './AuditLogFilters'
 import { AuditLogList } from './AuditLogList'
@@ -12,7 +12,10 @@ import type { AuditLogDirectoryProps } from './types'
 export function AuditLogDirectory(props: AuditLogDirectoryProps) {
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null)
   return (
-    <section className="flex min-h-0 flex-1 flex-col gap-3" aria-labelledby="audit-title">
+    <section
+      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3"
+      aria-labelledby="audit-title"
+    >
       <div>
         <h2 id="audit-title" className="text-xl font-semibold">
           Audit Log
@@ -26,11 +29,11 @@ export function AuditLogDirectory(props: AuditLogDirectoryProps) {
         onApply={props.onApplyFilters}
         onClear={props.onClearFilters}
       />
-      <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden py-0">
-        <CardHeader className="border-b px-4 py-3">
-          <CardTitle className="text-sm">Nhật ký hệ thống</CardTitle>
-        </CardHeader>
-        <CardContent className="min-h-0 flex-1 overflow-y-auto p-0">
+      <OperationalListPanel aria-label="Nhật ký hệ thống">
+        <div className="shrink-0 border-b px-4 py-3">
+          <h3 className="text-sm font-semibold">Nhật ký hệ thống</h3>
+        </div>
+        <div data-slot="operational-list-body" className="min-h-0">
           <AuditLogList
             items={props.items}
             isLoading={props.isLoading}
@@ -40,17 +43,18 @@ export function AuditLogDirectory(props: AuditLogDirectoryProps) {
             onView={setSelectedLog}
             onRetry={props.onRetry}
           />
-        </CardContent>
+        </div>
         {!props.isLoading && !props.isError && props.totalCount > 0 ? (
-          <PaginationControls
+          <OperationalPagination
             page={props.page}
             pageSize={props.pageSize}
             totalCount={props.totalCount}
-            isFetching={props.isFetching}
+            isPending={props.isFetching}
             onPageChange={props.onPageChange}
+            onPageSizeChange={props.onPageSizeChange}
           />
         ) : null}
-      </Card>
+      </OperationalListPanel>
       <AuditLogDetailSheet
         log={selectedLog}
         onOpenChange={(open) => {
