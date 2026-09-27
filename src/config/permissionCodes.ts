@@ -147,3 +147,18 @@ export const P = {
 } as const
 
 export type PermissionCode = (typeof P)[keyof typeof P]
+
+const PLATFORM_ONLY_PERMISSION_CODES: ReadonlySet<string> = new Set([
+  P.ADMIN_DASHBOARD_VIEW,
+  P.ADMIN_TENANTS_VIEW,
+  P.ADMIN_TENANTS_APPROVE,
+  P.ADMIN_TENANTS_SUSPEND,
+  P.SUBSCRIPTION_PLANS_VIEW,
+  P.SUBSCRIPTION_PLANS_CREATE,
+  P.SUBSCRIPTION_PLANS_UPDATE,
+  P.SUBSCRIPTION_PLANS_ACTIVATE,
+  P.SUBSCRIPTION_PLANS_DELETE,
+])
+
+export const isPlatformOnlyPermission = (permissionKey: string): boolean =>
+  PLATFORM_ONLY_PERMISSION_CODES.has(permissionKey)

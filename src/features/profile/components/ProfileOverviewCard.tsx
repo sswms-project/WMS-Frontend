@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ROLE_LABELS_VI, type UserRole } from '@/config/roles'
+import { getRoleLabel } from '@/config/roles'
 import type { UserProfileResponse } from '@/features/auth/types/auth.types'
 import { cn } from '@/lib/utils'
 
@@ -78,7 +78,7 @@ export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardP
 
   if (!profile) return null
 
-  const roleLabel = profile.role ? (ROLE_LABELS_VI[profile.role as UserRole] ?? profile.role) : null
+  const roleLabel = profile.role ? getRoleLabel(profile.role) : null
   const isActive = profile.status?.toLowerCase() === 'active'
 
   return (

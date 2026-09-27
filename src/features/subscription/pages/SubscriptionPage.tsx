@@ -23,7 +23,7 @@ import {
   useInitialSubscriptionSelectionMutation,
   usePreviewSubscriptionPlanChangeMutation,
   useRenewSubscriptionMutation,
-  useSubscriptionPlansQuery,
+  usePublicSubscriptionPlansQuery,
 } from '../hooks/use-subscription'
 import type {
   BillingCycle,
@@ -71,7 +71,7 @@ export function SubscriptionPage() {
   const [billingCycleOverride, setBillingCycleOverride] = useState<BillingCycle>()
 
   const subscriptionQuery = useCurrentSubscriptionQuery(isTenantOwner)
-  const plansQuery = useSubscriptionPlansQuery(isTenantOwner)
+  const plansQuery = usePublicSubscriptionPlansQuery(isTenantOwner)
   const renewMutation = useRenewSubscriptionMutation()
   const initialSelectionMutation = useInitialSubscriptionSelectionMutation()
   const changePlanMutation = useChangeSubscriptionPlanMutation()

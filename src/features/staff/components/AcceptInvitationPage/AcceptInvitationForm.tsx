@@ -9,7 +9,7 @@ import { Logo } from '@/components/Logo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ROLE_LABELS_VI } from '@/config/roles'
+import { getRoleLabel } from '@/config/roles'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -170,7 +170,7 @@ function InvitationDetails({ preview }: { readonly preview: InvitationPreviewRes
       {preview.fullName.trim() && <ReadOnlyField label="Họ và tên" value={preview.fullName} />}
       <ReadOnlyField label="Email" value={preview.email} />
       <ReadOnlyField label="Tổ chức" value={preview.tenantName} />
-      <ReadOnlyField label="Vai trò" value={ROLE_LABELS_VI[preview.role]} />
+      <ReadOnlyField label="Vai trò" value={getRoleLabel(preview.role)} />
       <div className="sm:col-span-2">
         <p className="text-muted-foreground text-xs">Kho ban đầu</p>
         <div className="mt-1 flex flex-wrap gap-1.5">

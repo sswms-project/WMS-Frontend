@@ -22,19 +22,12 @@ export function useCurrentSubscriptionQuery(enabled = true) {
   })
 }
 
-export function useSubscriptionPlansQuery(enabled = true) {
-  return useQuery({
-    queryKey: queryKeys.subscription.plans,
-    queryFn: () => subscriptionService.getSubscriptionPlans().then((response) => response.data),
-    enabled,
-  })
-}
-
-export function usePublicSubscriptionPlansQuery() {
+export function usePublicSubscriptionPlansQuery(enabled = true) {
   return useQuery({
     queryKey: queryKeys.subscription.publicPlans,
     queryFn: () =>
       subscriptionService.getPublicSubscriptionPlans().then((response) => response.data),
+    enabled,
   })
 }
 
