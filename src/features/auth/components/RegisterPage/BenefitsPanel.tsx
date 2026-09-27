@@ -45,15 +45,15 @@ export function BenefitsPanel({ logoHref = APP_ROUTES.auth.login }: BenefitsPane
 
         {/* Hero text */}
         <div className="flex flex-1 flex-col justify-center">
-          <span className="text-primary-fixed-dim/70 mb-5 text-[11px] font-semibold tracking-[0.12em] uppercase">
+          <span className="text-inverse-on-surface/75 mb-5 text-[11px] font-semibold tracking-[0.12em] uppercase">
             Operational Intelligence
           </span>
-          <h2 className="text-3xl leading-[1.2] font-semibold tracking-tight text-white xl:text-[2.6rem]">
+          <h2 className="text-inverse-on-surface text-3xl leading-[1.2] font-semibold tracking-tight xl:text-[2.6rem]">
             Quản trị kho bãi
             <br />
-            <span className="text-white/60">thế hệ mới</span>
+            <span className="text-inverse-on-surface/85">thế hệ mới</span>
           </h2>
-          <p className="mt-5 max-w-xs text-sm leading-relaxed text-white/40">
+          <p className="text-inverse-on-surface/80 mt-5 max-w-xs text-sm leading-relaxed">
             Nền tảng vận hành tập trung giúp kiểm soát tồn kho, vận chuyển và nhân sự trong một giao
             diện thống nhất.
           </p>
@@ -61,7 +61,7 @@ export function BenefitsPanel({ logoHref = APP_ROUTES.auth.login }: BenefitsPane
 
         {/* Trust points */}
         <footer className="mt-auto">
-          <div className="mb-7 h-px bg-white/[0.08]" />
+          <div className="bg-inverse-on-surface/20 mb-7 h-px" />
           <ul className="space-y-5">
             {trustPoints.map((point, i) => (
               <motion.li
@@ -71,10 +71,12 @@ export function BenefitsPanel({ logoHref = APP_ROUTES.auth.login }: BenefitsPane
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.15 + i * 0.12, ease: 'easeOut' }}
               >
-                <div className="bg-primary-fixed-dim/60 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
+                <div className="bg-inverse-on-surface/75 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
                 <div>
-                  <p className="text-sm font-medium text-white/80">{point.label}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-white/35">{point.desc}</p>
+                  <p className="text-inverse-on-surface text-sm font-medium">{point.label}</p>
+                  <p className="text-inverse-on-surface/80 mt-0.5 text-xs leading-relaxed">
+                    {point.desc}
+                  </p>
                 </div>
               </motion.li>
             ))}

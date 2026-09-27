@@ -14,6 +14,7 @@ import {
   useRejectInboundRequestMutation,
   useSubmitInboundRequestMutation,
 } from '../hooks/use-inbound-requests'
+import { INBOUND_REQUEST_ACTION, type InboundRequestAction } from '../types/inbound-request.types'
 
 export default function InboundRequestDetailPage({
   inboundRequestId,
@@ -26,15 +27,18 @@ export default function InboundRequestDetailPage({
   const approveMutation = useApproveInboundRequestMutation()
   const rejectMutation = useRejectInboundRequestMutation()
 
-  async function runAction(action: 'submit' | 'approve', reason?: string) {
+  async function runAction(action: InboundRequestAction, reason?: string) {
     try {
-      if (action === 'submit') await submitMutation.mutateAsync(inboundRequestId)
-      else if (reason) await rejectMutation.mutateAsync({ inboundRequestId, reason })
-      else await approveMutation.mutateAsync(inboundRequestId)
+      if (action === INBOUND_REQUEST_ACTION.Submit)
+        await submitMutation.mutateAsync(inboundRequestId)
+      else if (action === INBOUND_REQUEST_ACTION.Reject) {
+        if (!reason) return false
+        await rejectMutation.mutateAsync({ inboundRequestId, reason })
+      } else await approveMutation.mutateAsync(inboundRequestId)
       toast.success(
-        action === 'submit'
+        action === INBOUND_REQUEST_ACTION.Submit
           ? 'Đã gửi yêu cầu nhập kho để duyệt.'
-          : reason
+          : action === INBOUND_REQUEST_ACTION.Reject
             ? 'Đã trả yêu cầu nhập kho để chỉnh sửa.'
             : 'Đã phê duyệt yêu cầu nhập kho.'
       )
@@ -63,9 +67,9 @@ export default function InboundRequestDetailPage({
       inboundRequest={detailQuery.data}
       allowedActions={actionsQuery.data?.allowedActions ?? []}
       isPending={submitMutation.isPending || approveMutation.isPending || rejectMutation.isPending}
-      onSubmit={() => runAction('submit')}
-      onApprove={() => runAction('approve')}
-      onReject={(reason) => runAction('approve', reason)}
+      onSubmit={() => runAction(INBOUND_REQUEST_ACTION.Submit)}
+      onApprove={() => runAction(INBOUND_REQUEST_ACTION.Approve)}
+      onReject={(reason) => runAction(INBOUND_REQUEST_ACTION.Reject, reason)}
     />
   )
 }
