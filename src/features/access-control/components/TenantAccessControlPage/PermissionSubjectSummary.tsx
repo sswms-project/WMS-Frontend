@@ -12,11 +12,10 @@ export function PermissionSubjectSummary({
   customizedCount,
 }: PermissionSubjectSummaryProps) {
   const { subject } = workspace
-  const visibleWarehouses = subject.warehouses.slice(0, 3)
-  const hiddenWarehouseCount = subject.warehouses.length - visibleWarehouses.length
+  const warehouseCodes = subject.warehouses.map((warehouse) => warehouse.code).join(', ')
 
   return (
-    <div className="border-border bg-muted/20 flex min-w-0 flex-col gap-3 border-b px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="border-border bg-muted/20 flex min-w-0 flex-col gap-2 border-b px-3 py-2.5 sm:px-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="text-foreground truncate text-base font-semibold">{subject.fullName}</h2>
@@ -27,20 +26,13 @@ export function PermissionSubjectSummary({
         </div>
         <p className="text-muted-foreground mt-1 truncate text-xs">{subject.email}</p>
       </div>
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5 lg:justify-end">
-        {visibleWarehouses.length ? (
-          <>
-            {visibleWarehouses.map((warehouse) => (
-              <Badge key={warehouse.id} variant="outline" className="max-w-48 truncate">
-                {warehouse.code} · {warehouse.name}
-              </Badge>
-            ))}
-            {hiddenWarehouseCount > 0 && (
-              <Badge variant="outline">+{hiddenWarehouseCount} kho</Badge>
-            )}
-          </>
+      <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-xs lg:justify-end">
+        {subject.warehouses.length ? (
+          <span className="min-w-0 truncate" title={warehouseCodes}>
+            {subject.warehouses.length} kho · {warehouseCodes}
+          </span>
         ) : (
-          <span className="text-muted-foreground text-xs">Chưa được gán kho</span>
+          <span>Chưa được gán kho</span>
         )}
       </div>
     </div>
