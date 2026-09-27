@@ -99,30 +99,13 @@ export type GoodsReceiptFormValues = z.infer<typeof goodsReceiptSchema>
 export type PutawayFormValues = z.infer<typeof putawaySchema>
 export type CancelPutawayTaskFormValues = z.infer<typeof cancelPutawayTaskSchema>
 
-export function createAssignWarehouseTaskSchema(currentAssigneeId: string | null) {
-  return z
-    .object({
-      staffId: z.string().min(1, 'Vui lòng chọn nhân viên nhận việc.'),
-      reason: z.string().trim().max(500, 'Lý do không được vượt quá 500 ký tự.'),
-    })
-    .superRefine((values, context) => {
-      if (currentAssigneeId && values.staffId === currentAssigneeId) {
-        context.addIssue({
-          code: 'custom',
-          path: ['staffId'],
-          message: 'Nhân viên này đang được giao việc. Hãy chọn người khác để giao lại.',
-        })
-      }
-      if (currentAssigneeId && values.staffId !== currentAssigneeId && !values.reason) {
-        context.addIssue({
-          code: 'custom',
-          path: ['reason'],
-          message: 'Vui lòng nhập lý do giao lại công việc.',
-        })
-      }
-    })
-}
+// Quy tắc phụ thuộc vào nhân viên đang được giao (khác người cũ, bắt buộc lý do khi giao lại)
+// được kiểm tra trong hook điều phối (useAssignWarehouseTask), không đưa vào đây — schema phải
+// tĩnh vì form sống ở page và không được tạo lại theo từng target (xem .rules: "Components
+// receive form as a prop — they do NOT call useForm themselves").
+export const assignWarehouseTaskSchema = z.object({
+  staffId: z.string().min(1, 'Vui lòng chọn nhân viên nhận việc.'),
+  reason: z.string().trim().max(500, 'Lý do không được vượt quá 500 ký tự.'),
+})
 
-export type AssignWarehouseTaskFormValues = z.infer<
-  ReturnType<typeof createAssignWarehouseTaskSchema>
->
+export type AssignWarehouseTaskFormValues = z.infer<typeof assignWarehouseTaskSchema>

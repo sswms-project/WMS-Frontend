@@ -1,16 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { getApiErrorMessage } from '@/lib/api-error'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import { PutawayDirectory, type PutawayAssignmentFilter } from '../components/PutawayPage'
-import {
-  AssignWarehouseTaskDialog,
-  type AssignWarehouseTaskTarget,
-} from '../components/TaskAssignment'
-import { useAssignPutawayTaskMutation, usePutawayTasksQuery } from '../hooks/use-inbound'
+import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
+import { useAssignWarehouseTask } from '../hooks/use-assign-warehouse-task'
+import { usePutawayTasksQuery } from '../hooks/use-inbound'
 import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-assignment-access'
 import type { GoodsReceiptSummary } from '../types/inbound.types'
 
@@ -20,7 +16,7 @@ export default function InboundPutawayPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [assignmentFilter, setAssignmentFilter] = useState<PutawayAssignmentFilter>('all')
-  const [assignTarget, setAssignTarget] = useState<AssignWarehouseTaskTarget | null>(null)
+  const assignment = useAssignWarehouseTask()
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = usePutawayTasksQuery({
     pageNumber: page,
@@ -28,10 +24,9 @@ export default function InboundPutawayPage() {
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(canAssign && assignmentFilter === 'unassigned' ? { unassigned: true } : {}),
   })
-  const assignMutation = useAssignPutawayTaskMutation()
 
   function openAssign(receipt: GoodsReceiptSummary) {
-    setAssignTarget({
+    assignment.open({
       kind: 'PutAway',
       id: receipt.id,
       referenceCode: receipt.receiptCode,
@@ -40,28 +35,6 @@ export default function InboundPutawayPage() {
       currentAssigneeId: receipt.putAwayAssignedTo,
       currentAssigneeName: receipt.putAwayAssignedToName,
     })
-  }
-
-  async function assign(values: { staffId: string; reason: string }) {
-    if (!assignTarget) return
-    try {
-      await assignMutation.mutateAsync({
-        receiptId: assignTarget.id,
-        request: {
-          staffId: values.staffId,
-          expectedStaffId: assignTarget.currentAssigneeId,
-          reason: values.reason || null,
-        },
-      })
-      toast.success(
-        assignTarget.currentAssigneeId
-          ? `Đã giao lại việc cất hàng ${assignTarget.referenceCode}.`
-          : `Đã giao việc cất hàng ${assignTarget.referenceCode}.`
-      )
-      setAssignTarget(null)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể giao việc cất hàng. Vui lòng thử lại.'))
-    }
   }
 
   return (
@@ -96,10 +69,16 @@ export default function InboundPutawayPage() {
         onAssign={openAssign}
       />
       <AssignWarehouseTaskDialog
-        target={assignTarget}
-        isPending={assignMutation.isPending}
-        onOpenChange={(open) => !open && setAssignTarget(null)}
-        onSubmit={(values) => void assign(values)}
+        target={assignment.target}
+        form={assignment.form}
+        staff={assignment.staff}
+        isLoadingStaff={assignment.isLoadingStaff}
+        isErrorStaff={assignment.isErrorStaff}
+        isFetchingStaff={assignment.isFetchingStaff}
+        onRetryStaff={assignment.onRetryStaff}
+        isPending={assignment.isPending}
+        onOpenChange={(open) => !open && assignment.close()}
+        onSubmit={assignment.onSubmit}
       />
     </div>
   )

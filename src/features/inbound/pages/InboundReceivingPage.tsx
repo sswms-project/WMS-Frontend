@@ -10,7 +10,6 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
-import { getApiErrorMessage } from '@/lib/api-error'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import {
   InboundDocumentImportDialog,
@@ -18,13 +17,10 @@ import {
   ReceivingTaskDirectory,
   type ReceivingAssignmentFilter,
 } from '../components/ReceivingPage'
-import {
-  AssignWarehouseTaskDialog,
-  type AssignWarehouseTaskTarget,
-} from '../components/TaskAssignment'
+import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
+import { useAssignWarehouseTask } from '../hooks/use-assign-warehouse-task'
 import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-assignment-access'
 import {
-  useAssignReceivingTaskMutation,
   useCreateDraftFromDocumentMutation,
   useCreateGoodsReceiptMutation,
   useInboundDocumentImportQuery,
@@ -47,7 +43,7 @@ export default function InboundReceivingPage() {
   const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
   const [searchText, setSearchText] = useState(() => searchParams.get('search') ?? '')
   const [assignmentFilter, setAssignmentFilter] = useState<ReceivingAssignmentFilter>('all')
-  const [assignTarget, setAssignTarget] = useState<AssignWarehouseTaskTarget | null>(null)
+  const assignment = useAssignWarehouseTask()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedTask, setSelectedTask] = useState<ReceivingTask | null>(null)
@@ -64,7 +60,6 @@ export default function InboundReceivingPage() {
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(canAssign && assignmentFilter === 'unassigned' ? { unassigned: true } : {}),
   })
-  const assignMutation = useAssignReceivingTaskMutation()
   const createMutation = useCreateGoodsReceiptMutation()
   const submitMutation = useSubmitGoodsReceiptMutation()
   const importQuery = useInboundDocumentImportQuery(importId)
@@ -272,7 +267,7 @@ export default function InboundReceivingPage() {
   }
 
   function openAssign(task: ReceivingTask) {
-    setAssignTarget({
+    assignment.open({
       kind: 'Receiving',
       id: task.inboundRequestId,
       referenceCode: task.inboundRequestCode,
@@ -281,28 +276,6 @@ export default function InboundReceivingPage() {
       currentAssigneeId: task.assignedTo,
       currentAssigneeName: task.assignedToName,
     })
-  }
-
-  async function assign(values: { staffId: string; reason: string }) {
-    if (!assignTarget) return
-    try {
-      await assignMutation.mutateAsync({
-        inboundRequestId: assignTarget.id,
-        request: {
-          staffId: values.staffId,
-          expectedStaffId: assignTarget.currentAssigneeId,
-          reason: values.reason || null,
-        },
-      })
-      toast.success(
-        assignTarget.currentAssigneeId
-          ? `Đã giao lại việc nhận hàng ${assignTarget.referenceCode}.`
-          : `Đã giao việc nhận hàng ${assignTarget.referenceCode}.`
-      )
-      setAssignTarget(null)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể giao việc nhận hàng. Vui lòng thử lại.'))
-    }
   }
 
   const isPending = createMutation.isPending || submitMutation.isPending
@@ -340,10 +313,16 @@ export default function InboundReceivingPage() {
         onAssign={openAssign}
       />
       <AssignWarehouseTaskDialog
-        target={assignTarget}
-        isPending={assignMutation.isPending}
-        onOpenChange={(open) => !open && setAssignTarget(null)}
-        onSubmit={(values) => void assign(values)}
+        target={assignment.target}
+        form={assignment.form}
+        staff={assignment.staff}
+        isLoadingStaff={assignment.isLoadingStaff}
+        isErrorStaff={assignment.isErrorStaff}
+        isFetchingStaff={assignment.isFetchingStaff}
+        onRetryStaff={assignment.onRetryStaff}
+        isPending={assignment.isPending}
+        onOpenChange={(open) => !open && assignment.close()}
+        onSubmit={assignment.onSubmit}
       />
       <ReceiveGoodsDialog
         task={selectedTask}

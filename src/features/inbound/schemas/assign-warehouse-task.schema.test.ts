@@ -1,25 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { createAssignWarehouseTaskSchema } from './inbound.schema'
+import { assignWarehouseTaskSchema } from './inbound.schema'
 
 describe('assign warehouse task schema', () => {
-  it('requires only a staff member for a first assignment', () => {
-    const schema = createAssignWarehouseTaskSchema(null)
-
-    expect(schema.safeParse({ staffId: 'staff-1', reason: '' }).success).toBe(true)
-    expect(schema.safeParse({ staffId: '', reason: '' }).success).toBe(false)
+  it('requires a staff member', () => {
+    expect(assignWarehouseTaskSchema.safeParse({ staffId: 'staff-1', reason: '' }).success).toBe(
+      true
+    )
+    expect(assignWarehouseTaskSchema.safeParse({ staffId: '', reason: '' }).success).toBe(false)
   })
 
-  it('requires a reason and a different staff member when reassigning', () => {
-    const schema = createAssignWarehouseTaskSchema('staff-1')
-
-    const missingReason = schema.safeParse({ staffId: 'staff-2', reason: '   ' })
-    expect(missingReason.success).toBe(false)
-    expect(missingReason.error?.issues.map((issue) => issue.path.join('.'))).toContain('reason')
-
-    const sameStaff = schema.safeParse({ staffId: 'staff-1', reason: 'Nghỉ phép' })
-    expect(sameStaff.success).toBe(false)
-    expect(sameStaff.error?.issues.map((issue) => issue.path.join('.'))).toContain('staffId')
-
-    expect(schema.safeParse({ staffId: 'staff-2', reason: 'Nghỉ phép' }).success).toBe(true)
+  it('caps the reason length', () => {
+    const tooLong = 'a'.repeat(501)
+    expect(
+      assignWarehouseTaskSchema.safeParse({ staffId: 'staff-1', reason: tooLong }).success
+    ).toBe(false)
+    expect(
+      assignWarehouseTaskSchema.safeParse({ staffId: 'staff-1', reason: 'Nghỉ phép' }).success
+    ).toBe(true)
   })
 })

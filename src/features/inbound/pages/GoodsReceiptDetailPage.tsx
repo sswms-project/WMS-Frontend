@@ -13,9 +13,9 @@ import { logger } from '@/lib/logger'
 import { ReceiptDetail } from '../components/ReceiptDetailPage'
 import { ReceiveGoodsDialog } from '../components/ReceivingPage'
 import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
+import { useAssignWarehouseTask } from '../hooks/use-assign-warehouse-task'
 import {
   useApproveGoodsReceiptMutation,
-  useAssignPutawayTaskMutation,
   useInboundAllowedActionsQuery,
   useGoodsReceiptQuery,
   useRejectGoodsReceiptMutation,
@@ -27,14 +27,13 @@ import type { ReceivingTask } from '../types/inbound.types'
 
 export default function GoodsReceiptDetailPage({ receiptId }: { readonly receiptId: string }) {
   const [isEditing, setIsEditing] = useState(false)
-  const [isAssigningPutAway, setIsAssigningPutAway] = useState(false)
   const detailQuery = useGoodsReceiptQuery(receiptId)
   const actionsQuery = useInboundAllowedActionsQuery(receiptId)
   const submitMutation = useSubmitGoodsReceiptMutation()
   const approveMutation = useApproveGoodsReceiptMutation()
   const rejectMutation = useRejectGoodsReceiptMutation()
   const updateMutation = useUpdateGoodsReceiptMutation()
-  const assignPutAwayMutation = useAssignPutawayTaskMutation()
+  const assignment = useAssignWarehouseTask()
   const form = useForm<GoodsReceiptFormValues>({
     resolver: zodResolver(goodsReceiptSchema),
     defaultValues: { inboundRequestId: '', lines: [] },
@@ -94,27 +93,18 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     }
   }
 
-  async function assignPutAway(values: { staffId: string; reason: string }) {
+  function openAssignPutAway() {
     const receipt = detailQuery.data
     if (!receipt) return
-    try {
-      await assignPutAwayMutation.mutateAsync({
-        receiptId,
-        request: {
-          staffId: values.staffId,
-          expectedStaffId: receipt.putAwayAssignedTo,
-          reason: values.reason || null,
-        },
-      })
-      toast.success(
-        receipt.putAwayAssignedTo
-          ? `Đã giao lại việc cất hàng ${receipt.receiptCode}.`
-          : `Đã giao việc cất hàng ${receipt.receiptCode}.`
-      )
-      setIsAssigningPutAway(false)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể giao việc cất hàng. Vui lòng thử lại.'))
-    }
+    assignment.open({
+      kind: 'PutAway',
+      id: receipt.id,
+      referenceCode: receipt.receiptCode,
+      warehouseId: receipt.warehouseId,
+      warehouseName: receipt.warehouseName,
+      currentAssigneeId: receipt.putAwayAssignedTo,
+      currentAssigneeName: receipt.putAwayAssignedToName,
+    })
   }
 
   async function perform(action: 'submit' | 'approve' | 'reject', reason?: string) {
@@ -201,25 +191,19 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         onSubmit={() => perform('submit')}
         onApprove={() => perform('approve')}
         onReject={(reason) => perform('reject', reason)}
-        onAssignPutAway={() => setIsAssigningPutAway(true)}
+        onAssignPutAway={openAssignPutAway}
       />
       <AssignWarehouseTaskDialog
-        target={
-          isAssigningPutAway
-            ? {
-                kind: 'PutAway',
-                id: receipt.id,
-                referenceCode: receipt.receiptCode,
-                warehouseId: receipt.warehouseId,
-                warehouseName: receipt.warehouseName,
-                currentAssigneeId: receipt.putAwayAssignedTo,
-                currentAssigneeName: receipt.putAwayAssignedToName,
-              }
-            : null
-        }
-        isPending={assignPutAwayMutation.isPending}
-        onOpenChange={(open) => !open && setIsAssigningPutAway(false)}
-        onSubmit={(values) => void assignPutAway(values)}
+        target={assignment.target}
+        form={assignment.form}
+        staff={assignment.staff}
+        isLoadingStaff={assignment.isLoadingStaff}
+        isErrorStaff={assignment.isErrorStaff}
+        isFetchingStaff={assignment.isFetchingStaff}
+        onRetryStaff={assignment.onRetryStaff}
+        isPending={assignment.isPending}
+        onOpenChange={(open) => !open && assignment.close()}
+        onSubmit={assignment.onSubmit}
       />
       <ReceiveGoodsDialog
         task={isEditing ? editTask : null}
