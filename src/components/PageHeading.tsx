@@ -14,7 +14,6 @@ const pageTitles: Array<{ prefix: string; label: string }> = [
   { prefix: APP_ROUTES.admin.tenants, label: 'Quản lý đơn vị thuê' },
   { prefix: APP_ROUTES.admin.subscriptionPlans, label: 'Gói đăng ký' },
   { prefix: APP_ROUTES.admin.roles, label: 'Phân quyền' },
-  { prefix: APP_ROUTES.dashboard, label: 'Dashboard' },
   { prefix: APP_ROUTES.subscriptionInvoices, label: 'Lịch sử thanh toán' },
   { prefix: APP_ROUTES.subscriptionPayments, label: 'Lịch sử thanh toán' },
   { prefix: APP_ROUTES.subscription, label: 'Gói dịch vụ' },
@@ -35,7 +34,8 @@ export function getPageTitle(pathname: string) {
     (item) => pathname === item.prefix || pathname.startsWith(`${item.prefix}/`)
   )
 
-  return match?.label ?? 'Dashboard'
+  // Dashboard trùng tên với chính trang, nên không lặp lại tiêu đề trên header.
+  return match?.label ?? ''
 }
 
 export function PageHeading() {
@@ -43,13 +43,16 @@ export function PageHeading() {
   const showAccessControlIcon =
     pathname === APP_ROUTES.settings.accessControl ||
     pathname.startsWith(`${APP_ROUTES.settings.accessControl}/`)
+  const title = getPageTitle(pathname)
+
+  if (!title && !showAccessControlIcon) return null
 
   return (
     <div className="flex min-w-0 items-center gap-2">
       {showAccessControlIcon && <ShieldCheck className="text-primary size-4" aria-hidden="true" />}
-      <h1 className="text-foreground truncate text-[15px] font-semibold">
-        {getPageTitle(pathname)}
-      </h1>
+      {title ? (
+        <h1 className="text-foreground truncate text-[15px] font-semibold">{title}</h1>
+      ) : null}
     </div>
   )
 }
