@@ -47,7 +47,15 @@ export default function RolesPage() {
 
   async function savePermissions(permissionIds: string[]) {
     if (!selectedRole) return
-    await assignMutation.mutateAsync({ roleId: selectedRole.id, body: { permissionIds } })
+    const currentIds = new Set(selectedRole.permissions.map((permission) => permission.id))
+    const selectedIds = new Set(permissionIds)
+    await assignMutation.mutateAsync({
+      roleId: selectedRole.id,
+      body: {
+        toAdd: [...selectedIds].filter((permissionId) => !currentIds.has(permissionId)),
+        toRemove: [...currentIds].filter((permissionId) => !selectedIds.has(permissionId)),
+      },
+    })
   }
 
   return (

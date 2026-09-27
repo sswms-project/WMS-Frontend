@@ -42,6 +42,7 @@ export const P = {
   INBOUND_REQUESTS_VIEW: 'inbound-requests:view',
   INBOUND_REQUESTS_CREATE: 'inbound-requests:create',
   INBOUND_REQUESTS_EDIT: 'inbound-requests:edit',
+  INBOUND_REQUESTS_DELETE: 'inbound-requests:delete',
   INBOUND_REQUESTS_SUBMIT: 'inbound-requests:submit',
   INBOUND_REQUESTS_APPROVE: 'inbound-requests:approve',
   INBOUND_REQUESTS_REJECT: 'inbound-requests:reject',

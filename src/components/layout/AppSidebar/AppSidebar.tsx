@@ -1,14 +1,18 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { Boxes } from 'lucide-react'
 import { toast } from 'sonner'
-import { Sidebar, SidebarContent, SidebarHeader, useSidebar } from '@/components/ui/sidebar'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar'
 import { USER_ROLES } from '@/config/roles'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { logger } from '@/lib/logger'
-import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth.store'
 import { getVisibleNavSections } from '../nav-config'
 import { SidebarNavigation, type SidebarAppearance } from './SidebarNavigation'
@@ -17,7 +21,8 @@ export function AppSidebar() {
   const user = useAuthStore((state) => state.user)
   const meQuery = useMeQuery()
   const pathname = usePathname()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const { isMobile, setOpenMobile, open, setOpen } = useSidebar()
+  const hoverOpenRef = useRef(false)
   const permissions = new Set(meQuery.data?.permissions ?? [])
   const hasPermissionData = meQuery.data !== undefined
   const sections =
@@ -31,37 +36,27 @@ export function AppSidebar() {
     toast.error('Không thể tải quyền điều hướng. Vui lòng thử lại.')
   }, [meQuery.error, meQuery.isError])
 
+  const handleMouseEnter = () => {
+    if (!open && !isMobile) {
+      hoverOpenRef.current = true
+      setOpen(true)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverOpenRef.current) {
+      hoverOpenRef.current = false
+      setOpen(false)
+    }
+  }
+
   return (
     <Sidebar
-      collapsible="offcanvas"
+      collapsible="icon"
       className="border-sidebar-border min-w-0 overflow-hidden border-r-0"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      <SidebarHeader className="border-sidebar-border h-12 min-w-0 shrink-0 overflow-hidden border-b px-3 py-1.5">
-        <div className="border-sidebar-border bg-sidebar-accent/30 flex h-full min-w-0 items-center gap-3 rounded-xl border px-3">
-          <span
-            className={cn(
-              'bg-sidebar-primary text-sidebar-primary-foreground flex shrink-0 items-center justify-center rounded-lg',
-              appearance === 'tenant' ? 'size-9' : 'size-8'
-            )}
-          >
-            <Boxes className="size-4.5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p
-              className={cn(
-                'text-sidebar-foreground truncate leading-5 font-bold',
-                appearance === 'tenant' ? 'font-logo text-lg tracking-wide' : 'text-sm'
-              )}
-              translate="no"
-            >
-              KOVIA
-            </p>
-            <p className="text-sidebar-foreground/55 truncate text-[11px] leading-4">
-              Hệ thống vận hành kho
-            </p>
-          </div>
-        </div>
-      </SidebarHeader>
       <SidebarContent className="min-w-0 overscroll-contain py-3">
         <SidebarNavigation
           pathname={pathname}
@@ -76,6 +71,9 @@ export function AppSidebar() {
           appearance={appearance}
         />
       </SidebarContent>
+      <SidebarFooter className="border-sidebar-border shrink-0 border-t p-2">
+        <SidebarTrigger className="w-full" />
+      </SidebarFooter>
     </Sidebar>
   )
 }

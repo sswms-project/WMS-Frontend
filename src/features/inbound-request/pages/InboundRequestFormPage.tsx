@@ -3,52 +3,50 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useEffect, useRef, useState } from 'react'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
 import { logger } from '@/lib/logger'
+import { USER_ROLES } from '@/config/roles'
+import { useAuthStore } from '@/stores/auth.store'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import { useUnitsQuery } from '@/features/product/hooks/use-products'
+import type {
+  ProductResponse,
+  ProductUnitConversion,
+  UnitResponse,
+} from '@/features/product/types/product.types'
 import { InboundRequestForm } from '../components/InboundRequestFormPage'
 import {
   useCreateInboundRequestMutation,
-  useProductOptionsQuery,
+  useInboundRequestProductDetails,
   useInboundRequestQuery,
+  useInboundRequestUnitConversions,
+  useProductOptionsQuery,
   useSubmitInboundRequestMutation,
   useSupplierOptionsQuery,
   useUpdateInboundRequestMutation,
 } from '../hooks/use-inbound-requests'
 import {
-  inboundRequestSchema,
+  inboundRequestSchemaWithUnits,
   type InboundRequestFormValues,
 } from '../schemas/inbound-request.schema'
-import type {
-  LookupOption,
-  ProductSearchState,
-  SaveInboundRequestRequest,
-} from '../types/inbound-request.types'
+import type { LookupOption, ProductSearchState } from '../types/inbound-request.types'
+import { INBOUND_SOURCE_TYPE, RECORD_STATUS } from '../types/inbound-request.types'
 import {
   mergeLookupOptions,
-  toOperationalDateApiValue,
+  toInboundRequestSaveRequest,
   toOperationalDateInputValue,
 } from '../utils/inbound-request-format'
 
-const EMPTY_LINE = { productId: '', quantity: 1, unitPrice: null }
+const EMPTY_LINE = { productId: '', quantity: 1, unitId: '' }
 const LOOKUP_PAGE_SIZE = 20
 
 export default function InboundRequestFormPage({
@@ -57,6 +55,7 @@ export default function InboundRequestFormPage({
   readonly inboundRequestId?: string
 }) {
   const router = useRouter()
+  const isOwner = useAuthStore((state) => state.user?.role === USER_ROLES.TenantOwner)
   const hydratedInboundRequestId = useRef<string | null>(null)
   const createdInboundRequestId = useRef<string | null>(null)
   const [warehouseSearchText, setWarehouseSearchText] = useState('')
@@ -67,11 +66,37 @@ export default function InboundRequestFormPage({
   const debouncedSupplierSearch = useDebouncedValue(supplierSearchText.trim(), 300)
   const debouncedProductSearch = useDebouncedValue(productSearch?.value.trim() ?? '', 300)
   const isEditing = Boolean(inboundRequestId)
+  const validationData = useRef<{
+    products: Record<string, ProductResponse>
+    units: UnitResponse[]
+    conversions: Record<string, ProductUnitConversion[]>
+  }>({ products: {}, units: [], conversions: {} })
   const form = useForm<InboundRequestFormValues>({
-    resolver: zodResolver(inboundRequestSchema),
-    defaultValues: { warehouseId: '', supplierId: '', expectedDate: '', lines: [EMPTY_LINE] },
+    resolver: (values, context, options) =>
+      zodResolver(
+        inboundRequestSchemaWithUnits(
+          validationData.current.products,
+          validationData.current.units,
+          validationData.current.conversions
+        )
+      )(values, context, options),
+    defaultValues: {
+      warehouseId: '',
+      sourceType: INBOUND_SOURCE_TYPE.Supplier,
+      supplierId: '',
+      sourceName: '',
+      sourceReference: '',
+      expectedDate: '',
+      lines: [EMPTY_LINE],
+    },
   })
   const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
+  const selectedLines = useWatch({ control: form.control, name: 'lines' })
+  const productIds = [...new Set(selectedLines.map((line) => line.productId).filter(Boolean))]
+  // ponytail: lookups grow with line count; use a batch endpoint if large inbound requests become common.
+  const productDetails = useInboundRequestProductDetails(productIds)
+  const productConversions = useInboundRequestUnitConversions(productIds)
+  const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
   const detailQuery = useInboundRequestQuery(inboundRequestId ?? '')
   const warehousesQuery = useWarehousesQuery({
     top: LOOKUP_PAGE_SIZE,
@@ -83,30 +108,54 @@ export default function InboundRequestFormPage({
   const productsQuery = useProductOptionsQuery({
     pageNumber: 1,
     pageSize: LOOKUP_PAGE_SIZE,
-    status: 'Active',
+    status: RECORD_STATUS.Active,
     ...(debouncedProductSearch ? { searchTerm: debouncedProductSearch } : {}),
   })
   const suppliersQuery = useSupplierOptionsQuery({
     pageNumber: 1,
     pageSize: LOOKUP_PAGE_SIZE,
-    status: 'Active',
+    status: RECORD_STATUS.Active,
     ...(debouncedSupplierSearch ? { searchTerm: debouncedSupplierSearch } : {}),
+  })
+  const productsById: Record<string, ProductResponse> = {}
+  const conversionsByProductId: Record<string, ProductUnitConversion[]> = {}
+  productIds.forEach((id, index) => {
+    const product = productDetails[index]?.data
+    if (product) productsById[id] = product
+    const conversions = productConversions[index]?.data
+    if (conversions) conversionsByProductId[id] = conversions
+  })
+  useEffect(() => {
+    validationData.current = {
+      products: productsById,
+      units: unitsQuery.data ?? [],
+      conversions: conversionsByProductId,
+    }
   })
   const createMutation = useCreateInboundRequestMutation()
   const updateMutation = useUpdateInboundRequestMutation()
   const submitMutation = useSubmitInboundRequestMutation()
+  const lookupIsLoading =
+    productDetails.some((query) => query.isPending) ||
+    productConversions.some((query) => query.isPending)
+  const lookupIsError =
+    productDetails.some((query) => query.isError) ||
+    productConversions.some((query) => query.isError)
 
   useEffect(() => {
     const detail = detailQuery.data
     if (!detail || hydratedInboundRequestId.current === detail.id) return
     form.reset({
       warehouseId: detail.warehouseId ?? '',
-      supplierId: detail.supplierId,
+      sourceType: detail.sourceType,
+      supplierId: detail.supplierId ?? '',
+      sourceName: detail.sourceName ?? '',
+      sourceReference: detail.sourceReference ?? '',
       expectedDate: toOperationalDateInputValue(detail.expectedDate),
       lines: detail.lines.map((line) => ({
         productId: line.productId,
-        quantity: line.quantity,
-        unitPrice: line.unitPrice,
+        quantity: line.enteredQuantity,
+        unitId: line.enteredUnitId,
       })),
     })
     hydratedInboundRequestId.current = detail.id
@@ -121,19 +170,15 @@ export default function InboundRequestFormPage({
     return () => window.removeEventListener('beforeunload', warnBeforeUnload)
   }, [form.formState.isDirty])
 
-  function toRequest(values: InboundRequestFormValues): SaveInboundRequestRequest {
-    return {
-      warehouseId: values.warehouseId,
-      supplierId: values.supplierId,
-      expectedDate: toOperationalDateApiValue(values.expectedDate),
-      lines: values.lines,
-    }
-  }
-
   async function save(values: InboundRequestFormValues, shouldSubmit: boolean) {
+    if (lookupIsLoading || lookupIsError) {
+      toast.error('Vui lòng chờ tải thông tin đơn vị tính hoặc thử lại.')
+      return
+    }
     let savedId = inboundRequestId ?? createdInboundRequestId.current
+    const autoApproved = !savedId && isOwner
     try {
-      const request = toRequest(values)
+      const request = toInboundRequestSaveRequest(values)
       if (savedId) {
         await updateMutation.mutateAsync({ inboundRequestId: savedId, request })
       } else {
@@ -141,7 +186,7 @@ export default function InboundRequestFormPage({
         savedId = response.data
         createdInboundRequestId.current = savedId
       }
-      if (shouldSubmit && savedId) {
+      if (shouldSubmit && savedId && !autoApproved) {
         try {
           await submitMutation.mutateAsync(savedId)
         } catch (error) {
@@ -155,9 +200,11 @@ export default function InboundRequestFormPage({
       }
       form.reset(values)
       toast.success(
-        shouldSubmit
-          ? 'Đã lưu và gửi yêu cầu nhập kho để duyệt.'
-          : 'Đã lưu bản nháp yêu cầu nhập kho.'
+        autoApproved
+          ? 'Yêu cầu nhập kho đã được tạo và phê duyệt.'
+          : shouldSubmit
+            ? 'Đã lưu và gửi yêu cầu nhập kho để duyệt.'
+            : 'Đã lưu bản nháp yêu cầu nhập kho.'
       )
       if (savedId) router.push(APP_ROUTES.inboundRequestDetail(savedId) as Route)
     } catch (error) {
@@ -182,111 +229,122 @@ export default function InboundRequestFormPage({
     leavePage()
   }
 
-  function handleProductSearchChange(scope: string, value: string) {
+  function onProductSearchChange(scope: string, value: string) {
     setProductSearch((current) => {
       if (value) return { scope, value }
       return current?.scope === scope ? null : current
     })
   }
 
+  function retryProductDetails() {
+    productDetails.forEach((query) => {
+      if (query.isError) void query.refetch()
+    })
+    productConversions.forEach((query) => {
+      if (query.isError) void query.refetch()
+    })
+  }
+
+  function retry() {
+    void warehousesQuery.refetch()
+    void productsQuery.refetch()
+    void suppliersQuery.refetch()
+    void unitsQuery.refetch()
+    if (inboundRequestId) void detailQuery.refetch()
+  }
+
   const isLoading =
     warehousesQuery.isLoading ||
     productsQuery.isLoading ||
     suppliersQuery.isLoading ||
+    unitsQuery.isLoading ||
     (isEditing && detailQuery.isLoading)
   const isError =
     warehousesQuery.isError ||
     productsQuery.isError ||
     suppliersQuery.isError ||
+    unitsQuery.isError ||
     (isEditing && detailQuery.isError)
   const isPending = createMutation.isPending || updateMutation.isPending || submitMutation.isPending
   const detail = detailQuery.data
-  const warehouseOptions = useMemo(
-    () =>
-      mergeLookupOptions(
-        (warehousesQuery.data?.items ?? []).map(
-          (warehouse): LookupOption => ({
-            value: warehouse.id,
-            label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
-          })
-        ),
-        detail?.warehouseId
-          ? [
-              {
-                value: detail.warehouseId,
-                label: `${detail.warehouseCode ?? ''} - ${detail.warehouseName ?? 'Kho hiện tại'}`,
-              },
-            ]
-          : []
-      ),
-    [detail, warehousesQuery.data?.items]
+  const warehouseOptions = mergeLookupOptions(
+    (warehousesQuery.data?.items ?? []).map(
+      (warehouse): LookupOption => ({
+        value: warehouse.id,
+        label: `${warehouse.warehouseCode} - ${warehouse.warehouseName}`,
+      })
+    ),
+    detail?.warehouseId
+      ? [
+          {
+            value: detail.warehouseId,
+            label: `${detail.warehouseCode ?? ''} - ${detail.warehouseName ?? 'Kho hiện tại'}`,
+          },
+        ]
+      : []
   )
-  const supplierOptions = useMemo(
-    () =>
-      mergeLookupOptions(
-        (suppliersQuery.data?.items ?? []).map(
-          (supplier): LookupOption => ({
-            value: supplier.id,
-            label: `${supplier.supplierName} · ${supplier.phone}`,
-          })
-        ),
-        detail ? [{ value: detail.supplierId, label: detail.supplierName }] : []
-      ),
-    [detail, suppliersQuery.data?.items]
+  const supplierOptions = mergeLookupOptions(
+    (suppliersQuery.data?.items ?? []).map(
+      (supplier): LookupOption => ({
+        value: supplier.id,
+        label: `${supplier.supplierName} · ${supplier.phone}`,
+      })
+    ),
+    detail?.supplierId
+      ? [
+          {
+            value: detail.supplierId,
+            label: detail.supplierName ?? 'Nhà cung cấp hiện tại',
+          },
+        ]
+      : []
   )
-  const productOptions = useMemo(
-    () =>
-      mergeLookupOptions(
-        (productsQuery.data?.items ?? []).map(
-          (product): LookupOption => ({
-            value: product.id,
-            label: `${product.sku} - ${product.productName}`,
-          })
-        ),
-        detail?.lines.map(
-          (line): LookupOption => ({
-            value: line.productId,
-            label: `${line.productSKU} - ${line.productName}`,
-          })
-        ) ?? []
-      ),
-    [detail?.lines, productsQuery.data?.items]
+  const productOptions = mergeLookupOptions(
+    (productsQuery.data?.items ?? []).map(
+      (product): LookupOption => ({
+        value: product.id,
+        label: `${product.sku} - ${product.productName}`,
+      })
+    ),
+    detail?.lines.map(
+      (line): LookupOption => ({
+        value: line.productId,
+        label: `${line.productSKU} - ${line.productName}`,
+      })
+    ) ?? []
   )
-
   if (isLoading) return <OperationalLoadingState rows={8} />
   if (isError) {
     return (
-      <OperationalErrorState
-        title="Không thể chuẩn bị biểu mẫu yêu cầu nhập kho"
-        onRetry={() => {
-          void warehousesQuery.refetch()
-          void productsQuery.refetch()
-          void suppliersQuery.refetch()
-          if (isEditing) void detailQuery.refetch()
-        }}
-      />
+      <OperationalErrorState title="Không thể chuẩn bị biểu mẫu yêu cầu nhập kho" onRetry={retry} />
     )
   }
 
   return (
     <>
       <InboundRequestForm
-        currency={detailQuery.data?.currency ?? 'VND'}
         title={
           isEditing
             ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`
             : 'Tạo yêu cầu nhập kho'
         }
-        description="Chọn kho, nhà cung cấp và các sản phẩm cần nhập."
+        description="Chọn nguồn hàng, kho nhận và số lượng theo đơn vị phù hợp với từng sản phẩm."
+        autoApprove={isOwner && !isEditing}
         form={form}
         fields={fieldArray.fields}
         warehouseOptions={warehouseOptions}
         supplierOptions={supplierOptions}
         productOptions={productOptions}
+        productsById={productsById}
+        conversionsByProductId={conversionsByProductId}
+        units={unitsQuery.data ?? []}
+        isUnitLoading={lookupIsLoading}
+        isUnitError={lookupIsError}
+        onRetryUnits={retryProductDetails}
         isWarehouseSearchLoading={warehousesQuery.isFetching}
         isSupplierSearchLoading={suppliersQuery.isFetching}
         isProductSearchLoading={productsQuery.isFetching}
-        isPending={isPending}
+        isPending={isPending || lookupIsLoading || lookupIsError}
         disablePastDates={!isEditing}
         onAddLine={() => fieldArray.append(EMPTY_LINE)}
         onRemoveLine={fieldArray.remove}
@@ -295,22 +353,13 @@ export default function InboundRequestFormPage({
         onSaveAndSubmit={() => void form.handleSubmit((values) => save(values, true))()}
         onWarehouseSearchChange={setWarehouseSearchText}
         onSupplierSearchChange={setSupplierSearchText}
-        onProductSearchChange={handleProductSearchChange}
+        onProductSearchChange={onProductSearchChange}
       />
-      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Rời khỏi trang?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Dữ liệu chưa lưu sẽ bị mất. Bạn vẫn muốn rời trang?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Ở lại</AlertDialogCancel>
-            <AlertDialogAction onClick={leavePage}>Rời trang</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog
+        open={showLeaveDialog}
+        onOpenChange={setShowLeaveDialog}
+        onDiscard={leavePage}
+      />
     </>
   )
 }

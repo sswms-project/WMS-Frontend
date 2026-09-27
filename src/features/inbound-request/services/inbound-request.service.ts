@@ -47,9 +47,21 @@ export const inboundRequestService = {
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.inboundRequests.create, request)
       .then((response) => response.data),
+  duplicateInboundRequest: (inboundRequestId: string) =>
+    axiosClient
+      .post<ApiResponse<string>>(API_ENDPOINTS.inboundRequests.duplicate(inboundRequestId))
+      .then((response) => response.data),
   updateInboundRequest: (inboundRequestId: string, request: SaveInboundRequestRequest) =>
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.update(inboundRequestId), request)
+      .then((response) => response.data),
+  deleteInboundRequest: (inboundRequestId: string) =>
+    axiosClient
+      .delete<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.delete(inboundRequestId))
+      .then((response) => response.data),
+  deleteInboundRequests: (ids: readonly string[]) =>
+    axiosClient
+      .delete<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.deleteMany, { data: { ids } })
       .then((response) => response.data),
   submitInboundRequest: (inboundRequestId: string) =>
     axiosClient

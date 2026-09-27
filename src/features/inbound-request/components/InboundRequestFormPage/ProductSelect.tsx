@@ -8,7 +8,6 @@ interface ProductSelectProps {
   readonly inputId: string
   readonly searchScope: string
   readonly selectedOption?: LookupOption
-  readonly onSelectedOptionChange: (scope: string, option?: LookupOption) => void
   readonly index: number
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly options: readonly LookupOption[]
@@ -20,7 +19,6 @@ export function ProductSelect({
   inputId,
   searchScope,
   selectedOption,
-  onSelectedOptionChange,
   index,
   form,
   options,
@@ -41,12 +39,12 @@ export function ProductSelect({
         isLoading={isLoading}
         isInvalid={Boolean(error)}
         onSearchChange={(value) => onSearchChange(searchScope, value)}
-        onChange={(value, option) => {
-          onSelectedOptionChange(searchScope, option)
+        onChange={(value) => {
           form.setValue(`lines.${index}.productId`, value, {
             shouldDirty: true,
             shouldValidate: true,
           })
+          form.setValue(`lines.${index}.unitId`, '', { shouldDirty: true, shouldValidate: true })
         }}
       />
       <FieldError>{error?.message}</FieldError>

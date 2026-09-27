@@ -19,7 +19,8 @@ export interface PermissionResponse {
 }
 
 export interface AssignPermissionsRequest {
-  permissionIds: string[]
+  toAdd: string[]
+  toRemove: string[]
 }
 
 export type SubscriptionPlanStatus = 'Active' | 'Inactive'
