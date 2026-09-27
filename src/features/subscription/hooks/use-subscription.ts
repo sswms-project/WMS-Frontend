@@ -107,6 +107,21 @@ export function useChangeSubscriptionPlanMutation() {
   })
 }
 
+export function usePreviewSubscriptionPlanChangeMutation() {
+  return useMutation<
+    SubscriptionPlanChangeResponse,
+    ApiErrorResponse,
+    ChangeSubscriptionPlanRequestDto
+  >({
+    mutationFn: (body) =>
+      subscriptionService.previewPlanChange(body).then((response) => response.data),
+    onError: (error) => {
+      logger.error(error)
+      toast.error(error.message ?? 'Không thể tính trước thay đổi gói. Vui lòng thử lại.')
+    },
+  })
+}
+
 export function useRenewSubscriptionMutation() {
   return useMutation<PaymentLinkResponse, ApiErrorResponse>({
     mutationFn: () => subscriptionService.renewSubscription().then((response) => response.data),

@@ -10,6 +10,7 @@ import {
   formatBillingCycle,
   formatCurrency,
   formatDate,
+  formatSubscriptionStatus,
   hasPendingSubscriptionChange,
   isCancelledSubscription,
 } from '../../utils/format-subscription'
@@ -19,6 +20,7 @@ interface CurrentPlanCardProps {
   readonly showRenewAction: boolean
   readonly isRenewPending: boolean
   readonly onRenew: () => void
+  readonly onContinuePayment: () => void
 }
 
 function getProgressValue(subscription: SubscriptionStatusResponse): number {
@@ -42,8 +44,10 @@ function CurrentStatusBadge({
   if (subscription.isExpired) {
     return <Badge variant="destructive">Đã hết hạn</Badge>
   }
-
-  return <Badge>Đang hoạt động</Badge>
+  if (isCancelledSubscription(subscription)) {
+    return <Badge variant="outline">Đã hủy</Badge>
+  }
+  return <Badge>{formatSubscriptionStatus(subscription.status)}</Badge>
 }
 
 export function CurrentPlanCard({
@@ -51,16 +55,20 @@ export function CurrentPlanCard({
   showRenewAction,
   isRenewPending,
   onRenew,
+  onContinuePayment,
 }: CurrentPlanCardProps) {
   const progressValue = getProgressValue(subscription)
   const cancelled = isCancelledSubscription(subscription)
   const hasPendingChange = hasPendingSubscriptionChange(subscription)
+  const hasPendingPayment = subscription.pendingPaymentStatus === 'Pending'
+  const hasPaidFutureTerm = subscription.pendingPaymentStatus === 'Completed'
 
   // Expired, cancelled, and pending-change are shown as mutually exclusive banners
   // (most severe first) so the page never states two contradictory things at once —
   // e.g. "already cancelled" next to "your change applies next cycle".
-  const showExpiredAlert = subscription.isExpired
-  const showPendingChangeAlert = !subscription.isExpired && !cancelled && hasPendingChange
+  const showExpiredAlert = subscription.isExpired && !hasPendingPayment
+  const showPendingChangeAlert =
+    !cancelled && hasPendingChange && (!subscription.isExpired || hasPendingPayment)
 
   return (
     <Card className="border-primary/20 min-w-0 gap-0 py-0">
@@ -75,7 +83,7 @@ export function CurrentPlanCard({
                 <h2 className="truncate text-base font-semibold">{subscription.planName}</h2>
                 <CurrentStatusBadge subscription={subscription} />
               </div>
-              <p className="text-muted-foreground text-xs">Gói hiện tại của tenant</p>
+              <p className="text-muted-foreground text-xs">Gói hiện tại của tổ chức</p>
             </div>
           </div>
 
@@ -88,7 +96,12 @@ export function CurrentPlanCard({
             <Metric
               className="col-span-2 sm:col-span-1"
               label="Kết thúc"
-              value={formatDate(subscription.endDate)}
+              value={subscription.endDate ? formatDate(subscription.endDate) : 'Không thời hạn'}
+            />
+            <Metric label="Suất người dùng" value={formatUserUsage(subscription)} />
+            <Metric
+              label="Kho đang dùng"
+              value={formatUsage(subscription.currentWarehouseCount, subscription.warehouseLimit)}
             />
           </dl>
 
@@ -133,21 +146,47 @@ export function CurrentPlanCard({
         {showPendingChangeAlert && (
           <Alert>
             <RotateCcw aria-hidden="true" />
-            <AlertTitle>Đã lên lịch chuyển gói</AlertTitle>
+            <AlertTitle>
+              {hasPendingPayment
+                ? 'Thanh toán gói dịch vụ đang chờ'
+                : hasPaidFutureTerm
+                  ? 'Đã thanh toán, đang chờ ngày áp dụng'
+                  : 'Đã lên lịch chuyển gói'}
+            </AlertTitle>
             <AlertDescription>
-              {subscription.pendingPlanName || subscription.planName} (
-              {formatBillingCycle(subscription.pendingBillingCycle || subscription.billingCycle)})
-              sẽ được áp dụng{' '}
-              {subscription.pendingEffectiveAt
-                ? `từ ${formatDate(subscription.pendingEffectiveAt)}`
-                : 'vào kỳ thanh toán kế tiếp'}
-              .{subscription.pendingPaymentId ? ' Khoản thanh toán đã được ghi nhận.' : ''}
+              {hasPendingPayment
+                ? subscription.pendingPlanName &&
+                  subscription.pendingPlanName !== subscription.planName
+                  ? `Hoàn tất thanh toán để áp dụng gói ${subscription.pendingPlanName} (${formatBillingCycle(subscription.pendingBillingCycle || subscription.billingCycle)}).`
+                  : `Hoàn tất thanh toán để gia hạn gói ${subscription.planName}.`
+                : `${subscription.pendingPlanName || subscription.planName} (${formatBillingCycle(subscription.pendingBillingCycle || subscription.billingCycle)}) sẽ được áp dụng ${subscription.pendingEffectiveAt ? `từ ${formatDate(subscription.pendingEffectiveAt)}` : 'vào kỳ thanh toán kế tiếp'}.`}
+              {hasPendingPayment && subscription.pendingCheckoutUrl ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-3 min-h-11 w-full sm:w-auto"
+                  onClick={onContinuePayment}
+                >
+                  Tiếp tục thanh toán
+                </Button>
+              ) : null}
             </AlertDescription>
           </Alert>
         )}
       </CardContent>
     </Card>
   )
+}
+
+function formatUsage(current: number, limit: number | null): string {
+  return `${current}/${limit ?? 'Không giới hạn'}`
+}
+
+function formatUserUsage(subscription: SubscriptionStatusResponse): string {
+  const pendingInvitations = subscription.pendingInvitationCount ?? 0
+  const consumedSlots = subscription.currentUserCount + pendingInvitations
+  const usage = formatUsage(consumedSlots, subscription.userLimit)
+  return pendingInvitations > 0 ? `${usage} (${pendingInvitations} lời mời chờ)` : usage
 }
 
 interface MetricProps {

@@ -16,6 +16,7 @@ interface SubscriptionActionDialogProps {
   readonly description: string
   readonly confirmLabel: string
   readonly isPending: boolean
+  readonly confirmDisabled?: boolean
   readonly variant?: 'default' | 'destructive'
   readonly onOpenChange: (open: boolean) => void
   readonly onConfirm: () => void
@@ -28,6 +29,7 @@ export function SubscriptionActionDialog({
   description,
   confirmLabel,
   isPending,
+  confirmDisabled = false,
   variant = 'default',
   onOpenChange,
   onConfirm,
@@ -43,7 +45,12 @@ export function SubscriptionActionDialog({
         {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Đóng</AlertDialogCancel>
-          <Button type="button" variant={variant} disabled={isPending} onClick={onConfirm}>
+          <Button
+            type="button"
+            variant={variant}
+            disabled={isPending || confirmDisabled}
+            onClick={onConfirm}
+          >
             {isPending ? 'Đang xử lý...' : confirmLabel}
           </Button>
         </AlertDialogFooter>
