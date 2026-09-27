@@ -2,6 +2,7 @@ import { ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getRoleDescription, getRoleLabel } from '@/config/roles'
 import {
   Table,
   TableBody,
@@ -94,7 +95,9 @@ export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTable
                   </span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-semibold">{role.roleName}</span>
+                      <span className="truncate text-sm font-semibold">
+                        {getRoleLabel(role.roleName)}
+                      </span>
                       {role.isSystemRole && (
                         <Badge variant="secondary" className="shrink-0 text-[10px]">
                           Hệ thống
@@ -102,13 +105,13 @@ export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTable
                       )}
                     </div>
                     <p className="text-muted-foreground mt-0.5 text-xs lg:hidden">
-                      {role.description || 'Chưa có mô tả'}
+                      {getRoleDescription(role.roleName, role.description)}
                     </p>
                   </div>
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground max-w-sm truncate text-xs lg:table-cell">
-                {role.description || 'Chưa có mô tả'}
+                {getRoleDescription(role.roleName, role.description)}
               </TableCell>
               <TableCell className="text-center">
                 <Badge variant="outline" className="tabular-nums">

@@ -47,7 +47,7 @@ export function PermissionCatalog({
             {emptyDescription ??
               (hasSearch
                 ? 'Thử từ khóa khác theo tên quyền, mô tả hoặc phân hệ.'
-                : 'Backend chưa cung cấp quyền vận hành có thể ủy quyền cho tenant.')}
+                : 'Hiện chưa có quyền nào có thể phân cho vai trò này.')}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

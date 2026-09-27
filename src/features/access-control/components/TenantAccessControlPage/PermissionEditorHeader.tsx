@@ -7,8 +7,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { PermissionSearch } from './PermissionSearch'
 
 interface PermissionEditorHeaderProps {
-  readonly directCount: number
-  readonly effectiveCount: number
+  readonly selectedCount: number
+  readonly permissionCount: number
   readonly moduleCount: number
   readonly searchText: string
   readonly dirty: boolean
@@ -21,8 +21,8 @@ interface PermissionEditorHeaderProps {
 }
 
 export function PermissionEditorHeader({
-  directCount,
-  effectiveCount,
+  selectedCount,
+  permissionCount,
   moduleCount,
   searchText,
   dirty,
@@ -39,12 +39,12 @@ export function PermissionEditorHeader({
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center xl:flex-1">
         <dl className="flex shrink-0 items-center divide-x text-xs" aria-label="Thống kê quyền">
           <div className="flex items-baseline gap-1.5 pr-3">
-            <dt className="text-muted-foreground">Trực tiếp</dt>
-            <dd className="text-foreground font-semibold tabular-nums">{directCount}</dd>
+            <dt className="text-muted-foreground">Đã chọn</dt>
+            <dd className="text-foreground font-semibold tabular-nums">{selectedCount}</dd>
           </div>
           <div className="flex items-baseline gap-1.5 px-3">
-            <dt className="text-muted-foreground">Hiệu lực</dt>
-            <dd className="text-foreground font-semibold tabular-nums">{effectiveCount}</dd>
+            <dt className="text-muted-foreground">Tổng quyền</dt>
+            <dd className="text-foreground font-semibold tabular-nums">{permissionCount}</dd>
           </div>
           <div className="flex items-baseline gap-1.5 px-3">
             <dt className="text-muted-foreground">Phân hệ</dt>

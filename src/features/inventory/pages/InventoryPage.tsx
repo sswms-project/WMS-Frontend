@@ -33,9 +33,14 @@ export default function InventoryPage() {
   const [pageSize, setPageSize] = useState(20)
   const [damagedStock, setDamagedStock] = useState<InventoryStock | null>(null)
   const meQuery = useMeQuery()
+  const canViewWarehouseTasks =
+    meQuery.data?.permissions.includes(P.WAREHOUSE_TASKS_VIEW_OWN) ?? false
   const damagedMutation = useReportDamagedStockMutation()
   const evidenceMutation = useUploadInventoryEvidenceMutation()
-  const tasksQuery = useMyWarehouseTasksQuery(damagedStock?.warehouseId, Boolean(damagedStock))
+  const tasksQuery = useMyWarehouseTasksQuery(
+    damagedStock?.warehouseId,
+    Boolean(damagedStock) && canViewWarehouseTasks
+  )
   const damagedForm = useForm<ReportDamagedStockFormValues>({
     resolver: zodResolver(reportDamagedStockSchema),
     defaultValues: { reportMode: 'Confirmed', quantity: 1, reason: '' },
@@ -216,6 +221,7 @@ export default function InventoryPage() {
         item={damagedStock}
         form={damagedForm}
         isPending={evidenceMutation.isPending || damagedMutation.isPending}
+        canLinkTask={canViewWarehouseTasks}
         taskOptions={(tasksQuery.data?.items ?? []).map((task) => ({
           value: `${task.taskType}:${task.id}`,
           label: `${task.referenceCode} · ${task.title} · ${task.executionStatus}`,
