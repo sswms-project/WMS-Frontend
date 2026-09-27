@@ -1,6 +1,15 @@
 'use client'
 
-import { ArrowLeft, Check, PackageCheck, Pencil, Send, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  Check,
+  PackageCheck,
+  Pencil,
+  Send,
+  Undo2,
+  UserCheck,
+  UserRoundCog,
+} from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -53,6 +62,7 @@ interface ReceiptDetailProps {
   readonly onSubmit: () => Promise<boolean>
   readonly onApprove: () => Promise<boolean>
   readonly onReject: (reason: string) => Promise<boolean>
+  readonly onAssignPutAway?: () => void
 }
 
 export function ReceiptDetail({
@@ -63,6 +73,7 @@ export function ReceiptDetail({
   onSubmit,
   onApprove,
   onReject,
+  onAssignPutAway,
 }: ReceiptDetailProps) {
   const [confirmationAction, setConfirmationAction] = useState<'Submit' | 'Approve' | null>(null)
   const [isRejectOpen, setIsRejectOpen] = useState(false)
@@ -78,7 +89,7 @@ export function ReceiptDetail({
   async function reject() {
     const normalized = reason.trim()
     if (!normalized) {
-      setReasonError('Vui lòng nhập lý do từ chối.')
+      setReasonError('Vui lòng nhập lý do trả sửa.')
       return
     }
     if (normalized.length > 500) {
@@ -126,14 +137,28 @@ export function ReceiptDetail({
           ) : null}
           {allowedActions.includes('Reject') ? (
             <Button type="button" variant="outline" onClick={() => setIsRejectOpen(true)}>
-              <X aria-hidden="true" />
-              Từ chối
+              <Undo2 aria-hidden="true" />
+              Trả sửa
             </Button>
           ) : null}
           {allowedActions.includes('Approve') ? (
             <Button type="button" onClick={() => setConfirmationAction('Approve')}>
               <Check aria-hidden="true" />
               Phê duyệt
+            </Button>
+          ) : null}
+          {allowedActions.includes('AssignPutAway') && onAssignPutAway ? (
+            <Button
+              type="button"
+              variant={receipt.putAwayAssignedTo ? 'outline' : 'default'}
+              onClick={onAssignPutAway}
+            >
+              {receipt.putAwayAssignedTo ? (
+                <UserRoundCog aria-hidden="true" />
+              ) : (
+                <UserCheck aria-hidden="true" />
+              )}
+              {receipt.putAwayAssignedTo ? 'Giao lại cất hàng' : 'Giao việc cất hàng'}
             </Button>
           ) : null}
           {allowedActions.includes('PutAway') ? (
@@ -153,8 +178,17 @@ export function ReceiptDetail({
         <dl className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-4">
           <Metadata label="Yêu cầu nhập kho" value={receipt.inboundRequestCode} />
           <Metadata label="Kho nhận" value={receipt.warehouseName} />
-          <Metadata label="Người tạo" value={receipt.createdByName} />
+          <Metadata
+            label="Người ghi nhận"
+            value={receipt.receivingAssignedToName ?? receipt.createdByName}
+          />
           <Metadata label="Ngày tạo" value={formatOperationalDate(receipt.createdAt)} />
+          {receipt.status === 'Approved' || receipt.status === 'Completed' ? (
+            <Metadata label="Người cất hàng" value={receipt.putAwayAssignedToName ?? 'Chưa giao'} />
+          ) : null}
+          {receipt.approvedByName ? (
+            <Metadata label="Người duyệt" value={receipt.approvedByName} />
+          ) : null}
         </dl>
         {receipt.rejectionReason ? (
           <div className="border-t p-4">
@@ -330,7 +364,7 @@ export function ReceiptDetail({
       <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Từ chối phiếu nhận hàng</DialogTitle>
+            <DialogTitle>Trả sửa phiếu nhận hàng</DialogTitle>
             <DialogDescription>
               Ghi rõ số lượng hoặc tình trạng hàng cần kiểm tra lại.
             </DialogDescription>
@@ -364,7 +398,7 @@ export function ReceiptDetail({
               disabled={isPending}
               onClick={() => void reject()}
             >
-              Từ chối phiếu
+              Trả sửa phiếu
             </Button>
           </DialogFooter>
         </DialogContent>

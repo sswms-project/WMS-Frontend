@@ -30,6 +30,10 @@ export const P = {
   GOODS_RECEIPTS_APPROVE: 'goods-receipts:approve',
   GOODS_RECEIPTS_REJECT: 'goods-receipts:reject',
 
+  // Warehouse Tasks (công việc được giao của Nhân viên kho)
+  WAREHOUSE_TASKS_VIEW_OWN: 'warehouse-tasks:view-own',
+  WAREHOUSE_TASKS_MANAGE_OWN: 'warehouse-tasks:manage-own',
+
   // Goods Return Requests
   GOODS_RETURN_REQUESTS_VIEW: 'goods-return-requests:view',
   GOODS_RETURN_REQUESTS_APPROVE: 'goods-return-requests:approve',

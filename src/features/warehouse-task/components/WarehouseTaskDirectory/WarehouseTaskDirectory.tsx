@@ -30,9 +30,17 @@ interface WarehouseTaskDirectoryProps {
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
+  readonly canManage?: boolean
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onAction?: (task: MyWarehouseTask, action: 'Start' | 'Pause' | 'Return') => void
+}
+
+const executionLabel: Record<MyWarehouseTask['executionStatus'], string> = {
+  Queued: 'Chờ bắt đầu',
+  InProgress: 'Đang làm',
+  Paused: 'Tạm dừng',
+  Completed: 'Hoàn tất',
 }
 
 const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
@@ -52,10 +60,35 @@ export function WarehouseTaskDirectory({
   isLoading,
   isFetching,
   isError,
+  canManage = false,
   onPageChange,
   onRetry,
   onAction,
 }: WarehouseTaskDirectoryProps) {
+  function renderActions(item: MyWarehouseTask) {
+    if (!canManage || !onAction || item.taskType === 'DamagedStock') return null
+    const isInProgress = item.executionStatus === 'InProgress'
+    return (
+      <>
+        {!isInProgress && (
+          <Button size="sm" variant="outline" onClick={() => onAction(item, 'Start')}>
+            {item.executionStatus === 'Paused' ? 'Tiếp tục' : 'Bắt đầu'}
+          </Button>
+        )}
+        {isInProgress && item.priority !== 'Urgent' && (
+          <Button size="sm" variant="outline" onClick={() => onAction(item, 'Pause')}>
+            Tạm dừng
+          </Button>
+        )}
+        {!isInProgress && (
+          <Button size="sm" variant="ghost" onClick={() => onAction(item, 'Return')}>
+            Trả lại
+          </Button>
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex shrink-0 items-start justify-between gap-3">
@@ -98,7 +131,21 @@ export function WarehouseTaskDirectory({
                       <TableCell className="font-mono font-medium">{item.referenceCode}</TableCell>
                       <TableCell>{item.warehouseName}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{item.executionStatus}</Badge>
+                        <Badge
+                          variant={item.executionStatus === 'InProgress' ? 'default' : 'secondary'}
+                        >
+                          {executionLabel[item.executionStatus] ?? item.executionStatus}
+                        </Badge>
+                        {item.priority === 'Urgent' && (
+                          <Badge variant="outline" className="ml-1">
+                            Khẩn
+                          </Badge>
+                        )}
+                        {item.pauseReason && item.executionStatus === 'Paused' && (
+                          <p className="text-muted-foreground mt-1 max-w-48 truncate text-xs">
+                            {item.pauseReason}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell>
                         {new Intl.DateTimeFormat('vi-VN', {
@@ -106,41 +153,8 @@ export function WarehouseTaskDirectory({
                           timeStyle: 'short',
                         }).format(new Date(item.updatedAt))}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {onAction &&
-                          item.taskType !== 'DamagedStock' &&
-                          item.executionStatus !== 'InProgress' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onAction(item, 'Start')}
-                            >
-                              Bắt đầu
-                            </Button>
-                          )}
-                        {onAction &&
-                          item.taskType !== 'DamagedStock' &&
-                          item.executionStatus === 'InProgress' &&
-                          item.priority !== 'Urgent' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onAction(item, 'Pause')}
-                            >
-                              Tạm dừng
-                            </Button>
-                          )}
-                        {onAction &&
-                          item.taskType !== 'DamagedStock' &&
-                          item.executionStatus !== 'InProgress' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => onAction(item, 'Return')}
-                            >
-                              Trả lại
-                            </Button>
-                          )}
+                      <TableCell className="space-x-1 text-right">
+                        {renderActions(item)}
                         <Button asChild size="icon-sm" variant="ghost">
                           <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
                             <ArrowRight aria-hidden="true" />
@@ -161,12 +175,18 @@ export function WarehouseTaskDirectory({
                     <p className="text-muted-foreground truncate font-mono text-xs">
                       {item.referenceCode} · {item.warehouseName}
                     </p>
+                    <Badge variant="secondary" className="mt-1">
+                      {executionLabel[item.executionStatus] ?? item.executionStatus}
+                    </Badge>
                   </div>
-                  <Button asChild size="icon-sm" variant="ghost">
-                    <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
-                      <ArrowRight aria-hidden="true" />
-                    </Link>
-                  </Button>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    {renderActions(item)}
+                    <Button asChild size="icon-sm" variant="ghost">
+                      <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
+                        <ArrowRight aria-hidden="true" />
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -188,5 +208,6 @@ function getTaskRoute(task: MyWarehouseTask): Route {
   if (task.taskType === 'PutAway') return APP_ROUTES.inboundPutawayDetail(task.id) as Route
   if (task.taskType === 'CycleCount') return APP_ROUTES.cycleCountDetail(task.id)
   if (task.taskType === 'DamagedStock') return APP_ROUTES.stockAdjustmentDetail(task.id)
-  return APP_ROUTES.inbound as Route
+  // Mở màn nhận hàng đã lọc sẵn theo mã yêu cầu nhập kho được giao.
+  return `${APP_ROUTES.inbound}?search=${encodeURIComponent(task.referenceCode)}` as Route
 }

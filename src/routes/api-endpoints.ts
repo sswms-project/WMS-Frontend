@@ -188,6 +188,10 @@ export const API_ENDPOINTS = {
     update: (receiptId: string) => `/goods-receipts/${receiptId}`,
     receivingTasks: '/goods-receipts/receiving-tasks',
     putawayTasks: '/goods-receipts/putaway-tasks',
+    assignableStaff: '/goods-receipts/assignable-staff',
+    assignReceivingTask: (inboundRequestId: string) =>
+      `/goods-receipts/receiving-tasks/${inboundRequestId}/assignment`,
+    assignPutawayTask: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-assignment`,
     submit: (receiptId: string) => `/goods-receipts/${receiptId}/submit`,
     approve: (receiptId: string) => `/goods-receipts/${receiptId}/approve`,
     reject: (receiptId: string) => `/goods-receipts/${receiptId}/reject`,

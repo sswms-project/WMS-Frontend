@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -10,13 +10,21 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import {
   InboundDocumentImportDialog,
   ReceiveGoodsDialog,
   ReceivingTaskDirectory,
+  type ReceivingAssignmentFilter,
 } from '../components/ReceivingPage'
 import {
+  AssignWarehouseTaskDialog,
+  type AssignWarehouseTaskTarget,
+} from '../components/TaskAssignment'
+import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-assignment-access'
+import {
+  useAssignReceivingTaskMutation,
   useCreateDraftFromDocumentMutation,
   useCreateGoodsReceiptMutation,
   useInboundDocumentImportQuery,
@@ -35,7 +43,11 @@ import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.ty
 
 export default function InboundReceivingPage() {
   const router = useRouter()
-  const [searchText, setSearchText] = useState('')
+  const searchParams = useSearchParams()
+  const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
+  const [searchText, setSearchText] = useState(() => searchParams.get('search') ?? '')
+  const [assignmentFilter, setAssignmentFilter] = useState<ReceivingAssignmentFilter>('all')
+  const [assignTarget, setAssignTarget] = useState<AssignWarehouseTaskTarget | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedTask, setSelectedTask] = useState<ReceivingTask | null>(null)
@@ -50,7 +62,9 @@ export default function InboundReceivingPage() {
     pageNumber: page,
     pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
+    ...(canAssign && assignmentFilter === 'unassigned' ? { unassigned: true } : {}),
   })
+  const assignMutation = useAssignReceivingTaskMutation()
   const createMutation = useCreateGoodsReceiptMutation()
   const submitMutation = useSubmitGoodsReceiptMutation()
   const importQuery = useInboundDocumentImportQuery(importId)
@@ -257,6 +271,40 @@ export default function InboundReceivingPage() {
     }
   }
 
+  function openAssign(task: ReceivingTask) {
+    setAssignTarget({
+      kind: 'Receiving',
+      id: task.inboundRequestId,
+      referenceCode: task.inboundRequestCode,
+      warehouseId: task.warehouseId,
+      warehouseName: task.warehouseName,
+      currentAssigneeId: task.assignedTo,
+      currentAssigneeName: task.assignedToName,
+    })
+  }
+
+  async function assign(values: { staffId: string; reason: string }) {
+    if (!assignTarget) return
+    try {
+      await assignMutation.mutateAsync({
+        inboundRequestId: assignTarget.id,
+        request: {
+          staffId: values.staffId,
+          expectedStaffId: assignTarget.currentAssigneeId,
+          reason: values.reason || null,
+        },
+      })
+      toast.success(
+        assignTarget.currentAssigneeId
+          ? `Đã giao lại việc nhận hàng ${assignTarget.referenceCode}.`
+          : `Đã giao việc nhận hàng ${assignTarget.referenceCode}.`
+      )
+      setAssignTarget(null)
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Không thể giao việc nhận hàng. Vui lòng thử lại.'))
+    }
+  }
+
   const isPending = createMutation.isPending || submitMutation.isPending
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -282,6 +330,20 @@ export default function InboundReceivingPage() {
         onReceive={openReceive}
         onImportDocument={openDocumentImport}
         onRetry={() => void query.refetch()}
+        currentUserId={currentUserId}
+        canAssign={canAssign}
+        assignmentFilter={assignmentFilter}
+        onAssignmentFilterChange={(value) => {
+          setAssignmentFilter(value)
+          setPage(1)
+        }}
+        onAssign={openAssign}
+      />
+      <AssignWarehouseTaskDialog
+        target={assignTarget}
+        isPending={assignMutation.isPending}
+        onOpenChange={(open) => !open && setAssignTarget(null)}
+        onSubmit={(values) => void assign(values)}
       />
       <ReceiveGoodsDialog
         task={selectedTask}
