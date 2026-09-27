@@ -35,7 +35,7 @@ export function NotificationBell(props: NotificationBellProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
+          className="text-foreground relative"
           aria-label={`Thông báo${props.unreadCount > 0 ? `, ${props.unreadCount} chưa đọc` : ''}`}
         >
           <Bell aria-hidden="true" />

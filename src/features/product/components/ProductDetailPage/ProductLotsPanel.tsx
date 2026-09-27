@@ -3,15 +3,13 @@
 import { RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +18,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -29,7 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { WarehouseResponse } from '@/types/warehouse'
-import type { ProductLot, ProductLotStatus } from '../../types/product.types'
+import type { ProductLot, ProductLotImpact, ProductLotStatus } from '../../types/product.types'
 
 interface ProductLotsPanelProps {
   readonly lots: readonly ProductLot[]
@@ -40,14 +39,19 @@ interface ProductLotsPanelProps {
   readonly expiresOnOrBefore: string
   readonly isLoading: boolean
   readonly isError: boolean
+  readonly impact: ProductLotImpact | null
+  readonly isImpactLoading: boolean
   readonly isUpdating: boolean
-  readonly canManage: boolean
+  readonly canBlock: boolean
+  readonly canUnlock: boolean
   readonly onWarehouseChange: (value: string) => void
   readonly onStatusChange: (value: ProductLotStatus | '') => void
   readonly onOnlyAvailableChange: (value: boolean) => void
   readonly onExpiryChange: (value: string) => void
   readonly onRetry: () => void
-  readonly onStatusUpdate: (lot: ProductLot, status: 'Active' | 'Blocked') => void
+  readonly onInspectImpact: (lot: ProductLot) => void
+  readonly onBlock: (lot: ProductLot, reason: string) => void
+  readonly onUnlock: (lot: ProductLot, reason: string) => void
 }
 
 function lotStatusLabel(status: ProductLotStatus) {
@@ -70,7 +74,16 @@ function formatLotDate(value: string | null): string {
 }
 
 export function ProductLotsPanel(props: ProductLotsPanelProps) {
-  const [lotToBlock, setLotToBlock] = useState<ProductLot | null>(null)
+  const [actionLot, setActionLot] = useState<ProductLot | null>(null)
+  const [reason, setReason] = useState('')
+  const isUnlocking = actionLot?.status === 'Blocked'
+  const canSubmit = reason.trim().length > 0 && !props.isUpdating
+
+  function closeDialog() {
+    if (props.isUpdating) return
+    setActionLot(null)
+    setReason('')
+  }
 
   return (
     <>
@@ -156,7 +169,7 @@ export function ProductLotsPanel(props: ProductLotsPanelProps) {
                   <TableHead className="text-right">Tồn</TableHead>
                   <TableHead className="text-right">Đang giữ</TableHead>
                   <TableHead className="text-right">Khả dụng</TableHead>
-                  {props.canManage ? <TableHead className="text-right">Thao tác</TableHead> : null}
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -178,63 +191,148 @@ export function ProductLotsPanel(props: ProductLotsPanelProps) {
                     <TableCell className="text-right tabular-nums">
                       {lotQuantityFormatter.format(lot.availableQuantity)}
                     </TableCell>
-                    {props.canManage ? (
-                      <TableCell className="text-right">
-                        {lot.status !== 'Expired' ? (
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => props.onInspectImpact(lot)}
+                        >
+                          Ảnh hưởng
+                        </Button>
+                        {lot.status === 'Active' && props.canBlock ? (
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             disabled={props.isUpdating}
-                            onClick={() => {
-                              if (lot.status === 'Blocked') props.onStatusUpdate(lot, 'Active')
-                              else setLotToBlock(lot)
-                            }}
+                            onClick={() => setActionLot(lot)}
                           >
-                            {lot.status === 'Blocked' ? 'Mở khóa' : 'Khóa lô'}
+                            Khóa lô
+                          </Button>
+                        ) : lot.status === 'Blocked' && props.canUnlock ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={props.isUpdating}
+                            onClick={() => setActionLot(lot)}
+                          >
+                            Mở khóa
                           </Button>
                         ) : (
                           '—'
                         )}
-                      </TableCell>
-                    ) : null}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
+          {props.isImpactLoading ? <Skeleton className="h-24 w-full" /> : null}
+          {props.impact ? (
+            <section className="bg-muted/30 space-y-3 border p-4">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Lot Impact Summary · {props.impact.lotNumber}
+                </h3>
+                <p className="text-muted-foreground text-xs">
+                  Tồn và đơn đang ảnh hưởng được dùng để quyết định thay lô hoặc tạm dừng giao hàng.
+                </p>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kho</TableHead>
+                    <TableHead className="text-right">Tồn</TableHead>
+                    <TableHead className="text-right">Đang giữ</TableHead>
+                    <TableHead>Quarantine</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {props.impact.warehouses.map((warehouse) => (
+                    <TableRow key={warehouse.warehouseId}>
+                      <TableCell>{warehouse.warehouseName}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {lotQuantityFormatter.format(warehouse.quantityOnHand)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {lotQuantityFormatter.format(warehouse.reservedQuantity)}
+                      </TableCell>
+                      <TableCell>{warehouse.quarantineSlotCode ?? 'Chưa cấu hình'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div>
+                <p className="text-xs font-semibold">Đơn đang bị ảnh hưởng</p>
+                {props.impact.affectedOrders.length === 0 ? (
+                  <p className="text-muted-foreground mt-1 text-xs">Không có đơn chưa hoàn tất.</p>
+                ) : (
+                  <ul className="mt-1 space-y-1 text-xs">
+                    {props.impact.affectedOrders.map((order) => (
+                      <li key={order.outboundOrderId} className="flex flex-wrap gap-x-2">
+                        <span className="font-mono">{order.orderCode}</span>
+                        <span>{order.status}</span>
+                        <span>{order.warehouseName}</span>
+                        <span>{lotQuantityFormatter.format(order.quantity)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+          ) : null}
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={Boolean(lotToBlock)}
-        onOpenChange={(open) => {
-          if (!open && !props.isUpdating) setLotToBlock(null)
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Khóa lô {lotToBlock?.lotNumber}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Lô bị khóa sẽ không thể được chọn cho các nghiệp vụ nhập, xuất, điều chuyển hoặc điều
-              chỉnh tồn kho cho đến khi được mở khóa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={props.isUpdating}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
+      <Dialog open={Boolean(actionLot)} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isUnlocking ? 'Mở khóa' : 'Khóa'} lô {actionLot?.lotNumber}?
+            </DialogTitle>
+            <DialogDescription>
+              {isUnlocking
+                ? 'Chỉ Chủ doanh nghiệp được mở khóa. Lý do sẽ được lưu vào lịch sử kiểm toán.'
+                : 'Lô sẽ bị chặn xuất ở toàn bộ kho. Mỗi kho còn tồn lô phải có vị trí quarantine đã cấu hình.'}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            aria-label="Lý do thao tác lô"
+            placeholder="Nhập lý do bắt buộc"
+            value={reason}
+            maxLength={500}
+            disabled={props.isUpdating}
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
               disabled={props.isUpdating}
+              onClick={closeDialog}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant={isUnlocking ? 'default' : 'destructive'}
+              disabled={!canSubmit}
               onClick={() => {
-                if (lotToBlock) props.onStatusUpdate(lotToBlock, 'Blocked')
-                setLotToBlock(null)
+                if (!actionLot) return
+                if (isUnlocking) props.onUnlock(actionLot, reason.trim())
+                else props.onBlock(actionLot, reason.trim())
+                closeDialog()
               }}
             >
-              {props.isUpdating ? 'Đang khóa…' : 'Khóa lô'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {props.isUpdating ? 'Đang xử lý…' : isUnlocking ? 'Mở khóa lô' : 'Khóa lô'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

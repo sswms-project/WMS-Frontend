@@ -23,4 +23,14 @@ export const staffService = {
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.staff.terminate(userId))
       .then((response) => response.data),
+
+  activateStaff: (userId: string) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.staff.activate(userId))
+      .then((response) => response.data),
+
+  deactivateStaff: (userId: string) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.staff.deactivate(userId))
+      .then((response) => response.data),
 }

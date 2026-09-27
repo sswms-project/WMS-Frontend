@@ -6,7 +6,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { USER_ROLES } from '@/config/roles'
 import { getApiErrorMessage } from '@/lib/api-error'
-import {
+import type {
   useStaffWarehouseAssignmentsQuery,
   useUpdateStaffWarehousesMutation,
 } from '../../hooks/use-manager-assignment'
@@ -21,6 +21,8 @@ import { StaffWarehouseAssignmentDialog } from './StaffWarehouseAssignmentDialog
 interface StaffWarehouseAssignmentProps {
   readonly person: StaffResponse
   readonly onClose: () => void
+  readonly query: ReturnType<typeof useStaffWarehouseAssignmentsQuery>
+  readonly mutation: ReturnType<typeof useUpdateStaffWarehousesMutation>
 }
 
 function assignmentVersion(data: StaffWarehouseAssignments) {
@@ -32,15 +34,23 @@ function assignmentVersion(data: StaffWarehouseAssignments) {
   })
 }
 
-export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssignmentProps) {
-  const query = useStaffWarehouseAssignmentsQuery(person.id)
-  const mutation = useUpdateStaffWarehousesMutation(person.id)
+export function StaffWarehouseAssignment({
+  person,
+  onClose,
+  query,
+  mutation,
+}: StaffWarehouseAssignmentProps) {
   const [snapshot, setSnapshot] = useState<StaffWarehouseAssignments | null>(null)
+  const [role, setRole] = useState(
+    person.role === USER_ROLES.WarehouseManager
+      ? USER_ROLES.WarehouseManager
+      : USER_ROLES.WarehouseStaff
+  )
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [refreshing, setRefreshing] = useState(false)
   const warehouses = snapshot?.warehouses ?? query.data?.warehouses ?? []
-  const isManager = person.role === USER_ROLES.WarehouseManager
+  const isManager = role === USER_ROLES.WarehouseManager
   const form = useForm<UpdateStaffWarehousesRequest>({
     resolver: zodResolver(
       createStaffWarehouseFormSchema(
@@ -51,7 +61,7 @@ export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssi
       )
     ),
     mode: 'onChange',
-    defaultValues: { warehouseIds: [], expectedWarehouseIds: [], replacements: [] },
+    defaultValues: { role, warehouseIds: [], expectedWarehouseIds: [], replacements: [] },
   })
   const values = useWatch({ control: form.control })
   const selectedIds = snapshot
@@ -78,6 +88,7 @@ export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssi
   const initialIds = snapshot?.assignedWarehouseIds ?? query.data?.assignedWarehouseIds ?? []
   const changed =
     selectedIds.length !== initialIds.length || selectedIds.some((id) => !initialIds.includes(id))
+  const roleChanged = role !== person.role
   const visible = warehouses.filter((warehouse) =>
     (warehouse.warehouseName + ' ' + warehouse.warehouseCode)
       .toLocaleLowerCase('vi')
@@ -89,7 +100,7 @@ export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssi
     !refreshing &&
     !query.isError &&
     !query.isFetching &&
-    changed &&
+    (changed || roleChanged) &&
     form.formState.isValid &&
     (replacements.length === 0 || confirmed) &&
     mutation.error?.statusCode !== 409
@@ -97,8 +108,8 @@ export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssi
   async function save(request: UpdateStaffWarehousesRequest) {
     if (!canSave || mutation.isPending) return
     try {
-      await mutation.mutateAsync(request)
-      toast.success('Đã cập nhật phân công kho.')
+      await mutation.mutateAsync({ ...request, role })
+      toast.success('Đã cập nhật vai trò và phân công kho.')
       onClose()
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Không thể cập nhật phân công.'))
@@ -112,7 +123,7 @@ export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssi
       if (result.isError || !result.data) return
       mutation.reset()
       setSnapshot(null)
-      form.reset({ warehouseIds: [], expectedWarehouseIds: [], replacements: [] })
+      form.reset({ role, warehouseIds: [], expectedWarehouseIds: [], replacements: [] })
       setPage(1)
     } finally {
       setRefreshing(false)
@@ -123,6 +134,18 @@ export function StaffWarehouseAssignment({ person, onClose }: StaffWarehouseAssi
     <StaffWarehouseAssignmentDialog
       form={form}
       person={person}
+      role={role}
+      onRoleChange={(nextRole) => {
+        setRole(nextRole)
+        form.setValue('role', nextRole, { shouldDirty: true, shouldValidate: true })
+        if (!snapshot && query.data) {
+          setSnapshot(structuredClone(query.data))
+          form.setValue('warehouseIds', [...query.data.assignedWarehouseIds], {
+            shouldValidate: true,
+          })
+          form.setValue('expectedWarehouseIds', [...query.data.assignedWarehouseIds])
+        }
+      }}
       warehouses={visible.slice((page - 1) * 20, page * 20)}
       selectedIds={selectedIds}
       replacements={replacements}

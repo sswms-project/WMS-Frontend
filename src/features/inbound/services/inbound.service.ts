@@ -2,6 +2,8 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
+  AssignableWarehouseStaff,
+  AssignWarehouseTaskRequest,
   InboundAllowedActionsResponse,
   InboundDocumentImport,
   InboundListQuery,
@@ -34,6 +36,22 @@ export const inboundService = {
       .get<
         ApiResponse<GoodsReceiptListResponse>
       >(API_ENDPOINTS.goodsReceipts.putawayTasks, { params })
+      .then((response) => response.data),
+  getAssignableStaff: (warehouseId: string) =>
+    axiosClient
+      .get<ApiResponse<AssignableWarehouseStaff[]>>(API_ENDPOINTS.goodsReceipts.assignableStaff, {
+        params: { warehouseId },
+      })
+      .then((response) => response.data),
+  assignReceivingTask: (inboundRequestId: string, request: AssignWarehouseTaskRequest) =>
+    axiosClient
+      .put<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.goodsReceipts.assignReceivingTask(inboundRequestId), request)
+      .then((response) => response.data),
+  assignPutawayTask: (receiptId: string, request: AssignWarehouseTaskRequest) =>
+    axiosClient
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.assignPutawayTask(receiptId), request)
       .then((response) => response.data),
   getReceipt: (receiptId: string) =>
     axiosClient

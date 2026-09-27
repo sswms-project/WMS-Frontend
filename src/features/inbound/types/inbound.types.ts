@@ -12,7 +12,15 @@ export const GOODS_RECEIPT_STATUSES = [
 ] as const
 
 export type GoodsReceiptStatus = (typeof GOODS_RECEIPT_STATUSES)[number]
-export type GoodsReceiptAction = 'Update' | 'Submit' | 'Approve' | 'Reject' | 'PutAway'
+export type GoodsReceiptAction =
+  | 'Update'
+  | 'Submit'
+  | 'Approve'
+  | 'Reject'
+  | 'PutAway'
+  | 'AssignPutAway'
+
+export type WarehouseTaskExecutionStatus = 'Queued' | 'InProgress' | 'Paused' | 'Completed'
 
 export interface InboundListQuery {
   pageNumber: number
@@ -33,6 +41,7 @@ export interface ReceivingTaskQuery {
   supplierId?: string
   expectedFrom?: string
   expectedTo?: string
+  unassigned?: boolean
 }
 
 export interface PutawayTaskQuery {
@@ -40,6 +49,7 @@ export interface PutawayTaskQuery {
   pageSize: number
   searchTerm?: string
   warehouseId?: string
+  unassigned?: boolean
 }
 
 export interface ReceivingTaskLine {
@@ -66,6 +76,10 @@ export interface ReceivingTask {
   receivedQuantity: number
   remainingQuantity: number
   activeDocumentImportId: string | null
+  assignedTo: string | null
+  assignedToName: string | null
+  assignedAt: string | null
+  executionStatus: WarehouseTaskExecutionStatus
   lines: ReceivingTaskLine[]
 }
 
@@ -84,6 +98,10 @@ export interface GoodsReceiptSummary {
   receivedQuantity: number
   damagedQuantity: number
   putAwayQuantity: number
+  putAwayAssignedTo: string | null
+  putAwayAssignedToName: string | null
+  putAwayAssignedAt: string | null
+  putAwayExecutionStatus: WarehouseTaskExecutionStatus
 }
 
 export interface GoodsReceiptItem {
@@ -124,8 +142,14 @@ export interface PutAwayDetail {
 
 export interface GoodsReceiptDetail extends Omit<
   GoodsReceiptSummary,
-  'lineCount' | 'receivedQuantity' | 'damagedQuantity' | 'putAwayQuantity'
+  | 'lineCount'
+  | 'receivedQuantity'
+  | 'damagedQuantity'
+  | 'putAwayQuantity'
+  | 'putAwayExecutionStatus'
 > {
+  receivingAssignedTo: string | null
+  receivingAssignedToName: string | null
   warehouseCode: string
   approvedBy: string | null
   approvedByName: string | null
@@ -179,6 +203,21 @@ export interface CancelPutawayTaskRequest {
 export interface ReconcilePutawayCancellationRequest {
   note: string
   expectedVersion: string
+}
+
+export interface AssignableWarehouseStaff {
+  id: string
+  fullName: string
+  email: string
+  openReceivingTasks: number
+  openPutAwayTasks: number
+  hasTaskInProgress: boolean
+}
+
+export interface AssignWarehouseTaskRequest {
+  staffId: string
+  expectedStaffId: string | null
+  reason: string | null
 }
 
 export interface InboundAllowedActionsResponse {

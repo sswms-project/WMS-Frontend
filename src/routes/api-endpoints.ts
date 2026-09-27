@@ -56,12 +56,18 @@ export const API_ENDPOINTS = {
   },
   myWarehouseTasks: {
     current: '/my-warehouse-tasks',
+    list: '/my-warehouse-tasks',
+    history: '/my-warehouse-tasks/history',
+    action: (taskType: string, taskId: string) =>
+      `/my-warehouse-tasks/${taskType}/${taskId}/actions`,
   },
   staff: {
     managers: '/managers',
     list: '/staff',
     detail: (userId: string) => `/staff/${userId}`,
     terminate: (userId: string) => `/staff/${userId}/terminate`,
+    activate: (userId: string) => `/staff/${userId}/activate`,
+    deactivate: (userId: string) => `/staff/${userId}/deactivate`,
     assignManager: (warehouseId: string) => `/warehouses/${warehouseId}/manager`,
     warehouseAssignments: (userId: string) => `/staff/${userId}/warehouses`,
   },
@@ -100,6 +106,7 @@ export const API_ENDPOINTS = {
       `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,
     deactivate: (warehouseId: string) => `/warehouses/${warehouseId}/deactivate`,
     reactivate: (warehouseId: string) => `/warehouses/${warehouseId}/reactivate`,
+    quarantineSlot: (warehouseId: string) => `/warehouses/${warehouseId}/quarantine-slot`,
   },
   inventory: {
     list: '/inventory',
@@ -184,6 +191,10 @@ export const API_ENDPOINTS = {
     update: (receiptId: string) => `/goods-receipts/${receiptId}`,
     receivingTasks: '/goods-receipts/receiving-tasks',
     putawayTasks: '/goods-receipts/putaway-tasks',
+    assignableStaff: '/goods-receipts/assignable-staff',
+    assignReceivingTask: (inboundRequestId: string) =>
+      `/goods-receipts/receiving-tasks/${inboundRequestId}/assignment`,
+    assignPutawayTask: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-assignment`,
     submit: (receiptId: string) => `/goods-receipts/${receiptId}/submit`,
     approve: (receiptId: string) => `/goods-receipts/${receiptId}/approve`,
     reject: (receiptId: string) => `/goods-receipts/${receiptId}/reject`,
@@ -266,6 +277,9 @@ export const API_ENDPOINTS = {
       `/products/${productId}/unit-conversions/${conversionId}/reactivate`,
     lots: (id: string) => `/products/${id}/lots`,
     lotStatus: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/status`,
+    lotImpact: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/impact`,
+    blockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/block`,
+    unlockLot: (productId: string, lotId: string) => `/products/${productId}/lots/${lotId}/unlock`,
     barcode: (id: string) => `/products/${id}/barcode`,
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
@@ -310,6 +324,8 @@ export const API_ENDPOINTS = {
       `/goods-return-requests/${goodsReturnRequestId}/approve`,
     reject: (goodsReturnRequestId: string) =>
       `/goods-return-requests/${goodsReturnRequestId}/reject`,
+    restock: (goodsReturnRequestId: string) =>
+      `/goods-return-requests/${goodsReturnRequestId}/restock`,
   },
   stockRecipients: {
     list: '/stock-recipients',
