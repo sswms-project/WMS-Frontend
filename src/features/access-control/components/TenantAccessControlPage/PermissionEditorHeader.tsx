@@ -1,7 +1,6 @@
 import { ChevronsUp, RotateCcw, Save } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PermissionSearch } from './PermissionSearch'
@@ -51,7 +50,6 @@ export function PermissionEditorHeader({
             <dd className="text-foreground font-semibold tabular-nums">{moduleCount}</dd>
           </div>
         </dl>
-        <Separator orientation="vertical" className="hidden h-5 sm:block" />
         <PermissionSearch value={searchText} onChange={onSearchChange} />
         <Tooltip>
           <TooltipTrigger asChild>

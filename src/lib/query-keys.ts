@@ -83,7 +83,9 @@ export const queryKeys = {
   },
   staff: {
     all: ['staff'] as const,
-    list: (kind: StaffDirectoryKind, params: StaffQuery) => ['staff', kind, params] as const,
+    lists: ['staff', 'lists'] as const,
+    list: (kind: StaffDirectoryKind, params: StaffQuery) =>
+      ['staff', 'lists', kind, params] as const,
     detail: (userId: string) => ['staff', 'detail', userId] as const,
     warehouseAssignments: (userId: string) => ['staff', 'warehouses', userId] as const,
     allInvitations: ['staff', 'invitations'] as const,

@@ -32,7 +32,8 @@ export function useUpdateStaffWarehousesMutation(userId: string) {
     mutationFn: (request) => managerAssignmentService.updateStaffWarehouses(userId, request),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.lists }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(userId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all }),
       ])
     },
