@@ -1,9 +1,7 @@
 export interface TenantRolePolicy {
   roleId: string
   roleName: string
-  directPermissionIds: string[]
-  inheritedPermissionIds: string[]
-  effectivePermissionIds: string[]
+  assignedPermissionIds: string[]
 }
 
 export interface TenantAssignablePermission {
@@ -13,7 +11,6 @@ export interface TenantAssignablePermission {
   moduleDisplayName: string
   displayName: string
   description: string
-  eligibleRoles: string[]
 }
 
 export interface TenantRolePermissionWorkspace {
@@ -71,13 +68,7 @@ export interface TenantUserPermissionWorkspace {
 export type AccessControlMode = 'role' | 'personal'
 export type PersonalPermissionFilter = 'all' | 'customized'
 
-export type PermissionRowPresentation =
-  | 'role-direct'
-  | 'role-inherited'
-  | 'role-unavailable'
-  | 'personal-default'
-  | 'personal-customized'
-  | 'personal-unavailable'
+export type PermissionRowPresentation = 'role-assigned' | 'personal-default' | 'personal-customized'
 
 export interface PermissionRowViewModel {
   permission: TenantAssignablePermission
@@ -90,14 +81,11 @@ export type PermissionCatalogContext =
   | {
       kind: 'role'
       subjectId: string
-      roleName: string
       selectedIds: ReadonlySet<string>
-      inheritedIds: ReadonlySet<string>
     }
   | {
       kind: 'personal'
       subjectId: string
-      roleName: string
       selectedIds: ReadonlySet<string>
       roleDefaultIds: ReadonlySet<string>
     }

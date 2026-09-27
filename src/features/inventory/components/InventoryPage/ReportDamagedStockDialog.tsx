@@ -21,6 +21,7 @@ interface ReportDamagedStockDialogProps {
   readonly item: InventoryStock | null
   readonly form: UseFormReturn<ReportDamagedStockFormValues>
   readonly isPending: boolean
+  readonly canLinkTask: boolean
   readonly taskOptions: readonly { value: string; label: string }[]
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: (values: ReportDamagedStockFormValues) => Promise<void>
@@ -30,6 +31,7 @@ export function ReportDamagedStockDialog({
   item,
   form,
   isPending,
+  canLinkTask,
   taskOptions,
   onOpenChange,
   onSubmit,
@@ -114,23 +116,25 @@ export function ReportDamagedStockDialog({
               />
               <FieldError errors={reasonError ? [reasonError] : undefined} />
             </Field>
-            <Field>
-              <FieldLabel htmlFor="damage-related-task">
-                Công việc liên quan (không bắt buộc)
-              </FieldLabel>
-              <NativeSelect
-                id="damage-related-task"
-                disabled={isPending}
-                {...form.register('relatedTaskKey')}
-              >
-                <NativeSelectOption value="">Không liên kết công việc</NativeSelectOption>
-                {taskOptions.map((option) => (
-                  <NativeSelectOption key={option.value} value={option.value}>
-                    {option.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </Field>
+            {canLinkTask ? (
+              <Field>
+                <FieldLabel htmlFor="damage-related-task">
+                  Công việc liên quan (không bắt buộc)
+                </FieldLabel>
+                <NativeSelect
+                  id="damage-related-task"
+                  disabled={isPending}
+                  {...form.register('relatedTaskKey')}
+                >
+                  <NativeSelectOption value="">Không liên kết công việc</NativeSelectOption>
+                  {taskOptions.map((option) => (
+                    <NativeSelectOption key={option.value} value={option.value}>
+                      {option.label}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </Field>
+            ) : null}
             <Field data-invalid={Boolean(evidenceError)}>
               <FieldLabel htmlFor="damaged-evidence">Tệp bằng chứng</FieldLabel>
               <Input

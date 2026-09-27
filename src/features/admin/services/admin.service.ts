@@ -1,4 +1,5 @@
 import { axiosClient } from '@/lib/axios'
+import { permissionDeltaSchema } from '@/lib/permission-delta.schema'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { SubscriptionFeatureMetaResponse } from '@/features/subscription/types/subscription.types'
 import type { ApiResponse } from '@/types/api'
@@ -27,8 +28,12 @@ export const adminService = {
   getPermissions: () =>
     axiosClient.get<ApiResponse<PermissionResponse[]>>('/permissions').then((r) => r.data),
 
-  assignPermissions: (roleId: string, body: AssignPermissionsRequest) =>
-    axiosClient.put<ApiResponse<void>>(`/roles/${roleId}/permissions`, body).then((r) => r.data),
+  assignPermissions: (roleId: string, body: AssignPermissionsRequest) => {
+    const request = permissionDeltaSchema.parse(body)
+    return axiosClient
+      .put<ApiResponse<void>>(`/roles/${roleId}/permissions`, request)
+      .then((r) => r.data)
+  },
 
   getSubscriptionPlans: (params: AdminSubscriptionPlanQuery) =>
     axiosClient

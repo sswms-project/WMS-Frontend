@@ -4,7 +4,7 @@ import { OperationalPagination } from '@/components/operations/OperationalPagina
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ROLE_LABELS_VI } from '@/config/roles'
+import { getRoleLabel } from '@/config/roles'
 import type { InvitationResponse } from '../../types/invitation.types'
 
 interface InvitationManagementPanelProps {
@@ -102,7 +102,7 @@ export function InvitationManagementPanel({
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{invitation.fullName}</p>
                     <p className="text-muted-foreground truncate text-xs">
-                      {invitation.email} · {ROLE_LABELS_VI[invitation.role]}
+                      {invitation.email} · {getRoleLabel(invitation.role)}
                     </p>
                     {invitation.warehouses.length > 0 && (
                       <p className="text-muted-foreground mt-1 text-xs">

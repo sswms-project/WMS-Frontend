@@ -10,7 +10,7 @@ import { PaymentHistoryTable, TenantOwnerOnlyState } from '../components/Subscri
 import {
   useInvoiceDownloadMutation,
   usePaymentHistoryQuery,
-  useSubscriptionPlansQuery,
+  usePublicSubscriptionPlansQuery,
 } from '../hooks/use-subscription'
 import type {
   InvoiceActionState,
@@ -45,7 +45,7 @@ export function SubscriptionPaymentHistoryPage() {
     () => buildPaymentHistoryQuery(appliedFilters, pageIndex, pageSize),
     [appliedFilters, pageIndex, pageSize]
   )
-  const plansQuery = useSubscriptionPlansQuery(isTenantOwner)
+  const plansQuery = usePublicSubscriptionPlansQuery(isTenantOwner)
   const paymentsQuery = usePaymentHistoryQuery(paymentQuery, isTenantOwner)
   const invoiceDownloadMutation = useInvoiceDownloadMutation()
 

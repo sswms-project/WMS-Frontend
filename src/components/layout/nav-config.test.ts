@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { P } from '@/config/permissionCodes'
 import { USER_ROLES } from '@/config/roles'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
@@ -96,6 +97,20 @@ describe('application navigation visibility', () => {
     ).toBe(false)
   })
 
+  it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'shows warehouse layout navigation for %s only with warehouse view permission',
+    (role) => {
+      expect(
+        getVisibleNavItems(role, [P.WAREHOUSES_VIEW]).some(
+          (item) => item.href === APP_ROUTES.warehouseLayouts
+        )
+      ).toBe(true)
+      expect(
+        getVisibleNavItems(role, []).some((item) => item.href === APP_ROUTES.warehouseLayouts)
+      ).toBe(false)
+    }
+  )
+
   it('groups subscription management without duplicate payment entries', () => {
     const serviceSection = NAV_CONFIG[USER_ROLES.TenantOwner].find(
       (section) => section.id === 'services'
@@ -106,6 +121,19 @@ describe('application navigation visibility', () => {
       ['Gói dịch vụ', APP_ROUTES.subscription],
       ['Lịch sử thanh toán', APP_ROUTES.subscriptionPayments],
     ])
+  })
+
+  it('shows payment history only with the payment viewing permission', () => {
+    expect(
+      getVisibleNavItems(USER_ROLES.TenantOwner, [P.PAYMENTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.subscriptionPayments
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.TenantOwner, [P.SUBSCRIPTION_PLANS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.subscriptionPayments
+      )
+    ).toBe(false)
   })
 
   it('places staff management under organization management for warehouse managers', () => {
@@ -130,7 +158,7 @@ describe('application navigation visibility', () => {
     ).toEqual([
       { label: null, items: ['Dashboard'] },
       { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Phân quyền', 'Nhân viên'] },
-      { label: 'Quản Lý Kho', items: ['Kho hàng'] },
+      { label: 'Quản Lý Kho', items: ['Kho hàng', 'Sơ đồ kho'] },
       { label: 'Đối tượng', items: ['Nhà cung cấp', 'Khách hàng'] },
       {
         label: 'Danh mục',
@@ -179,7 +207,7 @@ describe('application navigation visibility', () => {
       getVisibleNavItems(USER_ROLES.WarehouseStaff, ['audit-logs:view']).some(
         (item) => item.href === APP_ROUTES.auditLogs
       )
-    ).toBe(false)
+    ).toBe(true)
     expect(
       getVisibleNavItems(USER_ROLES.WarehouseManager, ['audit-logs:view']).some(
         (item) => item.href === APP_ROUTES.auditLogs
@@ -190,6 +218,19 @@ describe('application navigation visibility', () => {
         (item) => item.href === APP_ROUTES.auditLogs
       )
     ).toBe(true)
+  })
+
+  it('lets staff see delegated staff-management navigation without role hard-coding', () => {
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['staff:view']).some(
+        (item) => item.href === APP_ROUTES.staff
+      )
+    ).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, []).some(
+        (item) => item.href === APP_ROUTES.staff
+      )
+    ).toBe(false)
   })
 
   it('marks a tenant group active when one of its child routes is active', () => {

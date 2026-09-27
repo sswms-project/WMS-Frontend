@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CreditCard } from 'lucide-react'
+import { CreditCard, Landmark } from 'lucide-react'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -21,8 +21,9 @@ import {
   useChangeSubscriptionPlanMutation,
   useCurrentSubscriptionQuery,
   useInitialSubscriptionSelectionMutation,
+  usePreviewSubscriptionPlanChangeMutation,
   useRenewSubscriptionMutation,
-  useSubscriptionPlansQuery,
+  usePublicSubscriptionPlansQuery,
 } from '../hooks/use-subscription'
 import type {
   BillingCycle,
@@ -66,13 +67,15 @@ export function SubscriptionPage() {
   const isTenantOwner = user?.role === USER_ROLES.TenantOwner
   const [dialogState, setDialogState] = useState<DialogState | null>(null)
   const [changeResult, setChangeResult] = useState<SubscriptionPlanChangeResponse | null>(null)
+  const [changePreview, setChangePreview] = useState<SubscriptionPlanChangeResponse | null>(null)
   const [billingCycleOverride, setBillingCycleOverride] = useState<BillingCycle>()
 
   const subscriptionQuery = useCurrentSubscriptionQuery(isTenantOwner)
-  const plansQuery = useSubscriptionPlansQuery(isTenantOwner)
+  const plansQuery = usePublicSubscriptionPlansQuery(isTenantOwner)
   const renewMutation = useRenewSubscriptionMutation()
   const initialSelectionMutation = useInitialSubscriptionSelectionMutation()
   const changePlanMutation = useChangeSubscriptionPlanMutation()
+  const previewPlanChangeMutation = usePreviewSubscriptionPlanChangeMutation()
 
   if (!isTenantOwner) return <TenantOwnerOnlyState />
   if (subscriptionQuery.isLoading || plansQuery.isLoading) return <SubscriptionPageSkeleton />
@@ -105,11 +108,15 @@ export function SubscriptionPage() {
     0
   )
   const isActionPending =
-    renewMutation.isPending || initialSelectionMutation.isPending || changePlanMutation.isPending
+    renewMutation.isPending ||
+    initialSelectionMutation.isPending ||
+    previewPlanChangeMutation.isPending ||
+    changePlanMutation.isPending
 
   const closeDialog = () => {
     if (isActionPending) return
     setDialogState(null)
+    setChangePreview(null)
     setChangeResult(null)
   }
 
@@ -131,13 +138,25 @@ export function SubscriptionPage() {
       }
 
       if (dialogState.type === 'change') {
+        if (!changePreview) {
+          const preview = await previewPlanChangeMutation.mutateAsync({
+            planId: dialogState.plan.id,
+            billingCycle: dialogState.billingCycle,
+            applicationTiming: dialogState.applicationTiming,
+          })
+          setChangePreview(preview)
+          return
+        }
+        if (changePreview.exceedsTargetLimits) return
         const result = await changePlanMutation.mutateAsync({
           planId: dialogState.plan.id,
           billingCycle: dialogState.billingCycle,
           applicationTiming: dialogState.applicationTiming,
         })
-        if (result.requiresPayment) setChangeResult(result)
-        else setDialogState(null)
+        if (result.requiresPayment) {
+          setChangePreview(result)
+          setChangeResult(result)
+        } else setDialogState(null)
         return
       }
 
@@ -149,6 +168,7 @@ export function SubscriptionPage() {
   }
 
   const openPlanDialog = (plan: SubscriptionPlanResponse) => {
+    setChangePreview(null)
     setChangeResult(null)
     if (isOnboarding) {
       setDialogState({ type: 'select', plan, billingCycle: selectedBillingCycle })
@@ -165,7 +185,7 @@ export function SubscriptionPage() {
     })
   }
 
-  const dialogCopy = getDialogCopy(dialogState, subscription, changeResult)
+  const dialogCopy = getDialogCopy(dialogState, subscription, changePreview, changeResult)
 
   return (
     <div className="flex w-full min-w-0 flex-none flex-col gap-4 lg:gap-5">
@@ -192,8 +212,14 @@ export function SubscriptionPage() {
           showRenewAction={shouldShowRenewAction(subscription)}
           isRenewPending={renewMutation.isPending}
           onRenew={() => {
+            setChangePreview(null)
             setChangeResult(null)
             setDialogState({ type: 'renew' })
+          }}
+          onContinuePayment={() => {
+            if (subscription.pendingCheckoutUrl) {
+              window.location.href = subscription.pendingCheckoutUrl
+            }
           }}
         />
       )}
@@ -278,12 +304,13 @@ export function SubscriptionPage() {
         description={dialogCopy.description}
         confirmLabel={dialogCopy.confirmLabel}
         isPending={isActionPending}
+        confirmDisabled={Boolean(changePreview?.exceedsTargetLimits)}
         onOpenChange={(open) => {
           if (!open) closeDialog()
         }}
         onConfirm={handleConfirmDialog}
       >
-        {dialogState?.type === 'change' && subscription && !changeResult ? (
+        {dialogState?.type === 'change' && subscription && !changePreview && !changeResult ? (
           <PlanChangeTimingOptions
             dialogState={dialogState}
             subscription={subscription}
@@ -292,7 +319,8 @@ export function SubscriptionPage() {
             }
           />
         ) : null}
-        {changeResult ? <PlanChangeImpact result={changeResult} /> : null}
+        {changePreview ? <PlanChangeImpact result={changePreview} /> : null}
+        {changeResult?.payment ? <PlanChangePaymentDetails result={changeResult} /> : null}
       </SubscriptionActionDialog>
     </div>
   )
@@ -365,7 +393,8 @@ function PlanChangeImpact({ result }: { readonly result: SubscriptionPlanChangeR
         <strong>{formatDate(result.effectiveAt)}</strong>
       </p>
       <p>
-        <span className="text-muted-foreground">Người dùng:</span> {result.currentUsers}/
+        <span className="text-muted-foreground">Suất người dùng:</span>{' '}
+        {result.currentUsers + result.pendingInvitations}/
         {result.targetUserLimit ?? 'Không giới hạn'} ·{' '}
         <span className="text-muted-foreground">Kho:</span> {result.currentWarehouses}/
         {result.targetWarehouseLimit ?? 'Không giới hạn'}
@@ -376,6 +405,27 @@ function PlanChangeImpact({ result }: { readonly result: SubscriptionPlanChangeR
           sẽ bị giới hạn sau khi gói có hiệu lực.
         </p>
       ) : null}
+      {result.pendingInvitations > 0 ? (
+        <p className="text-muted-foreground text-xs">
+          Bao gồm {result.pendingInvitations} lời mời người dùng đang chờ chấp nhận.
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function PlanChangePaymentDetails({ result }: { readonly result: SubscriptionPlanChangeResponse }) {
+  if (!result.payment) return null
+  return (
+    <div className="border-primary/25 bg-primary/5 flex gap-3 rounded-md border p-3 text-sm">
+      <Landmark className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+      <div className="min-w-0">
+        <p className="font-medium">Thanh toán PayOS đang chờ</p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Gói hiện tại chỉ thay đổi sau khi PayOS xác nhận giao dịch. Mã thanh toán:{' '}
+          {result.payment.orderCode}.
+        </p>
+      </div>
     </div>
   )
 }
@@ -383,6 +433,7 @@ function PlanChangeImpact({ result }: { readonly result: SubscriptionPlanChangeR
 function getDialogCopy(
   dialogState: DialogState | null,
   subscription: SubscriptionStatusResponse | null | undefined,
+  preview: SubscriptionPlanChangeResponse | null,
   result: SubscriptionPlanChangeResponse | null
 ) {
   if (!dialogState) return { title: '', description: '', confirmLabel: '' }
@@ -398,12 +449,26 @@ function getDialogCopy(
     }
   }
   if (dialogState.type === 'change') {
+    if (result?.requiresPayment) {
+      return {
+        title: `Thanh toán gói ${dialogState.plan.planName}`,
+        description: 'Yêu cầu thanh toán đã được tạo. Mở PayOS để hoàn tất giao dịch.',
+        confirmLabel: 'Đến trang thanh toán',
+      }
+    }
+    if (preview) {
+      return {
+        title: `Xác nhận chuyển sang ${dialogState.plan.planName}`,
+        description: preview.exceedsTargetLimits
+          ? 'Mức sử dụng hiện tại vượt giới hạn gói đã chọn. Hãy giảm mức sử dụng trước khi đổi gói.'
+          : 'Kiểm tra chi phí, thời điểm áp dụng và mức sử dụng trước khi xác nhận.',
+        confirmLabel: preview.exceedsTargetLimits ? 'Chưa thể đổi gói' : 'Xác nhận thay đổi',
+      }
+    }
     return {
       title: `Chuyển sang ${dialogState.plan.planName}`,
-      description: result
-        ? 'Kiểm tra thời điểm áp dụng và mức sử dụng trước khi tiếp tục đến PayOS.'
-        : `${formatBillingCycle(dialogState.billingCycle)} · ${formatCurrency(getPlanPrice(dialogState.plan, dialogState.billingCycle), dialogState.plan.currency)} ${getBillingPeriodLabel(dialogState.billingCycle)}.`,
-      confirmLabel: result?.requiresPayment ? 'Đến trang thanh toán' : 'Xác nhận thay đổi',
+      description: `${formatBillingCycle(dialogState.billingCycle)} · ${formatCurrency(getPlanPrice(dialogState.plan, dialogState.billingCycle), dialogState.plan.currency)} ${getBillingPeriodLabel(dialogState.billingCycle)}.`,
+      confirmLabel: 'Xem chi phí và giới hạn',
     }
   }
   return {

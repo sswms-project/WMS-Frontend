@@ -1,4 +1,5 @@
 import type { SubscriptionPlanResponse as SubscriptionPlanApiResponse } from '@/features/subscription/types/subscription.types'
+import type { PermissionDeltaInput } from '@/lib/permission-delta.schema'
 
 export interface RoleResponse {
   id: string
@@ -18,10 +19,7 @@ export interface PermissionResponse {
   description: string | null
 }
 
-export interface AssignPermissionsRequest {
-  toAdd: string[]
-  toRemove: string[]
-}
+export type AssignPermissionsRequest = PermissionDeltaInput
 
 export type SubscriptionPlanStatus = 'Active' | 'Inactive'
 

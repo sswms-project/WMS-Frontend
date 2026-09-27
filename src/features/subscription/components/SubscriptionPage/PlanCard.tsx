@@ -43,12 +43,12 @@ export function PlanCard({ plan, billingCycle, actionState, onUpgrade }: PlanCar
         isCurrentPlan && 'border-primary/40 bg-primary/5'
       )}
     >
-      <CardHeader className="gap-3 p-4">
+      <CardHeader className="flex min-h-52 flex-col gap-3 p-4">
         <div className="flex items-start gap-3">
           <div className="bg-muted text-primary flex size-9 shrink-0 items-center justify-center rounded-md">
             <PackageCheck className="size-4" aria-hidden="true" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-h-10 min-w-0 flex-1">
             <CardTitle className="truncate text-base font-semibold">{plan.planName}</CardTitle>
             <CardDescription>{plan.features.length} quyền lợi được cấu hình</CardDescription>
           </div>
@@ -56,7 +56,7 @@ export function PlanCard({ plan, billingCycle, actionState, onUpgrade }: PlanCar
             <Badge variant="secondary">Tiết kiệm {plan.yearlyDiscountPercent}%</Badge>
           )}
         </div>
-        <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="mt-auto flex min-w-0 flex-col gap-0.5">
           <p className="min-w-0 text-xl font-semibold [overflow-wrap:anywhere] tabular-nums">
             {planPrice === 0 ? 'Miễn phí' : formatCurrency(planPrice, plan.currency)}
           </p>

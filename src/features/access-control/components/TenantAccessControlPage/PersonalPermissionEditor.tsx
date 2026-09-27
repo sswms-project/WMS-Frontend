@@ -130,7 +130,6 @@ export function PersonalPermissionEditor({
             context={{
               kind: 'personal',
               subjectId: workspace.subject.userId,
-              roleName: workspace.subject.roleName,
               selectedIds: draftIds,
               roleDefaultIds,
             }}

@@ -50,6 +50,13 @@ export const subscriptionService = {
       >(API_ENDPOINTS.subscription.changePlan, body)
       .then((response) => response.data),
 
+  previewPlanChange: (body: ChangeSubscriptionPlanRequestDto) =>
+    axiosClient
+      .post<
+        ApiResponse<SubscriptionPlanChangeResponse>
+      >(API_ENDPOINTS.subscription.previewPlanChange, body)
+      .then((response) => response.data),
+
   syncPaymentStatus: (orderCode: string) =>
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.subscription.paymentStatus(orderCode))

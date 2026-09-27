@@ -74,7 +74,9 @@ export default function StockDiscrepanciesPage() {
     skip: 0,
     needTotalCount: true,
   })
-  const tasks = useMyWarehouseTasksQuery(warehouseId, Boolean(warehouseId))
+  const canViewWarehouseTasks =
+    meQuery.data?.permissions.includes(P.WAREHOUSE_TASKS_VIEW_OWN) ?? false
+  const tasks = useMyWarehouseTasksQuery(warehouseId, Boolean(warehouseId) && canViewWarehouseTasks)
   const warehouseOptions = useMemo(
     () =>
       (warehouses.data?.items ?? []).map((item) => ({
@@ -238,6 +240,7 @@ export default function StockDiscrepanciesPage() {
       lotOptions={lotOptions}
       staffOptions={staffOptions}
       taskOptions={taskOptions}
+      canLinkTask={canViewWarehouseTasks}
       warehouseId={warehouseId}
       productId={productId}
       slotId={slotId}
