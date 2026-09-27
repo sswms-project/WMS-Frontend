@@ -15,10 +15,11 @@ interface AssignManagerVariables {
   request: AssignManagerRequest
 }
 
-export function useStaffWarehouseAssignmentsQuery(userId: string) {
+export function useStaffWarehouseAssignmentsQuery(userId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.staff.warehouseAssignments(userId),
     queryFn: () => managerAssignmentService.getStaffWarehouses(userId),
+    enabled: enabled && Boolean(userId),
     staleTime: 0,
     refetchOnWindowFocus: false,
     retry: false,

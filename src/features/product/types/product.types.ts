@@ -183,6 +183,32 @@ export interface ProductLot {
   availableQuantity: number
 }
 
+export interface ProductLotImpactWarehouse {
+  warehouseId: string
+  warehouseName: string
+  quantityOnHand: number
+  reservedQuantity: number
+  availableQuantity: number
+  quarantineSlotId: string | null
+  quarantineSlotCode: string | null
+}
+
+export interface ProductLotAffectedOrder {
+  outboundOrderId: string
+  orderCode: string
+  status: string
+  quantity: number
+  warehouseName: string
+}
+
+export interface ProductLotImpact {
+  lotId: string
+  lotNumber: string
+  status: ProductLotStatus
+  warehouses: ProductLotImpactWarehouse[]
+  affectedOrders: ProductLotAffectedOrder[]
+}
+
 export interface ImportProductItemRequest {
   sku: string
   productName: string

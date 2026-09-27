@@ -80,6 +80,37 @@ describe('application navigation visibility', () => {
     expect(staffItems.some((item) => item.href === APP_ROUTES.inventory)).toBe(true)
   })
 
+  it('shows Staff task navigation only with the own-task permission', () => {
+    const visibleItems = getVisibleNavItems(USER_ROLES.WarehouseStaff, ['warehouse-tasks:view-own'])
+
+    expect(visibleItems.some((item) => item.href === APP_ROUTES.myTasks)).toBe(true)
+    expect(visibleItems.some((item) => item.href === APP_ROUTES.myTaskHistory)).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['dashboard:view']).some(
+        (item) => item.href === APP_ROUTES.myTasks
+      )
+    ).toBe(false)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseManager, ['warehouse-tasks:view-own']).some(
+        (item) => item.href === APP_ROUTES.myTasks
+      )
+    ).toBe(false)
+  })
+
+  it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'shows warehouse layout navigation for %s only with warehouse view permission',
+    (role) => {
+      expect(
+        getVisibleNavItems(role, [P.WAREHOUSES_VIEW]).some(
+          (item) => item.href === APP_ROUTES.warehouseLayouts
+        )
+      ).toBe(true)
+      expect(
+        getVisibleNavItems(role, []).some((item) => item.href === APP_ROUTES.warehouseLayouts)
+      ).toBe(false)
+    }
+  )
+
   it('groups subscription management without duplicate payment entries', () => {
     const serviceSection = NAV_CONFIG[USER_ROLES.TenantOwner].find(
       (section) => section.id === 'services'
@@ -127,7 +158,7 @@ describe('application navigation visibility', () => {
     ).toEqual([
       { label: null, items: ['Dashboard'] },
       { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Phân quyền', 'Nhân viên'] },
-      { label: 'Quản Lý Kho', items: ['Kho hàng'] },
+      { label: 'Quản Lý Kho', items: ['Kho hàng', 'Sơ đồ kho'] },
       { label: 'Đối tượng', items: ['Nhà cung cấp', 'Khách hàng'] },
       {
         label: 'Danh mục',

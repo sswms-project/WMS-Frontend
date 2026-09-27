@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { getStoredAccessToken } from '@/lib/axios'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
+import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { notificationCreatedEventSchema } from '../schemas/platform-services.schema'
 import { createNotificationHubConnection } from '../services/notification-realtime.service'
@@ -36,6 +37,13 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
       const result = notificationCreatedEventSchema.safeParse(payload)
       if (!result.success) {
         logger.warn('[notifications] Invalid realtime payload', result.error.flatten())
+        return
+      }
+      if (result.data.type === 'SessionRevoked') {
+        useAuthStore.getState().clearAuth()
+        toast.warning('Vai trò của bạn đã thay đổi. Vui lòng đăng nhập lại.', { duration: 6_000 })
+        void connection.stop()
+        window.location.href = APP_ROUTES.auth.login
         return
       }
       if (!shownEventsRef.current.has(result.data.notificationId)) {

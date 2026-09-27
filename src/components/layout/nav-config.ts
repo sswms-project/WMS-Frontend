@@ -85,7 +85,10 @@ const tenantWarehouseSection: NavSection = {
   label: 'Quản Lý Kho',
   icon: Warehouse,
   collapsible: true,
-  items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
+  items: [
+    requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW),
+    requiredNavItem(APP_ROUTES.warehouseLayouts, 'Sơ đồ kho', Warehouse, P.WAREHOUSES_VIEW),
+  ],
 }
 
 const tenantOperationsSection: NavSection = {
@@ -201,7 +204,10 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       icon: Warehouse,
       collapsible: true,
       separatorBefore: true,
-      items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
+      items: [
+        requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW),
+        requiredNavItem(APP_ROUTES.warehouseLayouts, 'Sơ đồ kho', Warehouse, P.WAREHOUSES_VIEW),
+      ],
     },
     {
       id: 'subjects',
@@ -322,6 +328,18 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.staff,
         ]),
+        requiredNavItem(
+          APP_ROUTES.myTasks,
+          'Công việc của tôi',
+          ClipboardList,
+          P.WAREHOUSE_TASKS_VIEW_OWN
+        ),
+        requiredNavItem(
+          APP_ROUTES.myTaskHistory,
+          'Lịch sử công việc',
+          ScrollText,
+          P.WAREHOUSE_TASKS_VIEW_OWN
+        ),
       ],
     },
     tenantStaffSection,

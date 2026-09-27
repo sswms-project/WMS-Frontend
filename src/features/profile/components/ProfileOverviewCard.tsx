@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CheckCircle2, Clock, Shield, ShieldOff, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, Shield, ShieldOff, Warehouse, XCircle } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -161,6 +161,16 @@ export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardP
                 className={profile.isTwoFactorEnabled ? 'text-primary' : 'text-muted-foreground'}
               >
                 {profile.isTwoFactorEnabled ? 'Đã bật' : 'Chưa bật'}
+              </span>
+            }
+          />
+          <StatusRow
+            delay="delay-[525ms]"
+            label="Kho làm việc"
+            icon={<Warehouse className="text-primary size-3.5" />}
+            value={
+              <span className="text-foreground">
+                {(profile.assignedWarehouses ?? []).length} kho
               </span>
             }
           />
