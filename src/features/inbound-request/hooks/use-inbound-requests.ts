@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { productService } from '@/features/product/services/product.service'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
@@ -69,6 +70,24 @@ export function useSupplierOptionsQuery(params: LookupQuery) {
   })
 }
 
+export function useInboundRequestProductDetails(productIds: readonly string[]) {
+  return useQueries({
+    queries: productIds.map((id) => ({
+      queryKey: queryKeys.products.detail(id),
+      queryFn: () => productService.getProductById(id).then((response) => response.data),
+    })),
+  })
+}
+
+export function useInboundRequestUnitConversions(productIds: readonly string[]) {
+  return useQueries({
+    queries: productIds.map((id) => ({
+      queryKey: queryKeys.products.unitConversions(id),
+      queryFn: () => productService.getUnitConversions(id).then((response) => response.data),
+    })),
+  })
+}
+
 function useInvalidateInboundRequests() {
   const queryClient = useQueryClient()
   return async (inboundRequestId?: string) => {
@@ -95,12 +114,39 @@ export function useCreateInboundRequestMutation() {
   })
 }
 
+export function useDuplicateInboundRequestMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<string>, ApiErrorResponse, string>({
+    mutationFn: inboundRequestService.duplicateInboundRequest,
+    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
 export function useUpdateInboundRequestMutation() {
   const invalidate = useInvalidateInboundRequests()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateInboundRequestVariables>({
     mutationFn: ({ inboundRequestId, request }) =>
       inboundRequestService.updateInboundRequest(inboundRequestId, request),
     onSuccess: (_, variables) => invalidate(variables.inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useDeleteInboundRequestMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
+    mutationFn: inboundRequestService.deleteInboundRequest,
+    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useDeleteInboundRequestsMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, readonly string[]>({
+    mutationFn: inboundRequestService.deleteInboundRequests,
+    onSuccess: () => invalidate(),
     onError: (error) => logger.error(error),
   })
 }

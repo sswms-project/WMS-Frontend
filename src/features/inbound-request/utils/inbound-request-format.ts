@@ -1,4 +1,10 @@
-import type { InboundRequestStatus, LookupOption } from '../types/inbound-request.types'
+import type { InboundRequestFormValues } from '../schemas/inbound-request.schema'
+import {
+  INBOUND_SOURCE_TYPE,
+  type InboundRequestStatus,
+  type LookupOption,
+  type SaveInboundRequestRequest,
+} from '../types/inbound-request.types'
 
 const OPERATIONAL_TIME_ZONE = 'Asia/Ho_Chi_Minh'
 const OPERATIONAL_DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
@@ -52,6 +58,25 @@ export function toOperationalDateApiValue(value: string): string | null {
   return value ? `${value}T00:00:00.000Z` : null
 }
 
+export function toInboundRequestSaveRequest(
+  values: InboundRequestFormValues
+): SaveInboundRequestRequest {
+  return {
+    warehouseId: values.warehouseId,
+    sourceType: values.sourceType,
+    supplierId: values.sourceType === INBOUND_SOURCE_TYPE.Supplier ? values.supplierId : null,
+    sourceName:
+      values.sourceType === INBOUND_SOURCE_TYPE.Supplier ? null : values.sourceName.trim(),
+    sourceReference: values.sourceReference.trim() || null,
+    expectedDate: toOperationalDateApiValue(values.expectedDate),
+    lines: values.lines.map((line) => ({
+      productId: line.productId,
+      quantity: line.quantity,
+      unitId: line.unitId || null,
+    })),
+  }
+}
+
 export function formatOperationalDate(value: string | null | undefined): string {
   if (!value) return 'Chưa xác định'
 
@@ -65,16 +90,7 @@ export function formatOperationalDateTime(value: string | null | undefined): str
 }
 
 export function formatQuantity(value: number) {
-  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value)
-}
-
-export function formatCurrency(value: number | null, currency = 'VND') {
-  if (value === null) return 'Chưa nhập'
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: currency === 'VND' ? 0 : 2,
-  }).format(value)
+  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 6 }).format(value)
 }
 
 export function mergeLookupOptions(

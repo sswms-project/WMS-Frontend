@@ -1,23 +1,41 @@
-export const INBOUND_REQUEST_STATUSES = [
-  'Draft',
-  'PendingApproval',
-  'Approved',
-  'Rejected',
-  'Sent',
-  'Confirmed',
-  'PartiallyReceived',
-  'Received',
-  'Cancelled',
-] as const
+export const INBOUND_REQUEST_STATUS = {
+  Draft: 'Draft',
+  PendingApproval: 'PendingApproval',
+  Approved: 'Approved',
+  Rejected: 'Rejected',
+  Sent: 'Sent',
+  Confirmed: 'Confirmed',
+  PartiallyReceived: 'PartiallyReceived',
+  Received: 'Received',
+  Cancelled: 'Cancelled',
+} as const
+
+export const INBOUND_REQUEST_STATUSES = Object.values(INBOUND_REQUEST_STATUS)
 
 export type InboundRequestStatus = (typeof INBOUND_REQUEST_STATUSES)[number]
-export type InboundRequestAction = 'Update' | 'Submit' | 'Approve' | 'Reject'
+export const INBOUND_REQUEST_ACTION = {
+  Update: 'Update',
+  Submit: 'Submit',
+  Approve: 'Approve',
+  Reject: 'Reject',
+} as const
+export type InboundRequestAction =
+  (typeof INBOUND_REQUEST_ACTION)[keyof typeof INBOUND_REQUEST_ACTION]
+export const INBOUND_SOURCE_TYPE = {
+  Supplier: 'Supplier',
+  InternalBranch: 'InternalBranch',
+  InternalDepartment: 'InternalDepartment',
+  ExternalPartner: 'ExternalPartner',
+  Other: 'Other',
+} as const
+export type InboundSourceType = (typeof INBOUND_SOURCE_TYPE)[keyof typeof INBOUND_SOURCE_TYPE]
+export const RECORD_STATUS = { Active: 'Active', Inactive: 'Inactive' } as const
 
 export interface LookupQuery {
   pageNumber: number
   pageSize: number
   searchTerm?: string
-  status?: 'Active' | 'Inactive'
+  status?: (typeof RECORD_STATUS)[keyof typeof RECORD_STATUS]
 }
 
 export interface InboundRequestListQuery {
@@ -38,9 +56,11 @@ export interface InboundRequestSummary {
   warehouseId: string | null
   warehouseCode: string | null
   warehouseName: string | null
-  supplierId: string
-  supplierName: string
-  currency: string
+  supplierId: string | null
+  supplierName: string | null
+  sourceType: InboundSourceType
+  sourceName: string | null
+  sourceReference: string | null
   status: InboundRequestStatus
   createdBy: string
   createdByName: string
@@ -67,10 +87,15 @@ export interface InboundRequestLine {
   productSKU: string
   productName: string
   unitName: string | null
+  enteredUnitId: string
+  enteredUnitName: string | null
+  unitQuantityPrecision: number
+  enteredUnitQuantityPrecision: number
+  enteredQuantity: number
+  conversionFactorSnapshot: number
   quantity: number
   receivedQuantity: number
   remainingQuantity: number
-  unitPrice: number | null
 }
 
 export interface InboundRequestDetail extends Omit<
@@ -101,12 +126,15 @@ export interface AllowedActionsResponse {
 export interface InboundRequestLineRequest {
   productId: string
   quantity: number
-  unitPrice: number | null
+  unitId: string | null
 }
 
 export interface SaveInboundRequestRequest {
   warehouseId: string
-  supplierId: string
+  supplierId: string | null
+  sourceType: InboundSourceType
+  sourceName: string | null
+  sourceReference: string | null
   expectedDate: string | null
   lines: InboundRequestLineRequest[]
 }

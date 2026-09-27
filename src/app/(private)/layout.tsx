@@ -15,25 +15,31 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
         <NotificationRealtimeProvider>
           <SubscriptionReadOnlyProvider>
             <SidebarProvider
-              className="h-svh min-h-0 overflow-hidden print:h-auto print:overflow-visible"
-              style={{ '--sidebar-width': '17.5rem' } as React.CSSProperties}
+              defaultOpen={true}
+              className="h-svh min-h-0 flex-col overflow-hidden print:h-auto print:overflow-visible"
+              style={
+                {
+                  '--sidebar-width': '17.5rem',
+                  '--sidebar-width-icon': '3.5rem',
+                } as React.CSSProperties
+              }
             >
-              <div className="print:hidden">
-                <AppSidebar />
-              </div>
-              <SidebarInset className="h-svh min-h-0 min-w-0 overflow-hidden print:m-0 print:block print:h-auto print:overflow-visible">
+              <AppHeader />
+              <div className="flex min-h-0 flex-1">
                 <div className="print:hidden">
-                  <AppHeader />
+                  <AppSidebar />
                 </div>
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4 lg:p-5 print:overflow-visible print:p-0">
-                  <div className="shrink-0 print:hidden">
-                    <SubscriptionReadOnlyBanner />
+                <SidebarInset className="h-full min-h-0 min-w-0 overflow-hidden print:m-0 print:block print:h-auto print:overflow-visible">
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4 lg:p-5 print:overflow-visible print:p-0">
+                    <div className="shrink-0 print:hidden">
+                      <SubscriptionReadOnlyBanner />
+                    </div>
+                    <SubscriptionWriteGuard>
+                      <PageTransition>{children}</PageTransition>
+                    </SubscriptionWriteGuard>
                   </div>
-                  <SubscriptionWriteGuard>
-                    <PageTransition>{children}</PageTransition>
-                  </SubscriptionWriteGuard>
-                </div>
-              </SidebarInset>
+                </SidebarInset>
+              </div>
             </SidebarProvider>
           </SubscriptionReadOnlyProvider>
         </NotificationRealtimeProvider>

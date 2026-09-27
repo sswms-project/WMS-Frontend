@@ -25,27 +25,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import { Progress } from '@/components/ui/progress'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type {
   InboundRequestAction,
   InboundRequestDetail as InboundRequestDetailType,
 } from '../../types/inbound-request.types'
-import {
-  formatCurrency,
-  formatOperationalDate,
-  formatQuantity,
-} from '../../utils/inbound-request-format'
+import { INBOUND_REQUEST_ACTION } from '../../types/inbound-request.types'
 import { InboundRequestStatusBadge } from '../InboundRequestsPage'
+import { InboundRequestOverview } from './InboundRequestOverview'
+import { InboundRequestLines } from './InboundRequestLines'
 
 interface InboundRequestDetailProps {
   readonly inboundRequest: InboundRequestDetailType
@@ -64,21 +53,14 @@ export function InboundRequestDetail({
   onApprove,
   onReject,
 }: InboundRequestDetailProps) {
-  const [confirmationAction, setConfirmationAction] = useState<'Submit' | 'Approve' | null>(null)
+  const [confirmationAction, setConfirmationAction] = useState<InboundRequestAction | null>(null)
   const [isRejectOpen, setIsRejectOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState('')
-  const orderedQuantity = inboundRequest.lines.reduce((sum, line) => sum + line.quantity, 0)
-  const receivedQuantity = inboundRequest.lines.reduce(
-    (sum, line) => sum + line.receivedQuantity,
-    0
-  )
-  const progress =
-    orderedQuantity <= 0 ? 0 : Math.min(100, (receivedQuantity / orderedQuantity) * 100)
-
   async function confirmAction() {
     if (!confirmationAction) return
-    const succeeded = confirmationAction === 'Submit' ? await onSubmit() : await onApprove()
+    const succeeded =
+      confirmationAction === INBOUND_REQUEST_ACTION.Submit ? await onSubmit() : await onApprove()
     if (succeeded) setConfirmationAction(null)
   }
 
@@ -117,13 +99,14 @@ export function InboundRequestDetail({
               <InboundRequestStatusBadge status={inboundRequest.status} />
             </div>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Đơn từ {inboundRequest.supplierName} đến{' '}
-              {inboundRequest.warehouseName ?? 'kho chưa xác định'}.
+              Hàng từ{' '}
+              {inboundRequest.supplierName ?? inboundRequest.sourceName ?? 'Nguồn chưa xác định'}{' '}
+              đến {inboundRequest.warehouseName ?? 'kho chưa xác định'}.
             </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {allowedActions.includes('Update') ? (
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.Update) ? (
             <Button asChild variant="outline">
               <Link href={APP_ROUTES.inboundRequestEdit(inboundRequest.id) as Route}>
                 <Edit3 aria-hidden="true" />
@@ -131,20 +114,26 @@ export function InboundRequestDetail({
               </Link>
             </Button>
           ) : null}
-          {allowedActions.includes('Submit') ? (
-            <Button type="button" onClick={() => setConfirmationAction('Submit')}>
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.Submit) ? (
+            <Button
+              type="button"
+              onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.Submit)}
+            >
               <Send aria-hidden="true" />
               Gửi duyệt
             </Button>
           ) : null}
-          {allowedActions.includes('Reject') ? (
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.Reject) ? (
             <Button type="button" variant="outline" onClick={() => setIsRejectOpen(true)}>
               <X aria-hidden="true" />
               Từ chối
             </Button>
           ) : null}
-          {allowedActions.includes('Approve') ? (
-            <Button type="button" onClick={() => setConfirmationAction('Approve')}>
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.Approve) ? (
+            <Button
+              type="button"
+              onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.Approve)}
+            >
               <Check aria-hidden="true" />
               Phê duyệt
             </Button>
@@ -152,96 +141,9 @@ export function InboundRequestDetail({
         </div>
       </header>
 
-      <section className="bg-card border" aria-labelledby="inbound-request-overview">
-        <div className="border-b p-4">
-          <h2 id="inbound-request-overview" className="text-sm font-semibold">
-            Tổng quan
-          </h2>
-        </div>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-4 lg:grid-cols-4">
-          <Metadata label="Nhà cung cấp" value={inboundRequest.supplierName} />
-          <Metadata label="Kho nhận" value={inboundRequest.warehouseName ?? 'Chưa xác định'} />
-          <Metadata
-            label="Ngày dự kiến"
-            value={formatOperationalDate(inboundRequest.expectedDate)}
-          />
-          <Metadata label="Người tạo" value={inboundRequest.createdByName} />
-          <div className="col-span-2 lg:col-span-4">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <dt className="text-muted-foreground text-xs">Tiến độ nhận</dt>
-              <dd className="text-xs font-medium tabular-nums">
-                {formatQuantity(receivedQuantity)} / {formatQuantity(orderedQuantity)}
-              </dd>
-            </div>
-            <Progress value={progress} />
-          </div>
-        </dl>
-        {inboundRequest.rejectionReason ? (
-          <div className="border-t px-4 py-3">
-            <p className="text-destructive text-xs font-medium">Yêu cầu chỉnh sửa</p>
-            <p className="mt-1 text-xs">{inboundRequest.rejectionReason}</p>
-          </div>
-        ) : null}
-      </section>
+      <InboundRequestOverview request={inboundRequest} />
 
-      <section className="bg-card border" aria-labelledby="inbound-request-lines">
-        <div className="border-b p-4">
-          <h2 id="inbound-request-lines" className="text-sm font-semibold">
-            Chi tiết sản phẩm
-          </h2>
-          <p className="text-muted-foreground text-xs">
-            {inboundRequest.lines.length} dòng sản phẩm
-          </p>
-        </div>
-        <div className="hidden overflow-x-auto md:block">
-          <Table className="min-w-[760px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sản phẩm</TableHead>
-                <TableHead className="text-right">Đặt mua</TableHead>
-                <TableHead className="text-right">Đã nhận</TableHead>
-                <TableHead className="text-right">Còn lại</TableHead>
-                <TableHead className="text-right">Đơn giá</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inboundRequest.lines.map((line) => (
-                <TableRow key={line.id}>
-                  <TableCell>
-                    <p className="font-medium">{line.productName}</p>
-                    <p className="text-muted-foreground font-mono text-xs">{line.productSKU}</p>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(line.quantity)} {line.unitName}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(line.receivedQuantity)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(line.remainingQuantity)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(line.unitPrice, inboundRequest.currency)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="divide-y md:hidden">
-          {inboundRequest.lines.map((line) => (
-            <div key={line.id} className="p-4">
-              <p className="font-medium">{line.productName}</p>
-              <p className="text-muted-foreground font-mono text-xs">{line.productSKU}</p>
-              <dl className="mt-3 grid grid-cols-3 gap-3">
-                <Metadata label="Đặt" value={formatQuantity(line.quantity)} />
-                <Metadata label="Đã nhận" value={formatQuantity(line.receivedQuantity)} />
-                <Metadata label="Còn lại" value={formatQuantity(line.remainingQuantity)} />
-              </dl>
-            </div>
-          ))}
-        </div>
-      </section>
+      <InboundRequestLines lines={inboundRequest.lines} />
 
       <section className="bg-card border p-4" aria-labelledby="inbound-request-history">
         <h2 id="inbound-request-history" className="mb-4 text-sm font-semibold">
@@ -259,12 +161,12 @@ export function InboundRequestDetail({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmationAction === 'Approve'
+              {confirmationAction === INBOUND_REQUEST_ACTION.Approve
                 ? 'Phê duyệt yêu cầu nhập kho?'
                 : 'Gửi yêu cầu nhập kho để duyệt?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmationAction === 'Approve'
+              {confirmationAction === INBOUND_REQUEST_ACTION.Approve
                 ? 'Yêu cầu nhập kho sẽ chuyển sang trạng thái sẵn sàng nhận hàng.'
                 : 'Sau khi gửi, bạn không thể chỉnh sửa cho đến khi đơn được trả lại.'}
             </AlertDialogDescription>
@@ -326,15 +228,6 @@ export function InboundRequestDetail({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  )
-}
-
-function Metadata({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="mt-1 truncate text-sm font-medium">{value}</dd>
     </div>
   )
 }
