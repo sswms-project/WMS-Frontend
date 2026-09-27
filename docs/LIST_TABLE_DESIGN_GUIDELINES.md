@@ -27,6 +27,15 @@ This document is the required layout contract for every list or table screen in 
 
 Use `OperationalListPanel` from `src/components/operations/OperationalListPanel.tsx`. Do not copy its height or overflow classes into feature screens.
 
+## Width and workspace rules
+
+1. The private application shell keeps the sidebar at its configured width and gives the main area `flex-1 min-w-0`.
+2. Every wrapper from the main area to the page root uses `w-full min-w-0`.
+3. Operational list/table pages must not use `container`, `mx-auto`, `max-w-*`, fixed pixel widths, or `justify-center` on their workspace wrappers.
+4. Responsive horizontal padding belongs to the shared private content shell; feature pages must not add a second centered container.
+5. Width limits remain valid for focused forms, dialogs, print views, authentication, public landing pages, and readable detail content when they are not the primary operational list workspace.
+6. Expanding the workspace must not scale typography, buttons, inputs, or other controls.
+
 ## Height and scrolling rules
 
 1. Every ancestor between the application content shell and the list panel must allow flex children to shrink with `min-h-0`.
@@ -70,6 +79,7 @@ Use `OperationalListPanel` from `src/components/operations/OperationalListPanel.
 ## Review checklist
 
 - [ ] Page root fills available height and includes `min-h-0`.
+- [ ] Page root and all workspace ancestors use `w-full min-w-0` without a centered `max-w-*` wrapper.
 - [ ] List panel uses `OperationalListPanel`.
 - [ ] Header and toolbar do not scroll with rows.
 - [ ] Only the list/table body scrolls vertically.

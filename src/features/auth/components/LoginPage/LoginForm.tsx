@@ -108,9 +108,6 @@ export function LoginForm({
               <h1 className="text-foreground text-2xl leading-[1.2] font-semibold tracking-tight">
                 Đăng nhập
               </h1>
-              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                Nhập thông tin tài khoản để truy cập hệ thống.
-              </p>
             </header>
 
             <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">

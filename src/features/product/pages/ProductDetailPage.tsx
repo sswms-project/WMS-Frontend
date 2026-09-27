@@ -243,7 +243,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
       await updateMutation.mutateAsync(values)
       toast.success('Đã cập nhật sản phẩm.')
       updateProductForm.reset(values)
-      setIsEditOpen(false)
+      closeProductEditor()
     } catch (error) {
       logger.error(formatApiError(error))
       const message = getApiErrorMessage(error, 'Không thể cập nhật sản phẩm.')
@@ -271,11 +271,24 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   }
 
   function changeProductEditorOpen(open: boolean) {
-    if (!open && updateProductForm.formState.isDirty) {
+    if (open) {
+      setIsEditOpen(true)
+      return
+    }
+    if (updateProductForm.formState.isDirty) {
       setDiscardTarget('product')
       return
     }
-    setIsEditOpen(open)
+    closeProductEditor()
+  }
+
+  function closeProductEditor() {
+    setIsEditOpen(false)
+    if (searchParams.get('edit') !== '1') return
+    const next = new URLSearchParams(searchParams.toString())
+    next.delete('edit')
+    const query = next.toString()
+    router.replace((query ? `${pathname}?${query}` : pathname) as never)
   }
 
   async function handleLotStatusUpdate(lot: ProductLot, status: 'Active' | 'Blocked') {
@@ -440,7 +453,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -497,7 +510,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
           <TabsList
             variant="line"
             aria-label="Các phần thông tin sản phẩm"
-            className="scroll-fade-x h-10 w-full max-w-full justify-start overflow-x-auto border-b p-0"
+            className="scroll-fade-x h-10 w-full max-w-full min-w-0 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain border-b p-0"
           >
             <TabsTrigger value="info" className="h-10 flex-none px-3">
               Thông tin cơ bản
@@ -720,7 +733,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
         open={discardTarget !== null}
         onOpenChange={(open) => !open && setDiscardTarget(null)}
         onDiscard={() => {
-          if (discardTarget === 'product') setIsEditOpen(false)
+          if (discardTarget === 'product') closeProductEditor()
           if (discardTarget === 'policy') setIsStockPolicyOpen(false)
           setDiscardTarget(null)
         }}

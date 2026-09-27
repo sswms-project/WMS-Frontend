@@ -16,6 +16,7 @@ import {
 import {
   useCreateSupplierMutation,
   useDeactivateSupplierMutation,
+  useNextSupplierCodeQuery,
   useReactivateSupplierMutation,
   useSuppliersQuery,
   useUpdateSupplierMutation,
@@ -28,9 +29,16 @@ function toSaveRequest(values: SaveSupplierFormValues): SaveSupplierRequest {
   return {
     supplierCode: values.supplierCode,
     supplierName: values.supplierName,
+    taxCode: values.taxCode || null,
     phone: values.phone,
     email: values.email || null,
     address: values.address || null,
+    contactSalutation: values.contactSalutation || null,
+    contactName: values.contactName || null,
+    contactEmail: values.contactEmail || null,
+    contactMobile: values.contactMobile || null,
+    contactChannel: values.contactChannel || null,
+    contactChannelName: values.contactChannelName || null,
   }
 }
 
@@ -56,6 +64,7 @@ export default function SuppliersPage() {
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
   })
+  const nextCodeQuery = useNextSupplierCodeQuery(isCreateOpen)
 
   const createMutation = useCreateSupplierMutation()
   const updateMutation = useUpdateSupplierMutation()
@@ -168,6 +177,7 @@ export default function SuppliersPage() {
       <SupplierCreateDialog
         open={isCreateOpen}
         isPending={createMutation.isPending}
+        suggestedCode={nextCodeQuery.data?.data}
         onOpenChange={setIsCreateOpen}
         onSubmit={handleCreate}
       />

@@ -6,10 +6,9 @@ import { TenantDirectoryView } from '../components/TenantDirectory'
 import { useAdminSubscriptionPlansQuery, useTenantsQuery } from '../hooks/use-admin'
 import type { TenantStatus, TenantSubscriptionStatus } from '../types/admin.types'
 
-const PAGE_SIZE = 20
-
 export default function TenantDirectoryPage() {
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<TenantStatus>()
   const [subscriptionStatus, setSubscriptionStatus] = useState<TenantSubscriptionStatus>()
@@ -20,7 +19,7 @@ export default function TenantDirectoryPage() {
   const debouncedSearch = useDebouncedValue(search, 350).trim()
   const tenants = useTenantsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(status ? { status } : {}),
     ...(subscriptionStatus ? { subscriptionStatus } : {}),
@@ -37,7 +36,7 @@ export default function TenantDirectoryPage() {
       plans={plans.data?.items ?? []}
       totalCount={tenants.data?.totalCount ?? 0}
       page={page}
-      pageSize={PAGE_SIZE}
+      pageSize={pageSize}
       search={search}
       status={status}
       subscriptionStatus={subscriptionStatus}
@@ -67,6 +66,10 @@ export default function TenantDirectoryPage() {
         resetPage()
       }}
       onPageChange={setPage}
+      onPageSizeChange={(value) => {
+        setPageSize(value)
+        setPage(1)
+      }}
       onClear={() => {
         setSearch('')
         setStatus(undefined)

@@ -24,8 +24,6 @@ import {
 } from '../utils/format-subscription'
 import { buildPaymentHistoryQuery, isInvalidPaymentDateRange } from '../utils/payment-history-query'
 
-const PAYMENT_PAGE_SIZE = 10
-
 const defaultPaymentFilters: PaymentHistoryFilterState = {
   searchText: '',
   planId: 'all',
@@ -36,6 +34,7 @@ export function SubscriptionPaymentHistoryPage() {
   const user = useAuthStore((state) => state.user)
   const isTenantOwner = user?.role === USER_ROLES.TenantOwner
   const [pageIndex, setPageIndex] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
   const [filters, setFilters] = useState<PaymentHistoryFilterState>(defaultPaymentFilters)
   const [appliedFilters, setAppliedFilters] =
     useState<PaymentHistoryFilterState>(defaultPaymentFilters)
@@ -43,8 +42,8 @@ export function SubscriptionPaymentHistoryPage() {
   const [invoiceActionState, setInvoiceActionState] = useState<InvoiceActionState | null>(null)
 
   const paymentQuery = useMemo(
-    () => buildPaymentHistoryQuery(appliedFilters, pageIndex, PAYMENT_PAGE_SIZE),
-    [appliedFilters, pageIndex]
+    () => buildPaymentHistoryQuery(appliedFilters, pageIndex, pageSize),
+    [appliedFilters, pageIndex, pageSize]
   )
   const plansQuery = useSubscriptionPlansQuery(isTenantOwner)
   const paymentsQuery = usePaymentHistoryQuery(paymentQuery, isTenantOwner)
@@ -110,12 +109,9 @@ export function SubscriptionPaymentHistoryPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex min-w-0 flex-col gap-1">
         <h1 className="text-foreground text-xl font-semibold">Lịch sử thanh toán</h1>
-        <p className="text-muted-foreground max-w-2xl text-sm">
-          Tra cứu giao dịch, theo dõi trạng thái và tải hóa đơn PDF khi cần đối soát.
-        </p>
       </header>
 
       <PaymentHistoryTable
@@ -123,7 +119,7 @@ export function SubscriptionPaymentHistoryPage() {
         plans={plans}
         totalCount={totalCount}
         pageIndex={pageIndex}
-        pageSize={PAYMENT_PAGE_SIZE}
+        pageSize={pageSize}
         filters={filters}
         dateRangeError={dateRangeError}
         isLoading={paymentsQuery.isLoading || paymentsQuery.isFetching}
@@ -132,8 +128,11 @@ export function SubscriptionPaymentHistoryPage() {
         onFiltersChange={setFilters}
         onFiltersSubmit={handleFiltersSubmit}
         onFiltersReset={handleFiltersReset}
-        onPreviousPage={() => setPageIndex((page) => Math.max(0, page - 1))}
-        onNextPage={() => setPageIndex((page) => page + 1)}
+        onPageChange={(page) => setPageIndex(page - 1)}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPageIndex(0)
+        }}
         onRetry={() => paymentsQuery.refetch()}
         onDownloadInvoice={handleDownloadInvoice}
         onPrintInvoice={handlePrintInvoice}

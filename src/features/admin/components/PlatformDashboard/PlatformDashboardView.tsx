@@ -84,14 +84,11 @@ export function PlatformDashboardView({
   const maxPlanCount = Math.max(...data.planDistribution.map((item) => item.tenantCount), 1)
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-primary text-xs font-medium">Quản trị nền tảng</p>
           <h2 className="text-xl font-semibold">Dashboard hệ thống</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Tổng quan tenant, đăng ký, doanh thu đã hoàn tất và sức khỏe dịch vụ.
-          </p>
         </div>
         <Button variant="outline" size="sm" disabled={isFetching} onClick={onRetry}>
           <RefreshCw

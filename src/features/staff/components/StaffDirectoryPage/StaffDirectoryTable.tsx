@@ -106,18 +106,18 @@ export function StaffDirectoryTable({
   }
 
   return (
-    <>
+    <div data-slot="operational-list-body" className="min-h-0 min-w-0">
       <div className="hidden min-w-0 xl:block">
         <Table className="min-w-[960px] table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-40 pl-4">Nhân sự</TableHead>
-              <TableHead className="w-48">Liên hệ</TableHead>
-              <TableHead className="w-36">Vai trò</TableHead>
-              <TableHead className="w-28">Trạng thái</TableHead>
-              <TableHead className="w-44">Phạm vi kho</TableHead>
-              <TableHead className="w-32">Lần đăng nhập cuối</TableHead>
-              <TableHead className="w-12">
+              <TableHead className="bg-card sticky top-0 z-10 w-40 pl-4">Nhân sự</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-48">Liên hệ</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-36">Vai trò</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-28">Trạng thái</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-44">Phạm vi kho</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-32">Lần đăng nhập cuối</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-12">
                 <span className="sr-only">Thao tác</span>
               </TableHead>
             </TableRow>
@@ -208,6 +208,6 @@ export function StaffDirectoryTable({
           </div>
         ))}
       </div>
-    </>
+    </div>
   )
 }

@@ -1,5 +1,6 @@
 export const STOCK_ISSUE_REQUEST_STATUSES = [
   'Pending',
+  'ReleasedForPicking',
   'Picking',
   'Picked',
   'AuthorizedForDispatch',
@@ -82,7 +83,14 @@ export interface StockIssueRequestSummary {
   dispatchAuthorizedByUserId: string | null
   dispatchAuthorizedAt: string | null
   dispatchedAt: string | null
+  version: string | null
   items: StockIssueRequestItem[]
+}
+
+export interface ReleaseStockIssueRequestRequest {
+  stockIssueRequestId: string
+  commandId: string
+  expectedVersion: string
 }
 
 export interface StockIssueRequestListResponse {

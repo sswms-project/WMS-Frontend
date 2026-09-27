@@ -14,6 +14,7 @@ import type {
   GoodsReturnRequestListQuery,
   GoodsReturnRequestListResponse,
   GoodsReturnRequestSummary,
+  ReleaseStockIssueRequestRequest,
 } from '../types/stock-issue.types'
 import type {
   StockRecipientListQuery,
@@ -84,6 +85,19 @@ export function useRecordStockPickingMutation() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all })
       void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all })
     },
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReleaseStockIssueRequestMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReleaseStockIssueRequestRequest>({
+    mutationFn: stockIssueService.releaseForPicking,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+      ]),
     onError: (error) => logger.error(error),
   })
 }

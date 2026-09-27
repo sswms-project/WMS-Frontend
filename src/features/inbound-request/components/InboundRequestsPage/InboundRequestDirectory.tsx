@@ -3,12 +3,12 @@
 import { ClipboardList, Copy, Eye, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import {
   OperationalEmptyState,
   OperationalErrorState,
 } from '@/components/operations/OperationalState'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -59,6 +59,7 @@ interface InboundRequestDirectoryProps {
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: InboundRequestStatus | '') => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onDelete: (item: InboundRequestSummary) => void
   readonly onDuplicate: (item: InboundRequestSummary) => void
@@ -85,6 +86,7 @@ export function InboundRequestDirectory({
   onSearchChange,
   onStatusChange,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onDelete,
   onDuplicate,
@@ -98,7 +100,7 @@ export function InboundRequestDirectory({
     selectableItems.length > 0 && selectableItems.every((item) => selectedIds.includes(item.id))
   const someSelected = selectedIds.length > 0
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -107,9 +109,6 @@ export function InboundRequestDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Nhập kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Yêu cầu nhập kho</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Theo dõi yêu cầu nhập kho từ bản nháp đến khi nhận đủ hàng.
-            </p>
           </div>
         </div>
         <Button asChild className="w-full sm:w-auto">
@@ -234,6 +233,7 @@ export function InboundRequestDirectory({
               totalCount={totalCount}
               isPending={isFetching}
               onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
             />
           </>
         )}

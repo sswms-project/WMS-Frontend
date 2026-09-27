@@ -102,7 +102,7 @@ export function OrganizationPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1180px] space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       <header className="flex items-start gap-3 border-b pb-4">
         <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
           <Building2 className="size-5" aria-hidden="true" />
@@ -110,9 +110,6 @@ export function OrganizationPage() {
         <div className="min-w-0">
           <p className="text-primary text-xs font-medium">Không gian tenant</p>
           <h1 className="mt-0.5 text-xl font-semibold">Hồ sơ tổ chức</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-xs sm:text-sm">
-            Thông tin liên hệ và nhận diện được sử dụng xuyên suốt hoạt động kho.
-          </p>
         </div>
       </header>
 

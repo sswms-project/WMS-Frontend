@@ -168,12 +168,9 @@ export function SubscriptionPage() {
   const dialogCopy = getDialogCopy(dialogState, subscription, changeResult)
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-4 lg:gap-5">
+    <div className="flex w-full min-w-0 flex-none flex-col gap-4 lg:gap-5">
       <div className="flex min-w-0 flex-col gap-1">
         <h1 className="text-foreground text-xl font-semibold">Gói dịch vụ</h1>
-        <p className="text-muted-foreground max-w-2xl text-sm">
-          Theo dõi gói hiện tại, điều chỉnh chu kỳ và nâng cấp khi cần thêm giới hạn.
-        </p>
       </div>
 
       {isOnboarding ? (
@@ -231,7 +228,7 @@ export function SubscriptionPage() {
             </EmptyHeader>
           </Empty>
         ) : (
-          <div className="grid min-w-0 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid w-full min-w-0 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {activePlans.map((plan) => {
               const defaultActionState = getPlanActionState(
                 plan,

@@ -27,11 +27,10 @@ import type {
   GoodsReturnRequestSummary,
 } from '../types/stock-issue.types'
 
-const PAGE_SIZE = 10
-
 export default function GoodsReturnRequestsPage() {
   const meQuery = useMeQuery()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<GoodsReturnRequestStatus | ''>('')
   const [warehouseId, setWarehouseId] = useState('')
@@ -42,7 +41,7 @@ export default function GoodsReturnRequestsPage() {
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const goodsReturnRequestsQuery = useGoodsReturnRequestsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText.trim() ? { searchTerm: debouncedSearchText.trim() } : {}),
     ...(status ? { status } : {}),
     ...(warehouseId ? { warehouseId } : {}),
@@ -89,7 +88,7 @@ export default function GoodsReturnRequestsPage() {
         items={goodsReturnRequestsQuery.data?.items ?? []}
         totalCount={goodsReturnRequestsQuery.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         status={status}
         warehouseId={warehouseId}
@@ -125,6 +124,10 @@ export default function GoodsReturnRequestsPage() {
           setPage(1)
         }}
         onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
+        }}
         onInspect={setInspectedItem}
         onApprove={(item) => void approve(item)}
         onReject={setRejectingItem}

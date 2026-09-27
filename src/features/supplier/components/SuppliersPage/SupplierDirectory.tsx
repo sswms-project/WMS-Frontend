@@ -79,7 +79,7 @@ export function SupplierDirectory({
   onRetry,
 }: SupplierDirectoryProps) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -88,9 +88,6 @@ export function SupplierDirectory({
           <div className="min-w-0">
             <p className="text-primary text-xs font-medium">Nguồn nhập kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Nhà cung cấp</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Quản lý danh bạ nhà cung cấp phục vụ hoạt động nhập kho của tổ chức.
-            </p>
           </div>
         </div>
         {canCreate ? (

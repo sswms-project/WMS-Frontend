@@ -38,7 +38,6 @@ export function TenantOwnerDashboard() {
       <FadeIn>
         <DashboardHeader
           title="Bảng điều khiển vận hành kho"
-          description="Tổng quan chuỗi cung ứng theo thời gian thực cho tất cả các kho"
           actions={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
         />
       </FadeIn>

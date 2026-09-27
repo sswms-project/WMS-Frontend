@@ -27,8 +27,6 @@ import {
 import type { InboundRequestStatus, InboundRequestSummary } from '../types/inbound-request.types'
 import { APP_ROUTES } from '@/routes/app-routes'
 
-const PAGE_SIZE = 10
-
 type DeleteIntent =
   | { readonly kind: 'single'; readonly item: InboundRequestSummary }
   | { readonly kind: 'many'; readonly ids: readonly string[] }
@@ -38,6 +36,7 @@ export default function InboundRequestsPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<InboundRequestStatus | ''>('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [selectedIds, setSelectedIds] = useState<readonly string[]>([])
   const [deleteIntent, setDeleteIntent] = useState<DeleteIntent | null>(null)
   const meQuery = useMeQuery()
@@ -47,7 +46,7 @@ export default function InboundRequestsPage() {
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useInboundRequestsQuery({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
   })
@@ -83,7 +82,7 @@ export default function InboundRequestsPage() {
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         searchText={searchText}
         status={status}
         isLoading={query.isLoading}
@@ -108,6 +107,10 @@ export default function InboundRequestsPage() {
         onPageChange={(value) => {
           setPage(value)
           setSelectedIds([])
+        }}
+        onPageSizeChange={(value) => {
+          setPageSize(value)
+          setPage(1)
         }}
         onRetry={() => void query.refetch()}
         onSelectionChange={setSelectedIds}

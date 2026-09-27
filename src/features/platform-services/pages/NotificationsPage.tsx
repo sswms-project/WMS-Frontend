@@ -49,6 +49,7 @@ export default function NotificationsPage() {
     }
 
     const next = new URLSearchParams()
+    next.set('pageSize', String(queryParams.pageSize))
     setIfPresent(next, 'search', result.data.search)
     setIfPresent(next, 'type', result.data.type === 'all' ? '' : result.data.type)
     setIfPresent(next, 'readState', result.data.readState === 'all' ? '' : result.data.readState)
@@ -92,10 +93,20 @@ export default function NotificationsPage() {
       pendingNotificationId={pendingNotificationId}
       isMarkingAll={markAllMutation.isPending}
       onApplyFilters={applyFilters}
-      onClearFilters={() => navigate(new URLSearchParams())}
+      onClearFilters={() => {
+        const next = new URLSearchParams()
+        next.set('pageSize', String(queryParams.pageSize))
+        navigate(next)
+      }}
       onPageChange={(page) => {
         const next = new URLSearchParams(params)
         next.set('page', String(page))
+        navigate(next)
+      }}
+      onPageSizeChange={(pageSize) => {
+        const next = new URLSearchParams(params)
+        next.set('page', '1')
+        next.set('pageSize', String(pageSize))
         navigate(next)
       }}
       onMarkRead={markRead}

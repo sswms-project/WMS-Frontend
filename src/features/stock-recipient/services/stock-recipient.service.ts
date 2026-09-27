@@ -12,6 +12,11 @@ import type {
 } from '../types/stock-recipient.types'
 
 export const stockRecipientService = {
+  getNextCode: () =>
+    axiosClient
+      .get<ApiResponse<string>>(API_ENDPOINTS.stockRecipients.nextCode)
+      .then((response) => response.data),
+
   getStockRecipients: (params: StockRecipientListQuery) =>
     axiosClient
       .get<ApiResponse<StockRecipientListResponse>>(API_ENDPOINTS.stockRecipients.list, { params })

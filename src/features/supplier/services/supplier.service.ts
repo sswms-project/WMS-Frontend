@@ -9,6 +9,11 @@ import type {
 } from '../types/supplier.types'
 
 export const supplierService = {
+  getNextSupplierCode: () =>
+    axiosClient
+      .get<ApiResponse<string>>(API_ENDPOINTS.suppliers.nextCode)
+      .then((response) => response.data),
+
   getSuppliers: (params: SupplierListQuery) =>
     axiosClient
       .get<ApiResponse<SupplierListResponse>>(API_ENDPOINTS.suppliers.list, { params })

@@ -13,6 +13,8 @@ import {
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -42,7 +44,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { ZoneResponse } from '@/types/warehouse'
 import type { LocationFilterState, LocationSearchResponse } from '../../types/warehouse.types'
-import { WarehousePagination } from '../WarehousePage'
 
 interface WarehouseLocationDirectoryProps {
   readonly warehouseId: string
@@ -65,6 +66,7 @@ interface WarehouseLocationDirectoryProps {
   readonly onApplyFilters: () => void
   readonly onResetFilters: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onRetryFilterMetadata: () => void
 }
@@ -113,6 +115,7 @@ export function WarehouseLocationDirectory({
   onApplyFilters,
   onResetFilters,
   onPageChange,
+  onPageSizeChange,
   onRetry,
   onRetryFilterMetadata,
 }: WarehouseLocationDirectoryProps) {
@@ -128,7 +131,7 @@ export function WarehouseLocationDirectory({
   }
 
   return (
-    <section className="bg-card min-w-0 border">
+    <OperationalListPanel aria-label="Danh mục vị trí kho">
       <header className="flex flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">Danh mục vị trí</h2>
@@ -210,22 +213,25 @@ export function WarehouseLocationDirectory({
         </Empty>
       ) : (
         <>
-          <LocationMobileList
-            warehouseId={warehouseId}
-            locations={locations}
-            canGenerateBarcode={canGenerateBarcode}
-          />
-          <LocationDesktopTable
-            warehouseId={warehouseId}
-            locations={locations}
-            canGenerateBarcode={canGenerateBarcode}
-          />
-          <WarehousePagination
+          <div data-slot="operational-list-body" className="min-h-0 min-w-0">
+            <LocationMobileList
+              warehouseId={warehouseId}
+              locations={locations}
+              canGenerateBarcode={canGenerateBarcode}
+            />
+            <LocationDesktopTable
+              warehouseId={warehouseId}
+              locations={locations}
+              canGenerateBarcode={canGenerateBarcode}
+            />
+          </div>
+          <OperationalPagination
             page={page}
             pageSize={pageSize}
             totalCount={totalCount}
             isPending={isFetching}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
           />
         </>
       )}
@@ -342,7 +348,7 @@ export function WarehouseLocationDirectory({
           </SheetFooter>
         </SheetContent>
       </Sheet>
-    </section>
+    </OperationalListPanel>
   )
 }
 

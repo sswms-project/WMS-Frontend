@@ -1,10 +1,11 @@
 import { LoaderCircle, Mail, RefreshCw, Send, Trash2 } from 'lucide-react'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ROLE_LABELS_VI } from '@/config/roles'
 import type { InvitationResponse } from '../../types/invitation.types'
-import { StaffDirectoryPagination } from './StaffDirectoryPagination'
 
 interface InvitationManagementPanelProps {
   readonly invitations: InvitationResponse[]
@@ -16,6 +17,7 @@ interface InvitationManagementPanelProps {
   readonly isFetching: boolean
   readonly resendingId: string | null
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRefresh: () => void
   readonly onResend: (invitation: InvitationResponse) => void
   readonly onRevoke: (invitation: InvitationResponse) => void
@@ -47,12 +49,13 @@ export function InvitationManagementPanel({
   isFetching,
   resendingId,
   onPageChange,
+  onPageSizeChange,
   onRefresh,
   onResend,
   onRevoke,
 }: InvitationManagementPanelProps) {
   return (
-    <section className="bg-card min-w-0 overflow-hidden border" aria-labelledby="invitations-title">
+    <OperationalListPanel aria-labelledby="invitations-title">
       <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-3 sm:px-4">
         <div>
           <h2 id="invitations-title" className="text-sm font-semibold">
@@ -85,7 +88,7 @@ export function InvitationManagementPanel({
         </div>
       ) : (
         <>
-          <ul className="divide-y">
+          <ul data-slot="operational-list-body" className="min-h-0 divide-y">
             {invitations.map((invitation) => {
               const needsWarehouse =
                 invitation.warehouses.length === 0 &&
@@ -158,14 +161,15 @@ export function InvitationManagementPanel({
               )
             })}
           </ul>
-          <StaffDirectoryPagination
+          <OperationalPagination
             page={page}
             pageSize={pageSize}
             totalCount={totalCount}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
           />
         </>
       )}
-    </section>
+    </OperationalListPanel>
   )
 }

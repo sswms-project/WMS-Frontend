@@ -16,6 +16,8 @@ import type {
   SaveGoodsReceiptRequest,
   StartInboundDocumentImportRequest,
   ReviewInboundDocumentImportRequest,
+  CancelPutawayTaskRequest,
+  ReconcilePutawayCancellationRequest,
 } from '../types/inbound.types'
 
 interface UpdateReceiptVariables {
@@ -31,6 +33,16 @@ interface RejectReceiptVariables {
 interface PutawayVariables {
   receiptId: string
   request: PutawayRequest
+}
+
+interface CancelPutawayTaskVariables {
+  receiptId: string
+  request: CancelPutawayTaskRequest
+}
+
+interface ReconcilePutawayCancellationVariables {
+  receiptId: string
+  request: ReconcilePutawayCancellationRequest
 }
 
 export function useReceivingTasksQuery(params: ReceivingTaskQuery) {
@@ -188,4 +200,25 @@ export function usePutawayMutation() {
     onSuccess: (_, variables) => invalidate(variables.receiptId),
     onError: (error) => logger.error(error),
   })
+}
+
+export function useCancelPutawayTaskMutation() {
+  const invalidate = useInvalidateInbound()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, CancelPutawayTaskVariables>({
+    mutationFn: ({ receiptId, request }) => inboundService.cancelPutawayTask(receiptId, request),
+    onSuccess: (_, variables) => invalidate(variables.receiptId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReconcilePutawayCancellationMutation() {
+  const invalidate = useInvalidateInbound()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReconcilePutawayCancellationVariables>(
+    {
+      mutationFn: ({ receiptId, request }) =>
+        inboundService.reconcilePutawayCancellation(receiptId, request),
+      onSuccess: (_, variables) => invalidate(variables.receiptId),
+      onError: (error) => logger.error(error),
+    }
+  )
 }

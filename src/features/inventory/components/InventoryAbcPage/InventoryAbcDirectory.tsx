@@ -4,6 +4,8 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -25,6 +27,8 @@ import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
 interface InventoryAbcDirectoryProps {
   readonly permissions: readonly string[]
   readonly items: readonly InventoryAbcItem[]
+  readonly page: number
+  readonly pageSize: number
   readonly warehouseId: string
   readonly warehouseOptions: readonly InventoryFilterOption[]
   readonly isLoading: boolean
@@ -33,12 +37,32 @@ interface InventoryAbcDirectoryProps {
   readonly areWarehousesLoading: boolean
   readonly areWarehousesError: boolean
   readonly onWarehouseChange: (value: string) => void
+  readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetryWarehouses: () => void
   readonly onRetry: () => void
   readonly historicalPeriodDays: number
+  readonly metric: 'Quantity' | 'Activity'
+  readonly aThreshold: number
+  readonly bThreshold: number
   readonly isRunning: boolean
+  readonly canRun: boolean
+  readonly canCreateCycleCount: boolean
+  readonly analysisId: string | null
+  readonly datasetFingerprint: string | null
+  readonly appliedCycleCountId: string | null
+  readonly staffOptions: readonly InventoryFilterOption[]
+  readonly assignedTo: string
+  readonly scheduledDate: string
+  readonly isApplying: boolean
   readonly onHistoricalPeriodDaysChange: (value: number) => void
+  readonly onMetricChange: (value: 'Quantity' | 'Activity') => void
+  readonly onAThresholdChange: (value: number) => void
+  readonly onBThresholdChange: (value: number) => void
   readonly onRun: () => void
+  readonly onAssignedToChange: (value: string) => void
+  readonly onScheduledDateChange: (value: string) => void
+  readonly onApply: () => void
 }
 
 const classStyles: Record<string, string> = {
@@ -50,6 +74,8 @@ const classStyles: Record<string, string> = {
 export function InventoryAbcDirectory({
   permissions,
   items,
+  page,
+  pageSize,
   warehouseId,
   warehouseOptions,
   isLoading,
@@ -58,20 +84,41 @@ export function InventoryAbcDirectory({
   areWarehousesLoading,
   areWarehousesError,
   onWarehouseChange,
+  onPageChange,
+  onPageSizeChange,
   onRetryWarehouses,
   onRetry,
   historicalPeriodDays,
+  metric,
+  aThreshold,
+  bThreshold,
   isRunning,
+  canRun,
+  canCreateCycleCount,
+  analysisId,
+  datasetFingerprint,
+  appliedCycleCountId,
+  staffOptions,
+  assignedTo,
+  scheduledDate,
+  isApplying,
   onHistoricalPeriodDaysChange,
+  onMetricChange,
+  onAThresholdChange,
+  onBThresholdChange,
   onRun,
+  onAssignedToChange,
+  onScheduledDateChange,
+  onApply,
 }: InventoryAbcDirectoryProps) {
   const counts: Record<string, number> = {
     A: items.filter((item) => item.class === 'A').length,
     B: items.filter((item) => item.class === 'B').length,
     C: items.filter((item) => item.class === 'C').length,
   }
+  const pageItems = items.slice((page - 1) * pageSize, page * pageSize)
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
@@ -81,7 +128,7 @@ export function InventoryAbcDirectory({
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Phân loại tồn kho ABC</h1>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Phân nhóm sản phẩm theo tỷ trọng số lượng tồn hiện tại.
+              Phân nhóm sản phẩm theo lịch sử xuất kho trong kỳ đã chọn.
             </p>
           </div>
         </div>
@@ -104,7 +151,58 @@ export function InventoryAbcDirectory({
           </div>
         ))}
       </section>
-      <section className="bg-card flex min-h-0 flex-col border" aria-labelledby="abc-title">
+      {analysisId ? (
+        <section className="bg-card grid gap-3 border p-3 text-xs sm:grid-cols-[1fr_auto_auto_auto]">
+          <div>
+            <p className="font-medium">Snapshot phân tích đã lưu</p>
+            <p className="text-muted-foreground">
+              Mã dữ liệu:{' '}
+              <span className="font-mono">{datasetFingerprint?.slice(0, 16) ?? 'không có'}…</span>.
+              Kết quả không tự thay đổi policy hoặc tạo kiểm kê.
+            </p>
+          </div>
+          {appliedCycleCountId ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                window.location.href = `/inventory/cycle-counts/${appliedCycleCountId}`
+              }}
+            >
+              Mở phiếu kiểm kê đã tạo
+            </Button>
+          ) : canCreateCycleCount ? (
+            <>
+              <NativeSelect
+                aria-label="Nhân viên kiểm kê"
+                value={assignedTo}
+                onChange={(event) => onAssignedToChange(event.target.value)}
+              >
+                <NativeSelectOption value="">Chọn nhân viên kiểm kê</NativeSelectOption>
+                {staffOptions.map((option) => (
+                  <NativeSelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              <Input
+                aria-label="Ngày kiểm kê"
+                type="datetime-local"
+                value={scheduledDate}
+                onChange={(event) => onScheduledDateChange(event.target.value)}
+              />
+              <Button
+                type="button"
+                disabled={isApplying || !assignedTo || !scheduledDate}
+                onClick={onApply}
+              >
+                {isApplying ? 'Đang tạo…' : 'Tạo kiểm kê nhóm A'}
+              </Button>
+            </>
+          ) : null}
+        </section>
+      ) : null}
+      <OperationalListPanel aria-labelledby="abc-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="abc-title" className="text-sm font-semibold">
@@ -129,6 +227,16 @@ export function InventoryAbcDirectory({
                 </NativeSelectOption>
               ))}
             </NativeSelect>
+            <NativeSelect
+              aria-label="Chỉ số phân tích ABC"
+              value={metric}
+              onChange={(event) =>
+                onMetricChange(event.target.value === 'Activity' ? 'Activity' : 'Quantity')
+              }
+            >
+              <NativeSelectOption value="Quantity">Số lượng xuất</NativeSelectOption>
+              <NativeSelectOption value="Activity">Tần suất xuất</NativeSelectOption>
+            </NativeSelect>
             <Input
               aria-label="Số ngày lịch sử phân loại ABC"
               className="w-28"
@@ -138,15 +246,39 @@ export function InventoryAbcDirectory({
               value={historicalPeriodDays}
               onChange={(event) => onHistoricalPeriodDaysChange(Number(event.target.value))}
             />
-            <Button
-              type="button"
-              disabled={
-                !warehouseId || isRunning || historicalPeriodDays < 1 || historicalPeriodDays > 366
-              }
-              onClick={onRun}
-            >
-              {isRunning ? 'Đang chạy…' : 'Chạy phân loại'}
-            </Button>
+            <Input
+              aria-label="Ngưỡng nhóm A"
+              className="w-20"
+              type="number"
+              min={1}
+              max={98}
+              value={aThreshold}
+              onChange={(event) => onAThresholdChange(Number(event.target.value))}
+            />
+            <Input
+              aria-label="Ngưỡng nhóm B"
+              className="w-20"
+              type="number"
+              min={2}
+              max={99}
+              value={bThreshold}
+              onChange={(event) => onBThresholdChange(Number(event.target.value))}
+            />
+            {canRun ? (
+              <Button
+                type="button"
+                disabled={
+                  !warehouseId ||
+                  isRunning ||
+                  historicalPeriodDays < 1 ||
+                  historicalPeriodDays > 366 ||
+                  aThreshold >= bThreshold
+                }
+                onClick={onRun}
+              >
+                {isRunning ? 'Đang phân tích…' : 'Phân tích'}
+              </Button>
+            ) : null}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -201,9 +333,17 @@ export function InventoryAbcDirectory({
             }
           />
         ) : (
-          <AbcResults items={items} />
+          <AbcResults items={pageItems} />
         )}
-      </section>
+        <OperationalPagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={items.length}
+          isPending={isFetching}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
+      </OperationalListPanel>
     </div>
   )
 }

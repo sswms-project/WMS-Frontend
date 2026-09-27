@@ -21,6 +21,14 @@ export function useSuppliersQuery(params: SupplierListQuery) {
   })
 }
 
+export function useNextSupplierCodeQuery(enabled: boolean) {
+  return useQuery<ApiResponse<string>, ApiErrorResponse>({
+    queryKey: queryKeys.suppliers.nextCode,
+    queryFn: supplierService.getNextSupplierCode,
+    enabled,
+  })
+}
+
 export function useSupplierQuery(supplierId: string) {
   return useQuery<Supplier, ApiErrorResponse>({
     queryKey: queryKeys.suppliers.detail(supplierId),

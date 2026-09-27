@@ -49,17 +49,6 @@ export function QuickCategoryDialog({
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FieldGroup>
-            <Field data-invalid={Boolean(form.formState.errors.categoryCode)}>
-              <FieldLabel htmlFor="quickCategoryCode">Mã nhóm *</FieldLabel>
-              <Input id="quickCategoryCode" autoComplete="off" {...form.register('categoryCode')} />
-              <FieldError
-                errors={
-                  form.formState.errors.categoryCode
-                    ? [form.formState.errors.categoryCode]
-                    : undefined
-                }
-              />
-            </Field>
             <Field data-invalid={Boolean(form.formState.errors.categoryName)}>
               <FieldLabel htmlFor="quickCategoryName">Tên nhóm *</FieldLabel>
               <Input id="quickCategoryName" autoComplete="off" {...form.register('categoryName')} />

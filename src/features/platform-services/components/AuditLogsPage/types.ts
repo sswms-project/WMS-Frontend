@@ -23,5 +23,6 @@ export interface AuditLogDirectoryProps {
   readonly onApplyFilters: (filters: AuditLogFilterValues) => void
   readonly onClearFilters: () => void
   readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
 }

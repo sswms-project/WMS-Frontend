@@ -14,6 +14,8 @@ import type {
   SaveGoodsReceiptRequest,
   StartInboundDocumentImportRequest,
   ReviewInboundDocumentImportRequest,
+  CancelPutawayTaskRequest,
+  ReconcilePutawayCancellationRequest,
 } from '../types/inbound.types'
 
 export const inboundService = {
@@ -66,6 +68,16 @@ export const inboundService = {
   putaway: (receiptId: string, request: PutawayRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.putaway(receiptId), request)
+      .then((response) => response.data),
+  cancelPutawayTask: (receiptId: string, request: CancelPutawayTaskRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.cancelPutawayTask(receiptId), request)
+      .then((response) => response.data),
+  reconcilePutawayCancellation: (receiptId: string, request: ReconcilePutawayCancellationRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.goodsReceipts.reconcilePutawayCancellation(receiptId), request)
       .then((response) => response.data),
   startDocumentImport: ({
     file,

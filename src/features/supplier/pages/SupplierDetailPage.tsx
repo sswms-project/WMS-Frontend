@@ -49,9 +49,16 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailPagePro
         request: {
           supplierCode: values.supplierCode,
           supplierName: values.supplierName,
+          taxCode: values.taxCode || null,
           phone: values.phone,
           email: values.email || null,
           address: values.address || null,
+          contactSalutation: values.contactSalutation || null,
+          contactName: values.contactName || null,
+          contactEmail: values.contactEmail || null,
+          contactMobile: values.contactMobile || null,
+          contactChannel: values.contactChannel || null,
+          contactChannelName: values.contactChannelName || null,
         },
       })
       toast.success('Đã cập nhật nhà cung cấp.')

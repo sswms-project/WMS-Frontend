@@ -52,11 +52,11 @@ export function PermissionModuleGroup({
         </Badge>
       </div>
       {isOpen && (
-        <div className="divide-y">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
           {permissions.map((permission) => (
             <label
               key={permission.id}
-              className="hover:bg-muted/30 flex cursor-pointer items-start gap-3 px-4 py-2.5"
+              className="hover:bg-muted/30 border-border/70 flex cursor-pointer items-start gap-3 border-b px-4 py-2.5 lg:odd:border-r"
             >
               <Checkbox
                 checked={selected.has(permission.id)}

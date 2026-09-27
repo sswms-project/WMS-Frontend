@@ -169,18 +169,22 @@ export function CycleCountDetailView({
             <TableHeader>
               <TableRow>
                 {allowedActions.includes('RequestRecount') ? (
-                  <TableHead className="bg-card sticky top-0 w-12">
+                  <TableHead className="bg-card sticky top-0 z-10 w-12">
                     <span className="sr-only">Chọn dòng kiểm đếm lại</span>
                   </TableHead>
                 ) : null}
-                <TableHead className="bg-card sticky top-0 w-64">Sản phẩm</TableHead>
-                <TableHead className="bg-card sticky top-0 w-28">Slot</TableHead>
-                <TableHead className="bg-card sticky top-0 w-36">Lô / chất lượng</TableHead>
-                <TableHead className="bg-card sticky top-0 w-36 text-right">Tồn hệ thống</TableHead>
-                <TableHead className="bg-card sticky top-0 w-52 text-right">Số đếm</TableHead>
-                <TableHead className="bg-card sticky top-0 w-32 text-right">Chênh lệch</TableHead>
-                <TableHead className="bg-card sticky top-0 w-48">Lịch sử</TableHead>
-                <TableHead className="bg-card sticky top-0 w-40" />
+                <TableHead className="bg-card sticky top-0 z-10 w-64">Sản phẩm</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-28">Slot</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-36">Lô / chất lượng</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-36 text-right">
+                  Tồn hệ thống
+                </TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-52 text-right">Số đếm</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">
+                  Chênh lệch
+                </TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-48">Lịch sử</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 w-40" />
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -6,9 +6,13 @@ import type {
 export function buildInventoryReservationQuery(
   warehouseId: string,
   productId: string,
-  status: InventoryReservationStatus
+  status: InventoryReservationStatus,
+  pageNumber = 1,
+  pageSize = 20
 ): InventoryReservationQuery {
   return {
+    pageNumber,
+    pageSize,
     ...(warehouseId ? { warehouseId } : {}),
     ...(productId ? { productId } : {}),
     status,

@@ -1,6 +1,9 @@
 import type { StockMovementListQuery, StockMovementType } from '../types/inventory.types'
 
 interface StockMovementFilters {
+  readonly searchTerm?: string
+  readonly warehouseId?: string
+  readonly slotId?: string
   readonly productId: string
   readonly movementType: StockMovementType | ''
   readonly dateFrom: string
@@ -29,6 +32,9 @@ export function buildStockMovementQuery(
   return {
     pageNumber,
     pageSize,
+    ...(filters.searchTerm ? { searchTerm: filters.searchTerm } : {}),
+    ...(filters.warehouseId ? { warehouseId: filters.warehouseId } : {}),
+    ...(filters.slotId ? { slotId: filters.slotId } : {}),
     ...(filters.productId ? { productId: filters.productId } : {}),
     ...(filters.movementType ? { movementType: filters.movementType } : {}),
     ...(dateFrom ? { dateFrom } : {}),

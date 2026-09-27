@@ -10,6 +10,9 @@ const movementLabels: Record<string, string> = {
   [STOCK_MOVEMENT_TYPES.adjustment]: 'Điều chỉnh',
   [STOCK_MOVEMENT_TYPES.returnIn]: 'Nhập hàng trả lại',
   [STOCK_MOVEMENT_TYPES.scrap]: 'Loại bỏ',
+  [STOCK_MOVEMENT_TYPES.opening]: 'Tồn đầu kỳ',
+  [STOCK_MOVEMENT_TYPES.reclassification]: 'Phân loại lại',
+  [STOCK_MOVEMENT_TYPES.correction]: 'Sửa sai biến động',
 }
 
 export function formatStockMovementType(value: string): string {

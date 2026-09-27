@@ -133,6 +133,13 @@ export interface GoodsReceiptDetail extends Omit<
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
+  putAwayTaskExecutionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
+  putAwayTaskCancelledAt: string | null
+  putAwayTaskCancellationReason: string | null
+  putAwayTaskRequiresReconciliation: boolean
+  putAwayTaskReconciledAt: string | null
+  putAwayTaskReconciliationNote: string | null
+  version: string
   items: GoodsReceiptItem[]
   history: LifecycleEvent[]
 }
@@ -160,6 +167,18 @@ export interface PutawayLineRequest {
 
 export interface PutawayRequest {
   lines: PutawayLineRequest[]
+}
+
+export interface CancelPutawayTaskRequest {
+  reason: string
+  expectedVersion: string
+  commandId: string
+  hasUnrecordedPhysicalMovement: boolean
+}
+
+export interface ReconcilePutawayCancellationRequest {
+  note: string
+  expectedVersion: string
 }
 
 export interface InboundAllowedActionsResponse {

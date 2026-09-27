@@ -35,6 +35,7 @@ interface Props {
   readonly isPending: boolean
   readonly onSubmit: (values: CreateCycleCountFormValues) => Promise<void>
   readonly onInventoryPageChange: (page: number) => void
+  readonly onInventoryPageSizeChange: (pageSize: number) => void
 }
 
 export function CreateCycleCountForm({
@@ -50,6 +51,7 @@ export function CreateCycleCountForm({
   isPending,
   onSubmit,
   onInventoryPageChange,
+  onInventoryPageSizeChange,
 }: Props) {
   const selectedItems = form.watch('items')
   const warehouseId = form.watch('warehouseId')
@@ -204,13 +206,13 @@ export function CreateCycleCountForm({
           <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky top-0 w-12">
+                <TableHead className="bg-card sticky top-0 z-10 w-12">
                   <span className="sr-only">Chọn</span>
                 </TableHead>
-                <TableHead className="bg-card sticky top-0">Sản phẩm</TableHead>
-                <TableHead className="bg-card sticky top-0">Vị trí</TableHead>
-                <TableHead className="bg-card sticky top-0">Lô / chất lượng</TableHead>
-                <TableHead className="bg-card sticky top-0 text-right">Tồn hiện tại</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Sản phẩm</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Vị trí</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10">Lô / chất lượng</TableHead>
+                <TableHead className="bg-card sticky top-0 z-10 text-right">Tồn hiện tại</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -275,6 +277,7 @@ export function CreateCycleCountForm({
           totalCount={inventoryTotalCount}
           isPending={isInventoryLoading}
           onPageChange={onInventoryPageChange}
+          onPageSizeChange={onInventoryPageSizeChange}
         />
       </section>
       <footer className="flex shrink-0 justify-end gap-2 border-t pt-4">
