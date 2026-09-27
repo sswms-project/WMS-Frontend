@@ -60,6 +60,7 @@ interface Props {
   readonly lotOptions: readonly InventoryFilterOption[]
   readonly staffOptions: readonly InventoryFilterOption[]
   readonly taskOptions: readonly InventoryFilterOption[]
+  readonly canLinkTask: boolean
   readonly isLoading: boolean
   readonly isError: boolean
   readonly isPending: boolean
@@ -430,20 +431,22 @@ export function StockDiscrepancyDirectory(props: Props) {
               ))}
             </NativeSelect>
           </Field>
-          <Field>
-            <FieldLabel>Công việc liên quan (không bắt buộc)</FieldLabel>
-            <NativeSelect
-              value={props.relatedTaskKey}
-              onChange={(event) => props.onRelatedTaskChange(event.target.value)}
-            >
-              <NativeSelectOption value="">Không liên kết công việc</NativeSelectOption>
-              {props.taskOptions.map((option) => (
-                <NativeSelectOption key={option.value} value={option.value}>
-                  {option.label}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </Field>
+          {props.canLinkTask ? (
+            <Field>
+              <FieldLabel>Công việc liên quan (không bắt buộc)</FieldLabel>
+              <NativeSelect
+                value={props.relatedTaskKey}
+                onChange={(event) => props.onRelatedTaskChange(event.target.value)}
+              >
+                <NativeSelectOption value="">Không liên kết công việc</NativeSelectOption>
+                {props.taskOptions.map((option) => (
+                  <NativeSelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
           <Field>
             <FieldLabel>Loại</FieldLabel>
             <NativeSelect

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import type { ApiErrorResponse } from '@/types/api'
@@ -18,6 +19,7 @@ import {
   filterPermissionGroups,
   getRoleById,
   groupTenantPermissions,
+  rebasePermissionDraft,
 } from '../../utils/tenant-access-control'
 import { PermissionCatalog } from './PermissionCatalog'
 import { AccessControlModeTabs } from './AccessControlModeTabs'
@@ -64,6 +66,7 @@ interface AccessControlWorkspaceProps {
   readonly workspace: TenantRolePermissionWorkspace
   readonly saving: boolean
   readonly onSave: (roleId: string, toAdd: string[], toRemove: string[]) => Promise<void>
+  readonly onReload: () => Promise<boolean>
   readonly onModeChange: (mode: AccessControlMode) => void
 }
 
@@ -72,6 +75,7 @@ export function AccessControlWorkspace({
   workspace,
   saving,
   onSave,
+  onReload,
   onModeChange,
 }: AccessControlWorkspaceProps) {
   const router = useRouter()
@@ -80,10 +84,10 @@ export function AccessControlWorkspace({
   const firstRole = workspace.roles[0]!
   const [selectedRoleId, setSelectedRoleId] = useState(firstRole.roleId)
   const [baselineIds, setBaselineIds] = useState<Set<string>>(
-    () => new Set(firstRole.directPermissionIds)
+    () => new Set(firstRole.assignedPermissionIds)
   )
   const [draftIds, setDraftIds] = useState<Set<string>>(
-    () => new Set(firstRole.directPermissionIds)
+    () => new Set(firstRole.assignedPermissionIds)
   )
   const [searchText, setSearchText] = useState('')
   const [openModules, setOpenModules] = useState<string[]>([])
@@ -92,12 +96,12 @@ export function AccessControlWorkspace({
   const [mutationError, setMutationError] = useState<string | null>(null)
 
   const selectedRole = getRoleById(workspace.roles, selectedRoleId) ?? firstRole
-  const inheritedIds = useMemo(
-    () => new Set(selectedRole.inheritedPermissionIds),
-    [selectedRole.inheritedPermissionIds]
-  )
   const permissionGroups = useMemo(
     () => groupTenantPermissions(workspace.permissions),
+    [workspace.permissions]
+  )
+  const eligiblePermissionIds = useMemo(
+    () => new Set(workspace.permissions.map((permission) => permission.id)),
     [workspace.permissions]
   )
   const filteredGroups = useMemo(
@@ -108,27 +112,36 @@ export function AccessControlWorkspace({
   const visibleOpenModules = searchText.trim()
     ? filteredGroups.map((group) => group.module)
     : openModules
-  const effectiveCount = new Set([...draftIds, ...inheritedIds]).size
 
   useEffect(() => {
     if (getRoleById(workspace.roles, selectedRoleId)) return
 
     queueMicrotask(() => {
       setSelectedRoleId(firstRole.roleId)
-      setBaselineIds(new Set(firstRole.directPermissionIds))
-      setDraftIds(new Set(firstRole.directPermissionIds))
+      setBaselineIds(new Set(firstRole.assignedPermissionIds))
+      setDraftIds(new Set(firstRole.assignedPermissionIds))
     })
   }, [firstRole, selectedRoleId, workspace.roles])
 
   useEffect(() => {
-    const authoritativeIds = new Set(selectedRole.directPermissionIds)
-    if (isDirty || arePermissionSetsEqual(authoritativeIds, baselineIds)) return
+    const authoritativeIds = new Set(selectedRole.assignedPermissionIds)
+    const rebased = rebasePermissionDraft(
+      baselineIds,
+      draftIds,
+      authoritativeIds,
+      eligiblePermissionIds
+    )
+    if (
+      arePermissionSetsEqual(rebased.baselineIds, baselineIds) &&
+      arePermissionSetsEqual(rebased.draftIds, draftIds)
+    )
+      return
 
     queueMicrotask(() => {
-      setBaselineIds(authoritativeIds)
-      setDraftIds(new Set(authoritativeIds))
+      setBaselineIds(rebased.baselineIds)
+      setDraftIds(rebased.draftIds)
     })
-  }, [baselineIds, isDirty, selectedRole.directPermissionIds])
+  }, [baselineIds, draftIds, eligiblePermissionIds, selectedRole.assignedPermissionIds])
 
   useEffect(() => {
     if (!isDirty) return
@@ -178,8 +191,8 @@ export function AccessControlWorkspace({
 
   function selectRole(role: TenantRolePolicy) {
     setSelectedRoleId(role.roleId)
-    setBaselineIds(new Set(role.directPermissionIds))
-    setDraftIds(new Set(role.directPermissionIds))
+    setBaselineIds(new Set(role.assignedPermissionIds))
+    setDraftIds(new Set(role.assignedPermissionIds))
     setMutationError(null)
     setSearchText('')
     setOpenModules([])
@@ -270,6 +283,10 @@ export function AccessControlWorkspace({
     if (await saveDraft()) completePendingIntent()
   }
 
+  async function reloadWorkspace() {
+    if (await onReload()) setMutationError(null)
+  }
+
   return (
     <>
       <AccessControlModeTabs value={activeMode} disabled={saving} onChange={requestModeChange} />
@@ -290,8 +307,8 @@ export function AccessControlWorkspace({
           className="border-border bg-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border"
         >
           <PermissionEditorHeader
-            directCount={draftIds.size}
-            effectiveCount={effectiveCount}
+            selectedCount={draftIds.size}
+            permissionCount={workspace.permissions.length}
             moduleCount={permissionGroups.length}
             searchText={searchText}
             dirty={isDirty}
@@ -310,7 +327,18 @@ export function AccessControlWorkspace({
             <Alert variant="destructive" className="m-3 mb-0 shrink-0 sm:mx-4">
               <TriangleAlert aria-hidden="true" />
               <AlertTitle>Chưa thể lưu quyền</AlertTitle>
-              <AlertDescription>{mutationError}</AlertDescription>
+              <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+                <span>{mutationError}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={saving}
+                  onClick={() => void reloadWorkspace()}
+                >
+                  Tải lại quyền
+                </Button>
+              </AlertDescription>
             </Alert>
           )}
 
@@ -321,9 +349,7 @@ export function AccessControlWorkspace({
                 context={{
                   kind: 'role',
                   subjectId: selectedRole.roleId,
-                  roleName: selectedRole.roleName,
                   selectedIds: draftIds,
-                  inheritedIds,
                 }}
                 openModules={visibleOpenModules}
                 disabled={saving}

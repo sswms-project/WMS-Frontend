@@ -15,6 +15,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { isPlatformOnlyPermission } from '@/config/permissionCodes'
+import { getRoleDescription, getRoleLabel, USER_ROLES } from '@/config/roles'
 import { PermissionModuleGroup } from './PermissionModuleGroup'
 import type { PermissionResponse, RoleResponse } from '../../types/admin.types'
 
@@ -53,14 +55,31 @@ export function RolePermissionsSheet({
   const isMounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(role?.permissions.map((permission) => permission.id))
+    () =>
+      new Set(
+        role?.permissions
+          .filter(
+            (permission) =>
+              role.roleName === USER_ROLES.SystemAdmin ||
+              !isPlatformOnlyPermission(permission.permissionKey)
+          )
+          .map((permission) => permission.id)
+      )
   )
   const [openModules, setOpenModules] = useState<Set<string>>(new Set())
 
   if (!isMounted || !role) return null
 
+  const assignablePermissions =
+    role.roleName === USER_ROLES.SystemAdmin
+      ? permissions
+      : permissions.filter((permission) => !isPlatformOnlyPermission(permission.permissionKey))
+  const assignedPermissions =
+    role.roleName === USER_ROLES.SystemAdmin
+      ? role.permissions
+      : role.permissions.filter((permission) => !isPlatformOnlyPermission(permission.permissionKey))
   const query = search.trim().toLocaleLowerCase('vi-VN')
-  const visiblePermissions = permissions.filter((permission) =>
+  const visiblePermissions = assignablePermissions.filter((permission) =>
     [permission.permissionKey, permission.displayName, permission.description]
       .filter(Boolean)
       .join(' ')
@@ -69,8 +88,8 @@ export function RolePermissionsSheet({
   )
   const grouped = groupPermissions(visiblePermissions)
   const isDirty =
-    selected.size !== role.permissions.length ||
-    role.permissions.some((permission) => !selected.has(permission.id))
+    selected.size !== assignedPermissions.length ||
+    assignedPermissions.some((permission) => !selected.has(permission.id))
 
   function togglePermission(permissionId: string) {
     setSelected((current) => {
@@ -121,14 +140,12 @@ export function RolePermissionsSheet({
         <SheetHeader className="shrink-0 border-b px-5 py-4 pr-12">
           <SheetTitle className="flex items-center gap-2 text-sm">
             <ShieldCheck className="text-primary size-4" aria-hidden="true" />
-            Phân quyền · {role.roleName}
+            Phân quyền · {getRoleLabel(role.roleName)}
             <Badge variant="secondary" className="ml-auto text-xs font-normal">
-              {selected.size}/{permissions.length}
+              {selected.size}/{assignablePermissions.length}
             </Badge>
           </SheetTitle>
-          <SheetDescription>
-            {role.description || 'Thiết lập quyền truy cập cho vai trò này.'}
-          </SheetDescription>
+          <SheetDescription>{getRoleDescription(role.roleName, role.description)}</SheetDescription>
         </SheetHeader>
 
         <div className="shrink-0 border-b px-4 py-2.5">

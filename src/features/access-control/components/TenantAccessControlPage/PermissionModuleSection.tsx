@@ -28,18 +28,8 @@ export function PermissionModuleSection({
 }: PermissionModuleSectionProps) {
   const rows = group.permissions.map((permission) =>
     context.kind === 'role'
-      ? createRolePermissionRow(
-          permission,
-          context.roleName,
-          context.selectedIds,
-          context.inheritedIds
-        )
-      : createPersonalPermissionRow(
-          permission,
-          context.roleName,
-          context.selectedIds,
-          context.roleDefaultIds
-        )
+      ? createRolePermissionRow(permission, context.selectedIds)
+      : createPersonalPermissionRow(permission, context.selectedIds, context.roleDefaultIds)
   )
   const editableRows = rows.filter((row) => row.editable)
   const selectedEditableCount = editableRows.filter((row) => row.checked).length
@@ -51,7 +41,7 @@ export function PermissionModuleSection({
     <AccordionItem value={group.module} className="border-border border-b last:border-b-0">
       <div className="flex min-h-14 min-w-0 items-center gap-3 px-3 sm:px-4">
         <Checkbox
-          aria-label={`Chọn tất cả ${context.kind === 'role' ? 'quyền trực tiếp' : 'quyền'} trong ${group.moduleDisplayName}`}
+          aria-label={`Chọn tất cả quyền trong ${group.moduleDisplayName}`}
           checked={allSelected ? true : someSelected ? 'indeterminate' : false}
           disabled={disabled || editableRows.length === 0}
           onCheckedChange={() => onToggleModule(editableRows.map((row) => row.permission.id))}
@@ -63,14 +53,13 @@ export function PermissionModuleSection({
             </span>
             <span className="flex shrink-0 items-center gap-2">
               <span className="text-muted-foreground hidden text-[11px] sm:inline">
-                {selectedEditableCount}{' '}
-                {context.kind === 'role' ? 'quyền trực tiếp' : 'quyền đã chọn'}
+                {selectedEditableCount} quyền đã chọn
               </span>
               <Badge
                 variant={effectiveCount > 0 ? 'secondary' : 'outline'}
                 className="tabular-nums"
               >
-                {effectiveCount}/{group.permissions.length} hiệu lực
+                {effectiveCount}/{group.permissions.length}
               </Badge>
             </span>
           </span>

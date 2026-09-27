@@ -127,6 +127,7 @@ export default function TenantAccessControlPage() {
           workspace={workspaceQuery.data}
           saving={updatePermissionsMutation.isPending}
           onSave={savePermissions}
+          onReload={async () => (await workspaceQuery.refetch()).isSuccess}
           onModeChange={setActiveMode}
         />
       ) : (
