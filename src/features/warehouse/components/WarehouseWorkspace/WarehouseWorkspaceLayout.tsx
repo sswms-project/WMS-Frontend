@@ -305,7 +305,9 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
         </Button>
       </nav>
 
-      <main>{children}</main>
+      <main className={isDesignerActive ? 'flex min-h-0 min-w-0 flex-1 flex-col' : undefined}>
+        {children}
+      </main>
 
       <WarehouseEditDialog
         warehouse={warehouse}
