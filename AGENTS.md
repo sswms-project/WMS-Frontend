@@ -57,7 +57,7 @@ These skills supplement, but never replace, `.rules`, `docs/CODING_GUIDELINES.md
 
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **WMS-Frontend** (7990 symbols, 17967 relationships, 216 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **WMS-Frontend** (8012 symbols, 18001 relationships, 216 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
