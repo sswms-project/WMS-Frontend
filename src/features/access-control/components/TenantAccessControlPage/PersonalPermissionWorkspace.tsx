@@ -211,7 +211,6 @@ export function PersonalPermissionWorkspace({
           unsavedChangeCount={editor.unsavedChangeCount}
           searchText={editor.permissionSearch}
           filter={editor.filter}
-          openModules={editor.visibleOpenModules}
           dirty={editor.isDirty}
           busy={editor.editorBlocked}
           saving={saving}
@@ -219,7 +218,6 @@ export function PersonalPermissionWorkspace({
           recovery={editor.recovery}
           onSearchChange={editor.setPermissionSearch}
           onFilterChange={editor.setFilter}
-          onOpenModulesChange={editor.changeOpenModules}
           onTogglePermission={editor.togglePermission}
           onToggleModule={editor.toggleModule}
           onRequestReset={() => editor.setResetDialogOpen(true)}

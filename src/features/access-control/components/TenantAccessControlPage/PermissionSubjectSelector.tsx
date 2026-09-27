@@ -85,10 +85,10 @@ export function PermissionSubjectSelector({
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
   return (
-    <div className="border-border bg-card shrink-0 rounded-md border p-3 sm:p-4">
+    <div className="border-border bg-card shrink-0 rounded-md border p-3">
       <FieldGroup className="gap-3 md:grid md:grid-cols-2">
         <Field>
-          <FieldLabel htmlFor="personal-role-select">Vai trò nhân sự</FieldLabel>
+          <FieldLabel htmlFor="personal-role-select">Vai trò</FieldLabel>
           <Select value={roleId} onValueChange={onRoleChange} disabled={disabled}>
             <SelectTrigger id="personal-role-select" className="w-full">
               <SelectValue placeholder="Chọn vai trò…" />
@@ -106,7 +106,7 @@ export function PermissionSubjectSelector({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="permission-subject-search">Nhân sự cần phân quyền</FieldLabel>
+          <FieldLabel htmlFor="permission-subject-search">Nhân sự</FieldLabel>
           <Combobox
             items={allItems}
             filteredItems={filteredItems}
