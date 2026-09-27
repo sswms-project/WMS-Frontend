@@ -1,4 +1,12 @@
-import { ArrowRight, PackageCheck, RefreshCw, Search } from 'lucide-react'
+import {
+  ArrowRight,
+  Eye,
+  PackageCheck,
+  RefreshCw,
+  Search,
+  UserCheck,
+  UserRoundCog,
+} from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import {
@@ -19,12 +27,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
   formatOperationalDate,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptSummary } from '../../types/inbound.types'
+import { TaskAssigneeCell } from '../TaskAssignment'
+
+export type PutawayAssignmentFilter = 'all' | 'unassigned'
 
 interface PutawayDirectoryProps {
   readonly items: readonly GoodsReceiptSummary[]
@@ -39,6 +51,11 @@ interface PutawayDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
+  readonly currentUserId: string | null
+  readonly canAssign: boolean
+  readonly assignmentFilter: PutawayAssignmentFilter
+  readonly onAssignmentFilterChange: (filter: PutawayAssignmentFilter) => void
+  readonly onAssign: (receipt: GoodsReceiptSummary) => void
 }
 
 function remainingQuantity(item: GoodsReceiptSummary) {
@@ -58,7 +75,58 @@ export function PutawayDirectory({
   onPageChange,
   onPageSizeChange,
   onRetry,
+  currentUserId,
+  canAssign,
+  assignmentFilter,
+  onAssignmentFilterChange,
+  onAssign,
 }: PutawayDirectoryProps) {
+  function renderActions(item: GoodsReceiptSummary, compact: boolean) {
+    const isMine = Boolean(currentUserId) && item.putAwayAssignedTo === currentUserId
+    return (
+      <div className={compact ? 'flex shrink-0 flex-col gap-1' : 'flex justify-end gap-2'}>
+        {canAssign && (
+          <Button
+            type="button"
+            size="sm"
+            variant={item.putAwayAssignedTo ? 'outline' : 'default'}
+            onClick={() => onAssign(item)}
+          >
+            {item.putAwayAssignedTo ? (
+              <UserRoundCog aria-hidden="true" />
+            ) : (
+              <UserCheck aria-hidden="true" />
+            )}
+            {item.putAwayAssignedTo ? 'Giao lại' : 'Giao việc'}
+          </Button>
+        )}
+        {isMine ? (
+          <Button asChild size="sm">
+            <Link
+              href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}
+              aria-label={`Cất hàng ${item.receiptCode}`}
+            >
+              Cất hàng
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </Button>
+        ) : canAssign ? (
+          <Button asChild size="sm" variant="ghost">
+            <Link
+              href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}
+              aria-label={`Xem tiến độ cất hàng ${item.receiptCode}`}
+            >
+              <Eye aria-hidden="true" />
+              Xem
+            </Link>
+          </Button>
+        ) : (
+          <span className="text-muted-foreground text-xs">Chờ quản lý giao việc</span>
+        )}
+      </div>
+    )
+  }
+
   return (
     <OperationalListPanel aria-label="Danh sách chờ cất hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -68,7 +136,22 @@ export function PutawayDirectory({
             {totalCount} phiếu còn hàng khả dụng
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canAssign && (
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={assignmentFilter}
+              onValueChange={(value) =>
+                value && onAssignmentFilterChange(value as PutawayAssignmentFilter)
+              }
+              aria-label="Lọc theo phân công"
+            >
+              <ToggleGroupItem value="all">Tất cả</ToggleGroupItem>
+              <ToggleGroupItem value="unassigned">Chưa giao</ToggleGroupItem>
+            </ToggleGroup>
+          )}
           <InputGroup className="min-w-0 flex-1 sm:w-72">
             <InputGroupAddon>
               <Search aria-hidden="true" />
@@ -98,7 +181,13 @@ export function PutawayDirectory({
       ) : items.length === 0 ? (
         <OperationalEmptyState
           title="Không có hàng chờ cất"
-          description="Phiếu đã duyệt và còn hàng khả dụng sẽ xuất hiện tại đây."
+          description={
+            canAssign
+              ? assignmentFilter === 'unassigned'
+                ? 'Mọi phiếu chờ cất đều đã được giao cho nhân viên.'
+                : 'Phiếu đã duyệt và còn hàng khả dụng sẽ xuất hiện tại đây.'
+              : 'Các phiếu cất hàng được quản lý giao cho bạn sẽ xuất hiện tại đây.'
+          }
         />
       ) : (
         <>
@@ -114,20 +203,22 @@ export function PutawayDirectory({
                   <ItemDescription>
                     {formatQuantity(remainingQuantity(item))} còn cất
                   </ItemDescription>
+                  <div className="mt-1">
+                    <TaskAssigneeCell
+                      assigneeName={item.putAwayAssignedToName}
+                      executionStatus={item.putAwayExecutionStatus}
+                      isCurrentUser={
+                        Boolean(currentUserId) && item.putAwayAssignedTo === currentUserId
+                      }
+                    />
+                  </div>
                 </ItemContent>
-                <Button asChild size="icon-sm">
-                  <Link
-                    href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}
-                    aria-label={`Cất hàng ${item.receiptCode}`}
-                  >
-                    <ArrowRight aria-hidden="true" />
-                  </Link>
-                </Button>
+                {renderActions(item, true)}
               </Item>
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[760px]">
+            <Table className="min-w-[940px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
@@ -135,6 +226,7 @@ export function PutawayDirectory({
                   <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10 text-right">Còn cất</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10">Ngày nhận</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Người cất hàng</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -148,14 +240,16 @@ export function PutawayDirectory({
                       {formatQuantity(remainingQuantity(item))}
                     </TableCell>
                     <TableCell>{formatOperationalDate(item.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild size="sm">
-                        <Link href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}>
-                          Phân bổ
-                          <ArrowRight aria-hidden="true" />
-                        </Link>
-                      </Button>
+                    <TableCell className="max-w-48">
+                      <TaskAssigneeCell
+                        assigneeName={item.putAwayAssignedToName}
+                        executionStatus={item.putAwayExecutionStatus}
+                        isCurrentUser={
+                          Boolean(currentUserId) && item.putAwayAssignedTo === currentUserId
+                        }
+                      />
                     </TableCell>
+                    <TableCell className="text-right">{renderActions(item, false)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

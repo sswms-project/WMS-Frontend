@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -15,7 +15,11 @@ import {
   InboundDocumentImportDialog,
   ReceiveGoodsDialog,
   ReceivingTaskDirectory,
+  type ReceivingAssignmentFilter,
 } from '../components/ReceivingPage'
+import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
+import { useAssignWarehouseTask } from '../hooks/use-assign-warehouse-task'
+import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-assignment-access'
 import {
   useCreateDraftFromDocumentMutation,
   useCreateGoodsReceiptMutation,
@@ -35,7 +39,11 @@ import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.ty
 
 export default function InboundReceivingPage() {
   const router = useRouter()
-  const [searchText, setSearchText] = useState('')
+  const searchParams = useSearchParams()
+  const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
+  const [searchText, setSearchText] = useState(() => searchParams.get('search') ?? '')
+  const [assignmentFilter, setAssignmentFilter] = useState<ReceivingAssignmentFilter>('all')
+  const assignment = useAssignWarehouseTask()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedTask, setSelectedTask] = useState<ReceivingTask | null>(null)
@@ -50,6 +58,7 @@ export default function InboundReceivingPage() {
     pageNumber: page,
     pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
+    ...(canAssign && assignmentFilter === 'unassigned' ? { unassigned: true } : {}),
   })
   const createMutation = useCreateGoodsReceiptMutation()
   const submitMutation = useSubmitGoodsReceiptMutation()
@@ -257,6 +266,18 @@ export default function InboundReceivingPage() {
     }
   }
 
+  function openAssign(task: ReceivingTask) {
+    assignment.open({
+      kind: 'Receiving',
+      id: task.inboundRequestId,
+      referenceCode: task.inboundRequestCode,
+      warehouseId: task.warehouseId,
+      warehouseName: task.warehouseName,
+      currentAssigneeId: task.assignedTo,
+      currentAssigneeName: task.assignedToName,
+    })
+  }
+
   const isPending = createMutation.isPending || submitMutation.isPending
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -282,6 +303,26 @@ export default function InboundReceivingPage() {
         onReceive={openReceive}
         onImportDocument={openDocumentImport}
         onRetry={() => void query.refetch()}
+        currentUserId={currentUserId}
+        canAssign={canAssign}
+        assignmentFilter={assignmentFilter}
+        onAssignmentFilterChange={(value) => {
+          setAssignmentFilter(value)
+          setPage(1)
+        }}
+        onAssign={openAssign}
+      />
+      <AssignWarehouseTaskDialog
+        target={assignment.target}
+        form={assignment.form}
+        staff={assignment.staff}
+        isLoadingStaff={assignment.isLoadingStaff}
+        isErrorStaff={assignment.isErrorStaff}
+        isFetchingStaff={assignment.isFetchingStaff}
+        onRetryStaff={assignment.onRetryStaff}
+        isPending={assignment.isPending}
+        onOpenChange={(open) => !open && assignment.close()}
+        onSubmit={assignment.onSubmit}
       />
       <ReceiveGoodsDialog
         task={selectedTask}

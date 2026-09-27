@@ -49,8 +49,8 @@ export default function TenantAccessControlPage() {
   const updateUserPermissionsMutation = useUpdateTenantUserPermissionsMutation()
   const resetUserPermissionsMutation = useResetTenantUserPermissionsMutation()
 
-  async function savePermissions(roleId: string, permissionIds: string[]) {
-    await updatePermissionsMutation.mutateAsync({ roleId, body: { permissionIds } })
+  async function savePermissions(roleId: string, toAdd: string[], toRemove: string[]) {
+    await updatePermissionsMutation.mutateAsync({ roleId, body: { toAdd, toRemove } })
     toast.success('Đã cập nhật quyền truy cập.')
   }
 

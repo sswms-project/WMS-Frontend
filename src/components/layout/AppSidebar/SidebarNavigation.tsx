@@ -155,7 +155,7 @@ function SidebarNavigationItem({
         <SidebarMenuSubButton
           asChild
           isActive={isActive}
-          className="hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground min-h-10 touch-manipulation gap-2.5 rounded-md px-2 text-sm data-[active=true]:font-semibold md:min-h-8"
+          className="text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground min-h-10 touch-manipulation gap-2.5 rounded-md px-2 text-sm data-[active=true]:font-semibold md:min-h-8"
         >
           <Link
             href={item.href as Route}
@@ -177,7 +177,7 @@ function SidebarNavigationItem({
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          'hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground h-10 min-w-0 touch-manipulation gap-3 rounded-md px-3 text-sm font-medium',
+          'text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground h-10 min-w-0 touch-manipulation gap-3 rounded-md px-3 text-sm font-medium',
           appearance === 'tenant'
             ? 'data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground'
             : 'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground'
@@ -189,7 +189,7 @@ function SidebarNavigationItem({
           onNavigate={onNavigate}
         >
           <Icon aria-hidden="true" />
-          <span>{item.label}</span>
+          <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -223,9 +223,9 @@ function CollapsibleNavigationSection({
                   className="text-sidebar-foreground/90 hover:text-sidebar-foreground/90 data-[active=true]:text-sidebar-foreground/90 h-11 touch-manipulation gap-3 rounded-lg border border-transparent px-3 text-sm font-semibold hover:bg-transparent data-[active=true]:bg-transparent"
                 >
                   <Icon aria-hidden="true" />
-                  <span>{section.label}</span>
+                  <span className="group-data-[collapsible=icon]:hidden">{section.label}</span>
                   <ChevronDown
-                    className="text-sidebar-foreground/50 ml-auto size-4 transition-transform duration-150 group-data-[state=open]/collapsible:rotate-180 motion-reduce:transition-none"
+                    className="text-sidebar-foreground/50 ml-auto size-4 transition-transform duration-150 group-data-[collapsible=icon]:hidden group-data-[state=open]/collapsible:rotate-180 motion-reduce:transition-none"
                     aria-hidden="true"
                   />
                 </SidebarMenuButton>

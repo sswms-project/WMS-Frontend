@@ -63,7 +63,7 @@ interface AccessControlWorkspaceProps {
   readonly activeMode: AccessControlMode
   readonly workspace: TenantRolePermissionWorkspace
   readonly saving: boolean
-  readonly onSave: (roleId: string, permissionIds: string[]) => Promise<void>
+  readonly onSave: (roleId: string, toAdd: string[], toRemove: string[]) => Promise<void>
   readonly onModeChange: (mode: AccessControlMode) => void
 }
 
@@ -235,8 +235,11 @@ export function AccessControlWorkspace({
   async function saveDraft() {
     if (!isDirty || saving) return !isDirty
 
+    const toAdd = [...draftIds].filter((id) => !baselineIds.has(id))
+    const toRemove = [...baselineIds].filter((id) => !draftIds.has(id))
+
     try {
-      await onSave(selectedRole.roleId, [...draftIds])
+      await onSave(selectedRole.roleId, toAdd, toRemove)
       setBaselineIds(new Set(draftIds))
       setMutationError(null)
       return true

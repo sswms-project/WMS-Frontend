@@ -8,9 +8,12 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { ReceiptDetail } from '../components/ReceiptDetailPage'
 import { ReceiveGoodsDialog } from '../components/ReceivingPage'
+import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
+import { useAssignWarehouseTask } from '../hooks/use-assign-warehouse-task'
 import {
   useApproveGoodsReceiptMutation,
   useInboundAllowedActionsQuery,
@@ -30,6 +33,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
   const approveMutation = useApproveGoodsReceiptMutation()
   const rejectMutation = useRejectGoodsReceiptMutation()
   const updateMutation = useUpdateGoodsReceiptMutation()
+  const assignment = useAssignWarehouseTask()
   const form = useForm<GoodsReceiptFormValues>({
     resolver: zodResolver(goodsReceiptSchema),
     defaultValues: { inboundRequestId: '', lines: [] },
@@ -89,6 +93,20 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     }
   }
 
+  function openAssignPutAway() {
+    const receipt = detailQuery.data
+    if (!receipt) return
+    assignment.open({
+      kind: 'PutAway',
+      id: receipt.id,
+      referenceCode: receipt.receiptCode,
+      warehouseId: receipt.warehouseId,
+      warehouseName: receipt.warehouseName,
+      currentAssigneeId: receipt.putAwayAssignedTo,
+      currentAssigneeName: receipt.putAwayAssignedToName,
+    })
+  }
+
   async function perform(action: 'submit' | 'approve' | 'reject', reason?: string) {
     try {
       if (action === 'submit') await submitMutation.mutateAsync(receiptId)
@@ -104,7 +122,9 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       return true
     } catch (error) {
       logger.error(error)
-      toast.error('Không thể cập nhật phiếu nhận hàng. Vui lòng thử lại.')
+      toast.error(
+        getApiErrorMessage(error, 'Không thể cập nhật phiếu nhận hàng. Vui lòng thử lại.')
+      )
       return false
     }
   }
@@ -133,6 +153,10 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     receivedQuantity: receipt.items.reduce((sum, item) => sum + item.receivedQuantity, 0),
     remainingQuantity: 0,
     activeDocumentImportId: null,
+    assignedTo: receipt.receivingAssignedTo,
+    assignedToName: receipt.receivingAssignedToName,
+    assignedAt: null,
+    executionStatus: 'Queued',
     lines: receipt.items.flatMap((item) =>
       item.inboundRequestItemId
         ? [
@@ -167,6 +191,19 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         onSubmit={() => perform('submit')}
         onApprove={() => perform('approve')}
         onReject={(reason) => perform('reject', reason)}
+        onAssignPutAway={openAssignPutAway}
+      />
+      <AssignWarehouseTaskDialog
+        target={assignment.target}
+        form={assignment.form}
+        staff={assignment.staff}
+        isLoadingStaff={assignment.isLoadingStaff}
+        isErrorStaff={assignment.isErrorStaff}
+        isFetchingStaff={assignment.isFetchingStaff}
+        onRetryStaff={assignment.onRetryStaff}
+        isPending={assignment.isPending}
+        onOpenChange={(open) => !open && assignment.close()}
+        onSubmit={assignment.onSubmit}
       />
       <ReceiveGoodsDialog
         task={isEditing ? editTask : null}

@@ -1,7 +1,6 @@
 'use client'
 
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft, Plus, RotateCw } from 'lucide-react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,37 +15,43 @@ import {
   Field,
   FieldError,
   FieldGroup,
-  FieldSet,
   FieldLabel,
   FieldLegend,
+  FieldSet,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import type {
+  ProductResponse,
+  ProductUnitConversion,
+  UnitResponse,
+} from '@/features/product/types/product.types'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useIsMobile } from '@/hooks/use-mobile'
-import type { InboundRequestFormValues } from '../../schemas/inbound-request.schema'
-import type { LookupOption } from '../../types/inbound-request.types'
+  inboundSourceLabels,
+  inboundSourceTypes,
+  type InboundRequestFormValues,
+} from '../../schemas/inbound-request.schema'
+import { INBOUND_SOURCE_TYPE, type LookupOption } from '../../types/inbound-request.types'
 import { DatePickerField } from './DatePickerField'
 import { FormActions } from './FormActions'
+import { InboundRequestLineRow } from './InboundRequestLineRow'
 import { LookupCombobox } from './LookupCombobox'
-import { ProductSelect } from './ProductSelect'
 
 interface InboundRequestFormProps {
   readonly title: string
   readonly description: string
-  readonly currency: string
+  readonly autoApprove: boolean
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly fields: readonly FieldArrayWithId<InboundRequestFormValues, 'lines', 'id'>[]
   readonly warehouseOptions: readonly LookupOption[]
   readonly supplierOptions: readonly LookupOption[]
   readonly productOptions: readonly LookupOption[]
+  readonly productsById: Readonly<Record<string, ProductResponse>>
+  readonly conversionsByProductId: Readonly<Record<string, readonly ProductUnitConversion[]>>
+  readonly units: readonly UnitResponse[]
+  readonly isUnitLoading: boolean
+  readonly isUnitError: boolean
+  readonly onRetryUnits: () => void
   readonly isWarehouseSearchLoading: boolean
   readonly isSupplierSearchLoading: boolean
   readonly isProductSearchLoading: boolean
@@ -65,12 +70,18 @@ interface InboundRequestFormProps {
 export function InboundRequestForm({
   title,
   description,
-  currency,
+  autoApprove,
   form,
   fields,
   warehouseOptions,
   supplierOptions,
   productOptions,
+  productsById,
+  conversionsByProductId,
+  units,
+  isUnitLoading,
+  isUnitError,
+  onRetryUnits,
   isWarehouseSearchLoading,
   isSupplierSearchLoading,
   isProductSearchLoading,
@@ -85,32 +96,14 @@ export function InboundRequestForm({
   onSupplierSearchChange,
   onProductSearchChange,
 }: InboundRequestFormProps) {
-  const isMobile = useIsMobile()
-  const [selectedProductOptions, setSelectedProductOptions] = useState<
-    Record<string, LookupOption>
-  >({})
   const {
     register,
     setValue,
     watch,
     formState: { errors },
   } = form
+  const sourceType = watch('sourceType')
   const lines = watch('lines')
-  const totalQuantity = lines.reduce((total, line) => total + (Number(line.quantity) || 0), 0)
-
-  function rememberProductOption(scope: string, option?: LookupOption) {
-    setSelectedProductOptions((current) => {
-      if (option) {
-        const existing = current[scope]
-        if (existing?.value === option.value && existing.label === option.label) return current
-        return { ...current, [scope]: option }
-      }
-      if (!current[scope]) return current
-      const next = { ...current }
-      delete next[scope]
-      return next
-    })
-  }
 
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
@@ -126,13 +119,19 @@ export function InboundRequestForm({
             <ArrowLeft aria-hidden="true" />
           </Button>
           <div>
-            <p className="text-primary text-xs font-medium">Nhập kho</p>
+            <p className="text-primary text-xs font-medium">Nhập kho / Yêu cầu</p>
             <h1 className="text-xl font-semibold">{title}</h1>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">{description}</p>
+            {autoApprove ? (
+              <p className="text-primary mt-1 text-xs">
+                Yêu cầu do Chủ doanh nghiệp tạo được duyệt ngay.
+              </p>
+            ) : null}
           </div>
         </div>
         <FormActions
           isPending={isPending}
+          autoApprove={autoApprove}
           onSaveDraft={onSaveDraft}
           onSaveAndSubmit={onSaveAndSubmit}
         />
@@ -147,11 +146,11 @@ export function InboundRequestForm({
       >
         <Card>
           <CardHeader>
-            <CardTitle>Thông tin yêu cầu nhập kho</CardTitle>
+            <CardTitle>Thông tin nguồn hàng</CardTitle>
           </CardHeader>
           <CardContent>
             <FieldSet>
-              <FieldGroup className="grid gap-4 md:grid-cols-3">
+              <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Field data-invalid={Boolean(errors.warehouseId)}>
                   <FieldLabel htmlFor="warehouseId">Kho nhận hàng</FieldLabel>
                   <LookupCombobox
@@ -170,23 +169,73 @@ export function InboundRequestForm({
                   />
                   <FieldError>{errors.warehouseId?.message}</FieldError>
                 </Field>
-                <Field data-invalid={Boolean(errors.supplierId)}>
-                  <FieldLabel htmlFor="supplierId">Nhà cung cấp</FieldLabel>
-                  <LookupCombobox
-                    id="supplierId"
-                    value={watch('supplierId')}
-                    options={supplierOptions}
-                    placeholder="Chọn hoặc tìm nhà cung cấp"
-                    emptyMessage="Không tìm thấy nhà cung cấp phù hợp."
-                    ariaLabel="Nhà cung cấp"
-                    isLoading={isSupplierSearchLoading}
-                    isInvalid={Boolean(errors.supplierId)}
-                    onSearchChange={onSupplierSearchChange}
-                    onChange={(value) =>
-                      setValue('supplierId', value, { shouldDirty: true, shouldValidate: true })
+                <Field data-invalid={Boolean(errors.sourceType)}>
+                  <FieldLabel htmlFor="inbound-source-type">Nguồn nhập hàng</FieldLabel>
+                  <NativeSelect
+                    id="inbound-source-type"
+                    className="w-full"
+                    value={sourceType}
+                    onChange={(event) =>
+                      setValue(
+                        'sourceType',
+                        inboundSourceTypes.find((type) => type === event.target.value) ??
+                          INBOUND_SOURCE_TYPE.Supplier,
+                        { shouldDirty: true, shouldValidate: true }
+                      )
                     }
+                  >
+                    {inboundSourceTypes.map((type) => (
+                      <NativeSelectOption key={type} value={type}>
+                        {inboundSourceLabels[type]}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  <FieldError>{errors.sourceType?.message}</FieldError>
+                </Field>
+                {sourceType === INBOUND_SOURCE_TYPE.Supplier ? (
+                  <Field data-invalid={Boolean(errors.supplierId)}>
+                    <FieldLabel htmlFor="supplierId">Nhà cung cấp</FieldLabel>
+                    <LookupCombobox
+                      id="supplierId"
+                      value={watch('supplierId')}
+                      options={supplierOptions}
+                      placeholder="Chọn hoặc tìm nhà cung cấp"
+                      emptyMessage="Không tìm thấy nhà cung cấp phù hợp."
+                      ariaLabel="Nhà cung cấp"
+                      isLoading={isSupplierSearchLoading}
+                      isInvalid={Boolean(errors.supplierId)}
+                      onSearchChange={onSupplierSearchChange}
+                      onChange={(value) =>
+                        setValue('supplierId', value, { shouldDirty: true, shouldValidate: true })
+                      }
+                    />
+                    <FieldError>{errors.supplierId?.message}</FieldError>
+                  </Field>
+                ) : (
+                  <Field data-invalid={Boolean(errors.sourceName)}>
+                    <FieldLabel htmlFor="sourceName">Tên nguồn hàng</FieldLabel>
+                    <Input
+                      id="sourceName"
+                      maxLength={200}
+                      placeholder="Tên chi nhánh, bộ phận hoặc đối tác"
+                      aria-invalid={Boolean(errors.sourceName)}
+                      {...register('sourceName')}
+                    />
+                    <FieldError>{errors.sourceName?.message}</FieldError>
+                  </Field>
+                )}
+                <Field data-invalid={Boolean(errors.sourceReference)}>
+                  <FieldLabel htmlFor="sourceReference">
+                    Mã chứng từ tham chiếu (tùy chọn)
+                  </FieldLabel>
+                  <Input
+                    id="sourceReference"
+                    maxLength={100}
+                    placeholder="VD: BB-2026-001"
+                    aria-invalid={Boolean(errors.sourceReference)}
+                    {...register('sourceReference')}
                   />
-                  <FieldError>{errors.supplierId?.message}</FieldError>
+                  <FieldError>{errors.sourceReference?.message}</FieldError>
                 </Field>
                 <DatePickerField
                   id="expectedDate"
@@ -204,11 +253,10 @@ export function InboundRequestForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>Sản phẩm</CardTitle>
+            <CardTitle>Sản phẩm dự kiến nhập</CardTitle>
             <CardAction>
               <Button type="button" variant="outline" size="sm" onClick={onAddLine}>
-                <Plus aria-hidden="true" />
-                Thêm dòng
+                <Plus aria-hidden="true" /> Thêm dòng
               </Button>
             </CardAction>
           </CardHeader>
@@ -218,152 +266,43 @@ export function InboundRequestForm({
               {errors.lines?.root?.message ? (
                 <FieldError>{errors.lines.root.message}</FieldError>
               ) : null}
-              {isMobile ? (
-                <div className="divide-y border">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="flex flex-col gap-3 p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium">Dòng {index + 1}</p>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Xóa dòng ${index + 1}`}
-                          disabled={fields.length === 1}
-                          onClick={() => onRemoveLine(index)}
-                        >
-                          <Trash2 aria-hidden="true" />
-                        </Button>
-                      </div>
-                      <ProductSelect
-                        inputId={`mobile-product-${index}`}
-                        searchScope={field.id}
-                        selectedOption={selectedProductOptions[field.id]}
-                        onSelectedOptionChange={rememberProductOption}
-                        index={index}
-                        form={form}
-                        options={productOptions}
-                        isLoading={isProductSearchLoading}
-                        onSearchChange={onProductSearchChange}
-                      />
-                      <Field>
-                        <FieldLabel htmlFor={`mobile-quantity-${index}`}>Số lượng</FieldLabel>
-                        <Input
-                          id={`mobile-quantity-${index}`}
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
-                          {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-                        />
-                        <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
-                      </Field>
-                      <Field>
-                        <FieldLabel htmlFor={`mobile-unit-price-${index}`}>
-                          Đơn giá ({currency})
-                        </FieldLabel>
-                        <Input
-                          id={`mobile-unit-price-${index}`}
-                          type="number"
-                          min="0"
-                          step="1000"
-                          aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
-                          {...register(`lines.${index}.unitPrice`, {
-                            setValueAs: (value: string) => (value === '' ? null : Number(value)),
-                          })}
-                        />
-                        <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
-                      </Field>
-                    </div>
-                  ))}
+              {isUnitError ? (
+                <div className="border-destructive/50 bg-destructive/5 mb-4 flex flex-wrap items-center justify-between gap-2 border p-3 text-sm">
+                  <span>Không tải được đơn vị tính của sản phẩm. Vui lòng thử lại.</span>
+                  <Button type="button" variant="outline" size="sm" onClick={onRetryUnits}>
+                    <RotateCw aria-hidden="true" /> Thử lại
+                  </Button>
                 </div>
-              ) : (
-                <Table className="min-w-[760px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Sản phẩm</TableHead>
-                      <TableHead className="w-36">Số lượng</TableHead>
-                      <TableHead className="w-44">Đơn giá ({currency})</TableHead>
-                      <TableHead className="w-12">
-                        <span className="sr-only">Xóa</span>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {fields.map((field, index) => (
-                      <TableRow key={field.id}>
-                        <TableCell className="align-top">
-                          <ProductSelect
-                            inputId={`desktop-product-${index}`}
-                            searchScope={field.id}
-                            selectedOption={selectedProductOptions[field.id]}
-                            onSelectedOptionChange={rememberProductOption}
-                            index={index}
-                            form={form}
-                            options={productOptions}
-                            isLoading={isProductSearchLoading}
-                            onSearchChange={onProductSearchChange}
-                          />
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <Input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            aria-label={`Số lượng dòng ${index + 1}`}
-                            aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
-                            {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-                          />
-                          <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <Input
-                            type="number"
-                            min="0"
-                            step="1000"
-                            aria-label={`Đơn giá dòng ${index + 1}`}
-                            aria-invalid={Boolean(errors.lines?.[index]?.unitPrice)}
-                            {...register(`lines.${index}.unitPrice`, {
-                              setValueAs: (value: string) => (value === '' ? null : Number(value)),
-                            })}
-                          />
-                          <FieldError>{errors.lines?.[index]?.unitPrice?.message}</FieldError>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`Xóa dòng ${index + 1}`}
-                                disabled={fields.length === 1}
-                                onClick={() => onRemoveLine(index)}
-                              >
-                                <Trash2 aria-hidden="true" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Xóa dòng</TooltipContent>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              ) : null}
+              <div className="divide-y border">
+                {fields.map((field, index) => (
+                  <InboundRequestLineRow
+                    key={field.id}
+                    field={field}
+                    index={index}
+                    lineCount={fields.length}
+                    form={form}
+                    product={productsById[lines[index]?.productId ?? '']}
+                    options={productOptions}
+                    conversions={conversionsByProductId[lines[index]?.productId ?? ''] ?? []}
+                    units={units}
+                    isProductSearchLoading={isProductSearchLoading}
+                    isUnitLoading={isUnitLoading}
+                    onProductSearchChange={onProductSearchChange}
+                    onRemove={onRemoveLine}
+                  />
+                ))}
+              </div>
             </FieldSet>
           </CardContent>
-          <CardFooter className="text-muted-foreground justify-between gap-3">
-            <span>{fields.length} dòng sản phẩm</span>
-            <span>Tổng SL: {totalQuantity}</span>
+          <CardFooter className="text-muted-foreground text-xs">
+            {fields.length} dòng · Số lượng nhập được giữ theo đơn vị đã chọn khi lưu yêu cầu.
           </CardFooter>
         </Card>
 
-        <Card>
-          <CardFooter className="justify-end gap-2">
-            <FormActions isPending={isPending} onSaveDraft={onSaveDraft} />
-          </CardFooter>
-        </Card>
+        <div className="flex justify-end border-t pt-4">
+          <FormActions isPending={isPending} autoApprove={autoApprove} onSaveDraft={onSaveDraft} />
+        </div>
       </form>
     </div>
   )

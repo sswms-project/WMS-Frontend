@@ -79,6 +79,23 @@ describe('application navigation visibility', () => {
     expect(staffItems.some((item) => item.href === APP_ROUTES.inventory)).toBe(true)
   })
 
+  it('shows Staff task navigation only with the own-task permission', () => {
+    const visibleItems = getVisibleNavItems(USER_ROLES.WarehouseStaff, ['warehouse-tasks:view-own'])
+
+    expect(visibleItems.some((item) => item.href === APP_ROUTES.myTasks)).toBe(true)
+    expect(visibleItems.some((item) => item.href === APP_ROUTES.myTaskHistory)).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['dashboard:view']).some(
+        (item) => item.href === APP_ROUTES.myTasks
+      )
+    ).toBe(false)
+    expect(
+      getVisibleNavItems(USER_ROLES.WarehouseManager, ['warehouse-tasks:view-own']).some(
+        (item) => item.href === APP_ROUTES.myTasks
+      )
+    ).toBe(false)
+  })
+
   it('groups subscription management without duplicate payment entries', () => {
     const serviceSection = NAV_CONFIG[USER_ROLES.TenantOwner].find(
       (section) => section.id === 'services'

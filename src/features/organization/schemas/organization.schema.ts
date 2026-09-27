@@ -16,11 +16,6 @@ export const organizationFormSchema = z.object({
       'Số điện thoại phải có 7-20 chữ số và có thể chứa +, khoảng trắng hoặc dấu gạch ngang.'
     ),
   address: z.string().trim().max(500, 'Địa chỉ tối đa 500 ký tự.'),
-  defaultCurrency: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z]{3}$/, 'Mã tiền tệ phải gồm đúng 3 chữ cái.'),
 })
 
 export const updateOrganizationRequestSchema = organizationFormSchema.partial()

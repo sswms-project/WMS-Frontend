@@ -1,4 +1,4 @@
-import { PackagePlus, RefreshCw, Search } from 'lucide-react'
+import { PackagePlus, RefreshCw, Search, UserCheck, UserRoundCog } from 'lucide-react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -17,8 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ReceivingTask } from '../../types/inbound.types'
+import { TaskAssigneeCell } from '../TaskAssignment'
 import {
   formatOperationalDate,
   formatQuantity,
@@ -39,7 +41,14 @@ interface ReceivingTaskDirectoryProps {
   readonly onReceive: (task: ReceivingTask) => void
   readonly onImportDocument: (task: ReceivingTask) => void
   readonly onRetry: () => void
+  readonly currentUserId: string | null
+  readonly canAssign: boolean
+  readonly assignmentFilter: ReceivingAssignmentFilter
+  readonly onAssignmentFilterChange: (filter: ReceivingAssignmentFilter) => void
+  readonly onAssign: (task: ReceivingTask) => void
 }
+
+export type ReceivingAssignmentFilter = 'all' | 'unassigned'
 
 export function ReceivingTaskDirectory({
   items,
@@ -56,7 +65,54 @@ export function ReceivingTaskDirectory({
   onReceive,
   onImportDocument,
   onRetry,
+  currentUserId,
+  canAssign,
+  assignmentFilter,
+  onAssignmentFilterChange,
+  onAssign,
 }: ReceivingTaskDirectoryProps) {
+  function renderActions(item: ReceivingTask, layout: 'row' | 'stack') {
+    const isMine = Boolean(currentUserId) && item.assignedTo === currentUserId
+    return (
+      <div className={layout === 'row' ? 'flex justify-end gap-2' : 'flex shrink-0 flex-col gap-1'}>
+        {canAssign && (
+          <Button
+            type="button"
+            size="sm"
+            variant={item.assignedTo ? 'outline' : 'default'}
+            onClick={() => onAssign(item)}
+          >
+            {item.assignedTo ? (
+              <UserRoundCog aria-hidden="true" />
+            ) : (
+              <UserCheck aria-hidden="true" />
+            )}
+            {item.assignedTo ? 'Giao lại' : 'Giao việc'}
+          </Button>
+        )}
+        {isMine && (
+          <>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onImportDocument(item)}
+            >
+              {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
+            </Button>
+            <Button type="button" size="sm" onClick={() => onReceive(item)}>
+              <PackagePlus aria-hidden="true" />
+              Nhập thủ công
+            </Button>
+          </>
+        )}
+        {!canAssign && !isMine && (
+          <span className="text-muted-foreground text-xs">Chờ quản lý giao việc</span>
+        )}
+      </div>
+    )
+  }
+
   return (
     <OperationalListPanel aria-label="Đơn chờ nhận hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -64,7 +120,22 @@ export function ReceivingTaskDirectory({
           <h2 className="text-sm font-semibold">Đơn chờ nhận hàng</h2>
           <p className="text-muted-foreground text-xs tabular-nums">{totalCount} đơn đang mở</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canAssign && (
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={assignmentFilter}
+              onValueChange={(value) =>
+                value && onAssignmentFilterChange(value as ReceivingAssignmentFilter)
+              }
+              aria-label="Lọc theo phân công"
+            >
+              <ToggleGroupItem value="all">Tất cả</ToggleGroupItem>
+              <ToggleGroupItem value="unassigned">Chưa giao</ToggleGroupItem>
+            </ToggleGroup>
+          )}
           <InputGroup className="min-w-0 flex-1 sm:w-72">
             <InputGroupAddon>
               <Search aria-hidden="true" />
@@ -99,7 +170,13 @@ export function ReceivingTaskDirectory({
       ) : items.length === 0 ? (
         <OperationalEmptyState
           title="Không có đơn chờ nhận"
-          description="Các yêu cầu nhập kho đã duyệt và còn số lượng sẽ xuất hiện tại đây."
+          description={
+            canAssign
+              ? assignmentFilter === 'unassigned'
+                ? 'Mọi đơn chờ nhận đều đã được giao cho nhân viên.'
+                : 'Các yêu cầu nhập kho đã duyệt và còn số lượng sẽ xuất hiện tại đây.'
+              : 'Các đơn nhận hàng được quản lý giao cho bạn sẽ xuất hiện tại đây.'
+          }
         />
       ) : (
         <>
@@ -117,26 +194,20 @@ export function ReceivingTaskDirectory({
                     {formatQuantity(item.remainingQuantity)} còn nhận ·{' '}
                     {formatOperationalDate(item.expectedDate)}
                   </ItemDescription>
+                  <div className="mt-1">
+                    <TaskAssigneeCell
+                      assigneeName={item.assignedToName}
+                      executionStatus={item.executionStatus}
+                      isCurrentUser={Boolean(currentUserId) && item.assignedTo === currentUserId}
+                    />
+                  </div>
                 </ItemContent>
-                <div className="flex shrink-0 flex-col gap-1">
-                  <Button type="button" size="sm" onClick={() => onReceive(item)}>
-                    <PackagePlus aria-hidden="true" />
-                    Nhập thủ công
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onImportDocument(item)}
-                  >
-                    {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
-                  </Button>
-                </div>
+                {renderActions(item, 'stack')}
               </Item>
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[820px]">
+            <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="bg-card sticky top-0 z-10">Mã PO</TableHead>
@@ -146,6 +217,7 @@ export function ReceivingTaskDirectory({
                     Đã nhận / Đặt
                   </TableHead>
                   <TableHead className="bg-card sticky top-0 z-10">Ngày dự kiến</TableHead>
+                  <TableHead className="bg-card sticky top-0 z-10">Người nhận việc</TableHead>
                   <TableHead className="bg-card sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -162,22 +234,14 @@ export function ReceivingTaskDirectory({
                       {formatQuantity(item.orderedQuantity)}
                     </TableCell>
                     <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onImportDocument(item)}
-                        >
-                          {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
-                        </Button>
-                        <Button type="button" size="sm" onClick={() => onReceive(item)}>
-                          <PackagePlus aria-hidden="true" />
-                          Nhập thủ công
-                        </Button>
-                      </div>
+                    <TableCell className="max-w-48">
+                      <TaskAssigneeCell
+                        assigneeName={item.assignedToName}
+                        executionStatus={item.executionStatus}
+                        isCurrentUser={Boolean(currentUserId) && item.assignedTo === currentUserId}
+                      />
                     </TableCell>
+                    <TableCell className="text-right">{renderActions(item, 'row')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
