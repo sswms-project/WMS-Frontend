@@ -220,6 +220,7 @@ export const API_ENDPOINTS = {
     plans: '/subscription-plans',
     planById: (id: string) => `/subscription-plans/${id}`,
     initialSelection: '/subscriptions/initial-selection',
+    previewPlanChange: '/subscriptions/change-plan/preview',
     changePlan: '/subscriptions/change-plan',
     renew: '/subscriptions/renew',
     paymentStatus: (orderCode: string) => `/subscriptions/payments/${orderCode}/sync`,

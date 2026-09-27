@@ -67,7 +67,7 @@ function PricingPlanCard({
       className="h-full"
     >
       <Card className="border-border/70 flex h-full flex-col gap-0 rounded-lg py-0">
-        <CardHeader className="gap-2.5 p-4">
+        <CardHeader className="flex min-h-48 flex-col gap-2.5 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-md">
               <PackageCheck className="size-4" aria-hidden="true" />
@@ -76,7 +76,7 @@ function PricingPlanCard({
               <Badge variant="secondary">Tiết kiệm {plan.yearlyDiscountPercent}%</Badge>
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-h-12 min-w-0">
             <CardTitle className="truncate text-lg" title={plan.planName}>
               {plan.planName}
             </CardTitle>
@@ -84,7 +84,7 @@ function PricingPlanCard({
               {plan.features.length} quyền lợi được cấu hình
             </p>
           </div>
-          <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="mt-auto flex min-w-0 flex-col gap-0.5">
             <div className="min-w-0 [overflow-wrap:anywhere]">
               <PlanPrice plan={plan} billingCycle={billingCycle} />
             </div>
@@ -205,7 +205,7 @@ export function PricingSection() {
 
         {!isLoading && !isError && activePlans.length > 0 && (
           <div
-            className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-(--pricing-plan-columns)"
+            className="grid auto-rows-fr grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-(--pricing-plan-columns)"
             style={pricingGridStyle}
           >
             {activePlans.map((plan, index) => (
