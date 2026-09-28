@@ -1,8 +1,33 @@
-import { Search } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { AUDIT_LOG_TIME_RANGES, type AuditLogTimeRange } from '../../types/platform-services.types'
 import type { AuditLogFilterValues } from './types'
+
+const TIME_RANGE_OPTIONS: ReadonlyArray<{ value: AuditLogTimeRange; label: string }> = [
+  { value: 'today', label: 'Hôm nay' },
+  { value: 'this-week', label: 'Tuần này' },
+  { value: 'week-to-date', label: 'Từ đầu tuần đến nay' },
+  { value: 'this-month', label: 'Tháng này' },
+  { value: 'month-to-date', label: 'Từ đầu tháng đến nay' },
+  { value: 'this-quarter', label: 'Quý này' },
+  { value: 'quarter-to-date', label: 'Từ đầu quý đến nay' },
+  { value: 'this-year', label: 'Năm nay' },
+  { value: 'year-to-date', label: 'Từ đầu năm đến nay' },
+  { value: 'custom', label: 'Khoảng thời gian khác' },
+]
 
 interface AuditLogFiltersProps {
   readonly filters: AuditLogFilterValues
@@ -11,107 +36,82 @@ interface AuditLogFiltersProps {
 }
 
 export function AuditLogFilters({ filters, onApply, onClear }: AuditLogFiltersProps) {
+  const [timeRange, setTimeRange] = useState<AuditLogTimeRange>(filters.timeRange)
+
   return (
     <form
-      key={JSON.stringify(filters)}
-      className="bg-card grid gap-3 rounded-md border p-3 sm:grid-cols-2 xl:grid-cols-4"
+      className="flex flex-wrap items-end gap-2"
       onSubmit={(event) => {
         event.preventDefault()
         const data = new FormData(event.currentTarget)
         onApply({
           search: String(data.get('search') ?? ''),
-          action: String(data.get('action') ?? ''),
-          entityType: String(data.get('entityType') ?? ''),
-          entityId: String(data.get('entityId') ?? ''),
-          userId: String(data.get('userId') ?? ''),
-          dateFrom: String(data.get('dateFrom') ?? ''),
-          dateTo: String(data.get('dateTo') ?? ''),
+          timeRange,
+          dateFrom: timeRange === 'custom' ? String(data.get('dateFrom') ?? '') : '',
+          dateTo: timeRange === 'custom' ? String(data.get('dateTo') ?? '') : '',
         })
       }}
     >
-      <FilterInput
-        id="audit-search"
-        name="search"
-        label="Tìm kiếm"
-        value={filters.search}
-        placeholder="Ví dụ: phê duyệt yêu cầu nhập kho…"
-      />
-      <FilterInput
-        id="audit-action"
-        name="action"
-        label="Hành động"
-        value={filters.action}
-        placeholder="Ví dụ: ApproveInboundRequest…"
-      />
-      <FilterInput
-        id="audit-entity-type"
-        name="entityType"
-        label="Loại đối tượng"
-        value={filters.entityType}
-        placeholder="Ví dụ: InboundRequest…"
-      />
-      <FilterInput
-        id="audit-user-id"
-        name="userId"
-        label="Actor ID"
-        value={filters.userId}
-        placeholder="UUID người thực hiện…"
-      />
-      <FilterInput
-        id="audit-entity-id"
-        name="entityId"
-        label="Entity ID"
-        value={filters.entityId}
-        placeholder="UUID đối tượng…"
-      />
-      <FilterInput
-        id="audit-from"
-        name="dateFrom"
-        label="Từ ngày"
-        value={filters.dateFrom}
-        type="date"
-      />
-      <FilterInput
-        id="audit-to"
-        name="dateTo"
-        label="Đến ngày"
-        value={filters.dateTo}
-        type="date"
-      />
-      <div className="flex items-end gap-2">
-        <Button type="submit">
-          <Search data-icon="inline-start" aria-hidden="true" />
-          Áp dụng
-        </Button>
+      <InputGroup className="w-full sm:w-72 lg:w-96">
+        <InputGroupAddon>
+          <Search aria-hidden="true" />
+        </InputGroupAddon>
+        <InputGroupInput
+          name="search"
+          defaultValue={filters.search}
+          placeholder="Tìm người dùng, hành động hoặc tham chiếu…"
+          aria-label="Tìm nhật ký hoạt động"
+          autoComplete="off"
+        />
+      </InputGroup>
+      <Select
+        value={timeRange}
+        onValueChange={(value) =>
+          setTimeRange(AUDIT_LOG_TIME_RANGES.find((item) => item === value) ?? 'this-week')
+        }
+      >
+        <SelectTrigger className="w-48" aria-label="Khoảng thời gian">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="start" position="popper" sideOffset={4}>
+          <SelectGroup>
+            {TIME_RANGE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      {timeRange === 'custom' ? (
+        <>
+          <Input
+            name="dateFrom"
+            type="date"
+            defaultValue={filters.dateFrom}
+            className="w-40"
+            aria-label="Từ ngày"
+            autoComplete="off"
+          />
+          <Input
+            name="dateTo"
+            type="date"
+            defaultValue={filters.dateTo}
+            className="w-40"
+            aria-label="Đến ngày"
+            autoComplete="off"
+          />
+        </>
+      ) : null}
+      <Button type="submit" variant="outline">
+        Tìm kiếm
+      </Button>
+      {filters.search || filters.timeRange !== 'this-week' ? (
         <Button type="button" variant="ghost" onClick={onClear}>
+          <X data-icon="inline-start" aria-hidden="true" />
           Xóa lọc
         </Button>
-      </div>
+      ) : null}
     </form>
-  )
-}
-
-interface FilterInputProps {
-  readonly id: string
-  readonly name: string
-  readonly label: string
-  readonly value: string
-  readonly placeholder?: string
-  readonly type?: string
-}
-
-function FilterInput({ id, name, label, value, placeholder, type = 'text' }: FilterInputProps) {
-  return (
-    <div className="space-y-1">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        name={name}
-        type={type}
-        defaultValue={value}
-        placeholder={placeholder}
-        autoComplete="off"
-      />
-    </div>
   )
 }

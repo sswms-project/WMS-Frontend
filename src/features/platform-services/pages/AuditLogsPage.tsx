@@ -11,6 +11,7 @@ import { useAuditLogsQuery } from '../hooks/use-platform-services'
 import { auditLogFiltersSchema } from '../schemas/platform-services.schema'
 import { buildAuditLogQuery } from '../utils/platform-services-query'
 import { canViewAuditLogs } from '../utils/platform-services-permissions'
+import { AUDIT_LOG_TIME_RANGES } from '../types/platform-services.types'
 
 export default function AuditLogsPage() {
   const searchParams = useSearchParams()
@@ -29,22 +30,12 @@ export default function AuditLogsPage() {
   }, [hasAuditLogPermission, meQuery.isSuccess, router])
   const filters: AuditLogFilterValues = {
     search: params.get('search') ?? '',
-    action: params.get('action') ?? '',
-    entityType: params.get('entityType') ?? '',
-    entityId: params.get('entityId') ?? '',
-    userId: params.get('userId') ?? '',
+    timeRange:
+      AUDIT_LOG_TIME_RANGES.find((item) => item === params.get('timeRange')) ?? 'this-week',
     dateFrom: params.get('dateFrom') ?? '',
     dateTo: params.get('dateTo') ?? '',
   }
-  const hasActiveFilters = [
-    'search',
-    'action',
-    'entityType',
-    'entityId',
-    'userId',
-    'dateFrom',
-    'dateTo',
-  ].some((key) => Boolean(params.get(key)))
+  const hasActiveFilters = Boolean(params.get('search')) || filters.timeRange !== 'this-week'
 
   function applyFilters(values: AuditLogFilterValues) {
     const result = auditLogFiltersSchema.safeParse(values)
@@ -108,6 +99,7 @@ export default function AuditLogsPage() {
         navigate(next)
       }}
       onRetry={() => void auditLogsQuery.refetch()}
+      onRefresh={() => void auditLogsQuery.refetch()}
     />
   )
 }
