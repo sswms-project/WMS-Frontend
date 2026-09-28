@@ -109,7 +109,7 @@ export function LoginPage({ returnUrl }: { readonly returnUrl?: string }) {
 
       clearTwoFactorTempToken()
       setAuth(user, accessToken, refreshToken)
-      router.replace(await resolvePostLoginRoute(user, safeReturnUrl(returnUrl)))
+      window.location.replace(await resolvePostLoginRoute(user, safeReturnUrl(returnUrl)))
     } catch (error) {
       if (!isApiErrorResponse(error)) return
 

@@ -206,13 +206,13 @@ export function CreateCycleCountForm({
           <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky top-0 z-10 w-12">
+                <TableHead className="sticky top-0 z-10 w-12">
                   <span className="sr-only">Chọn</span>
                 </TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Sản phẩm</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Vị trí</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Lô / chất lượng</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10 text-right">Tồn hiện tại</TableHead>
+                <TableHead className="sticky top-0 z-10">Sản phẩm</TableHead>
+                <TableHead className="sticky top-0 z-10">Vị trí</TableHead>
+                <TableHead className="sticky top-0 z-10">Lô / chất lượng</TableHead>
+                <TableHead className="sticky top-0 z-10 text-right">Tồn hiện tại</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

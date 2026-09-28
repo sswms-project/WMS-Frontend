@@ -133,12 +133,12 @@ export function StockRecipientDirectory({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky top-0 z-10">Mã</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Tên khách hàng</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Điện thoại</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Email</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">
+                <TableHead className="sticky top-0 z-10">Mã</TableHead>
+                <TableHead className="sticky top-0 z-10">Tên khách hàng</TableHead>
+                <TableHead className="sticky top-0 z-10">Điện thoại</TableHead>
+                <TableHead className="sticky top-0 z-10">Email</TableHead>
+                <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                <TableHead className="sticky top-0 z-10">
                   <span className="sr-only">Thao tác</span>
                 </TableHead>
               </TableRow>

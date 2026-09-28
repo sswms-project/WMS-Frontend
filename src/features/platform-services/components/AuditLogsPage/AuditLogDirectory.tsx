@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
+import { Button } from '@/components/ui/button'
 import type { AuditLogItem } from '../../types/platform-services.types'
 import { AuditLogDetailSheet } from './AuditLogDetailSheet'
 import { AuditLogFilters } from './AuditLogFilters'
@@ -21,14 +23,27 @@ export function AuditLogDirectory(props: AuditLogDirectoryProps) {
           Nhật ký hoạt động
         </h2>
       </div>
-      <AuditLogFilters
-        filters={props.filters}
-        onApply={props.onApplyFilters}
-        onClear={props.onClearFilters}
-      />
       <OperationalListPanel aria-label="Nhật ký hoạt động">
-        <div className="shrink-0 border-b px-4 py-3">
-          <h3 className="text-sm font-semibold">Nhật ký hoạt động</h3>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+          <AuditLogFilters
+            key={`${props.filters.timeRange}-${props.filters.dateFrom}-${props.filters.dateTo}-${props.filters.search}`}
+            filters={props.filters}
+            onApply={props.onApplyFilters}
+            onClear={props.onClearFilters}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Làm mới nhật ký hoạt động"
+            disabled={props.isFetching}
+            onClick={props.onRefresh}
+          >
+            <RefreshCw
+              className={props.isFetching ? 'motion-safe:animate-spin' : undefined}
+              aria-hidden="true"
+            />
+          </Button>
         </div>
         <div data-slot="operational-list-body" className="min-h-0">
           <AuditLogList

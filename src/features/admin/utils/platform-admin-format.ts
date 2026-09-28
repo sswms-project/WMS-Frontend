@@ -33,3 +33,15 @@ export function formatAdminDateTime(value: string | null): string {
 export function formatAdminCurrency(value: number): string {
   return currencyFormatter.format(value)
 }
+
+export function formatTenantStatus(status: TenantStatus): string {
+  return TENANT_STATUS_LABELS[status]
+}
+import type { TenantStatus } from '../types/admin.types'
+
+const TENANT_STATUS_LABELS: Record<TenantStatus, string> = {
+  Pending: 'Chờ kích hoạt',
+  Active: 'Hoạt động',
+  Inactive: 'Không hoạt động',
+  Suspended: 'Tạm ngưng',
+}

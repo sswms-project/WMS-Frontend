@@ -2,6 +2,14 @@
 
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { AlertTriangle } from 'lucide-react'
 
 interface LowStockItem {
@@ -34,66 +42,61 @@ export function LowStockTable({ items }: LowStockTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px]">
-          <thead>
-            <tr className="border-border border-b">
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                SKU
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Tên sản phẩm
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Số lượng
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Ngưỡng tối thiểu
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Vị trí
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Trạng thái
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => {
-              const criticality = getCriticalityLevel(item.quantity, item.threshold)
-              return (
-                <tr
-                  key={item.id}
-                  className="border-border hover:bg-muted/30 border-b transition-colors"
-                >
-                  <td className="px-4 py-4 sm:px-6">
-                    <span className="text-foreground font-mono text-sm font-semibold">
-                      {item.sku}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <span className="text-foreground text-sm">{item.name}</span>
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <span className="text-foreground text-sm font-semibold">{item.quantity}</span>
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <span className="text-muted-foreground text-sm">{item.threshold}</span>
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <span className="text-muted-foreground text-xs">{item.location}</span>
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <Badge className={`${criticality.color} border-0 text-xs font-semibold`}>
-                      {criticality.label}
-                    </Badge>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Table className="min-w-[720px]">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              SKU
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Tên sản phẩm
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Số lượng
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Ngưỡng tối thiểu
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Vị trí
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Trạng thái
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => {
+            const criticality = getCriticalityLevel(item.quantity, item.threshold)
+            return (
+              <TableRow key={item.id}>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <span className="text-foreground font-mono text-sm font-semibold">
+                    {item.sku}
+                  </span>
+                </TableCell>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <span className="text-foreground text-sm">{item.name}</span>
+                </TableCell>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <span className="text-foreground text-sm font-semibold">{item.quantity}</span>
+                </TableCell>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <span className="text-muted-foreground text-sm">{item.threshold}</span>
+                </TableCell>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <span className="text-muted-foreground text-xs">{item.location}</span>
+                </TableCell>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <Badge className={`${criticality.color} border-0 text-xs font-semibold`}>
+                    {criticality.label}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     </Card>
   )
 }

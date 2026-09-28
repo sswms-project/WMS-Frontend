@@ -1,5 +1,3 @@
-import { Eye } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -29,18 +27,16 @@ export function AuditLogList(props: AuditLogListProps) {
   if (props.items.length === 0) return <AuditEmptyState hasActiveFilters={props.hasActiveFilters} />
   return (
     <div aria-busy={props.isFetching}>
-      <div className="hidden min-w-0 md:block">
+      <div className="hidden min-w-0 md:block [&>[data-slot=table-container]]:overflow-visible">
         <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
+          <TableHeader>
             <TableRow>
-              <TableHead>Thời gian</TableHead>
-              <TableHead>Người thực hiện</TableHead>
-              <TableHead>Hành động</TableHead>
-              <TableHead>Đối tượng</TableHead>
-              <TableHead>Lý do</TableHead>
-              <TableHead className="w-12">
-                <span className="sr-only">Chi tiết</span>
-              </TableHead>
+              <TableHead className="sticky top-0 z-10">Người dùng</TableHead>
+              <TableHead className="sticky top-0 z-10">Thời gian</TableHead>
+              <TableHead className="sticky top-0 z-10">Đối tượng thao tác</TableHead>
+              <TableHead className="sticky top-0 z-10">Hành động</TableHead>
+              <TableHead className="sticky top-0 z-10">Tham chiếu</TableHead>
+              <TableHead className="sticky top-0 z-10">Mô tả chi tiết</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -66,24 +62,37 @@ interface AuditItemProps {
 
 function AuditTableRow({ log, onView }: AuditItemProps) {
   return (
-    <TableRow>
-      <TableCell className="text-xs whitespace-nowrap">
-        {formatPlatformDateTime(log.createdAt)}
-      </TableCell>
+    <TableRow
+      tabIndex={0}
+      className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-[-2px]"
+      aria-label={`Xem chi tiết ${log.actionLabel}: ${log.referenceDisplay}`}
+      onClick={(event) => {
+        event.currentTarget.focus()
+        onView(log)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onView(log)
+        }
+      }}
+    >
       <TableCell>
         <p className="text-sm font-medium">{log.actorName}</p>
         <p className="text-muted-foreground text-xs">{log.actorEmail}</p>
       </TableCell>
-      <TableCell>
-        <Badge variant="outline">{log.action}</Badge>
+      <TableCell className="text-xs whitespace-nowrap">
+        {formatPlatformDateTime(log.createdAt)}
       </TableCell>
       <TableCell>
-        <p className="text-sm">{log.entityType}</p>
-        <p className="text-muted-foreground max-w-40 truncate font-mono text-xs">{log.entityId}</p>
+        <p className="text-sm">{log.entityTypeLabel}</p>
       </TableCell>
-      <TableCell className="max-w-64 truncate text-sm">{log.reason ?? '—'}</TableCell>
-      <TableCell>
-        <ViewButton log={log} onView={onView} />
+      <TableCell className="text-sm">{log.actionLabel}</TableCell>
+      <TableCell className="max-w-56">
+        <EmailAwareDisplay value={log.referenceDisplay} />
+      </TableCell>
+      <TableCell className="max-w-80">
+        <EmailAwareDisplay value={log.summary} emphasizeLabel={false} />
       </TableCell>
     </TableRow>
   )
@@ -91,32 +100,56 @@ function AuditTableRow({ log, onView }: AuditItemProps) {
 
 function AuditMobileCard({ log, onView }: AuditItemProps) {
   return (
-    <li className="space-y-2 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <Badge variant="outline">{log.action}</Badge>
-          <p className="mt-2 text-sm font-medium">{log.actorName}</p>
-          <p className="text-muted-foreground text-xs">{log.actorEmail}</p>
-        </div>
-        <ViewButton log={log} onView={onView} />
-      </div>
-      <p className="text-sm">{log.entityType}</p>
-      <p className="text-muted-foreground text-xs">{formatPlatformDateTime(log.createdAt)}</p>
-      {log.reason ? <p className="text-sm">Lý do: {log.reason}</p> : null}
+    <li>
+      <Button
+        type="button"
+        variant="ghost"
+        className="h-auto w-full flex-col items-stretch gap-2 rounded-none p-4 text-left whitespace-normal"
+        aria-label={`Xem chi tiết ${log.actionLabel}: ${log.referenceDisplay}`}
+        onClick={() => onView(log)}
+      >
+        <span className="block">
+          <span className="block text-sm font-medium">{log.actorName}</span>
+          <span className="text-muted-foreground block text-xs">{log.actorEmail}</span>
+        </span>
+        <span className="block text-sm">
+          {log.actionLabel} · {log.entityTypeLabel}
+        </span>
+        <EmailAwareDisplay value={log.referenceDisplay} />
+        <span className="text-muted-foreground block text-xs">
+          {formatPlatformDateTime(log.createdAt)}
+        </span>
+        <EmailAwareDisplay value={log.summary} emphasizeLabel={false} />
+      </Button>
     </li>
   )
 }
 
-function ViewButton({ log, onView }: AuditItemProps) {
+function EmailAwareDisplay({
+  value,
+  emphasizeLabel = true,
+}: {
+  readonly value: string
+  readonly emphasizeLabel?: boolean
+}) {
+  const separatorIndex = value.lastIndexOf(' · ')
+  const label = separatorIndex === -1 ? value : value.slice(0, separatorIndex)
+  const detail = separatorIndex === -1 ? '' : value.slice(separatorIndex + 3)
+
+  if (!detail.includes('@')) {
+    return <span className="block text-sm break-words">{value}</span>
+  }
+
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label={`Xem chi tiết ${log.action}`}
-      onClick={() => onView(log)}
-    >
-      <Eye aria-hidden="true" />
-    </Button>
+    <span className="block min-w-0">
+      <span
+        className={
+          emphasizeLabel ? 'block text-sm font-medium break-words' : 'block text-sm break-words'
+        }
+      >
+        {label}
+      </span>
+      <span className="text-muted-foreground block text-xs break-all">{detail}</span>
+    </span>
   )
 }

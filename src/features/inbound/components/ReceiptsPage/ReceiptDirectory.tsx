@@ -149,16 +149,14 @@ export function ReceiptDirectory({
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">
-                    Nhận / Hỏng
-                  </TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Người tạo</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Ngày tạo</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">
+                  <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
+                  <TableHead className="sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
+                  <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                  <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Nhận / Hỏng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Người tạo</TableHead>
+                  <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
+                  <TableHead className="sticky top-0 z-10">
                     <span className="sr-only">Thao tác</span>
                   </TableHead>
                 </TableRow>

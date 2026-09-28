@@ -15,7 +15,7 @@ export function MetricSparkline({ data, trend }: MetricSparklineProps) {
 
   return (
     <div className="h-10 w-20 shrink-0" aria-hidden="true">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 80, height: 40 }}>
         <LineChart data={data} margin={{ top: 4, right: 2, bottom: 2, left: 2 }}>
           <Line
             type="linear"

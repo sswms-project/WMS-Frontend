@@ -11,6 +11,14 @@ import { P } from '@/config/permissionCodes'
 import { Button } from '@/components/ui/button'
 import { StatusChangeDialog } from '@/components/operations/StatusChangeDialog'
 import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import {
@@ -240,31 +248,31 @@ export default function StockRecipientDetailPage({
           />
         ) : (
           <>
-            <div className="min-h-0 flex-1 overflow-auto">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead className="bg-card sticky top-0 z-10">
-                  <tr className="border-b text-left">
-                    <th className="p-3">Mã đơn</th>
-                    <th className="p-3">Kho</th>
-                    <th className="p-3">Mục đích</th>
-                    <th className="p-3">Trạng thái</th>
-                    <th className="p-3">Ngày tạo</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="min-h-0 flex-1 overflow-auto [&>[data-slot=table-container]]:overflow-visible">
+              <Table className="min-w-[720px] text-sm">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky top-0 z-10 p-3">Mã đơn</TableHead>
+                    <TableHead className="sticky top-0 z-10 p-3">Kho</TableHead>
+                    <TableHead className="sticky top-0 z-10 p-3">Mục đích</TableHead>
+                    <TableHead className="sticky top-0 z-10 p-3">Trạng thái</TableHead>
+                    <TableHead className="sticky top-0 z-10 p-3">Ngày tạo</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {historyQuery.data?.items.map((order) => (
-                    <tr key={order.id} className="border-b">
-                      <td className="p-3 font-mono">{order.stockIssueRequestCode}</td>
-                      <td className="p-3">{order.warehouseName}</td>
-                      <td className="p-3">{order.purpose ?? '—'}</td>
-                      <td className="p-3">
+                    <TableRow key={order.id}>
+                      <TableCell className="p-3 font-mono">{order.stockIssueRequestCode}</TableCell>
+                      <TableCell className="p-3">{order.warehouseName}</TableCell>
+                      <TableCell className="p-3">{order.purpose ?? '—'}</TableCell>
+                      <TableCell className="p-3">
                         <StockIssueRequestStatusBadge status={order.status} />
-                      </td>
-                      <td className="p-3">{formatStockIssueDate(order.createdAt)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="p-3">{formatStockIssueDate(order.createdAt)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
             <OperationalPagination
               page={page}
