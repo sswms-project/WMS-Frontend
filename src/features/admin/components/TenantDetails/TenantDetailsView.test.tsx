@@ -54,4 +54,41 @@ describe('TenantDetailsView', () => {
     expect(container.firstElementChild).toHaveClass('w-full', 'min-w-0', 'flex-1')
     expect(container.firstElementChild).not.toHaveClass('mx-auto', 'max-w-[1440px]')
   })
+
+  it('translates subscription status and billing cycles', () => {
+    render(
+      <TenantDetailsView
+        data={{
+          ...tenant,
+          subscription: {
+            id: '22222222-2222-4222-8222-222222222222',
+            planId: '33333333-3333-4333-8333-333333333333',
+            planName: 'Premium',
+            billingCycle: 'Monthly',
+            startDate: '2026-09-01T00:00:00Z',
+            endDate: '2026-10-01T00:00:00Z',
+            status: 'Active',
+            autoRenew: false,
+            cancelledAt: null,
+            pendingPlanId: '44444444-4444-4444-8444-444444444444',
+            pendingPlanName: 'Plus',
+            pendingBillingCycle: 'Yearly',
+          },
+        }}
+        isLoading={false}
+        isError={false}
+        isFetching={false}
+        isPending={false}
+        onRetry={vi.fn()}
+        onStateAction={vi.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Hàng tháng')).toBeInTheDocument()
+    expect(screen.getByText('Hàng năm')).toBeInTheDocument()
+    expect(screen.getByText('Đang hoạt động')).toBeInTheDocument()
+    expect(screen.queryByText('Monthly')).not.toBeInTheDocument()
+  })
 })

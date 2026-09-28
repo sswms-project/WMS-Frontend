@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
+import {
+  formatBillingCycle,
+  formatSubscriptionStatus,
+} from '@/features/subscription/utils/format-subscription'
 import type { TenantDetailsResponse } from '../../types/admin.types'
 import {
   formatAdminCurrency,
@@ -166,13 +170,18 @@ export function TenantDetailsView({
               <DetailList
                 items={[
                   ['Gói hiện tại', data.subscription.planName],
-                  ['Chu kỳ', data.subscription.billingCycle],
+                  ['Chu kỳ', formatBillingCycle(data.subscription.billingCycle)],
                   ['Hiệu lực từ', formatAdminDate(data.subscription.startDate)],
                   ['Hết hạn', formatAdminDate(data.subscription.endDate)],
-                  ['Trạng thái', data.subscription.status],
+                  ['Trạng thái', formatSubscriptionStatus(data.subscription.status)],
                   ['Phương thức gia hạn', 'Thủ công qua PayOS'],
                   ['Thay đổi chờ áp dụng', data.subscription.pendingPlanName ?? 'Không có'],
-                  ['Chu kỳ chờ áp dụng', data.subscription.pendingBillingCycle ?? '—'],
+                  [
+                    'Chu kỳ chờ áp dụng',
+                    data.subscription.pendingBillingCycle
+                      ? formatBillingCycle(data.subscription.pendingBillingCycle)
+                      : '—',
+                  ],
                 ]}
               />
             ) : (
