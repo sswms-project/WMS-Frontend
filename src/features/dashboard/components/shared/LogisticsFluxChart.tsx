@@ -27,7 +27,7 @@ export function LogisticsFluxChart({ data }: LogisticsFluxChartProps) {
           </span>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height={260} initialDimension={{ width: 600, height: 260 }}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="day" stroke="var(--muted-foreground)" />
