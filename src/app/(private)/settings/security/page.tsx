@@ -4,7 +4,7 @@ import { SectionIconBadge } from '@/features/settings/components/SecurityPage'
 
 export default function SettingsSecurityPage() {
   return (
-    <div className="space-y-7">
+    <div data-hide-workspace-scrollbar className="space-y-7 pb-4 md:pb-5">
       <div className="flex items-center gap-3.5">
         <SectionIconBadge icon={ShieldCheck} tone="primary" size="lg" />
         <div>
