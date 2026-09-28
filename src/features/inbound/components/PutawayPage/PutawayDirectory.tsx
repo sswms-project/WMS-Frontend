@@ -221,13 +221,13 @@ export function PutawayDirectory({
             <Table className="min-w-[940px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">Còn cất</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Ngày nhận</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Người cất hàng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">Thao tác</TableHead>
+                  <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
+                  <TableHead className="sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
+                  <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Còn cất</TableHead>
+                  <TableHead className="sticky top-0 z-10">Ngày nhận</TableHead>
+                  <TableHead className="sticky top-0 z-10">Người cất hàng</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -36,8 +36,8 @@ export function PermissionCustomizationFilter({
           </SelectTrigger>
           <SelectContent position="popper" align="start" sideOffset={4}>
             <SelectGroup>
-              <SelectItem value="all">Tất cả quyền</SelectItem>
-              <SelectItem value="customized">Đã tùy chỉnh</SelectItem>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="customized">Tùy chỉnh</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -53,8 +53,8 @@ export function PermissionCustomizationFilter({
           if (isPersonalPermissionFilter(next)) onChange(next)
         }}
       >
-        <ToggleGroupItem value="all">Tất cả quyền</ToggleGroupItem>
-        <ToggleGroupItem value="customized">Đã tùy chỉnh</ToggleGroupItem>
+        <ToggleGroupItem value="all">Tất cả</ToggleGroupItem>
+        <ToggleGroupItem value="customized">Tùy chỉnh</ToggleGroupItem>
       </ToggleGroup>
     </>
   )

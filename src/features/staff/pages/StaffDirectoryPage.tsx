@@ -287,7 +287,10 @@ export function StaffDirectoryPage() {
           )}
         </TabsList>
 
-        <TabsContent value={STAFF_PAGE_VIEWS.directory} className="min-h-0 min-w-0 flex-1">
+        <TabsContent
+          value={STAFF_PAGE_VIEWS.directory}
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        >
           <OperationalListPanel aria-labelledby="staff-directory-title">
             <div className="flex min-h-12 flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div>
@@ -440,7 +443,10 @@ export function StaffDirectoryPage() {
         </TabsContent>
 
         {canInvite && (
-          <TabsContent value={STAFF_PAGE_VIEWS.invitations} className="min-h-0 min-w-0 flex-1">
+          <TabsContent
+            value={STAFF_PAGE_VIEWS.invitations}
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+          >
             <InvitationManagementPanel
               invitations={invitations}
               totalCount={invitationsQuery.data?.totalCount ?? 0}

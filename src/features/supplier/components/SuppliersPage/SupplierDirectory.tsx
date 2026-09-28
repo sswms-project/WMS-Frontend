@@ -240,13 +240,13 @@ function SupplierDesktopTable({
       <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">Mã NCC</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-60">Nhà cung cấp</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">Số điện thoại</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-48">Email</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-60">Địa chỉ</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-28">Trạng thái</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-28">
+            <TableHead className="sticky top-0 z-10 w-32">Mã NCC</TableHead>
+            <TableHead className="sticky top-0 z-10 w-60">Nhà cung cấp</TableHead>
+            <TableHead className="sticky top-0 z-10 w-32">Số điện thoại</TableHead>
+            <TableHead className="sticky top-0 z-10 w-48">Email</TableHead>
+            <TableHead className="sticky top-0 z-10 w-60">Địa chỉ</TableHead>
+            <TableHead className="sticky top-0 z-10 w-28">Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10 w-28">
               <span className="sr-only">Thao tác</span>
             </TableHead>
           </TableRow>

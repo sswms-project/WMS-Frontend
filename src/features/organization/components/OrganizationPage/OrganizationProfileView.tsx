@@ -50,9 +50,6 @@ export function OrganizationProfileView({ organization, onEdit }: OrganizationPr
               <p className="text-muted-foreground mt-1 text-sm">
                 Không gian vận hành kho của tổ chức
               </p>
-              <p className="text-muted-foreground mt-2 font-mono text-xs">
-                Mã tổ chức · {organization.id}
-              </p>
             </div>
           </div>
           <Button type="button" variant="outline" onClick={onEdit}>

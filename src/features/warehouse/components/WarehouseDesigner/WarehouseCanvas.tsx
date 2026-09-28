@@ -721,7 +721,7 @@ export function WarehouseCanvas({
   return (
     <div
       ref={containerRef}
-      className="bg-muted focus-visible:ring-ring relative h-full min-h-[28rem] w-full touch-none overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-inset"
+      className="bg-muted focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-inset"
       role="application"
       aria-label="Mặt bằng kho tương tác"
       aria-describedby="warehouse-canvas-instructions"

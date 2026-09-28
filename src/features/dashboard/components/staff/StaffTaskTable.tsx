@@ -2,6 +2,14 @@
 
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import type { StaffTask } from '../../types'
 
 interface StaffTaskTableProps {
@@ -27,60 +35,55 @@ export function StaffTaskTable({ tasks }: StaffTaskTableProps) {
         <h3 className="text-foreground text-lg font-semibold">Công việc của tôi</h3>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px]">
-          <thead>
-            <tr className="border-border border-b">
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Công việc
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                SKU
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Vị trí
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Hạn hoàn thành
-              </th>
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase sm:px-6">
-                Trạng thái
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((task) => {
-              const statusStyle = statusConfig[task.status]
-              return (
-                <tr
-                  key={task.id}
-                  className="border-border hover:bg-muted/30 border-b transition-colors"
-                >
-                  <td className="text-foreground px-4 py-4 text-sm font-semibold sm:px-6">
-                    {taskTypeLabels[task.type]}
-                  </td>
-                  <td className="text-foreground px-4 py-4 font-mono text-sm sm:px-6">
-                    {task.sku}
-                  </td>
-                  <td className="text-muted-foreground px-4 py-4 text-xs sm:px-6">
-                    {task.location}
-                  </td>
-                  <td className="text-muted-foreground px-4 py-4 text-xs sm:px-6">
-                    {task.dueTime}
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <Badge
-                      className={`${statusStyle.bg} ${statusStyle.text} border-0 text-xs font-semibold`}
-                    >
-                      {statusStyle.label}
-                    </Badge>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Table className="min-w-[640px]">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Công việc
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              SKU
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Vị trí
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Hạn hoàn thành
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 text-xs font-semibold uppercase sm:px-6">
+              Trạng thái
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tasks.map((task) => {
+            const statusStyle = statusConfig[task.status]
+            return (
+              <TableRow key={task.id}>
+                <TableCell className="text-foreground px-4 py-4 text-sm font-semibold sm:px-6">
+                  {taskTypeLabels[task.type]}
+                </TableCell>
+                <TableCell className="text-foreground px-4 py-4 font-mono text-sm sm:px-6">
+                  {task.sku}
+                </TableCell>
+                <TableCell className="text-muted-foreground px-4 py-4 text-xs sm:px-6">
+                  {task.location}
+                </TableCell>
+                <TableCell className="text-muted-foreground px-4 py-4 text-xs sm:px-6">
+                  {task.dueTime}
+                </TableCell>
+                <TableCell className="px-4 py-4 sm:px-6">
+                  <Badge
+                    className={`${statusStyle.bg} ${statusStyle.text} border-0 text-xs font-semibold`}
+                  >
+                    {statusStyle.label}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     </Card>
   )
 }

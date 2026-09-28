@@ -401,7 +401,7 @@ export function WarehouseDesignerWorkspace({
 
   return (
     <section
-      className="bg-surface-container-lowest overflow-hidden border"
+      className="bg-surface-container-lowest flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border"
       aria-label="Trình thiết kế bố cục kho"
       onKeyDown={handleWorkspaceKeyDown}
     >
@@ -480,7 +480,7 @@ export function WarehouseDesignerWorkspace({
               Chạm đối tượng để xem thuộc tính
             </span>
           </div>
-          <div className="h-[min(66dvh,42rem)] min-h-[28rem]">{canvas}</div>
+          <div className="min-h-0 flex-1">{canvas}</div>
           <Drawer open={isToolboxOpen} onOpenChange={setIsToolboxOpen}>
             <DrawerContent className="h-[76dvh] overscroll-contain">
               <DrawerHeader className="sr-only">
@@ -512,7 +512,7 @@ export function WarehouseDesignerWorkspace({
           </Drawer>
         </>
       ) : (
-        <ResizablePanelGroup orientation="horizontal" className="h-[max(34rem,calc(100dvh-15rem))]">
+        <ResizablePanelGroup orientation="horizontal" className="h-0 min-h-0 min-w-0 flex-1">
           <ResizablePanel defaultSize="18%" minSize="14%" maxSize="24%">
             {toolbox}
           </ResizablePanel>

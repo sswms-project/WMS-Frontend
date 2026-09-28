@@ -1,6 +1,7 @@
-import { NOTIFICATION_TYPES } from '../types/platform-services.types'
+import { AUDIT_LOG_TIME_RANGES, NOTIFICATION_TYPES } from '../types/platform-services.types'
 import type {
   AuditLogQuery,
+  AuditLogTimeRange,
   NotificationQuery,
   NotificationType,
 } from '../types/platform-services.types'
@@ -56,6 +57,7 @@ export function buildNotificationQuery(params: URLSearchParams): NotificationQue
 export function buildAuditLogQuery(params: URLSearchParams): AuditLogQuery {
   const entityId = trimmed(params.get('entityId'))
   const userId = trimmed(params.get('userId'))
+  const dateRange = resolveAuditLogDateRange(params)
   return {
     pageNumber: positivePage(params.get('page')),
     pageSize: positivePageSize(params.get('pageSize')),
@@ -64,11 +66,61 @@ export function buildAuditLogQuery(params: URLSearchParams): AuditLogQuery {
     ...stringFilter(params, 'entityType'),
     ...(entityId && isUuid(entityId) ? { entityId } : {}),
     ...(userId && isUuid(userId) ? { userId } : {}),
-    ...(toUtcStart(params.get('dateFrom')) ? { dateFrom: toUtcStart(params.get('dateFrom')) } : {}),
-    ...(toUtcExclusiveEnd(params.get('dateTo'))
-      ? { dateTo: toUtcExclusiveEnd(params.get('dateTo')) }
-      : {}),
+    ...(toUtcStart(dateRange.dateFrom) ? { dateFrom: toUtcStart(dateRange.dateFrom) } : {}),
+    ...(toUtcExclusiveEnd(dateRange.dateTo) ? { dateTo: toUtcExclusiveEnd(dateRange.dateTo) } : {}),
   }
+}
+
+export function resolveAuditLogDateRange(
+  params: URLSearchParams,
+  now = new Date()
+): { dateFrom: string; dateTo: string } {
+  const value = params.get('timeRange')
+  const timeRange: AuditLogTimeRange =
+    AUDIT_LOG_TIME_RANGES.find((item) => item === value) ?? 'this-week'
+  if (timeRange === 'custom') {
+    return {
+      dateFrom: params.get('dateFrom') ?? '',
+      dateTo: params.get('dateTo') ?? '',
+    }
+  }
+
+  const today = startOfDay(now)
+  const monday = addDays(today, -((today.getDay() + 6) % 7))
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1)
+  const yearStart = new Date(today.getFullYear(), 0, 1)
+  const ranges: Record<Exclude<AuditLogTimeRange, 'custom'>, [Date, Date]> = {
+    today: [today, today],
+    'this-week': [monday, addDays(monday, 6)],
+    'week-to-date': [monday, today],
+    'this-month': [monthStart, new Date(today.getFullYear(), today.getMonth() + 1, 0)],
+    'month-to-date': [monthStart, today],
+    'this-quarter': [
+      quarterStart,
+      new Date(quarterStart.getFullYear(), quarterStart.getMonth() + 3, 0),
+    ],
+    'quarter-to-date': [quarterStart, today],
+    'this-year': [yearStart, new Date(today.getFullYear(), 11, 31)],
+    'year-to-date': [yearStart, today],
+  }
+  const [dateFrom, dateTo] = ranges[timeRange]
+  return { dateFrom: formatLocalDate(dateFrom), dateTo: formatLocalDate(dateTo) }
+}
+
+function startOfDay(value: Date): Date {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate())
+}
+
+function addDays(value: Date, days: number): Date {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate() + days)
+}
+
+function formatLocalDate(value: Date): string {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function positivePage(value: string | null): number {

@@ -7,7 +7,12 @@ export function AccessControlSkeleton() {
       aria-label="Đang tải phân quyền"
       aria-busy="true"
     >
-      <Skeleton className="h-16 w-full max-w-xl rounded-lg" />
+      <div className="border-border flex items-center gap-3 border-b pb-3">
+        <Skeleton className="size-10" />
+        <Skeleton className="h-7 w-28" />
+        <Skeleton className="h-9 w-28" />
+        <Skeleton className="h-9 w-28" />
+      </div>
       <div className="flex gap-2">
         <Skeleton className="h-9 w-64 rounded-md" />
         <Skeleton className="h-9 w-64 rounded-md" />

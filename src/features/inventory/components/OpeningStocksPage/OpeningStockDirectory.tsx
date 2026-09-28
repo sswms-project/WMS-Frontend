@@ -337,12 +337,12 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
             <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10">Chứng từ</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Dòng hàng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Bằng chứng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Thao tác</TableHead>
+                  <TableHead className="sticky top-0 z-10">Chứng từ</TableHead>
+                  <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                  <TableHead className="sticky top-0 z-10">Dòng hàng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Bằng chứng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

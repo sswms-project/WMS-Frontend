@@ -127,12 +127,12 @@ export function CycleCountDirectory(props: Props) {
             <Table className="min-w-[920px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10 w-64">Kho / Khu vực</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 w-44">Lịch kiểm kê</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 w-44">Phụ trách</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 w-36">Tiến độ</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 w-40">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 w-20" />
+                  <TableHead className="sticky top-0 z-10 w-64">Kho / Khu vực</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-44">Lịch kiểm kê</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-44">Phụ trách</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-36">Tiến độ</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-40">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
