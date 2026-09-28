@@ -48,7 +48,6 @@ export function usePersonalPermissionEditorState({
   const [draftIds, setDraftIds] = useState<Set<string>>(() => new Set(initialEffectiveIds))
   const [permissionSearch, setPermissionSearch] = useState('')
   const [filter, setFilter] = useState<PersonalPermissionFilter>('all')
-  const [openModules, setOpenModules] = useState<string[]>([])
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const [mutationError, setMutationError] = useState<string | null>(null)
   const [recovery, setRecovery] = useState<PersonalPermissionRecovery | null>(null)
@@ -80,9 +79,6 @@ export function usePersonalPermissionEditorState({
   const isDirty = Boolean(workspace) && !arePermissionSetsEqual(draftIds, baselineIds)
   const busy = saving || resetting
   const editorBlocked = busy || recovery !== null
-  const visibleOpenModules = permissionSearch.trim()
-    ? filteredGroups.map((group) => group.module)
-    : openModules
 
   useEffect(() => {
     // A successful mutation invalidates and refetches this workspace before mutateAsync resolves.
@@ -195,10 +191,6 @@ export function usePersonalPermissionEditorState({
     setMutationError(null)
   }
 
-  function changeOpenModules(modules: string[]) {
-    if (!permissionSearch.trim()) setOpenModules(modules)
-  }
-
   return {
     busy,
     customizedIds,
@@ -223,7 +215,5 @@ export function usePersonalPermissionEditorState({
     toggleModule,
     togglePermission,
     unsavedChangeCount,
-    visibleOpenModules,
-    changeOpenModules,
   }
 }

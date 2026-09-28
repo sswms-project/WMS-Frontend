@@ -38,7 +38,7 @@ export function RoleSelector({ roles, selectedRoleId, disabled, onSelect }: Role
             <SelectGroup>
               {roles.map((role) => (
                 <SelectItem key={role.roleId} value={role.roleId}>
-                  {getTenantRoleContent(role.roleName).label} · {role.effectivePermissionIds.length}{' '}
+                  {getTenantRoleContent(role.roleName).label} · {role.assignedPermissionIds.length}{' '}
                   quyền
                 </SelectItem>
               ))}
@@ -85,7 +85,7 @@ export function RoleSelector({ roles, selectedRoleId, disabled, onSelect }: Role
                   {content.label}
                 </span>
                 <Badge variant={active ? 'default' : 'outline'} className="shrink-0 tabular-nums">
-                  {role.effectivePermissionIds.length}
+                  {role.assignedPermissionIds.length}
                 </Badge>
               </TabsTrigger>
             )

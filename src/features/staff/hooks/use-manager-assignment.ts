@@ -15,10 +15,11 @@ interface AssignManagerVariables {
   request: AssignManagerRequest
 }
 
-export function useStaffWarehouseAssignmentsQuery(userId: string) {
+export function useStaffWarehouseAssignmentsQuery(userId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.staff.warehouseAssignments(userId),
     queryFn: () => managerAssignmentService.getStaffWarehouses(userId),
+    enabled: enabled && Boolean(userId),
     staleTime: 0,
     refetchOnWindowFocus: false,
     retry: false,
@@ -31,7 +32,8 @@ export function useUpdateStaffWarehousesMutation(userId: string) {
     mutationFn: (request) => managerAssignmentService.updateStaffWarehouses(userId, request),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.lists }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(userId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.warehouses.all }),
       ])
     },

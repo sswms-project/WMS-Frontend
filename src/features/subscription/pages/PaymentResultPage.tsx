@@ -42,7 +42,8 @@ export function PaymentResultPage() {
           <div className="text-center">
             <h1 className="text-foreground text-2xl font-semibold">Thanh toán thành công</h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              Gói dịch vụ đã được cập nhật. Mã đơn: {orderCode}
+              Giao dịch đã được ghi nhận. Thời điểm áp dụng được hiển thị tại trang Gói dịch vụ. Mã
+              đơn: {orderCode}
             </p>
           </div>
           <Button onClick={() => router.push('/subscription')}>Xem gói hiện tại</Button>

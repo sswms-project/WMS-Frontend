@@ -1,5 +1,10 @@
+import { Suspense } from 'react'
 import { InboundReceivingPage } from '@/features/inbound/pages'
 
 export default function InboundRoutePage() {
-  return <InboundReceivingPage />
+  return (
+    <Suspense>
+      <InboundReceivingPage />
+    </Suspense>
+  )
 }

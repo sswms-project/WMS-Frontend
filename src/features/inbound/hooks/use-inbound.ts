@@ -4,6 +4,8 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inboundService } from '../services/inbound.service'
 import type {
+  AssignableWarehouseStaff,
+  AssignWarehouseTaskRequest,
   InboundAllowedActionsResponse,
   InboundDocumentImport,
   InboundListQuery,
@@ -40,6 +42,16 @@ interface CancelPutawayTaskVariables {
   request: CancelPutawayTaskRequest
 }
 
+interface AssignReceivingTaskVariables {
+  inboundRequestId: string
+  request: AssignWarehouseTaskRequest
+}
+
+interface AssignPutawayTaskVariables {
+  receiptId: string
+  request: AssignWarehouseTaskRequest
+}
+
 interface ReconcilePutawayCancellationVariables {
   receiptId: string
   request: ReconcilePutawayCancellationRequest
@@ -66,6 +78,15 @@ export function usePutawayTasksQuery(params: PutawayTaskQuery) {
     queryKey: queryKeys.goodsReceipts.putawayTasks(params),
     queryFn: () => inboundService.getPutawayTasks(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useAssignableStaffQuery(warehouseId: string | null) {
+  return useQuery<AssignableWarehouseStaff[], ApiErrorResponse>({
+    queryKey: queryKeys.goodsReceipts.assignableStaff(warehouseId ?? ''),
+    queryFn: () =>
+      inboundService.getAssignableStaff(warehouseId ?? '').then((response) => response.data),
+    enabled: Boolean(warehouseId),
   })
 }
 
@@ -221,4 +242,32 @@ export function useReconcilePutawayCancellationMutation() {
       onError: (error) => logger.error(error),
     }
   )
+}
+
+function useInvalidateAssignments() {
+  const queryClient = useQueryClient()
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.goodsReceipts.all }),
+      queryClient.invalidateQueries({ queryKey: ['my-warehouse-tasks'] }),
+    ])
+}
+
+export function useAssignReceivingTaskMutation() {
+  const invalidate = useInvalidateAssignments()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, AssignReceivingTaskVariables>({
+    mutationFn: ({ inboundRequestId, request }) =>
+      inboundService.assignReceivingTask(inboundRequestId, request),
+    onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useAssignPutawayTaskMutation() {
+  const invalidate = useInvalidateAssignments()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, AssignPutawayTaskVariables>({
+    mutationFn: ({ receiptId, request }) => inboundService.assignPutawayTask(receiptId, request),
+    onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
 }

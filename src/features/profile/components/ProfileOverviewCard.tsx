@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
-import { CheckCircle2, Clock, Shield, ShieldOff, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, Shield, ShieldOff, Warehouse, XCircle } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ROLE_LABELS_VI, type UserRole } from '@/config/roles'
+import { getRoleLabel } from '@/config/roles'
 import type { UserProfileResponse } from '@/features/auth/types/auth.types'
 import { cn } from '@/lib/utils'
 
@@ -78,7 +78,7 @@ export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardP
 
   if (!profile) return null
 
-  const roleLabel = profile.role ? (ROLE_LABELS_VI[profile.role as UserRole] ?? profile.role) : null
+  const roleLabel = profile.role ? getRoleLabel(profile.role) : null
   const isActive = profile.status?.toLowerCase() === 'active'
 
   return (
@@ -161,6 +161,16 @@ export function ProfileOverviewCard({ profile, isLoading }: ProfileOverviewCardP
                 className={profile.isTwoFactorEnabled ? 'text-primary' : 'text-muted-foreground'}
               >
                 {profile.isTwoFactorEnabled ? 'Đã bật' : 'Chưa bật'}
+              </span>
+            }
+          />
+          <StatusRow
+            delay="delay-[525ms]"
+            label="Kho làm việc"
+            icon={<Warehouse className="text-primary size-3.5" />}
+            value={
+              <span className="text-foreground">
+                {(profile.assignedWarehouses ?? []).length} kho
               </span>
             }
           />

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ROLE_LABELS_VI } from '@/config/roles'
+import { getRoleLabel } from '@/config/roles'
 import { useLogoutMutation } from '@/features/auth'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
@@ -61,7 +61,7 @@ export function UserMenu() {
           <div className="hidden text-left sm:block">
             <p className="text-foreground text-[13px] leading-tight font-medium">{user.fullName}</p>
             <p className="text-muted-foreground text-[11px] leading-tight">
-              {ROLE_LABELS_VI[user.role]}
+              {getRoleLabel(user.role)}
             </p>
           </div>
         </button>

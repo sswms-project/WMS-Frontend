@@ -30,6 +30,10 @@ export const P = {
   GOODS_RECEIPTS_APPROVE: 'goods-receipts:approve',
   GOODS_RECEIPTS_REJECT: 'goods-receipts:reject',
 
+  // Warehouse Tasks (công việc được giao của Nhân viên kho)
+  WAREHOUSE_TASKS_VIEW_OWN: 'warehouse-tasks:view-own',
+  WAREHOUSE_TASKS_MANAGE_OWN: 'warehouse-tasks:manage-own',
+
   // Goods Return Requests
   GOODS_RETURN_REQUESTS_VIEW: 'goods-return-requests:view',
   GOODS_RETURN_REQUESTS_APPROVE: 'goods-return-requests:approve',
@@ -143,3 +147,18 @@ export const P = {
 } as const
 
 export type PermissionCode = (typeof P)[keyof typeof P]
+
+const PLATFORM_ONLY_PERMISSION_CODES: ReadonlySet<string> = new Set([
+  P.ADMIN_DASHBOARD_VIEW,
+  P.ADMIN_TENANTS_VIEW,
+  P.ADMIN_TENANTS_APPROVE,
+  P.ADMIN_TENANTS_SUSPEND,
+  P.SUBSCRIPTION_PLANS_VIEW,
+  P.SUBSCRIPTION_PLANS_CREATE,
+  P.SUBSCRIPTION_PLANS_UPDATE,
+  P.SUBSCRIPTION_PLANS_ACTIVATE,
+  P.SUBSCRIPTION_PLANS_DELETE,
+])
+
+export const isPlatformOnlyPermission = (permissionKey: string): boolean =>
+  PLATFORM_ONLY_PERMISSION_CODES.has(permissionKey)

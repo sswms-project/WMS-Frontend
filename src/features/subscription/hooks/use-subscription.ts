@@ -22,19 +22,12 @@ export function useCurrentSubscriptionQuery(enabled = true) {
   })
 }
 
-export function useSubscriptionPlansQuery(enabled = true) {
-  return useQuery({
-    queryKey: queryKeys.subscription.plans,
-    queryFn: () => subscriptionService.getSubscriptionPlans().then((response) => response.data),
-    enabled,
-  })
-}
-
-export function usePublicSubscriptionPlansQuery() {
+export function usePublicSubscriptionPlansQuery(enabled = true) {
   return useQuery({
     queryKey: queryKeys.subscription.publicPlans,
     queryFn: () =>
       subscriptionService.getPublicSubscriptionPlans().then((response) => response.data),
+    enabled,
   })
 }
 
@@ -103,6 +96,21 @@ export function useChangeSubscriptionPlanMutation() {
     onError: (error) => {
       logger.error(error)
       toast.error(error.message ?? 'Không thể thay đổi gói dịch vụ. Vui lòng thử lại.')
+    },
+  })
+}
+
+export function usePreviewSubscriptionPlanChangeMutation() {
+  return useMutation<
+    SubscriptionPlanChangeResponse,
+    ApiErrorResponse,
+    ChangeSubscriptionPlanRequestDto
+  >({
+    mutationFn: (body) =>
+      subscriptionService.previewPlanChange(body).then((response) => response.data),
+    onError: (error) => {
+      logger.error(error)
+      toast.error(error.message ?? 'Không thể tính trước thay đổi gói. Vui lòng thử lại.')
     },
   })
 }

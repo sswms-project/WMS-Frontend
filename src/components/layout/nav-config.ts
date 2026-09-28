@@ -49,6 +49,84 @@ export type NavSection = {
   readonly separatorBefore?: boolean
 }
 
+const tenantStaffSection: NavSection = {
+  id: 'organization-management',
+  label: 'Quản trị tổ chức',
+  icon: Building2,
+  collapsible: true,
+  items: [requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW)],
+}
+
+const tenantSubjectsSection: NavSection = {
+  id: 'subjects',
+  label: 'Đối tượng',
+  icon: Users,
+  collapsible: true,
+  items: [
+    requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
+    requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
+  ],
+}
+
+const tenantCatalogSection: NavSection = {
+  id: 'catalog',
+  label: 'Danh mục',
+  icon: Tags,
+  collapsible: true,
+  items: [
+    requiredNavItem(APP_ROUTES.products, 'Danh mục VTHH', Package, P.PRODUCTS_VIEW),
+    requiredNavItem(APP_ROUTES.categories, 'Nhóm VTHH', Tags, P.CATEGORIES_VIEW),
+    requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
+  ],
+}
+
+const tenantWarehouseSection: NavSection = {
+  id: 'warehouse-management',
+  label: 'Quản Lý Kho',
+  icon: Warehouse,
+  collapsible: true,
+  items: [
+    requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW),
+    requiredNavItem(APP_ROUTES.warehouseLayouts, 'Sơ đồ kho', Warehouse, P.WAREHOUSES_VIEW),
+  ],
+}
+
+const tenantOperationsSection: NavSection = {
+  id: 'warehouse-operations',
+  label: 'Hoạt Động Kho',
+  icon: PackageOpen,
+  collapsible: true,
+  items: [
+    requiredNavItem(
+      APP_ROUTES.inboundRequests,
+      'Yêu cầu nhập kho',
+      ClipboardList,
+      P.INBOUND_REQUESTS_VIEW
+    ),
+    requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW),
+    requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
+    requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
+    requiredNavItem(
+      APP_ROUTES.stockIssueRequests,
+      'Xuất kho & Trả hàng',
+      PackageMinus,
+      P.STOCK_ISSUE_REQUESTS_VIEW,
+      [APP_ROUTES.goodsReturnRequests]
+    ),
+  ],
+}
+
+const tenantMemberSystemSection: NavSection = {
+  id: 'system',
+  label: 'Hệ thống',
+  icon: Settings,
+  collapsible: true,
+  items: [
+    requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
+    requiredNavItem(APP_ROUTES.auditLogs, 'Nhật ký hoạt động', ScrollText, P.AUDIT_LOGS_VIEW),
+  ],
+}
+
 export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
   [USER_ROLES.SystemAdmin]: [
     {
@@ -126,7 +204,10 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       icon: Warehouse,
       collapsible: true,
       separatorBefore: true,
-      items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
+      items: [
+        requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW),
+        requiredNavItem(APP_ROUTES.warehouseLayouts, 'Sơ đồ kho', Warehouse, P.WAREHOUSES_VIEW),
+      ],
     },
     {
       id: 'subjects',
@@ -206,7 +287,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           href: APP_ROUTES.subscriptionPayments,
           label: 'Lịch sử thanh toán',
           icon: ReceiptText,
-          requiredPermission: P.SUBSCRIPTION_PLANS_VIEW,
+          requiredPermission: P.PAYMENTS_VIEW,
           activePrefixes: [APP_ROUTES.subscriptionInvoices],
         },
       ],
@@ -233,75 +314,12 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ]),
       ],
     },
-    {
-      id: 'organization-management',
-      label: 'Quản trị tổ chức',
-      icon: Building2,
-      collapsible: true,
-      items: [requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW)],
-    },
-    {
-      id: 'subjects',
-      label: 'Đối tượng',
-      icon: Users,
-      collapsible: true,
-      items: [
-        requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
-        requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
-      ],
-    },
-    {
-      id: 'catalog',
-      label: 'Danh mục',
-      icon: Tags,
-      collapsible: true,
-      items: [
-        requiredNavItem(APP_ROUTES.products, 'Danh mục VTHH', Package, P.PRODUCTS_VIEW),
-        requiredNavItem(APP_ROUTES.categories, 'Nhóm VTHH', Tags, P.CATEGORIES_VIEW),
-        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
-      ],
-    },
-    {
-      id: 'warehouse-management',
-      label: 'Quản Lý Kho',
-      icon: Warehouse,
-      collapsible: true,
-      items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
-    },
-    {
-      id: 'warehouse-operations',
-      label: 'Hoạt Động Kho',
-      icon: PackageOpen,
-      collapsible: true,
-      items: [
-        requiredNavItem(
-          APP_ROUTES.inboundRequests,
-          'Yêu cầu nhập kho',
-          ClipboardList,
-          P.INBOUND_REQUESTS_VIEW
-        ),
-        requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW),
-        requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
-        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
-        requiredNavItem(
-          APP_ROUTES.stockIssueRequests,
-          'Xuất kho & Trả hàng',
-          PackageMinus,
-          P.STOCK_ISSUE_REQUESTS_VIEW,
-          [APP_ROUTES.goodsReturnRequests]
-        ),
-      ],
-    },
-    {
-      id: 'system',
-      label: 'Hệ thống',
-      icon: Settings,
-      collapsible: true,
-      items: [
-        requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
-        requiredNavItem(APP_ROUTES.auditLogs, 'Nhật ký hoạt động', ScrollText, P.AUDIT_LOGS_VIEW),
-      ],
-    },
+    tenantStaffSection,
+    tenantSubjectsSection,
+    tenantCatalogSection,
+    tenantWarehouseSection,
+    tenantOperationsSection,
+    tenantMemberSystemSection,
   ],
   [USER_ROLES.WarehouseStaff]: [
     {
@@ -310,67 +328,26 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.staff,
         ]),
-      ],
-    },
-    {
-      id: 'catalog',
-      label: 'Danh mục',
-      icon: Tags,
-      collapsible: true,
-      items: [
-        requiredNavItem(APP_ROUTES.products, 'Danh mục VTHH', Package, P.PRODUCTS_VIEW),
-        requiredNavItem(APP_ROUTES.categories, 'Nhóm VTHH', Tags, P.CATEGORIES_VIEW),
-        requiredNavItem(APP_ROUTES.units, 'Đơn vị tính', Scale, P.UNITS_VIEW),
-      ],
-    },
-    {
-      id: 'subjects',
-      label: 'Đối tượng',
-      icon: Users,
-      collapsible: true,
-      items: [
-        requiredNavItem(APP_ROUTES.suppliers, 'Nhà cung cấp', Truck, P.SUPPLIERS_VIEW),
-        requiredNavItem(APP_ROUTES.stockRecipients, 'Khách hàng', Users, P.STOCK_RECIPIENTS_VIEW),
-      ],
-    },
-    {
-      id: 'warehouse-management',
-      label: 'Quản Lý Kho',
-      icon: Warehouse,
-      collapsible: true,
-      items: [requiredNavItem(APP_ROUTES.warehouses, 'Kho hàng', Warehouse, P.WAREHOUSES_VIEW)],
-    },
-    {
-      id: 'warehouse-operations',
-      label: 'Hoạt Động Kho',
-      icon: PackageOpen,
-      collapsible: true,
-      items: [
         requiredNavItem(
-          APP_ROUTES.inboundRequests,
-          'Yêu cầu nhập kho',
+          APP_ROUTES.myTasks,
+          'Công việc của tôi',
           ClipboardList,
-          P.INBOUND_REQUESTS_VIEW
+          P.WAREHOUSE_TASKS_VIEW_OWN
         ),
-        requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW),
-        requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
-        requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
         requiredNavItem(
-          APP_ROUTES.stockIssueRequests,
-          'Xuất kho & Trả hàng',
-          PackageMinus,
-          P.STOCK_ISSUE_REQUESTS_VIEW,
-          [APP_ROUTES.goodsReturnRequests]
+          APP_ROUTES.myTaskHistory,
+          'Lịch sử công việc',
+          ScrollText,
+          P.WAREHOUSE_TASKS_VIEW_OWN
         ),
       ],
     },
-    {
-      id: 'system',
-      label: 'Hệ thống',
-      icon: Settings,
-      collapsible: true,
-      items: [requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW)],
-    },
+    tenantStaffSection,
+    tenantCatalogSection,
+    tenantSubjectsSection,
+    tenantWarehouseSection,
+    tenantOperationsSection,
+    tenantMemberSystemSection,
   ],
 }
 

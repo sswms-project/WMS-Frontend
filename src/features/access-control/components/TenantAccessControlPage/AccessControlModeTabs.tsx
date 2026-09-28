@@ -1,6 +1,5 @@
 import { ShieldCheck, UserRoundCog } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
 import type { AccessControlMode } from '../../types/tenant-access-control.types'
 import { isAccessControlMode } from '../../utils/tenant-access-control'
 
@@ -11,9 +10,6 @@ interface AccessControlModeTabsProps {
 }
 
 export function AccessControlModeTabs({ value, disabled, onChange }: AccessControlModeTabsProps) {
-  const roleModeActive = value === 'role'
-  const personalModeActive = value === 'personal'
-
   return (
     <Tabs
       value={value}
@@ -21,67 +17,25 @@ export function AccessControlModeTabs({ value, disabled, onChange }: AccessContr
         if (isAccessControlMode(nextValue)) onChange(nextValue)
       }}
     >
-      <TabsList
-        aria-label="Chế độ phân quyền"
-        className="grid h-auto w-full max-w-xl grid-cols-2 gap-1 rounded-lg border p-1 group-data-[orientation=horizontal]/tabs:h-auto"
-      >
-        <TabsTrigger
-          value="role"
-          aria-label="Vai trò"
-          disabled={disabled}
-          className={cn(
-            'min-h-14 justify-start gap-3 rounded-md border border-transparent px-3 py-2 text-left transition-[background-color,border-color,box-shadow,color] after:hidden',
-            roleModeActive
-              ? 'border-primary/30 bg-card text-foreground shadow-xs'
-              : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
-          )}
-        >
-          <span
-            className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-sm border',
-              roleModeActive
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-background text-muted-foreground'
-            )}
-          >
+      <header className="border-border flex shrink-0 flex-wrap items-center gap-3 border-b pb-3">
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
             <ShieldCheck aria-hidden="true" />
           </span>
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-sm font-semibold">Vai trò</span>
-            <span className="text-muted-foreground truncate text-xs font-normal">
-              Quyền mặc định theo nhóm
-            </span>
-          </span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="personal"
-          aria-label="Quyền cá nhân"
-          disabled={disabled}
-          className={cn(
-            'min-h-14 justify-start gap-3 rounded-md border border-transparent px-3 py-2 text-left transition-[background-color,border-color,box-shadow,color] after:hidden',
-            personalModeActive
-              ? 'border-primary/30 bg-card text-foreground shadow-xs'
-              : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
-          )}
-        >
-          <span
-            className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-sm border',
-              personalModeActive
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-background text-muted-foreground'
-            )}
-          >
+          <h1 className="text-xl font-semibold text-balance">Phân quyền</h1>
+        </div>
+
+        <TabsList variant="workspace" aria-label="Chế độ phân quyền" className="h-9 p-0">
+          <TabsTrigger value="role" disabled={disabled} className="h-9 flex-none gap-2 px-3">
+            <ShieldCheck aria-hidden="true" />
+            Theo vai trò
+          </TabsTrigger>
+          <TabsTrigger value="personal" disabled={disabled} className="h-9 flex-none gap-2 px-3">
             <UserRoundCog aria-hidden="true" />
-          </span>
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-sm font-semibold">Quyền cá nhân</span>
-            <span className="text-muted-foreground truncate text-xs font-normal">
-              Tùy chỉnh cho từng người
-            </span>
-          </span>
-        </TabsTrigger>
-      </TabsList>
+            Theo nhân sự
+          </TabsTrigger>
+        </TabsList>
+      </header>
     </Tabs>
   )
 }

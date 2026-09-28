@@ -57,7 +57,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
   )
 
   if (warehouseQuery.isLoading || sceneQuery.isLoading || meQuery.isLoading) {
-    return <Skeleton className="h-[min(72dvh,48rem)] min-h-[32rem] w-full" />
+    return <Skeleton className="h-full min-h-0 w-full" />
   }
 
   if (

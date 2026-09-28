@@ -12,10 +12,19 @@ export interface SubscriptionStatusResponse {
   autoRenew: boolean
   isExpired: boolean
   daysRemaining: number
+  currentUserCount: number
+  pendingInvitationCount: number
+  userLimit: number | null
+  currentWarehouseCount: number
+  warehouseLimit: number | null
   pendingPlanName?: string | null
   pendingBillingCycle?: BillingCycle | null
   pendingEffectiveAt?: string | null
   pendingPaymentId?: string | null
+  pendingPaymentStatus?: PaymentStatus | null
+  pendingPaymentType?: PaymentType | null
+  pendingCheckoutUrl?: string | null
+  pendingPaymentOrderCode?: number | null
   cancelledAt?: string | null
 }
 
@@ -80,6 +89,7 @@ export interface SubscriptionPlanChangeResponse {
   amount: number
   currency: string
   currentUsers: number
+  pendingInvitations: number
   targetUserLimit: number | null
   currentWarehouses: number
   targetWarehouseLimit: number | null
@@ -87,6 +97,13 @@ export interface SubscriptionPlanChangeResponse {
   requiresPayment: boolean
   payment?: PaymentLinkResponse | null
 }
+
+export type PaymentType =
+  | 'NewSubscription'
+  | 'Renewal'
+  | 'Upgrade'
+  | 'Downgrade'
+  | 'ScheduledChange'
 
 export const PAYMENT_STATUS_VALUES = [
   'Completed',

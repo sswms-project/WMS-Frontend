@@ -54,10 +54,12 @@ export function AppSidebar() {
     <Sidebar
       collapsible="icon"
       className="border-sidebar-border min-w-0 overflow-hidden border-r-0"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      <SidebarContent className="min-w-0 overscroll-contain py-3">
+      <SidebarContent
+        className="min-w-0 overscroll-contain py-3"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <SidebarNavigation
           pathname={pathname}
           sections={sections}

@@ -40,6 +40,30 @@ export function arePermissionSetsEqual(left: ReadonlySet<string>, right: Readonl
   return left.size === right.size && [...left].every((permissionId) => right.has(permissionId))
 }
 
+export function rebasePermissionDraft(
+  baselineIds: ReadonlySet<string>,
+  draftIds: ReadonlySet<string>,
+  authoritativeIds: ReadonlySet<string>,
+  eligibleIds: ReadonlySet<string>
+) {
+  const localAdditions = [...draftIds].filter(
+    (permissionId) => !baselineIds.has(permissionId) && eligibleIds.has(permissionId)
+  )
+  const localRemovals = new Set(
+    [...baselineIds].filter((permissionId) => !draftIds.has(permissionId))
+  )
+  const nextBaselineIds = new Set(
+    [...authoritativeIds].filter((permissionId) => eligibleIds.has(permissionId))
+  )
+  const nextDraftIds = new Set(
+    [...nextBaselineIds, ...localAdditions].filter(
+      (permissionId) => !localRemovals.has(permissionId)
+    )
+  )
+
+  return { baselineIds: nextBaselineIds, draftIds: nextDraftIds }
+}
+
 export function groupTenantPermissions(
   permissions: TenantAssignablePermission[]
 ): PermissionModuleGroup[] {
@@ -117,36 +141,26 @@ export function getCustomizedPermissionIds(
 
 export function createRolePermissionRow(
   permission: TenantAssignablePermission,
-  roleName: string,
-  selectedIds: ReadonlySet<string>,
-  inheritedIds: ReadonlySet<string>
+  selectedIds: ReadonlySet<string>
 ): PermissionRowViewModel {
-  const eligible = permission.eligibleRoles.includes(roleName)
-  const inherited = inheritedIds.has(permission.id)
   return {
     permission,
-    checked: selectedIds.has(permission.id) || inherited,
-    editable: eligible && !inherited,
-    presentation: !eligible ? 'role-unavailable' : inherited ? 'role-inherited' : 'role-direct',
+    checked: selectedIds.has(permission.id),
+    editable: true,
+    presentation: 'role-assigned',
   }
 }
 
 export function createPersonalPermissionRow(
   permission: TenantAssignablePermission,
-  roleName: string,
   selectedIds: ReadonlySet<string>,
   roleDefaultIds: ReadonlySet<string>
 ): PermissionRowViewModel {
-  const eligible = permission.eligibleRoles.includes(roleName)
   const customized = selectedIds.has(permission.id) !== roleDefaultIds.has(permission.id)
   return {
     permission,
     checked: selectedIds.has(permission.id),
-    editable: eligible,
-    presentation: !eligible
-      ? 'personal-unavailable'
-      : customized
-        ? 'personal-customized'
-        : 'personal-default',
+    editable: true,
+    presentation: customized ? 'personal-customized' : 'personal-default',
   }
 }
