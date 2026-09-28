@@ -38,7 +38,7 @@ export function TwoFactorCard({
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="px-6 py-6">
+      <CardContent className="grid gap-5 px-6 py-6">
         {isLoading && <Skeleton className="h-9 w-full" />}
 
         {isError && !isLoading && (
@@ -49,32 +49,41 @@ export function TwoFactorCard({
         )}
 
         {!isLoading && !isError && (
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
+          <div className="grid gap-5">
+            <div className="bg-surface-container-low border-border flex items-center gap-3 border px-4 py-3">
               <span
                 className={cn(
                   'size-[9px] shrink-0 rounded-full',
                   isTwoFactorEnabled ? 'bg-primary' : 'bg-muted-foreground'
                 )}
               />
-              <span
-                className={cn(
-                  'text-[13px] font-semibold',
-                  isTwoFactorEnabled ? 'text-primary' : 'text-muted-foreground'
-                )}
-              >
-                {isTwoFactorEnabled ? 'Đã bật' : 'Chưa bật'}
-              </span>
+              <div className="min-w-0">
+                <p
+                  className={cn(
+                    'font-semibold',
+                    isTwoFactorEnabled ? 'text-primary' : 'text-muted-foreground'
+                  )}
+                >
+                  {isTwoFactorEnabled ? 'Đang được bảo vệ' : 'Chưa được bảo vệ bằng OTP'}
+                </p>
+                <p className="text-muted-foreground mt-0.5">
+                  {isTwoFactorEnabled
+                    ? 'Bạn sẽ nhập thêm mã xác thực sau mật khẩu.'
+                    : 'Bật 2FA để giảm rủi ro khi mật khẩu bị lộ.'}
+                </p>
+              </div>
             </div>
-            {isTwoFactorEnabled ? (
-              <DisableTwoFactorDialog
-                form={disableForm}
-                isPending={isDisabling}
-                onSubmit={onDisable}
-              />
-            ) : (
-              <EnableTwoFactorDialog />
-            )}
+            <div className="[&_[data-slot=dialog-trigger]]:w-full">
+              {isTwoFactorEnabled ? (
+                <DisableTwoFactorDialog
+                  form={disableForm}
+                  isPending={isDisabling}
+                  onSubmit={onDisable}
+                />
+              ) : (
+                <EnableTwoFactorDialog />
+              )}
+            </div>
           </div>
         )}
       </CardContent>

@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import type { DateRange } from 'react-day-picker'
+import { format, isValid, parseISO } from 'date-fns'
 import { Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import {
   Select,
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DateRangeFilter } from '@/features/dashboard/components/shared'
 import { AUDIT_LOG_TIME_RANGES, type AuditLogTimeRange } from '../../types/platform-services.types'
 import type { AuditLogFilterValues } from './types'
 
@@ -26,7 +28,7 @@ const TIME_RANGE_OPTIONS: ReadonlyArray<{ value: AuditLogTimeRange; label: strin
   { value: 'quarter-to-date', label: 'Từ đầu quý đến nay' },
   { value: 'this-year', label: 'Năm nay' },
   { value: 'year-to-date', label: 'Từ đầu năm đến nay' },
-  { value: 'custom', label: 'Khoảng thời gian khác' },
+  { value: 'custom', label: 'Tùy chọn' },
 ]
 
 interface AuditLogFiltersProps {
@@ -37,6 +39,9 @@ interface AuditLogFiltersProps {
 
 export function AuditLogFilters({ filters, onApply, onClear }: AuditLogFiltersProps) {
   const [timeRange, setTimeRange] = useState<AuditLogTimeRange>(filters.timeRange)
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(() =>
+    createCustomRange(filters.dateFrom, filters.dateTo)
+  )
 
   return (
     <form
@@ -47,8 +52,9 @@ export function AuditLogFilters({ filters, onApply, onClear }: AuditLogFiltersPr
         onApply({
           search: String(data.get('search') ?? ''),
           timeRange,
-          dateFrom: timeRange === 'custom' ? String(data.get('dateFrom') ?? '') : '',
-          dateTo: timeRange === 'custom' ? String(data.get('dateTo') ?? '') : '',
+          dateFrom: timeRange === 'custom' ? formatRangeDate(customRange?.from) : '',
+          dateTo:
+            timeRange === 'custom' ? formatRangeDate(customRange?.to ?? customRange?.from) : '',
         })
       }}
     >
@@ -84,24 +90,7 @@ export function AuditLogFilters({ filters, onApply, onClear }: AuditLogFiltersPr
         </SelectContent>
       </Select>
       {timeRange === 'custom' ? (
-        <>
-          <Input
-            name="dateFrom"
-            type="date"
-            defaultValue={filters.dateFrom}
-            className="w-40"
-            aria-label="Từ ngày"
-            autoComplete="off"
-          />
-          <Input
-            name="dateTo"
-            type="date"
-            defaultValue={filters.dateTo}
-            className="w-40"
-            aria-label="Đến ngày"
-            autoComplete="off"
-          />
-        </>
+        <DateRangeFilter value={customRange} onChange={setCustomRange} />
       ) : null}
       <Button type="submit" variant="outline">
         Tìm kiếm
@@ -114,4 +103,16 @@ export function AuditLogFilters({ filters, onApply, onClear }: AuditLogFiltersPr
       ) : null}
     </form>
   )
+}
+
+function createCustomRange(dateFrom: string, dateTo: string): DateRange | undefined {
+  if (!dateFrom) return undefined
+  const from = parseISO(dateFrom)
+  if (!isValid(from)) return undefined
+  const to = dateTo ? parseISO(dateTo) : undefined
+  return { from, to: to && isValid(to) ? to : undefined }
+}
+
+function formatRangeDate(date: Date | undefined) {
+  return date ? format(date, 'yyyy-MM-dd') : ''
 }

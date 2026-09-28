@@ -42,7 +42,7 @@ import type {
   TenantSubscriptionStatus,
   TenantSummaryResponse,
 } from '../../types/admin.types'
-import { formatAdminDate } from '../../utils/platform-admin-format'
+import { formatAdminDate, formatTenantStatus } from '../../utils/platform-admin-format'
 
 interface TenantDirectoryViewProps {
   readonly items: readonly TenantSummaryResponse[]
@@ -72,12 +72,6 @@ interface TenantDirectoryViewProps {
 }
 
 function TenantStatusBadge({ status }: { readonly status: TenantStatus }) {
-  const label = {
-    Active: 'Hoạt động',
-    Suspended: 'Tạm ngưng',
-    Pending: 'Chờ kích hoạt',
-    Inactive: 'Không hoạt động',
-  }[status]
   return (
     <Badge
       variant="outline"
@@ -86,7 +80,7 @@ function TenantStatusBadge({ status }: { readonly status: TenantStatus }) {
         status === 'Suspended' && 'border-destructive/30 text-destructive'
       )}
     >
-      {label}
+      {formatTenantStatus(status)}
     </Badge>
   )
 }
@@ -103,14 +97,20 @@ function isTenantSort(value: string): value is TenantDirectoryViewProps['sortBy'
   return ['createdAt', 'tenantName', 'status', 'subscriptionEndDate'].includes(value)
 }
 
-function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewProps }) {
+function TenantFilterSelects({
+  props,
+  className,
+}: {
+  readonly props: TenantDirectoryViewProps
+  readonly className?: string
+}) {
   return (
-    <>
+    <div className={cn('grid gap-2 md:flex md:flex-wrap md:items-center', className)}>
       <Select
         value={props.status ?? 'all'}
         onValueChange={(value) => props.onStatusChange(isTenantStatus(value) ? value : undefined)}
       >
-        <SelectTrigger aria-label="Trạng thái đơn vị thuê">
+        <SelectTrigger className="w-full md:w-40" aria-label="Trạng thái đơn vị thuê">
           <SelectValue placeholder="Trạng thái" />
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
@@ -127,7 +127,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
           props.onSubscriptionStatusChange(isSubscriptionStatus(value) ? value : undefined)
         }
       >
-        <SelectTrigger aria-label="Trạng thái đăng ký">
+        <SelectTrigger className="w-full md:w-40" aria-label="Trạng thái đăng ký">
           <SelectValue placeholder="Đăng ký" />
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
@@ -141,7 +141,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
         value={props.planId ?? 'all'}
         onValueChange={(value) => props.onPlanChange(value === 'all' ? undefined : value)}
       >
-        <SelectTrigger aria-label="Gói đăng ký">
+        <SelectTrigger className="w-full md:w-40" aria-label="Gói đăng ký">
           <SelectValue placeholder="Gói" />
         </SelectTrigger>
         <SelectContent align="start" sideOffset={4}>
@@ -159,7 +159,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
           if (isTenantSort(value)) props.onSortChange(value)
         }}
       >
-        <SelectTrigger aria-label="Sắp xếp">
+        <SelectTrigger className="w-full md:w-44" aria-label="Sắp xếp">
           <SlidersHorizontal aria-hidden="true" />
           <SelectValue />
         </SelectTrigger>
@@ -170,7 +170,7 @@ function TenantFilterSelects({ props }: { readonly props: TenantDirectoryViewPro
           <SelectItem value="subscriptionEndDate">Ngày hết hạn</SelectItem>
         </SelectContent>
       </Select>
-    </>
+    </div>
   )
 }
 
@@ -257,7 +257,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
                     Thu hẹp danh sách theo trạng thái, gói và ngày.
                   </SheetDescription>
                 </SheetHeader>
-                <div className="grid gap-3 px-4">
+                <div className="px-4">
                   <TenantFilterSelects props={props} />
                 </div>
                 <SheetFooter>
@@ -268,8 +268,8 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
               </SheetContent>
             </Sheet>
           </div>
-          <div className="hidden gap-2 md:grid md:grid-cols-2 xl:grid-cols-[minmax(240px,2fr)_1fr_1fr_1fr_1fr]">
-            <InputGroup>
+          <div className="hidden flex-wrap items-center gap-2 md:flex">
+            <InputGroup className="min-w-64 flex-1">
               <InputGroupAddon>
                 <Search aria-hidden="true" />
               </InputGroupAddon>
@@ -282,7 +282,7 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
                 onChange={(event) => props.onSearchChange(event.target.value)}
               />
             </InputGroup>
-            <TenantFilterSelects props={props} />
+            <TenantFilterSelects props={props} className="w-full lg:w-auto" />
           </div>
         </div>
 

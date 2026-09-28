@@ -44,7 +44,7 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
         </div>
       </CardHeader>
       <CardContent className="px-6 py-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4.5">
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
           <Field data-invalid={Boolean(errors.currentPassword)}>
             <FieldLabel htmlFor="currentPassword">Mật khẩu hiện tại</FieldLabel>
             <div className="relative">
@@ -56,10 +56,12 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
                 className="h-10 rounded-lg pr-10 text-sm"
                 {...register('currentPassword')}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setShowCurrentPassword((v) => !v)}
-                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+                className="text-muted-foreground absolute top-1/2 right-1 -translate-y-1/2"
                 aria-label={showCurrentPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showCurrentPassword ? (
@@ -67,7 +69,7 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
                 ) : (
                   <Eye className="size-4" aria-hidden="true" />
                 )}
-              </button>
+              </Button>
             </div>
             <FieldError>{errors.currentPassword?.message}</FieldError>
           </Field>
@@ -83,10 +85,12 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
                 className="h-10 rounded-lg pr-10 text-sm"
                 {...register('newPassword')}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setShowNewPassword((v) => !v)}
-                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+                className="text-muted-foreground absolute top-1/2 right-1 -translate-y-1/2"
                 aria-label={showNewPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showNewPassword ? (
@@ -94,7 +98,7 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
                 ) : (
                   <Eye className="size-4" aria-hidden="true" />
                 )}
-              </button>
+              </Button>
             </div>
             <FieldError>{errors.newPassword?.message}</FieldError>
           </Field>
@@ -116,10 +120,12 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
                 className="h-10 rounded-lg pr-10 text-sm"
                 {...register('confirmPassword')}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setShowConfirmPassword((v) => !v)}
-                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+                className="text-muted-foreground absolute top-1/2 right-1 -translate-y-1/2"
                 aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showConfirmPassword ? (
@@ -127,7 +133,7 @@ export function ChangePasswordCard({ form, isPending, onSubmit }: ChangePassword
                 ) : (
                   <Eye className="size-4" aria-hidden="true" />
                 )}
-              </button>
+              </Button>
             </div>
             <FieldError>{errors.confirmPassword?.message}</FieldError>
             <ConfirmPasswordHint
