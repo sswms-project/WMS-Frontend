@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { AuditLogItem } from '../../types/platform-services.types'
 import { AuditLogList } from './AuditLogList'
@@ -49,5 +49,31 @@ describe('AuditLogList', () => {
     expect(screen.queryByText(auditLog.summary)).not.toBeInTheDocument()
     expect(screen.queryByText('CreateInvitation')).not.toBeInTheDocument()
     expect(screen.queryByText(auditLog.entityId)).not.toBeInTheDocument()
+  })
+
+  it('opens details from the row without rendering a redundant detail action column', () => {
+    const onView = vi.fn()
+
+    render(
+      <AuditLogList
+        items={[auditLog]}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+        hasActiveFilters={false}
+        onView={onView}
+        onRetry={vi.fn()}
+      />
+    )
+
+    expect(screen.queryByRole('columnheader', { name: 'Chi tiết' })).not.toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('row', {
+        name: `Xem chi tiết ${auditLog.actionLabel}: ${auditLog.referenceDisplay}`,
+      })
+    )
+
+    expect(onView).toHaveBeenCalledWith(auditLog)
   })
 })

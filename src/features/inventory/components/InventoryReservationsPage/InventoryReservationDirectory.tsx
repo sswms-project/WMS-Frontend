@@ -145,14 +145,14 @@ export function InventoryReservationDirectory(props: InventoryReservationDirecto
             <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10">Sản phẩm</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Kho / Vị trí</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Lô / Chất lượng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Chứng từ</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Người tạo</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">Số lượng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Thời điểm</TableHead>
+                  <TableHead className="sticky top-0 z-10">Sản phẩm</TableHead>
+                  <TableHead className="sticky top-0 z-10">Kho / Vị trí</TableHead>
+                  <TableHead className="sticky top-0 z-10">Lô / Chất lượng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Chứng từ</TableHead>
+                  <TableHead className="sticky top-0 z-10">Người tạo</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Số lượng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10">Thời điểm</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

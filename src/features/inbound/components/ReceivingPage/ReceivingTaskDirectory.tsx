@@ -210,15 +210,13 @@ export function ReceivingTaskDirectory({
             <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10">Mã PO</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Nhà cung cấp</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Kho nhận</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">
-                    Đã nhận / Đặt
-                  </TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Ngày dự kiến</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Người nhận việc</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">Thao tác</TableHead>
+                  <TableHead className="sticky top-0 z-10">Mã PO</TableHead>
+                  <TableHead className="sticky top-0 z-10">Nhà cung cấp</TableHead>
+                  <TableHead className="sticky top-0 z-10">Kho nhận</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Đã nhận / Đặt</TableHead>
+                  <TableHead className="sticky top-0 z-10">Ngày dự kiến</TableHead>
+                  <TableHead className="sticky top-0 z-10">Người nhận việc</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

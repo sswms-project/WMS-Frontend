@@ -26,12 +26,10 @@ export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTable
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="bg-card sticky top-0 z-10">Vai trò</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 hidden lg:table-cell">
-                Mô tả
-              </TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-28 text-center">Quyền</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
+              <TableHead className="sticky top-0 z-10">Vai trò</TableHead>
+              <TableHead className="sticky top-0 z-10 hidden lg:table-cell">Mô tả</TableHead>
+              <TableHead className="sticky top-0 z-10 w-28 text-center">Quyền</TableHead>
+              <TableHead className="sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -79,10 +77,10 @@ export function RolesTable({ roles, isLoading, onManagePermissions }: RolesTable
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30">
-            <TableHead className="bg-card sticky top-0 z-10">Vai trò</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 hidden lg:table-cell">Mô tả</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-28 text-center">Quyền</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
+            <TableHead className="sticky top-0 z-10">Vai trò</TableHead>
+            <TableHead className="sticky top-0 z-10 hidden lg:table-cell">Mô tả</TableHead>
+            <TableHead className="sticky top-0 z-10 w-28 text-center">Quyền</TableHead>
+            <TableHead className="sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

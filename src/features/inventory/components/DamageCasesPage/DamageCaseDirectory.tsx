@@ -189,12 +189,12 @@ export function DamageCaseDirectory(props: DamageCaseDirectoryProps) {
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky top-0 z-10">Sản phẩm</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Kho / vị trí</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10 text-right">Số lượng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Lý do / bằng chứng</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Người báo</TableHead>
-                  <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10">Sản phẩm</TableHead>
+                  <TableHead className="sticky top-0 z-10">Kho / vị trí</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Số lượng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Lý do / bằng chứng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Người báo</TableHead>
+                  <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>

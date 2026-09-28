@@ -254,7 +254,7 @@ function InboundRequestTableSkeleton() {
       <Table className="min-w-[1120px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-12">
+            <TableHead className="sticky top-0 z-10 w-12">
               <Skeleton className="size-4" />
             </TableHead>
             {[
@@ -266,7 +266,7 @@ function InboundRequestTableSkeleton() {
               'Ngày dự kiến',
               'Thao tác',
             ].map((heading) => (
-              <TableHead key={heading} className="bg-card sticky top-0 z-10">
+              <TableHead key={heading} className="sticky top-0 z-10">
                 {heading}
               </TableHead>
             ))}
@@ -397,7 +397,7 @@ function InboundRequestDesktopTable({
       <Table className="min-w-[1120px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-12">
+            <TableHead className="sticky top-0 z-10 w-12">
               <Checkbox
                 aria-label="Chọn tất cả phiếu nháp trên trang"
                 checked={allSelected}
@@ -415,13 +415,13 @@ function InboundRequestDesktopTable({
                 }
               />
             </TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-64">Mã yêu cầu</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-44">Nguồn hàng</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Kho nhận</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">Trạng thái</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36">Tiến độ nhận</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">Ngày dự kiến</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24">
+            <TableHead className="sticky top-0 z-10 w-64">Mã yêu cầu</TableHead>
+            <TableHead className="sticky top-0 z-10 w-44">Nguồn hàng</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Kho nhận</TableHead>
+            <TableHead className="sticky top-0 z-10 w-32">Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10 w-36">Tiến độ nhận</TableHead>
+            <TableHead className="sticky top-0 z-10 w-32">Ngày dự kiến</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24">
               <span className="sr-only">Thao tác</span>
             </TableHead>
           </TableRow>

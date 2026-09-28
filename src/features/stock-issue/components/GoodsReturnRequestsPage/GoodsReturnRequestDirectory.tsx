@@ -180,12 +180,12 @@ export function GoodsReturnRequestDirectory({
           <Table className="min-w-[760px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky top-0 z-10">Mã phiếu</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Yêu cầu xuất kho</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Lý do</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">Ngày tạo</TableHead>
-                <TableHead className="bg-card sticky top-0 z-10">
+                <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
+                <TableHead className="sticky top-0 z-10">Yêu cầu xuất kho</TableHead>
+                <TableHead className="sticky top-0 z-10">Lý do</TableHead>
+                <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
+                <TableHead className="sticky top-0 z-10">
                   <span className="sr-only">Thao tác</span>
                 </TableHead>
               </TableRow>

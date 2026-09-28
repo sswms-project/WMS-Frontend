@@ -376,15 +376,11 @@ function AbcResults({ items }: { readonly items: readonly InventoryAbcItem[] }) 
         <Table className="min-w-[760px] table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-card sticky top-0 z-10 w-80">Sản phẩm</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-32 text-right">
-                Tổng số lượng
-              </TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-36 text-right">
-                Tỷ lệ tích lũy
-              </TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-44">Cơ sở / kỳ</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-28 text-center">Nhóm</TableHead>
+              <TableHead className="sticky top-0 z-10 w-80">Sản phẩm</TableHead>
+              <TableHead className="sticky top-0 z-10 w-32 text-right">Tổng số lượng</TableHead>
+              <TableHead className="sticky top-0 z-10 w-36 text-right">Tỷ lệ tích lũy</TableHead>
+              <TableHead className="sticky top-0 z-10 w-44">Cơ sở / kỳ</TableHead>
+              <TableHead className="sticky top-0 z-10 w-28 text-center">Nhóm</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

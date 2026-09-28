@@ -304,14 +304,12 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="bg-card sticky top-0 z-10">Đơn vị thuê</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Chủ sở hữu</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Gói</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10 text-center">
-                      Người dùng
-                    </TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10 text-center">Kho</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+                    <TableHead className="sticky top-0 z-10">Đơn vị thuê</TableHead>
+                    <TableHead className="sticky top-0 z-10">Chủ sở hữu</TableHead>
+                    <TableHead className="sticky top-0 z-10">Gói</TableHead>
+                    <TableHead className="sticky top-0 z-10 text-center">Người dùng</TableHead>
+                    <TableHead className="sticky top-0 z-10 text-center">Kho</TableHead>
+                    <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

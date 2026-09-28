@@ -79,17 +79,15 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
       <Table className="min-w-[1080px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Thời gian</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36">Loại</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-64">Sản phẩm</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">Slot</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36">Lô / Chất lượng</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">Biến động</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-28 text-right">
-              Sau biến động
-            </TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-48">Chứng từ</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-48">Người thực hiện</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Thời gian</TableHead>
+            <TableHead className="sticky top-0 z-10 w-36">Loại</TableHead>
+            <TableHead className="sticky top-0 z-10 w-64">Sản phẩm</TableHead>
+            <TableHead className="sticky top-0 z-10 w-32">Slot</TableHead>
+            <TableHead className="sticky top-0 z-10 w-36">Lô / Chất lượng</TableHead>
+            <TableHead className="sticky top-0 z-10 w-28 text-right">Biến động</TableHead>
+            <TableHead className="sticky top-0 z-10 w-28 text-right">Sau biến động</TableHead>
+            <TableHead className="sticky top-0 z-10 w-48">Chứng từ</TableHead>
+            <TableHead className="sticky top-0 z-10 w-48">Người thực hiện</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
