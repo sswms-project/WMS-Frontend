@@ -22,8 +22,8 @@ export function useUpdateOrganizationMutation() {
     UpdateOrganizationRequest
   >({
     mutationFn: organizationService.updateOrganization,
-    onSuccess: (response) => {
-      queryClient.setQueryData(queryKeys.organization.me, response.data)
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.organization.me })
     },
     onError: (error) => logger.error(error),
   })
