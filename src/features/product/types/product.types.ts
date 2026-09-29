@@ -69,7 +69,16 @@ export interface ProductResponse {
 export interface ProductListResponse {
   items: ProductListItem[]
   totalCount: number
+  stockStatusCounts: ProductStockStatusCounts | null
 }
+
+export interface ProductStockStatusCounts {
+  all: number
+  lowStock: number
+  outOfStock: number
+}
+
+export type ProductStockStatus = 'LowStock' | 'OutOfStock'
 
 export type ProductListItem = Omit<
   ProductResponse,
@@ -92,6 +101,7 @@ export interface ProductListQuery {
   warehouseId?: string
   status?: ProductStatus
   isLotTracked?: boolean
+  stockStatus?: ProductStockStatus
 }
 
 export interface CreateProductRequest {

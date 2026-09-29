@@ -18,7 +18,11 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useInventoryWarehouseOptionsQuery } from '@/features/inventory/hooks/use-inventory'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { ProductListTable, ProductListToolbar } from '../components/ProductListPage'
+import {
+  ProductListTable,
+  ProductListToolbar,
+  ProductStockStatusFilter,
+} from '../components/ProductListPage'
 import { CreateProductDialog } from '../components/ProductForm'
 import {
   useCreateProductMutation,
@@ -30,7 +34,7 @@ import {
 } from '../hooks/use-products'
 import { createProductSchema, type CreateProductFormValues } from '../schemas/product.schema'
 import { categorySchema, type CategoryFormValues } from '../schemas/master-data.schema'
-import type { ProductListItem, ProductStatus } from '../types/product.types'
+import type { ProductListItem, ProductStatus, ProductStockStatus } from '../types/product.types'
 import { suggestCategoryCode } from '../utils/category-code'
 
 function parseProductStatus(value: string): ProductStatus | '' {
@@ -50,6 +54,7 @@ export default function ProductListPage() {
   const [warehouseId, setWarehouseId] = useState('')
   const [status, setStatus] = useState<ProductStatus | ''>('')
   const [trackingMode, setTrackingMode] = useState<'quantity' | 'lot' | ''>('')
+  const [stockStatus, setStockStatus] = useState<ProductStockStatus | ''>('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [discardTarget, setDiscardTarget] = useState<'product' | 'category' | null>(null)
@@ -89,6 +94,7 @@ export default function ProductListPage() {
     ...(canViewInventory && warehouseId ? { warehouseId } : {}),
     ...(status ? { status } : {}),
     ...(trackingMode ? { isLotTracked: trackingMode === 'lot' } : {}),
+    ...(canViewInventory && stockStatus ? { stockStatus } : {}),
   })
 
   const createMutation = useCreateProductMutation()
@@ -222,13 +228,31 @@ export default function ProductListPage() {
       </header>
 
       <OperationalListPanel aria-label="Danh sách sản phẩm">
-        <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-3 sm:px-4">
-          <div>
-            <h2 className="text-sm font-semibold">Tất cả sản phẩm</h2>
+        <div className="grid min-h-12 grid-cols-1 gap-2 border-b px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:px-4">
+          <div className="min-w-0 sm:col-start-1 sm:row-start-1">
+            <h2 className="text-sm font-semibold">
+              {stockStatus === 'LowStock'
+                ? 'Sản phẩm sắp hết hàng'
+                : stockStatus === 'OutOfStock'
+                  ? 'Sản phẩm hết hàng'
+                  : 'Tất cả sản phẩm'}
+            </h2>
             <p className="text-muted-foreground mt-0.5 text-xs">
               {listQuery.data?.totalCount ?? 0} sản phẩm
             </p>
           </div>
+          {canViewInventory && listQuery.data?.stockStatusCounts ? (
+            <div className="min-w-0 justify-self-center sm:col-start-2 sm:row-start-1">
+              <ProductStockStatusFilter
+                value={stockStatus}
+                counts={listQuery.data.stockStatusCounts}
+                onValueChange={(value) => {
+                  setStockStatus(value)
+                  setPage(1)
+                }}
+              />
+            </div>
+          ) : null}
         </div>
 
         <ProductListToolbar

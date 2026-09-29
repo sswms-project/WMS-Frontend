@@ -53,7 +53,7 @@ export function ProductListToolbar({
           type="search"
           aria-label="Tìm sản phẩm theo mã, tên hoặc mã vạch"
           autoComplete="off"
-          placeholder="Tìm theo mã, tên hoặc barcode..."
+          placeholder="Tìm theo mã, tên hoặc barcode…"
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
           className="h-9 pl-8 text-sm"
