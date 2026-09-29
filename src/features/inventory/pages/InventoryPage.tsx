@@ -8,11 +8,11 @@ import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useProductOptionsQuery } from '@/features/inbound-request/hooks/use-inbound-requests'
-import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
-import { useWarehouseLocationsQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { InventoryDirectory, ReportDamagedStockDialog } from '../components/InventoryPage'
 import {
   useInventoryQuery,
+  useInventorySlotOptionsQuery,
+  useInventoryWarehouseOptionsQuery,
   useMyWarehouseTasksQuery,
   useReportDamagedStockMutation,
   useUploadInventoryEvidenceMutation,
@@ -56,27 +56,16 @@ export default function InventoryPage() {
     [debouncedSearchText, page, pageSize, productId, slotId, warehouseId]
   )
   const inventoryQuery = useInventoryQuery(inventoryParams)
-  const warehousesQuery = useWarehousesQuery({
-    top: 100,
-    skip: 0,
-    needTotalCount: true,
-    isActive: true,
-  })
+  const warehousesQuery = useInventoryWarehouseOptionsQuery()
   const productsQuery = useProductOptionsQuery({ pageNumber: 1, pageSize: 100, status: 'Active' })
-  const slotsQuery = useWarehouseLocationsQuery(warehouseId, {
-    top: 200,
-    skip: 0,
-    needTotalCount: true,
-    type: 'Slot',
-    lifecycleStatus: 'Active',
-  })
+  const slotsQuery = useInventorySlotOptionsQuery(warehouseId)
   const warehouseOptions = useMemo(
     () =>
-      (warehousesQuery.data?.items ?? []).map((warehouse) => ({
+      (warehousesQuery.data ?? []).map((warehouse) => ({
         value: warehouse.id,
-        label: `${warehouse.warehouseCode} · ${warehouse.warehouseName}`,
+        label: `${warehouse.warehouseCode} · ${warehouse.warehouseName}${warehouse.canManageWarehouse ? '' : ' · Chỉ xem'}`,
       })),
-    [warehousesQuery.data?.items]
+    [warehousesQuery.data]
   )
   const productOptions = useMemo(
     () =>
@@ -87,8 +76,8 @@ export default function InventoryPage() {
     [productsQuery.data?.items]
   )
   const slotOptions = useMemo(
-    () => (slotsQuery.data?.items ?? []).map((slot) => ({ value: slot.id, label: slot.code })),
-    [slotsQuery.data?.items]
+    () => (slotsQuery.data ?? []).map((slot) => ({ value: slot.id, label: slot.slotCode })),
+    [slotsQuery.data]
   )
 
   function updateFilter(setValue: (value: string) => void, value: string) {
@@ -204,9 +193,9 @@ export default function InventoryPage() {
         }}
         onRetryFilters={() => {
           void Promise.all([
-            warehousesQuery.refetch(),
-            productsQuery.refetch(),
-            slotsQuery.refetch(),
+            ...(warehousesQuery.isError ? [warehousesQuery.refetch()] : []),
+            ...(productsQuery.isError ? [productsQuery.refetch()] : []),
+            ...(warehouseId && slotsQuery.isError ? [slotsQuery.refetch()] : []),
           ])
         }}
         onPageChange={setPage}

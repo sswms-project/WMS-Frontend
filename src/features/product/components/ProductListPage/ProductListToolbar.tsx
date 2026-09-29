@@ -4,7 +4,7 @@ import { RefreshCw, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import type { WarehouseResponse } from '@/types/warehouse'
+import type { InventoryWarehouseOption } from '@/features/inventory/types/inventory.types'
 import type { CategoryResponse } from '../../types/product.types'
 
 interface ProductListToolbarProps {
@@ -14,7 +14,8 @@ interface ProductListToolbarProps {
   readonly status: string
   readonly trackingMode: string
   readonly categories: readonly CategoryResponse[]
-  readonly warehouses: readonly WarehouseResponse[]
+  readonly warehouses: readonly InventoryWarehouseOption[]
+  readonly canViewInventory: boolean
   readonly isFetching: boolean
   readonly onSearchChange: (value: string) => void
   readonly onCategoryChange: (value: string) => void
@@ -32,6 +33,7 @@ export function ProductListToolbar({
   trackingMode,
   categories,
   warehouses,
+  canViewInventory,
   isFetching,
   onSearchChange,
   onCategoryChange,
@@ -57,19 +59,21 @@ export function ProductListToolbar({
           className="h-9 pl-8 text-sm"
         />
       </div>
-      <NativeSelect
-        aria-label="Lọc theo kho hàng"
-        className="w-full sm:w-56"
-        value={warehouseId}
-        onChange={(event) => onWarehouseChange(event.target.value)}
-      >
-        <NativeSelectOption value="">Tất cả kho được phép xem</NativeSelectOption>
-        {warehouses.map((warehouse) => (
-          <NativeSelectOption key={warehouse.id} value={warehouse.id}>
-            {warehouse.warehouseCode} — {warehouse.warehouseName}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+      {canViewInventory ? (
+        <NativeSelect
+          aria-label="Lọc theo kho hàng"
+          className="w-full sm:w-56"
+          value={warehouseId}
+          onChange={(event) => onWarehouseChange(event.target.value)}
+        >
+          <NativeSelectOption value="">Tất cả kho trong đơn vị</NativeSelectOption>
+          {warehouses.map((warehouse) => (
+            <NativeSelectOption key={warehouse.id} value={warehouse.id}>
+              {warehouse.warehouseCode} — {warehouse.warehouseName}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      ) : null}
       <NativeSelect
         aria-label="Lọc theo nhóm vật tư hàng hóa"
         className="w-full sm:w-72"

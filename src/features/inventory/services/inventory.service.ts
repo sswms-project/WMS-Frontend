@@ -37,6 +37,8 @@ import type {
   AddStockDiscrepancyEvidenceRequest,
   AddDamageCaseEvidenceRequest,
   MyWarehouseTaskListResponse,
+  InventoryWarehouseOption,
+  InventorySlotOption,
 } from '../types/inventory.types'
 
 export const inventoryService = {
@@ -73,6 +75,14 @@ export const inventoryService = {
   getInventory: (params: InventoryListQuery) =>
     axiosClient
       .get<ApiResponse<InventoryStockListResponse>>(API_ENDPOINTS.inventory.list, { params })
+      .then((response) => response.data),
+  getWarehouseOptions: () =>
+    axiosClient
+      .get<ApiResponse<InventoryWarehouseOption[]>>(API_ENDPOINTS.inventory.warehouseOptions)
+      .then((response) => response.data),
+  getSlotOptions: (warehouseId: string) =>
+    axiosClient
+      .get<ApiResponse<InventorySlotOption[]>>(API_ENDPOINTS.inventory.slotOptions(warehouseId))
       .then((response) => response.data),
   getStockMovements: (params: StockMovementListQuery) =>
     axiosClient

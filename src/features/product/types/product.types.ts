@@ -71,7 +71,18 @@ export interface ProductListResponse {
   totalCount: number
 }
 
-export type ProductListItem = Omit<ProductResponse, 'canChangeBaseUnit' | 'canChangeTrackingMode'>
+export type ProductListItem = Omit<
+  ProductResponse,
+  | 'canChangeBaseUnit'
+  | 'canChangeTrackingMode'
+  | 'quantityOnHand'
+  | 'reservedQuantity'
+  | 'availableQuantity'
+> & {
+  quantityOnHand: number | null
+  reservedQuantity: number | null
+  availableQuantity: number | null
+}
 
 export interface ProductListQuery {
   pageNumber?: number

@@ -16,7 +16,7 @@ import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDial
 import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import { useInventoryWarehouseOptionsQuery } from '@/features/inventory/hooks/use-inventory'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { ProductListTable, ProductListToolbar } from '../components/ProductListPage'
 import { CreateProductDialog } from '../components/ProductForm'
@@ -79,16 +79,14 @@ export default function ProductListPage() {
 
   const meQuery = useMeQuery()
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const warehousesQuery = useWarehousesQuery(
-    { top: 100, skip: 0, needTotalCount: true },
-    permissions.has(P.WAREHOUSES_VIEW)
-  )
+  const canViewInventory = permissions.has(P.INVENTORY_VIEW)
+  const warehousesQuery = useInventoryWarehouseOptionsQuery(canViewInventory)
   const listQuery = useProductListQuery({
     pageNumber: page,
     pageSize,
     ...(debouncedSearch ? { searchTerm: debouncedSearch } : {}),
     ...(categoryId ? { categoryId } : {}),
-    ...(warehouseId ? { warehouseId } : {}),
+    ...(canViewInventory && warehouseId ? { warehouseId } : {}),
     ...(status ? { status } : {}),
     ...(trackingMode ? { isLotTracked: trackingMode === 'lot' } : {}),
   })
@@ -240,9 +238,8 @@ export default function ProductListPage() {
           status={status}
           trackingMode={trackingMode}
           categories={categoriesQuery.data ?? []}
-          warehouses={(warehousesQuery.data?.items ?? []).filter(
-            (warehouse) => warehouse.status === 'Active'
-          )}
+          warehouses={warehousesQuery.data ?? []}
+          canViewInventory={canViewInventory}
           isFetching={listQuery.isFetching}
           onSearchChange={handleSearchChange}
           onCategoryChange={(value) => {
@@ -318,6 +315,7 @@ export default function ProductListPage() {
             <ProductListTable
               products={products}
               canEdit={canEdit}
+              canViewInventory={canViewInventory}
               onView={handleView}
               onEdit={handleEdit}
             />
