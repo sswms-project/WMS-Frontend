@@ -23,6 +23,9 @@ const serverFieldMap = {
   TenantName: 'tenantName',
   Phone: 'phone',
   Address: 'address',
+  TaxCode: 'taxCode',
+  Website: 'website',
+  Industry: 'industry',
 } as const
 
 function isServerField(field: string): field is keyof typeof serverFieldMap {
@@ -63,6 +66,9 @@ function buildUpdateRequest(
     ...(dirtyFields.tenantName ? { tenantName: values.tenantName } : {}),
     ...(dirtyFields.phone ? { phone: values.phone } : {}),
     ...(dirtyFields.address ? { address: values.address } : {}),
+    ...(dirtyFields.taxCode ? { taxCode: values.taxCode } : {}),
+    ...(dirtyFields.website ? { website: values.website } : {}),
+    ...(dirtyFields.industry ? { industry: values.industry } : {}),
   })
 }
 
