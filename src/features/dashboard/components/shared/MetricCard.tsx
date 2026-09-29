@@ -30,10 +30,10 @@ export function MetricCard({ metric }: MetricCardProps) {
         </div>
 
         <div className="space-y-2">
-          <div className="flex min-w-0 items-end justify-between gap-3">
+          <div className="flex min-w-0 items-start justify-between gap-3">
             <AnimatedMetricValue
               value={metric.value}
-              className="text-foreground min-w-0 text-3xl font-bold sm:text-4xl"
+              className="text-foreground min-w-0 flex-1 truncate text-2xl font-bold sm:text-3xl lg:text-lg xl:text-xl 2xl:text-2xl"
             />
             {trendPoints && trendPoints.length > 1 && (
               <MetricSparkline data={trendPoints} trend={sparklineTrend} />
