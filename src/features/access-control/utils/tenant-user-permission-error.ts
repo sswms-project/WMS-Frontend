@@ -1,5 +1,5 @@
 import { ZodError } from 'zod'
-import { getApiErrorCode, getApiErrorMessage } from '@/lib/api-error'
+import { getApiErrorCode, getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 
 export type PersonalPermissionRecovery = 'reload' | 'reselect'
 
@@ -13,6 +13,13 @@ export function getPersonalPermissionErrorDetails(error: unknown): PersonalPermi
   if (error instanceof ZodError) {
     return {
       message: 'Dữ liệu quyền không hợp lệ. Hãy tải lại trang và thử lại.',
+      targetUnavailable: false,
+    }
+  }
+
+  if (isApiErrorResponse(error) && error.statusCode === 403) {
+    return {
+      message: 'Bạn chỉ có quyền xem cấu hình phân quyền và không thể lưu thay đổi.',
       targetUnavailable: false,
     }
   }

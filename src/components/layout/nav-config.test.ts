@@ -285,21 +285,28 @@ describe('application navigation visibility', () => {
     ).toBe(false)
   })
 
-  it('shows tenant access control only to the tenant owner', () => {
+  it('shows tenant access control to delegated tenant roles', () => {
     expect(
       getNavItems(USER_ROLES.TenantOwner).some(
         (item) => item.href === APP_ROUTES.settings.accessControl
       )
     ).toBe(true)
 
-    for (const role of [
-      USER_ROLES.SystemAdmin,
-      USER_ROLES.WarehouseManager,
-      USER_ROLES.WarehouseStaff,
-    ]) {
+    for (const role of [USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff]) {
       expect(
-        getNavItems(role).some((item) => item.href === APP_ROUTES.settings.accessControl)
+        getVisibleNavItems(role, [P.TENANT_ROLE_PERMISSIONS_VIEW]).some(
+          (item) => item.href === APP_ROUTES.settings.accessControl
+        )
+      ).toBe(true)
+      expect(
+        getVisibleNavItems(role, []).some((item) => item.href === APP_ROUTES.settings.accessControl)
       ).toBe(false)
     }
+
+    expect(
+      getNavItems(USER_ROLES.SystemAdmin).some(
+        (item) => item.href === APP_ROUTES.settings.accessControl
+      )
+    ).toBe(false)
   })
 })

@@ -21,6 +21,7 @@ import {
 interface PersonalPermissionEditorStateOptions {
   readonly permissions: TenantAssignablePermission[]
   readonly workspace?: TenantUserPermissionWorkspace
+  readonly canManage: boolean
   readonly saving: boolean
   readonly resetting: boolean
   readonly onSubjectChange: (userId: string) => void
@@ -36,6 +37,7 @@ interface PersonalPermissionEditorStateOptions {
 export function usePersonalPermissionEditorState({
   permissions,
   workspace,
+  canManage,
   saving,
   resetting,
   onSubjectChange,
@@ -106,6 +108,7 @@ export function usePersonalPermissionEditorState({
   }, [baselineIds, busy, isDirty, recovery, workspace])
 
   function togglePermission(permissionId: string) {
+    if (!canManage) return
     setMutationError(null)
     setDraftIds((current) => {
       const next = new Set(current)
@@ -116,6 +119,7 @@ export function usePersonalPermissionEditorState({
   }
 
   function toggleModule(permissionIds: string[]) {
+    if (!canManage) return
     setMutationError(null)
     setDraftIds((current) => {
       const next = new Set(current)
@@ -129,7 +133,7 @@ export function usePersonalPermissionEditorState({
   }
 
   async function saveDraft() {
-    if (!workspace || !isDirty || editorBlocked) return !isDirty
+    if (!canManage || !workspace || !isDirty || editorBlocked) return !isDirty
     try {
       await onSave(workspace.subject.userId, workspace.subject.roleId, [...draftIds].sort())
       setBaselineIds(new Set(draftIds))
@@ -149,7 +153,7 @@ export function usePersonalPermissionEditorState({
   }
 
   async function resetPermissions() {
-    if (!workspace || busy) return
+    if (!canManage || !workspace || busy) return
     try {
       await onReset(workspace.subject.userId, workspace.subject.roleId)
       setBaselineIds(new Set(roleDefaultIds))
