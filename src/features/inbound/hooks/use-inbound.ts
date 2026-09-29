@@ -90,11 +90,13 @@ export function useAssignableStaffQuery(warehouseId: string | null) {
   })
 }
 
+const NULL_GUID = '00000000-0000-0000-0000-000000000000'
+
 export function useGoodsReceiptQuery(receiptId: string) {
   return useQuery<GoodsReceiptDetail, ApiErrorResponse>({
     queryKey: queryKeys.goodsReceipts.detail(receiptId),
     queryFn: () => inboundService.getReceipt(receiptId).then((response) => response.data),
-    enabled: Boolean(receiptId),
+    enabled: Boolean(receiptId) && receiptId !== NULL_GUID,
   })
 }
 
@@ -119,7 +121,7 @@ export function useInboundAllowedActionsQuery(receiptId: string) {
   return useQuery<InboundAllowedActionsResponse, ApiErrorResponse>({
     queryKey: queryKeys.goodsReceipts.allowedActions(receiptId),
     queryFn: () => inboundService.getAllowedActions(receiptId).then((response) => response.data),
-    enabled: Boolean(receiptId),
+    enabled: Boolean(receiptId) && receiptId !== NULL_GUID,
   })
 }
 
