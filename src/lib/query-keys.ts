@@ -124,6 +124,9 @@ export const queryKeys = {
   inventory: {
     all: ['inventory'] as const,
     list: (params: InventoryListQuery) => ['inventory', 'list', params] as const,
+    warehouseOptions: () => ['inventory', 'filter-options', 'warehouses'] as const,
+    slotOptions: (warehouseId: string) =>
+      ['inventory', 'filter-options', 'warehouses', warehouseId, 'slots'] as const,
     movements: (params: StockMovementListQuery) => ['inventory', 'movements', params] as const,
     reservations: (params: InventoryReservationQuery) =>
       ['inventory', 'reservations', params] as const,

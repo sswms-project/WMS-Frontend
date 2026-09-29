@@ -16,11 +16,18 @@ const quantityFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits
 interface ProductListTableProps {
   readonly products: readonly ProductListItem[]
   readonly canEdit: boolean
+  readonly canViewInventory: boolean
   readonly onView: (product: ProductListItem) => void
   readonly onEdit: (product: ProductListItem) => void
 }
 
-export function ProductListTable({ products, canEdit, onView, onEdit }: ProductListTableProps) {
+export function ProductListTable({
+  products,
+  canEdit,
+  canViewInventory,
+  onView,
+  onEdit,
+}: ProductListTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -29,9 +36,9 @@ export function ProductListTable({ products, canEdit, onView, onEdit }: ProductL
           <TableHead className="sticky top-0 z-10">Tên sản phẩm</TableHead>
           <TableHead className="sticky top-0 z-10">Danh mục</TableHead>
           <TableHead className="sticky top-0 z-10">Đơn vị</TableHead>
-          <TableHead className="sticky top-0 z-10 text-right">Tồn thực tế</TableHead>
-          <TableHead className="sticky top-0 z-10 text-right">Đang giữ</TableHead>
-          <TableHead className="sticky top-0 z-10 text-right">Khả dụng</TableHead>
+          {canViewInventory ? (
+            <TableHead className="sticky top-0 z-10 text-right">Số lượng tồn</TableHead>
+          ) : null}
           <TableHead className="sticky top-0 z-10 w-[120px] text-center">Trạng thái</TableHead>
           <TableHead className="sticky top-0 z-10 w-[100px] pr-4 text-right">Thao tác</TableHead>
         </TableRow>
@@ -47,15 +54,11 @@ export function ProductListTable({ products, canEdit, onView, onEdit }: ProductL
               <span title={product.categoryPath ?? undefined}>{product.categoryName ?? '—'}</span>
             </TableCell>
             <TableCell className="text-muted-foreground text-sm">{product.unitName}</TableCell>
-            <TableCell className="text-right tabular-nums">
-              {quantityFormatter.format(product.quantityOnHand)}
-            </TableCell>
-            <TableCell className="text-right tabular-nums">
-              {quantityFormatter.format(product.reservedQuantity)}
-            </TableCell>
-            <TableCell className="text-right font-medium tabular-nums">
-              {quantityFormatter.format(product.availableQuantity)}
-            </TableCell>
+            {canViewInventory ? (
+              <TableCell className="text-right font-medium tabular-nums">
+                {quantityFormatter.format(product.quantityOnHand ?? 0)}
+              </TableCell>
+            ) : null}
             <TableCell className="text-center">
               <ProductStatusBadge status={product.status} />
             </TableCell>

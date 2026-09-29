@@ -49,11 +49,7 @@ function getMutationMessage(error: unknown) {
     return 'Không thể lưu thay đổi. Dữ liệu đang chỉnh vẫn được giữ lại.'
   }
   if (error.statusCode === 403) {
-    const backendMessage = error.message.trim()
-    if (backendMessage && backendMessage.toLowerCase() !== 'forbidden') {
-      return backendMessage
-    }
-    return 'Quyền thao tác của bạn đã thay đổi. Hãy tải lại cấu hình trước khi thử lại.'
+    return 'Bạn chỉ có quyền xem cấu hình phân quyền và không thể lưu thay đổi.'
   }
   if (error.statusCode === 404 || error.statusCode === 409) {
     return 'Cấu hình quyền đã thay đổi ở nơi khác. Hãy tải lại và kiểm tra trước khi lưu.'
@@ -64,6 +60,7 @@ function getMutationMessage(error: unknown) {
 interface AccessControlWorkspaceProps {
   readonly activeMode: AccessControlMode
   readonly workspace: TenantRolePermissionWorkspace
+  readonly canManage: boolean
   readonly saving: boolean
   readonly onSave: (roleId: string, toAdd: string[], toRemove: string[]) => Promise<void>
   readonly onReload: () => Promise<boolean>
@@ -73,6 +70,7 @@ interface AccessControlWorkspaceProps {
 export function AccessControlWorkspace({
   activeMode,
   workspace,
+  canManage,
   saving,
   onSave,
   onReload,
@@ -223,6 +221,7 @@ export function AccessControlWorkspace({
   }
 
   function togglePermission(permissionId: string) {
+    if (!canManage) return
     setMutationError(null)
     setDraftIds((current) => {
       const next = new Set(current)
@@ -233,6 +232,7 @@ export function AccessControlWorkspace({
   }
 
   function toggleModule(permissionIds: string[]) {
+    if (!canManage) return
     setMutationError(null)
     setDraftIds((current) => {
       const next = new Set(current)
@@ -246,7 +246,7 @@ export function AccessControlWorkspace({
   }
 
   async function saveDraft() {
-    if (!isDirty || saving) return !isDirty
+    if (!canManage || !isDirty || saving) return !isDirty
 
     const toAdd = [...draftIds].filter((id) => !baselineIds.has(id))
     const toRemove = [...baselineIds].filter((id) => !draftIds.has(id))
@@ -311,6 +311,7 @@ export function AccessControlWorkspace({
             permissionCount={workspace.permissions.length}
             moduleCount={permissionGroups.length}
             searchText={searchText}
+            canManage={canManage}
             dirty={isDirty}
             pending={saving}
             canCollapse={openModules.length > 0 && !searchText.trim()}
@@ -352,7 +353,7 @@ export function AccessControlWorkspace({
                   selectedIds: draftIds,
                 }}
                 openModules={visibleOpenModules}
-                disabled={saving}
+                disabled={saving || !canManage}
                 hasSearch={Boolean(searchText.trim())}
                 onOpenModulesChange={(modules) => {
                   if (!searchText.trim()) setOpenModules(modules)

@@ -64,6 +64,7 @@ import {
   useDeleteProductSupplierMutation,
   useBlockProductLotMutation,
   useUnlockProductLotMutation,
+  useUploadProductImageMutation,
   useUnitsQuery,
 } from '../hooks/use-products'
 import {
@@ -87,6 +88,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isEditOpen, setIsEditOpen] = useState(() => searchParams.get('edit') === '1')
+  const [isEditImageDirty, setIsEditImageDirty] = useState(false)
   const [isStockPolicyOpen, setIsStockPolicyOpen] = useState(false)
   const [policyWarehouseId, setPolicyWarehouseId] = useState('')
   const [isConversionOpen, setIsConversionOpen] = useState(false)
@@ -102,6 +104,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const detailQuery = useProductDetailQuery(productId)
   const meQuery = useMeQuery()
   const updateMutation = useUpdateProductMutation(productId)
+  const uploadImageMutation = useUploadProductImageMutation()
   const productStatusMutation = useChangeProductStatusMutation(productId)
   const stockPolicyMutation = useConfigureStockPolicyMutation(productId)
   const barcodeMutation = useGenerateBarcodeMutation(productId)
@@ -157,6 +160,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
   const stockPolicyForm = useForm<StockPolicyFormValues>({
     resolver: zodResolver(stockPolicySchema),
     defaultValues: {
+      scope: 'single',
       warehouseId: '',
       preferredSlotId: null,
       minStockThreshold: 0,
@@ -249,15 +253,22 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     }
   }
 
-  async function handleUpdate(values: UpdateProductFormValues) {
+  async function handleUpdate(values: UpdateProductFormValues, imageFile: File | null) {
     try {
-      await updateMutation.mutateAsync(values)
+      if (updateProductForm.formState.isDirty) {
+        await updateMutation.mutateAsync(values)
+        updateProductForm.reset(values)
+      }
+      if (imageFile) await uploadImageMutation.mutateAsync({ id: productId, file: imageFile })
       toast.success('Đã cập nhật sản phẩm.')
-      updateProductForm.reset(values)
       closeProductEditor()
+      return true
     } catch (error) {
       logger.error(formatApiError(error))
-      const message = getApiErrorMessage(error, 'Không thể cập nhật sản phẩm.')
+      const message =
+        imageFile && !updateProductForm.formState.isDirty
+          ? 'Thông tin sản phẩm đã được lưu nhưng chưa tải được ảnh. Hãy thử lại.'
+          : getApiErrorMessage(error, 'Không thể cập nhật sản phẩm.')
       toast.error(message)
       if (
         message ===
@@ -265,6 +276,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
       ) {
         await detailQuery.refetch()
       }
+      return false
     }
   }
 
@@ -286,7 +298,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
       setIsEditOpen(true)
       return
     }
-    if (updateProductForm.formState.isDirty) {
+    if (updateProductForm.formState.isDirty || isEditImageDirty) {
       setDiscardTarget('product')
       return
     }
@@ -295,6 +307,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
 
   function closeProductEditor() {
     setIsEditOpen(false)
+    setIsEditImageDirty(false)
     if (searchParams.get('edit') !== '1') return
     const next = new URLSearchParams(searchParams.toString())
     next.delete('edit')
@@ -324,8 +337,21 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
 
   async function handleStockPolicy(values: StockPolicyFormValues) {
     try {
-      await stockPolicyMutation.mutateAsync(values)
-      toast.success('Đã cập nhật chính sách tồn kho.')
+      await stockPolicyMutation.mutateAsync({
+        warehouseId: values.scope === 'single' ? values.warehouseId : null,
+        applyToAllWarehouses: values.scope === 'all',
+        preferredSlotId: values.scope === 'single' ? values.preferredSlotId : null,
+        minStockThreshold: values.minStockThreshold,
+        maxStockThreshold: values.maxStockThreshold,
+        reorderPoint: values.reorderPoint,
+        safetyStock: values.safetyStock,
+        leadTimeDays: values.leadTimeDays,
+      })
+      toast.success(
+        values.scope === 'all'
+          ? 'Đã áp dụng chính sách cho tất cả kho được quản lý.'
+          : 'Đã cập nhật chính sách tồn kho.'
+      )
       stockPolicyForm.reset(values)
       setIsStockPolicyOpen(false)
     } catch (error) {
@@ -340,6 +366,7 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
     const policy = policiesQuery.data?.find((item) => item.warehouseId === warehouseId)
     setPolicyWarehouseId(warehouseId)
     stockPolicyForm.reset({
+      scope: 'single',
       warehouseId,
       preferredSlotId: policy?.preferredSlotId ?? null,
       minStockThreshold: policy?.minStockThreshold ?? 0,
@@ -750,9 +777,15 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
           canManageCategories={canManageCategories}
           open={isEditOpen}
           product={product}
-          isPending={updateMutation.isPending}
+          conversions={conversionsQuery.data ?? []}
+          isPending={updateMutation.isPending || uploadImageMutation.isPending}
           onOpenChange={changeProductEditorOpen}
-          onSubmit={(values) => void handleUpdate(values)}
+          onImageDirtyChange={setIsEditImageDirty}
+          onManageConversions={() => {
+            closeProductEditor()
+            handleTabChange('conversions')
+          }}
+          onSubmit={handleUpdate}
         />
       )}
       <UnsavedChangesDialog

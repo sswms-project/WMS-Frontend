@@ -19,9 +19,13 @@ describe('tenant route boundaries', () => {
     }
   )
 
-  it('keeps owner-only access-control outside manager and staff routes', () => {
+  it('allows every tenant role to open delegated access control', () => {
     const roles = getAllowedRolesForPath(APP_ROUTES.settings.accessControl)
 
-    expect(roles).toEqual([USER_ROLES.TenantOwner])
+    expect(roles).toEqual([
+      USER_ROLES.TenantOwner,
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
   })
 })

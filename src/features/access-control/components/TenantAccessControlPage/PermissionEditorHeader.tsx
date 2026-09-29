@@ -10,6 +10,7 @@ interface PermissionEditorHeaderProps {
   readonly permissionCount: number
   readonly moduleCount: number
   readonly searchText: string
+  readonly canManage: boolean
   readonly dirty: boolean
   readonly pending: boolean
   readonly canCollapse: boolean
@@ -24,6 +25,7 @@ export function PermissionEditorHeader({
   permissionCount,
   moduleCount,
   searchText,
+  canManage,
   dirty,
   pending,
   canCollapse,
@@ -69,21 +71,24 @@ export function PermissionEditorHeader({
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-        {dirty && <Badge variant="secondary">Chưa lưu</Badge>}
-        {dirty && (
+        {!canManage && <Badge variant="outline">Chỉ xem</Badge>}
+        {canManage && dirty && <Badge variant="secondary">Chưa lưu</Badge>}
+        {canManage && dirty && (
           <Button type="button" variant="outline" disabled={pending} onClick={onDiscard}>
             <RotateCcw data-icon="inline-start" aria-hidden="true" />
             Bỏ thay đổi
           </Button>
         )}
-        <Button type="button" disabled={!dirty || pending} onClick={onSave}>
-          {pending ? (
-            <Spinner data-icon="inline-start" aria-hidden="true" />
-          ) : (
-            <Save data-icon="inline-start" aria-hidden="true" />
-          )}
-          {pending ? 'Đang lưu…' : 'Lưu thay đổi'}
-        </Button>
+        {canManage && (
+          <Button type="button" disabled={!dirty || pending} onClick={onSave}>
+            {pending ? (
+              <Spinner data-icon="inline-start" aria-hidden="true" />
+            ) : (
+              <Save data-icon="inline-start" aria-hidden="true" />
+            )}
+            {pending ? 'Đang lưu…' : 'Lưu thay đổi'}
+          </Button>
+        )}
       </div>
     </div>
   )
