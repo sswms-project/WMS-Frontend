@@ -77,7 +77,8 @@ export type UpdateProductFormValues = z.infer<typeof updateProductSchema>
 
 export const stockPolicySchema = z
   .object({
-    warehouseId: z.string().min(1, 'Vui lòng chọn kho'),
+    scope: z.enum(['single', 'all']),
+    warehouseId: z.string(),
     preferredSlotId: z.string().nullable(),
     minStockThreshold: z.number().min(0, 'Ngưỡng tồn kho tối thiểu phải >= 0'),
     maxStockThreshold: z.number().min(0, 'Ngưỡng tồn kho tối đa phải >= 0').nullable(),
@@ -86,6 +87,20 @@ export const stockPolicySchema = z
     leadTimeDays: z.number().int().positive('Thời gian cung ứng phải lớn hơn 0').nullable(),
   })
   .superRefine((values, context) => {
+    if (values.scope === 'single' && !values.warehouseId) {
+      context.addIssue({
+        code: 'custom',
+        path: ['warehouseId'],
+        message: 'Vui lòng chọn kho',
+      })
+    }
+    if (values.scope === 'all' && values.preferredSlotId) {
+      context.addIssue({
+        code: 'custom',
+        path: ['preferredSlotId'],
+        message: 'Không thể đặt vị trí ưu tiên chung cho tất cả kho',
+      })
+    }
     if (values.maxStockThreshold !== null && values.maxStockThreshold < values.minStockThreshold) {
       context.addIssue({
         code: 'custom',

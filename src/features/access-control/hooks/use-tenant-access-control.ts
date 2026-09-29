@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { formatApiError } from '@/lib/api-error'
+import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
@@ -15,6 +15,18 @@ import type {
   TenantUserPermissionWorkspace,
 } from '../types/tenant-access-control.types'
 import { getPersonalPermissionErrorDetails } from '../utils/tenant-user-permission-error'
+
+const MANAGE_PERMISSION_MESSAGE =
+  'Bạn chỉ có quyền xem cấu hình phân quyền và không thể lưu thay đổi.'
+
+function logPermissionMutationError(error: unknown) {
+  const message = formatApiError(error)
+  if (isApiErrorResponse(error) && error.statusCode === 403) {
+    logger.warn(message)
+    return
+  }
+  logger.error(message, error)
+}
 
 export function useTenantAccessControlQuery() {
   return useQuery<TenantRolePermissionWorkspace, ApiErrorResponse>({
@@ -39,8 +51,12 @@ export function useUpdateTenantRolePermissionsMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
       ]),
     onError: (error) => {
-      logger.error(error.message, error)
-      toast.error(error.message ?? 'Không thể cập nhật quyền truy cập. Vui lòng thử lại.')
+      logPermissionMutationError(error)
+      toast.error(
+        error.statusCode === 403
+          ? MANAGE_PERMISSION_MESSAGE
+          : error.message || 'Không thể cập nhật quyền truy cập. Vui lòng thử lại.'
+      )
     },
   })
 }
@@ -88,7 +104,7 @@ export function useUpdateTenantUserPermissionsMutation() {
       ]),
     onError: (error) => {
       const details = getPersonalPermissionErrorDetails(error)
-      logger.error(formatApiError(error), error)
+      logPermissionMutationError(error)
       toast.error(details.message)
     },
   })
@@ -115,7 +131,7 @@ export function useResetTenantUserPermissionsMutation() {
       ]),
     onError: (error) => {
       const details = getPersonalPermissionErrorDetails(error)
-      logger.error(formatApiError(error), error)
+      logPermissionMutationError(error)
       toast.error(details.message)
     },
   })

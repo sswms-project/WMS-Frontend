@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Package, PackagePlus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatApiError, getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
@@ -16,9 +16,13 @@ import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDial
 import { P } from '@/config/permissionCodes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import { useInventoryWarehouseOptionsQuery } from '@/features/inventory/hooks/use-inventory'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { ProductListTable, ProductListToolbar } from '../components/ProductListPage'
+import {
+  ProductListTable,
+  ProductListToolbar,
+  ProductStockStatusFilter,
+} from '../components/ProductListPage'
 import { CreateProductDialog } from '../components/ProductForm'
 import {
   useCreateProductMutation,
@@ -30,7 +34,7 @@ import {
 } from '../hooks/use-products'
 import { createProductSchema, type CreateProductFormValues } from '../schemas/product.schema'
 import { categorySchema, type CategoryFormValues } from '../schemas/master-data.schema'
-import type { ProductListItem, ProductStatus } from '../types/product.types'
+import type { ProductListItem, ProductStatus, ProductStockStatus } from '../types/product.types'
 import { suggestCategoryCode } from '../utils/category-code'
 
 function parseProductStatus(value: string): ProductStatus | '' {
@@ -41,16 +45,34 @@ function parseTrackingMode(value: string): 'quantity' | 'lot' | '' {
   return value === 'quantity' || value === 'lot' ? value : ''
 }
 
+function parseStockStatus(value: string | null): ProductStockStatus | '' {
+  return value === 'LowStock' || value === 'OutOfStock' ? value : ''
+}
+
+function parsePositiveInteger(value: string | null, fallback: number) {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function parsePageSize(value: string | null) {
+  const parsed = parsePositiveInteger(value, 20)
+  return [10, 20, 30, 50].includes(parsed) ? parsed : 20
+}
+
 export default function ProductListPage() {
   const router = useRouter()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
-  const [searchText, setSearchText] = useState('')
-  const [categoryId, setCategoryId] = useState('')
-  const [warehouseId, setWarehouseId] = useState('')
-  const [status, setStatus] = useState<ProductStatus | ''>('')
-  const [trackingMode, setTrackingMode] = useState<'quantity' | 'lot' | ''>('')
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const page = parsePositiveInteger(searchParams.get('page'), 1)
+  const pageSize = parsePageSize(searchParams.get('pageSize'))
+  const searchText = searchParams.get('search') ?? ''
+  const categoryId = searchParams.get('category') ?? ''
+  const warehouseId = searchParams.get('warehouse') ?? ''
+  const status = parseProductStatus(searchParams.get('status') ?? '')
+  const trackingMode = parseTrackingMode(searchParams.get('tracking') ?? '')
+  const stockStatus = parseStockStatus(searchParams.get('stock'))
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isCreateImageDirty, setIsCreateImageDirty] = useState(false)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [discardTarget, setDiscardTarget] = useState<'product' | 'category' | null>(null)
   const debouncedSearch = useDebouncedValue(searchText.trim(), 300)
@@ -79,18 +101,17 @@ export default function ProductListPage() {
 
   const meQuery = useMeQuery()
   const permissions = new Set(meQuery.data?.permissions ?? [])
-  const warehousesQuery = useWarehousesQuery(
-    { top: 100, skip: 0, needTotalCount: true },
-    permissions.has(P.WAREHOUSES_VIEW)
-  )
+  const canViewInventory = permissions.has(P.INVENTORY_VIEW)
+  const warehousesQuery = useInventoryWarehouseOptionsQuery(canViewInventory)
   const listQuery = useProductListQuery({
     pageNumber: page,
     pageSize,
     ...(debouncedSearch ? { searchTerm: debouncedSearch } : {}),
     ...(categoryId ? { categoryId } : {}),
-    ...(warehouseId ? { warehouseId } : {}),
+    ...(canViewInventory && warehouseId ? { warehouseId } : {}),
     ...(status ? { status } : {}),
     ...(trackingMode ? { isLotTracked: trackingMode === 'lot' } : {}),
+    ...(canViewInventory && stockStatus ? { stockStatus } : {}),
   })
 
   const createMutation = useCreateProductMutation()
@@ -99,15 +120,31 @@ export default function ProductListPage() {
   const unitsQuery = useUnitsQuery(isCreateOpen, 'Active')
   const categoriesQuery = useCategoriesQuery(true, 'Active')
 
-  const products = listQuery.data?.items ?? []
+  const listData = listQuery.isPlaceholderData ? undefined : listQuery.data
+  const products = listData?.items ?? []
+  const isListLoading = listQuery.isLoading || listQuery.isPlaceholderData
   const canCreate = permissions.has(P.PRODUCTS_CREATE)
   const canEdit = permissions.has(P.PRODUCTS_UPDATE)
   const canManageUnits = permissions.has(P.UNITS_MANAGE)
   const canManageCategories = permissions.has(P.CATEGORIES_MANAGE)
 
+  function updateListParams(
+    updates: Readonly<Record<string, string | null>>,
+    history: 'push' | 'replace' = 'push'
+  ) {
+    const next = new URLSearchParams(searchParams.toString())
+    Object.entries(updates).forEach(([name, value]) => {
+      if (value) next.set(name, value)
+      else next.delete(name)
+    })
+    const query = next.toString()
+    const url = query ? `${pathname}?${query}` : pathname
+    if (history === 'replace') window.history.replaceState(null, '', url)
+    else window.history.pushState(null, '', url)
+  }
+
   function handleSearchChange(value: string) {
-    setSearchText(value)
-    setPage(1)
+    updateListParams({ search: value || null, page: null }, 'replace')
   }
 
   async function handleCreate(
@@ -136,6 +173,7 @@ export default function ProductListPage() {
     }
 
     if (!imageUploadFailed) toast.success('Đã thêm sản phẩm mới.')
+    setIsCreateImageDirty(false)
     if (!createAnother) {
       productForm.reset()
       setIsCreateOpen(false)
@@ -146,11 +184,12 @@ export default function ProductListPage() {
   }
 
   function handleCreateOpenChange(open: boolean) {
-    if (!open && productForm.formState.isDirty) {
+    if (!open && (productForm.formState.isDirty || isCreateImageDirty)) {
       setDiscardTarget('product')
       return
     }
     if (!open) productForm.reset()
+    if (!open) setIsCreateImageDirty(false)
     setIsCreateOpen(open)
   }
 
@@ -224,13 +263,30 @@ export default function ProductListPage() {
       </header>
 
       <OperationalListPanel aria-label="Danh sách sản phẩm">
-        <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-3 sm:px-4">
-          <div>
-            <h2 className="text-sm font-semibold">Tất cả sản phẩm</h2>
+        <div className="grid min-h-12 grid-cols-1 gap-2 border-b px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:px-4">
+          <div className="min-w-0 sm:col-start-1 sm:row-start-1">
+            <h2 className="text-sm font-semibold">
+              {stockStatus === 'LowStock'
+                ? 'Sản phẩm sắp hết hàng'
+                : stockStatus === 'OutOfStock'
+                  ? 'Sản phẩm hết hàng'
+                  : 'Tất cả sản phẩm'}
+            </h2>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {listQuery.data?.totalCount ?? 0} sản phẩm
+              {listData?.totalCount ?? 0} sản phẩm
             </p>
           </div>
+          {canViewInventory && listData?.stockStatusCounts ? (
+            <div className="min-w-0 justify-self-center sm:col-start-2 sm:row-start-1">
+              <ProductStockStatusFilter
+                value={stockStatus}
+                counts={listData.stockStatusCounts}
+                onValueChange={(value) => {
+                  updateListParams({ stock: value || null, page: null })
+                }}
+              />
+            </div>
+          ) : null}
         </div>
 
         <ProductListToolbar
@@ -240,31 +296,26 @@ export default function ProductListPage() {
           status={status}
           trackingMode={trackingMode}
           categories={categoriesQuery.data ?? []}
-          warehouses={(warehousesQuery.data?.items ?? []).filter(
-            (warehouse) => warehouse.status === 'Active'
-          )}
+          warehouses={warehousesQuery.data ?? []}
+          canViewInventory={canViewInventory}
           isFetching={listQuery.isFetching}
           onSearchChange={handleSearchChange}
           onCategoryChange={(value) => {
-            setCategoryId(value)
-            setPage(1)
+            updateListParams({ category: value || null, page: null })
           }}
           onWarehouseChange={(value) => {
-            setWarehouseId(value)
-            setPage(1)
+            updateListParams({ warehouse: value || null, page: null })
           }}
           onStatusChange={(value) => {
-            setStatus(parseProductStatus(value))
-            setPage(1)
+            updateListParams({ status: parseProductStatus(value) || null, page: null })
           }}
           onTrackingModeChange={(value) => {
-            setTrackingMode(parseTrackingMode(value))
-            setPage(1)
+            updateListParams({ tracking: parseTrackingMode(value) || null, page: null })
           }}
           onRefresh={() => void listQuery.refetch()}
         />
 
-        {listQuery.isLoading && (
+        {isListLoading && (
           <div className="flex-1 divide-y overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex h-14 items-center gap-3 px-4">
@@ -294,7 +345,7 @@ export default function ProductListPage() {
           </div>
         )}
 
-        {!listQuery.isLoading && !listQuery.isError && products.length === 0 && (
+        {!isListLoading && !listQuery.isError && products.length === 0 && (
           <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
             <div className="bg-muted flex size-12 items-center justify-center">
               <Package className="text-muted-foreground size-5" aria-hidden="true" />
@@ -318,18 +369,20 @@ export default function ProductListPage() {
             <ProductListTable
               products={products}
               canEdit={canEdit}
+              canViewInventory={canViewInventory}
               onView={handleView}
               onEdit={handleEdit}
             />
             <OperationalPagination
               page={page}
               pageSize={pageSize}
-              totalCount={listQuery.data?.totalCount ?? 0}
+              totalCount={listData?.totalCount ?? 0}
               isPending={listQuery.isFetching}
-              onPageChange={setPage}
+              onPageChange={(value) =>
+                updateListParams({ page: value === 1 ? null : String(value) })
+              }
               onPageSizeChange={(value) => {
-                setPageSize(value)
-                setPage(1)
+                updateListParams({ pageSize: value === 20 ? null : String(value), page: null })
               }}
             />
           </>
@@ -356,6 +409,7 @@ export default function ProductListPage() {
           open={isCreateOpen}
           isPending={createMutation.isPending || uploadImageMutation.isPending}
           onOpenChange={handleCreateOpenChange}
+          onImageDirtyChange={setIsCreateImageDirty}
           onCategoryDialogOpenChange={handleCategoryDialogOpenChange}
           onSubmit={handleCreate}
         />
@@ -367,6 +421,7 @@ export default function ProductListPage() {
           if (discardTarget === 'product') {
             productForm.reset()
             setIsCreateOpen(false)
+            setIsCreateImageDirty(false)
           } else if (discardTarget === 'category') {
             categoryForm.reset()
             setIsCategoryDialogOpen(false)

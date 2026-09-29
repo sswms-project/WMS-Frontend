@@ -39,6 +39,8 @@ import type {
   AddStockDiscrepancyEvidenceRequest,
   AddDamageCaseEvidenceRequest,
   MyWarehouseTaskListResponse,
+  InventoryWarehouseOption,
+  InventorySlotOption,
 } from '../types/inventory.types'
 
 export function useMyWarehouseTasksQuery(warehouseId?: string, enabled = true) {
@@ -67,6 +69,22 @@ export function useInventoryQuery(params: InventoryListQuery, enabled = true) {
     queryFn: () => inventoryService.getInventory(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
     enabled,
+  })
+}
+
+export function useInventoryWarehouseOptionsQuery(enabled = true) {
+  return useQuery<InventoryWarehouseOption[], ApiErrorResponse>({
+    queryKey: queryKeys.inventory.warehouseOptions(),
+    queryFn: () => inventoryService.getWarehouseOptions().then((response) => response.data),
+    enabled,
+  })
+}
+
+export function useInventorySlotOptionsQuery(warehouseId: string, enabled = true) {
+  return useQuery<InventorySlotOption[], ApiErrorResponse>({
+    queryKey: queryKeys.inventory.slotOptions(warehouseId),
+    queryFn: () => inventoryService.getSlotOptions(warehouseId).then((response) => response.data),
+    enabled: enabled && Boolean(warehouseId),
   })
 }
 

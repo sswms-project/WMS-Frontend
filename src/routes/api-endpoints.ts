@@ -110,6 +110,9 @@ export const API_ENDPOINTS = {
   },
   inventory: {
     list: '/inventory',
+    warehouseOptions: '/inventory/filter-options/warehouses',
+    slotOptions: (warehouseId: string) =>
+      `/inventory/filter-options/warehouses/${warehouseId}/slots`,
     evidence: '/inventory/evidence',
     evidenceFile: (id: string) => `/inventory/evidence/${id}`,
     movements: '/inventory/movements',

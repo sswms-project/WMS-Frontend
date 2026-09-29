@@ -54,7 +54,15 @@ const tenantStaffSection: NavSection = {
   label: 'Quản trị tổ chức',
   icon: Building2,
   collapsible: true,
-  items: [requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW)],
+  items: [
+    requiredNavItem(
+      APP_ROUTES.settings.accessControl,
+      'Phân quyền',
+      ShieldCheck,
+      P.TENANT_ROLE_PERMISSIONS_VIEW
+    ),
+    requiredNavItem(APP_ROUTES.staff, 'Nhân viên', Users, P.STAFF_VIEW),
+  ],
 }
 
 const tenantSubjectsSection: NavSection = {

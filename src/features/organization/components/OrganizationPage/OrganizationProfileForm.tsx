@@ -47,6 +47,9 @@ export function OrganizationProfileForm({
       tenantName: organization.tenantName,
       phone: organization.phone,
       address: organization.address ?? '',
+      taxCode: organization.taxCode ?? '',
+      website: organization.website ?? '',
+      industry: organization.industry ?? '',
     },
   })
 
@@ -103,6 +106,39 @@ export function OrganizationProfileForm({
               {...form.register('address')}
             />
             <FieldError errors={fieldError(form.formState.errors, 'address')} />
+          </Field>
+
+          <Field data-invalid={Boolean(form.formState.errors.taxCode)}>
+            <FieldLabel htmlFor="taxCode">Mã số thuế</FieldLabel>
+            <Input
+              id="taxCode"
+              aria-invalid={Boolean(form.formState.errors.taxCode)}
+              {...form.register('taxCode')}
+            />
+            <FieldError errors={fieldError(form.formState.errors, 'taxCode')} />
+          </Field>
+
+          <Field data-invalid={Boolean(form.formState.errors.website)}>
+            <FieldLabel htmlFor="website">Website</FieldLabel>
+            <Input
+              id="website"
+              type="text"
+              autoComplete="url"
+              placeholder="https://example.com"
+              aria-invalid={Boolean(form.formState.errors.website)}
+              {...form.register('website')}
+            />
+            <FieldError errors={fieldError(form.formState.errors, 'website')} />
+          </Field>
+
+          <Field className="md:col-span-2" data-invalid={Boolean(form.formState.errors.industry)}>
+            <FieldLabel htmlFor="industry">Ngành nghề kinh doanh</FieldLabel>
+            <Input
+              id="industry"
+              aria-invalid={Boolean(form.formState.errors.industry)}
+              {...form.register('industry')}
+            />
+            <FieldError errors={fieldError(form.formState.errors, 'industry')} />
           </Field>
         </FieldGroup>
 

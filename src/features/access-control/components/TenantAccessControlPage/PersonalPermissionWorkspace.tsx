@@ -42,6 +42,7 @@ interface PersonalPermissionWorkspaceProps {
   readonly workspace?: TenantUserPermissionWorkspace
   readonly workspaceLoading: boolean
   readonly workspaceError: ApiErrorResponse | null
+  readonly canManage: boolean
   readonly saving: boolean
   readonly resetting: boolean
   readonly onModeChange: (mode: AccessControlMode) => void
@@ -76,6 +77,7 @@ export function PersonalPermissionWorkspace({
   workspace,
   workspaceLoading,
   workspaceError,
+  canManage,
   saving,
   resetting,
   onModeChange,
@@ -92,6 +94,7 @@ export function PersonalPermissionWorkspace({
   const editor = usePersonalPermissionEditorState({
     permissions,
     workspace,
+    canManage,
     saving,
     resetting,
     onSubjectChange,
@@ -204,6 +207,7 @@ export function PersonalPermissionWorkspace({
       ) : (
         <PersonalPermissionEditor
           workspace={workspace}
+          canManage={canManage}
           groups={editor.filteredGroups}
           draftIds={editor.draftIds}
           roleDefaultIds={editor.roleDefaultIds}
@@ -241,7 +245,7 @@ export function PersonalPermissionWorkspace({
       />
 
       <ResetUserPermissionsDialog
-        open={editor.resetDialogOpen}
+        open={canManage && editor.resetDialogOpen}
         name={workspace?.subject.fullName ?? ''}
         role={
           getTenantRoleContent(workspace?.subject.roleName ?? selectedRole?.roleName ?? '').label

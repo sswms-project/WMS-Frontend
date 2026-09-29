@@ -69,9 +69,29 @@ export interface ProductResponse {
 export interface ProductListResponse {
   items: ProductListItem[]
   totalCount: number
+  stockStatusCounts: ProductStockStatusCounts | null
 }
 
-export type ProductListItem = Omit<ProductResponse, 'canChangeBaseUnit' | 'canChangeTrackingMode'>
+export interface ProductStockStatusCounts {
+  all: number
+  lowStock: number
+  outOfStock: number
+}
+
+export type ProductStockStatus = 'LowStock' | 'OutOfStock'
+
+export type ProductListItem = Omit<
+  ProductResponse,
+  | 'canChangeBaseUnit'
+  | 'canChangeTrackingMode'
+  | 'quantityOnHand'
+  | 'reservedQuantity'
+  | 'availableQuantity'
+> & {
+  quantityOnHand: number | null
+  reservedQuantity: number | null
+  availableQuantity: number | null
+}
 
 export interface ProductListQuery {
   pageNumber?: number
@@ -81,6 +101,7 @@ export interface ProductListQuery {
   warehouseId?: string
   status?: ProductStatus
   isLotTracked?: boolean
+  stockStatus?: ProductStockStatus
 }
 
 export interface CreateProductRequest {
@@ -107,7 +128,8 @@ export interface UpdateProductRequest {
 }
 
 export interface ConfigureStockPolicyRequest {
-  warehouseId: string
+  warehouseId: string | null
+  applyToAllWarehouses: boolean
   preferredSlotId: string | null
   minStockThreshold: number
   maxStockThreshold: number | null

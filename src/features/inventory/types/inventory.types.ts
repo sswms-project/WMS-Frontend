@@ -40,6 +40,7 @@ export interface InventoryStock {
   availableQuantity: number
   version: string | null
   updatedAt: string | null
+  canManageWarehouse: boolean
 }
 
 export interface InventoryStockListResponse {
@@ -53,6 +54,18 @@ export interface InventoryStockListResponse {
 export interface InventoryFilterOption {
   value: string
   label: string
+}
+
+export interface InventoryWarehouseOption {
+  id: string
+  warehouseCode: string
+  warehouseName: string
+  canManageWarehouse: boolean
+}
+
+export interface InventorySlotOption {
+  id: string
+  slotCode: string
 }
 
 export const STOCK_MOVEMENT_TYPES = {
