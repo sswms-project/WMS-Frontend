@@ -116,12 +116,12 @@ export function WarehouseTaskDirectory({
               <Table className="min-w-[760px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="bg-card sticky top-0 z-10">Công việc</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Mã tham chiếu</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Kho</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10">Cập nhật</TableHead>
-                    <TableHead className="bg-card sticky top-0 z-10 text-right">Mở</TableHead>
+                    <TableHead className="sticky top-0 z-10">Công việc</TableHead>
+                    <TableHead className="sticky top-0 z-10">Mã tham chiếu</TableHead>
+                    <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                    <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                    <TableHead className="sticky top-0 z-10">Cập nhật</TableHead>
+                    <TableHead className="sticky top-0 z-10 text-right">Mở</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -36,12 +36,12 @@ export function WarehouseList({ warehouses }: WarehouseListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-card sticky top-0 z-10 pl-4">Mã kho</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Tên kho</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Địa chỉ</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Ngày tạo</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-12">
+              <TableHead className="sticky top-0 z-10 pl-4">Mã kho</TableHead>
+              <TableHead className="sticky top-0 z-10">Tên kho</TableHead>
+              <TableHead className="sticky top-0 z-10">Địa chỉ</TableHead>
+              <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+              <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
+              <TableHead className="sticky top-0 z-10 w-12">
                 <span className="sr-only">Thao tác</span>
               </TableHead>
             </TableRow>

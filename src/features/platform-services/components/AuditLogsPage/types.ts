@@ -1,11 +1,8 @@
-import type { AuditLogItem } from '../../types/platform-services.types'
+import type { AuditLogItem, AuditLogTimeRange } from '../../types/platform-services.types'
 
 export interface AuditLogFilterValues {
   readonly search: string
-  readonly action: string
-  readonly entityType: string
-  readonly entityId: string
-  readonly userId: string
+  readonly timeRange: AuditLogTimeRange
   readonly dateFrom: string
   readonly dateTo: string
 }
@@ -25,4 +22,5 @@ export interface AuditLogDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
+  readonly onRefresh: () => void
 }

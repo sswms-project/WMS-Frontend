@@ -276,7 +276,7 @@ export function CategoryCatalog({
           />
         ) : (
           <Table>
-            <TableHeader className="bg-card sticky top-0 z-10">
+            <TableHeader className="sticky top-0 z-10">
               <TableRow>
                 {canUpdate ? (
                   <TableHead className="w-12">

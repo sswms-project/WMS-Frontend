@@ -235,15 +235,15 @@ export function ReviewStep({
         <Table className="min-w-[980px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-card sticky top-0 z-10">Dòng chứng từ</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Dòng yêu cầu nhập kho</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 text-right">Còn lại</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 text-right">SL chứng từ</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Thông tin lô</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 text-right">SL xác nhận</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 text-right">SL hỏng</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Tình trạng hàng hỏng</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10">Trạng thái</TableHead>
+              <TableHead className="sticky top-0 z-10">Dòng chứng từ</TableHead>
+              <TableHead className="sticky top-0 z-10">Dòng yêu cầu nhập kho</TableHead>
+              <TableHead className="sticky top-0 z-10 text-right">Còn lại</TableHead>
+              <TableHead className="sticky top-0 z-10 text-right">SL chứng từ</TableHead>
+              <TableHead className="sticky top-0 z-10">Thông tin lô</TableHead>
+              <TableHead className="sticky top-0 z-10 text-right">SL xác nhận</TableHead>
+              <TableHead className="sticky top-0 z-10 text-right">SL hỏng</TableHead>
+              <TableHead className="sticky top-0 z-10">Tình trạng hàng hỏng</TableHead>
+              <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

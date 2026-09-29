@@ -6,11 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { cn } from '@/lib/utils'
+import {
+  formatBillingCycle,
+  formatSubscriptionStatus,
+} from '@/features/subscription/utils/format-subscription'
 import type { TenantDetailsResponse } from '../../types/admin.types'
 import {
   formatAdminCurrency,
   formatAdminDate,
   formatAdminDateTime,
+  formatTenantStatus,
 } from '../../utils/platform-admin-format'
 
 interface TenantDetailsViewProps {
@@ -51,7 +56,7 @@ export function TenantDetailsView({
 }: TenantDetailsViewProps) {
   if (isLoading)
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <Skeleton className="h-20" />
         <div className="grid gap-4 lg:grid-cols-12">
           <Skeleton className="h-96 lg:col-span-8" />
@@ -62,7 +67,7 @@ export function TenantDetailsView({
   if (isError || !data)
     return (
       <Alert variant="destructive">
-        <AlertTitle>Không thể tải chi tiết tenant</AlertTitle>
+        <AlertTitle>Không thể tải chi tiết đơn vị thuê</AlertTitle>
         <AlertDescription>
           <Button variant="outline" size="sm" onClick={onRetry}>
             Thử lại
@@ -72,15 +77,16 @@ export function TenantDetailsView({
     )
   const isActive = data.status === 'Active'
   const isPendingRegistration = data.status === 'Pending'
+  const statusLabel = formatTenantStatus(data.status)
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Button asChild variant="link" className="h-auto px-0 text-xs">
             <Link href={APP_ROUTES.admin.tenants}>
               <ArrowLeft aria-hidden="true" />
-              Quay lại danh sách tenant
+              Quay lại danh sách đơn vị thuê
             </Link>
           </Button>
           <div className="mt-2 flex items-center gap-3">
@@ -89,7 +95,6 @@ export function TenantDetailsView({
             </span>
             <div>
               <h2 className="text-xl font-semibold">{data.tenantName}</h2>
-              <p className="text-muted-foreground font-mono text-xs">{data.id}</p>
             </div>
           </div>
         </div>
@@ -104,7 +109,7 @@ export function TenantDetailsView({
                   : 'border-destructive/30 text-destructive'
             )}
           >
-            {data.status}
+            {statusLabel}
           </Badge>
           <Button
             variant="outline"
@@ -122,12 +127,12 @@ export function TenantDetailsView({
       </header>
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <div className="space-y-4 lg:col-span-8">
+        <div className="flex flex-col gap-4 lg:col-span-8">
           <section className="bg-card border p-4">
             <h2 className="text-sm font-semibold">Tổ chức và chủ sở hữu</h2>
             <DetailList
               items={[
-                ['Email tenant', data.email],
+                ['Email đơn vị thuê', data.email],
                 ['Điện thoại', data.phone],
                 ['Địa chỉ', data.address ?? '—'],
                 ['Ngày tạo', formatAdminDate(data.createdAt)],
@@ -165,37 +170,42 @@ export function TenantDetailsView({
               <DetailList
                 items={[
                   ['Gói hiện tại', data.subscription.planName],
-                  ['Chu kỳ', data.subscription.billingCycle],
+                  ['Chu kỳ', formatBillingCycle(data.subscription.billingCycle)],
                   ['Hiệu lực từ', formatAdminDate(data.subscription.startDate)],
                   ['Hết hạn', formatAdminDate(data.subscription.endDate)],
-                  ['Trạng thái', data.subscription.status],
+                  ['Trạng thái', formatSubscriptionStatus(data.subscription.status)],
                   ['Phương thức gia hạn', 'Thủ công qua PayOS'],
                   ['Thay đổi chờ áp dụng', data.subscription.pendingPlanName ?? 'Không có'],
-                  ['Chu kỳ chờ áp dụng', data.subscription.pendingBillingCycle ?? '—'],
+                  [
+                    'Chu kỳ chờ áp dụng',
+                    data.subscription.pendingBillingCycle
+                      ? formatBillingCycle(data.subscription.pendingBillingCycle)
+                      : '—',
+                  ],
                 ]}
               />
             ) : (
               <p className="text-muted-foreground py-8 text-center text-sm">
-                Tenant chưa có đăng ký.
+                Đơn vị thuê chưa có đăng ký.
               </p>
             )}
           </section>
         </div>
 
-        <aside className="order-first space-y-4 lg:order-none lg:col-span-4">
+        <aside className="order-first flex flex-col gap-4 lg:order-none lg:col-span-4">
           <Alert variant={isActive || isPendingRegistration ? 'default' : 'destructive'}>
             {isActive ? <CircleCheck aria-hidden="true" /> : <CirclePause aria-hidden="true" />}
-            <AlertTitle>Trạng thái tenant: {data.status}</AlertTitle>
+            <AlertTitle>Trạng thái đơn vị thuê: {statusLabel}</AlertTitle>
             <AlertDescription>
               {isPendingRegistration
                 ? data.owner.emailVerified
                   ? 'Email chủ sở hữu đã được xác minh. Đăng ký đã sẵn sàng để xét duyệt.'
                   : 'Chủ sở hữu chưa xác minh email. Chưa thể phê duyệt đăng ký.'
                 : isActive
-                  ? 'Tạm ngưng sẽ thu hồi phiên đăng nhập và chặn truy cập tenant.'
+                  ? 'Tạm ngưng sẽ thu hồi phiên đăng nhập và chặn truy cập đơn vị thuê.'
                   : data.status === 'Suspended'
-                    ? 'Kích hoạt lại để khôi phục quyền truy cập của tenant.'
-                    : 'Chỉ tenant đang hoạt động hoặc tạm ngưng mới có thể đổi trạng thái tại đây.'}
+                    ? 'Kích hoạt lại để khôi phục quyền truy cập của đơn vị thuê.'
+                    : 'Chỉ đơn vị thuê đang hoạt động hoặc tạm ngưng mới có thể đổi trạng thái tại đây.'}
               {isPendingRegistration ? (
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Button
@@ -221,7 +231,7 @@ export function TenantDetailsView({
                   disabled={isPending || (!isActive && data.status !== 'Suspended')}
                   onClick={onStateAction}
                 >
-                  {isActive ? 'Tạm ngưng tenant' : 'Kích hoạt lại tenant'}
+                  {isActive ? 'Tạm ngưng đơn vị thuê' : 'Kích hoạt lại đơn vị thuê'}
                 </Button>
               )}
             </AlertDescription>

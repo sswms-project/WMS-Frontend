@@ -188,7 +188,7 @@ export function SubscriptionPage() {
   const dialogCopy = getDialogCopy(dialogState, subscription, changePreview, changeResult)
 
   return (
-    <div className="flex w-full min-w-0 flex-none flex-col gap-4 lg:gap-5">
+    <div className="flex w-full min-w-0 flex-none flex-col gap-4 pb-4 lg:gap-5 lg:pb-5">
       <div className="flex min-w-0 flex-col gap-1">
         <h1 className="text-foreground text-xl font-semibold">Gói dịch vụ</h1>
       </div>

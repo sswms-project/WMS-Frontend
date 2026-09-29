@@ -104,7 +104,7 @@ export function VerifyTwoFactorPage() {
 
           clearTwoFactorTempToken()
           setAuth(user, accessToken, refreshToken)
-          router.replace(await resolvePostLoginRoute(user, takeAuthReturnUrl()))
+          window.location.replace(await resolvePostLoginRoute(user, takeAuthReturnUrl()))
         },
         onError: (error) => {
           if (flowId !== verifyFlowIdRef.current) return

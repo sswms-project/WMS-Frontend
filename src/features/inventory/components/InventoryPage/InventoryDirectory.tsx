@@ -410,16 +410,16 @@ function InventoryDesktopTable({
       <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-56">Sản phẩm</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Kho / Slot</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Lô / Trạng thái</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đặt trước</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Đang giữ</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Khả dụng</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-32">Cập nhật</TableHead>
+            <TableHead className="sticky top-0 z-10 w-56">Sản phẩm</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Kho / Slot</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Lô / Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24 text-right">Đặt trước</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24 text-right">Đang giữ</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24 text-right">Khả dụng</TableHead>
+            <TableHead className="sticky top-0 z-10 w-32">Cập nhật</TableHead>
             {canReportDamaged ? (
-              <TableHead className="bg-card sticky top-0 z-10 w-44 text-right">Thao tác</TableHead>
+              <TableHead className="sticky top-0 z-10 w-44 text-right">Thao tác</TableHead>
             ) : null}
           </TableRow>
         </TableHeader>

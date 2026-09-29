@@ -32,7 +32,11 @@ export function RevenueDonutChart({
         <p className="text-muted-foreground text-sm">{subtitle}</p>
       </div>
       <div className="relative">
-        <ResponsiveContainer width="100%" height={180}>
+        <ResponsiveContainer
+          width="100%"
+          height={180}
+          initialDimension={{ width: 300, height: 180 }}
+        >
           <PieChart>
             <Pie
               data={data}

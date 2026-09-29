@@ -1,17 +1,33 @@
 'use client'
 
+import { useState } from 'react'
 import { ArrowRight, MapPinned, RefreshCw, TriangleAlert } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useWarehousesQuery } from '../hooks/use-warehouse'
 
 export default function WarehouseLayoutDirectoryPage() {
-  const warehousesQuery = useWarehousesQuery({ top: 100, skip: 0, needTotalCount: true })
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const warehousesQuery = useWarehousesQuery({
+    top: pageSize,
+    skip: (page - 1) * pageSize,
+    needTotalCount: true,
+  })
   const warehouses = warehousesQuery.data?.items ?? []
 
   return (
@@ -91,27 +107,71 @@ export default function WarehouseLayoutDirectoryPage() {
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="divide-y">
-              {warehouses.map((warehouse) => (
-                <div key={warehouse.id} className="flex items-center gap-3 px-4 py-3">
-                  <MapPinned className="text-primary size-5 shrink-0" aria-hidden="true" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{warehouse.warehouseName}</p>
-                    <p className="text-muted-foreground font-mono text-xs">
-                      {warehouse.warehouseCode}
-                    </p>
-                  </div>
-                  <Button asChild size="sm">
-                    <Link href={APP_ROUTES.warehouseLayout(warehouse.id) as Route}>
-                      Mở sơ đồ
-                      <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="hidden min-w-0 md:block [&>[data-slot=table-container]]:overflow-visible">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky top-0 z-10 pl-4">Mã kho</TableHead>
+                      <TableHead className="sticky top-0 z-10">Tên kho</TableHead>
+                      <TableHead className="sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {warehouses.map((warehouse) => (
+                      <TableRow key={warehouse.id}>
+                        <TableCell className="pl-4 font-mono text-xs font-medium">
+                          {warehouse.warehouseCode}
+                        </TableCell>
+                        <TableCell className="font-medium">{warehouse.warehouseName}</TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild size="sm">
+                            <Link href={APP_ROUTES.warehouseLayout(warehouse.id) as Route}>
+                              Mở sơ đồ
+                              <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="divide-y md:hidden">
+                {warehouses.map((warehouse) => (
+                  <article key={warehouse.id} className="flex items-center gap-3 px-3 py-3">
+                    <MapPinned className="text-primary size-5 shrink-0" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{warehouse.warehouseName}</p>
+                      <p className="text-muted-foreground truncate font-mono text-xs">
+                        {warehouse.warehouseCode}
+                      </p>
+                    </div>
+                    <Button asChild size="sm">
+                      <Link href={APP_ROUTES.warehouseLayout(warehouse.id) as Route}>
+                        Mở sơ đồ
+                        <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                      </Link>
+                    </Button>
+                  </article>
+                ))}
+              </div>
+            </>
           )}
         </div>
+        {!warehousesQuery.isLoading && !warehousesQuery.isError && warehouses.length > 0 ? (
+          <OperationalPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={warehousesQuery.data?.totalCount ?? 0}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value)
+              setPage(1)
+            }}
+          />
+        ) : null}
       </OperationalListPanel>
     </div>
   )

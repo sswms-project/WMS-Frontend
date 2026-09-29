@@ -25,19 +25,15 @@ export function ProductListTable({ products, canEdit, onView, onEdit }: ProductL
     <Table>
       <TableHeader>
         <TableRow className="bg-muted/40">
-          <TableHead className="bg-card sticky top-0 z-10 w-[200px] pl-4">Mã hàng hóa</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10">Tên sản phẩm</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10">Danh mục</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10">Đơn vị</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10 text-right">Tồn thực tế</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10 text-right">Đang giữ</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10 text-right">Khả dụng</TableHead>
-          <TableHead className="bg-card sticky top-0 z-10 w-[120px] text-center">
-            Trạng thái
-          </TableHead>
-          <TableHead className="bg-card sticky top-0 z-10 w-[100px] pr-4 text-right">
-            Thao tác
-          </TableHead>
+          <TableHead className="sticky top-0 z-10 w-[200px] pl-4">Mã hàng hóa</TableHead>
+          <TableHead className="sticky top-0 z-10">Tên sản phẩm</TableHead>
+          <TableHead className="sticky top-0 z-10">Danh mục</TableHead>
+          <TableHead className="sticky top-0 z-10">Đơn vị</TableHead>
+          <TableHead className="sticky top-0 z-10 text-right">Tồn thực tế</TableHead>
+          <TableHead className="sticky top-0 z-10 text-right">Đang giữ</TableHead>
+          <TableHead className="sticky top-0 z-10 text-right">Khả dụng</TableHead>
+          <TableHead className="sticky top-0 z-10 w-[120px] text-center">Trạng thái</TableHead>
+          <TableHead className="sticky top-0 z-10 w-[100px] pr-4 text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

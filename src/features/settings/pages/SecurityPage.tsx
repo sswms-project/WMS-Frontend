@@ -82,9 +82,13 @@ export function SecurityPage() {
   }
 
   return (
-    <div className="grid w-full min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[280px_1fr]">
-      <SecurityOverviewCard />
-      <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex w-full min-w-0 flex-col gap-6">
+      <SecurityOverviewCard
+        isLoading={meQuery.isLoading}
+        isError={meQuery.isError}
+        isTwoFactorEnabled={meQuery.data?.isTwoFactorEnabled ?? false}
+      />
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
         <ChangePasswordCard
           form={changePasswordForm}
           isPending={changePasswordMutation.isPending}

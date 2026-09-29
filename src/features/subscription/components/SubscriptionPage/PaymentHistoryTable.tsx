@@ -127,15 +127,15 @@ export function PaymentHistoryTable({
         </form>
       </div>
 
-      <div data-slot="operational-list-body" className="flex min-h-0 flex-col gap-4 p-4">
+      <div data-slot="operational-list-body" className="min-h-0 min-w-0">
         {isLoading ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 p-4">
             {Array.from({ length: 5 }).map((_, index) => (
               <Skeleton key={index} className="h-10 w-full" />
             ))}
           </div>
         ) : isError ? (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="m-4">
             <AlertTitle>Không thể tải lịch sử thanh toán</AlertTitle>
             <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>Vui lòng kiểm tra kết nối hoặc thử lại sau ít phút.</span>
@@ -145,7 +145,7 @@ export function PaymentHistoryTable({
             </AlertDescription>
           </Alert>
         ) : payments.length === 0 ? (
-          <Empty className="border-border bg-muted/30 min-h-48 border">
+          <Empty className="border-border bg-muted/30 m-4 min-h-48 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <Download aria-hidden="true" />
@@ -174,14 +174,15 @@ export function PaymentHistoryTable({
         )}
       </div>
 
-      <OperationalPagination
-        page={pageIndex + 1}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        isPending={isLoading}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-      />
+      {!isLoading && !isError && totalCount > 0 ? (
+        <OperationalPagination
+          page={pageIndex + 1}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
+      ) : null}
 
       <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
         <SheetContent className="w-full sm:max-w-md">
@@ -221,12 +222,9 @@ function PaymentHistoryMobileList({
   onPrintInvoice,
 }: PaymentHistoryListProps) {
   return (
-    <div className="flex flex-col md:hidden">
+    <div className="divide-y md:hidden">
       {payments.map((payment) => (
-        <article
-          key={payment.id}
-          className="flex flex-col gap-3 border-b py-3 first:pt-0 last:border-b-0"
-        >
+        <article key={payment.id} className="flex flex-col gap-3 px-3 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-mono text-sm font-medium">{payment.invoiceNumber}</p>
@@ -294,23 +292,23 @@ function PaymentHistoryDesktopTable({
   onPrintInvoice,
 }: PaymentHistoryListProps) {
   return (
-    <div className="hidden min-w-0 overflow-x-auto md:block">
+    <div className="hidden min-w-0 md:block [&>[data-slot=table-container]]:overflow-visible">
       <Table className="min-w-[820px]">
         <TableHeader>
           <TableRow>
-            <TableHead>Mã hóa đơn</TableHead>
-            <TableHead>Gói dịch vụ</TableHead>
-            <TableHead className="text-right">Số tiền</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Ngày thanh toán</TableHead>
-            <TableHead>Ngày tạo</TableHead>
-            <TableHead className="text-right">Thao tác</TableHead>
+            <TableHead className="sticky top-0 z-10 pl-4">Mã hóa đơn</TableHead>
+            <TableHead className="sticky top-0 z-10">Gói dịch vụ</TableHead>
+            <TableHead className="sticky top-0 z-10 text-right">Số tiền</TableHead>
+            <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10">Ngày thanh toán</TableHead>
+            <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
+            <TableHead className="sticky top-0 z-10 pr-4 text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {payments.map((payment) => (
             <TableRow key={payment.id}>
-              <TableCell className="font-mono">{payment.invoiceNumber}</TableCell>
+              <TableCell className="pl-4 font-mono">{payment.invoiceNumber}</TableCell>
               <TableCell>{formatHistoricalPlanName(payment.planName)}</TableCell>
               <TableCell className="text-right font-medium tabular-nums">
                 {formatCurrency(payment.amount, payment.currency)}
@@ -320,7 +318,7 @@ function PaymentHistoryDesktopTable({
                 {payment.paidAt ? formatDate(payment.paidAt) : 'Chưa thanh toán'}
               </TableCell>
               <TableCell>{formatDate(payment.createdAt)}</TableCell>
-              <TableCell className="text-right">
+              <TableCell className="pr-4 text-right">
                 <div className="flex justify-end gap-2">
                   <InvoiceActionButton
                     ariaLabel={`Tải hóa đơn ${payment.invoiceNumber}`}

@@ -454,14 +454,14 @@ function StockIssueRequestDesktopTable({
       <Table className="min-w-[1040px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-56">Mã đơn</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-52">Đơn vị nhận hàng</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-52">Kho xuất</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-40">Trạng thái</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-24 text-right">Số dòng</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36 text-right">Đã lấy/Đặt</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-44">Ngày tạo</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-12">
+            <TableHead className="sticky top-0 z-10 w-56">Mã đơn</TableHead>
+            <TableHead className="sticky top-0 z-10 w-52">Đơn vị nhận hàng</TableHead>
+            <TableHead className="sticky top-0 z-10 w-52">Kho xuất</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24 text-right">Số dòng</TableHead>
+            <TableHead className="sticky top-0 z-10 w-36 text-right">Đã lấy/Đặt</TableHead>
+            <TableHead className="sticky top-0 z-10 w-44">Ngày tạo</TableHead>
+            <TableHead className="sticky top-0 z-10 w-12">
               <span className="sr-only">Thao tác</span>
             </TableHead>
           </TableRow>

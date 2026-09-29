@@ -348,6 +348,14 @@ body {
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
+[data-slot='workspace-scroll-area']:has([data-hide-workspace-scrollbar]) {
+  scrollbar-width: none;
+}
+
+[data-slot='workspace-scroll-area']:has([data-hide-workspace-scrollbar])::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

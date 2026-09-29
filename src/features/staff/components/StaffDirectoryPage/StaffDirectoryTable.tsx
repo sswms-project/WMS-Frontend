@@ -135,13 +135,13 @@ export function StaffDirectoryTable({
         <Table className="min-w-[960px] table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-card sticky top-0 z-10 w-40 pl-4">Nhân sự</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-48">Liên hệ</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-36">Vai trò</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-28">Trạng thái</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-44">Phạm vi kho</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-32">Lần đăng nhập cuối</TableHead>
-              <TableHead className="bg-card sticky top-0 z-10 w-12">
+              <TableHead className="sticky top-0 z-10 w-40 pl-4">Nhân sự</TableHead>
+              <TableHead className="sticky top-0 z-10 w-48">Liên hệ</TableHead>
+              <TableHead className="sticky top-0 z-10 w-36">Vai trò</TableHead>
+              <TableHead className="sticky top-0 z-10 w-28">Trạng thái</TableHead>
+              <TableHead className="sticky top-0 z-10 w-44">Phạm vi kho</TableHead>
+              <TableHead className="sticky top-0 z-10 w-32">Lần đăng nhập cuối</TableHead>
+              <TableHead className="sticky top-0 z-10 w-12">
                 <span className="sr-only">Thao tác</span>
               </TableHead>
             </TableRow>
