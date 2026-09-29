@@ -1,4 +1,14 @@
-import { Building2, CircleCheck, Mail, MapPin, Pencil, Phone } from 'lucide-react'
+import {
+  Briefcase,
+  Building2,
+  CircleCheck,
+  Globe,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Receipt,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { OrganizationResponse } from '../../types/organization.types'
@@ -92,6 +102,31 @@ export function OrganizationProfileView({ organization, onEdit }: OrganizationPr
           />
         </section>
       </div>
+      <section className="bg-card border p-4">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold">Thông tin doanh nghiệp</h3>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Thông tin bổ sung phục vụ nhận diện thương hiệu và hồ sơ pháp lý.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <DetailCard
+            icon={Receipt}
+            label="Mã số thuế"
+            value={organization.taxCode || 'Chưa cập nhật'}
+          />
+          <DetailCard
+            icon={Globe}
+            label="Website"
+            value={organization.website || 'Chưa cập nhật'}
+          />
+          <DetailCard
+            icon={Briefcase}
+            label="Ngành nghề kinh doanh"
+            value={organization.industry || 'Chưa cập nhật'}
+          />
+        </div>
+      </section>
     </section>
   )
 }
