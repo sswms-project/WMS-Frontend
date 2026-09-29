@@ -128,7 +128,8 @@ export interface UpdateProductRequest {
 }
 
 export interface ConfigureStockPolicyRequest {
-  warehouseId: string
+  warehouseId: string | null
+  applyToAllWarehouses: boolean
   preferredSlotId: string | null
   minStockThreshold: number
   maxStockThreshold: number | null

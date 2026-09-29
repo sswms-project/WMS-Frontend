@@ -1,6 +1,6 @@
 'use client'
 
-import { ImagePlus, Plus, Save, Trash2, Upload, X } from 'lucide-react'
+import { ArrowRight, ImagePlus, Plus, Save, Trash2, Upload, X } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useWatch } from 'react-hook-form'
@@ -39,7 +39,16 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import { QuickCategoryDialog } from './QuickCategoryDialog'
 import type { CategoryFormValues } from '../schemas/master-data.schema'
 import type { CreateProductFormValues, UpdateProductFormValues } from '../schemas/product.schema'
-import type { CategoryResponse, ProductResponse, UnitResponse } from '../types/product.types'
+import type {
+  CategoryResponse,
+  ProductResponse,
+  ProductUnitConversion,
+  UnitResponse,
+} from '../types/product.types'
+
+const conversionFactorFormatter = new Intl.NumberFormat('vi-VN', {
+  maximumFractionDigits: 6,
+})
 
 interface ProductReferenceOptionsProps {
   readonly units: readonly UnitResponse[]
@@ -64,7 +73,141 @@ interface CreateProductFormProps extends ProductReferenceOptionsProps {
     imageFile: File | null
   ) => Promise<boolean>
   readonly onCancel: () => void
+  readonly onImageDirtyChange: (isDirty: boolean) => void
   readonly onCategoryDialogOpenChange: (open: boolean) => void
+}
+
+interface ProductImagePickerProps {
+  readonly id: string
+  readonly initialImageUrl?: string | null
+  readonly disabled?: boolean
+  readonly onFileChange: (file: File | null) => void
+}
+
+export function ProductImagePicker({
+  id,
+  initialImageUrl,
+  disabled,
+  onFileChange,
+}: ProductImagePickerProps) {
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!imagePreviewUrl) return
+    return () => URL.revokeObjectURL(imagePreviewUrl)
+  }, [imagePreviewUrl])
+
+  function clearImage() {
+    setImageFile(null)
+    setImagePreviewUrl(null)
+    setImageError(null)
+    onFileChange(null)
+  }
+
+  function openImagePicker() {
+    const input = imageInputRef.current
+    if (!input || disabled) return
+    input.value = ''
+    input.click()
+  }
+
+  function selectImage(file: File | null) {
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setImageFile(null)
+      setImagePreviewUrl(null)
+      setImageError('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.')
+      onFileChange(null)
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageFile(null)
+      setImagePreviewUrl(null)
+      setImageError('Ảnh sản phẩm không được vượt quá 5 MB.')
+      onFileChange(null)
+      return
+    }
+
+    setImageFile(file)
+    setImagePreviewUrl(URL.createObjectURL(file))
+    setImageError(null)
+    onFileChange(file)
+  }
+
+  const displayedImageUrl = imagePreviewUrl ?? initialImageUrl
+
+  return (
+    <Field className="md:col-start-2" data-invalid={Boolean(imageError)}>
+      <FieldLabel htmlFor={id}>Ảnh sản phẩm</FieldLabel>
+      <input
+        ref={imageInputRef}
+        id={id}
+        name={id}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        aria-label="Chọn ảnh sản phẩm từ thiết bị"
+        className="sr-only"
+        tabIndex={-1}
+        disabled={disabled}
+        onChange={(event) => selectImage(event.target.files?.[0] ?? null)}
+      />
+      <button
+        type="button"
+        aria-label={displayedImageUrl ? 'Thay đổi ảnh sản phẩm' : 'Chọn ảnh sản phẩm'}
+        disabled={disabled}
+        onClick={openImagePicker}
+        className="bg-muted/20 hover:bg-muted/50 focus-visible:ring-ring relative flex size-28 items-center justify-center overflow-hidden border border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:size-32"
+      >
+        {displayedImageUrl ? (
+          <Image
+            src={displayedImageUrl}
+            alt={imageFile ? `Xem trước ảnh ${imageFile.name}` : 'Ảnh sản phẩm hiện tại'}
+            fill
+            unoptimized
+            sizes="128px"
+            className="object-cover"
+          />
+        ) : (
+          <span className="text-muted-foreground flex flex-col items-center gap-2 text-xs">
+            <ImagePlus aria-hidden="true" />
+            Chọn ảnh
+          </span>
+        )}
+      </button>
+      <div className="mt-2 flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={openImagePicker}
+        >
+          <Upload data-icon="inline-start" aria-hidden="true" />
+          {displayedImageUrl ? 'Thay ảnh' : 'Tải ảnh lên'}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Bỏ ảnh mới đã chọn"
+          title="Bỏ ảnh mới"
+          disabled={disabled || !imageFile}
+          onClick={clearImage}
+        >
+          <Trash2 aria-hidden="true" />
+        </Button>
+      </div>
+      <FieldDescription>JPG, PNG hoặc WebP, tối đa 5 MB.</FieldDescription>
+      {imageError ? (
+        <p role="alert" className="text-destructive text-xs">
+          {imageError}
+        </p>
+      ) : null}
+    </Field>
+  )
 }
 
 export function CreateProductForm({
@@ -83,13 +226,12 @@ export function CreateProductForm({
   isPending,
   onSubmit,
   onCancel,
+  onImageDirtyChange,
   onCategoryDialogOpenChange,
 }: CreateProductFormProps) {
   const isLotTracked = useWatch({ control: form.control, name: 'isLotTracked' })
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
-  const [imageError, setImageError] = useState<string | null>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
+  const [imagePickerVersion, setImagePickerVersion] = useState(0)
   const baseUnitId = useWatch({ control: form.control, name: 'unitId' })
   const {
     fields: conversionFields,
@@ -100,28 +242,11 @@ export function CreateProductForm({
     name: 'unitConversions',
   })
 
-  useEffect(() => {
-    if (!imagePreviewUrl) return
-    return () => URL.revokeObjectURL(imagePreviewUrl)
-  }, [imagePreviewUrl])
-
-  function clearImage() {
-    setImageFile(null)
-    setImagePreviewUrl(null)
-    setImageError(null)
-  }
-
-  function openImagePicker() {
-    const input = imageInputRef.current
-    if (!input) return
-    input.value = ''
-    input.click()
-  }
-
   async function save(values: CreateProductFormValues, createAnother: boolean) {
     const saved = await onSubmit(values, createAnother, imageFile)
     if (saved) {
-      clearImage()
+      setImageFile(null)
+      setImagePickerVersion((version) => version + 1)
       if (createAnother) form.reset()
     }
   }
@@ -273,81 +398,15 @@ export function CreateProductForm({
           </FieldSet>
         </div>
 
-        <Field className="md:col-start-2" data-invalid={Boolean(imageError)}>
-          <FieldLabel htmlFor="productImage">Ảnh sản phẩm</FieldLabel>
-          <input
-            ref={imageInputRef}
-            id="productImage"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-label="Chọn ảnh sản phẩm từ thiết bị"
-            className="sr-only"
-            tabIndex={-1}
-            onChange={(event) => {
-              const file = event.target.files?.[0] ?? null
-              event.target.value = ''
-              if (!file) return
-              if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-                setImageError('Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.')
-                return
-              }
-              if (file.size > 5 * 1024 * 1024) {
-                setImageError('Ảnh sản phẩm không được vượt quá 5 MB.')
-                return
-              }
-              setImageFile(file)
-              setImagePreviewUrl(URL.createObjectURL(file))
-              setImageError(null)
-            }}
-          />
-          <button
-            type="button"
-            aria-label={imageFile ? 'Thay đổi ảnh sản phẩm' : 'Chọn ảnh sản phẩm'}
-            onClick={openImagePicker}
-            className="bg-muted/20 hover:bg-muted/50 focus-visible:ring-ring relative flex size-28 items-center justify-center overflow-hidden border border-dashed transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 sm:size-32"
-          >
-            {imagePreviewUrl ? (
-              <Image
-                src={imagePreviewUrl}
-                alt={`Xem trước ảnh ${imageFile?.name ?? 'sản phẩm'}`}
-                fill
-                unoptimized
-                sizes="128px"
-                className="object-cover"
-              />
-            ) : (
-              <span className="text-muted-foreground flex flex-col items-center gap-2 text-xs">
-                <ImagePlus aria-hidden="true" />
-                Chọn ảnh
-              </span>
-            )}
-          </button>
-          <div className="mt-2 flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={openImagePicker}>
-              <Upload data-icon="inline-start" aria-hidden="true" />
-              Tải ảnh lên
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Xóa ảnh sản phẩm"
-              title="Xóa ảnh"
-              disabled={!imageFile}
-              onClick={clearImage}
-            >
-              <Trash2 aria-hidden="true" />
-            </Button>
-          </div>
-          <FieldDescription>
-            Ảnh được tải lên khi lưu sản phẩm. JPG, PNG hoặc WebP, tối đa 5 MB.
-          </FieldDescription>
-          {imageError ? (
-            <p role="alert" className="text-destructive text-xs">
-              {imageError}
-            </p>
-          ) : null}
-        </Field>
+        <ProductImagePicker
+          key={imagePickerVersion}
+          id="productImage"
+          disabled={isPending}
+          onFileChange={(file) => {
+            setImageFile(file)
+            onImageDirtyChange(Boolean(file))
+          }}
+        />
 
         {isLotTracked ? (
           <Field
@@ -556,6 +615,7 @@ interface CreateProductDialogProps extends ProductReferenceOptionsProps {
   readonly isCreatingCategory: boolean
   readonly onCreateCategory: (values: CategoryFormValues) => Promise<string | null>
   readonly onOpenChange: (open: boolean) => void
+  readonly onImageDirtyChange: (isDirty: boolean) => void
   readonly onSubmit: (
     values: CreateProductFormValues,
     createAnother: boolean,
@@ -580,6 +640,7 @@ export function CreateProductDialog({
   open,
   isPending,
   onOpenChange,
+  onImageDirtyChange,
   onSubmit,
   onCategoryDialogOpenChange,
 }: CreateProductDialogProps) {
@@ -610,6 +671,7 @@ export function CreateProductDialog({
             isPending={isPending}
             onSubmit={onSubmit}
             onCancel={() => onOpenChange(false)}
+            onImageDirtyChange={onImageDirtyChange}
             onCategoryDialogOpenChange={onCategoryDialogOpenChange}
           />
         </div>
@@ -622,9 +684,12 @@ interface UpdateProductDialogProps extends ProductReferenceOptionsProps {
   readonly form: UseFormReturn<UpdateProductFormValues>
   readonly open: boolean
   readonly product: ProductResponse
+  readonly conversions: readonly ProductUnitConversion[]
   readonly isPending: boolean
   readonly onOpenChange: (open: boolean) => void
-  readonly onSubmit: (values: UpdateProductFormValues) => void
+  readonly onImageDirtyChange: (isDirty: boolean) => void
+  readonly onManageConversions: () => void
+  readonly onSubmit: (values: UpdateProductFormValues, imageFile: File | null) => Promise<boolean>
 }
 
 export function UpdateProductDialog({
@@ -638,11 +703,23 @@ export function UpdateProductDialog({
   canManageCategories,
   open,
   product,
+  conversions,
   isPending,
   onOpenChange,
+  onImageDirtyChange,
+  onManageConversions,
   onSubmit,
 }: UpdateProductDialogProps) {
   const isLotTracked = useWatch({ control: form.control, name: 'isLotTracked' })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+
+  async function save(values: UpdateProductFormValues) {
+    const saved = await onSubmit(values, imageFile)
+    if (saved) {
+      setImageFile(null)
+      onImageDirtyChange(false)
+    }
+  }
 
   return (
     <Sheet open={open} onOpenChange={(o) => !isPending && onOpenChange(o)}>
@@ -654,7 +731,7 @@ export function UpdateProductDialog({
           </SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
-          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <form onSubmit={form.handleSubmit(save)} noValidate>
             {areOptionsError ? (
               <Alert variant="destructive" className="mb-4">
                 <AlertTitle>Không thể tải dữ liệu sản phẩm</AlertTitle>
@@ -685,6 +762,14 @@ export function UpdateProductDialog({
                       : undefined
                   }
                 />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="edit-sku">Mã hàng hóa</FieldLabel>
+                <Input id="edit-sku" value={product.sku} disabled readOnly className="font-mono" />
+                <FieldDescription>
+                  Mã hàng hóa được cố định sau khi tạo để bảo toàn lịch sử giao dịch.
+                </FieldDescription>
               </Field>
 
               <Field data-invalid={Boolean(form.formState.errors.unitId)}>
@@ -759,6 +844,16 @@ export function UpdateProductDialog({
                   }
                 />
               </Field>
+
+              <ProductImagePicker
+                id="edit-productImage"
+                initialImageUrl={product.imageUrl}
+                disabled={isPending}
+                onFileChange={(file) => {
+                  setImageFile(file)
+                  onImageDirtyChange(Boolean(file))
+                }}
+              />
 
               <FieldSet
                 className="bg-muted/30 rounded-md border p-4 md:col-span-2"
@@ -842,6 +937,75 @@ export function UpdateProductDialog({
               </Field>
             </FieldGroup>
 
+            <Accordion type="single" collapsible className="mt-4 rounded-lg border px-4">
+              <AccordionItem value="conversions">
+                <AccordionTrigger>Đơn vị chuyển đổi</AccordionTrigger>
+                <AccordionContent className="flex flex-col items-start gap-3">
+                  <p className="text-muted-foreground text-sm">
+                    Sản phẩm hiện có {conversions.length} đơn vị chuyển đổi. Việc sửa quy đổi được
+                    quản lý riêng để không làm thay đổi dữ liệu giao dịch đã phát sinh.
+                  </p>
+                  <div className="max-h-52 w-full overflow-auto border">
+                    <table className="w-full min-w-[520px] table-fixed text-sm">
+                      <colgroup>
+                        <col className="w-[30%]" />
+                        <col />
+                        <col className="w-[24%]" />
+                      </colgroup>
+                      <thead className="bg-muted/60 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-medium">Đơn vị chuyển đổi</th>
+                          <th className="px-3 py-2 text-left font-medium">Mô tả quy đổi</th>
+                          <th className="px-3 py-2 text-left font-medium">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {conversions.length > 0 ? (
+                          conversions.map((conversion) => (
+                            <tr key={conversion.id} className="border-t">
+                              <td className="px-3 py-2">{conversion.unitName}</td>
+                              <td className="px-3 py-2 tabular-nums">
+                                1 {conversion.unitName} ={' '}
+                                {conversionFactorFormatter.format(conversion.conversionFactor)}{' '}
+                                {product.unitName}
+                              </td>
+                              <td className="px-3 py-2">
+                                {conversion.status === 'Active' ? 'Đang sử dụng' : 'Ngừng sử dụng'}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={3}
+                              className="text-muted-foreground px-3 py-4 text-center text-xs"
+                            >
+                              Chưa khai báo đơn vị chuyển đổi.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={form.formState.isDirty || Boolean(imageFile)}
+                    onClick={onManageConversions}
+                  >
+                    Quản lý đơn vị chuyển đổi
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                  </Button>
+                  {form.formState.isDirty || imageFile ? (
+                    <p className="text-muted-foreground text-xs">
+                      Hãy lưu hoặc hủy thay đổi hiện tại trước khi chuyển sang phần quy đổi.
+                    </p>
+                  ) : null}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
             <SheetFooter className="bg-popover sticky -bottom-5 z-10 -mx-5 mt-6 border-t px-5 py-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
@@ -855,7 +1019,10 @@ export function UpdateProductDialog({
               <Button
                 type="submit"
                 disabled={
-                  isPending || areOptionsLoading || areOptionsError || !form.formState.isDirty
+                  isPending ||
+                  areOptionsLoading ||
+                  areOptionsError ||
+                  (!form.formState.isDirty && !imageFile)
                 }
               >
                 {isPending ? (

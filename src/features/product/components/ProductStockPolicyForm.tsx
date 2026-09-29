@@ -5,16 +5,26 @@ import type { ComponentProps } from 'react'
 import { useWatch } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { WarehouseResponse } from '@/types/warehouse'
 import type { LocationSearchResponse } from '@/features/warehouse/types/warehouse.types'
 import type { StockPolicyFormValues } from '../schemas/product.schema'
@@ -51,10 +61,12 @@ export function ProductStockPolicyDialog({
 }: ProductStockPolicyDialogProps) {
   const warehouseId = useWatch({ control: form.control, name: 'warehouseId' })
   const preferredSlotId = useWatch({ control: form.control, name: 'preferredSlotId' })
+  const scope = useWatch({ control: form.control, name: 'scope' })
 
   function selectWarehouse(warehouseId: string) {
     const policy = policies.find((item) => item.warehouseId === warehouseId)
     form.reset({
+      scope: 'single',
       warehouseId,
       preferredSlotId: policy?.preferredSlotId ?? null,
       minStockThreshold: policy?.minStockThreshold ?? 0,
@@ -66,70 +78,142 @@ export function ProductStockPolicyDialog({
     onWarehouseChange(warehouseId)
   }
 
+  function selectScope(nextScope: 'single' | 'all') {
+    if (nextScope === 'single') {
+      selectWarehouse(warehouseId || warehouses[0]?.id || '')
+      return
+    }
+
+    form.setValue('scope', 'all', { shouldDirty: true, shouldValidate: true })
+    form.setValue('warehouseId', '', { shouldDirty: true, shouldValidate: true })
+    form.setValue('preferredSlotId', null, { shouldDirty: true, shouldValidate: true })
+    onWarehouseChange('')
+  }
+
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Chính sách tồn kho theo kho</DialogTitle>
+          <DialogDescription>
+            Thiết lập ngưỡng tồn và vị trí ưu tiên cho một hoặc nhiều kho đang quản lý.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FieldGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field
-              className="sm:col-span-2"
-              data-invalid={Boolean(form.formState.errors.warehouseId)}
-            >
-              <FieldLabel htmlFor="policy-warehouse">Kho</FieldLabel>
-              <NativeSelect
-                id="policy-warehouse"
-                value={warehouseId}
+            <FieldSet className="bg-muted/30 rounded-md border p-4 sm:col-span-2">
+              <FieldLegend variant="label">Phạm vi áp dụng</FieldLegend>
+              <RadioGroup
+                value={scope}
                 disabled={isPending}
-                onChange={(event) => selectWarehouse(event.target.value)}
+                onValueChange={(value) => selectScope(value === 'all' ? 'all' : 'single')}
+                className="mt-3 grid gap-2 sm:grid-cols-2"
               >
-                <NativeSelectOption value="">Chọn kho</NativeSelectOption>
-                {warehouses.map((warehouse) => (
-                  <NativeSelectOption key={warehouse.id} value={warehouse.id}>
-                    {warehouse.warehouseCode} — {warehouse.warehouseName}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              <FieldError
-                errors={
-                  form.formState.errors.warehouseId
-                    ? [form.formState.errors.warehouseId]
-                    : undefined
-                }
-              />
-            </Field>
+                <Field
+                  orientation="horizontal"
+                  className="bg-card hover:bg-muted/50 rounded-md border p-3 transition-colors"
+                >
+                  <RadioGroupItem id="policy-scope-single" value="single" />
+                  <div className="grid gap-0.5">
+                    <FieldLabel htmlFor="policy-scope-single">Một kho</FieldLabel>
+                    <p className="text-muted-foreground text-xs">
+                      Thiết lập riêng cho kho được chọn.
+                    </p>
+                  </div>
+                </Field>
+                <Field
+                  orientation="horizontal"
+                  className="bg-card hover:bg-muted/50 rounded-md border p-3 transition-colors"
+                >
+                  <RadioGroupItem id="policy-scope-all" value="all" />
+                  <div className="grid gap-0.5">
+                    <FieldLabel htmlFor="policy-scope-all">Tất cả kho</FieldLabel>
+                    <p className="text-muted-foreground text-xs">
+                      Áp dụng cùng một ngưỡng cho các kho bạn quản lý.
+                    </p>
+                  </div>
+                </Field>
+              </RadioGroup>
+            </FieldSet>
 
-            <Field className="sm:col-span-2">
-              <FieldLabel htmlFor="policy-preferred-slot">
-                Vị trí cất ưu tiên <span className="text-muted-foreground">(tùy chọn)</span>
-              </FieldLabel>
-              <NativeSelect
-                id="policy-preferred-slot"
-                value={preferredSlotId ?? ''}
-                disabled={!warehouseId || areLocationsLoading || isPending}
-                onChange={(event) =>
-                  form.setValue('preferredSlotId', event.target.value || null, {
-                    shouldDirty: true,
-                  })
-                }
+            {scope === 'all' ? (
+              <Alert
+                variant={warehouses.length === 0 ? 'destructive' : 'default'}
+                className="sm:col-span-2"
               >
-                <NativeSelectOption value="">
-                  {areLocationsLoading ? 'Đang tải vị trí…' : 'Không đặt vị trí ưu tiên'}
-                </NativeSelectOption>
-                {locations.map((location) => (
-                  <NativeSelectOption key={location.id} value={location.id}>
-                    {[location.zoneCode, location.rackCode, location.code]
-                      .filter(Boolean)
-                      .join(' / ')}
+                <AlertTitle>
+                  {warehouses.length > 0
+                    ? `Áp dụng cho ${warehouses.length} kho đang hoạt động`
+                    : 'Không có kho phù hợp để áp dụng'}
+                </AlertTitle>
+                <AlertDescription>
+                  {warehouses.length > 0
+                    ? 'Chỉ các kho bạn đang được quản lý tại thời điểm lưu được cập nhật. Kho tạo hoặc phân công sau này không tự động nhận chính sách này.'
+                    : 'Bạn cần được phân công quản lý ít nhất một kho đang hoạt động.'}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {scope === 'single' ? (
+              <Field
+                className="sm:col-span-2"
+                data-invalid={Boolean(form.formState.errors.warehouseId)}
+              >
+                <FieldLabel htmlFor="policy-warehouse">Kho</FieldLabel>
+                <NativeSelect
+                  id="policy-warehouse"
+                  value={warehouseId}
+                  disabled={isPending}
+                  onChange={(event) => selectWarehouse(event.target.value)}
+                >
+                  <NativeSelectOption value="">Chọn kho</NativeSelectOption>
+                  {warehouses.map((warehouse) => (
+                    <NativeSelectOption key={warehouse.id} value={warehouse.id}>
+                      {warehouse.warehouseCode} — {warehouse.warehouseName}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <FieldError
+                  errors={
+                    form.formState.errors.warehouseId
+                      ? [form.formState.errors.warehouseId]
+                      : undefined
+                  }
+                />
+              </Field>
+            ) : null}
+
+            {scope === 'single' ? (
+              <Field className="sm:col-span-2">
+                <FieldLabel htmlFor="policy-preferred-slot">
+                  Vị trí cất ưu tiên <span className="text-muted-foreground">(tùy chọn)</span>
+                </FieldLabel>
+                <NativeSelect
+                  id="policy-preferred-slot"
+                  value={preferredSlotId ?? ''}
+                  disabled={!warehouseId || areLocationsLoading || isPending}
+                  onChange={(event) =>
+                    form.setValue('preferredSlotId', event.target.value || null, {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  <NativeSelectOption value="">
+                    {areLocationsLoading ? 'Đang tải vị trí…' : 'Không đặt vị trí ưu tiên'}
                   </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              <p className="text-muted-foreground text-xs">
-                Đây là gợi ý cất hàng; hệ thống vẫn kiểm tra trạng thái và sức chứa thực tế.
-              </p>
-            </Field>
+                  {locations.map((location) => (
+                    <NativeSelectOption key={location.id} value={location.id}>
+                      {[location.zoneCode, location.rackCode, location.code]
+                        .filter(Boolean)
+                        .join(' / ')}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <p className="text-muted-foreground text-xs">
+                  Đây là gợi ý cất hàng; hệ thống vẫn kiểm tra trạng thái và sức chứa thực tế.
+                </p>
+              </Field>
+            ) : null}
 
             <PolicyNumberField
               id="policy-minimum"
@@ -177,7 +261,12 @@ export function ProductStockPolicyDialog({
               <X data-icon="inline-start" aria-hidden="true" />
               Hủy
             </Button>
-            <Button type="submit" disabled={isPending || !form.formState.isDirty}>
+            <Button
+              type="submit"
+              disabled={
+                isPending || !form.formState.isDirty || (scope === 'all' && warehouses.length === 0)
+              }
+            >
               {isPending ? (
                 <LoaderCircle
                   data-icon="inline-start"
