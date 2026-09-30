@@ -4,7 +4,6 @@ import { useState, type MouseEvent, type ReactNode } from 'react'
 import {
   ArrowLeft,
   CircleOff,
-  DraftingCompass,
   Edit3,
   Ellipsis,
   LayoutPanelTop,
@@ -278,16 +277,6 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
           >
             <LayoutPanelTop data-icon="inline-start" aria-hidden="true" />
             Vị trí VTHH
-          </Link>
-        </Button>
-        <Button asChild variant={isDesignerActive ? 'secondary' : 'ghost'} size="sm">
-          <Link
-            href={designerHref as Route}
-            aria-current={isDesignerActive ? 'page' : undefined}
-            onClick={(event) => handleWorkspaceNavigation(event, designerHref as Route)}
-          >
-            <DraftingCompass data-icon="inline-start" aria-hidden="true" />
-            Thiết kế
           </Link>
         </Button>
       </nav>

@@ -6,6 +6,16 @@ import { useEffect, useRef, useState } from 'react'
 import { logger } from '@/lib/logger'
 import { AlertCircle, Boxes, Info, RefreshCw, X } from 'lucide-react'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Drawer,
@@ -134,6 +144,7 @@ export function WarehouseDesignerWorkspace({
   const [zoomPercent, setZoomPercent] = useState(100)
   const [isToolboxOpen, setIsToolboxOpen] = useState(false)
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
   const [rackDeactivateTarget, setRackDeactivateTarget] =
     useState<WarehouseLayoutEditorRack | null>(null)
   const [rackDeactivateError, setRackDeactivateError] = useState<string | null>(null)
@@ -412,9 +423,15 @@ export function WarehouseDesignerWorkspace({
   }
 
   function closeDesigner() {
-    if (isDirty && !window.confirm('Các thay đổi chưa lưu sẽ bị mất. Bạn có muốn đóng thiết kế?')) {
+    if (isDirty) {
+      setIsCloseDialogOpen(true)
       return
     }
+    router.back()
+  }
+
+  function confirmCloseDesigner() {
+    setIsCloseDialogOpen(false)
     router.back()
   }
 
@@ -667,6 +684,22 @@ export function WarehouseDesignerWorkspace({
         }}
         onConfirm={() => void confirmDeactivateRack()}
       />
+      <AlertDialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bỏ thay đổi chưa lưu?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Các thay đổi trên sơ đồ sẽ bị mất nếu bạn đóng trang ngay bây giờ.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Tiếp tục chỉnh sửa</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmCloseDesigner}>
+              Đóng và bỏ thay đổi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }

@@ -42,7 +42,6 @@ interface CanvasPalette {
   background: string
   foreground: string
   muted: string
-  mutedForeground: string
   border: string
   primary: string
   accent: string
@@ -50,9 +49,17 @@ interface CanvasPalette {
   card: string
   warning: string
   warningContainer: string
+  selectionFill: string
+  selectionForeground: string
   viewerSelected: string
-  viewerSelectedForeground: string
   viewerOccupied: string
+}
+
+interface CanvasHoverInfo {
+  readonly code: string
+  readonly name: string
+  readonly left: number
+  readonly top: number
 }
 
 interface WarehouseCanvasProps {
@@ -86,16 +93,16 @@ function readCanvasPalette(): CanvasPalette {
     background: isDark ? '#111827' : '#FFFFFF',
     foreground: isDark ? '#E5E7EB' : '#1F2937',
     muted: isDark ? '#1F2937' : '#F2F4F7',
-    mutedForeground: read('--muted-foreground'),
     border: isDark ? '#475569' : '#CBD5E1',
-    primary: '#2F80ED',
-    accent: isDark ? '#1E3A5F' : '#DCE9FF',
+    primary: read('--diagram-outline'),
+    accent: read('--diagram-zone-fill'),
     destructive: read('--destructive'),
     card: isDark ? '#172033' : '#FFFFFF',
     warning: read('--warning'),
     warningContainer: read('--warning-container'),
-    viewerSelected: read('--primary'),
-    viewerSelectedForeground: read('--primary-foreground'),
+    selectionFill: read('--canvas-selection-fill'),
+    selectionForeground: read('--canvas-selection-foreground'),
+    viewerSelected: read('--diagram-outline'),
     viewerOccupied: read('--secondary-container'),
   }
 }
@@ -154,16 +161,6 @@ function getFitScale(containerWidth: number, containerHeight: number, bounds: La
     MAX_SCALE,
     Math.max(MIN_SCALE, Math.min(availableWidth / canvasWidth, availableHeight / canvasHeight))
   )
-}
-
-function getOccupancyLabel(slots: WarehouseLayoutEditorScene['slots']) {
-  if (slots.length === 0) return 'Chưa có vị trí'
-  if (slots.length > 1) return `${slots.length} vị trí lưu trữ`
-
-  const slot = slots[0]!
-  return slot.capacity === null
-    ? 'Không áp dụng giới hạn số lượng'
-    : `${slot.currentOccupancy} / ${slot.capacity}`
 }
 
 function isSelected(
@@ -400,6 +397,7 @@ export function WarehouseCanvas({
     scrollTop: number
   } | null>(null)
   const [isPanning, setIsPanning] = useState(false)
+  const [hoverInfo, setHoverInfo] = useState<CanvasHoverInfo | null>(null)
   const isFitMode = useRef(true)
   const pendingCenter = useRef<{ x: number; y: number } | null>(null)
   const [scale, setScale] = useState(1)
@@ -591,6 +589,7 @@ export function WarehouseCanvas({
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (mode !== 'viewer' || !event.ctrlKey || event.button !== 0) return
+    setHoverInfo(null)
     event.preventDefault()
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -638,14 +637,22 @@ export function WarehouseCanvas({
   }
 
   function getNodeGeometry(node: Konva.Node, zIndex: number): WarehouseLayoutGeometry {
+    const width = Math.max(1, node.width() * node.scaleX())
+    const height = Math.max(1, node.height() * node.scaleY())
     return {
-      x: node.x(),
-      y: node.y(),
-      width: Math.max(1, node.width() * node.scaleX()),
-      height: Math.max(1, node.height() * node.scaleY()),
+      x: node.x() - width / 2,
+      y: node.y() - height / 2,
+      width,
+      height,
       rotation: node.rotation(),
       zIndex,
     }
+  }
+
+  function showHoverInfo(event: KonvaEventObject<MouseEvent>, code: string, name: string) {
+    const left = Math.min(event.evt.clientX + 12, window.innerWidth - 240)
+    const top = Math.min(event.evt.clientY + 12, window.innerHeight - 128)
+    setHoverInfo({ code, name, left: Math.max(8, left), top: Math.max(8, top) })
   }
 
   function commitNodeGeometry(
@@ -678,20 +685,20 @@ export function WarehouseCanvas({
     const hasStock = isZone
       ? scene.slots.some((slot) => slot.zoneId === object.id && slot.currentOccupancy > 0)
       : rackSlots.some((slot) => slot.currentOccupancy > 0)
-    const objectFill =
-      mode === 'viewer'
-        ? selected
-          ? canvasPalette.viewerSelected
+    const objectFill = selected
+      ? canvasPalette.selectionFill
+      : mode === 'viewer'
+        ? isZone
+          ? (object.color ?? canvasPalette.accent)
           : hasStock
             ? canvasPalette.viewerOccupied
             : canvasPalette.card
         : (object.color ?? (isZone ? canvasPalette.accent : canvasPalette.card))
-    const objectForeground =
-      mode === 'viewer' && selected
-        ? canvasPalette.viewerSelectedForeground
-        : object.color
-          ? getReadableCanvasColor(object.color, canvasPalette)
-          : canvasPalette.foreground
+    const objectForeground = selected
+      ? canvasPalette.selectionForeground
+      : object.color
+        ? getReadableCanvasColor(object.color, canvasPalette)
+        : canvasPalette.foreground
     const selectionStroke = mode === 'viewer' ? canvasPalette.viewerSelected : canvasPalette.primary
     const canMoveObject =
       canConfigure &&
@@ -701,16 +708,22 @@ export function WarehouseCanvas({
       <Group
         key={key}
         ref={(node) => setObjectNode(key, node)}
-        x={object.x}
-        y={object.y}
+        x={object.x + object.width / 2}
+        y={object.y + object.height / 2}
+        offsetX={object.width / 2}
+        offsetY={object.height / 2}
         width={object.width}
         height={object.height}
         rotation={object.rotation}
         draggable={canMoveObject}
         dragBoundFunc={(position) => ({
-          x: snapToGrid(position.x, scene.canvas.gridSize),
-          y: snapToGrid(position.y, scene.canvas.gridSize),
+          x: snapToGrid(position.x - object.width / 2, scene.canvas.gridSize) + object.width / 2,
+          y: snapToGrid(position.y - object.height / 2, scene.canvas.gridSize) + object.height / 2,
         })}
+        onMouseEnter={(event) =>
+          showHoverInfo(event, code, isRack ? object.rackName : object.zoneName)
+        }
+        onMouseLeave={() => setHoverInfo(null)}
         onClick={(event) => {
           event.cancelBubble = true
           onSelect({ kind: target, id: object.id })
@@ -733,59 +746,11 @@ export function WarehouseCanvas({
           width={object.width}
           height={object.height}
           fill={objectFill}
-          opacity={
-            isInactive ? 0.38 : mode === 'viewer' ? 0.88 : isZone && !object.color ? 0.55 : 1
-          }
           stroke={selected ? selectionStroke : canvasPalette.border}
           strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
           dash={isZone || isInactive ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
           cornerRadius={isZone ? 4 : 2}
         />
-        <Text
-          x={10}
-          y={10}
-          width={Math.max(object.width - 20, 1)}
-          text={code}
-          fill={objectForeground}
-          fontFamily="monospace"
-          fontSize={isZone ? 16 : 13}
-          fontStyle="bold"
-          ellipsis
-          wrap="none"
-        />
-        {isInactive ? (
-          <Text
-            x={10}
-            y={Math.max(10, object.height - 20)}
-            width={Math.max(object.width - 20, 1)}
-            text="Ngừng hoạt động"
-            fill={objectForeground}
-            fontSize={9}
-            fontStyle="bold"
-            align="right"
-            ellipsis
-            wrap="none"
-          />
-        ) : null}
-        {rack ? (
-          <Text
-            x={10}
-            y={Math.min(32, Math.max(rack.height - 18, 18))}
-            width={Math.max(rack.width - 20, 1)}
-            text={getOccupancyLabel(rackSlots)}
-            fill={
-              mode === 'viewer' && selected
-                ? canvasPalette.viewerSelectedForeground
-                : object.color
-                  ? objectForeground
-                  : canvasPalette.mutedForeground
-            }
-            fontFamily="monospace"
-            fontSize={10}
-            ellipsis
-            wrap="none"
-          />
-        ) : null}
         {rack ? (
           <>
             <Line
@@ -818,7 +783,18 @@ export function WarehouseCanvas({
             />
           </>
         ) : null}
-        {rack ? renderRackSlots(rack, rackSlots, canvasPalette, selection, onSelect, mode) : null}
+        {rack
+          ? renderRackSlots(
+              rack,
+              rackSlots,
+              canvasPalette,
+              selection,
+              onSelect,
+              mode,
+              showHoverInfo,
+              () => setHoverInfo(null)
+            )
+          : null}
       </Group>
     )
   }
@@ -845,6 +821,7 @@ export function WarehouseCanvas({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onMouseLeave={() => setHoverInfo(null)}
       onDragOver={(event) => {
         if (hasLayoutDragData(event.dataTransfer)) event.preventDefault()
       }}
@@ -931,15 +908,21 @@ export function WarehouseCanvas({
                     <Group
                       key={key}
                       ref={(node) => setObjectNode(key, node)}
-                      x={decoration.x}
-                      y={decoration.y}
+                      x={decoration.x + decoration.width / 2}
+                      y={decoration.y + decoration.height / 2}
+                      offsetX={decoration.width / 2}
+                      offsetY={decoration.height / 2}
                       width={decoration.width}
                       height={decoration.height}
                       rotation={decoration.rotation}
                       draggable={canConfigure}
                       dragBoundFunc={(position) => ({
-                        x: snapToGrid(position.x, scene.canvas.gridSize),
-                        y: snapToGrid(position.y, scene.canvas.gridSize),
+                        x:
+                          snapToGrid(position.x - decoration.width / 2, scene.canvas.gridSize) +
+                          decoration.width / 2,
+                        y:
+                          snapToGrid(position.y - decoration.height / 2, scene.canvas.gridSize) +
+                          decoration.height / 2,
                       })}
                       onClick={(event) => {
                         event.cancelBubble = true
@@ -985,20 +968,6 @@ export function WarehouseCanvas({
                         canvasPalette,
                         decoration.color ? decorationForeground : undefined
                       )}
-                      {decoration.width >= 72 && decoration.height >= 58 ? (
-                        <Text
-                          x={8}
-                          y={decoration.height - 22}
-                          width={Math.max(decoration.width - 16, 1)}
-                          text={decoration.label}
-                          align="center"
-                          fill={decorationForeground}
-                          fontSize={11}
-                          fontStyle="bold"
-                          ellipsis
-                          wrap="none"
-                        />
-                      ) : null}
                     </Group>
                   )
                 })}
@@ -1034,11 +1003,29 @@ export function WarehouseCanvas({
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span
-              className="bg-warning-container border-warning size-2.5 rounded-[2px] border"
+              className="bg-canvas-selection-fill border-diagram-outline size-2.5 rounded-[2px] border"
               aria-hidden="true"
             />
             Đang chọn
           </span>
+        </div>
+      ) : null}
+      {hoverInfo ? (
+        <div
+          role="tooltip"
+          className="bg-popover text-popover-foreground pointer-events-none fixed z-50 max-h-28 max-w-56 overflow-y-auto rounded-md border px-3 py-2 text-xs shadow-sm"
+          style={{ left: hoverInfo.left, top: hoverInfo.top }}
+        >
+          <p>
+            <span className="text-muted-foreground">Mã vị trí: </span>
+            <span translate="no" className="font-mono break-all">
+              {hoverInfo.code}
+            </span>
+          </p>
+          <p className="mt-1 break-words">
+            <span className="text-muted-foreground">Tên vị trí: </span>
+            {hoverInfo.name}
+          </p>
         </div>
       ) : null}
     </div>
@@ -1051,7 +1038,9 @@ function renderRackSlots(
   palette: CanvasPalette,
   selection: WarehouseLayoutSelection | null,
   onSelect: (selection: WarehouseLayoutSelection | null) => void,
-  mode: 'designer' | 'viewer'
+  mode: 'designer' | 'viewer',
+  onHover: (event: KonvaEventObject<MouseEvent>, code: string, name: string) => void,
+  onHoverEnd: () => void
 ) {
   if (slots.length === 0 || rack.width < 60 || rack.height < 45) return null
   const gap = 3
@@ -1074,14 +1063,14 @@ function renderRackSlots(
     const fill =
       mode === 'viewer'
         ? selected
-          ? palette.viewerSelected
+          ? palette.selectionFill
           : !slot.isActive
             ? palette.muted
             : slot.currentOccupancy > 0
               ? palette.viewerOccupied
               : palette.card
         : selected
-          ? palette.warningContainer
+          ? palette.selectionFill
           : !slot.isActive
             ? palette.muted
             : slot.occupancyStatus === 'Vacant'
@@ -1094,6 +1083,8 @@ function renderRackSlots(
         key={slot.id}
         x={x}
         y={y}
+        onMouseEnter={(event) => onHover(event, slot.slotCode, slot.slotName)}
+        onMouseLeave={onHoverEnd}
         onClick={(event) => {
           event.cancelBubble = true
           onSelect({ kind: 'slot', id: slot.id })
@@ -1129,7 +1120,7 @@ function renderRackSlots(
               slotWidth * 0.72,
               slotHeight * 0.32,
             ]}
-            stroke={mode === 'viewer' ? palette.viewerSelectedForeground : palette.warning}
+            stroke={mode === 'viewer' ? palette.selectionForeground : palette.warning}
             strokeWidth={1.5}
             lineCap="round"
             lineJoin="round"

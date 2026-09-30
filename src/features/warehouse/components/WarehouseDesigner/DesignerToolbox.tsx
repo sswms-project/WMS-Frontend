@@ -812,7 +812,7 @@ function OutlineButton({
         selected
           ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
           : hasStock
-            ? 'bg-secondary-container text-secondary-foreground hover:bg-secondary-container/80'
+            ? 'bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80'
             : 'bg-card text-card-foreground hover:bg-muted'
       )}
       aria-pressed={selected}

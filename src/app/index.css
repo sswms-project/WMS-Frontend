@@ -51,6 +51,10 @@
   --outline: #5f7a62;
   --outline-variant: #b5d8ab;
   --surface-tint: #2e5a2a;
+  --diagram-outline: #2f80ed;
+  --diagram-zone-fill: #dce9ff;
+  --canvas-selection-fill: #f1e9dc;
+  --canvas-selection-foreground: #18232f;
   --primary: #2e5a2a;
   --on-primary: #f9fff6;
   --primary-container: #60f040;
@@ -222,7 +226,11 @@
   --color-outline: var(--outline);
   --color-outline-variant: var(--outline-variant);
   --color-surface-tint: var(--surface-tint);
+  --color-diagram-outline: var(--diagram-outline);
+  --color-diagram-zone-fill: var(--diagram-zone-fill);
   --color-primary: var(--primary);
+  --color-canvas-selection-fill: var(--canvas-selection-fill);
+  --color-canvas-selection-foreground: var(--canvas-selection-foreground);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-container: var(--primary-container);
   --color-on-primary-container: var(--on-primary-container);
@@ -310,7 +318,11 @@
   --inverse-on-surface: #1c2a1e;
   --outline: #6a9e6d;
   --outline-variant: #2e4d30;
+  --diagram-outline: #2f80ed;
+  --diagram-zone-fill: #1e3a5f;
   --primary: #7de86a;
+  --canvas-selection-fill: #f1e9dc;
+  --canvas-selection-foreground: #18232f;
   --on-primary: #0e2e0a;
   --primary-container: #1a4a16;
   --on-primary-container: #b0f0a0;

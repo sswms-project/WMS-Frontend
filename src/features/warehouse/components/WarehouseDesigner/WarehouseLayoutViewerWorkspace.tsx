@@ -10,6 +10,7 @@ import { OperationalListPanel } from '@/components/operations/OperationalListPan
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import {
   Sheet,
   SheetContent,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
+import { useLayoutDesignerCompact } from '../../hooks/use-layout-designer-compact'
 import {
   formatInventoryDateOnly,
   formatInventoryQuantity,
@@ -80,6 +82,7 @@ export function WarehouseLayoutViewerWorkspace({
   canConfigure,
 }: WarehouseLayoutViewerWorkspaceProps) {
   const router = useRouter()
+  const isCompact = useLayoutDesignerCompact()
   const canvasRef = useRef<WarehouseCanvasHandle>(null)
   const [selection, setSelection] = useState<WarehouseLayoutSelection | null>(null)
   const [zoomPercent, setZoomPercent] = useState(100)
@@ -241,6 +244,21 @@ export function WarehouseLayoutViewerWorkspace({
     </section>
   )
 
+  const canvas = (
+    <WarehouseCanvas
+      ref={canvasRef}
+      scene={scene}
+      selection={selection}
+      mode="viewer"
+      canConfigure={false}
+      isGridVisible
+      onSelect={handleSelectionChange}
+      onGeometryChange={() => undefined}
+      onZoomChange={setZoomPercent}
+      onPaletteDrop={() => undefined}
+    />
+  )
+
   return (
     <section
       className="bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden"
@@ -269,34 +287,34 @@ export function WarehouseLayoutViewerWorkspace({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[25rem] shrink-0 flex-col border-r lg:flex">
-          <div className="min-h-0 flex-[3]">{tree}</div>
-          <div className="flex min-h-0 flex-[2]">{inventory}</div>
-        </aside>
-        <div className="relative min-h-0 min-w-0 flex-1">
-          <WarehouseCanvas
-            ref={canvasRef}
-            scene={scene}
-            selection={selection}
-            mode="viewer"
-            canConfigure={false}
-            isGridVisible
-            onSelect={handleSelectionChange}
-            onGeometryChange={() => undefined}
-            onZoomChange={setZoomPercent}
-            onPaletteDrop={() => undefined}
-          />
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="absolute top-3 left-3 lg:hidden"
-            onClick={() => setIsLocationSheetOpen(true)}
-          >
-            <Boxes data-icon="inline-start" aria-hidden="true" />
-            Vị trí & hàng hóa
-          </Button>
-        </div>
+        {isCompact ? (
+          <div className="relative min-h-0 min-w-0 flex-1">
+            {canvas}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="absolute top-3 left-3"
+              onClick={() => setIsLocationSheetOpen(true)}
+            >
+              <Boxes data-icon="inline-start" aria-hidden="true" />
+              Vị trí & hàng hóa
+            </Button>
+          </div>
+        ) : (
+          <ResizablePanelGroup orientation="horizontal" className="h-0 min-h-0 min-w-0 flex-1">
+            <ResizablePanel defaultSize="30%" minSize="25%" maxSize="33.333%">
+              <aside className="flex h-full min-h-0 min-w-0 flex-col border-r">
+                <div className="min-h-0 flex-[3]">{tree}</div>
+                <div className="flex min-h-0 flex-[2]">{inventory}</div>
+              </aside>
+            </ResizablePanel>
+            <ResizableHandle withHandle aria-label="Thay đổi chiều rộng danh sách vị trí" />
+            <ResizablePanel minSize="55%">
+              <div className="relative h-full min-h-0 min-w-0">{canvas}</div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
       </div>
 
       <footer className="bg-surface-container-lowest flex min-h-11 shrink-0 items-center border-t px-3 py-1.5">
@@ -313,7 +331,7 @@ export function WarehouseLayoutViewerWorkspace({
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span
-              className="border-primary bg-primary size-2.5 rounded-[2px] border-2"
+              className="bg-canvas-selection-fill border-diagram-outline size-2.5 rounded-[2px] border-2"
               aria-hidden="true"
             />
             Đang chọn
