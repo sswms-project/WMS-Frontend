@@ -228,6 +228,11 @@ export interface AssignableWarehouseStaff {
   hasTaskInProgress: boolean
 }
 
+export interface UnassignReceivingTaskRequest {
+  expectedStaffId: string | null
+  reason: string
+}
+
 export interface AssignWarehouseTaskRequest {
   staffId: string
   expectedStaffId: string | null

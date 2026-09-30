@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/types/api'
 import type {
   AssignableWarehouseStaff,
   AssignWarehouseTaskRequest,
+  UnassignReceivingTaskRequest,
   InboundAllowedActionsResponse,
   InboundDocumentImport,
   InboundListQuery,
@@ -48,6 +49,12 @@ export const inboundService = {
       .put<
         ApiResponse<unknown>
       >(API_ENDPOINTS.goodsReceipts.assignReceivingTask(inboundRequestId), request)
+      .then((response) => response.data),
+  unassignReceivingTask: (inboundRequestId: string, request: UnassignReceivingTaskRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.goodsReceipts.unassignReceivingTask(inboundRequestId), request)
       .then((response) => response.data),
   assignPutawayTask: (receiptId: string, request: AssignWarehouseTaskRequest) =>
     axiosClient

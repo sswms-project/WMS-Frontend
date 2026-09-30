@@ -347,6 +347,7 @@ export default function InboundReceivingPage() {
         isPending={assignment.isPending}
         onOpenChange={(open) => !open && assignment.close()}
         onSubmit={assignment.onSubmit}
+        onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
         task={selectedTask}
