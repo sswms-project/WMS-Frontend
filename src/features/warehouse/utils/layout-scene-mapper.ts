@@ -42,10 +42,9 @@ function getDefaultZoneGeometry(
 function getDefaultRackGeometry(
   rackIndex: number,
   zone: WarehouseLayoutEditorZone,
-  scene: WarehouseLayoutSceneResponse,
-  layoutShape: WarehouseLayoutSceneResponse['racks'][number]['layoutShape']
+  scene: WarehouseLayoutSceneResponse
 ): WarehouseLayoutGeometry {
-  const rackSize = getRackPresetSize(layoutShape, scene.canvas.gridSize)
+  const rackSize = getRackPresetSize()
   const columns = Math.max(1, Math.floor(Math.max(zone.width - 60, 1) / (rackSize.width + 20)))
   return constrainLayoutGeometryToCanvas(
     {
@@ -82,12 +81,12 @@ export function mapWarehouseLayoutScene(scene: WarehouseLayoutSceneResponse): {
     const geometry = hasGeometry(rack)
       ? constrainLayoutGeometryToCanvas(rack, scene.canvas, false)
       : zone
-        ? getDefaultRackGeometry(rackIndex, zone, scene, rack.layoutShape)
+        ? getDefaultRackGeometry(rackIndex, zone, scene)
         : constrainLayoutGeometryToCanvas(
             {
               x: 40 + index * 20,
               y: 40 + index * 20,
-              ...getRackPresetSize(rack.layoutShape, scene.canvas.gridSize),
+              ...getRackPresetSize(),
               rotation: 0,
               zIndex: 100 + index,
             },

@@ -230,32 +230,45 @@ function renderDecorationSymbol(
     case 'Door':
       symbol = (
         <>
-          <Rect x={5} y={2} width={13} height={20} stroke={stroke} strokeWidth={strokeWidth} />
-          <Line points={[5, 2, 5, 22]} stroke={stroke} strokeWidth={strokeWidth} />
-          <Circle x={15} y={12} radius={1} fill={stroke} />
+          <Line points={[3, 22, 21, 22]} stroke={stroke} strokeWidth={2} />
+          <Line points={[6, 22, 6, 4]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line
+            points={[6, 4, 16, 4, 21, 12, 21, 22]}
+            bezier
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+          />
         </>
       )
       break
     case 'DoubleDoor':
       symbol = (
         <>
-          <Rect x={2} y={3} width={20} height={18} stroke={stroke} strokeWidth={strokeWidth} />
-          <Line points={[12, 3, 12, 21]} stroke={stroke} strokeWidth={strokeWidth} />
-          <Circle x={9} y={12} radius={1} fill={stroke} />
-          <Circle x={15} y={12} radius={1} fill={stroke} />
-        </>
-      )
-      break
-    case 'Aisle':
-      symbol = (
-        <>
-          <Line points={[4, 3, 4, 21]} stroke={stroke} strokeWidth={strokeWidth} />
-          <Line points={[20, 3, 20, 21]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[1, 22, 23, 22]} stroke={stroke} strokeWidth={2} />
+          <Line points={[4, 22, 4, 7]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[20, 22, 20, 7]} stroke={stroke} strokeWidth={strokeWidth} />
           <Line
-            points={[8, 12, 16, 12, 13, 9, 16, 12, 13, 15]}
+            points={[4, 7, 12, 7, 12, 15, 12, 22]}
+            bezier
             stroke={stroke}
             strokeWidth={strokeWidth}
           />
+          <Line
+            points={[20, 7, 12, 7, 12, 15, 12, 22]}
+            bezier
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+          />
+        </>
+      )
+      break
+    case 'Gate':
+      symbol = (
+        <>
+          <Line points={[3, 4, 3, 21, 6, 21, 6, 4, 3, 4]} stroke={stroke} strokeWidth={1.4} />
+          <Line points={[18, 4, 18, 21, 21, 21, 21, 4, 18, 4]} stroke={stroke} strokeWidth={1.4} />
+          <Line points={[6, 14, 18, 14]} stroke={stroke} strokeWidth={2} />
+          <Rect x={10.5} y={11.5} width={3} height={5} stroke={stroke} strokeWidth={1.2} />
         </>
       )
       break
@@ -285,20 +298,30 @@ function renderDecorationSymbol(
     case 'Forklift':
       symbol = (
         <>
-          <Rect x={3} y={9} width={11} height={8} stroke={stroke} strokeWidth={strokeWidth} />
-          <Line points={[14, 5, 17, 5, 17, 17, 21, 17]} stroke={stroke} strokeWidth={strokeWidth} />
-          <Circle x={7} y={20} radius={2} stroke={stroke} strokeWidth={strokeWidth} />
-          <Circle x={17} y={20} radius={2} stroke={stroke} strokeWidth={strokeWidth} />
+          <Rect x={3} y={8} width={12} height={9} fill={stroke} opacity={0.16} />
+          <Line points={[5, 8, 5, 3, 8, 3, 8, 8]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line
+            points={[12, 8, 12, 3, 15, 3, 17, 17, 21, 17]}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+          />
+          <Line points={[5, 12, 14, 12]} stroke={stroke} strokeWidth={1.2} />
+          <Circle x={7} y={20} radius={2.2} fill={stroke} />
+          <Circle x={17} y={20} radius={2.2} fill={stroke} />
         </>
       )
       break
-    case 'Receiving':
+    case 'PalletTruck':
       symbol = (
         <>
-          <Rect x={3} y={9} width={11} height={8} stroke={stroke} strokeWidth={strokeWidth} />
-          <Line points={[14, 5, 17, 5, 17, 17, 21, 17]} stroke={stroke} strokeWidth={strokeWidth} />
-          <Circle x={7} y={20} radius={2} stroke={stroke} strokeWidth={strokeWidth} />
-          <Circle x={17} y={20} radius={2} stroke={stroke} strokeWidth={strokeWidth} />
+          <Rect x={6} y={3} width={12} height={17} fill={stroke} opacity={0.16} />
+          <Line points={[8, 7, 16, 7]} stroke={stroke} strokeWidth={1.2} />
+          <Line points={[8, 10, 16, 10]} stroke={stroke} strokeWidth={1.2} />
+          <Line points={[8, 13, 16, 13]} stroke={stroke} strokeWidth={1.2} />
+          <Line points={[8, 16, 16, 16]} stroke={stroke} strokeWidth={1.2} />
+          <Line points={[6, 5, 3, 5, 3, 21, 21, 21]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Circle x={7} y={22} radius={1.5} fill={stroke} />
+          <Circle x={18} y={22} radius={1.5} fill={stroke} />
         </>
       )
       break
@@ -350,7 +373,34 @@ function renderDecorationSymbol(
         </>
       )
       break
-    default:
+    case 'DoubleGate':
+      symbol = (
+        <>
+          <Line points={[3, 4, 3, 21, 6, 21, 6, 4, 3, 4]} stroke={stroke} strokeWidth={1.4} />
+          <Line points={[18, 4, 18, 21, 21, 21, 21, 4, 18, 4]} stroke={stroke} strokeWidth={1.4} />
+          <Line points={[6, 16, 18, 10]} stroke={stroke} strokeWidth={2} />
+          <Rect x={10.5} y={10.5} width={3} height={5} stroke={stroke} strokeWidth={1.2} />
+        </>
+      )
+      break
+    case 'Aisle':
+      symbol = (
+        <>
+          <Line points={[4, 3, 4, 21]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[20, 3, 20, 21]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[8, 12, 16, 12]} stroke={stroke} strokeWidth={strokeWidth} />
+        </>
+      )
+      break
+    case 'Receiving':
+      symbol = (
+        <>
+          <Rect x={4} y={5} width={16} height={15} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[2, 12, 12, 12, 9, 9, 12, 12, 9, 15]} stroke={stroke} strokeWidth={1.5} />
+        </>
+      )
+      break
+    case 'Other':
       symbol = (
         <>
           <Line
@@ -366,6 +416,9 @@ function renderDecorationSymbol(
           <Line points={[12, 12, 12, 22]} stroke={stroke} strokeWidth={strokeWidth} />
         </>
       )
+      break
+    default:
+      symbol = <Rect x={4} y={4} width={16} height={16} stroke={stroke} strokeWidth={strokeWidth} />
   }
 
   return (

@@ -1,17 +1,3 @@
-import {
-  Archive,
-  Box,
-  DoorOpen,
-  DoorClosed,
-  ArrowRight,
-  LogOut,
-  Forklift,
-  PackageCheck,
-  PackageSearch,
-  PanelsTopLeft,
-  TriangleAlert,
-  type LucideIcon,
-} from 'lucide-react'
 import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutRackShape,
@@ -20,7 +6,6 @@ import type {
 export interface DecorationOption {
   type: WarehouseLayoutDecorationType
   label: string
-  icon: LucideIcon
 }
 
 export const LAYOUT_DRAG_DATA_TYPE = 'application/x-sswms-layout-object'
@@ -77,19 +62,37 @@ export const LAYOUT_COLOR_SWATCHES = [
 ] as const
 
 export const DECORATION_OPTIONS: DecorationOption[] = [
-  { type: 'Door', label: 'Cửa ra vào', icon: DoorOpen },
-  { type: 'DoubleDoor', label: 'Cửa đôi', icon: DoorClosed },
-  { type: 'Aisle', label: 'Lối đi', icon: PanelsTopLeft },
-  { type: 'DirectionArrow', label: 'Mũi tên chỉ hướng', icon: ArrowRight },
-  { type: 'Exit', label: 'Lối ra', icon: LogOut },
-  { type: 'Forklift', label: 'Xe nâng', icon: Forklift },
-  { type: 'Receiving', label: 'Khu nhận hàng', icon: Forklift },
-  { type: 'Packing', label: 'Khu đóng gói', icon: PackageCheck },
-  { type: 'Picking', label: 'Khu lấy hàng', icon: PackageSearch },
-  { type: 'Damaged', label: 'Hàng hư hỏng', icon: TriangleAlert },
-  { type: 'Office', label: 'Văn phòng', icon: Archive },
-  { type: 'Other', label: 'Khu vực khác', icon: Box },
+  { type: 'Door', label: 'Cửa một cánh' },
+  { type: 'DoubleDoor', label: 'Cửa hai cánh' },
+  { type: 'Forklift', label: 'Xe nâng' },
+  { type: 'Gate', label: 'Cổng một cánh' },
+  { type: 'DoubleGate', label: 'Cổng hai cánh' },
+  { type: 'PalletTruck', label: 'Xe nâng tay' },
+  { type: 'DirectionArrow', label: 'Mũi tên chỉ hướng' },
+  { type: 'Exit', label: 'Lối ra' },
+  { type: 'Aisle', label: 'Lối đi' },
+  { type: 'Receiving', label: 'Khu nhận hàng' },
+  { type: 'Packing', label: 'Khu đóng gói' },
+  { type: 'Picking', label: 'Khu lấy hàng' },
+  { type: 'Damaged', label: 'Hàng hư hỏng' },
+  { type: 'Office', label: 'Văn phòng' },
+  { type: 'Other', label: 'Khu vực khác' },
 ]
+
+const PALETTE_DECORATION_TYPES = new Set<WarehouseLayoutDecorationType>([
+  'Gate',
+  'DoubleGate',
+  'Door',
+  'DoubleDoor',
+  'Forklift',
+  'PalletTruck',
+  'DirectionArrow',
+  'Exit',
+])
+
+export const PALETTE_DECORATION_OPTIONS = DECORATION_OPTIONS.filter((option) =>
+  PALETTE_DECORATION_TYPES.has(option.type)
+)
 
 export function getDecorationLabel(type: WarehouseLayoutDecorationType): string {
   return DECORATION_OPTIONS.find((option) => option.type === type)?.label ?? type

@@ -1,20 +1,13 @@
 import type {
   WarehouseLayoutCanvas,
   WarehouseLayoutGeometry,
-  WarehouseLayoutRackShape,
 } from '../types/warehouse-layout-scene.types'
 
 export const MIN_LAYOUT_OBJECT_SIZE = 20
 export const MAX_LAYOUT_EXTENT = 100_000
 
-export function getRackPresetSize(
-  shape: WarehouseLayoutRackShape | null | undefined,
-  gridSize: number
-) {
-  if (shape === 'Vertical') return { width: gridSize * 5, height: gridSize * 13 }
-  if (shape === 'Pallet') return { width: gridSize * 8, height: gridSize * 8 }
-  if (shape === 'CrossBraced') return { width: gridSize * 12, height: gridSize * 7 }
-  return { width: gridSize * 13, height: gridSize * 5 }
+export function getRackPresetSize() {
+  return { width: 160, height: 60 }
 }
 
 export interface LayoutBounds {

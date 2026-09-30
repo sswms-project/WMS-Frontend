@@ -36,6 +36,7 @@ import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
   WarehouseLayoutEditorRack,
+  WarehouseLayoutEditorZone,
   WarehouseLayoutGeometry,
   WarehouseLayoutGeometryTarget,
   WarehouseLayoutRackShape,
@@ -65,6 +66,7 @@ interface WarehouseDesignerWorkspaceProps {
   readonly canConfigure: boolean
   readonly isSaving: boolean
   readonly isUpdatingRack: boolean
+  readonly isDeactivatingZone: boolean
   readonly isDeactivatingRack: boolean
   readonly saveError: string | null
   readonly hasConflict: boolean
@@ -73,6 +75,7 @@ interface WarehouseDesignerWorkspaceProps {
   readonly onCreateZone: (position?: WarehouseLayoutDropPosition) => void
   readonly onCreateRack: (zoneId: string, position?: WarehouseLayoutDropPosition) => void
   readonly onUpdateRackName: (rack: WarehouseLayoutEditorRack, rackName: string) => Promise<void>
+  readonly onDeactivateZone: (zone: WarehouseLayoutEditorZone) => Promise<void>
   readonly onDeactivateRack: (rack: WarehouseLayoutEditorRack) => Promise<void>
   readonly onSave: (scene: WarehouseLayoutEditorScene, baseVersion: number) => void
   readonly onReload: () => void
@@ -119,6 +122,7 @@ export function WarehouseDesignerWorkspace({
   canConfigure,
   isSaving,
   isUpdatingRack,
+  isDeactivatingZone,
   isDeactivatingRack,
   saveError,
   hasConflict,
@@ -127,6 +131,7 @@ export function WarehouseDesignerWorkspace({
   placementToApply,
   onPlacementApplied,
   onUpdateRackName,
+  onDeactivateZone,
   onDeactivateRack,
   onSave,
   onReload,
@@ -139,9 +144,11 @@ export function WarehouseDesignerWorkspace({
   const [isToolboxOpen, setIsToolboxOpen] = useState(false)
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
+  const [zoneDeactivateTarget, setZoneDeactivateTarget] =
+    useState<WarehouseLayoutEditorZone | null>(null)
   const [rackDeactivateTarget, setRackDeactivateTarget] =
     useState<WarehouseLayoutEditorRack | null>(null)
-  const [rackDeactivateError, setRackDeactivateError] = useState<string | null>(null)
+  const [locationDeactivateError, setLocationDeactivateError] = useState<string | null>(null)
   const canvasRef = useRef<WarehouseCanvasHandle>(null)
   const initialSceneRef = useRef(initialScene)
   const resetRevisionRef = useRef(resetRevision)
@@ -263,7 +270,7 @@ export function WarehouseDesignerWorkspace({
     if (payload.kind === 'zone') onCreateZone(position)
     else if (payload.kind === 'rack') {
       const zoneId = getSelectedZoneId()
-      const rackSize = getRackPresetSize(payload.shape, scene.canvas.gridSize)
+      const rackSize = getRackPresetSize()
       if (zoneId)
         onCreateRack(zoneId, {
           ...position,
@@ -357,10 +364,22 @@ export function WarehouseDesignerWorkspace({
     return rack?.status === 'Active' && activeZoneContainsRack(scene, rack) ? rack : null
   }
 
+  function getSelectedActiveZone() {
+    if (selection?.kind !== 'zone' || !canConfigure) return null
+    return scene.zones.find((zone) => zone.id === selection.id && zone.status === 'Active') ?? null
+  }
+
+  function requestDeactivateSelectedZone() {
+    const zone = getSelectedActiveZone()
+    if (!zone) return
+    setLocationDeactivateError(null)
+    setZoneDeactivateTarget(zone)
+  }
+
   function requestDeactivateSelectedRack() {
     const rack = getSelectedActiveRack()
     if (!rack) return
-    setRackDeactivateError(null)
+    setLocationDeactivateError(null)
     setRackDeactivateTarget(rack)
   }
 
@@ -384,13 +403,30 @@ export function WarehouseDesignerWorkspace({
       await onDeactivateRack(rackDeactivateTarget)
       toast.success('Đã ngừng hoạt động kệ hàng và gỡ khỏi sơ đồ.')
       setRackDeactivateTarget(null)
-      setRackDeactivateError(null)
+      setLocationDeactivateError(null)
       setSelection(null)
       setIsInspectorOpen(false)
     } catch (error) {
       logger.error(error)
-      setRackDeactivateError(
+      setLocationDeactivateError(
         getActionError(error, 'Không thể ngừng hoạt động kệ. Vui lòng thử lại.')
+      )
+    }
+  }
+
+  async function confirmDeactivateZone() {
+    if (!zoneDeactivateTarget) return
+    try {
+      await onDeactivateZone(zoneDeactivateTarget)
+      toast.success('Đã ngừng hoạt động khu vực và gỡ khỏi sơ đồ.')
+      setZoneDeactivateTarget(null)
+      setLocationDeactivateError(null)
+      setSelection(null)
+      setIsInspectorOpen(false)
+    } catch (error) {
+      logger.error(error)
+      setLocationDeactivateError(
+        getActionError(error, 'Không thể ngừng hoạt động khu vực. Vui lòng thử lại.')
       )
     }
   }
@@ -456,7 +492,7 @@ export function WarehouseDesignerWorkspace({
               ? {
                   x: scene.canvas.gridSize * 5,
                   y: scene.canvas.gridSize * 5,
-                  ...getRackPresetSize(shape, scene.canvas.gridSize),
+                  ...getRackPresetSize(),
                   layoutShape: shape,
                 }
               : undefined
@@ -510,8 +546,12 @@ export function WarehouseDesignerWorkspace({
       canConfigure={canConfigure && isSelectionEditable(scene, selection)}
       canCreateRack={selection.kind === 'zone' && Boolean(getSelectedZoneId())}
       canDuplicate={selection.kind === 'decoration'}
-      canRemove={selection.kind === 'decoration' || selection.kind === 'rack'}
-      removeLabel={selection.kind === 'rack' ? 'Ngừng dùng' : 'Xóa'}
+      canRemove={
+        selection.kind === 'decoration' || selection.kind === 'rack' || selection.kind === 'zone'
+      }
+      removeDisabled={selectionHasInventory(scene, selection)}
+      removeDisabledReason="Vị trí còn tồn kho nên chưa thể ngừng sử dụng."
+      removeLabel={selection.kind === 'decoration' ? 'Xóa' : 'Ngừng dùng'}
       onOpenDetails={() => setIsInspectorOpen(true)}
       onCreateRack={() => {
         const zoneId = getSelectedZoneId()
@@ -525,6 +565,7 @@ export function WarehouseDesignerWorkspace({
       onRemove={() => {
         if (selection.kind === 'decoration') deleteSelectedDecoration()
         else if (selection.kind === 'rack') requestDeactivateSelectedRack()
+        else if (selection.kind === 'zone') requestDeactivateSelectedZone()
       }}
     />
   ) : null
@@ -679,14 +720,28 @@ export function WarehouseDesignerWorkspace({
         locationLabel="kệ hàng"
         locationCode={rackDeactivateTarget?.rackCode ?? ''}
         isPending={isDeactivatingRack}
-        errorMessage={rackDeactivateError}
+        errorMessage={locationDeactivateError}
         onOpenChange={(open) => {
           if (!open) {
             setRackDeactivateTarget(null)
-            setRackDeactivateError(null)
+            setLocationDeactivateError(null)
           }
         }}
         onConfirm={() => void confirmDeactivateRack()}
+      />
+      <WarehouseLocationDeactivateDialog
+        open={Boolean(zoneDeactivateTarget)}
+        locationLabel="khu vực"
+        locationCode={zoneDeactivateTarget?.zoneCode ?? ''}
+        isPending={isDeactivatingZone}
+        errorMessage={locationDeactivateError}
+        onOpenChange={(open) => {
+          if (!open) {
+            setZoneDeactivateTarget(null)
+            setLocationDeactivateError(null)
+          }
+        }}
+        onConfirm={() => void confirmDeactivateZone()}
       />
       <AlertDialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
         <AlertDialogContent>
@@ -713,6 +768,19 @@ function activeZoneContainsRack(
   rack: WarehouseLayoutEditorRack
 ) {
   return scene.zones.some((zone) => zone.id === rack.zoneId && zone.status === 'Active')
+}
+
+function selectionHasInventory(
+  scene: WarehouseLayoutEditorScene,
+  selection: WarehouseLayoutSelection
+): boolean {
+  if (selection.kind === 'rack') {
+    return scene.slots.some((slot) => slot.rackId === selection.id && slot.currentOccupancy > 0)
+  }
+  if (selection.kind === 'zone') {
+    return scene.slots.some((slot) => slot.zoneId === selection.id && slot.currentOccupancy > 0)
+  }
+  return false
 }
 
 function getActionError(error: unknown, fallback: string) {

@@ -37,6 +37,9 @@ export const warehouseLayoutDecorationSchema = warehouseLayoutGeometrySchema.ext
     'Damaged',
     'Office',
     'Other',
+    'Gate',
+    'DoubleGate',
+    'PalletTruck',
   ]),
 })
 

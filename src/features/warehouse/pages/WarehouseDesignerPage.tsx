@@ -29,6 +29,7 @@ import {
   useCreateRackMutation,
   useCreateZoneMutation,
   useDeactivateRackMutation,
+  useDeactivateZoneMutation,
   useUpdateRackMutation,
   useWarehouseQuery,
 } from '../hooks/use-warehouse'
@@ -36,6 +37,7 @@ import type { RackFormValues, ZoneFormValues } from '../schemas/warehouse.schema
 import type {
   WarehouseLayoutEditorRack,
   WarehouseLayoutEditorScene,
+  WarehouseLayoutEditorZone,
 } from '../types/warehouse-layout-scene.types'
 import { getWarehouseCapabilities } from '../utils/warehouse-capabilities'
 import { mapEditorSceneToSaveRequest, mapWarehouseLayoutScene } from '../utils/layout-scene-mapper'
@@ -57,6 +59,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
   const createZoneMutation = useCreateZoneMutation()
   const createRackMutation = useCreateRackMutation()
   const updateRackMutation = useUpdateRackMutation()
+  const deactivateZoneMutation = useDeactivateZoneMutation()
   const deactivateRackMutation = useDeactivateRackMutation()
   const [isZoneFormOpen, setIsZoneFormOpen] = useState(false)
   const [rackZoneId, setRackZoneId] = useState<string | null>(null)
@@ -228,7 +231,23 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
       warehouseId,
       zoneId: rack.zoneId,
       rackId: rack.id,
-      request: { reason: null, expectedRowVersion: rack.rowVersion ?? '' },
+      request: {
+        reason: 'Gỡ kệ trống khỏi sơ đồ kho',
+        expectedRowVersion: rack.rowVersion ?? '',
+        cascadeToChildren: true,
+      },
+    })
+  }
+
+  async function deactivateZone(zone: WarehouseLayoutEditorZone) {
+    await deactivateZoneMutation.mutateAsync({
+      warehouseId,
+      zoneId: zone.id,
+      request: {
+        reason: 'Gỡ khu vực trống khỏi sơ đồ kho',
+        expectedRowVersion: zone.rowVersion ?? '',
+        cascadeToChildren: true,
+      },
     })
   }
 
@@ -244,6 +263,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
         canConfigure={canConfigure}
         isSaving={saveMutation.isPending}
         isUpdatingRack={updateRackMutation.isPending}
+        isDeactivatingZone={deactivateZoneMutation.isPending}
         isDeactivatingRack={deactivateRackMutation.isPending}
         saveError={saveError}
         hasConflict={hasConflict}
@@ -258,6 +278,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
           setRackZoneId(zoneId)
         }}
         onUpdateRackName={updateRackName}
+        onDeactivateZone={deactivateZone}
         onDeactivateRack={deactivateRack}
         onSave={(scene, baseVersion) => void saveScene(scene, baseVersion)}
         onReload={() => void reloadScene()}

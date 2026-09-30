@@ -11,6 +11,9 @@ export type WarehouseLayoutDecorationType =
   | 'Damaged'
   | 'Office'
   | 'Other'
+  | 'Gate'
+  | 'DoubleGate'
+  | 'PalletTruck'
 
 export type WarehouseLayoutRackShape = 'Standard' | 'Vertical' | 'CrossBraced' | 'Pallet'
 
@@ -34,6 +37,7 @@ export interface WarehouseLayoutZoneSceneResponse {
   zoneCode: string
   zoneName: string
   status: string
+  rowVersion?: string | null
   x: number | null
   y: number | null
   width: number | null

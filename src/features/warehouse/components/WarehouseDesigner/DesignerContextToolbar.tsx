@@ -16,6 +16,8 @@ interface DesignerContextToolbarProps {
   readonly canCreateRack: boolean
   readonly canDuplicate: boolean
   readonly canRemove: boolean
+  readonly removeDisabled?: boolean
+  readonly removeDisabledReason?: string
   readonly removeLabel: string
   readonly onOpenDetails: () => void
   readonly onCreateRack: () => void
@@ -29,12 +31,14 @@ function ContextAction({
   label,
   disabled,
   destructive = false,
+  tooltipText,
   onClick,
   children,
 }: {
   readonly label: string
   readonly disabled?: boolean
   readonly destructive?: boolean
+  readonly tooltipText?: string
   readonly onClick: () => void
   readonly children: React.ReactNode
 }) {
@@ -56,7 +60,7 @@ function ContextAction({
           <span>{label}</span>
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>{tooltipText ?? label}</TooltipContent>
     </Tooltip>
   )
 }
@@ -68,6 +72,8 @@ export function DesignerContextToolbar({
   canCreateRack,
   canDuplicate,
   canRemove,
+  removeDisabled = false,
+  removeDisabledReason,
   removeLabel,
   onOpenDetails,
   onCreateRack,
@@ -184,7 +190,8 @@ export function DesignerContextToolbar({
           <ContextAction
             label={removeLabel}
             destructive
-            disabled={!canConfigure}
+            disabled={!canConfigure || removeDisabled}
+            tooltipText={removeDisabled ? removeDisabledReason : removeLabel}
             onClick={onRemove}
           >
             <Trash2 aria-hidden="true" />

@@ -58,10 +58,7 @@ describe('constrainLayoutGeometryToCanvas', () => {
 })
 
 describe('getRackPresetSize', () => {
-  it('uses the same grid-based dimensions for mapped and newly placed racks', () => {
-    expect(getRackPresetSize('Standard', 20)).toEqual({ width: 260, height: 100 })
-    expect(getRackPresetSize('Vertical', 20)).toEqual({ width: 100, height: 260 })
-    expect(getRackPresetSize('CrossBraced', 20)).toEqual({ width: 240, height: 140 })
-    expect(getRackPresetSize('Pallet', 20)).toEqual({ width: 160, height: 160 })
+  it('uses the same 160×60 initial footprint for every rack style', () => {
+    expect(getRackPresetSize()).toEqual({ width: 160, height: 60 })
   })
 })
