@@ -7,7 +7,7 @@ import {
   Layers3,
   MapPin,
   Rows3,
-  SquareDashed,
+  Square,
   TriangleAlert,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -60,7 +60,7 @@ function RackShapeIcon({ shape }: { readonly shape: WarehouseLayoutRackShape }) 
       {shape === 'CrossBraced' ? (
         <>
           <rect x="5" y="6" width="22" height="20" fill="white" />
-          <path d="m7 8 18 16M25 8 7 24" strokeDasharray="2 2" />
+          <path d="m7 8 18 16M25 8 7 24" />
         </>
       ) : null}
       {shape === 'Pallet' ? (
@@ -176,7 +176,7 @@ export function DesignerToolbox({
                 disabledReason="Bạn chỉ có quyền xem sơ đồ."
                 onClick={onCreateZone}
                 dragData={{ kind: 'zone' }}
-                icon={<SquareDashed className="size-8" aria-hidden="true" />}
+                icon={<Square className="size-8" aria-hidden="true" />}
               />
             </div>
           </section>

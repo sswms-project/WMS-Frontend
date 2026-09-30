@@ -696,7 +696,6 @@ export function WarehouseCanvas({
     const key = `${target}:${object.id}`
     const selected = isSelected(selection, target, object.id)
     const isZone = !isRack
-    const isInactive = object.status !== 'Active'
     const rack = isRack ? object : null
     const rackSlots = rack ? (slotsByRack.get(rack.id) ?? []) : []
     const hasStock = isZone
@@ -707,11 +706,13 @@ export function WarehouseCanvas({
         ? selected
           ? canvasPalette.selectionFill
           : isZone
-            ? (object.color ?? canvasPalette.accent)
+            ? canvasPalette.accent
             : hasStock
               ? canvasPalette.viewerOccupied
               : canvasPalette.card
-        : (object.color ?? (isZone ? canvasPalette.accent : canvasPalette.card))
+        : isZone
+          ? canvasPalette.accent
+          : (object.color ?? canvasPalette.card)
     const objectForeground = object.color
       ? getReadableCanvasColor(object.color, canvasPalette)
       : canvasPalette.foreground
@@ -767,11 +768,16 @@ export function WarehouseCanvas({
           width={object.width}
           height={object.height}
           fill={objectFill}
-          stroke={selected ? selectionStroke : canvasPalette.border}
+          stroke={
+            selected
+              ? selectionStroke
+              : isZone
+                ? (object.color ?? canvasPalette.primary)
+                : canvasPalette.foreground
+          }
           strokeWidth={
             selected ? (mode === 'viewer' ? 1.5 : 1.25) / viewport.scale : 1 / viewport.scale
           }
-          dash={isZone || isInactive ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
           cornerRadius={isZone ? 4 : 2}
         />
         {rack?.layoutShape === 'Vertical' ? (
@@ -788,14 +794,12 @@ export function WarehouseCanvas({
               points={[5, 5, rack.width - 5, rack.height - 5]}
               stroke={objectForeground}
               strokeWidth={1.5 / viewport.scale}
-              dash={[3 / viewport.scale, 3 / viewport.scale]}
               listening={false}
             />
             <Line
               points={[rack.width - 5, 5, 5, rack.height - 5]}
               stroke={objectForeground}
               strokeWidth={1.5 / viewport.scale}
-              dash={[3 / viewport.scale, 3 / viewport.scale]}
               listening={false}
             />
           </>

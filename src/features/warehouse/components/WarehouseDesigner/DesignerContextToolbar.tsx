@@ -76,6 +76,8 @@ export function DesignerContextToolbar({
   onDuplicate,
   onRemove,
 }: DesignerContextToolbarProps) {
+  const colorTargetLabel = selection.kind === 'zone' ? 'viền khu vực' : 'nền đối tượng'
+
   return (
     <div className="bg-popover text-popover-foreground flex max-w-[calc(100vw-2rem)] items-stretch overflow-x-auto rounded-md border shadow-lg">
       {selection.kind === 'zone' ? (
@@ -109,16 +111,18 @@ export function DesignerContextToolbar({
                     disabled={!canConfigure}
                   >
                     <Palette aria-hidden="true" />
-                    <span>Đổ màu</span>
+                    <span>{selection.kind === 'zone' ? 'Màu viền' : 'Đổ màu'}</span>
                   </Button>
                 </PopoverTrigger>
               </TooltipTrigger>
-              <TooltipContent>Đổi màu nền đối tượng</TooltipContent>
+              <TooltipContent>Đổi màu {colorTargetLabel}</TooltipContent>
             </Tooltip>
             <PopoverContent align="center" sideOffset={8} className="w-64 p-3">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Màu nền</p>
+                  <p className="text-sm font-medium">
+                    {selection.kind === 'zone' ? 'Màu viền' : 'Màu nền'}
+                  </p>
                   <p className="text-muted-foreground text-[11px]">Chọn màu hoặc nhập mã HEX.</p>
                 </div>
                 <Button type="button" size="xs" variant="ghost" onClick={() => onColorChange(null)}>
