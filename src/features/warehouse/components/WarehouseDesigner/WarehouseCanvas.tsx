@@ -2,7 +2,15 @@
 
 import Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Circle, Group, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
 import type {
   WarehouseLayoutDecorationType,
@@ -11,13 +19,18 @@ import type {
   WarehouseLayoutGeometryTarget,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
-import { normalizeLayoutGeometry, snapToGrid, type LayoutBounds } from '../../utils/layout-grid'
+import {
+  constrainLayoutGeometryToCanvas,
+  snapToGrid,
+  type LayoutBounds,
+} from '../../utils/layout-grid'
 import { readLayoutDragData, type LayoutPaletteDragData } from './designer-constants'
 
 const MIN_SCALE = 0.2
 const MAX_SCALE = 4
 const ZOOM_FACTOR = 1.15
 const CANVAS_PADDING = 32
+const SCROLLBAR_ALLOWANCE = 18
 
 interface CanvasPalette {
   background: string
@@ -53,12 +66,6 @@ export interface WarehouseCanvasHandle {
   zoomIn: () => void
   zoomOut: () => void
   fit: () => void
-}
-
-interface Viewport {
-  scale: number
-  x: number
-  y: number
 }
 
 function readCanvasPalette(): CanvasPalette {
@@ -102,8 +109,12 @@ function useContainerSize() {
     if (!container) return
 
     const updateSize = (width: number, height: number) => {
+      const nextWidth = Math.floor(width)
+      const nextHeight = Math.floor(height)
       setSize((current) =>
-        current.width === width && current.height === height ? current : { width, height }
+        current.width === nextWidth && current.height === nextHeight
+          ? current
+          : { width: nextWidth, height: nextHeight }
       )
     }
     const initialBounds = container.getBoundingClientRect()
@@ -120,24 +131,15 @@ function useContainerSize() {
   return { containerRef, size }
 }
 
-function getFitViewport(
-  containerWidth: number,
-  containerHeight: number,
-  bounds: LayoutBounds
-): Viewport {
-  const availableWidth = Math.max(containerWidth - CANVAS_PADDING * 2, 1)
-  const availableHeight = Math.max(containerHeight - CANVAS_PADDING * 2, 1)
+function getFitScale(containerWidth: number, containerHeight: number, bounds: LayoutBounds) {
+  const availableWidth = Math.max(containerWidth - CANVAS_PADDING * 2 - SCROLLBAR_ALLOWANCE, 1)
+  const availableHeight = Math.max(containerHeight - CANVAS_PADDING * 2 - SCROLLBAR_ALLOWANCE, 1)
   const canvasWidth = Math.max(bounds.maxX - bounds.minX, 1)
   const canvasHeight = Math.max(bounds.maxY - bounds.minY, 1)
-  const scale = Math.min(
+  return Math.min(
     MAX_SCALE,
     Math.max(MIN_SCALE, Math.min(availableWidth / canvasWidth, availableHeight / canvasHeight))
   )
-  return {
-    scale,
-    x: (containerWidth - canvasWidth * scale) / 2 - bounds.minX * scale,
-    y: (containerHeight - canvasHeight * scale) / 2 - bounds.minY * scale,
-  }
 }
 
 function getOccupancyLabel(slots: WarehouseLayoutEditorScene['slots']) {
@@ -375,44 +377,54 @@ export function WarehouseCanvas({
   const transformerRef = useRef<Konva.Transformer>(null)
   const objectNodes = useRef(new Map<string, Konva.Node>())
   const lastPinchDistance = useRef<number | null>(null)
-  const hasFitted = useRef(false)
-  const previousContainerSize = useRef({ width: 0, height: 0 })
-  const [viewport, setViewport] = useState<Viewport>({ scale: 1, x: 0, y: 0 })
+  const isFitMode = useRef(true)
+  const pendingCenter = useRef<{ x: number; y: number } | null>(null)
+  const [scale, setScale] = useState(1)
+  const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 })
   const activeZoneIds = useMemo(
     () => new Set(scene.zones.filter((zone) => zone.status === 'Active').map((zone) => zone.id)),
     [scene.zones]
   )
-  const visibleRacks = useMemo(
-    () => scene.racks.filter((rack) => rack.status === 'Active' && activeZoneIds.has(rack.zoneId)),
-    [activeZoneIds, scene.racks]
-  )
+  const visibleRacks = useMemo(() => scene.racks, [scene.racks])
   const effectiveBounds = useMemo(
     () => ({ minX: 0, minY: 0, maxX: scene.canvas.width, maxY: scene.canvas.height }),
     [scene.canvas.height, scene.canvas.width]
   )
+  const paperWidth = scene.canvas.width * scale
+  const paperHeight = scene.canvas.height * scale
+  const contentWidth = Math.max(size.width, paperWidth + CANVAS_PADDING * 2)
+  const contentHeight = Math.max(size.height, paperHeight + CANVAS_PADDING * 2)
+  const paperLeft = (contentWidth - paperWidth) / 2
+  const paperTop = (contentHeight - paperHeight) / 2
+  const viewport = useMemo(
+    () => ({
+      scale,
+      x: paperLeft - scrollPosition.left,
+      y: paperTop - scrollPosition.top,
+    }),
+    [paperLeft, paperTop, scale, scrollPosition.left, scrollPosition.top]
+  )
 
   const fit = useCallback(() => {
     if (!size.width || !size.height) return
-    setViewport(getFitViewport(size.width, size.height, effectiveBounds))
+    isFitMode.current = true
+    pendingCenter.current = {
+      x: (effectiveBounds.minX + effectiveBounds.maxX) / 2,
+      y: (effectiveBounds.minY + effectiveBounds.maxY) / 2,
+    }
+    setScale(getFitScale(size.width, size.height, effectiveBounds))
   }, [effectiveBounds, size.height, size.width])
 
   const zoomAtCenter = useCallback(
     (factor: number) => {
-      setViewport((current) => {
-        const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, current.scale * factor))
-        const center = { x: size.width / 2, y: size.height / 2 }
-        const worldPoint = {
-          x: (center.x - current.x) / current.scale,
-          y: (center.y - current.y) / current.scale,
-        }
-        return {
-          scale: nextScale,
-          x: center.x - worldPoint.x * nextScale,
-          y: center.y - worldPoint.y * nextScale,
-        }
-      })
+      isFitMode.current = false
+      pendingCenter.current = {
+        x: (size.width / 2 - viewport.x) / viewport.scale,
+        y: (size.height / 2 - viewport.y) / viewport.scale,
+      }
+      setScale((current) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, current * factor)))
     },
-    [size.height, size.width]
+    [size.height, size.width, viewport]
   )
 
   useImperativeHandle(
@@ -427,29 +439,33 @@ export function WarehouseCanvas({
 
   useEffect(() => {
     if (size.width <= 0 || size.height <= 0) return
-
-    const previousSize = previousContainerSize.current
-    previousContainerSize.current = size
-    if (!hasFitted.current) {
-      hasFitted.current = true
-      fit()
-      return
-    }
-
-    if (previousSize.width <= 0 || previousSize.height <= 0) return
-    const widthDelta = size.width - previousSize.width
-    const heightDelta = size.height - previousSize.height
-    if (widthDelta === 0 && heightDelta === 0) return
-    setViewport((current) => ({
-      ...current,
-      x: current.x + widthDelta / 2,
-      y: current.y + heightDelta / 2,
-    }))
+    if (isFitMode.current) fit()
   }, [fit, size])
 
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    const center = pendingCenter.current
+    if (!container || !center || size.width <= 0 || size.height <= 0) return
+
+    const nextLeft = Math.max(0, paperLeft + center.x * scale - size.width / 2)
+    const nextTop = Math.max(0, paperTop + center.y * scale - size.height / 2)
+    container.scrollTo({ left: nextLeft, top: nextTop })
+    setScrollPosition({ left: nextLeft, top: nextTop })
+    pendingCenter.current = null
+  }, [
+    containerRef,
+    contentHeight,
+    contentWidth,
+    paperLeft,
+    paperTop,
+    scale,
+    size.height,
+    size.width,
+  ])
+
   useEffect(() => {
-    onZoomChange(Math.round(viewport.scale * 100))
-  }, [onZoomChange, viewport.scale])
+    onZoomChange(Math.round(scale * 100))
+  }, [onZoomChange, scale])
 
   const canTransformSelection = (() => {
     if (!canConfigure || !selection) return false
@@ -585,7 +601,7 @@ export function WarehouseCanvas({
     const nodeGeometry = getNodeGeometry(node, zIndex)
     node.scaleX(1)
     node.scaleY(1)
-    const geometry = normalizeLayoutGeometry(nodeGeometry, scene.canvas)
+    const geometry = constrainLayoutGeometryToCanvas(nodeGeometry, scene.canvas)
     onGeometryChange(target, id, geometry)
   }
 
@@ -600,6 +616,7 @@ export function WarehouseCanvas({
     const key = `${target}:${object.id}`
     const selected = isSelected(selection, target, object.id)
     const isZone = !isRack
+    const isInactive = object.status !== 'Active'
     const rack = isRack ? object : null
     const rackSlots = rack ? (slotsByRack.get(rack.id) ?? []) : []
     const objectFill = object.color ?? (isZone ? canvasPalette.accent : canvasPalette.card)
@@ -646,10 +663,10 @@ export function WarehouseCanvas({
           width={object.width}
           height={object.height}
           fill={objectFill}
-          opacity={isZone && !object.color ? 0.55 : 1}
+          opacity={isInactive ? 0.38 : isZone && !object.color ? 0.55 : 1}
           stroke={selected ? canvasPalette.primary : canvasPalette.border}
           strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
-          dash={isZone ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
+          dash={isZone || isInactive ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
           cornerRadius={isZone ? 4 : 2}
         />
         <Text
@@ -664,6 +681,20 @@ export function WarehouseCanvas({
           ellipsis
           wrap="none"
         />
+        {isInactive ? (
+          <Text
+            x={10}
+            y={Math.max(10, object.height - 20)}
+            width={Math.max(object.width - 20, 1)}
+            text="Ngừng hoạt động"
+            fill={objectForeground}
+            fontSize={9}
+            fontStyle="bold"
+            align="right"
+            ellipsis
+            wrap="none"
+          />
+        ) : null}
         {rack ? (
           <Text
             x={10}
@@ -717,7 +748,7 @@ export function WarehouseCanvas({
   return (
     <div
       ref={containerRef}
-      className="bg-muted focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-inset"
+      className="bg-muted focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-auto overscroll-contain outline-none select-none focus-visible:ring-2 focus-visible:ring-inset"
       role="application"
       aria-label="Mặt bằng kho tương tác"
       aria-describedby="warehouse-canvas-instructions"
@@ -735,164 +766,176 @@ export function WarehouseCanvas({
         event.preventDefault()
         const bounds = event.currentTarget.getBoundingClientRect()
         const x = snapToGrid(
-          (event.clientX - bounds.left - viewport.x) / viewport.scale,
+          (event.clientX - bounds.left + event.currentTarget.scrollLeft - paperLeft) / scale,
           scene.canvas.gridSize
         )
         const y = snapToGrid(
-          (event.clientY - bounds.top - viewport.y) / viewport.scale,
+          (event.clientY - bounds.top + event.currentTarget.scrollTop - paperTop) / scale,
           scene.canvas.gridSize
         )
         if (x < 0 || y < 0 || x > scene.canvas.width || y > scene.canvas.height) return
         onPaletteDrop(payload, x, y)
+      }}
+      onScroll={(event) => {
+        setScrollPosition({
+          left: event.currentTarget.scrollLeft,
+          top: event.currentTarget.scrollTop,
+        })
       }}
     >
       <p id="warehouse-canvas-instructions" className="sr-only">
         Dùng danh sách đối tượng để chọn bằng bàn phím. Nhấn Escape để bỏ chọn.
       </p>
       {size.width > 0 && size.height > 0 ? (
-        <Stage
-          ref={stageRef}
-          width={size.width}
-          height={size.height}
-          x={viewport.x}
-          y={viewport.y}
-          scaleX={viewport.scale}
-          scaleY={viewport.scale}
-          draggable={false}
-          onWheel={handleWheel}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={() => {
-            lastPinchDistance.current = null
-          }}
-        >
-          <Layer>
-            <Rect
-              name="canvas-background"
-              x={effectiveBounds.minX}
-              y={effectiveBounds.minY}
-              width={effectiveBounds.maxX - effectiveBounds.minX}
-              height={effectiveBounds.maxY - effectiveBounds.minY}
-              fill={canvasPalette.background}
-              stroke={canvasPalette.border}
-              strokeWidth={1 / viewport.scale}
-              onClick={() => onSelect(null)}
-              onTap={() => onSelect(null)}
-            />
-            {gridLines.map((line) => (
-              <Line
-                key={line.key}
-                points={line.points}
-                stroke={canvasPalette.border}
-                strokeWidth={1 / viewport.scale}
-                opacity={0.45}
-                listening={false}
-              />
-            ))}
-          </Layer>
-          <Layer>{sortedZones.map((zone) => renderBusinessObject('zone', zone))}</Layer>
-          <Layer>{sortedRacks.map((rack) => renderBusinessObject('rack', rack))}</Layer>
-          <Layer>
-            {sortedDecorations.map((decoration) => {
-              const key = `decoration:${decoration.clientKey}`
-              const selected = isSelected(selection, 'decoration', decoration.clientKey)
-              const decorationFill =
-                decoration.color ??
-                (decoration.type === 'Damaged' ? canvasPalette.destructive : canvasPalette.muted)
-              const decorationForeground = decoration.color
-                ? getReadableCanvasColor(decoration.color, canvasPalette)
-                : canvasPalette.foreground
-              return (
-                <Group
-                  key={key}
-                  ref={(node) => setObjectNode(key, node)}
-                  x={decoration.x}
-                  y={decoration.y}
-                  width={decoration.width}
-                  height={decoration.height}
-                  rotation={decoration.rotation}
-                  draggable={canConfigure}
-                  dragBoundFunc={(position) => ({
-                    x: snapToGrid(position.x, scene.canvas.gridSize),
-                    y: snapToGrid(position.y, scene.canvas.gridSize),
-                  })}
-                  onClick={(event) => {
-                    event.cancelBubble = true
-                    onSelect({ kind: 'decoration', id: decoration.clientKey })
-                  }}
-                  onTap={(event) => {
-                    event.cancelBubble = true
-                    onSelect({ kind: 'decoration', id: decoration.clientKey })
-                  }}
-                  onDragEnd={(event) => {
-                    event.cancelBubble = true
-                    commitNodeGeometry(
-                      'decoration',
-                      decoration.clientKey,
-                      event.target,
-                      decoration.zIndex
-                    )
-                  }}
-                  onTransformEnd={(event) => {
-                    event.cancelBubble = true
-                    commitNodeGeometry(
-                      'decoration',
-                      decoration.clientKey,
-                      event.target,
-                      decoration.zIndex
-                    )
-                  }}
-                >
-                  <Rect
-                    name={`decoration:${decoration.clientKey}`}
-                    width={decoration.width}
-                    height={decoration.height}
-                    fill={decorationFill}
-                    opacity={decoration.color ? 1 : decoration.type === 'Damaged' ? 0.16 : 0.8}
-                    stroke={selected ? canvasPalette.primary : canvasPalette.mutedForeground}
-                    strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
-                    cornerRadius={2}
+        <div style={{ width: contentWidth, height: contentHeight }} className="relative">
+          <div className="sticky top-0 left-0" style={{ width: size.width, height: size.height }}>
+            <Stage
+              ref={stageRef}
+              width={size.width}
+              height={size.height}
+              x={viewport.x}
+              y={viewport.y}
+              scaleX={scale}
+              scaleY={scale}
+              draggable={false}
+              onWheel={handleWheel}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={() => {
+                lastPinchDistance.current = null
+              }}
+            >
+              <Layer>
+                <Rect
+                  name="canvas-background"
+                  x={effectiveBounds.minX}
+                  y={effectiveBounds.minY}
+                  width={effectiveBounds.maxX - effectiveBounds.minX}
+                  height={effectiveBounds.maxY - effectiveBounds.minY}
+                  fill={canvasPalette.background}
+                  stroke={canvasPalette.border}
+                  strokeWidth={1 / viewport.scale}
+                  onClick={() => onSelect(null)}
+                  onTap={() => onSelect(null)}
+                />
+                {gridLines.map((line) => (
+                  <Line
+                    key={line.key}
+                    points={line.points}
+                    stroke={canvasPalette.border}
+                    strokeWidth={1 / viewport.scale}
+                    opacity={0.45}
+                    listening={false}
                   />
-                  {renderDecorationSymbol(
-                    decoration.type,
-                    decoration.width,
-                    decoration.height,
-                    canvasPalette,
-                    decoration.color ? decorationForeground : undefined
-                  )}
-                  {decoration.width >= 72 && decoration.height >= 58 ? (
-                    <Text
-                      x={8}
-                      y={decoration.height - 22}
-                      width={Math.max(decoration.width - 16, 1)}
-                      text={decoration.label}
-                      align="center"
-                      fill={decorationForeground}
-                      fontSize={11}
-                      fontStyle="bold"
-                      ellipsis
-                      wrap="none"
-                    />
-                  ) : null}
-                </Group>
-              )
-            })}
-          </Layer>
-          <Layer>
-            <Transformer
-              ref={transformerRef}
-              rotateEnabled
-              flipEnabled={false}
-              borderStroke={canvasPalette.primary}
-              anchorStroke={canvasPalette.primary}
-              anchorFill={canvasPalette.card}
-              anchorSize={8}
-              rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
-              boundBoxFunc={(oldBox, newBox) =>
-                Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20 ? oldBox : newBox
-              }
-            />
-          </Layer>
-        </Stage>
+                ))}
+              </Layer>
+              <Layer>{sortedZones.map((zone) => renderBusinessObject('zone', zone))}</Layer>
+              <Layer>{sortedRacks.map((rack) => renderBusinessObject('rack', rack))}</Layer>
+              <Layer>
+                {sortedDecorations.map((decoration) => {
+                  const key = `decoration:${decoration.clientKey}`
+                  const selected = isSelected(selection, 'decoration', decoration.clientKey)
+                  const decorationFill =
+                    decoration.color ??
+                    (decoration.type === 'Damaged'
+                      ? canvasPalette.destructive
+                      : canvasPalette.muted)
+                  const decorationForeground = decoration.color
+                    ? getReadableCanvasColor(decoration.color, canvasPalette)
+                    : canvasPalette.foreground
+                  return (
+                    <Group
+                      key={key}
+                      ref={(node) => setObjectNode(key, node)}
+                      x={decoration.x}
+                      y={decoration.y}
+                      width={decoration.width}
+                      height={decoration.height}
+                      rotation={decoration.rotation}
+                      draggable={canConfigure}
+                      dragBoundFunc={(position) => ({
+                        x: snapToGrid(position.x, scene.canvas.gridSize),
+                        y: snapToGrid(position.y, scene.canvas.gridSize),
+                      })}
+                      onClick={(event) => {
+                        event.cancelBubble = true
+                        onSelect({ kind: 'decoration', id: decoration.clientKey })
+                      }}
+                      onTap={(event) => {
+                        event.cancelBubble = true
+                        onSelect({ kind: 'decoration', id: decoration.clientKey })
+                      }}
+                      onDragEnd={(event) => {
+                        event.cancelBubble = true
+                        commitNodeGeometry(
+                          'decoration',
+                          decoration.clientKey,
+                          event.target,
+                          decoration.zIndex
+                        )
+                      }}
+                      onTransformEnd={(event) => {
+                        event.cancelBubble = true
+                        commitNodeGeometry(
+                          'decoration',
+                          decoration.clientKey,
+                          event.target,
+                          decoration.zIndex
+                        )
+                      }}
+                    >
+                      <Rect
+                        name={`decoration:${decoration.clientKey}`}
+                        width={decoration.width}
+                        height={decoration.height}
+                        fill={decorationFill}
+                        opacity={decoration.color ? 1 : decoration.type === 'Damaged' ? 0.16 : 0.8}
+                        stroke={selected ? canvasPalette.primary : canvasPalette.mutedForeground}
+                        strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
+                        cornerRadius={2}
+                      />
+                      {renderDecorationSymbol(
+                        decoration.type,
+                        decoration.width,
+                        decoration.height,
+                        canvasPalette,
+                        decoration.color ? decorationForeground : undefined
+                      )}
+                      {decoration.width >= 72 && decoration.height >= 58 ? (
+                        <Text
+                          x={8}
+                          y={decoration.height - 22}
+                          width={Math.max(decoration.width - 16, 1)}
+                          text={decoration.label}
+                          align="center"
+                          fill={decorationForeground}
+                          fontSize={11}
+                          fontStyle="bold"
+                          ellipsis
+                          wrap="none"
+                        />
+                      ) : null}
+                    </Group>
+                  )
+                })}
+              </Layer>
+              <Layer>
+                <Transformer
+                  ref={transformerRef}
+                  rotateEnabled
+                  flipEnabled={false}
+                  borderStroke={canvasPalette.primary}
+                  anchorStroke={canvasPalette.primary}
+                  anchorFill={canvasPalette.card}
+                  anchorSize={8}
+                  rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                  boundBoxFunc={(oldBox, newBox) =>
+                    Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20 ? oldBox : newBox
+                  }
+                />
+              </Layer>
+            </Stage>
+          </div>
+        </div>
       ) : null}
       {scene.slots.length > 0 ? (
         <div className="bg-card/95 pointer-events-none absolute bottom-3 left-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 text-[11px]">

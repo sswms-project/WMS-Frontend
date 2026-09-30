@@ -29,7 +29,7 @@ import type {
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import type { LayoutPaletteDragData } from './designer-constants'
-import { normalizeLayoutGeometry } from '../../utils/layout-grid'
+import { constrainLayoutGeometryToCanvas } from '../../utils/layout-grid'
 import { WarehouseLocationDeactivateDialog } from '../WarehouseDetailPage'
 import { DesignerInspector } from './DesignerInspector'
 import { DesignerToolbar } from './DesignerToolbar'
@@ -66,6 +66,8 @@ interface WarehouseDesignerWorkspaceProps {
 export interface WarehouseLayoutDropPosition {
   readonly x: number
   readonly y: number
+  readonly width?: number
+  readonly height?: number
 }
 export interface WarehouseLayoutCreatedPlacement extends WarehouseLayoutDropPosition {
   readonly kind: 'zone' | 'rack'
@@ -79,6 +81,15 @@ function createClientKey() {
 function getDuplicateLabel(label: string): string {
   const suffix = ' bản sao'
   return `${label.slice(0, 100 - suffix.length).trimEnd()}${suffix}`
+}
+
+function getRackPresetSize(
+  preset: 'vertical' | 'horizontal' | 'double' | undefined,
+  gridSize: number
+) {
+  if (preset === 'vertical') return { width: gridSize * 5, height: gridSize * 13 }
+  if (preset === 'double') return { width: gridSize * 12, height: gridSize * 9 }
+  return { width: gridSize * 13, height: gridSize * 5 }
 }
 
 function isFormControl(target: EventTarget | null): boolean {
@@ -159,11 +170,13 @@ export function WarehouseDesignerWorkspace({
       type: 'update-geometry',
       target: placementToApply.kind,
       id: placementToApply.entityId,
-      geometry: normalizeLayoutGeometry(
+      geometry: constrainLayoutGeometryToCanvas(
         {
           ...entity,
           x: placementToApply.x,
           y: placementToApply.y,
+          width: placementToApply.width ?? entity.width,
+          height: placementToApply.height ?? entity.height,
         },
         scene.canvas
       ),
@@ -190,7 +203,12 @@ export function WarehouseDesignerWorkspace({
     geometry: WarehouseLayoutGeometry
   ) {
     if (!canConfigure) return
-    dispatch({ type: 'update-geometry', target, id, geometry })
+    dispatch({
+      type: 'update-geometry',
+      target,
+      id,
+      geometry: constrainLayoutGeometryToCanvas(geometry, scene.canvas),
+    })
   }
 
   function updateColor(target: WarehouseLayoutGeometryTarget, id: string, color: string | null) {
@@ -206,7 +224,7 @@ export function WarehouseDesignerWorkspace({
     if (!canConfigure) return
     const clientKey = createClientKey()
     const offset = scene.decorations.length * scene.canvas.gridSize
-    const geometry = normalizeLayoutGeometry(
+    const geometry = constrainLayoutGeometryToCanvas(
       {
         x: position?.x ?? scene.canvas.gridSize * 5 + offset,
         y: position?.y ?? scene.canvas.gridSize * 5 + offset,
@@ -232,7 +250,8 @@ export function WarehouseDesignerWorkspace({
     if (payload.kind === 'zone') onCreateZone(position)
     else if (payload.kind === 'rack') {
       const zoneId = getSelectedZoneId()
-      if (zoneId) onCreateRack(zoneId, position)
+      const rackSize = getRackPresetSize(payload.preset, scene.canvas.gridSize)
+      if (zoneId) onCreateRack(zoneId, { ...position, ...rackSize })
       else toast.error('Chọn một khu vực trước khi đặt kệ hàng.')
     } else addDecoration(payload.type, payload.label, position)
   }
@@ -256,7 +275,7 @@ export function WarehouseDesignerWorkspace({
     const source = scene.decorations.find((decoration) => decoration.clientKey === selection.id)
     if (!source) return
     const clientKey = createClientKey()
-    const geometry = normalizeLayoutGeometry(
+    const geometry = constrainLayoutGeometryToCanvas(
       {
         ...source,
         x: source.x + scene.canvas.gridSize,
@@ -353,11 +372,6 @@ export function WarehouseDesignerWorkspace({
       dispatch({ type: 'redo' })
       return
     }
-    if ((event.key === 'Delete' || event.key === 'Backspace') && selection?.kind === 'rack') {
-      event.preventDefault()
-      requestDeactivateSelectedRack()
-      return
-    }
     if ((event.key === 'Delete' || event.key === 'Backspace') && selection?.kind === 'decoration') {
       event.preventDefault()
       deleteSelectedDecoration()
@@ -373,11 +387,20 @@ export function WarehouseDesignerWorkspace({
         setIsToolboxOpen(false)
         onCreateZone()
       }}
-      onCreateRack={() => {
+      onCreateRack={(preset) => {
         const zoneId = getSelectedZoneId()
         if (zoneId) {
           setIsToolboxOpen(false)
-          onCreateRack(zoneId)
+          onCreateRack(
+            zoneId,
+            preset
+              ? {
+                  x: scene.canvas.gridSize * 5,
+                  y: scene.canvas.gridSize * 5,
+                  ...getRackPresetSize(preset, scene.canvas.gridSize),
+                }
+              : undefined
+          )
         }
       }}
       onCreateDecoration={addDecoration}
@@ -431,7 +454,7 @@ export function WarehouseDesignerWorkspace({
 
   return (
     <section
-      className="bg-surface-container-lowest flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border"
+      className="bg-surface-container-lowest flex h-[calc(100dvh-17rem)] min-h-[28rem] min-w-0 flex-col overflow-hidden border"
       aria-label="Trình thiết kế bố cục kho"
       onKeyDown={handleWorkspaceKeyDown}
     >

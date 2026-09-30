@@ -122,9 +122,7 @@ function CanvasSettingsSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-sm">
         <SheetHeader>
           <SheetTitle>Cài đặt nền</SheetTitle>
-          <SheetDescription>
-            Đặt kích thước nền tối thiểu và bước lưới. Nền tự mở rộng khi đối tượng vượt biên.
-          </SheetDescription>
+          <SheetDescription>Đặt kích thước cố định và bước lưới của mặt bằng kho.</SheetDescription>
         </SheetHeader>
         <form
           className="flex flex-1 flex-col"
@@ -136,13 +134,13 @@ function CanvasSettingsSheet({
           <FieldGroup className="p-4">
             <CanvasNumberField
               id="canvas-width"
-              label="Chiều rộng tối thiểu"
+              label="Chiều rộng mặt bằng"
               error={errors.width}
               registration={form.register('width', { valueAsNumber: true })}
             />
             <CanvasNumberField
               id="canvas-height"
-              label="Chiều cao tối thiểu"
+              label="Chiều cao mặt bằng"
               error={errors.height}
               registration={form.register('height', { valueAsNumber: true })}
             />

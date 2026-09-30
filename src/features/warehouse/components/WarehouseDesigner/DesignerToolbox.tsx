@@ -4,6 +4,8 @@ import {
   Box,
   ChevronRight,
   ChevronsUp,
+  Columns3,
+  Grid2X2,
   Layers3,
   MapPin,
   Rows3,
@@ -14,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -29,8 +32,9 @@ interface DesignerToolboxProps {
   readonly scene: WarehouseLayoutEditorScene
   readonly selection: WarehouseLayoutSelection | null
   readonly canConfigure: boolean
+  readonly mode?: 'designer' | 'viewer'
   readonly onCreateZone: () => void
-  readonly onCreateRack: () => void
+  readonly onCreateRack: (preset?: 'vertical' | 'horizontal' | 'double') => void
   readonly onCreateDecoration: (type: WarehouseLayoutDecorationType, label: string) => void
   readonly onSelect: (selection: WarehouseLayoutSelection) => void
 }
@@ -74,15 +78,56 @@ function DisabledActionTooltip({
   )
 }
 
+function PaletteIconAction({
+  label,
+  disabledReason,
+  disabled,
+  onClick,
+  icon,
+  dragData,
+}: {
+  readonly label: string
+  readonly disabledReason: string
+  readonly disabled: boolean
+  readonly onClick: () => void
+  readonly icon: React.ReactNode
+  readonly dragData: LayoutPaletteDragData
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="rounded-sm"
+            disabled={disabled}
+            draggable={!disabled}
+            aria-label={label}
+            onDragStart={(event) => writeLayoutDragData(event.dataTransfer, dragData)}
+            onClick={onClick}
+          >
+            {icon}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{disabled ? disabledReason : label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 export function DesignerToolbox({
   scene,
   selection,
   canConfigure,
+  mode = 'designer',
   onCreateZone,
   onCreateRack,
   onCreateDecoration,
   onSelect,
 }: DesignerToolboxProps) {
+  const [searchTerm, setSearchTerm] = useState('')
   const selectedZoneCandidateId =
     selection?.kind === 'zone'
       ? selection.id
@@ -95,88 +140,152 @@ export function DesignerToolbox({
   return (
     <div className="bg-surface-container-lowest flex h-full min-h-0 flex-col overflow-hidden">
       <div className="shrink-0 px-3 py-3">
-        <h2 className="text-sm font-semibold">Đối tượng</h2>
-        <p className="text-muted-foreground mt-0.5 text-[11px]">Thêm và chọn thành phần sơ đồ.</p>
+        <h2 className="text-sm font-semibold">
+          {mode === 'viewer' ? 'Danh sách vị trí' : 'Đối tượng'}
+        </h2>
+        <p className="text-muted-foreground mt-0.5 text-[11px]">
+          {mode === 'viewer'
+            ? 'Chọn vị trí để xem hàng hóa và đối chiếu trên sơ đồ.'
+            : 'Thêm và chọn thành phần sơ đồ.'}
+        </p>
       </div>
-      <div className="shrink-0 px-3 pb-3">
-        <section aria-labelledby="business-tools-title">
-          <h3
-            id="business-tools-title"
-            className="text-muted-foreground mb-2 text-[11px] font-medium"
-          >
-            Cấu trúc kho
-          </h3>
-          <div className="flex flex-col gap-1.5">
-            <DisabledActionTooltip
-              label="Khu vực"
-              disabled={!canConfigure}
-              disabledReason="Bạn chỉ có quyền xem sơ đồ."
-              onClick={onCreateZone}
-              dragData={{ kind: 'zone' }}
-              icon={<SquareDashed data-icon="inline-start" aria-hidden="true" />}
-            />
-            <DisabledActionTooltip
-              label="Kệ hàng"
-              disabled={!canConfigure || !selectedZoneId}
-              disabledReason={
-                !canConfigure
-                  ? 'Bạn chỉ có quyền xem sơ đồ.'
-                  : 'Chọn một khu vực trước khi thêm kệ.'
-              }
-              onClick={onCreateRack}
-              dragData={{ kind: 'rack' }}
-              icon={<Rows3 data-icon="inline-start" aria-hidden="true" />}
-            />
-          </div>
-        </section>
+      {mode === 'viewer' ? (
+        <div className="shrink-0 px-3 pb-3">
+          <Input
+            type="search"
+            name="warehouse-layout-location-search"
+            autoComplete="off"
+            value={searchTerm}
+            placeholder="Tìm mã hoặc tên vị trí…"
+            aria-label="Tìm vị trí trên sơ đồ"
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
+      ) : null}
+      {mode === 'designer' ? (
+        <div className="max-h-[55%] shrink-0 overflow-y-auto overscroll-contain px-3 pb-3">
+          <section aria-labelledby="business-tools-title">
+            <h3
+              id="business-tools-title"
+              className="text-muted-foreground mb-2 text-[11px] font-medium"
+            >
+              Khu vực lưu trữ
+            </h3>
+            <div className="flex flex-col gap-1.5">
+              <DisabledActionTooltip
+                label="Khu vực"
+                disabled={!canConfigure}
+                disabledReason="Bạn chỉ có quyền xem sơ đồ."
+                onClick={onCreateZone}
+                dragData={{ kind: 'zone' }}
+                icon={<SquareDashed data-icon="inline-start" aria-hidden="true" />}
+              />
+            </div>
+          </section>
 
-        <Separator className="my-3" />
-        <section aria-labelledby="decoration-tools-title">
-          <h3
-            id="decoration-tools-title"
-            className="text-muted-foreground mb-2 text-[11px] font-medium"
-          >
-            Khu chức năng
-          </h3>
-          <div className="grid grid-cols-[repeat(4,2.25rem)] gap-1">
-            {DECORATION_OPTIONS.map((option) => (
-              <Tooltip key={option.type}>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="rounded-sm"
-                    disabled={!canConfigure}
-                    draggable={canConfigure}
-                    onDragStart={(event) =>
-                      writeLayoutDragData(event.dataTransfer, {
-                        kind: 'decoration',
-                        type: option.type,
-                        label: option.label,
-                      })
-                    }
-                    aria-label={option.label}
-                    onClick={() => onCreateDecoration(option.type, option.label)}
-                  >
-                    <option.icon aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {canConfigure ? option.label : `${option.label}: Bạn chỉ có quyền xem sơ đồ.`}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        </section>
-      </div>
+          <Separator className="my-3" />
+          <section aria-labelledby="rack-tools-title">
+            <h3
+              id="rack-tools-title"
+              className="text-muted-foreground mb-2 text-[11px] font-medium"
+            >
+              Kệ hàng
+            </h3>
+            <div className="grid grid-cols-3 gap-1.5">
+              <PaletteIconAction
+                label="Kệ dọc"
+                disabled={!canConfigure || !selectedZoneId}
+                disabledReason={
+                  !canConfigure
+                    ? 'Bạn chỉ có quyền xem sơ đồ.'
+                    : 'Chọn một khu vực trước khi thêm kệ.'
+                }
+                onClick={() => onCreateRack('vertical')}
+                dragData={{ kind: 'rack', preset: 'vertical' }}
+                icon={<Columns3 aria-hidden="true" />}
+              />
+              <PaletteIconAction
+                label="Kệ ngang"
+                disabled={!canConfigure || !selectedZoneId}
+                disabledReason={
+                  !canConfigure
+                    ? 'Bạn chỉ có quyền xem sơ đồ.'
+                    : 'Chọn một khu vực trước khi thêm kệ.'
+                }
+                onClick={() => onCreateRack('horizontal')}
+                dragData={{ kind: 'rack', preset: 'horizontal' }}
+                icon={<Rows3 aria-hidden="true" />}
+              />
+              <PaletteIconAction
+                label="Kệ hai mặt"
+                disabled={!canConfigure || !selectedZoneId}
+                disabledReason={
+                  !canConfigure
+                    ? 'Bạn chỉ có quyền xem sơ đồ.'
+                    : 'Chọn một khu vực trước khi thêm kệ.'
+                }
+                onClick={() => onCreateRack('double')}
+                dragData={{ kind: 'rack', preset: 'double' }}
+                icon={<Grid2X2 aria-hidden="true" />}
+              />
+            </div>
+          </section>
 
-      <Separator />
+          <Separator className="my-3" />
+          <section aria-labelledby="decoration-tools-title">
+            <h3
+              id="decoration-tools-title"
+              className="text-muted-foreground mb-2 text-[11px] font-medium"
+            >
+              Cửa, lối đi & khu chức năng
+            </h3>
+            <div className="grid grid-cols-3 gap-1">
+              {DECORATION_OPTIONS.map((option) => (
+                <Tooltip key={option.type}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="rounded-sm"
+                      disabled={!canConfigure}
+                      draggable={canConfigure}
+                      onDragStart={(event) =>
+                        writeLayoutDragData(event.dataTransfer, {
+                          kind: 'decoration',
+                          type: option.type,
+                          label: option.label,
+                        })
+                      }
+                      aria-label={option.label}
+                      onClick={() => onCreateDecoration(option.type, option.label)}
+                    >
+                      <option.icon aria-hidden="true" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {canConfigure ? option.label : `${option.label}: Bạn chỉ có quyền xem sơ đồ.`}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {mode === 'designer' ? <Separator /> : null}
       <section
         aria-labelledby="scene-outline-title"
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <SceneOutlineTree scene={scene} selection={selection} onSelect={onSelect} />
+        <SceneOutlineTree
+          scene={scene}
+          selection={selection}
+          query={searchTerm}
+          title={mode === 'viewer' ? 'Cấu trúc vị trí' : 'Danh sách sơ đồ'}
+          showDecorations={mode === 'designer'}
+          onSelect={onSelect}
+        />
       </section>
     </div>
   )
@@ -185,10 +294,18 @@ export function DesignerToolbox({
 type OutlineIdUpdater = (id: string, open: boolean) => void
 
 function SceneOutlineTree({
-  scene,
+  scene: sourceScene,
   selection,
+  query,
+  title,
+  showDecorations,
   onSelect,
-}: Pick<DesignerToolboxProps, 'scene' | 'selection' | 'onSelect'>) {
+}: Pick<DesignerToolboxProps, 'scene' | 'selection' | 'onSelect'> & {
+  readonly query: string
+  readonly title: string
+  readonly showDecorations: boolean
+}) {
+  const scene = useMemo(() => filterOutlineScene(sourceScene, query), [query, sourceScene])
   const [openZoneIds, setOpenZoneIds] = useState<ReadonlySet<string>>(() => new Set())
   const [openRackIds, setOpenRackIds] = useState<ReadonlySet<string>>(() => new Set())
   const [isDecorationGroupOpen, setIsDecorationGroupOpen] = useState(false)
@@ -208,8 +325,11 @@ function SceneOutlineTree({
   )
 
   const selectedPath = getSelectedPath(scene, selection, zoneIds, rackIds)
-  const isZoneOpen = (zoneId: string) => openZoneIds.has(zoneId) || selectedPath.zoneId === zoneId
-  const isRackOpen = (rackId: string) => openRackIds.has(rackId) || selectedPath.rackId === rackId
+  const hasQuery = Boolean(query.trim())
+  const isZoneOpen = (zoneId: string) =>
+    hasQuery || openZoneIds.has(zoneId) || selectedPath.zoneId === zoneId
+  const isRackOpen = (rackId: string) =>
+    hasQuery || openRackIds.has(rackId) || selectedPath.rackId === rackId
   const decorationGroupOpen = isDecorationGroupOpen || selection?.kind === 'decoration'
   const unclassifiedGroupOpen = isUnclassifiedGroupOpen || selectedPath.isUnclassified
   const hasManuallyExpandedGroup =
@@ -228,13 +348,16 @@ function SceneOutlineTree({
   }
 
   const totalCount =
-    scene.zones.length + scene.racks.length + scene.slots.length + scene.decorations.length
+    scene.zones.length +
+    scene.racks.length +
+    scene.slots.length +
+    (showDecorations ? scene.decorations.length : 0)
 
   return (
     <>
       <div className="bg-surface-container-lowest flex shrink-0 items-center justify-between gap-2 px-3 py-2.5">
         <h3 id="scene-outline-title" className="text-muted-foreground text-[11px] font-medium">
-          Danh sách sơ đồ
+          {title}
         </h3>
         <div className="flex items-center gap-1">
           <Badge variant="outline">{totalCount}</Badge>
@@ -268,7 +391,7 @@ function SceneOutlineTree({
         <div className="px-2 pb-3">
           {totalCount === 0 ? (
             <p className="text-muted-foreground py-3 text-center text-[11px]">
-              Sơ đồ chưa có đối tượng.
+              {query.trim() ? 'Không tìm thấy vị trí phù hợp.' : 'Sơ đồ chưa có đối tượng.'}
             </p>
           ) : (
             <ul className="flex flex-col gap-1">
@@ -290,7 +413,7 @@ function SceneOutlineTree({
                 )
               })}
 
-              {scene.decorations.length > 0 ? (
+              {showDecorations && scene.decorations.length > 0 ? (
                 <OutlineGroup
                   label="Khu chức năng"
                   count={scene.decorations.length}
@@ -523,7 +646,11 @@ function OutlineToggle({
       >
         <ChevronRight
           aria-hidden="true"
-          className={open ? 'rotate-90 transition-transform' : 'transition-transform'}
+          className={
+            open
+              ? 'rotate-90 transition-transform motion-reduce:transition-none'
+              : 'transition-transform motion-reduce:transition-none'
+          }
         />
       </Button>
     </CollapsibleTrigger>
@@ -560,6 +687,53 @@ function getSelectedPath(
     }
   }
   return { zoneId: null, rackId: null, isUnclassified: false }
+}
+
+function filterOutlineScene(scene: WarehouseLayoutEditorScene, query: string) {
+  const normalizedQuery = query.trim().toLocaleLowerCase('vi')
+  if (!normalizedQuery) return scene
+  const includesQuery = (...values: Array<string | null | undefined>) =>
+    values.some((value) => value?.toLocaleLowerCase('vi').includes(normalizedQuery))
+
+  const matchingSlotIds = new Set(
+    scene.slots
+      .filter((slot) => includesQuery(slot.slotCode, slot.slotName, slot.description))
+      .map((slot) => slot.id)
+  )
+  const matchingZoneSelfIds = new Set(
+    scene.zones.filter((zone) => includesQuery(zone.zoneCode, zone.zoneName)).map((zone) => zone.id)
+  )
+  const matchingRackIds = new Set(
+    scene.racks
+      .filter(
+        (rack) =>
+          matchingZoneSelfIds.has(rack.zoneId) ||
+          includesQuery(rack.rackCode, rack.rackName, rack.description) ||
+          scene.slots.some((slot) => slot.rackId === rack.id && matchingSlotIds.has(slot.id))
+      )
+      .map((rack) => rack.id)
+  )
+  const matchingZoneIds = new Set(
+    scene.zones
+      .filter(
+        (zone) =>
+          matchingZoneSelfIds.has(zone.id) ||
+          scene.racks.some((rack) => rack.zoneId === zone.id && matchingRackIds.has(rack.id))
+      )
+      .map((zone) => zone.id)
+  )
+
+  return {
+    ...scene,
+    zones: scene.zones.filter((zone) => matchingZoneIds.has(zone.id)),
+    racks: scene.racks.filter((rack) => matchingRackIds.has(rack.id)),
+    slots: scene.slots.filter(
+      (slot) => matchingSlotIds.has(slot.id) || matchingRackIds.has(slot.rackId)
+    ),
+    decorations: scene.decorations.filter((decoration) =>
+      includesQuery(decoration.label, decoration.type)
+    ),
+  }
 }
 
 function groupBy<T>(items: readonly T[], getKey: (item: T) => string) {

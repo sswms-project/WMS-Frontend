@@ -69,6 +69,64 @@ export function normalizeLayoutGeometry(
   }
 }
 
+export function constrainLayoutGeometryToCanvas(
+  geometry: WarehouseLayoutGeometry,
+  canvas: WarehouseLayoutCanvas
+): WarehouseLayoutGeometry {
+  const normalized = normalizeLayoutGeometry(geometry, canvas)
+  let constrained = {
+    ...normalized,
+    width: Math.min(normalized.width, canvas.width),
+    height: Math.min(normalized.height, canvas.height),
+  }
+  const projectedBounds = getLayoutGeometryBounds({ ...constrained, x: 0, y: 0 })
+  const projectedWidth = projectedBounds.maxX - projectedBounds.minX
+  const projectedHeight = projectedBounds.maxY - projectedBounds.minY
+  const scaleToFit = Math.min(1, canvas.width / projectedWidth, canvas.height / projectedHeight)
+  if (scaleToFit < 1) {
+    constrained = {
+      ...constrained,
+      width: Math.max(
+        MIN_LAYOUT_OBJECT_SIZE,
+        Math.floor((constrained.width * scaleToFit) / canvas.gridSize) * canvas.gridSize
+      ),
+      height: Math.max(
+        MIN_LAYOUT_OBJECT_SIZE,
+        Math.floor((constrained.height * scaleToFit) / canvas.gridSize) * canvas.gridSize
+      ),
+    }
+  }
+  const bounds = getLayoutGeometryBounds(constrained)
+  const offsetX =
+    bounds.minX < 0 ? -bounds.minX : bounds.maxX > canvas.width ? canvas.width - bounds.maxX : 0
+  const offsetY =
+    bounds.minY < 0 ? -bounds.minY : bounds.maxY > canvas.height ? canvas.height - bounds.maxY : 0
+  constrained = {
+    ...constrained,
+    x: snapToGrid(constrained.x + offsetX, canvas.gridSize),
+    y: snapToGrid(constrained.y + offsetY, canvas.gridSize),
+  }
+  const snappedBounds = getLayoutGeometryBounds(constrained)
+  const finalOffsetX =
+    snappedBounds.minX < 0
+      ? -snappedBounds.minX
+      : snappedBounds.maxX > canvas.width
+        ? canvas.width - snappedBounds.maxX
+        : 0
+  const finalOffsetY =
+    snappedBounds.minY < 0
+      ? -snappedBounds.minY
+      : snappedBounds.maxY > canvas.height
+        ? canvas.height - snappedBounds.maxY
+        : 0
+
+  return {
+    ...constrained,
+    x: constrained.x + finalOffsetX,
+    y: constrained.y + finalOffsetY,
+  }
+}
+
 export function getEffectiveCanvasBounds(
   canvas: WarehouseLayoutCanvas,
   geometries: WarehouseLayoutGeometry[]

@@ -252,7 +252,10 @@ function LocationRow({
             onClick={onToggle}
           >
             <ChevronRight
-              className={cn('transition-transform', expanded && 'rotate-90')}
+              className={cn(
+                'transition-transform motion-reduce:transition-none',
+                expanded && 'rotate-90'
+              )}
               aria-hidden="true"
             />
           </Button>

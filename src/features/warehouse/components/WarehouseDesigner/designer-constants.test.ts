@@ -20,6 +20,9 @@ describe('layout palette drag data', () => {
     writeLayoutDragData(dataTransfer, { kind: 'zone' })
     expect(readLayoutDragData(dataTransfer)).toEqual({ kind: 'zone' })
 
+    writeLayoutDragData(dataTransfer, { kind: 'rack', preset: 'double' })
+    expect(readLayoutDragData(dataTransfer)).toEqual({ kind: 'rack', preset: 'double' })
+
     writeLayoutDragData(dataTransfer, {
       kind: 'decoration',
       type: 'Forklift',
@@ -37,6 +40,15 @@ describe('layout palette drag data', () => {
     dataTransfer.setData(
       LAYOUT_DRAG_DATA_TYPE,
       JSON.stringify({ kind: 'decoration', type: 'Unknown', label: 'Không hợp lệ' })
+    )
+    expect(readLayoutDragData(dataTransfer)).toBeNull()
+  })
+
+  it('ignores unknown rack presets', () => {
+    const dataTransfer = createDataTransfer()
+    dataTransfer.setData(
+      LAYOUT_DRAG_DATA_TYPE,
+      JSON.stringify({ kind: 'rack', preset: 'ceiling-mounted' })
     )
     expect(readLayoutDragData(dataTransfer)).toBeNull()
   })

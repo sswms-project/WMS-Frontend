@@ -24,7 +24,7 @@ export const LAYOUT_DRAG_DATA_TYPE = 'application/x-sswms-layout-object'
 
 export type LayoutPaletteDragData =
   | { kind: 'zone' }
-  | { kind: 'rack' }
+  | { kind: 'rack'; preset?: 'vertical' | 'horizontal' | 'double' }
   | { kind: 'decoration'; type: WarehouseLayoutDecorationType; label: string }
 
 export function writeLayoutDragData(dataTransfer: DataTransfer, payload: LayoutPaletteDragData) {
@@ -37,7 +37,12 @@ export function readLayoutDragData(dataTransfer: DataTransfer): LayoutPaletteDra
   if (!value) return null
   try {
     const payload = JSON.parse(value) as LayoutPaletteDragData
-    if (payload.kind === 'zone' || payload.kind === 'rack') return payload
+    if (payload.kind === 'zone') return payload
+    if (
+      payload.kind === 'rack' &&
+      (!payload.preset || ['vertical', 'horizontal', 'double'].includes(payload.preset))
+    )
+      return payload
     if (
       payload.kind === 'decoration' &&
       DECORATION_OPTIONS.some((option) => option.type === payload.type)

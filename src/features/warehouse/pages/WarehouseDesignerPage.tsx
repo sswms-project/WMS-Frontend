@@ -12,7 +12,10 @@ import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useAuthStore } from '@/stores/auth.store'
 import { RackFormSheet, ZoneFormSheet } from '../components/WarehouseDetailPage'
-import { WarehouseDesignerWorkspace } from '../components/WarehouseDesigner'
+import {
+  WarehouseDesignerWorkspace,
+  WarehouseLayoutViewerWorkspace,
+} from '../components/WarehouseDesigner'
 import type {
   WarehouseLayoutCreatedPlacement,
   WarehouseLayoutDropPosition,
@@ -105,11 +108,23 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
 
   const persistedScene = sceneQuery.data
   const { editorScene, hasGeneratedGeometry } = mappedScene
-  const canConfigure =
-    searchParams.get('mode') !== 'view' &&
+  const hasConfigurePermission =
     capabilities.canConfigureLayout &&
     meQuery.data.permissions.includes(P.WAREHOUSES_CONFIGURE_LAYOUT) &&
     warehouseQuery.data.status === 'Active'
+  const isViewMode = searchParams.get('mode') === 'view'
+  const canConfigure = !isViewMode && hasConfigurePermission
+
+  if (isViewMode) {
+    return (
+      <WarehouseLayoutViewerWorkspace
+        warehouseId={warehouseId}
+        warehouseName={warehouseQuery.data.warehouseName}
+        scene={editorScene}
+        canConfigure={hasConfigurePermission}
+      />
+    )
+  }
 
   async function saveScene(scene: WarehouseLayoutEditorScene, baseVersion: number) {
     setSaveError(null)
