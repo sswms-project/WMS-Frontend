@@ -207,6 +207,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         isPending={assignment.isPending}
         onOpenChange={(open) => !open && assignment.close()}
         onSubmit={assignment.onSubmit}
+        onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
         task={isEditing ? editTask : null}
