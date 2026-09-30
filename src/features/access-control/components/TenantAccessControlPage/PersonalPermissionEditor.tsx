@@ -16,6 +16,7 @@ import { PermissionSubjectSummary } from './PermissionSubjectSummary'
 
 interface PersonalPermissionEditorProps {
   readonly workspace: TenantUserPermissionWorkspace
+  readonly canManage: boolean
   readonly groups: PermissionModuleGroup[]
   readonly draftIds: ReadonlySet<string>
   readonly roleDefaultIds: ReadonlySet<string>
@@ -40,6 +41,7 @@ interface PersonalPermissionEditorProps {
 
 export function PersonalPermissionEditor({
   workspace,
+  canManage,
   groups,
   draftIds,
   roleDefaultIds,
@@ -71,25 +73,30 @@ export function PersonalPermissionEditor({
           <PermissionCustomizationFilter value={filter} onChange={onFilterChange} />
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {dirty && <Badge variant="secondary">{unsavedChangeCount} chưa lưu</Badge>}
-          <Button
-            type="button"
-            variant="outline"
-            aria-label="Khôi phục quyền mặc định theo vai trò"
-            disabled={busy || customizedCount === 0}
-            onClick={onRequestReset}
-          >
-            Khôi phục mặc định
-          </Button>
-          {dirty && (
+          {!canManage && <Badge variant="outline">Chỉ xem</Badge>}
+          {canManage && dirty && <Badge variant="secondary">{unsavedChangeCount} chưa lưu</Badge>}
+          {canManage && (
+            <Button
+              type="button"
+              variant="outline"
+              aria-label="Khôi phục quyền mặc định theo vai trò"
+              disabled={busy || customizedCount === 0}
+              onClick={onRequestReset}
+            >
+              Khôi phục mặc định
+            </Button>
+          )}
+          {canManage && dirty && (
             <Button type="button" variant="outline" disabled={busy} onClick={onDiscard}>
               Bỏ thay đổi
             </Button>
           )}
-          <Button type="button" disabled={!dirty || busy} onClick={onSave}>
-            {saving && <Spinner data-icon="inline-start" aria-hidden="true" />}
-            {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
-          </Button>
+          {canManage && (
+            <Button type="button" disabled={!dirty || busy} onClick={onSave}>
+              {saving && <Spinner data-icon="inline-start" aria-hidden="true" />}
+              {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -113,7 +120,7 @@ export function PersonalPermissionEditor({
         subjectId={workspace.subject.userId}
         selectedIds={draftIds}
         roleDefaultIds={roleDefaultIds}
-        disabled={busy}
+        disabled={busy || !canManage}
         hasSearch={Boolean(searchText.trim()) || filter === 'customized'}
         emptyTitle={filter === 'customized' ? 'Không có quyền tùy chỉnh' : undefined}
         emptyDescription={

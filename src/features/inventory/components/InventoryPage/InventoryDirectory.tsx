@@ -10,6 +10,7 @@ import {
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -135,6 +136,9 @@ export function InventoryDirectory({
             </h2>
             <p className="text-muted-foreground text-xs">
               Dữ liệu theo từng slot · Ảnh chụp {formatInventoryDate(snapshotAt)}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Có thể xem tồn kho toàn đơn vị. Thao tác chỉ áp dụng tại kho được phân công.
             </p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
@@ -368,12 +372,17 @@ function InventoryMobileList({
               </span>{' '}
               · {item.warehouseName} / {item.slotCode}
             </ItemDescription>
+            {!item.canManageWarehouse ? (
+              <Badge variant="outline" className="mt-1 w-fit">
+                Chỉ xem
+              </Badge>
+            ) : null}
             <ItemDescription>
               {item.lotNumber ? `Lô ${item.lotNumber} · ` : ''}
               {formatQualityStatus(item.qualityStatus)} ·{' '}
               {formatEligibilityStatus(item.eligibilityStatus)}
             </ItemDescription>
-            {canReportDamaged && item.availableQuantity > 0 ? (
+            {canReportDamaged && item.canManageWarehouse && item.availableQuantity > 0 ? (
               <Button
                 type="button"
                 variant="destructive"
@@ -437,6 +446,11 @@ function InventoryDesktopTable({
                 <p className="text-muted-foreground truncate font-mono text-xs" translate="no">
                   {item.slotCode}
                 </p>
+                {!item.canManageWarehouse ? (
+                  <Badge variant="outline" className="mt-1">
+                    Chỉ xem
+                  </Badge>
+                ) : null}
               </TableCell>
               <TableCell>
                 <p className="truncate font-mono text-xs">{item.lotNumber ?? 'Không theo lô'}</p>
@@ -462,7 +476,7 @@ function InventoryDesktopTable({
               </TableCell>
               {canReportDamaged ? (
                 <TableCell className="text-right">
-                  {canReportDamaged ? (
+                  {item.canManageWarehouse ? (
                     <Button
                       type="button"
                       variant="destructive"
@@ -472,7 +486,11 @@ function InventoryDesktopTable({
                     >
                       Báo hỏng
                     </Button>
-                  ) : null}
+                  ) : (
+                    <span className="text-muted-foreground" aria-label="Không có thao tác">
+                      —
+                    </span>
+                  )}
                 </TableCell>
               ) : null}
             </TableRow>

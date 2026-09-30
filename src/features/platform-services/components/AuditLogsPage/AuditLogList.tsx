@@ -88,10 +88,10 @@ function AuditTableRow({ log, onView }: AuditItemProps) {
         <p className="text-sm">{log.entityTypeLabel}</p>
       </TableCell>
       <TableCell className="text-sm">{log.actionLabel}</TableCell>
-      <TableCell className="max-w-56">
+      <TableCell className="max-w-56 whitespace-normal">
         <EmailAwareDisplay value={log.referenceDisplay} />
       </TableCell>
-      <TableCell className="max-w-80">
+      <TableCell className="max-w-80 whitespace-normal">
         <EmailAwareDisplay value={log.summary} emphasizeLabel={false} />
       </TableCell>
     </TableRow>

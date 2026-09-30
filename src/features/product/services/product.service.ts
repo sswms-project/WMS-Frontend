@@ -92,7 +92,9 @@ export const productService = {
     const formData = new FormData()
     formData.append('file', file)
     return axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.products.image(id), formData)
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.products.image(id), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       .then((response) => response.data)
   },
 

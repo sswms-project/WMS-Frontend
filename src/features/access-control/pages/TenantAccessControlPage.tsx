@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import {
   AccessControlSkeleton,
@@ -28,6 +30,8 @@ export default function TenantAccessControlPage() {
   const [subjectSearch, setSubjectSearch] = useState('')
   const [subjectPage, setSubjectPage] = useState(0)
   const debouncedSubjectSearch = useDebouncedValue(subjectSearch.trim(), 300)
+  const meQuery = useMeQuery()
+  const canManage = new Set(meQuery.data?.permissions ?? []).has(P.TENANT_ROLE_PERMISSIONS_MANAGE)
   const workspaceQuery = useTenantAccessControlQuery()
   const updatePermissionsMutation = useUpdateTenantRolePermissionsMutation()
   const effectiveRoleId = personalRoleId || workspaceQuery.data?.roles[0]?.roleId || ''
@@ -125,6 +129,7 @@ export default function TenantAccessControlPage() {
         <AccessControlWorkspace
           activeMode={activeMode}
           workspace={workspaceQuery.data}
+          canManage={canManage}
           saving={updatePermissionsMutation.isPending}
           onSave={savePermissions}
           onReload={async () => (await workspaceQuery.refetch()).isSuccess}
@@ -149,6 +154,7 @@ export default function TenantAccessControlPage() {
           workspace={personalWorkspaceQuery.data}
           workspaceLoading={personalWorkspaceQuery.isLoading}
           workspaceError={personalWorkspaceQuery.error ?? null}
+          canManage={canManage}
           saving={updateUserPermissionsMutation.isPending}
           resetting={resetUserPermissionsMutation.isPending}
           onModeChange={setActiveMode}
