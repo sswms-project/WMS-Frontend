@@ -3,8 +3,9 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Boxes, Maximize, PencilRuler, SearchX, ZoomIn, ZoomOut } from 'lucide-react'
+import { Boxes, HelpCircle, Maximize, PencilRuler, SearchX, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import {
@@ -76,6 +77,7 @@ export function WarehouseLayoutViewerWorkspace({
   scene,
   canConfigure,
 }: WarehouseLayoutViewerWorkspaceProps) {
+  const router = useRouter()
   const canvasRef = useRef<WarehouseCanvasHandle>(null)
   const [selection, setSelection] = useState<WarehouseLayoutSelection | null>(null)
   const [zoomPercent, setZoomPercent] = useState(100)
@@ -188,26 +190,33 @@ export function WarehouseLayoutViewerWorkspace({
 
   return (
     <section
-      className="bg-surface-container-lowest flex h-[calc(100dvh-17rem)] min-h-[28rem] min-w-0 flex-col overflow-hidden border"
+      className="bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden"
       aria-label={`Sơ đồ ${warehouseName}`}
     >
-      <header className="flex min-h-12 shrink-0 items-center gap-3 border-b px-3 py-2">
+      <header className="flex min-h-16 shrink-0 items-center gap-3 border-b px-5 py-2">
         <div className="min-w-0">
-          <h2 className="truncate text-base font-semibold">Sơ đồ {warehouseName}</h2>
-          <p className="text-muted-foreground text-[11px]">Chọn vị trí để đối chiếu hàng hóa.</p>
+          <h1 className="truncate text-xl font-semibold">Sơ đồ {warehouseName}</h1>
         </div>
         {canConfigure ? (
           <Button asChild size="sm" className="ml-auto">
             <Link href={APP_ROUTES.warehouseLayoutDesigner(warehouseId) as Route}>
               <PencilRuler data-icon="inline-start" aria-hidden="true" />
-              Sửa thiết kế
+              Sửa
             </Link>
           </Button>
-        ) : null}
+        ) : (
+          <span className="ml-auto" />
+        )}
+        <ViewerIconButton label="Trợ giúp" onClick={() => setIsLocationSheetOpen(true)}>
+          <HelpCircle aria-hidden="true" />
+        </ViewerIconButton>
+        <ViewerIconButton label="Đóng sơ đồ" onClick={() => router.back()}>
+          <X aria-hidden="true" />
+        </ViewerIconButton>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[22rem] shrink-0 flex-col border-r lg:flex">
+        <aside className="hidden w-[25rem] shrink-0 flex-col border-r lg:flex">
           <div className="min-h-0 flex-[3]">{tree}</div>
           <div className="flex min-h-0 flex-[2]">{inventory}</div>
         </aside>

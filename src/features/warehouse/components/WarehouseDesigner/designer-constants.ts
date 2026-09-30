@@ -32,6 +32,10 @@ export function writeLayoutDragData(dataTransfer: DataTransfer, payload: LayoutP
   dataTransfer.setData(LAYOUT_DRAG_DATA_TYPE, JSON.stringify(payload))
 }
 
+export function hasLayoutDragData(dataTransfer: DataTransfer): boolean {
+  return Array.from(dataTransfer.types).includes(LAYOUT_DRAG_DATA_TYPE)
+}
+
 export function readLayoutDragData(dataTransfer: DataTransfer): LayoutPaletteDragData | null {
   const value = dataTransfer.getData(LAYOUT_DRAG_DATA_TYPE)
   if (!value) return null
@@ -55,12 +59,18 @@ export function readLayoutDragData(dataTransfer: DataTransfer): LayoutPaletteDra
 }
 
 export const LAYOUT_COLOR_SWATCHES = [
-  '#C7E8C0',
-  '#B9DDF2',
-  '#FFE0A8',
-  '#E4D2F4',
-  '#F3C5C1',
-  '#D3DDD0',
+  '#99B9FE',
+  '#5B8DEF',
+  '#3957B7',
+  '#0E7490',
+  '#15803D',
+  '#475569',
+  '#F6C453',
+  '#F97316',
+  '#DC2626',
+  '#9333EA',
+  '#0F172A',
+  '#E2E8F0',
 ] as const
 
 export const DECORATION_OPTIONS: DecorationOption[] = [

@@ -24,7 +24,11 @@ import {
   snapToGrid,
   type LayoutBounds,
 } from '../../utils/layout-grid'
-import { readLayoutDragData, type LayoutPaletteDragData } from './designer-constants'
+import {
+  hasLayoutDragData,
+  readLayoutDragData,
+  type LayoutPaletteDragData,
+} from './designer-constants'
 
 const MIN_SCALE = 0.2
 const MAX_SCALE = 4
@@ -71,16 +75,17 @@ export interface WarehouseCanvasHandle {
 function readCanvasPalette(): CanvasPalette {
   const styles = getComputedStyle(document.documentElement)
   const read = (token: string) => styles.getPropertyValue(token).trim()
+  const isDark = document.documentElement.classList.contains('dark')
   return {
-    background: read('--background'),
-    foreground: read('--foreground'),
-    muted: read('--muted'),
+    background: isDark ? '#111827' : '#FFFFFF',
+    foreground: isDark ? '#E5E7EB' : '#1F2937',
+    muted: isDark ? '#1F2937' : '#F2F4F7',
     mutedForeground: read('--muted-foreground'),
-    border: read('--border'),
-    primary: read('--primary'),
-    accent: read('--accent'),
+    border: isDark ? '#475569' : '#CBD5E1',
+    primary: '#2F80ED',
+    accent: isDark ? '#1E3A5F' : '#DCE9FF',
     destructive: read('--destructive'),
-    card: read('--card'),
+    card: isDark ? '#172033' : '#FFFFFF',
     warning: read('--warning'),
     warningContainer: read('--warning-container'),
   }
@@ -748,17 +753,21 @@ export function WarehouseCanvas({
   return (
     <div
       ref={containerRef}
-      className="bg-muted focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-auto overscroll-contain outline-none select-none focus-visible:ring-2 focus-visible:ring-inset"
+      className="focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-auto overscroll-contain bg-[#eef1f5] outline-none select-none focus-visible:ring-2 focus-visible:ring-inset dark:bg-slate-950"
       role="application"
       aria-label="Mặt bằng kho tương tác"
       aria-describedby="warehouse-canvas-instructions"
       tabIndex={0}
-      style={{ cursor: 'default' }}
+      style={{
+        cursor: 'default',
+        backgroundImage: 'radial-gradient(circle, rgba(148, 163, 184, 0.28) 1px, transparent 1px)',
+        backgroundSize: '16px 16px',
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onSelect(null)
       }}
       onDragOver={(event) => {
-        if (readLayoutDragData(event.dataTransfer)) event.preventDefault()
+        if (hasLayoutDragData(event.dataTransfer)) event.preventDefault()
       }}
       onDrop={(event) => {
         const payload = readLayoutDragData(event.dataTransfer)
@@ -812,8 +821,8 @@ export function WarehouseCanvas({
                   width={effectiveBounds.maxX - effectiveBounds.minX}
                   height={effectiveBounds.maxY - effectiveBounds.minY}
                   fill={canvasPalette.background}
-                  stroke={canvasPalette.border}
-                  strokeWidth={1 / viewport.scale}
+                  stroke={canvasPalette.primary}
+                  strokeWidth={2 / viewport.scale}
                   onClick={() => onSelect(null)}
                   onTap={() => onSelect(null)}
                 />
@@ -834,14 +843,8 @@ export function WarehouseCanvas({
                 {sortedDecorations.map((decoration) => {
                   const key = `decoration:${decoration.clientKey}`
                   const selected = isSelected(selection, 'decoration', decoration.clientKey)
-                  const decorationFill =
-                    decoration.color ??
-                    (decoration.type === 'Damaged'
-                      ? canvasPalette.destructive
-                      : canvasPalette.muted)
-                  const decorationForeground = decoration.color
-                    ? getReadableCanvasColor(decoration.color, canvasPalette)
-                    : canvasPalette.foreground
+                  const decorationFill = decoration.color ?? canvasPalette.background
+                  const decorationForeground = decoration.color ?? canvasPalette.foreground
                   return (
                     <Group
                       key={key}
@@ -887,10 +890,10 @@ export function WarehouseCanvas({
                         name={`decoration:${decoration.clientKey}`}
                         width={decoration.width}
                         height={decoration.height}
-                        fill={decorationFill}
-                        opacity={decoration.color ? 1 : decoration.type === 'Damaged' ? 0.16 : 0.8}
-                        stroke={selected ? canvasPalette.primary : canvasPalette.mutedForeground}
-                        strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
+                        fill={selected ? decorationFill : 'transparent'}
+                        opacity={selected ? 0.16 : 0}
+                        stroke={selected ? canvasPalette.primary : 'transparent'}
+                        strokeWidth={selected ? 2 / viewport.scale : 0}
                         cornerRadius={2}
                       />
                       {renderDecorationSymbol(

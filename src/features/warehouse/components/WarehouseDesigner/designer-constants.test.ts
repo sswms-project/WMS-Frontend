@@ -1,20 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import {
   LAYOUT_DRAG_DATA_TYPE,
+  hasLayoutDragData,
   readLayoutDragData,
   writeLayoutDragData,
 } from './designer-constants'
 
-function createDataTransfer() {
+function createDataTransfer(protectData = false) {
   const values = new Map<string, string>()
   return {
     effectAllowed: 'none',
+    get types() {
+      return Array.from(values.keys())
+    },
     setData: (type: string, value: string) => values.set(type, value),
-    getData: (type: string) => values.get(type) ?? '',
+    getData: (type: string) => (protectData ? '' : (values.get(type) ?? '')),
   } as unknown as DataTransfer
 }
 
 describe('layout palette drag data', () => {
+  it('recognizes a drag from its type without reading protected payload data', () => {
+    const dataTransfer = createDataTransfer(true)
+    writeLayoutDragData(dataTransfer, { kind: 'rack', preset: 'vertical' })
+
+    expect(readLayoutDragData(dataTransfer)).toBeNull()
+    expect(hasLayoutDragData(dataTransfer)).toBe(true)
+  })
+
   it('round-trips supported business and decoration payloads', () => {
     const dataTransfer = createDataTransfer()
     writeLayoutDragData(dataTransfer, { kind: 'zone' })

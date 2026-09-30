@@ -233,6 +233,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
     <>
       <WarehouseDesignerWorkspace
         warehouseId={warehouseId}
+        warehouseName={warehouseQuery.data.warehouseName}
         sceneVersion={persistedScene.version}
         resetRevision={resetRevision}
         initialScene={editorScene}

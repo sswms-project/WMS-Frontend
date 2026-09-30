@@ -102,7 +102,7 @@ export function ZoneFormSheet({
               <FieldError errors={[errors.description]} />
             </Field>
           </FieldGroup>
-          <FormFooter isPending={isPending} onCancel={() => handleOpenChange(false)} />
+          <FormFooter mode={mode} isPending={isPending} onCancel={() => handleOpenChange(false)} />
         </form>
       </SheetContent>
     </Sheet>
@@ -248,7 +248,7 @@ export function RackFormSheet({
               </>
             ) : null}
           </FieldGroup>
-          <FormFooter isPending={isPending} onCancel={() => handleOpenChange(false)} />
+          <FormFooter mode={mode} isPending={isPending} onCancel={() => handleOpenChange(false)} />
         </form>
       </SheetContent>
     </Sheet>
@@ -356,7 +356,7 @@ export function SlotFormSheet({
               </p>
             )}
           </FieldGroup>
-          <FormFooter isPending={isPending} onCancel={() => handleOpenChange(false)} />
+          <FormFooter mode={mode} isPending={isPending} onCancel={() => handleOpenChange(false)} />
         </form>
       </SheetContent>
     </Sheet>
@@ -397,9 +397,11 @@ function CapacityField({
 }
 
 function FormFooter({
+  mode,
   isPending,
   onCancel,
 }: {
+  readonly mode: 'create' | 'update'
   readonly isPending: boolean
   readonly onCancel: () => void
 }) {
@@ -411,7 +413,7 @@ function FormFooter({
         ) : (
           <Save data-icon="inline-start" aria-hidden="true" />
         )}
-        Lưu thay đổi
+        {mode === 'create' ? 'Lưu' : 'Lưu thay đổi'}
       </Button>
       <Button type="button" variant="outline" disabled={isPending} onClick={onCancel}>
         Hủy

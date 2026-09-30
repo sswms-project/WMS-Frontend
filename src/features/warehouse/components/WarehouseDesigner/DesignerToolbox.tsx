@@ -60,16 +60,16 @@ function DisabledActionTooltip({
         <span className="block">
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-start"
+            variant="ghost"
+            size="icon"
+            className="bg-muted/70 hover:bg-accent size-14 rounded-md border border-transparent hover:border-current/10"
             disabled={disabled}
             draggable={!disabled}
+            aria-label={label}
             onDragStart={(event) => writeLayoutDragData(event.dataTransfer, dragData)}
             onClick={onClick}
           >
             {icon}
-            {label}
           </Button>
         </span>
       </TooltipTrigger>
@@ -99,9 +99,9 @@ function PaletteIconAction({
         <span className="inline-flex">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="rounded-sm"
+            className="bg-muted/70 hover:bg-accent size-14 rounded-md border border-transparent hover:border-current/10 [&_svg]:size-7"
             disabled={disabled}
             draggable={!disabled}
             aria-label={label}
@@ -139,14 +139,14 @@ export function DesignerToolbox({
   )?.id
   return (
     <div className="bg-surface-container-lowest flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="shrink-0 px-3 py-3">
-        <h2 className="text-sm font-semibold">
-          {mode === 'viewer' ? 'Danh sách vị trí' : 'Đối tượng'}
+      <div className="shrink-0 px-4 py-4">
+        <h2 className="text-base font-semibold">
+          {mode === 'viewer' ? 'Danh sách vị trí' : 'Chọn biểu tượng'}
         </h2>
         <p className="text-muted-foreground mt-0.5 text-[11px]">
           {mode === 'viewer'
             ? 'Chọn vị trí để xem hàng hóa và đối chiếu trên sơ đồ.'
-            : 'Thêm và chọn thành phần sơ đồ.'}
+            : 'Nhấn hoặc kéo thả biểu tượng để thêm vào sơ đồ.'}
         </p>
       </div>
       {mode === 'viewer' ? (
@@ -163,7 +163,7 @@ export function DesignerToolbox({
         </div>
       ) : null}
       {mode === 'designer' ? (
-        <div className="max-h-[55%] shrink-0 overflow-y-auto overscroll-contain px-3 pb-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
           <section aria-labelledby="business-tools-title">
             <h3
               id="business-tools-title"
@@ -171,19 +171,19 @@ export function DesignerToolbox({
             >
               Khu vực lưu trữ
             </h3>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap gap-2">
               <DisabledActionTooltip
                 label="Khu vực"
                 disabled={!canConfigure}
                 disabledReason="Bạn chỉ có quyền xem sơ đồ."
                 onClick={onCreateZone}
                 dragData={{ kind: 'zone' }}
-                icon={<SquareDashed data-icon="inline-start" aria-hidden="true" />}
+                icon={<SquareDashed className="size-7" aria-hidden="true" />}
               />
             </div>
           </section>
 
-          <Separator className="my-3" />
+          <Separator className="my-4" />
           <section aria-labelledby="rack-tools-title">
             <h3
               id="rack-tools-title"
@@ -191,7 +191,7 @@ export function DesignerToolbox({
             >
               Kệ hàng
             </h3>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="flex flex-wrap gap-2">
               <PaletteIconAction
                 label="Kệ dọc"
                 disabled={!canConfigure || !selectedZoneId}
@@ -231,7 +231,7 @@ export function DesignerToolbox({
             </div>
           </section>
 
-          <Separator className="my-3" />
+          <Separator className="my-4" />
           <section aria-labelledby="decoration-tools-title">
             <h3
               id="decoration-tools-title"
@@ -239,15 +239,15 @@ export function DesignerToolbox({
             >
               Cửa, lối đi & khu chức năng
             </h3>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="flex flex-wrap gap-2">
               {DECORATION_OPTIONS.map((option) => (
                 <Tooltip key={option.type}>
                   <TooltipTrigger asChild>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="rounded-sm"
+                      className="bg-muted/70 hover:bg-accent size-14 rounded-md border border-transparent hover:border-current/10 [&_svg]:size-7"
                       disabled={!canConfigure}
                       draggable={canConfigure}
                       onDragStart={(event) =>
@@ -273,20 +273,21 @@ export function DesignerToolbox({
         </div>
       ) : null}
 
-      {mode === 'designer' ? <Separator /> : null}
-      <section
-        aria-labelledby="scene-outline-title"
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
-      >
-        <SceneOutlineTree
-          scene={scene}
-          selection={selection}
-          query={searchTerm}
-          title={mode === 'viewer' ? 'Cấu trúc vị trí' : 'Danh sách sơ đồ'}
-          showDecorations={mode === 'designer'}
-          onSelect={onSelect}
-        />
-      </section>
+      {mode === 'viewer' ? (
+        <section
+          aria-labelledby="scene-outline-title"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
+          <SceneOutlineTree
+            scene={scene}
+            selection={selection}
+            query={searchTerm}
+            title="Cấu trúc vị trí"
+            showDecorations={false}
+            onSelect={onSelect}
+          />
+        </section>
+      ) : null}
     </div>
   )
 }
