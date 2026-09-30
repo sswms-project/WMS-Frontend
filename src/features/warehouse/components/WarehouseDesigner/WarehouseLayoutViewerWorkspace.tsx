@@ -122,7 +122,7 @@ export function WarehouseLayoutViewerWorkspace({
 
   const inventory = (
     <section
-      className="flex min-h-0 flex-1 flex-col border-t"
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-t"
       aria-labelledby="viewer-inventory-title"
     >
       <div className="shrink-0 px-3 py-2.5">
@@ -306,7 +306,7 @@ export function WarehouseLayoutViewerWorkspace({
             <ResizablePanel defaultSize="30%" minSize="25%" maxSize="33.333%">
               <aside className="flex h-full min-h-0 min-w-0 flex-col border-r">
                 <div className="min-h-0 flex-[3]">{tree}</div>
-                <div className="flex min-h-0 flex-[2]">{inventory}</div>
+                <div className="flex min-h-0 min-w-0 flex-[2] overflow-hidden">{inventory}</div>
               </aside>
             </ResizablePanel>
             <ResizableHandle withHandle aria-label="Thay đổi chiều rộng danh sách vị trí" />
@@ -361,7 +361,7 @@ export function WarehouseLayoutViewerWorkspace({
           </SheetHeader>
           <div className="flex min-h-0 flex-1 flex-col pt-10">
             <div className="min-h-0 flex-[3]">{tree}</div>
-            <div className="flex min-h-0 flex-[2]">{inventory}</div>
+            <div className="flex min-h-0 min-w-0 flex-[2] overflow-hidden">{inventory}</div>
           </div>
         </SheetContent>
       </Sheet>

@@ -1,8 +1,9 @@
 'use client'
 
 import { RefreshCw, TriangleAlert } from 'lucide-react'
+import type { Route } from 'next'
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
@@ -38,12 +39,14 @@ import type {
 } from '../types/warehouse-layout-scene.types'
 import { getWarehouseCapabilities } from '../utils/warehouse-capabilities'
 import { mapEditorSceneToSaveRequest, mapWarehouseLayoutScene } from '../utils/layout-scene-mapper'
+import { APP_ROUTES } from '@/routes/app-routes'
 
 interface WarehouseDesignerPageProps {
   readonly warehouseId: string
 }
 
 export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const role = useAuthStore((state) => state.user?.role ?? null)
   const capabilities = getWarehouseCapabilities(role)
@@ -134,8 +137,8 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
         warehouseId,
         request: mapEditorSceneToSaveRequest(warehouseId, baseVersion, scene),
       })
-      setResetRevision((revision) => revision + 1)
       toast.success('Đã lưu bố cục kho.')
+      router.push(`${APP_ROUTES.warehouseLayoutDesigner(warehouseId)}?mode=view` as Route)
     } catch (error) {
       const statusCode =
         typeof error === 'object' && error !== null && 'statusCode' in error

@@ -33,13 +33,13 @@ export function OperationalPagination({
 
   return (
     <footer className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-3 border-t px-3 py-2 sm:px-4">
-      <p className="text-sm tabular-nums">
+      <p className="text-[13px] tabular-nums">
         Tổng số: <span className="font-medium">{totalCount}</span>
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {onPageSizeChange ? (
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">Số dòng/trang</span>
+            <span className="text-muted-foreground text-[13px]">Số dòng/trang</span>
             <Select
               value={String(pageSize)}
               disabled={isPending}
