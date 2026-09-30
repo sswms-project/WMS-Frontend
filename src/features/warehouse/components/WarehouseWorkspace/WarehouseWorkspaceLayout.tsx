@@ -281,7 +281,11 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
         </Button>
       </nav>
 
-      <main className={isDesignerActive ? 'flex min-h-0 min-w-0 flex-1 flex-col' : undefined}>
+      <main
+        className={
+          isLayoutActive || isDesignerActive ? 'flex min-h-0 min-w-0 flex-1 flex-col' : undefined
+        }
+      >
         {children}
       </main>
 

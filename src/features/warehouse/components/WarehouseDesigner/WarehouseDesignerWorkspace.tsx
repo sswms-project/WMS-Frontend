@@ -31,6 +31,7 @@ import { toast } from 'sonner'
 import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.store'
 import { useLayoutDesignerCompact } from '../../hooks/use-layout-designer-compact'
 import { useLayoutEditorHistory } from '../../hooks/use-layout-editor-history'
+import { APP_ROUTES } from '@/routes/app-routes'
 import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
@@ -431,16 +432,16 @@ export function WarehouseDesignerWorkspace({
   }
 
   function closeDesigner() {
-    if (isDirty) {
+    if (isDirty && canConfigure) {
       setIsCloseDialogOpen(true)
       return
     }
-    router.back()
+    router.replace(APP_ROUTES.warehouseLayouts)
   }
 
   function confirmCloseDesigner() {
     setIsCloseDialogOpen(false)
-    router.back()
+    router.replace(APP_ROUTES.warehouseLayouts)
   }
 
   const toolbox = (

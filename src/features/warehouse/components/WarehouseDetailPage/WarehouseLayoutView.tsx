@@ -16,6 +16,8 @@ import {
 import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +84,8 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
   const [searchText, setSearchText] = useState('')
   const [lifecycleStatus, setLifecycleStatus] = useState<LifecycleFilter>('')
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(() => new Set())
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const tree = useMemo(() => buildWarehouseLocationTree(props.zones), [props.zones])
   const filteredTree = useMemo(
     () => filterWarehouseLocationTree(tree, searchText, lifecycleStatus),
@@ -95,8 +99,12 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
   )
   const allExpanded =
     expandableIds.size > 0 && [...expandableIds].every((id) => visibleExpandedIds.has(id))
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const currentPage = Math.min(page, pageCount)
+  const visibleRows = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   function toggleNode(id: string) {
+    setPage(1)
     setExpandedIds((current) => {
       const next = new Set(current)
       if (next.has(id)) next.delete(id)
@@ -106,10 +114,7 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
   }
 
   return (
-    <section
-      className="flex min-h-[32rem] min-w-0 flex-col border"
-      aria-labelledby="locations-title"
-    >
+    <OperationalListPanel aria-labelledby="locations-title">
       <header className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <p className="text-primary text-xs font-medium">Quản lý kho</p>
@@ -137,14 +142,20 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
             aria-label="Tìm vị trí vật tư, hàng hóa"
             placeholder="Tìm mã, tên hoặc mô tả…"
             value={searchText}
-            onChange={(event) => setSearchText(event.currentTarget.value)}
+            onChange={(event) => {
+              setPage(1)
+              setSearchText(event.currentTarget.value)
+            }}
           />
         </InputGroup>
         <NativeSelect
           aria-label="Lọc trạng thái vị trí"
           className="md:w-44"
           value={lifecycleStatus}
-          onChange={(event) => setLifecycleStatus(event.currentTarget.value as LifecycleFilter)}
+          onChange={(event) => {
+            setPage(1)
+            setLifecycleStatus(event.currentTarget.value as LifecycleFilter)
+          }}
         >
           <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
           <NativeSelectOption value="Active">Đang sử dụng</NativeSelectOption>
@@ -156,7 +167,10 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
               type="button"
               variant="outline"
               disabled={expandableIds.size === 0 || Boolean(searchText.trim())}
-              onClick={() => setExpandedIds(allExpanded ? new Set() : new Set(expandableIds))}
+              onClick={() => {
+                setPage(1)
+                setExpandedIds(allExpanded ? new Set() : new Set(expandableIds))
+              }}
             >
               {allExpanded ? (
                 <ChevronsDownUp data-icon="inline-start" aria-hidden="true" />
@@ -177,8 +191,8 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
         </Badge>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        {rows.length === 0 ? (
+      {rows.length === 0 ? (
+        <div data-slot="operational-list-body" className="flex min-w-0 items-center justify-center">
           <Empty className="min-h-72 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -188,36 +202,48 @@ export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
               <EmptyDescription>Thử đổi từ khóa hoặc trạng thái đang lọc.</EmptyDescription>
             </EmptyHeader>
           </Empty>
-        ) : (
-          <Table className="min-w-[980px] table-fixed">
-            <TableHeader className="sticky top-0 z-10">
-              <TableRow>
-                <TableHead className="w-[16%]">Mã vị trí</TableHead>
-                <TableHead className="w-[18%]">Tên vị trí</TableHead>
-                <TableHead className="w-[15%]">Thuộc</TableHead>
-                <TableHead className="w-[24%]">Mô tả</TableHead>
-                <TableHead className="w-[11%]">Sức chứa</TableHead>
-                <TableHead className="w-[11%]">Trạng thái</TableHead>
-                <TableHead className="w-[5%] text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((node) => (
-                <LocationRow
-                  key={`${node.kind}-${node.id}`}
-                  node={node}
-                  expanded={visibleExpandedIds.has(node.id)}
-                  canConfigure={props.canConfigure && props.isWarehouseActive}
-                  canGenerateBarcode={props.canGenerateBarcode}
-                  onToggle={() => toggleNode(node.id)}
-                  actions={props}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-    </section>
+        </div>
+      ) : (
+        <Table className="min-w-[900px] table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="bg-card sticky top-0 z-10 w-[16%]">Mã vị trí</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-[18%]">Tên vị trí</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-[15%]">Thuộc</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-[20%]">Mô tả</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-[11%]">Sức chứa</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-[11%]">Trạng thái</TableHead>
+              <TableHead className="bg-card sticky top-0 z-10 w-[9%] text-right">
+                Thao tác
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {visibleRows.map((node) => (
+              <LocationRow
+                key={`${node.kind}-${node.id}`}
+                node={node}
+                expanded={visibleExpandedIds.has(node.id)}
+                canConfigure={props.canConfigure && props.isWarehouseActive}
+                canGenerateBarcode={props.canGenerateBarcode}
+                onToggle={() => toggleNode(node.id)}
+                actions={props}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      <OperationalPagination
+        page={currentPage}
+        pageSize={pageSize}
+        totalCount={rows.length}
+        onPageChange={setPage}
+        onPageSizeChange={(nextPageSize) => {
+          setPage(1)
+          setPageSize(nextPageSize)
+        }}
+      />
+    </OperationalListPanel>
   )
 }
 

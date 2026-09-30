@@ -581,14 +581,14 @@ export function WarehouseCanvas({
   const canvasPalette = palette
 
   function handleWheel(event: KonvaEventObject<WheelEvent>) {
-    if (mode === 'viewer' && !event.evt.ctrlKey) return
+    if (!event.evt.ctrlKey) return
     event.evt.preventDefault()
     const direction = event.evt.deltaY > 0 ? 1 / ZOOM_FACTOR : ZOOM_FACTOR
     zoomAtCenter(direction)
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (mode !== 'viewer' || !event.ctrlKey || event.button !== 0) return
+    if (!event.ctrlKey || event.button !== 0) return
     setHoverInfo(null)
     event.preventDefault()
     event.stopPropagation()
@@ -685,20 +685,19 @@ export function WarehouseCanvas({
     const hasStock = isZone
       ? scene.slots.some((slot) => slot.zoneId === object.id && slot.currentOccupancy > 0)
       : rackSlots.some((slot) => slot.currentOccupancy > 0)
-    const objectFill = selected
-      ? canvasPalette.selectionFill
-      : mode === 'viewer'
-        ? isZone
-          ? (object.color ?? canvasPalette.accent)
-          : hasStock
-            ? canvasPalette.viewerOccupied
-            : canvasPalette.card
+    const objectFill =
+      mode === 'viewer'
+        ? selected
+          ? canvasPalette.selectionFill
+          : isZone
+            ? (object.color ?? canvasPalette.accent)
+            : hasStock
+              ? canvasPalette.viewerOccupied
+              : canvasPalette.card
         : (object.color ?? (isZone ? canvasPalette.accent : canvasPalette.card))
-    const objectForeground = selected
-      ? canvasPalette.selectionForeground
-      : object.color
-        ? getReadableCanvasColor(object.color, canvasPalette)
-        : canvasPalette.foreground
+    const objectForeground = object.color
+      ? getReadableCanvasColor(object.color, canvasPalette)
+      : canvasPalette.foreground
     const selectionStroke = mode === 'viewer' ? canvasPalette.viewerSelected : canvasPalette.primary
     const checkBadgeSize = Math.min(22 / viewport.scale, object.width * 0.45, object.height * 0.45)
     const checkBadgeInset = Math.min(
@@ -752,7 +751,9 @@ export function WarehouseCanvas({
           height={object.height}
           fill={objectFill}
           stroke={selected ? selectionStroke : canvasPalette.border}
-          strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
+          strokeWidth={
+            selected ? (mode === 'viewer' ? 1.5 : 1.25) / viewport.scale : 1 / viewport.scale
+          }
           dash={isZone || isInactive ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
           cornerRadius={isZone ? 4 : 2}
         />
@@ -878,7 +879,7 @@ export function WarehouseCanvas({
       onKeyDown={(event) => {
         if (event.key === 'Escape') onSelect(null)
       }}
-      onPointerDown={handlePointerDown}
+      onPointerDownCapture={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
@@ -925,7 +926,7 @@ export function WarehouseCanvas({
               scaleY={scale}
               draggable={false}
               onClick={(event) => {
-                if (mode === 'viewer' && event.evt.ctrlKey) event.cancelBubble = true
+                if (event.evt.ctrlKey) event.cancelBubble = true
               }}
               onWheel={handleWheel}
               onTouchMove={handleTouchMove}
@@ -1016,10 +1017,10 @@ export function WarehouseCanvas({
                         name={`decoration:${decoration.clientKey}`}
                         width={decoration.width}
                         height={decoration.height}
-                        fill={selected ? decorationFill : 'transparent'}
-                        opacity={selected ? 0.16 : 0}
+                        fill={mode === 'viewer' && selected ? decorationFill : 'transparent'}
+                        opacity={mode === 'viewer' && selected ? 1 : 0}
                         stroke={selected ? canvasPalette.primary : 'transparent'}
-                        strokeWidth={selected ? 2 / viewport.scale : 0}
+                        strokeWidth={selected ? (mode === 'viewer' ? 1.5 : 1) / viewport.scale : 0}
                         cornerRadius={2}
                       />
                       {renderDecorationSymbol(
@@ -1111,15 +1112,13 @@ function renderRackSlots(
             : slot.currentOccupancy > 0
               ? palette.viewerOccupied
               : palette.card
-        : selected
-          ? palette.selectionFill
-          : !slot.isActive
-            ? palette.muted
-            : slot.occupancyStatus === 'Vacant'
-              ? palette.card
-              : slot.occupancyStatus === 'Reserved'
-                ? palette.warningContainer
-                : palette.accent
+        : !slot.isActive
+          ? palette.muted
+          : slot.occupancyStatus === 'Vacant'
+            ? palette.card
+            : slot.occupancyStatus === 'Reserved'
+              ? palette.warningContainer
+              : palette.accent
     return (
       <Group
         key={slot.id}
@@ -1146,13 +1145,13 @@ function renderRackSlots(
             selected
               ? mode === 'viewer'
                 ? palette.viewerSelected
-                : palette.warning
+                : palette.primary
               : palette.border
           }
-          strokeWidth={selected ? 2 : 1}
+          strokeWidth={selected ? (mode === 'viewer' ? 1.5 : 1.25) : 1}
           cornerRadius={2}
         />
-        {selected && slotWidth >= 14 && slotHeight >= 10 ? (
+        {mode === 'viewer' && selected && slotWidth >= 14 && slotHeight >= 10 ? (
           <Line
             points={[
               slotWidth * 0.3,
@@ -1162,7 +1161,7 @@ function renderRackSlots(
               slotWidth * 0.72,
               slotHeight * 0.32,
             ]}
-            stroke={mode === 'viewer' ? palette.selectionForeground : palette.warning}
+            stroke={palette.selectionForeground}
             strokeWidth={1.5}
             lineCap="round"
             lineJoin="round"

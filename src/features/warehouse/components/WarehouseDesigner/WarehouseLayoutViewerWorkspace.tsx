@@ -292,7 +292,10 @@ export function WarehouseLayoutViewerWorkspace({
         <ViewerIconButton label="Trợ giúp" onClick={() => setIsLocationSheetOpen(true)}>
           <HelpCircle aria-hidden="true" />
         </ViewerIconButton>
-        <ViewerIconButton label="Đóng sơ đồ" onClick={() => router.back()}>
+        <ViewerIconButton
+          label="Đóng sơ đồ"
+          onClick={() => router.replace(APP_ROUTES.warehouseLayouts)}
+        >
           <X aria-hidden="true" />
         </ViewerIconButton>
       </header>
@@ -316,8 +319,8 @@ export function WarehouseLayoutViewerWorkspace({
           <ResizablePanelGroup orientation="horizontal" className="h-0 min-h-0 min-w-0 flex-1">
             <ResizablePanel defaultSize="30%" minSize="25%" maxSize="33.333%">
               <aside className="flex h-full min-h-0 min-w-0 flex-col border-r">
-                <div className="min-h-0 flex-[3]">{tree}</div>
-                <div className="flex min-h-0 min-w-0 flex-[2] overflow-hidden">{inventory}</div>
+                <div className="min-h-0 flex-1">{tree}</div>
+                <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">{inventory}</div>
               </aside>
             </ResizablePanel>
             <ResizableHandle withHandle aria-label="Thay đổi chiều rộng danh sách vị trí" />
@@ -366,8 +369,8 @@ export function WarehouseLayoutViewerWorkspace({
             <SheetDescription>Chọn vị trí và xem hàng hóa trong kho.</SheetDescription>
           </SheetHeader>
           <div className="flex min-h-0 flex-1 flex-col pt-10">
-            <div className="min-h-0 flex-[3]">{tree}</div>
-            <div className="flex min-h-0 min-w-0 flex-[2] overflow-hidden">{inventory}</div>
+            <div className="min-h-0 flex-1">{tree}</div>
+            <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">{inventory}</div>
           </div>
         </SheetContent>
       </Sheet>

@@ -89,7 +89,7 @@ function RackShapeIcon({ shape }: { readonly shape: WarehouseLayoutRackShape }) 
       aria-hidden="true"
       className="size-7"
     >
-      {shape === 'Standard' ? <rect x="5" y="6" width="22" height="20" fill="white" /> : null}
+      {shape === 'Standard' ? <rect x="3" y="10" width="26" height="12" fill="white" /> : null}
       {shape === 'Vertical' ? (
         <>
           <rect x="10" y="4" width="12" height="24" fill="white" />
@@ -230,7 +230,7 @@ export function DesignerToolbox({
             </h3>
             <div className="flex flex-wrap gap-2">
               <PaletteIconAction
-                label="Kệ trống"
+                label="Kệ"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
                   !canConfigure
@@ -242,7 +242,7 @@ export function DesignerToolbox({
                 icon={<RackShapeIcon shape="Standard" />}
               />
               <PaletteIconAction
-                label="Kệ dọc"
+                label="Kệ"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
                   !canConfigure
@@ -254,7 +254,7 @@ export function DesignerToolbox({
                 icon={<RackShapeIcon shape="Vertical" />}
               />
               <PaletteIconAction
-                label="Kệ chữ X"
+                label="Kệ"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
                   !canConfigure
@@ -266,7 +266,7 @@ export function DesignerToolbox({
                 icon={<RackShapeIcon shape="CrossBraced" />}
               />
               <PaletteIconAction
-                label="Pallet"
+                label="Kệ"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
                   !canConfigure
