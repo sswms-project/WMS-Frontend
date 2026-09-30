@@ -217,10 +217,7 @@ function renderDecorationSymbol(
   palette: CanvasPalette,
   foreground?: string
 ) {
-  const iconSize = Math.min(
-    56,
-    Math.max(20, Math.min(width, height - (height >= 58 ? 18 : 0)) * 0.62)
-  )
+  const iconSize = Math.max(20, Math.min(width, height - (height >= 58 ? 18 : 0)) * 0.62)
   const scale = iconSize / 24
   const x = (width - iconSize) / 2
   const y = Math.max(0, (height - iconSize - (height >= 58 ? 18 : 0)) / 2)
