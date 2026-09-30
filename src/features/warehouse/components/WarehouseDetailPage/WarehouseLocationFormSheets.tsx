@@ -164,6 +164,16 @@ export function RackFormSheet({
               />
               <FieldError errors={[errors.rackName]} />
             </Field>
+            <Field data-invalid={Boolean(errors.description)}>
+              <FieldLabel htmlFor="rack-description">Mô tả</FieldLabel>
+              <Textarea
+                id="rack-description"
+                rows={3}
+                aria-invalid={Boolean(errors.description)}
+                {...form.register('description')}
+              />
+              <FieldError errors={[errors.description]} />
+            </Field>
             <Field>
               <FieldLabel>Phương thức quản lý vị trí</FieldLabel>
               <RadioGroup
@@ -290,6 +300,26 @@ export function SlotFormSheet({
                 {...form.register('slotCode')}
               />
               <FieldError errors={[errors.slotCode]} />
+            </Field>
+            <Field data-invalid={Boolean(errors.slotName)}>
+              <FieldLabel htmlFor="slot-name">Tên vị trí</FieldLabel>
+              <Input
+                id="slot-name"
+                autoComplete="off"
+                aria-invalid={Boolean(errors.slotName)}
+                {...form.register('slotName')}
+              />
+              <FieldError errors={[errors.slotName]} />
+            </Field>
+            <Field data-invalid={Boolean(errors.description)}>
+              <FieldLabel htmlFor="slot-description">Mô tả</FieldLabel>
+              <Textarea
+                id="slot-description"
+                rows={3}
+                aria-invalid={Boolean(errors.description)}
+                {...form.register('description')}
+              />
+              <FieldError errors={[errors.description]} />
             </Field>
             <Field orientation="horizontal">
               <Checkbox

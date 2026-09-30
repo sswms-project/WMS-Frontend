@@ -2,6 +2,9 @@ import {
   Archive,
   Box,
   DoorOpen,
+  DoorClosed,
+  ArrowRight,
+  LogOut,
   Forklift,
   PackageCheck,
   PackageSearch,
@@ -17,6 +20,35 @@ export interface DecorationOption {
   icon: LucideIcon
 }
 
+export const LAYOUT_DRAG_DATA_TYPE = 'application/x-sswms-layout-object'
+
+export type LayoutPaletteDragData =
+  | { kind: 'zone' }
+  | { kind: 'rack' }
+  | { kind: 'decoration'; type: WarehouseLayoutDecorationType; label: string }
+
+export function writeLayoutDragData(dataTransfer: DataTransfer, payload: LayoutPaletteDragData) {
+  dataTransfer.effectAllowed = 'copy'
+  dataTransfer.setData(LAYOUT_DRAG_DATA_TYPE, JSON.stringify(payload))
+}
+
+export function readLayoutDragData(dataTransfer: DataTransfer): LayoutPaletteDragData | null {
+  const value = dataTransfer.getData(LAYOUT_DRAG_DATA_TYPE)
+  if (!value) return null
+  try {
+    const payload = JSON.parse(value) as LayoutPaletteDragData
+    if (payload.kind === 'zone' || payload.kind === 'rack') return payload
+    if (
+      payload.kind === 'decoration' &&
+      DECORATION_OPTIONS.some((option) => option.type === payload.type)
+    )
+      return payload
+  } catch {
+    return null
+  }
+  return null
+}
+
 export const LAYOUT_COLOR_SWATCHES = [
   '#C7E8C0',
   '#B9DDF2',
@@ -28,7 +60,11 @@ export const LAYOUT_COLOR_SWATCHES = [
 
 export const DECORATION_OPTIONS: DecorationOption[] = [
   { type: 'Door', label: 'Cửa ra vào', icon: DoorOpen },
+  { type: 'DoubleDoor', label: 'Cửa đôi', icon: DoorClosed },
   { type: 'Aisle', label: 'Lối đi', icon: PanelsTopLeft },
+  { type: 'DirectionArrow', label: 'Mũi tên chỉ hướng', icon: ArrowRight },
+  { type: 'Exit', label: 'Lối ra', icon: LogOut },
+  { type: 'Forklift', label: 'Xe nâng', icon: Forklift },
   { type: 'Receiving', label: 'Khu nhận hàng', icon: Forklift },
   { type: 'Packing', label: 'Khu đóng gói', icon: PackageCheck },
   { type: 'Picking', label: 'Khu lấy hàng', icon: PackageSearch },

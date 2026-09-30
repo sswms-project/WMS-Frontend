@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowRight, MapPinned, RefreshCw, TriangleAlert } from 'lucide-react'
+import { ArrowRight, MapPinned, PencilRuler, RefreshCw, TriangleAlert } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
@@ -18,6 +18,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { APP_ROUTES } from '@/routes/app-routes'
+import { P } from '@/config/permissionCodes'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '../hooks/use-warehouse'
 
 export default function WarehouseLayoutDirectoryPage() {
@@ -28,6 +30,8 @@ export default function WarehouseLayoutDirectoryPage() {
     skip: (page - 1) * pageSize,
     needTotalCount: true,
   })
+  const meQuery = useMeQuery()
+  const canConfigure = meQuery.data?.permissions.includes(P.WAREHOUSES_CONFIGURE_LAYOUT) ?? false
   const warehouses = warehousesQuery.data?.items ?? []
 
   return (
@@ -112,25 +116,46 @@ export default function WarehouseLayoutDirectoryPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky top-0 z-10 pl-4">Mã kho</TableHead>
-                      <TableHead className="sticky top-0 z-10">Tên kho</TableHead>
-                      <TableHead className="sticky top-0 z-10 w-32 text-right">Thao tác</TableHead>
+                      <TableHead className="sticky top-0 z-10 pl-4">Tên sơ đồ</TableHead>
+                      <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                      <TableHead className="sticky top-0 z-10 w-56 text-right">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {warehouses.map((warehouse) => (
                       <TableRow key={warehouse.id}>
-                        <TableCell className="pl-4 font-mono text-xs font-medium">
-                          {warehouse.warehouseCode}
+                        <TableCell className="pl-4 font-medium">
+                          Sơ đồ {warehouse.warehouseName}
                         </TableCell>
-                        <TableCell className="font-medium">{warehouse.warehouseName}</TableCell>
+                        <TableCell>
+                          <p className="font-medium">{warehouse.warehouseName}</p>
+                          <p className="text-muted-foreground font-mono text-xs">
+                            {warehouse.warehouseCode}
+                          </p>
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild size="sm">
-                            <Link href={APP_ROUTES.warehouseLayout(warehouse.id) as Route}>
-                              Mở sơ đồ
-                              <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                            </Link>
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button asChild size="sm" variant="outline">
+                              <Link
+                                href={
+                                  `${APP_ROUTES.warehouseLayoutDesigner(warehouse.id)}?mode=view` as Route
+                                }
+                              >
+                                Mở sơ đồ
+                                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                              </Link>
+                            </Button>
+                            {canConfigure ? (
+                              <Button asChild size="sm">
+                                <Link
+                                  href={APP_ROUTES.warehouseLayoutDesigner(warehouse.id) as Route}
+                                >
+                                  <PencilRuler data-icon="inline-start" aria-hidden="true" />
+                                  Thiết lập
+                                </Link>
+                              </Button>
+                            ) : null}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -149,7 +174,11 @@ export default function WarehouseLayoutDirectoryPage() {
                       </p>
                     </div>
                     <Button asChild size="sm">
-                      <Link href={APP_ROUTES.warehouseLayout(warehouse.id) as Route}>
+                      <Link
+                        href={
+                          `${APP_ROUTES.warehouseLayoutDesigner(warehouse.id)}?mode=view` as Route
+                        }
+                      >
                         Mở sơ đồ
                         <ArrowRight data-icon="inline-end" aria-hidden="true" />
                       </Link>

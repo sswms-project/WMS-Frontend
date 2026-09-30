@@ -22,7 +22,8 @@ import type {
   WarehouseLayoutEditorScene,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
-import { DECORATION_OPTIONS } from './designer-constants'
+import { DECORATION_OPTIONS, writeLayoutDragData } from './designer-constants'
+import type { LayoutPaletteDragData } from './designer-constants'
 
 interface DesignerToolboxProps {
   readonly scene: WarehouseLayoutEditorScene
@@ -40,12 +41,14 @@ function DisabledActionTooltip({
   disabled,
   onClick,
   icon,
+  dragData,
 }: {
   readonly label: string
   readonly disabledReason: string
   readonly disabled: boolean
   readonly onClick: () => void
   readonly icon: React.ReactNode
+  readonly dragData: LayoutPaletteDragData
 }) {
   return (
     <Tooltip>
@@ -57,6 +60,8 @@ function DisabledActionTooltip({
             size="sm"
             className="w-full justify-start"
             disabled={disabled}
+            draggable={!disabled}
+            onDragStart={(event) => writeLayoutDragData(event.dataTransfer, dragData)}
             onClick={onClick}
           >
             {icon}
@@ -107,6 +112,7 @@ export function DesignerToolbox({
               disabled={!canConfigure}
               disabledReason="Bạn chỉ có quyền xem sơ đồ."
               onClick={onCreateZone}
+              dragData={{ kind: 'zone' }}
               icon={<SquareDashed data-icon="inline-start" aria-hidden="true" />}
             />
             <DisabledActionTooltip
@@ -118,6 +124,7 @@ export function DesignerToolbox({
                   : 'Chọn một khu vực trước khi thêm kệ.'
               }
               onClick={onCreateRack}
+              dragData={{ kind: 'rack' }}
               icon={<Rows3 data-icon="inline-start" aria-hidden="true" />}
             />
           </div>
@@ -141,6 +148,14 @@ export function DesignerToolbox({
                     size="icon"
                     className="rounded-sm"
                     disabled={!canConfigure}
+                    draggable={canConfigure}
+                    onDragStart={(event) =>
+                      writeLayoutDragData(event.dataTransfer, {
+                        kind: 'decoration',
+                        type: option.type,
+                        label: option.label,
+                      })
+                    }
                     aria-label={option.label}
                     onClick={() => onCreateDecoration(option.type, option.label)}
                   >

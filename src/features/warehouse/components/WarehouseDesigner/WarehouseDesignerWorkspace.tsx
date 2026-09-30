@@ -27,8 +27,8 @@ import type {
   WarehouseLayoutGeometry,
   WarehouseLayoutGeometryTarget,
   WarehouseLayoutSelection,
-  WarehouseLayoutTool,
 } from '../../types/warehouse-layout-scene.types'
+import type { LayoutPaletteDragData } from './designer-constants'
 import { normalizeLayoutGeometry } from '../../utils/layout-grid'
 import { WarehouseLocationDeactivateDialog } from '../WarehouseDetailPage'
 import { DesignerInspector } from './DesignerInspector'
@@ -53,12 +53,23 @@ interface WarehouseDesignerWorkspaceProps {
   readonly isDeactivatingRack: boolean
   readonly saveError: string | null
   readonly hasConflict: boolean
-  readonly onCreateZone: () => void
-  readonly onCreateRack: (zoneId: string) => void
+  readonly placementToApply: WarehouseLayoutCreatedPlacement | null
+  readonly onPlacementApplied: () => void
+  readonly onCreateZone: (position?: WarehouseLayoutDropPosition) => void
+  readonly onCreateRack: (zoneId: string, position?: WarehouseLayoutDropPosition) => void
   readonly onUpdateRackName: (rack: WarehouseLayoutEditorRack, rackName: string) => Promise<void>
   readonly onDeactivateRack: (rack: WarehouseLayoutEditorRack) => Promise<void>
   readonly onSave: (scene: WarehouseLayoutEditorScene, baseVersion: number) => void
   readonly onReload: () => void
+}
+
+export interface WarehouseLayoutDropPosition {
+  readonly x: number
+  readonly y: number
+}
+export interface WarehouseLayoutCreatedPlacement extends WarehouseLayoutDropPosition {
+  readonly kind: 'zone' | 'rack'
+  readonly entityId: string
 }
 
 function createClientKey() {
@@ -94,6 +105,8 @@ export function WarehouseDesignerWorkspace({
   hasConflict,
   onCreateZone,
   onCreateRack,
+  placementToApply,
+  onPlacementApplied,
   onUpdateRackName,
   onDeactivateRack,
   onSave,
@@ -101,7 +114,6 @@ export function WarehouseDesignerWorkspace({
 }: WarehouseDesignerWorkspaceProps) {
   const [history, dispatch] = useLayoutEditorHistory(initialScene)
   const [selection, setSelection] = useState<WarehouseLayoutSelection | null>(null)
-  const [isControlPressed, setIsControlPressed] = useState(false)
   const [isGridVisible, setIsGridVisible] = useState(true)
   const [zoomPercent, setZoomPercent] = useState(100)
   const [isToolboxOpen, setIsToolboxOpen] = useState(false)
@@ -117,26 +129,6 @@ export function WarehouseDesignerWorkspace({
   const setWarehouseDirty = useWarehouseLayoutEditorStore((state) => state.setWarehouseDirty)
   const scene = history.present
   const isDirty = hasGeneratedGeometry || history.past.length > 0
-  const activeTool: WarehouseLayoutTool = isControlPressed ? 'pan' : 'select'
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Control') setIsControlPressed(true)
-    }
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'Control') setIsControlPressed(false)
-    }
-    const handleWindowBlur = () => setIsControlPressed(false)
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    window.addEventListener('blur', handleWindowBlur)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-      window.removeEventListener('blur', handleWindowBlur)
-    }
-  }, [])
 
   useEffect(() => {
     const resetRequested = resetRevisionRef.current !== resetRevision
@@ -155,6 +147,29 @@ export function WarehouseDesignerWorkspace({
 
     dispatch({ type: 'reconcile-server-scene', scene: initialScene })
   }, [dispatch, initialScene, isDirty, resetRevision, sceneVersion])
+
+  useEffect(() => {
+    if (!placementToApply) return
+    const entity =
+      placementToApply.kind === 'zone'
+        ? scene.zones.find((zone) => zone.id === placementToApply.entityId)
+        : scene.racks.find((rack) => rack.id === placementToApply.entityId)
+    if (!entity) return
+    dispatch({
+      type: 'update-geometry',
+      target: placementToApply.kind,
+      id: placementToApply.entityId,
+      geometry: normalizeLayoutGeometry(
+        {
+          ...entity,
+          x: placementToApply.x,
+          y: placementToApply.y,
+        },
+        scene.canvas
+      ),
+    })
+    onPlacementApplied()
+  }, [dispatch, onPlacementApplied, placementToApply, scene.canvas, scene.racks, scene.zones])
 
   useEffect(() => {
     setWarehouseDirty(warehouseId, isDirty && canConfigure)
@@ -183,14 +198,18 @@ export function WarehouseDesignerWorkspace({
     dispatch({ type: 'update-color', target, id, color })
   }
 
-  function addDecoration(type: WarehouseLayoutDecorationType, label: string) {
+  function addDecoration(
+    type: WarehouseLayoutDecorationType,
+    label: string,
+    position?: WarehouseLayoutDropPosition
+  ) {
     if (!canConfigure) return
     const clientKey = createClientKey()
     const offset = scene.decorations.length * scene.canvas.gridSize
     const geometry = normalizeLayoutGeometry(
       {
-        x: scene.canvas.gridSize * 5 + offset,
-        y: scene.canvas.gridSize * 5 + offset,
+        x: position?.x ?? scene.canvas.gridSize * 5 + offset,
+        y: position?.y ?? scene.canvas.gridSize * 5 + offset,
         width: type === 'Aisle' ? scene.canvas.gridSize * 12 : scene.canvas.gridSize * 8,
         height: type === 'Aisle' ? scene.canvas.gridSize * 3 : scene.canvas.gridSize * 5,
         rotation: 0,
@@ -205,6 +224,17 @@ export function WarehouseDesignerWorkspace({
     setSelection({ kind: 'decoration', id: clientKey })
     setIsInspectorOpen(true)
     setIsToolboxOpen(false)
+  }
+
+  function handlePaletteDrop(payload: LayoutPaletteDragData, x: number, y: number) {
+    if (!canConfigure) return
+    const position = { x, y }
+    if (payload.kind === 'zone') onCreateZone(position)
+    else if (payload.kind === 'rack') {
+      const zoneId = getSelectedZoneId()
+      if (zoneId) onCreateRack(zoneId, position)
+      else toast.error('Chọn một khu vực trước khi đặt kệ hàng.')
+    } else addDecoration(payload.type, payload.label, position)
   }
 
   function getSelectedZoneId() {
@@ -390,12 +420,12 @@ export function WarehouseDesignerWorkspace({
       ref={canvasRef}
       scene={scene}
       selection={selection}
-      tool={activeTool}
       canConfigure={canConfigure}
       isGridVisible={isGridVisible}
       onSelect={handleSelectionChange}
       onGeometryChange={updateGeometry}
       onZoomChange={setZoomPercent}
+      onPaletteDrop={handlePaletteDrop}
     />
   )
 
@@ -406,7 +436,6 @@ export function WarehouseDesignerWorkspace({
       onKeyDown={handleWorkspaceKeyDown}
     >
       <DesignerToolbar
-        tool={activeTool}
         canvas={scene.canvas}
         zoomPercent={zoomPercent}
         isGridVisible={isGridVisible}
@@ -430,7 +459,7 @@ export function WarehouseDesignerWorkspace({
           <Info aria-hidden="true" />
           <AlertTitle>Chế độ xem</AlertTitle>
           <AlertDescription>
-            Bạn có thể di chuyển khung nhìn và kiểm tra đối tượng, nhưng không thể sửa sơ đồ.
+            Bạn có thể chọn và kiểm tra đối tượng, nhưng không thể thay đổi sơ đồ.
           </AlertDescription>
         </Alert>
       ) : null}

@@ -2,6 +2,7 @@
 
 import { RefreshCw, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,10 @@ import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useAuthStore } from '@/stores/auth.store'
 import { RackFormSheet, ZoneFormSheet } from '../components/WarehouseDetailPage'
 import { WarehouseDesignerWorkspace } from '../components/WarehouseDesigner'
+import type {
+  WarehouseLayoutCreatedPlacement,
+  WarehouseLayoutDropPosition,
+} from '../components/WarehouseDesigner/WarehouseDesignerWorkspace'
 import {
   useSaveWarehouseLayoutSceneMutation,
   useWarehouseLayoutSceneQuery,
@@ -36,6 +41,7 @@ interface WarehouseDesignerPageProps {
 }
 
 export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProps) {
+  const searchParams = useSearchParams()
   const role = useAuthStore((state) => state.user?.role ?? null)
   const capabilities = getWarehouseCapabilities(role)
   const meQuery = useMeQuery()
@@ -48,6 +54,12 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
   const deactivateRackMutation = useDeactivateRackMutation()
   const [isZoneFormOpen, setIsZoneFormOpen] = useState(false)
   const [rackZoneId, setRackZoneId] = useState<string | null>(null)
+  const [pendingDrop, setPendingDrop] = useState<
+    ({ kind: 'zone' | 'rack' } & WarehouseLayoutDropPosition) | null
+  >(null)
+  const [placementToApply, setPlacementToApply] = useState<WarehouseLayoutCreatedPlacement | null>(
+    null
+  )
   const [saveError, setSaveError] = useState<string | null>(null)
   const [hasConflict, setHasConflict] = useState(false)
   const [resetRevision, setResetRevision] = useState(0)
@@ -94,6 +106,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
   const persistedScene = sceneQuery.data
   const { editorScene, hasGeneratedGeometry } = mappedScene
   const canConfigure =
+    searchParams.get('mode') !== 'view' &&
     capabilities.canConfigureLayout &&
     meQuery.data.permissions.includes(P.WAREHOUSES_CONFIGURE_LAYOUT) &&
     warehouseQuery.data.status === 'Active'
@@ -131,7 +144,11 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
 
   async function submitZone(values: ZoneFormValues) {
     try {
-      await createZoneMutation.mutateAsync({ warehouseId, request: values })
+      const result = await createZoneMutation.mutateAsync({ warehouseId, request: values })
+      if (pendingDrop?.kind === 'zone') {
+        setPlacementToApply({ ...pendingDrop, entityId: result.data })
+        setPendingDrop(null)
+      }
       toast.success('Đã thêm khu vực. Đối tượng mới đã được đặt vào sơ đồ.')
       setIsZoneFormOpen(false)
       return true
@@ -145,7 +162,15 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
   async function submitRack(values: RackFormValues) {
     if (!rackZoneId) return false
     try {
-      await createRackMutation.mutateAsync({ warehouseId, zoneId: rackZoneId, request: values })
+      const result = await createRackMutation.mutateAsync({
+        warehouseId,
+        zoneId: rackZoneId,
+        request: { ...values, description: values.description || null },
+      })
+      if (pendingDrop?.kind === 'rack') {
+        setPlacementToApply({ ...pendingDrop, entityId: result.data })
+        setPendingDrop(null)
+      }
       toast.success('Đã thêm kệ hàng. Đối tượng mới đã được đặt vào sơ đồ.')
       setRackZoneId(null)
       return true
@@ -171,6 +196,7 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
       request: {
         rackCode: rack.rackCode,
         rackName,
+        description: rack.description,
         storageMode: rack.storageMode ?? 'SlotLevel',
         allowsMixedProducts: rack.allowsMixedProducts ?? true,
         capacity: rack.capacity ?? null,
@@ -202,8 +228,16 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
         isDeactivatingRack={deactivateRackMutation.isPending}
         saveError={saveError}
         hasConflict={hasConflict}
-        onCreateZone={() => setIsZoneFormOpen(true)}
-        onCreateRack={setRackZoneId}
+        placementToApply={placementToApply}
+        onPlacementApplied={() => setPlacementToApply(null)}
+        onCreateZone={(position) => {
+          setPendingDrop(position ? { kind: 'zone', ...position } : null)
+          setIsZoneFormOpen(true)
+        }}
+        onCreateRack={(zoneId, position) => {
+          setPendingDrop(position ? { kind: 'rack', ...position } : null)
+          setRackZoneId(zoneId)
+        }}
         onUpdateRackName={updateRackName}
         onDeactivateRack={deactivateRack}
         onSave={(scene, baseVersion) => void saveScene(scene, baseVersion)}
@@ -216,7 +250,12 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
           mode="create"
           isPending={createZoneMutation.isPending}
           defaultValues={{ zoneCode: '', zoneName: '', description: '' }}
-          onOpenChange={(open) => !open && setIsZoneFormOpen(false)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsZoneFormOpen(false)
+              setPendingDrop(null)
+            }
+          }}
           onSubmit={submitZone}
         />
       ) : null}
@@ -229,11 +268,17 @@ export function WarehouseDesignerPage({ warehouseId }: WarehouseDesignerPageProp
           defaultValues={{
             rackCode: '',
             rackName: '',
+            description: '',
             storageMode: 'SlotLevel',
             allowsMixedProducts: true,
             capacity: null,
           }}
-          onOpenChange={(open) => !open && setRackZoneId(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRackZoneId(null)
+              setPendingDrop(null)
+            }
+          }}
           onSubmit={submitRack}
         />
       ) : null}

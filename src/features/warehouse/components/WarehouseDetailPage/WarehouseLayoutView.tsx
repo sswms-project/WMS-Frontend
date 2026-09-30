@@ -1,16 +1,19 @@
+'use client'
+
 import {
-  ArrowLeft,
   Barcode,
-  Boxes,
+  ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
   CircleOff,
   Edit3,
   Ellipsis,
-  Layers3,
-  MapPin,
+  MapPinned,
   Plus,
   RotateCcw,
-  Warehouse,
+  Search,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,19 +24,27 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from '@/components/ui/item'
-import { ScrollArea } from '@/components/ui/scroll-area'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import type { InventoryStock } from '@/features/inventory/types/inventory.types'
 import { cn } from '@/lib/utils'
 import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
-import type { InventoryStock } from '@/features/inventory/types/inventory.types'
+import {
+  buildWarehouseLocationTree,
+  filterWarehouseLocationTree,
+  flattenExpandedLocationTree,
+  getExpandableLocationIds,
+  type WarehouseLocationTreeNode,
+} from '../WarehouseLocationsPage/location-tree'
 import { formatCapacityLimit, formatWarehouseStatus } from '../../utils/warehouse-labels'
 
 interface WarehouseLayoutViewProps {
@@ -65,441 +76,271 @@ interface WarehouseLayoutViewProps {
   readonly onBarcode: (type: 'Zone' | 'Rack' | 'Slot', locationId: string) => void
 }
 
-const quantityFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 })
+type LifecycleFilter = '' | 'Active' | 'Inactive'
 
-function RackInventorySummary({
-  items,
-  isLoading,
-  isError,
-}: {
-  readonly items: readonly InventoryStock[]
-  readonly isLoading: boolean
-  readonly isError: boolean
-}) {
+export function WarehouseLayoutView(props: WarehouseLayoutViewProps) {
+  const [searchText, setSearchText] = useState('')
+  const [lifecycleStatus, setLifecycleStatus] = useState<LifecycleFilter>('')
+  const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(() => new Set())
+  const tree = useMemo(() => buildWarehouseLocationTree(props.zones), [props.zones])
+  const filteredTree = useMemo(
+    () => filterWarehouseLocationTree(tree, searchText, lifecycleStatus),
+    [lifecycleStatus, searchText, tree]
+  )
+  const expandableIds = useMemo(() => getExpandableLocationIds(filteredTree), [filteredTree])
+  const visibleExpandedIds = searchText.trim() ? expandableIds : expandedIds
+  const rows = useMemo(
+    () => flattenExpandedLocationTree(filteredTree, visibleExpandedIds),
+    [filteredTree, visibleExpandedIds]
+  )
+  const allExpanded =
+    expandableIds.size > 0 && [...expandableIds].every((id) => visibleExpandedIds.has(id))
+
+  function toggleNode(id: string) {
+    setExpandedIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   return (
-    <section className="m-3 mt-0 min-h-0 border" aria-labelledby="rack-inventory-title">
-      <div className="border-b px-3 py-2">
-        <h3 id="rack-inventory-title" className="text-sm font-semibold">
-          Hàng đang lưu
-        </h3>
-        <p className="text-muted-foreground text-xs">
-          Số lượng được tách theo sản phẩm, lô và tình trạng chất lượng.
-        </p>
-      </div>
-      {isLoading ? (
-        <p className="text-muted-foreground p-3 text-xs" aria-live="polite">
-          Đang tải tồn kho…
-        </p>
-      ) : isError ? (
-        <p className="text-destructive p-3 text-xs" role="alert">
-          Không thể tải hàng đang lưu. Hãy tải lại trang để thử lại.
-        </p>
-      ) : items.length === 0 ? (
-        <p className="text-muted-foreground p-3 text-xs">Kệ hàng chưa có tồn kho.</p>
-      ) : (
-        <div className="max-h-56 overflow-auto">
-          <div className="grid min-w-[34rem] grid-cols-[minmax(8rem,1fr)_6rem_6rem_6rem_5rem] gap-2 border-b px-3 py-2 text-xs font-medium">
-            <span>Sản phẩm / Lô</span>
-            <span className="text-right">Đang có</span>
-            <span className="text-right">Đã giữ</span>
-            <span className="text-right">Khả dụng</span>
-            <span>Đơn vị</span>
-          </div>
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="grid min-w-[34rem] grid-cols-[minmax(8rem,1fr)_6rem_6rem_6rem_5rem] gap-2 border-b px-3 py-2 text-xs last:border-b-0"
-            >
-              <span className="min-w-0">
-                <span translate="no" className="block truncate font-mono font-medium">
-                  {item.sku}
-                </span>
-                <span className="text-muted-foreground block truncate">
-                  {item.productName}
-                  {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
-                </span>
-              </span>
-              <span className="text-right tabular-nums">
-                {quantityFormatter.format(item.quantityOnHand)}
-              </span>
-              <span className="text-right tabular-nums">
-                {quantityFormatter.format(item.reservedQuantity)}
-              </span>
-              <span className="text-right tabular-nums">
-                {quantityFormatter.format(item.availableQuantity)}
-              </span>
-              <span>{item.unitName || '—'}</span>
-            </div>
-          ))}
+    <section
+      className="flex min-h-[32rem] min-w-0 flex-col border"
+      aria-labelledby="locations-title"
+    >
+      <header className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-primary text-xs font-medium">Quản lý kho</p>
+          <h2 id="locations-title" className="text-lg font-semibold">
+            Vị trí vật tư, hàng hóa
+          </h2>
+          <p className="text-muted-foreground text-xs">
+            Cấu trúc Khu vực → Kệ hàng → Vị trí lưu trữ.
+          </p>
         </div>
-      )}
+        {props.canConfigure && props.isWarehouseActive ? (
+          <Button type="button" onClick={props.onCreateZone}>
+            <Plus data-icon="inline-start" aria-hidden="true" />
+            Thêm khu vực
+          </Button>
+        ) : null}
+      </header>
+
+      <div className="flex shrink-0 flex-col gap-2 border-b p-3 md:flex-row md:items-center">
+        <InputGroup className="md:max-w-sm">
+          <InputGroupAddon>
+            <Search aria-hidden="true" />
+          </InputGroupAddon>
+          <InputGroupInput
+            aria-label="Tìm vị trí vật tư, hàng hóa"
+            placeholder="Tìm mã, tên hoặc mô tả…"
+            value={searchText}
+            onChange={(event) => setSearchText(event.currentTarget.value)}
+          />
+        </InputGroup>
+        <NativeSelect
+          aria-label="Lọc trạng thái vị trí"
+          className="md:w-44"
+          value={lifecycleStatus}
+          onChange={(event) => setLifecycleStatus(event.currentTarget.value as LifecycleFilter)}
+        >
+          <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+          <NativeSelectOption value="Active">Đang sử dụng</NativeSelectOption>
+          <NativeSelectOption value="Inactive">Ngừng sử dụng</NativeSelectOption>
+        </NativeSelect>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={expandableIds.size === 0 || Boolean(searchText.trim())}
+              onClick={() => setExpandedIds(allExpanded ? new Set() : new Set(expandableIds))}
+            >
+              {allExpanded ? (
+                <ChevronsDownUp data-icon="inline-start" aria-hidden="true" />
+              ) : (
+                <ChevronsUpDown data-icon="inline-start" aria-hidden="true" />
+              )}
+              {allExpanded ? 'Thu gọn tất cả' : 'Mở rộng tất cả'}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {searchText.trim()
+              ? 'Tìm kiếm đang tự mở các nhánh phù hợp.'
+              : 'Đổi trạng thái toàn bộ cây.'}
+          </TooltipContent>
+        </Tooltip>
+        <Badge variant="secondary" className="md:ml-auto">
+          {rows.length} vị trí đang hiển thị
+        </Badge>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-auto">
+        {rows.length === 0 ? (
+          <Empty className="min-h-72 border-0">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MapPinned aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>Không tìm thấy vị trí</EmptyTitle>
+              <EmptyDescription>Thử đổi từ khóa hoặc trạng thái đang lọc.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Table className="min-w-[980px] table-fixed">
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="w-[16%]">Mã vị trí</TableHead>
+                <TableHead className="w-[18%]">Tên vị trí</TableHead>
+                <TableHead className="w-[15%]">Thuộc</TableHead>
+                <TableHead className="w-[24%]">Mô tả</TableHead>
+                <TableHead className="w-[11%]">Sức chứa</TableHead>
+                <TableHead className="w-[11%]">Trạng thái</TableHead>
+                <TableHead className="w-[5%] text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((node) => (
+                <LocationRow
+                  key={`${node.kind}-${node.id}`}
+                  node={node}
+                  expanded={visibleExpandedIds.has(node.id)}
+                  canConfigure={props.canConfigure && props.isWarehouseActive}
+                  canGenerateBarcode={props.canGenerateBarcode}
+                  onToggle={() => toggleNode(node.id)}
+                  actions={props}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </section>
   )
 }
 
-function StatusBadge({ status }: { readonly status: string }) {
-  return (
-    <Badge variant={status === 'Inactive' ? 'destructive' : 'outline'}>
-      {formatWarehouseStatus(status)}
-    </Badge>
-  )
-}
-
-function PaneHeader({
-  title,
-  count,
-  createLabel,
-  onCreate,
+function LocationRow({
+  node,
+  expanded,
+  canConfigure,
+  canGenerateBarcode,
+  onToggle,
+  actions,
 }: {
-  readonly title: string
-  readonly count: number
-  readonly createLabel?: string
-  readonly onCreate?: () => void
+  readonly node: WarehouseLocationTreeNode
+  readonly expanded: boolean
+  readonly canConfigure: boolean
+  readonly canGenerateBarcode: boolean
+  readonly onToggle: () => void
+  readonly actions: WarehouseLayoutViewProps
 }) {
+  const details = getNodeDetails(node)
+  const hasChildren = node.children.length > 0
   return (
-    <div className="flex h-12 shrink-0 items-center justify-between border-b px-3">
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <div className="flex items-center gap-1">
-        <Badge variant="secondary" className="tabular-nums">
-          {count}
+    <TableRow aria-expanded={hasChildren ? expanded : undefined}>
+      <TableCell className="whitespace-normal">
+        <div className="flex min-w-0 items-center" style={{ paddingInlineStart: node.depth * 20 }}>
+          <Button
+            type="button"
+            size="icon-xs"
+            variant="ghost"
+            className={cn('shrink-0', !hasChildren && 'invisible')}
+            disabled={!hasChildren}
+            aria-label={`${expanded ? 'Thu gọn' : 'Mở rộng'} ${details.code}`}
+            onClick={onToggle}
+          >
+            <ChevronRight
+              className={cn('transition-transform', expanded && 'rotate-90')}
+              aria-hidden="true"
+            />
+          </Button>
+          <span translate="no" className="font-mono font-medium break-all">
+            {details.code}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="font-medium break-words whitespace-normal">{details.name}</TableCell>
+      <TableCell className="break-words whitespace-normal">{details.parent}</TableCell>
+      <TableCell className="text-muted-foreground break-words whitespace-normal">
+        {details.description || '—'}
+      </TableCell>
+      <TableCell className="whitespace-normal tabular-nums">{details.capacity}</TableCell>
+      <TableCell className="whitespace-normal">
+        <Badge variant={details.status === 'Inactive' ? 'destructive' : 'outline'}>
+          {formatWarehouseStatus(details.status)}
         </Badge>
-        {onCreate && createLabel ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={createLabel}
-                onClick={onCreate}
-              >
-                <Plus aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{createLabel}</TooltipContent>
-          </Tooltip>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-function ZoneList({
-  zones,
-  selectedZoneId,
-  onSelectZone,
-  canManage,
-  canGenerateBarcode,
-  onEdit,
-  onDeactivate,
-  onReactivate,
-  onBarcode,
-}: Pick<WarehouseLayoutViewProps, 'zones' | 'selectedZoneId' | 'onSelectZone'> & {
-  readonly canManage: boolean
-  readonly canGenerateBarcode: boolean
-  readonly onEdit: (zone: ZoneResponse) => void
-  readonly onDeactivate: (zone: ZoneResponse) => void
-  readonly onReactivate: (zone: ZoneResponse) => void
-  readonly onBarcode: (locationId: string) => void
-}) {
-  return (
-    <ScrollArea className="min-h-0 flex-1">
-      <ItemGroup className="gap-1 p-2">
-        {zones.map((zone) => {
-          const isSelected = zone.id === selectedZoneId
-
-          return (
-            <Item
-              key={zone.id}
-              variant={isSelected ? 'muted' : 'default'}
-              className={cn(isSelected && 'border-primary bg-primary/10 border-l-4')}
-            >
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                className="focus-visible:ring-ring flex min-w-0 flex-1 cursor-pointer items-center text-left outline-none focus-visible:ring-2"
-                onClick={() => onSelectZone(zone.id)}
-              >
-                <ItemContent className="min-w-0">
-                  <ItemTitle className={cn('max-w-full truncate', isSelected && 'font-bold')}>
-                    {zone.zoneName}
-                  </ItemTitle>
-                  <ItemDescription translate="no" className="font-mono">
-                    {zone.zoneCode}
-                  </ItemDescription>
-                </ItemContent>
-                <StatusBadge status={zone.status} />
-              </button>
-              <LocationActionMenu
-                label={`Tác vụ khu vực ${zone.zoneCode}`}
-                isActive={zone.status === 'Active'}
-                canManage={canManage}
-                canGenerateBarcode={canGenerateBarcode}
-                onEdit={() => onEdit(zone)}
-                onDeactivate={() => onDeactivate(zone)}
-                onReactivate={() => onReactivate(zone)}
-                onBarcode={() => onBarcode(zone.id)}
-              />
-            </Item>
-          )
-        })}
-      </ItemGroup>
-    </ScrollArea>
-  )
-}
-
-function RackList({
-  racks,
-  selectedRackId,
-  onSelectRack,
-  canManage,
-  canGenerateBarcode,
-  isParentActive,
-  onEdit,
-  onDeactivate,
-  onReactivate,
-  onBarcode,
-}: {
-  readonly racks: readonly RackResponse[]
-  readonly selectedRackId: string | null
-  readonly onSelectRack: (rackId: string) => void
-  readonly canManage: boolean
-  readonly canGenerateBarcode: boolean
-  readonly isParentActive: boolean
-  readonly onEdit: (rack: RackResponse) => void
-  readonly onDeactivate: (rack: RackResponse) => void
-  readonly onReactivate: (rack: RackResponse) => void
-  readonly onBarcode: (locationId: string) => void
-}) {
-  if (racks.length === 0) {
-    return (
-      <PaneEmpty
-        icon={Boxes}
-        title="Chưa có kệ hàng"
-        description="Khu vực này chưa được cấu hình kệ hàng."
-      />
-    )
-  }
-
-  return (
-    <ScrollArea className="min-h-0 flex-1">
-      <ItemGroup className="gap-1 p-2">
-        {racks.map((rack) => {
-          const isSelected = rack.id === selectedRackId
-
-          return (
-            <Item
-              key={rack.id}
-              variant={isSelected ? 'muted' : 'default'}
-              className={cn(isSelected && 'border-primary bg-primary/10 border-l-4')}
-            >
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                className="focus-visible:ring-ring flex min-w-0 flex-1 cursor-pointer items-center text-left outline-none focus-visible:ring-2"
-                onClick={() => onSelectRack(rack.id)}
-              >
-                <ItemContent className="min-w-0">
-                  <ItemTitle className={cn('max-w-full truncate', isSelected && 'font-bold')}>
-                    {rack.rackName}
-                  </ItemTitle>
-                  <ItemDescription translate="no" className="font-mono">
-                    {rack.rackCode}
-                  </ItemDescription>
-                </ItemContent>
-                <StatusBadge status={isParentActive ? rack.status : 'Inactive'} />
-              </button>
-              <LocationActionMenu
-                label={`Tác vụ kệ ${rack.rackCode}`}
-                isActive={isParentActive && rack.status === 'Active'}
-                canManage={canManage}
-                canGenerateBarcode={canGenerateBarcode}
-                onEdit={() => onEdit(rack)}
-                onDeactivate={() => onDeactivate(rack)}
-                onReactivate={() => onReactivate(rack)}
-                onBarcode={() => onBarcode(rack.id)}
-              />
-            </Item>
-          )
-        })}
-      </ItemGroup>
-    </ScrollArea>
-  )
-}
-
-function SlotItem({
-  slot,
-  canManage,
-  canGenerateBarcode,
-  isParentActive,
-  onEdit,
-  onDeactivate,
-  onReactivate,
-  onBarcode,
-}: {
-  readonly slot: SlotResponse
-  readonly canManage: boolean
-  readonly canGenerateBarcode: boolean
-  readonly isParentActive: boolean
-  readonly onEdit: () => void
-  readonly onDeactivate: () => void
-  readonly onReactivate: () => void
-  readonly onBarcode: () => void
-}) {
-  const currentOccupancy = Math.max(0, slot.currentOccupancy)
-
-  return (
-    <Item
-      role="listitem"
-      aria-label={`Vị trí ${slot.slotCode}`}
-      variant="outline"
-      className="grid min-h-24 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2.5 p-3"
-    >
-      <ItemContent className="min-w-0 self-center">
-        <ItemTitle
-          translate="no"
-          title={slot.slotCode}
-          className="block max-w-full truncate font-mono text-sm font-semibold"
-        >
-          {slot.slotCode}
-        </ItemTitle>
-      </ItemContent>
-      <ItemActions className="shrink-0 gap-1">
-        <StatusBadge status={isParentActive && slot.isActive ? slot.status : 'Inactive'} />
-        <LocationActionMenu
-          label={`Tác vụ vị trí ${slot.slotCode}`}
-          isActive={isParentActive && slot.isActive}
-          canManage={canManage}
+      </TableCell>
+      <TableCell className="text-right">
+        <RowActions
+          node={node}
+          active={details.status === 'Active'}
+          canConfigure={canConfigure}
           canGenerateBarcode={canGenerateBarcode}
-          onEdit={onEdit}
-          onDeactivate={onDeactivate}
-          onReactivate={onReactivate}
-          onBarcode={onBarcode}
+          actions={actions}
         />
-      </ItemActions>
-
-      <dl className="col-span-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t pt-2.5">
-        <dt className="text-muted-foreground">Giới hạn số lượng</dt>
-        <dd className="font-medium tabular-nums">
-          {slot.capacity === null
-            ? 'Không áp dụng'
-            : `${quantityFormatter.format(currentOccupancy)} / ${formatCapacityLimit(slot.capacity)}`}
-        </dd>
-        {slot.barcodeValue && slot.barcodeValue !== slot.slotCode && (
-          <div className="col-span-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-3">
-            <dt className="text-muted-foreground">Barcode</dt>
-            <dd translate="no" title={slot.barcodeValue} className="truncate text-right font-mono">
-              {slot.barcodeValue}
-            </dd>
-          </div>
-        )}
-      </dl>
-    </Item>
+      </TableCell>
+    </TableRow>
   )
 }
 
-function SlotList({
-  slots,
-  canManage,
+function RowActions({
+  node,
+  active,
+  canConfigure,
   canGenerateBarcode,
-  isParentActive,
-  onEdit,
-  onDeactivate,
-  onReactivate,
-  onBarcode,
+  actions,
 }: {
-  readonly slots: readonly SlotResponse[]
-  readonly canManage: boolean
+  readonly node: WarehouseLocationTreeNode
+  readonly active: boolean
+  readonly canConfigure: boolean
   readonly canGenerateBarcode: boolean
-  readonly isParentActive: boolean
-  readonly onEdit: (slot: SlotResponse) => void
-  readonly onDeactivate: (slot: SlotResponse) => void
-  readonly onReactivate: (slot: SlotResponse) => void
-  readonly onBarcode: (slot: SlotResponse) => void
+  readonly actions: WarehouseLayoutViewProps
 }) {
-  if (slots.length === 0) {
-    return (
-      <PaneEmpty
-        icon={MapPin}
-        title="Chưa có vị trí lưu trữ"
-        description="Kệ này chưa được cấu hình vị trí lưu trữ."
-      />
-    )
-  }
-
-  return (
-    <ScrollArea className="min-h-0 flex-1">
-      <ItemGroup className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-        {slots.map((slot) => (
-          <SlotItem
-            key={slot.id}
-            slot={slot}
-            canManage={canManage}
-            canGenerateBarcode={canGenerateBarcode}
-            isParentActive={isParentActive}
-            onEdit={() => onEdit(slot)}
-            onDeactivate={() => onDeactivate(slot)}
-            onReactivate={() => onReactivate(slot)}
-            onBarcode={() => onBarcode(slot)}
-          />
-        ))}
-      </ItemGroup>
-    </ScrollArea>
-  )
-}
-
-function LocationActionMenu({
-  label,
-  isActive,
-  canManage,
-  canGenerateBarcode,
-  onEdit,
-  onDeactivate,
-  onReactivate,
-  onBarcode,
-}: {
-  readonly label: string
-  readonly isActive: boolean
-  readonly canManage: boolean
-  readonly canGenerateBarcode: boolean
-  readonly onEdit: () => void
-  readonly onDeactivate: () => void
-  readonly onReactivate: () => void
-  readonly onBarcode: () => void
-}) {
-  if (!canManage && !canGenerateBarcode) return null
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={label}>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label="Mở thao tác vị trí">
           <Ellipsis aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          {canManage && isActive ? (
-            <DropdownMenuItem onSelect={onEdit}>
+          {canConfigure && active && node.kind === 'zone' ? (
+            <DropdownMenuItem onSelect={() => actions.onCreateRack(node.zone)}>
+              <Plus aria-hidden="true" />
+              Thêm kệ
+            </DropdownMenuItem>
+          ) : null}
+          {canConfigure &&
+          active &&
+          node.kind === 'rack' &&
+          node.rack.storageMode === 'SlotLevel' ? (
+            <DropdownMenuItem onSelect={() => actions.onCreateSlot(node.rack)}>
+              <Plus aria-hidden="true" />
+              Thêm vị trí
+            </DropdownMenuItem>
+          ) : null}
+          {canConfigure ? (
+            <DropdownMenuItem onSelect={() => editNode(node, actions)}>
               <Edit3 aria-hidden="true" />
               Chỉnh sửa
             </DropdownMenuItem>
           ) : null}
-          {canManage && !isActive ? (
-            <DropdownMenuItem onSelect={onReactivate}>
-              <RotateCcw aria-hidden="true" />
-              Kích hoạt lại
-            </DropdownMenuItem>
-          ) : null}
-          {canGenerateBarcode && isActive ? (
-            <DropdownMenuItem onSelect={onBarcode}>
+          {canGenerateBarcode && active ? (
+            <DropdownMenuItem onSelect={() => actions.onBarcode(toLocationType(node), node.id)}>
               <Barcode aria-hidden="true" />
               Xem barcode
             </DropdownMenuItem>
           ) : null}
-          {canManage && isActive ? (
-            <DropdownMenuItem variant="destructive" onSelect={onDeactivate}>
-              <CircleOff aria-hidden="true" />
-              Ngừng hoạt động
+          {canConfigure ? (
+            <DropdownMenuItem
+              variant={active ? 'destructive' : 'default'}
+              onSelect={() => changeLifecycle(node, active, actions)}
+            >
+              {active ? <CircleOff aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
+              {active ? 'Ngừng sử dụng' : 'Kích hoạt lại'}
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuGroup>
@@ -508,293 +349,51 @@ function LocationActionMenu({
   )
 }
 
-function PaneEmpty({
-  icon: Icon,
-  title,
-  description,
-}: {
-  readonly icon: typeof Boxes
-  readonly title: string
-  readonly description: string
-}) {
-  return (
-    <Empty className="min-h-0 flex-1 border-0">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Icon aria-hidden="true" />
-        </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  )
+function getNodeDetails(node: WarehouseLocationTreeNode) {
+  if (node.kind === 'zone')
+    return {
+      code: node.zone.zoneCode,
+      name: node.zone.zoneName,
+      parent: 'Kho',
+      description: node.zone.description,
+      capacity: '—',
+      status: node.zone.status,
+    }
+  if (node.kind === 'rack')
+    return {
+      code: node.rack.rackCode,
+      name: node.rack.rackName,
+      parent: node.zone.zoneName,
+      description: node.rack.description,
+      capacity: formatCapacityLimit(node.rack.capacity),
+      status: node.rack.status,
+    }
+  return {
+    code: node.slot.slotCode,
+    name: node.slot.slotName,
+    parent: node.rack.rackName,
+    description: node.slot.description,
+    capacity: formatCapacityLimit(node.slot.capacity),
+    status: node.slot.status,
+  }
 }
 
-export function WarehouseLayoutView({
-  zones,
-  selectedZoneId,
-  selectedRackId,
-  onSelectZone,
-  onSelectRack,
-  onBackToZones,
-  onBackToRacks,
-  canConfigure,
-  canGenerateBarcode,
-  isWarehouseActive,
-  inventoryItems = [],
-  isInventoryLoading = false,
-  isInventoryError = false,
-  onCreateZone,
-  onCreateRack,
-  onCreateSlot,
-  onEditZone,
-  onEditRack,
-  onEditSlot,
-  onDeactivateZone,
-  onDeactivateRack,
-  onDeactivateSlot,
-  onReactivateZone,
-  onReactivateRack,
-  onReactivateSlot,
-  onBarcode,
-}: WarehouseLayoutViewProps) {
-  if (zones.length === 0) {
-    return (
-      <Empty className="min-h-72 border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Warehouse aria-hidden="true" />
-          </EmptyMedia>
-          <EmptyTitle>Chưa có bố cục kho</EmptyTitle>
-          <EmptyDescription>
-            Khu vực, kệ và vị trí sẽ hiển thị tại đây sau khi được cấu hình.
-          </EmptyDescription>
-        </EmptyHeader>
-        {canConfigure && isWarehouseActive ? (
-          <Button type="button" onClick={onCreateZone}>
-            <Plus data-icon="inline-start" aria-hidden="true" />
-            Thêm khu vực
-          </Button>
-        ) : null}
-      </Empty>
-    )
-  }
-
-  const selectedZone = zones.find((zone) => zone.id === selectedZoneId) ?? null
-  const selectedRack = selectedZone?.racks.find((rack) => rack.id === selectedRackId) ?? null
-
-  return (
-    <div className="mb-5 grid min-h-[32rem] min-w-0 overflow-hidden border lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
-      <section className={cn('min-w-0 flex-col', selectedZone ? 'hidden lg:flex' : 'flex')}>
-        <PaneHeader
-          title="Khu vực"
-          count={zones.length}
-          createLabel={canConfigure && isWarehouseActive ? 'Thêm khu vực' : undefined}
-          onCreate={canConfigure && isWarehouseActive ? onCreateZone : undefined}
-        />
-        <ZoneList
-          zones={zones}
-          selectedZoneId={selectedZoneId}
-          onSelectZone={onSelectZone}
-          canManage={canConfigure && isWarehouseActive}
-          canGenerateBarcode={canGenerateBarcode}
-          onEdit={onEditZone}
-          onDeactivate={onDeactivateZone}
-          onReactivate={onReactivateZone}
-          onBarcode={(locationId) => onBarcode('Zone', locationId)}
-        />
-      </section>
-
-      <section
-        className={cn(
-          'min-w-0 flex-col border-l',
-          selectedZone && !selectedRack ? 'flex' : 'hidden lg:flex'
-        )}
-      >
-        <div className="flex h-12 shrink-0 items-center gap-1 border-b px-2 lg:hidden">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Quay lại danh sách khu vực"
-            onClick={onBackToZones}
-          >
-            <ArrowLeft aria-hidden="true" />
-          </Button>
-          <span className="min-w-0 truncate text-xs font-medium">{selectedZone?.zoneName}</span>
-          {canConfigure && isWarehouseActive && selectedZone?.status === 'Active' ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="ml-auto"
-              aria-label="Thêm kệ hàng"
-              onClick={() => onCreateRack(selectedZone)}
-            >
-              <Plus aria-hidden="true" />
-            </Button>
-          ) : null}
-        </div>
-        <div className="hidden lg:block">
-          <PaneHeader
-            title="Kệ hàng"
-            count={selectedZone?.racks.length ?? 0}
-            createLabel={
-              canConfigure && isWarehouseActive && selectedZone?.status === 'Active'
-                ? 'Thêm kệ hàng'
-                : undefined
-            }
-            onCreate={
-              canConfigure && isWarehouseActive && selectedZone?.status === 'Active'
-                ? () => onCreateRack(selectedZone)
-                : undefined
-            }
-          />
-        </div>
-        {selectedZone ? (
-          <RackList
-            racks={selectedZone.racks}
-            selectedRackId={selectedRackId}
-            onSelectRack={onSelectRack}
-            canManage={canConfigure && isWarehouseActive && selectedZone.status === 'Active'}
-            canGenerateBarcode={canGenerateBarcode && selectedZone.status === 'Active'}
-            isParentActive={selectedZone.status === 'Active'}
-            onEdit={(rack) => onEditRack(selectedZone, rack)}
-            onDeactivate={(rack) => onDeactivateRack(selectedZone, rack)}
-            onReactivate={(rack) => onReactivateRack(selectedZone, rack)}
-            onBarcode={(locationId) => onBarcode('Rack', locationId)}
-          />
-        ) : (
-          <PaneEmpty
-            icon={Layers3}
-            title="Chọn khu vực"
-            description="Chọn một khu vực để xem danh sách kệ hàng."
-          />
-        )}
-      </section>
-
-      <section
-        className={cn('min-w-0 flex-col border-l', selectedRack ? 'flex' : 'hidden lg:flex')}
-      >
-        <div className="flex h-12 shrink-0 items-center gap-1 border-b px-2 lg:hidden">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Quay lại danh sách kệ"
-            onClick={onBackToRacks}
-          >
-            <ArrowLeft aria-hidden="true" />
-          </Button>
-          <span className="min-w-0 truncate text-xs font-medium">{selectedRack?.rackName}</span>
-          {canConfigure &&
-          isWarehouseActive &&
-          selectedZone?.status === 'Active' &&
-          selectedRack?.status === 'Active' &&
-          selectedRack.storageMode === 'SlotLevel' ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="ml-auto"
-              aria-label="Thêm vị trí lưu trữ"
-              onClick={() => onCreateSlot(selectedRack)}
-            >
-              <Plus aria-hidden="true" />
-            </Button>
-          ) : null}
-        </div>
-        <div className="hidden lg:block">
-          <PaneHeader
-            title="Vị trí lưu trữ"
-            count={selectedRack?.slots.length ?? 0}
-            createLabel={
-              canConfigure &&
-              isWarehouseActive &&
-              selectedZone?.status === 'Active' &&
-              selectedRack?.status === 'Active' &&
-              selectedRack.storageMode === 'SlotLevel'
-                ? 'Thêm vị trí lưu trữ'
-                : undefined
-            }
-            onCreate={
-              canConfigure &&
-              isWarehouseActive &&
-              selectedZone?.status === 'Active' &&
-              selectedRack?.status === 'Active' &&
-              selectedRack.storageMode === 'SlotLevel'
-                ? () => onCreateSlot(selectedRack)
-                : undefined
-            }
-          />
-        </div>
-        {selectedRack?.storageMode === 'RackLevel' ? (
-          <div className="min-h-0 overflow-auto">
-            <div className="m-3 grid gap-3 border p-4 text-sm">
-              <div>
-                <p className="font-medium">Quản lý theo kệ</p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Nghiệp vụ tồn kho được ghi nhận trực tiếp tại kệ này.
-                </p>
-              </div>
-              <dl className="grid gap-2 border-t pt-3">
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Cách chứa hàng</dt>
-                  <dd className="text-right font-medium">
-                    {selectedRack.allowsMixedProducts
-                      ? 'Cho phép nhiều sản phẩm'
-                      : 'Chỉ chứa một sản phẩm'}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Giới hạn số lượng</dt>
-                  <dd className="font-medium tabular-nums">
-                    {formatCapacityLimit(selectedRack.capacity)}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-            <RackInventorySummary
-              items={inventoryItems}
-              isLoading={isInventoryLoading}
-              isError={isInventoryError}
-            />
-          </div>
-        ) : selectedRack ? (
-          <>
-            <SlotList
-              slots={selectedRack.slots}
-              canManage={
-                canConfigure &&
-                isWarehouseActive &&
-                selectedZone?.status === 'Active' &&
-                selectedRack.status === 'Active'
-              }
-              canGenerateBarcode={
-                canGenerateBarcode &&
-                selectedZone?.status === 'Active' &&
-                selectedRack.status === 'Active'
-              }
-              isParentActive={selectedZone?.status === 'Active' && selectedRack.status === 'Active'}
-              onEdit={(slot) => onEditSlot(selectedRack, slot)}
-              onDeactivate={(slot) => onDeactivateSlot(selectedRack, slot)}
-              onReactivate={(slot) => onReactivateSlot(selectedRack, slot)}
-              onBarcode={(slot) => onBarcode('Slot', slot.id)}
-            />
-            <RackInventorySummary
-              items={inventoryItems}
-              isLoading={isInventoryLoading}
-              isError={isInventoryError}
-            />
-          </>
-        ) : (
-          <PaneEmpty
-            icon={MapPin}
-            title="Chọn kệ hàng"
-            description="Chọn một kệ để xem các vị trí lưu trữ."
-          />
-        )}
-      </section>
-    </div>
-  )
+function toLocationType(node: WarehouseLocationTreeNode): 'Zone' | 'Rack' | 'Slot' {
+  return node.kind === 'zone' ? 'Zone' : node.kind === 'rack' ? 'Rack' : 'Slot'
+}
+function editNode(node: WarehouseLocationTreeNode, actions: WarehouseLayoutViewProps) {
+  if (node.kind === 'zone') actions.onEditZone(node.zone)
+  else if (node.kind === 'rack') actions.onEditRack(node.zone, node.rack)
+  else actions.onEditSlot(node.rack, node.slot)
+}
+function changeLifecycle(
+  node: WarehouseLocationTreeNode,
+  active: boolean,
+  actions: WarehouseLayoutViewProps
+) {
+  if (node.kind === 'zone')
+    (active ? actions.onDeactivateZone : actions.onReactivateZone)(node.zone)
+  else if (node.kind === 'rack')
+    (active ? actions.onDeactivateRack : actions.onReactivateRack)(node.zone, node.rack)
+  else (active ? actions.onDeactivateSlot : actions.onReactivateSlot)(node.rack, node.slot)
 }

@@ -10,14 +10,9 @@ import type {
   WarehouseLayoutGeometry,
   WarehouseLayoutGeometryTarget,
   WarehouseLayoutSelection,
-  WarehouseLayoutTool,
 } from '../../types/warehouse-layout-scene.types'
-import {
-  getEffectiveCanvasBounds,
-  normalizeLayoutGeometry,
-  snapToGrid,
-  type LayoutBounds,
-} from '../../utils/layout-grid'
+import { normalizeLayoutGeometry, snapToGrid, type LayoutBounds } from '../../utils/layout-grid'
+import { readLayoutDragData, type LayoutPaletteDragData } from './designer-constants'
 
 const MIN_SCALE = 0.2
 const MAX_SCALE = 4
@@ -42,7 +37,6 @@ interface WarehouseCanvasProps {
   readonly ref?: React.Ref<WarehouseCanvasHandle>
   readonly scene: WarehouseLayoutEditorScene
   readonly selection: WarehouseLayoutSelection | null
-  readonly tool: WarehouseLayoutTool
   readonly canConfigure: boolean
   readonly isGridVisible: boolean
   readonly onSelect: (selection: WarehouseLayoutSelection | null) => void
@@ -52,6 +46,7 @@ interface WarehouseCanvasProps {
     geometry: WarehouseLayoutGeometry
   ) => void
   readonly onZoomChange: (zoomPercent: number) => void
+  readonly onPaletteDrop: (payload: LayoutPaletteDragData, x: number, y: number) => void
 }
 
 export interface WarehouseCanvasHandle {
@@ -64,12 +59,6 @@ interface Viewport {
   scale: number
   x: number
   y: number
-}
-
-interface InteractionGeometry {
-  target: WarehouseLayoutGeometryTarget
-  id: string
-  geometry: WarehouseLayoutGeometry
 }
 
 function readCanvasPalette(): CanvasPalette {
@@ -230,6 +219,16 @@ function renderDecorationSymbol(
         </>
       )
       break
+    case 'DoubleDoor':
+      symbol = (
+        <>
+          <Rect x={2} y={3} width={20} height={18} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[12, 3, 12, 21]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Circle x={9} y={12} radius={1} fill={stroke} />
+          <Circle x={15} y={12} radius={1} fill={stroke} />
+        </>
+      )
+      break
     case 'Aisle':
       symbol = (
         <>
@@ -240,6 +239,39 @@ function renderDecorationSymbol(
             stroke={stroke}
             strokeWidth={strokeWidth}
           />
+        </>
+      )
+      break
+    case 'DirectionArrow':
+      symbol = (
+        <Line
+          points={[3, 12, 19, 12, 14, 7, 19, 12, 14, 17]}
+          stroke={stroke}
+          strokeWidth={2}
+          lineCap="round"
+          lineJoin="round"
+        />
+      )
+      break
+    case 'Exit':
+      symbol = (
+        <>
+          <Rect x={3} y={3} width={12} height={18} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line
+            points={[9, 12, 22, 12, 18, 8, 22, 12, 18, 16]}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+          />
+        </>
+      )
+      break
+    case 'Forklift':
+      symbol = (
+        <>
+          <Rect x={3} y={9} width={11} height={8} stroke={stroke} strokeWidth={strokeWidth} />
+          <Line points={[14, 5, 17, 5, 17, 17, 21, 17]} stroke={stroke} strokeWidth={strokeWidth} />
+          <Circle x={7} y={20} radius={2} stroke={stroke} strokeWidth={strokeWidth} />
+          <Circle x={17} y={20} radius={2} stroke={stroke} strokeWidth={strokeWidth} />
         </>
       )
       break
@@ -330,12 +362,12 @@ export function WarehouseCanvas({
   ref,
   scene,
   selection,
-  tool,
   canConfigure,
   isGridVisible,
   onSelect,
   onGeometryChange,
   onZoomChange,
+  onPaletteDrop,
 }: WarehouseCanvasProps) {
   const palette = useCanvasPalette()
   const { containerRef, size } = useContainerSize()
@@ -345,10 +377,7 @@ export function WarehouseCanvas({
   const lastPinchDistance = useRef<number | null>(null)
   const hasFitted = useRef(false)
   const previousContainerSize = useRef({ width: 0, height: 0 })
-  const interactionFrame = useRef<number | null>(null)
-  const pendingInteraction = useRef<InteractionGeometry | null>(null)
   const [viewport, setViewport] = useState<Viewport>({ scale: 1, x: 0, y: 0 })
-  const [interactionGeometry, setInteractionGeometry] = useState<InteractionGeometry | null>(null)
   const activeZoneIds = useMemo(
     () => new Set(scene.zones.filter((zone) => zone.status === 'Active').map((zone) => zone.id)),
     [scene.zones]
@@ -357,24 +386,10 @@ export function WarehouseCanvas({
     () => scene.racks.filter((rack) => rack.status === 'Active' && activeZoneIds.has(rack.zoneId)),
     [activeZoneIds, scene.racks]
   )
-  const effectiveBounds = useMemo(() => {
-    const resolveGeometry = (
-      target: WarehouseLayoutGeometryTarget,
-      id: string,
-      geometry: WarehouseLayoutGeometry
-    ) =>
-      interactionGeometry?.target === target && interactionGeometry.id === id
-        ? interactionGeometry.geometry
-        : geometry
-
-    return getEffectiveCanvasBounds(scene.canvas, [
-      ...scene.zones.map((zone) => resolveGeometry('zone', zone.id, zone)),
-      ...visibleRacks.map((rack) => resolveGeometry('rack', rack.id, rack)),
-      ...scene.decorations.map((decoration) =>
-        resolveGeometry('decoration', decoration.clientKey, decoration)
-      ),
-    ])
-  }, [interactionGeometry, scene.canvas, scene.decorations, scene.zones, visibleRacks])
+  const effectiveBounds = useMemo(
+    () => ({ minX: 0, minY: 0, maxX: scene.canvas.width, maxY: scene.canvas.height }),
+    [scene.canvas.height, scene.canvas.width]
+  )
 
   const fit = useCallback(() => {
     if (!size.width || !size.height) return
@@ -435,13 +450,6 @@ export function WarehouseCanvas({
   useEffect(() => {
     onZoomChange(Math.round(viewport.scale * 100))
   }, [onZoomChange, viewport.scale])
-
-  useEffect(
-    () => () => {
-      if (interactionFrame.current !== null) cancelAnimationFrame(interactionFrame.current)
-    },
-    []
-  )
 
   const canTransformSelection = (() => {
     if (!canConfigure || !selection) return false
@@ -537,22 +545,8 @@ export function WarehouseCanvas({
 
   function handleWheel(event: KonvaEventObject<WheelEvent>) {
     event.evt.preventDefault()
-    const stage = stageRef.current
-    const pointer = stage?.getPointerPosition()
-    if (!pointer) return
     const direction = event.evt.deltaY > 0 ? 1 / ZOOM_FACTOR : ZOOM_FACTOR
-    setViewport((current) => {
-      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, current.scale * direction))
-      const worldPoint = {
-        x: (pointer.x - current.x) / current.scale,
-        y: (pointer.y - current.y) / current.scale,
-      }
-      return {
-        scale: nextScale,
-        x: pointer.x - worldPoint.x * nextScale,
-        y: pointer.y - worldPoint.y * nextScale,
-      }
-    })
+    zoomAtCenter(direction)
   }
 
   function handleTouchMove(event: KonvaEventObject<TouchEvent>) {
@@ -582,33 +576,6 @@ export function WarehouseCanvas({
     }
   }
 
-  function previewNodeGeometry(
-    target: WarehouseLayoutGeometryTarget,
-    id: string,
-    node: Konva.Node,
-    zIndex: number
-  ) {
-    pendingInteraction.current = {
-      target,
-      id,
-      geometry: getNodeGeometry(node, zIndex),
-    }
-    if (interactionFrame.current !== null) return
-    interactionFrame.current = requestAnimationFrame(() => {
-      interactionFrame.current = null
-      setInteractionGeometry(pendingInteraction.current)
-    })
-  }
-
-  function clearInteractionGeometry() {
-    pendingInteraction.current = null
-    if (interactionFrame.current !== null) {
-      cancelAnimationFrame(interactionFrame.current)
-      interactionFrame.current = null
-    }
-    setInteractionGeometry(null)
-  }
-
   function commitNodeGeometry(
     target: WarehouseLayoutGeometryTarget,
     id: string,
@@ -618,7 +585,6 @@ export function WarehouseCanvas({
     const nodeGeometry = getNodeGeometry(node, zIndex)
     node.scaleX(1)
     node.scaleY(1)
-    clearInteractionGeometry()
     const geometry = normalizeLayoutGeometry(nodeGeometry, scene.canvas)
     onGeometryChange(target, id, geometry)
   }
@@ -653,7 +619,7 @@ export function WarehouseCanvas({
         width={object.width}
         height={object.height}
         rotation={object.rotation}
-        draggable={canMoveObject && tool === 'select'}
+        draggable={canMoveObject}
         dragBoundFunc={(position) => ({
           x: snapToGrid(position.x, scene.canvas.gridSize),
           y: snapToGrid(position.y, scene.canvas.gridSize),
@@ -666,12 +632,10 @@ export function WarehouseCanvas({
           event.cancelBubble = true
           onSelect({ kind: target, id: object.id })
         }}
-        onDragMove={(event) => previewNodeGeometry(target, object.id, event.target, object.zIndex)}
         onDragEnd={(event) => {
           event.cancelBubble = true
           commitNodeGeometry(target, object.id, event.target, object.zIndex)
         }}
-        onTransform={(event) => previewNodeGeometry(target, object.id, event.target, object.zIndex)}
         onTransformEnd={(event) => {
           event.cancelBubble = true
           commitNodeGeometry(target, object.id, event.target, object.zIndex)
@@ -713,6 +677,38 @@ export function WarehouseCanvas({
             wrap="none"
           />
         ) : null}
+        {rack ? (
+          <>
+            <Line
+              points={[6, 28, rack.width - 6, 28]}
+              stroke={objectForeground}
+              strokeWidth={1}
+              opacity={0.55}
+              listening={false}
+            />
+            <Line
+              points={[6, rack.height - 7, rack.width - 6, rack.height - 7]}
+              stroke={objectForeground}
+              strokeWidth={1}
+              opacity={0.55}
+              listening={false}
+            />
+            <Line
+              points={[6, 28, 6, rack.height - 7]}
+              stroke={objectForeground}
+              strokeWidth={2}
+              opacity={0.7}
+              listening={false}
+            />
+            <Line
+              points={[rack.width - 6, 28, rack.width - 6, rack.height - 7]}
+              stroke={objectForeground}
+              strokeWidth={2}
+              opacity={0.7}
+              listening={false}
+            />
+          </>
+        ) : null}
         {rack ? renderRackSlots(rack, rackSlots, canvasPalette, selection, onSelect) : null}
       </Group>
     )
@@ -726,9 +722,28 @@ export function WarehouseCanvas({
       aria-label="Mặt bằng kho tương tác"
       aria-describedby="warehouse-canvas-instructions"
       tabIndex={0}
-      style={{ cursor: tool === 'pan' ? 'grab' : 'default' }}
+      style={{ cursor: 'default' }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onSelect(null)
+      }}
+      onDragOver={(event) => {
+        if (readLayoutDragData(event.dataTransfer)) event.preventDefault()
+      }}
+      onDrop={(event) => {
+        const payload = readLayoutDragData(event.dataTransfer)
+        if (!payload) return
+        event.preventDefault()
+        const bounds = event.currentTarget.getBoundingClientRect()
+        const x = snapToGrid(
+          (event.clientX - bounds.left - viewport.x) / viewport.scale,
+          scene.canvas.gridSize
+        )
+        const y = snapToGrid(
+          (event.clientY - bounds.top - viewport.y) / viewport.scale,
+          scene.canvas.gridSize
+        )
+        if (x < 0 || y < 0 || x > scene.canvas.width || y > scene.canvas.height) return
+        onPaletteDrop(payload, x, y)
       }}
     >
       <p id="warehouse-canvas-instructions" className="sr-only">
@@ -743,15 +758,7 @@ export function WarehouseCanvas({
           y={viewport.y}
           scaleX={viewport.scale}
           scaleY={viewport.scale}
-          draggable={tool === 'pan'}
-          onDragEnd={(event) => {
-            if (event.target !== stageRef.current) return
-            setViewport((current) => ({
-              ...current,
-              x: event.target.x(),
-              y: event.target.y(),
-            }))
-          }}
+          draggable={false}
           onWheel={handleWheel}
           onTouchMove={handleTouchMove}
           onTouchEnd={() => {
@@ -803,7 +810,7 @@ export function WarehouseCanvas({
                   width={decoration.width}
                   height={decoration.height}
                   rotation={decoration.rotation}
-                  draggable={canConfigure && tool === 'select'}
+                  draggable={canConfigure}
                   dragBoundFunc={(position) => ({
                     x: snapToGrid(position.x, scene.canvas.gridSize),
                     y: snapToGrid(position.y, scene.canvas.gridSize),
@@ -816,14 +823,6 @@ export function WarehouseCanvas({
                     event.cancelBubble = true
                     onSelect({ kind: 'decoration', id: decoration.clientKey })
                   }}
-                  onDragMove={(event) =>
-                    previewNodeGeometry(
-                      'decoration',
-                      decoration.clientKey,
-                      event.target,
-                      decoration.zIndex
-                    )
-                  }
                   onDragEnd={(event) => {
                     event.cancelBubble = true
                     commitNodeGeometry(
@@ -833,14 +832,6 @@ export function WarehouseCanvas({
                       decoration.zIndex
                     )
                   }}
-                  onTransform={(event) =>
-                    previewNodeGeometry(
-                      'decoration',
-                      decoration.clientKey,
-                      event.target,
-                      decoration.zIndex
-                    )
-                  }
                   onTransformEnd={(event) => {
                     event.cancelBubble = true
                     commitNodeGeometry(

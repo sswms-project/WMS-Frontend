@@ -44,6 +44,7 @@ export interface LocationSearchResponse {
   type: WarehouseLocationType
   code: string
   name: string | null
+  description: string | null
   lifecycleStatus: LocationLifecycleStatus
   occupancyStatus: SlotOccupancyStatus | null
   zoneId: string | null
@@ -80,6 +81,7 @@ export type RackStorageMode = 'RackLevel' | 'SlotLevel'
 export interface CreateRackRequest {
   rackCode: string
   rackName: string
+  description: string | null
   storageMode: RackStorageMode
   allowsMixedProducts: boolean
   capacity: number | null
@@ -91,6 +93,8 @@ export interface UpdateRackRequest extends CreateRackRequest {
 
 export interface CreateSlotRequest {
   slotCode: string
+  slotName: string
+  description: string | null
   allowsMixedProducts: boolean
   capacity: number | null
 }

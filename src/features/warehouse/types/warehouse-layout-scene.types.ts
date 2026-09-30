@@ -1,6 +1,10 @@
 export type WarehouseLayoutDecorationType =
   | 'Door'
+  | 'DoubleDoor'
   | 'Aisle'
+  | 'DirectionArrow'
+  | 'Exit'
+  | 'Forklift'
   | 'Receiving'
   | 'Packing'
   | 'Picking'
@@ -43,6 +47,7 @@ export interface WarehouseLayoutRackSceneResponse {
   zoneCode: string
   rackCode: string
   rackName: string
+  description: string | null
   status: string
   storageMode?: 'RackLevel' | 'SlotLevel'
   allowsMixedProducts?: boolean
@@ -62,6 +67,8 @@ export interface WarehouseLayoutSlotSceneResponse {
   zoneId: string
   rackId: string
   slotCode: string
+  slotName: string
+  description: string | null
   occupancyStatus: string
   isActive: boolean
   isOutboundStaging?: boolean

@@ -18,6 +18,8 @@ export interface WarehouseDetailResponse extends WarehouseResponse {
 export interface SlotResponse {
   id: string
   slotCode: string
+  slotName: string
+  description: string | null
   status: string
   isActive: boolean
   isOutboundStaging?: boolean
@@ -32,6 +34,7 @@ export interface RackResponse {
   id: string
   rackCode: string
   rackName: string
+  description: string | null
   status: string
   storageMode?: 'RackLevel' | 'SlotLevel'
   allowsMixedProducts?: boolean

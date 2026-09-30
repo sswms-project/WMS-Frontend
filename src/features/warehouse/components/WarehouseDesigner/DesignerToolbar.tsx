@@ -4,10 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Check,
   Grid3X3,
-  Hand,
   LoaderCircle,
   Maximize,
-  MousePointer2,
   Redo2,
   Save,
   Settings2,
@@ -35,13 +33,9 @@ import {
   warehouseLayoutCanvasSchema,
   type WarehouseLayoutCanvasFormValues,
 } from '../../schemas/warehouse-layout-scene.schema'
-import type {
-  WarehouseLayoutCanvas,
-  WarehouseLayoutTool,
-} from '../../types/warehouse-layout-scene.types'
+import type { WarehouseLayoutCanvas } from '../../types/warehouse-layout-scene.types'
 
 interface DesignerToolbarProps {
-  readonly tool: WarehouseLayoutTool
   readonly canvas: WarehouseLayoutCanvas
   readonly zoomPercent: number
   readonly isGridVisible: boolean
@@ -205,7 +199,6 @@ function CanvasNumberField({
 }
 
 export function DesignerToolbar({
-  tool,
   canvas,
   zoomPercent,
   isGridVisible,
@@ -225,23 +218,6 @@ export function DesignerToolbar({
 }: DesignerToolbarProps) {
   return (
     <div className="bg-surface-container-lowest flex min-h-11 flex-wrap items-center gap-1 border-b px-2 py-1.5">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className="bg-secondary text-secondary-foreground flex size-7 items-center justify-center rounded-sm border [&_svg]:size-4"
-            role="status"
-            tabIndex={0}
-            aria-label={tool === 'pan' ? 'Đang di chuyển khung nhìn' : 'Đang chọn đối tượng'}
-          >
-            {tool === 'pan' ? <Hand aria-hidden="true" /> : <MousePointer2 aria-hidden="true" />}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          {tool === 'pan' ? 'Đang di chuyển khung nhìn' : 'Giữ Ctrl để di chuyển khung nhìn'}
-        </TooltipContent>
-      </Tooltip>
-
-      <Separator orientation="vertical" className="mx-1 h-6" />
       <ToolbarIconButton label="Hoàn tác" disabled={!canUndo || isReadOnly} onClick={onUndo}>
         <Undo2 aria-hidden="true" />
       </ToolbarIconButton>

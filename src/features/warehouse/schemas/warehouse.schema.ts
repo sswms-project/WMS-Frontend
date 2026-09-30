@@ -47,6 +47,7 @@ export const rackSchema = z
   .object({
     rackCode: z.string().trim().min(1, 'Mã kệ là bắt buộc.').max(50, 'Mã kệ tối đa 50 ký tự.'),
     rackName: z.string().trim().min(1, 'Tên kệ là bắt buộc.').max(255, 'Tên kệ tối đa 255 ký tự.'),
+    description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     storageMode: z.enum(['RackLevel', 'SlotLevel']),
     allowsMixedProducts: z.boolean(),
     capacity: optionalCapacitySchema,
@@ -73,6 +74,12 @@ export const slotSchema = z
       .trim()
       .min(1, 'Mã vị trí là bắt buộc.')
       .max(50, 'Mã vị trí tối đa 50 ký tự.'),
+    slotName: z
+      .string()
+      .trim()
+      .min(1, 'Tên vị trí là bắt buộc.')
+      .max(255, 'Tên vị trí tối đa 255 ký tự.'),
+    description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     allowsMixedProducts: z.boolean(),
     capacity: optionalCapacitySchema,
     expectedRowVersion: z.string().optional(),
