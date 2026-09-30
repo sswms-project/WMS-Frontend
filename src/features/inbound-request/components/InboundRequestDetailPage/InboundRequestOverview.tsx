@@ -1,6 +1,10 @@
 import { Progress } from '@/components/ui/progress'
 import type { InboundRequestDetail } from '../../types/inbound-request.types'
-import { formatOperationalDate, formatQuantity } from '../../utils/inbound-request-format'
+import {
+  formatOperationalDate,
+  formatOperationalDateTime,
+  formatQuantity,
+} from '../../utils/inbound-request-format'
 import { inboundSourceLabels } from '../../schemas/inbound-request.schema'
 
 export function InboundRequestOverview({ request }: { readonly request: InboundRequestDetail }) {
@@ -26,6 +30,15 @@ export function InboundRequestOverview({ request }: { readonly request: InboundR
           <Metadata label="Kho nhận" value={request.warehouseName ?? 'Chưa xác định'} />
           <Metadata label="Ngày dự kiến" value={formatOperationalDate(request.expectedDate)} />
           <Metadata label="Người tạo" value={request.createdByName} />
+          {request.supplierId ? (
+            <Metadata label="Email nhà cung cấp" value={request.supplierEmail ?? 'Chưa có email'} />
+          ) : null}
+          {request.supplierEmailSentAt ? (
+            <Metadata
+              label="Đã gửi mail đơn hàng"
+              value={`${request.supplierEmailSentTo ?? ''} · ${formatOperationalDateTime(request.supplierEmailSentAt)}${request.supplierEmailSentByName ? ` · ${request.supplierEmailSentByName}` : ''}`}
+            />
+          ) : null}
           {request.sourceReference ? (
             <Metadata label="Mã tham chiếu" value={request.sourceReference} />
           ) : null}

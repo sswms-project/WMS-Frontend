@@ -185,6 +185,10 @@ export const API_ENDPOINTS = {
     submitMany: '/inbound-requests/batch/submit',
     approve: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/approve`,
     approveMany: '/inbound-requests/batch/approve',
+    approveAndSend: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/approve-and-send`,
+    sendToSupplier: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/send-to-supplier`,
     reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
     allowedActions: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/allowed-actions`,

@@ -10,6 +10,7 @@ import type {
   InboundRequestDetail,
   InboundRequestListQuery,
   SaveInboundRequestRequest,
+  SupplierEmailDispatch,
   SupplierOption,
 } from '../types/inbound-request.types'
 
@@ -77,6 +78,18 @@ export const inboundRequestService = {
   approveInboundRequests: (ids: readonly string[]) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.approveMany, { ids })
+      .then((response) => response.data),
+  approveAndSendInboundRequest: (inboundRequestId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<SupplierEmailDispatch>
+      >(API_ENDPOINTS.inboundRequests.approveAndSend(inboundRequestId))
+      .then((response) => response.data),
+  sendInboundRequestToSupplier: (inboundRequestId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<SupplierEmailDispatch>
+      >(API_ENDPOINTS.inboundRequests.sendToSupplier(inboundRequestId))
       .then((response) => response.data),
   rejectInboundRequest: (inboundRequestId: string, reason: string) =>
     axiosClient
