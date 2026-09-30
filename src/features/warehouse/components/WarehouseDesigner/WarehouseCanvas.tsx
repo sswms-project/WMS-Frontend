@@ -11,7 +11,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Circle, Group, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
+import { cn } from '@/lib/utils'
 import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
@@ -48,6 +50,9 @@ interface CanvasPalette {
   card: string
   warning: string
   warningContainer: string
+  viewerSelected: string
+  viewerSelectedForeground: string
+  viewerOccupied: string
 }
 
 interface WarehouseCanvasProps {
@@ -55,6 +60,7 @@ interface WarehouseCanvasProps {
   readonly scene: WarehouseLayoutEditorScene
   readonly selection: WarehouseLayoutSelection | null
   readonly canConfigure: boolean
+  readonly mode?: 'designer' | 'viewer'
   readonly isGridVisible: boolean
   readonly onSelect: (selection: WarehouseLayoutSelection | null) => void
   readonly onGeometryChange: (
@@ -88,6 +94,9 @@ function readCanvasPalette(): CanvasPalette {
     card: isDark ? '#172033' : '#FFFFFF',
     warning: read('--warning'),
     warningContainer: read('--warning-container'),
+    viewerSelected: read('--primary'),
+    viewerSelectedForeground: read('--primary-foreground'),
+    viewerOccupied: read('--secondary-container'),
   }
 }
 
@@ -370,6 +379,7 @@ export function WarehouseCanvas({
   scene,
   selection,
   canConfigure,
+  mode = 'designer',
   isGridVisible,
   onSelect,
   onGeometryChange,
@@ -382,6 +392,14 @@ export function WarehouseCanvas({
   const transformerRef = useRef<Konva.Transformer>(null)
   const objectNodes = useRef(new Map<string, Konva.Node>())
   const lastPinchDistance = useRef<number | null>(null)
+  const pointerPanStart = useRef<{
+    pointerId: number
+    clientX: number
+    clientY: number
+    scrollLeft: number
+    scrollTop: number
+  } | null>(null)
+  const [isPanning, setIsPanning] = useState(false)
   const isFitMode = useRef(true)
   const pendingCenter = useRef<{ x: number; y: number } | null>(null)
   const [scale, setScale] = useState(1)
@@ -565,9 +583,42 @@ export function WarehouseCanvas({
   const canvasPalette = palette
 
   function handleWheel(event: KonvaEventObject<WheelEvent>) {
+    if (mode === 'viewer' && !event.evt.ctrlKey) return
     event.evt.preventDefault()
     const direction = event.evt.deltaY > 0 ? 1 / ZOOM_FACTOR : ZOOM_FACTOR
     zoomAtCenter(direction)
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (mode !== 'viewer' || !event.ctrlKey || event.button !== 0) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    pointerPanStart.current = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      scrollLeft: event.currentTarget.scrollLeft,
+      scrollTop: event.currentTarget.scrollTop,
+    }
+    setIsPanning(true)
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = pointerPanStart.current
+    if (!start || start.pointerId !== event.pointerId) return
+    event.preventDefault()
+    event.currentTarget.scrollLeft = start.scrollLeft - (event.clientX - start.clientX)
+    event.currentTarget.scrollTop = start.scrollTop - (event.clientY - start.clientY)
+  }
+
+  function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (pointerPanStart.current?.pointerId !== event.pointerId) return
+    pointerPanStart.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setIsPanning(false)
   }
 
   function handleTouchMove(event: KonvaEventObject<TouchEvent>) {
@@ -624,10 +675,24 @@ export function WarehouseCanvas({
     const isInactive = object.status !== 'Active'
     const rack = isRack ? object : null
     const rackSlots = rack ? (slotsByRack.get(rack.id) ?? []) : []
-    const objectFill = object.color ?? (isZone ? canvasPalette.accent : canvasPalette.card)
-    const objectForeground = object.color
-      ? getReadableCanvasColor(object.color, canvasPalette)
-      : canvasPalette.foreground
+    const hasStock = isZone
+      ? scene.slots.some((slot) => slot.zoneId === object.id && slot.currentOccupancy > 0)
+      : rackSlots.some((slot) => slot.currentOccupancy > 0)
+    const objectFill =
+      mode === 'viewer'
+        ? selected
+          ? canvasPalette.viewerSelected
+          : hasStock
+            ? canvasPalette.viewerOccupied
+            : canvasPalette.card
+        : (object.color ?? (isZone ? canvasPalette.accent : canvasPalette.card))
+    const objectForeground =
+      mode === 'viewer' && selected
+        ? canvasPalette.viewerSelectedForeground
+        : object.color
+          ? getReadableCanvasColor(object.color, canvasPalette)
+          : canvasPalette.foreground
+    const selectionStroke = mode === 'viewer' ? canvasPalette.viewerSelected : canvasPalette.primary
     const canMoveObject =
       canConfigure &&
       object.status === 'Active' &&
@@ -668,8 +733,10 @@ export function WarehouseCanvas({
           width={object.width}
           height={object.height}
           fill={objectFill}
-          opacity={isInactive ? 0.38 : isZone && !object.color ? 0.55 : 1}
-          stroke={selected ? canvasPalette.primary : canvasPalette.border}
+          opacity={
+            isInactive ? 0.38 : mode === 'viewer' ? 0.88 : isZone && !object.color ? 0.55 : 1
+          }
+          stroke={selected ? selectionStroke : canvasPalette.border}
           strokeWidth={selected ? 3 / viewport.scale : 1 / viewport.scale}
           dash={isZone || isInactive ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
           cornerRadius={isZone ? 4 : 2}
@@ -706,7 +773,13 @@ export function WarehouseCanvas({
             y={Math.min(32, Math.max(rack.height - 18, 18))}
             width={Math.max(rack.width - 20, 1)}
             text={getOccupancyLabel(rackSlots)}
-            fill={object.color ? objectForeground : canvasPalette.mutedForeground}
+            fill={
+              mode === 'viewer' && selected
+                ? canvasPalette.viewerSelectedForeground
+                : object.color
+                  ? objectForeground
+                  : canvasPalette.mutedForeground
+            }
             fontFamily="monospace"
             fontSize={10}
             ellipsis
@@ -745,7 +818,7 @@ export function WarehouseCanvas({
             />
           </>
         ) : null}
-        {rack ? renderRackSlots(rack, rackSlots, canvasPalette, selection, onSelect) : null}
+        {rack ? renderRackSlots(rack, rackSlots, canvasPalette, selection, onSelect, mode) : null}
       </Group>
     )
   }
@@ -753,19 +826,25 @@ export function WarehouseCanvas({
   return (
     <div
       ref={containerRef}
-      className="focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-auto overscroll-contain bg-[#eef1f5] outline-none select-none focus-visible:ring-2 focus-visible:ring-inset dark:bg-slate-950"
+      className={cn(
+        'focus-visible:ring-ring relative h-full min-h-0 w-full touch-none overflow-auto overscroll-contain bg-[#eef1f5] outline-none select-none focus-visible:ring-2 focus-visible:ring-inset dark:bg-slate-950',
+        isPanning ? 'cursor-grabbing' : 'cursor-default'
+      )}
       role="application"
       aria-label="Mặt bằng kho tương tác"
       aria-describedby="warehouse-canvas-instructions"
       tabIndex={0}
       style={{
-        cursor: 'default',
         backgroundImage: 'radial-gradient(circle, rgba(148, 163, 184, 0.28) 1px, transparent 1px)',
         backgroundSize: '16px 16px',
       }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onSelect(null)
       }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       onDragOver={(event) => {
         if (hasLayoutDragData(event.dataTransfer)) event.preventDefault()
       }}
@@ -807,6 +886,9 @@ export function WarehouseCanvas({
               scaleX={scale}
               scaleY={scale}
               draggable={false}
+              onClick={(event) => {
+                if (mode === 'viewer' && event.evt.ctrlKey) event.cancelBubble = true
+              }}
               onWheel={handleWheel}
               onTouchMove={handleTouchMove}
               onTouchEnd={() => {
@@ -940,7 +1022,7 @@ export function WarehouseCanvas({
           </div>
         </div>
       ) : null}
-      {scene.slots.length > 0 ? (
+      {mode !== 'viewer' && scene.slots.length > 0 ? (
         <div className="bg-card/95 pointer-events-none absolute bottom-3 left-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 text-[11px]">
           <span className="inline-flex items-center gap-1.5">
             <span className="bg-accent size-2.5 rounded-[2px] border" aria-hidden="true" />
@@ -968,7 +1050,8 @@ function renderRackSlots(
   slots: WarehouseLayoutEditorScene['slots'],
   palette: CanvasPalette,
   selection: WarehouseLayoutSelection | null,
-  onSelect: (selection: WarehouseLayoutSelection | null) => void
+  onSelect: (selection: WarehouseLayoutSelection | null) => void,
+  mode: 'designer' | 'viewer'
 ) {
   if (slots.length === 0 || rack.width < 60 || rack.height < 45) return null
   const gap = 3
@@ -988,15 +1071,24 @@ function renderRackSlots(
     const x = 10 + (index % columns) * (slotWidth + gap)
     const y = 42 + Math.floor(index / columns) * (slotHeight + gap)
     const selected = isSelected(selection, 'slot', slot.id)
-    const fill = selected
-      ? palette.warningContainer
-      : !slot.isActive
-        ? palette.muted
-        : slot.occupancyStatus === 'Vacant'
-          ? palette.card
-          : slot.occupancyStatus === 'Reserved'
-            ? palette.warningContainer
-            : palette.accent
+    const fill =
+      mode === 'viewer'
+        ? selected
+          ? palette.viewerSelected
+          : !slot.isActive
+            ? palette.muted
+            : slot.currentOccupancy > 0
+              ? palette.viewerOccupied
+              : palette.card
+        : selected
+          ? palette.warningContainer
+          : !slot.isActive
+            ? palette.muted
+            : slot.occupancyStatus === 'Vacant'
+              ? palette.card
+              : slot.occupancyStatus === 'Reserved'
+                ? palette.warningContainer
+                : palette.accent
     return (
       <Group
         key={slot.id}
@@ -1017,7 +1109,13 @@ function renderRackSlots(
           height={slotHeight}
           fill={fill}
           opacity={slot.isActive ? 1 : 0.55}
-          stroke={selected ? palette.warning : palette.border}
+          stroke={
+            selected
+              ? mode === 'viewer'
+                ? palette.viewerSelected
+                : palette.warning
+              : palette.border
+          }
           strokeWidth={selected ? 2 : 1}
           cornerRadius={2}
         />
@@ -1031,7 +1129,7 @@ function renderRackSlots(
               slotWidth * 0.72,
               slotHeight * 0.32,
             ]}
-            stroke={palette.warning}
+            stroke={mode === 'viewer' ? palette.viewerSelectedForeground : palette.warning}
             strokeWidth={1.5}
             lineCap="round"
             lineJoin="round"

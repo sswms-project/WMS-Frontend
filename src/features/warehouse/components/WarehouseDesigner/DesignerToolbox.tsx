@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
@@ -143,11 +144,11 @@ export function DesignerToolbox({
         <h2 className="text-base font-semibold">
           {mode === 'viewer' ? 'Danh sách vị trí' : 'Chọn biểu tượng'}
         </h2>
-        <p className="text-muted-foreground mt-0.5 text-[11px]">
-          {mode === 'viewer'
-            ? 'Chọn vị trí để xem hàng hóa và đối chiếu trên sơ đồ.'
-            : 'Nhấn hoặc kéo thả biểu tượng để thêm vào sơ đồ.'}
-        </p>
+        {mode === 'designer' ? (
+          <p className="text-muted-foreground mt-0.5 text-[11px]">
+            Nhấn hoặc kéo thả biểu tượng để thêm vào sơ đồ.
+          </p>
+        ) : null}
       </div>
       {mode === 'viewer' ? (
         <div className="shrink-0 px-3 pb-3">
@@ -281,6 +282,7 @@ export function DesignerToolbox({
           <SceneOutlineTree
             scene={scene}
             selection={selection}
+            mode={mode}
             query={searchTerm}
             title="Cấu trúc vị trí"
             showDecorations={false}
@@ -297,11 +299,12 @@ type OutlineIdUpdater = (id: string, open: boolean) => void
 function SceneOutlineTree({
   scene: sourceScene,
   selection,
+  mode,
   query,
   title,
   showDecorations,
   onSelect,
-}: Pick<DesignerToolboxProps, 'scene' | 'selection' | 'onSelect'> & {
+}: Pick<DesignerToolboxProps, 'scene' | 'selection' | 'onSelect' | 'mode'> & {
   readonly query: string
   readonly title: string
   readonly showDecorations: boolean
@@ -405,6 +408,12 @@ function SceneOutlineTree({
                     racks={racks}
                     slotsByRackId={slotsByRackId}
                     selection={selection}
+                    hasStock={
+                      mode === 'viewer' &&
+                      scene.slots.some(
+                        (slot) => slot.zoneId === zone.id && slot.currentOccupancy > 0
+                      )
+                    }
                     isOpen={isZoneOpen(zone.id)}
                     isRackOpen={isRackOpen}
                     onOpenChange={(open) => updateZoneOpen(zone.id, open)}
@@ -452,6 +461,9 @@ function SceneOutlineTree({
                       rack={rack}
                       slots={slotsByRackId.get(rack.id) ?? []}
                       selection={selection}
+                      hasStock={(slotsByRackId.get(rack.id) ?? []).some(
+                        (slot) => slot.currentOccupancy > 0
+                      )}
                       isOpen={isRackOpen(rack.id)}
                       onOpenChange={(open) => updateRackOpen(rack.id, open)}
                       onSelect={onSelect}
@@ -463,6 +475,7 @@ function SceneOutlineTree({
                         label={slot.slotCode}
                         detail="Không tìm thấy kệ hàng"
                         selected={selection?.kind === 'slot' && selection.id === slot.id}
+                        hasStock={slot.currentOccupancy > 0}
                         icon={<MapPin aria-hidden="true" />}
                         onClick={() => onSelect({ kind: 'slot', id: slot.id })}
                       />
@@ -483,6 +496,7 @@ function ZoneTreeItem({
   racks,
   slotsByRackId,
   selection,
+  hasStock,
   isOpen,
   isRackOpen,
   onOpenChange,
@@ -493,6 +507,7 @@ function ZoneTreeItem({
   readonly racks: WarehouseLayoutEditorScene['racks']
   readonly slotsByRackId: ReadonlyMap<string, WarehouseLayoutEditorScene['slots']>
   readonly selection: WarehouseLayoutSelection | null
+  readonly hasStock: boolean
   readonly isOpen: boolean
   readonly isRackOpen: (rackId: string) => boolean
   readonly onOpenChange: (open: boolean) => void
@@ -513,6 +528,7 @@ function ZoneTreeItem({
             detail={zone.zoneName}
             count={racks.length}
             selected={selection?.kind === 'zone' && selection.id === zone.id}
+            hasStock={hasStock}
             icon={<Layers3 aria-hidden="true" />}
             onClick={() => onSelect({ kind: 'zone', id: zone.id })}
           />
@@ -525,6 +541,9 @@ function ZoneTreeItem({
                 rack={rack}
                 slots={slotsByRackId.get(rack.id) ?? []}
                 selection={selection}
+                hasStock={(slotsByRackId.get(rack.id) ?? []).some(
+                  (slot) => slot.currentOccupancy > 0
+                )}
                 isOpen={isRackOpen(rack.id)}
                 onOpenChange={(open) => onRackOpenChange(rack.id, open)}
                 onSelect={onSelect}
@@ -541,6 +560,7 @@ function RackTreeItem({
   rack,
   slots,
   selection,
+  hasStock,
   isOpen,
   onOpenChange,
   onSelect,
@@ -548,6 +568,7 @@ function RackTreeItem({
   readonly rack: WarehouseLayoutEditorScene['racks'][number]
   readonly slots: WarehouseLayoutEditorScene['slots']
   readonly selection: WarehouseLayoutSelection | null
+  readonly hasStock: boolean
   readonly isOpen: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly onSelect: DesignerToolboxProps['onSelect']
@@ -566,6 +587,7 @@ function RackTreeItem({
             detail={rack.status === 'Active' ? rack.rackName : 'Ngừng hoạt động'}
             count={slots.length}
             selected={selection?.kind === 'rack' && selection.id === rack.id}
+            hasStock={hasStock}
             icon={<Rows3 aria-hidden="true" />}
             onClick={() => onSelect({ kind: 'rack', id: rack.id })}
           />
@@ -578,6 +600,7 @@ function RackTreeItem({
                   label={slot.slotCode}
                   detail="Vị trí lưu trữ"
                   selected={selection?.kind === 'slot' && selection.id === slot.id}
+                  hasStock={slot.currentOccupancy > 0}
                   icon={<MapPin aria-hidden="true" />}
                   onClick={() => onSelect({ kind: 'slot', id: slot.id })}
                 />
@@ -759,6 +782,7 @@ function OutlineButton({
   label,
   detail,
   selected,
+  hasStock = false,
   icon,
   count,
   onClick,
@@ -766,6 +790,7 @@ function OutlineButton({
   readonly label: string
   readonly detail: string
   readonly selected: boolean
+  readonly hasStock?: boolean
   readonly icon: React.ReactNode
   readonly count?: number
   readonly onClick: () => void
@@ -780,9 +805,16 @@ function OutlineButton({
     <Button
       ref={buttonRef}
       type="button"
-      variant={selected ? 'secondary' : 'ghost'}
+      variant="ghost"
       size="sm"
-      className="h-auto w-full min-w-0 justify-start py-1.5 [contain-intrinsic-size:32px] [content-visibility:auto]"
+      className={cn(
+        'h-auto w-full min-w-0 justify-start border border-transparent py-1.5 [contain-intrinsic-size:32px] [content-visibility:auto]',
+        selected
+          ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
+          : hasStock
+            ? 'bg-secondary-container text-secondary-foreground hover:bg-secondary-container/80'
+            : 'bg-card text-card-foreground hover:bg-muted'
+      )}
       aria-pressed={selected}
       onClick={onClick}
     >
@@ -791,10 +823,24 @@ function OutlineButton({
         <span translate="no" className="block truncate font-mono text-xs">
           {label}
         </span>
-        <span className="text-muted-foreground block truncate text-[10px]">{detail}</span>
+        <span
+          className={cn(
+            'block truncate text-[10px]',
+            selected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+          )}
+        >
+          {detail}
+        </span>
       </span>
       {count !== undefined ? (
-        <span className="text-muted-foreground ml-auto shrink-0 tabular-nums">{count}</span>
+        <span
+          className={cn(
+            'ml-auto shrink-0 tabular-nums',
+            selected ? 'text-primary-foreground' : 'text-muted-foreground'
+          )}
+        >
+          {count}
+        </span>
       ) : null}
     </Button>
   )
