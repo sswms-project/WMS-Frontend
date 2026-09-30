@@ -7,6 +7,7 @@ import {
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import {
@@ -23,6 +24,7 @@ import type { ReceivingTask } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
 import {
   formatOperationalDate,
+  formatOperationalDateTime,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 
@@ -32,10 +34,14 @@ interface ReceivingTaskDirectoryProps {
   readonly page: number
   readonly pageSize: number
   readonly searchText: string
+  readonly createdFrom: string
+  readonly createdTo: string
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
   readonly onSearchChange: (value: string) => void
+  readonly onCreatedFromChange: (value: string) => void
+  readonly onCreatedToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onReceive: (task: ReceivingTask) => void
@@ -56,10 +62,14 @@ export function ReceivingTaskDirectory({
   page,
   pageSize,
   searchText,
+  createdFrom,
+  createdTo,
   isLoading,
   isFetching,
   isError,
   onSearchChange,
+  onCreatedFromChange,
+  onCreatedToChange,
   onPageChange,
   onPageSizeChange,
   onReceive,
@@ -73,6 +83,7 @@ export function ReceivingTaskDirectory({
 }: ReceivingTaskDirectoryProps) {
   function renderActions(item: ReceivingTask, layout: 'row' | 'stack') {
     const isMine = Boolean(currentUserId) && item.assignedTo === currentUserId
+    const receiptPendingApproval = item.activeGoodsReceiptStatus === 'PendingApproval'
     return (
       <div className={layout === 'row' ? 'flex justify-end gap-2' : 'flex shrink-0 flex-col gap-1'}>
         {canAssign && (
@@ -100,10 +111,15 @@ export function ReceivingTaskDirectory({
             >
               {item.activeDocumentImportId ? 'Tiếp tục chứng từ' : 'Nhập từ chứng từ'}
             </Button>
-            <Button type="button" size="sm" onClick={() => onReceive(item)}>
-              <PackagePlus aria-hidden="true" />
-              Nhập thủ công
-            </Button>
+            {!receiptPendingApproval && (
+              <Button type="button" size="sm" onClick={() => onReceive(item)}>
+                <PackagePlus aria-hidden="true" />
+                Nhập thủ công
+              </Button>
+            )}
+            {receiptPendingApproval && (
+              <span className="text-muted-foreground text-xs">Phiếu nhập đang chờ duyệt</span>
+            )}
           </>
         )}
         {!canAssign && !isMine && (
@@ -136,6 +152,28 @@ export function ReceivingTaskDirectory({
               <ToggleGroupItem value="unassigned">Chưa giao</ToggleGroupItem>
             </ToggleGroup>
           )}
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            Tạo từ
+            <Input
+              type="date"
+              aria-label="Lọc đơn từ ngày tạo"
+              className="w-36"
+              value={createdFrom}
+              max={createdTo || undefined}
+              onChange={(event) => onCreatedFromChange(event.target.value)}
+            />
+          </label>
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            Đến
+            <Input
+              type="date"
+              aria-label="Lọc đơn đến ngày tạo"
+              className="w-36"
+              value={createdTo}
+              min={createdFrom || undefined}
+              onChange={(event) => onCreatedToChange(event.target.value)}
+            />
+          </label>
           <InputGroup className="min-w-0 flex-1 sm:w-72">
             <InputGroupAddon>
               <Search aria-hidden="true" />
@@ -191,6 +229,9 @@ export function ReceivingTaskDirectory({
                     {item.supplierName} · {item.warehouseName}
                   </ItemDescription>
                   <ItemDescription>
+                    Tạo lúc {formatOperationalDateTime(item.createdAt)}
+                  </ItemDescription>
+                  <ItemDescription>
                     {formatQuantity(item.remainingQuantity)} còn nhận ·{' '}
                     {formatOperationalDate(item.expectedDate)}
                   </ItemDescription>
@@ -207,13 +248,14 @@ export function ReceivingTaskDirectory({
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[980px]">
+            <Table className="min-w-[1120px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky top-0 z-10">Mã PO</TableHead>
                   <TableHead className="sticky top-0 z-10">Nhà cung cấp</TableHead>
                   <TableHead className="sticky top-0 z-10">Kho nhận</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Đã nhận / Đặt</TableHead>
+                  <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
                   <TableHead className="sticky top-0 z-10">Ngày dự kiến</TableHead>
                   <TableHead className="sticky top-0 z-10">Người nhận việc</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
@@ -230,6 +272,9 @@ export function ReceivingTaskDirectory({
                     <TableCell className="text-right tabular-nums">
                       {formatQuantity(item.receivedQuantity)} /{' '}
                       {formatQuantity(item.orderedQuantity)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatOperationalDateTime(item.createdAt)}
                     </TableCell>
                     <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
                     <TableCell className="max-w-48">

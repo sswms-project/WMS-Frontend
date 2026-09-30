@@ -40,6 +40,7 @@ export const P = {
 
   // Inbound Requests
   INBOUND_REQUESTS_VIEW: 'inbound-requests:view',
+  INBOUND_REQUESTS_VIEW_DRAFT: 'inbound-requests:view-draft',
   INBOUND_REQUESTS_CREATE: 'inbound-requests:create',
   INBOUND_REQUESTS_EDIT: 'inbound-requests:edit',
   INBOUND_REQUESTS_DELETE: 'inbound-requests:delete',

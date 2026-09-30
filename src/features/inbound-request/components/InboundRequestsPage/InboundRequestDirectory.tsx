@@ -1,6 +1,16 @@
 'use client'
 
-import { ClipboardList, Copy, Eye, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
+import {
+  ClipboardList,
+  Copy,
+  Eye,
+  Plus,
+  RefreshCw,
+  Search,
+  Send,
+  Check,
+  Trash2,
+} from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import {
@@ -11,6 +21,7 @@ import { OperationalPagination } from '@/components/operations/OperationalPagina
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -31,14 +42,18 @@ import { inboundSourceLabels } from '../../schemas/inbound-request.schema'
 import {
   INBOUND_REQUEST_STATUS,
   type InboundRequestStatus,
+  type InboundRequestStatusCount,
   type InboundRequestSummary,
 } from '../../types/inbound-request.types'
 import {
   formatOperationalDate,
+  formatOperationalDateTime,
   formatQuantity,
   INBOUND_REQUEST_STATUS_LABELS,
 } from '../../utils/inbound-request-format'
 import { InboundRequestStatusBadge } from './InboundRequestStatusBadge'
+import { InboundRequestBulkActions } from './InboundRequestBulkActions'
+import { InboundRequestStatusStats } from './InboundRequestStatusStats'
 
 interface InboundRequestDirectoryProps {
   readonly items: readonly InboundRequestSummary[]
@@ -47,24 +62,38 @@ interface InboundRequestDirectoryProps {
   readonly pageSize: number
   readonly searchText: string
   readonly status: InboundRequestStatus | ''
+  readonly createdFrom: string
+  readonly createdTo: string
+  readonly statusCounts: readonly InboundRequestStatusCount[]
   readonly isLoading: boolean
+  readonly isStatsError: boolean
   readonly isFetching: boolean
   readonly isError: boolean
   readonly canDelete: boolean
   readonly canCreate: boolean
+  readonly canSubmit: boolean
+  readonly canApprove: boolean
   readonly isDeleting: boolean
+  readonly isSubmitting: boolean
+  readonly isApproving: boolean
   readonly isDuplicating: boolean
   readonly selectedIds: readonly string[]
   readonly isDeletingMany: boolean
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: InboundRequestStatus | '') => void
+  readonly onCreatedFromChange: (value: string) => void
+  readonly onCreatedToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
   readonly onDelete: (item: InboundRequestSummary) => void
+  readonly onSubmit: (item: InboundRequestSummary) => void
+  readonly onApprove: (item: InboundRequestSummary) => void
   readonly onDuplicate: (item: InboundRequestSummary) => void
   readonly onSelectionChange: (ids: readonly string[]) => void
-  readonly onDeleteMany: () => void
+  readonly onDeleteMany: (ids: readonly string[]) => void
+  readonly onSubmitMany: (ids: readonly string[]) => void
+  readonly onApproveMany: (ids: readonly string[]) => void
 }
 
 export function InboundRequestDirectory({
@@ -74,31 +103,69 @@ export function InboundRequestDirectory({
   pageSize,
   searchText,
   status,
+  createdFrom,
+  createdTo,
+  statusCounts,
   isLoading,
+  isStatsError,
   isFetching,
   isError,
   canDelete,
   canCreate,
+  canSubmit,
+  canApprove,
   isDeleting,
+  isSubmitting,
+  isApproving,
   isDuplicating,
   selectedIds,
   isDeletingMany,
   onSearchChange,
   onStatusChange,
+  onCreatedFromChange,
+  onCreatedToChange,
   onPageChange,
   onPageSizeChange,
   onRetry,
   onDelete,
+  onSubmit,
+  onApprove,
   onDuplicate,
   onSelectionChange,
   onDeleteMany,
+  onSubmitMany,
+  onApproveMany,
 }: InboundRequestDirectoryProps) {
-  const selectableItems = canDelete
-    ? items.filter((item) => item.status === INBOUND_REQUEST_STATUS.Draft)
+  const selectableItems = items.filter(
+    (item) =>
+      (item.status === INBOUND_REQUEST_STATUS.Draft && (canDelete || canSubmit)) ||
+      (item.status === INBOUND_REQUEST_STATUS.PendingApproval && canApprove)
+  )
+  const selectedStatus = items.find((item) => selectedIds.includes(item.id))?.status ?? null
+  const headerSelectionStatus =
+    selectedStatus ??
+    selectableItems.find((item) => item.status === INBOUND_REQUEST_STATUS.Draft)?.status ??
+    selectableItems[0]?.status ??
+    null
+  const selectAllIds = selectableItems
+    .filter((item) => item.status === headerSelectionStatus)
+    .map((item) => item.id)
+  const selectedIdsForStatus = selectedStatus
+    ? selectedIds.filter((id) =>
+        items.some((item) => item.id === id && item.status === selectedStatus)
+      )
     : []
+  const selectedDraftIds =
+    selectedStatus === INBOUND_REQUEST_STATUS.Draft ? selectedIdsForStatus : []
+  const selectedPendingIds =
+    selectedStatus === INBOUND_REQUEST_STATUS.PendingApproval ? selectedIdsForStatus : []
   const allSelected =
-    selectableItems.length > 0 && selectableItems.every((item) => selectedIds.includes(item.id))
-  const someSelected = selectedIds.length > 0
+    selectAllIds.length > 0 && selectAllIds.every((id) => selectedIds.includes(id))
+  const hasSelectionActions = canDelete || canSubmit || canApprove
+  const showDraftActions =
+    headerSelectionStatus === INBOUND_REQUEST_STATUS.Draft && (canSubmit || canDelete)
+  const showApproveAction =
+    headerSelectionStatus === INBOUND_REQUEST_STATUS.PendingApproval && canApprove
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -111,18 +178,26 @@ export function InboundRequestDirectory({
             <h1 className="mt-0.5 text-xl font-semibold">Yêu cầu nhập kho</h1>
           </div>
         </div>
-        <Button asChild className="w-full sm:w-auto">
-          <Link href={APP_ROUTES.inboundRequestCreate as Route}>
-            <Plus aria-hidden="true" />
-            Tạo yêu cầu nhập kho
-          </Link>
-        </Button>
+        {canCreate ? (
+          <Button asChild className="w-full sm:w-auto">
+            <Link href={APP_ROUTES.inboundRequestCreate as Route}>
+              <Plus aria-hidden="true" />
+              Tạo yêu cầu nhập kho
+            </Link>
+          </Button>
+        ) : null}
       </header>
 
-      <OperationalListPanel aria-labelledby="po-directory-title">
+      <InboundRequestStatusStats
+        counts={statusCounts}
+        isLoading={isLoading}
+        isError={isStatsError}
+      />
+
+      <OperationalListPanel aria-labelledby="inbound-request-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 id="po-directory-title" className="text-sm font-semibold">
+            <h2 id="inbound-request-directory-title" className="text-sm font-semibold">
               Danh sách yêu cầu nhập kho
             </h2>
             <p className="text-muted-foreground text-xs tabular-nums">{totalCount} đơn</p>
@@ -152,6 +227,28 @@ export function InboundRequestDirectory({
                 </NativeSelectOption>
               ))}
             </NativeSelect>
+            <label className="text-muted-foreground flex items-center gap-2 text-xs">
+              Tạo từ
+              <Input
+                type="date"
+                aria-label="Lọc từ ngày tạo"
+                className="w-36"
+                value={createdFrom}
+                max={createdTo || undefined}
+                onChange={(event) => onCreatedFromChange(event.target.value)}
+              />
+            </label>
+            <label className="text-muted-foreground flex items-center gap-2 text-xs">
+              Đến
+              <Input
+                type="date"
+                aria-label="Lọc đến ngày tạo"
+                className="w-36"
+                value={createdTo}
+                min={createdFrom || undefined}
+                onChange={(event) => onCreatedToChange(event.target.value)}
+              />
+            </label>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -169,30 +266,26 @@ export function InboundRequestDirectory({
               </TooltipTrigger>
               <TooltipContent>Tải lại</TooltipContent>
             </Tooltip>
-            {canDelete ? (
-              <>
-                <span className="text-sm whitespace-nowrap">
-                  Đã chọn <strong>{selectedIds.length}</strong>
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={!someSelected || isDeletingMany}
-                  onClick={() => onSelectionChange([])}
-                >
-                  Bỏ chọn
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={!someSelected || isDeletingMany}
-                  onClick={onDeleteMany}
-                >
-                  <Trash2 aria-hidden="true" />
-                  {isDeletingMany ? 'Đang xoá…' : 'Xoá'}
-                </Button>
-              </>
-            ) : null}
+            <InboundRequestBulkActions
+              hasActions={hasSelectionActions}
+              selectedCount={selectedIdsForStatus.length}
+              selectedStatusLabel={
+                selectedStatus ? INBOUND_REQUEST_STATUS_LABELS[selectedStatus] : null
+              }
+              showDraftActions={showDraftActions}
+              showApproveAction={showApproveAction}
+              canDelete={canDelete}
+              canSubmit={canSubmit}
+              draftIds={selectedDraftIds}
+              pendingIds={selectedPendingIds}
+              isDeletingMany={isDeletingMany}
+              isSubmitting={isSubmitting}
+              isApproving={isApproving}
+              onClearSelection={() => onSelectionChange([])}
+              onDeleteMany={onDeleteMany}
+              onSubmitMany={onSubmitMany}
+              onApproveMany={onApproveMany}
+            />
           </div>
         </div>
 
@@ -219,11 +312,21 @@ export function InboundRequestDirectory({
               items={items}
               canDelete={canDelete}
               canCreate={canCreate}
+              canSubmit={canSubmit}
+              canApprove={canApprove}
               isDeleting={isDeleting}
+              isSubmitting={isSubmitting}
+              isApproving={isApproving}
+              isDeletingMany={isDeletingMany}
+              selectedStatus={selectedStatus}
+              selectAllStatus={headerSelectionStatus}
+              selectAllIds={selectAllIds}
               isDuplicating={isDuplicating}
               selectedIds={selectedIds}
               allSelected={allSelected}
               onDelete={onDelete}
+              onSubmit={onSubmit}
+              onApprove={onApprove}
               onDuplicate={onDuplicate}
               onSelectionChange={onSelectionChange}
             />
@@ -251,7 +354,7 @@ function receivedPercent(item: InboundRequestSummary) {
 function InboundRequestTableSkeleton() {
   return (
     <div className="flex-1 overflow-hidden" aria-label="Đang tải danh sách yêu cầu nhập kho">
-      <Table className="min-w-[1120px] table-fixed">
+      <Table className="min-w-[1360px] table-fixed">
         <TableHeader>
           <TableRow>
             <TableHead className="sticky top-0 z-10 w-12">
@@ -263,6 +366,7 @@ function InboundRequestTableSkeleton() {
               'Kho nhận',
               'Trạng thái',
               'Tiến độ nhận',
+              'Ngày tạo',
               'Ngày dự kiến',
               'Thao tác',
             ].map((heading) => (
@@ -286,11 +390,17 @@ function InboundRequestTableSkeleton() {
                 <Skeleton className="h-4 w-32" />
               </TableCell>
               <TableCell>
+                <Skeleton className="h-4 w-28" />
+              </TableCell>
+              <TableCell>
                 <Skeleton className="h-5 w-20" />
               </TableCell>
               <TableCell>
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="mt-2 h-2 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-28" />
               </TableCell>
               <TableCell>
                 <Skeleton className="h-4 w-24" />
@@ -349,6 +459,14 @@ function InboundRequestMobileList({
                 href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
                 className="hover:text-primary"
               >
+                Tạo lúc {formatOperationalDateTime(item.createdAt)}
+              </Link>
+            </ItemDescription>
+            <ItemDescription>
+              <Link
+                href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
+                className="hover:text-primary"
+              >
                 {item.supplierName ?? item.sourceName ?? 'Chưa xác định nguồn'} ·{' '}
                 {item.warehouseName ?? 'Chưa xác định kho'}
               </Link>
@@ -373,46 +491,58 @@ function InboundRequestDesktopTable({
   items,
   canDelete,
   canCreate,
+  canSubmit,
+  canApprove,
   isDeleting,
+  isSubmitting,
+  isApproving,
+  isDeletingMany,
+  selectedStatus,
+  selectAllStatus,
+  selectAllIds,
   isDuplicating,
   selectedIds,
   allSelected,
   onDelete,
+  onSubmit,
+  onApprove,
   onDuplicate,
   onSelectionChange,
 }: {
   readonly items: readonly InboundRequestSummary[]
   readonly canDelete: boolean
   readonly canCreate: boolean
+  readonly canSubmit: boolean
+  readonly canApprove: boolean
   readonly isDeleting: boolean
+  readonly isSubmitting: boolean
+  readonly isApproving: boolean
+  readonly isDeletingMany: boolean
+  readonly selectedStatus: InboundRequestStatus | null
+  readonly selectAllStatus: InboundRequestStatus | null
+  readonly selectAllIds: readonly string[]
   readonly isDuplicating: boolean
   readonly selectedIds: readonly string[]
   readonly allSelected: boolean
   readonly onDelete: (item: InboundRequestSummary) => void
+  readonly onSubmit: (item: InboundRequestSummary) => void
+  readonly onApprove: (item: InboundRequestSummary) => void
   readonly onDuplicate: (item: InboundRequestSummary) => void
   readonly onSelectionChange: (ids: readonly string[]) => void
 }) {
   return (
     <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-      <Table className="min-w-[1120px] table-fixed">
+      <Table className="min-w-[1360px] table-fixed">
         <TableHeader>
           <TableRow>
             <TableHead className="sticky top-0 z-10 w-12">
               <Checkbox
-                aria-label="Chọn tất cả phiếu nháp trên trang"
+                aria-label={`Chọn tất cả ${selectAllStatus ? INBOUND_REQUEST_STATUS_LABELS[selectAllStatus] : 'yêu cầu nhập kho'} trên trang`}
                 checked={allSelected}
                 disabled={
-                  !canDelete || !items.some((item) => item.status === INBOUND_REQUEST_STATUS.Draft)
+                  selectAllIds.length === 0 || isDeletingMany || isSubmitting || isApproving
                 }
-                onCheckedChange={(checked) =>
-                  onSelectionChange(
-                    checked
-                      ? items
-                          .filter((item) => item.status === INBOUND_REQUEST_STATUS.Draft)
-                          .map((item) => item.id)
-                      : []
-                  )
-                }
+                onCheckedChange={(checked) => onSelectionChange(checked ? selectAllIds : [])}
               />
             </TableHead>
             <TableHead className="sticky top-0 z-10 w-64">Mã yêu cầu</TableHead>
@@ -420,6 +550,7 @@ function InboundRequestDesktopTable({
             <TableHead className="sticky top-0 z-10 w-40">Kho nhận</TableHead>
             <TableHead className="sticky top-0 z-10 w-32">Trạng thái</TableHead>
             <TableHead className="sticky top-0 z-10 w-36">Tiến độ nhận</TableHead>
+            <TableHead className="sticky top-0 z-10 w-48">Ngày tạo</TableHead>
             <TableHead className="sticky top-0 z-10 w-32">Ngày dự kiến</TableHead>
             <TableHead className="sticky top-0 z-10 w-24">
               <span className="sr-only">Thao tác</span>
@@ -430,11 +561,17 @@ function InboundRequestDesktopTable({
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell>
-                {item.status === INBOUND_REQUEST_STATUS.Draft ? (
+                {(item.status === INBOUND_REQUEST_STATUS.Draft && (canDelete || canSubmit)) ||
+                (item.status === INBOUND_REQUEST_STATUS.PendingApproval && canApprove) ? (
                   <Checkbox
                     aria-label={`Chọn ${item.inboundRequestCode}`}
                     checked={selectedIds.includes(item.id)}
-                    disabled={!canDelete}
+                    disabled={
+                      isDeletingMany ||
+                      isSubmitting ||
+                      isApproving ||
+                      (selectedStatus !== null && item.status !== selectedStatus)
+                    }
                     onCheckedChange={(checked) =>
                       onSelectionChange(
                         checked
@@ -508,6 +645,14 @@ function InboundRequestDesktopTable({
               <TableCell>
                 <Link
                   href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
+                  className="hover:text-primary block whitespace-nowrap"
+                >
+                  {formatOperationalDateTime(item.createdAt)}
+                </Link>
+              </TableCell>
+              <TableCell>
+                <Link
+                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
                   className="hover:text-primary block"
                 >
                   {formatOperationalDate(item.expectedDate)}
@@ -543,6 +688,40 @@ function InboundRequestDesktopTable({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Sao chép yêu cầu</TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                  {canApprove && item.status === INBOUND_REQUEST_STATUS.PendingApproval ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Duyệt ${item.inboundRequestCode}`}
+                          disabled={isApproving}
+                          onClick={() => onApprove(item)}
+                        >
+                          <Check className="text-primary" aria-hidden="true" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Duyệt yêu cầu</TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                  {canSubmit && item.status === INBOUND_REQUEST_STATUS.Draft ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Gửi duyệt ${item.inboundRequestCode}`}
+                          disabled={isSubmitting}
+                          onClick={() => onSubmit(item)}
+                        >
+                          <Send className="text-primary" aria-hidden="true" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Gửi duyệt</TooltipContent>
                     </Tooltip>
                   ) : null}
                   {canDelete && item.status === INBOUND_REQUEST_STATUS.Draft ? (

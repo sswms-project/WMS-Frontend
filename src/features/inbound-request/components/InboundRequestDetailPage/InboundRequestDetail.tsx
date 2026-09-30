@@ -45,6 +45,22 @@ interface InboundRequestDetailProps {
   readonly onReject: (reason: string) => Promise<boolean>
 }
 
+const INBOUND_REQUEST_HISTORY_ACTION_LABELS: Readonly<Record<string, string>> = {
+  Approve: 'Phê duyệt yêu cầu',
+  AssignReceivingTask: 'Phân công nhiệm vụ nhận hàng',
+  Create: 'Tạo yêu cầu nhập kho',
+  Delete: 'Xóa yêu cầu nhập kho',
+  Duplicate: 'Sao chép yêu cầu nhập kho',
+  PauseWarehouseTask: 'Tạm dừng nhiệm vụ nhận hàng',
+  Receive: 'Tiếp nhận hàng',
+  ReassignReceivingTask: 'Phân công lại nhiệm vụ nhận hàng',
+  Reject: 'Từ chối yêu cầu',
+  ReturnWarehouseTask: 'Trả nhiệm vụ nhận hàng về hàng đợi',
+  StartWarehouseTask: 'Bắt đầu nhiệm vụ nhận hàng',
+  Submit: 'Gửi yêu cầu duyệt',
+  Update: 'Cập nhật yêu cầu',
+}
+
 export function InboundRequestDetail({
   inboundRequest,
   allowedActions,
@@ -145,11 +161,27 @@ export function InboundRequestDetail({
 
       <InboundRequestLines lines={inboundRequest.lines} />
 
-      <section className="bg-card border p-4" aria-labelledby="inbound-request-history">
-        <h2 id="inbound-request-history" className="mb-4 text-sm font-semibold">
-          Lịch sử xử lý
-        </h2>
-        <LifecycleTimeline events={inboundRequest.history} />
+      <section
+        className="bg-card rounded-lg border p-4 sm:p-5"
+        aria-labelledby="inbound-request-history"
+      >
+        <header className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <h2 id="inbound-request-history" className="text-base font-semibold">
+              Lịch sử xử lý
+            </h2>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Các thay đổi đã thực hiện trên yêu cầu nhập kho
+            </p>
+          </div>
+          <span className="bg-muted text-muted-foreground shrink-0 rounded-sm px-2 py-1 text-xs font-medium">
+            {inboundRequest.history.length} hoạt động
+          </span>
+        </header>
+        <LifecycleTimeline
+          events={inboundRequest.history}
+          actionLabels={INBOUND_REQUEST_HISTORY_ACTION_LABELS}
+        />
       </section>
 
       <AlertDialog

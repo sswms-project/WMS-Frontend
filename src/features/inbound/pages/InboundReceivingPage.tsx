@@ -15,6 +15,7 @@ import {
   InboundDocumentImportDialog,
   ReceiveGoodsDialog,
   ReceivingTaskDirectory,
+  ReceivingTaskStatsCards,
   type ReceivingAssignmentFilter,
 } from '../components/ReceivingPage'
 import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
@@ -36,12 +37,18 @@ import {
 } from '../schemas/inbound-document-import.schema'
 import { goodsReceiptSchema, type GoodsReceiptFormValues } from '../schemas/inbound.schema'
 import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.types'
+import {
+  toOperationalDateTimeEnd,
+  toOperationalDateTimeStart,
+} from '@/features/inbound-request/utils/inbound-request-format'
 
 export default function InboundReceivingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
   const [searchText, setSearchText] = useState(() => searchParams.get('search') ?? '')
+  const [createdFrom, setCreatedFrom] = useState('')
+  const [createdTo, setCreatedTo] = useState('')
   const [assignmentFilter, setAssignmentFilter] = useState<ReceivingAssignmentFilter>('all')
   const assignment = useAssignWarehouseTask()
   const [page, setPage] = useState(1)
@@ -58,6 +65,8 @@ export default function InboundReceivingPage() {
     pageNumber: page,
     pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
+    ...(createdFrom ? { createdFrom: toOperationalDateTimeStart(createdFrom) } : {}),
+    ...(createdTo ? { createdTo: toOperationalDateTimeEnd(createdTo) } : {}),
     ...(canAssign && assignmentFilter === 'unassigned' ? { unassigned: true } : {}),
   })
   const createMutation = useCreateGoodsReceiptMutation()
@@ -282,17 +291,32 @@ export default function InboundReceivingPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <InboundPageHeader title="Nhập kho" />
+      <ReceivingTaskStatsCards
+        taskStats={query.data?.taskStats ?? null}
+        isLoading={query.isFetching}
+        isError={query.isError}
+      />
       <ReceivingTaskDirectory
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
         pageSize={pageSize}
         searchText={searchText}
-        isLoading={query.isLoading}
+        createdFrom={createdFrom}
+        createdTo={createdTo}
+        isLoading={query.isFetching}
         isFetching={query.isFetching}
         isError={query.isError}
         onSearchChange={(value) => {
           setSearchText(value)
+          setPage(1)
+        }}
+        onCreatedFromChange={(value) => {
+          setCreatedFrom(value)
+          setPage(1)
+        }}
+        onCreatedToChange={(value) => {
+          setCreatedTo(value)
           setPage(1)
         }}
         onPageChange={setPage}

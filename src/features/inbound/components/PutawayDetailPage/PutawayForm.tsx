@@ -162,7 +162,9 @@ export function PutawayForm({
                       })
                     }
                   >
-                    <NativeSelectOption value="">Chọn vị trí</NativeSelectOption>
+                    <NativeSelectOption value="">
+                      {slots.length > 0 ? 'Chọn vị trí' : 'Không có vị trí khả dụng'}
+                    </NativeSelectOption>
                     {slots.map((slot) => (
                       <NativeSelectOption key={slot.id} value={slot.id}>
                         {slot.code} · {slot.hierarchy} · trống{' '}
