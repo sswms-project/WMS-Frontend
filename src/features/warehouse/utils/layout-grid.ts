@@ -71,9 +71,10 @@ export function normalizeLayoutGeometry(
 
 export function constrainLayoutGeometryToCanvas(
   geometry: WarehouseLayoutGeometry,
-  canvas: WarehouseLayoutCanvas
+  canvas: WarehouseLayoutCanvas,
+  shouldSnap = true
 ): WarehouseLayoutGeometry {
-  const normalized = normalizeLayoutGeometry(geometry, canvas)
+  const normalized = normalizeLayoutGeometry(geometry, canvas, shouldSnap)
   let constrained = {
     ...normalized,
     width: Math.min(normalized.width, canvas.width),
@@ -84,16 +85,14 @@ export function constrainLayoutGeometryToCanvas(
   const projectedHeight = projectedBounds.maxY - projectedBounds.minY
   const scaleToFit = Math.min(1, canvas.width / projectedWidth, canvas.height / projectedHeight)
   if (scaleToFit < 1) {
+    const scaleDimension = (value: number) =>
+      shouldSnap
+        ? Math.floor((value * scaleToFit) / canvas.gridSize) * canvas.gridSize
+        : value * scaleToFit
     constrained = {
       ...constrained,
-      width: Math.max(
-        MIN_LAYOUT_OBJECT_SIZE,
-        Math.floor((constrained.width * scaleToFit) / canvas.gridSize) * canvas.gridSize
-      ),
-      height: Math.max(
-        MIN_LAYOUT_OBJECT_SIZE,
-        Math.floor((constrained.height * scaleToFit) / canvas.gridSize) * canvas.gridSize
-      ),
+      width: Math.max(MIN_LAYOUT_OBJECT_SIZE, scaleDimension(constrained.width)),
+      height: Math.max(MIN_LAYOUT_OBJECT_SIZE, scaleDimension(constrained.height)),
     }
   }
   const bounds = getLayoutGeometryBounds(constrained)
@@ -103,8 +102,8 @@ export function constrainLayoutGeometryToCanvas(
     bounds.minY < 0 ? -bounds.minY : bounds.maxY > canvas.height ? canvas.height - bounds.maxY : 0
   constrained = {
     ...constrained,
-    x: snapToGrid(constrained.x + offsetX, canvas.gridSize),
-    y: snapToGrid(constrained.y + offsetY, canvas.gridSize),
+    x: shouldSnap ? snapToGrid(constrained.x + offsetX, canvas.gridSize) : constrained.x + offsetX,
+    y: shouldSnap ? snapToGrid(constrained.y + offsetY, canvas.gridSize) : constrained.y + offsetY,
   }
   const snappedBounds = getLayoutGeometryBounds(constrained)
   const finalOffsetX =
