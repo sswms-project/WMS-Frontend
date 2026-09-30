@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { constrainLayoutGeometryToCanvas, getLayoutGeometryBounds } from './layout-grid'
+import {
+  constrainLayoutGeometryToCanvas,
+  getLayoutGeometryBounds,
+  getRackPresetSize,
+} from './layout-grid'
 
 const canvas = { width: 1000, height: 600, gridSize: 20 }
 
@@ -50,5 +54,14 @@ describe('constrainLayoutGeometryToCanvas', () => {
     expect(bounds.minY).toBeGreaterThanOrEqual(0)
     expect(bounds.maxX).toBeLessThanOrEqual(canvas.width)
     expect(bounds.maxY).toBeLessThanOrEqual(canvas.height)
+  })
+})
+
+describe('getRackPresetSize', () => {
+  it('uses the same grid-based dimensions for mapped and newly placed racks', () => {
+    expect(getRackPresetSize('Standard', 20)).toEqual({ width: 260, height: 100 })
+    expect(getRackPresetSize('Vertical', 20)).toEqual({ width: 100, height: 260 })
+    expect(getRackPresetSize('CrossBraced', 20)).toEqual({ width: 240, height: 140 })
+    expect(getRackPresetSize('Pallet', 20)).toEqual({ width: 160, height: 160 })
   })
 })

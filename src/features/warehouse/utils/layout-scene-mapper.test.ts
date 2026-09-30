@@ -83,4 +83,37 @@ describe('layout scene mapper', () => {
     expect(request.racks[0]?.layoutShape).toBe('Pallet')
     expect(request.decorations[0]).toMatchObject({ x: 80, y: 80 })
   })
+
+  it('gives a physical rack the same preset size as a rack placed from the diagram palette', () => {
+    const mapped = mapWarehouseLayoutScene({
+      ...scene,
+      canvas: { width: 1000, height: 600, gridSize: 20 },
+      zones: [
+        {
+          ...scene.zones[0]!,
+          x: 40,
+          y: 40,
+          width: 600,
+          height: 400,
+        },
+      ],
+      racks: [
+        {
+          ...scene.racks[0]!,
+          layoutShape: null,
+          x: null,
+          y: null,
+          width: null,
+          height: null,
+        },
+      ],
+      decorations: [],
+    })
+
+    expect(mapped.editorScene.racks[0]).toMatchObject({
+      width: 260,
+      height: 100,
+      layoutShape: 'Standard',
+    })
+  })
 })

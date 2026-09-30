@@ -7,12 +7,10 @@ import type {
   WarehouseLayoutGeometry,
   WarehouseLayoutSceneResponse,
 } from '../types/warehouse-layout-scene.types'
-import { constrainLayoutGeometryToCanvas } from './layout-grid'
+import { constrainLayoutGeometryToCanvas, getRackPresetSize } from './layout-grid'
 
 const DEFAULT_ZONE_WIDTH = 520
 const DEFAULT_ZONE_HEIGHT = 320
-const DEFAULT_RACK_WIDTH = 160
-const DEFAULT_RACK_HEIGHT = 60
 
 function hasGeometry(object: {
   x: number | null
@@ -44,15 +42,16 @@ function getDefaultZoneGeometry(
 function getDefaultRackGeometry(
   rackIndex: number,
   zone: WarehouseLayoutEditorZone,
-  scene: WarehouseLayoutSceneResponse
+  scene: WarehouseLayoutSceneResponse,
+  layoutShape: WarehouseLayoutSceneResponse['racks'][number]['layoutShape']
 ): WarehouseLayoutGeometry {
-  const columns = Math.max(1, Math.floor(Math.max(zone.width - 60, 1) / (DEFAULT_RACK_WIDTH + 20)))
+  const rackSize = getRackPresetSize(layoutShape, scene.canvas.gridSize)
+  const columns = Math.max(1, Math.floor(Math.max(zone.width - 60, 1) / (rackSize.width + 20)))
   return constrainLayoutGeometryToCanvas(
     {
-      x: zone.x + 30 + (rackIndex % columns) * (DEFAULT_RACK_WIDTH + 20),
-      y: zone.y + 70 + Math.floor(rackIndex / columns) * (DEFAULT_RACK_HEIGHT + 24),
-      width: DEFAULT_RACK_WIDTH,
-      height: DEFAULT_RACK_HEIGHT,
+      x: zone.x + 30 + (rackIndex % columns) * (rackSize.width + 20),
+      y: zone.y + 70 + Math.floor(rackIndex / columns) * (rackSize.height + 24),
+      ...rackSize,
       rotation: 0,
       zIndex: 100 + rackIndex,
     },
@@ -83,13 +82,12 @@ export function mapWarehouseLayoutScene(scene: WarehouseLayoutSceneResponse): {
     const geometry = hasGeometry(rack)
       ? constrainLayoutGeometryToCanvas(rack, scene.canvas, false)
       : zone
-        ? getDefaultRackGeometry(rackIndex, zone, scene)
+        ? getDefaultRackGeometry(rackIndex, zone, scene, rack.layoutShape)
         : constrainLayoutGeometryToCanvas(
             {
               x: 40 + index * 20,
               y: 40 + index * 20,
-              width: DEFAULT_RACK_WIDTH,
-              height: DEFAULT_RACK_HEIGHT,
+              ...getRackPresetSize(rack.layoutShape, scene.canvas.gridSize),
               rotation: 0,
               zIndex: 100 + index,
             },

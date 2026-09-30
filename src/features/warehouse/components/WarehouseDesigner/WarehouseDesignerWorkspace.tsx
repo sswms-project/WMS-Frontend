@@ -42,7 +42,7 @@ import type {
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import type { LayoutPaletteDragData } from './designer-constants'
-import { constrainLayoutGeometryToCanvas } from '../../utils/layout-grid'
+import { constrainLayoutGeometryToCanvas, getRackPresetSize } from '../../utils/layout-grid'
 import { WarehouseLocationDeactivateDialog } from '../WarehouseDetailPage'
 import { DesignerInspector } from './DesignerInspector'
 import { DesignerContextToolbar } from './DesignerContextToolbar'
@@ -97,13 +97,6 @@ function createClientKey() {
 function getDuplicateLabel(label: string): string {
   const suffix = ' bản sao'
   return `${label.slice(0, 100 - suffix.length).trimEnd()}${suffix}`
-}
-
-function getRackPresetSize(shape: WarehouseLayoutRackShape | undefined, gridSize: number) {
-  if (shape === 'Vertical') return { width: gridSize * 5, height: gridSize * 13 }
-  if (shape === 'Pallet') return { width: gridSize * 8, height: gridSize * 8 }
-  if (shape === 'CrossBraced') return { width: gridSize * 12, height: gridSize * 7 }
-  return { width: gridSize * 13, height: gridSize * 5 }
 }
 
 function isFormControl(target: EventTarget | null): boolean {
