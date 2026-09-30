@@ -44,9 +44,6 @@ export default function WarehouseLayoutDirectoryPage() {
           <div>
             <p className="text-primary text-xs font-medium">Vận hành kho</p>
             <h1 className="mt-0.5 text-xl font-semibold">Sơ đồ kho</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Chọn kho được phân công để xem khu vực, kệ và vị trí lưu trữ.
-            </p>
           </div>
         </div>
       </header>
