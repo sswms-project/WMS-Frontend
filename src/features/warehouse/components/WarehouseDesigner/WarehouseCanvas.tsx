@@ -46,6 +46,7 @@ interface CanvasPalette {
   primary: string
   accent: string
   destructive: string
+  errorContainer: string
   card: string
   warning: string
   warningContainer: string
@@ -98,6 +99,7 @@ function readCanvasPalette(): CanvasPalette {
     primary: read('--diagram-outline'),
     accent: read('--diagram-zone-fill'),
     destructive: read('--destructive'),
+    errorContainer: read('--error-container'),
     card: isDark ? '#172033' : '#FFFFFF',
     warning: read('--warning'),
     warningContainer: read('--warning-container'),
@@ -756,13 +758,15 @@ export function WarehouseCanvas({
       : rackSlots.some((slot) => slot.currentOccupancy > 0)
     const objectFill =
       mode === 'viewer'
-        ? selected
-          ? canvasPalette.selectionFill
-          : isZone
-            ? canvasPalette.accent
-            : hasStock
-              ? canvasPalette.viewerOccupied
-              : canvasPalette.card
+        ? object.status === 'Inactive'
+          ? canvasPalette.errorContainer
+          : selected
+            ? canvasPalette.selectionFill
+            : isZone
+              ? canvasPalette.accent
+              : hasStock
+                ? canvasPalette.viewerOccupied
+                : canvasPalette.card
         : isZone
           ? canvasPalette.accent
           : (object.color ?? canvasPalette.card)
@@ -824,9 +828,11 @@ export function WarehouseCanvas({
           stroke={
             selected
               ? selectionStroke
-              : isZone
-                ? (object.color ?? canvasPalette.primary)
-                : canvasPalette.foreground
+              : object.status === 'Inactive'
+                ? canvasPalette.destructive
+                : isZone
+                  ? (object.color ?? canvasPalette.primary)
+                  : canvasPalette.foreground
           }
           strokeWidth={
             selected ? (mode === 'viewer' ? 1.5 : 1.25) / viewport.scale : 1 / viewport.scale
@@ -1179,10 +1185,10 @@ function renderRackSlots(
     const selected = isSelected(selection, 'slot', slot.id)
     const fill =
       mode === 'viewer'
-        ? selected
-          ? palette.selectionFill
-          : !slot.isActive
-            ? palette.muted
+        ? !slot.isActive
+          ? palette.errorContainer
+          : selected
+            ? palette.selectionFill
             : slot.currentOccupancy > 0
               ? palette.viewerOccupied
               : palette.card
@@ -1214,13 +1220,15 @@ function renderRackSlots(
           width={slotWidth}
           height={slotHeight}
           fill={fill}
-          opacity={slot.isActive ? 1 : 0.55}
+          opacity={mode === 'designer' && !slot.isActive ? 0.55 : 1}
           stroke={
             selected
               ? mode === 'viewer'
                 ? palette.viewerSelected
                 : palette.primary
-              : palette.border
+              : mode === 'viewer' && !slot.isActive
+                ? palette.destructive
+                : palette.border
           }
           strokeWidth={selected ? (mode === 'viewer' ? 1.5 : 1.25) : 1}
           cornerRadius={2}
