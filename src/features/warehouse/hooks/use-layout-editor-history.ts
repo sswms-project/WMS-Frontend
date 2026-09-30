@@ -7,6 +7,7 @@ import type {
   WarehouseLayoutEditorScene,
   WarehouseLayoutGeometry,
   WarehouseLayoutGeometryTarget,
+  WarehouseLayoutRackShape,
 } from '../types/warehouse-layout-scene.types'
 import { normalizeLayoutGeometry } from '../utils/layout-grid'
 
@@ -24,6 +25,7 @@ export type LayoutEditorHistoryAction =
       target: WarehouseLayoutGeometryTarget
       id: string
       geometry: WarehouseLayoutGeometry
+      rackShape?: WarehouseLayoutRackShape
     }
   | {
       type: 'update-color'
@@ -66,7 +68,8 @@ function updateGeometry(
   scene: WarehouseLayoutEditorScene,
   target: WarehouseLayoutGeometryTarget,
   id: string,
-  geometry: WarehouseLayoutGeometry
+  geometry: WarehouseLayoutGeometry,
+  rackShape?: WarehouseLayoutRackShape
 ): WarehouseLayoutEditorScene {
   const normalizedGeometry = normalizeLayoutGeometry(geometry, scene.canvas)
   if (target === 'zone') {
@@ -81,7 +84,9 @@ function updateGeometry(
     return {
       ...scene,
       racks: scene.racks.map((rack) =>
-        rack.id === id ? { ...rack, ...normalizedGeometry } : rack
+        rack.id === id
+          ? { ...rack, ...normalizedGeometry, ...(rackShape ? { layoutShape: rackShape } : {}) }
+          : rack
       ),
     }
   }
@@ -177,6 +182,7 @@ function reconcileServerScene(
             rotation: draftRack.rotation,
             zIndex: draftRack.zIndex,
             color: draftRack.color ?? null,
+            layoutShape: draftRack.layoutShape ?? serverRack.layoutShape ?? 'Standard',
           }
         : serverRack
     }),
@@ -221,7 +227,7 @@ export function layoutEditorHistoryReducer(
   if (action.type === 'update-geometry') {
     return commitScene(
       state,
-      updateGeometry(state.present, action.target, action.id, action.geometry)
+      updateGeometry(state.present, action.target, action.id, action.geometry, action.rackShape)
     )
   }
 

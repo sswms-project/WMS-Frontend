@@ -30,6 +30,7 @@ const scene: WarehouseLayoutSceneResponse = {
       rackName: 'Kệ 1',
       description: null,
       status: 'Active',
+      layoutShape: 'Pallet',
       x: -10,
       y: 40,
       width: 20,
@@ -79,6 +80,7 @@ describe('layout scene mapper', () => {
     )
     expect(request.zones[0]).toMatchObject({ x: 80, y: 10 })
     expect(request.racks[0]).toMatchObject({ x: 0, y: 40 })
+    expect(request.racks[0]?.layoutShape).toBe('Pallet')
     expect(request.decorations[0]).toMatchObject({ x: 80, y: 80 })
   })
 })

@@ -37,6 +37,7 @@ import type {
   WarehouseLayoutEditorRack,
   WarehouseLayoutGeometry,
   WarehouseLayoutGeometryTarget,
+  WarehouseLayoutRackShape,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import type { LayoutPaletteDragData } from './designer-constants'
@@ -81,6 +82,7 @@ export interface WarehouseLayoutDropPosition {
   readonly y: number
   readonly width?: number
   readonly height?: number
+  readonly layoutShape?: WarehouseLayoutRackShape
 }
 export interface WarehouseLayoutCreatedPlacement extends WarehouseLayoutDropPosition {
   readonly kind: 'zone' | 'rack'
@@ -96,12 +98,10 @@ function getDuplicateLabel(label: string): string {
   return `${label.slice(0, 100 - suffix.length).trimEnd()}${suffix}`
 }
 
-function getRackPresetSize(
-  preset: 'vertical' | 'horizontal' | 'double' | undefined,
-  gridSize: number
-) {
-  if (preset === 'vertical') return { width: gridSize * 5, height: gridSize * 13 }
-  if (preset === 'double') return { width: gridSize * 12, height: gridSize * 9 }
+function getRackPresetSize(shape: WarehouseLayoutRackShape | undefined, gridSize: number) {
+  if (shape === 'Vertical') return { width: gridSize * 5, height: gridSize * 13 }
+  if (shape === 'Pallet') return { width: gridSize * 8, height: gridSize * 8 }
+  if (shape === 'CrossBraced') return { width: gridSize * 12, height: gridSize * 7 }
   return { width: gridSize * 13, height: gridSize * 5 }
 }
 
@@ -196,6 +196,9 @@ export function WarehouseDesignerWorkspace({
         },
         scene.canvas
       ),
+      ...(placementToApply.kind === 'rack'
+        ? { rackShape: placementToApply.layoutShape ?? 'Standard' }
+        : {}),
     })
     onPlacementApplied()
   }, [dispatch, onPlacementApplied, placementToApply, scene.canvas, scene.racks, scene.zones])
@@ -266,8 +269,13 @@ export function WarehouseDesignerWorkspace({
     if (payload.kind === 'zone') onCreateZone(position)
     else if (payload.kind === 'rack') {
       const zoneId = getSelectedZoneId()
-      const rackSize = getRackPresetSize(payload.preset, scene.canvas.gridSize)
-      if (zoneId) onCreateRack(zoneId, { ...position, ...rackSize })
+      const rackSize = getRackPresetSize(payload.shape, scene.canvas.gridSize)
+      if (zoneId)
+        onCreateRack(zoneId, {
+          ...position,
+          ...rackSize,
+          layoutShape: payload.shape ?? 'Standard',
+        })
       else toast.error('Chọn một khu vực trước khi đặt kệ hàng.')
     } else addDecoration(payload.type, payload.label, position)
   }
@@ -444,17 +452,18 @@ export function WarehouseDesignerWorkspace({
         setIsToolboxOpen(false)
         onCreateZone()
       }}
-      onCreateRack={(preset) => {
+      onCreateRack={(shape) => {
         const zoneId = getSelectedZoneId()
         if (zoneId) {
           setIsToolboxOpen(false)
           onCreateRack(
             zoneId,
-            preset
+            shape
               ? {
                   x: scene.canvas.gridSize * 5,
                   y: scene.canvas.gridSize * 5,
-                  ...getRackPresetSize(preset, scene.canvas.gridSize),
+                  ...getRackPresetSize(shape, scene.canvas.gridSize),
+                  layoutShape: shape,
                 }
               : undefined
           )

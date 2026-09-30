@@ -102,7 +102,7 @@ function readCanvasPalette(): CanvasPalette {
     warningContainer: read('--warning-container'),
     selectionFill: read('--canvas-selection-fill'),
     selectionForeground: read('--canvas-selection-foreground'),
-    viewerSelected: read('--diagram-outline'),
+    viewerSelected: read('--diagram-viewer-selected') || '#FF9800',
     viewerOccupied: read('--secondary-container'),
   }
 }
@@ -700,6 +700,11 @@ export function WarehouseCanvas({
         ? getReadableCanvasColor(object.color, canvasPalette)
         : canvasPalette.foreground
     const selectionStroke = mode === 'viewer' ? canvasPalette.viewerSelected : canvasPalette.primary
+    const checkBadgeSize = Math.min(22 / viewport.scale, object.width * 0.45, object.height * 0.45)
+    const checkBadgeInset = Math.min(
+      4 / viewport.scale,
+      Math.max(0, (Math.min(object.width, object.height) - checkBadgeSize) / 2)
+    )
     const canMoveObject =
       canConfigure &&
       object.status === 'Active' &&
@@ -751,36 +756,62 @@ export function WarehouseCanvas({
           dash={isZone || isInactive ? [10 / viewport.scale, 5 / viewport.scale] : undefined}
           cornerRadius={isZone ? 4 : 2}
         />
-        {rack ? (
+        {rack?.layoutShape === 'Vertical' ? (
+          <Line
+            points={[rack.width / 2, 4, rack.width / 2, rack.height - 4]}
+            stroke={objectForeground}
+            strokeWidth={1 / viewport.scale}
+            listening={false}
+          />
+        ) : null}
+        {rack?.layoutShape === 'CrossBraced' ? (
           <>
             <Line
-              points={[6, 28, rack.width - 6, 28]}
+              points={[5, 5, rack.width - 5, rack.height - 5]}
               stroke={objectForeground}
-              strokeWidth={1}
-              opacity={0.55}
+              strokeWidth={1.5 / viewport.scale}
+              dash={[3 / viewport.scale, 3 / viewport.scale]}
               listening={false}
             />
             <Line
-              points={[6, rack.height - 7, rack.width - 6, rack.height - 7]}
+              points={[rack.width - 5, 5, 5, rack.height - 5]}
               stroke={objectForeground}
-              strokeWidth={1}
-              opacity={0.55}
+              strokeWidth={1.5 / viewport.scale}
+              dash={[3 / viewport.scale, 3 / viewport.scale]}
               listening={false}
             />
-            <Line
-              points={[6, 28, 6, rack.height - 7]}
-              stroke={objectForeground}
-              strokeWidth={2}
-              opacity={0.7}
-              listening={false}
-            />
-            <Line
-              points={[rack.width - 6, 28, rack.width - 6, rack.height - 7]}
-              stroke={objectForeground}
-              strokeWidth={2}
-              opacity={0.7}
-              listening={false}
-            />
+          </>
+        ) : null}
+        {rack?.layoutShape === 'Pallet' ? (
+          <>
+            {[0.3, 0.5, 0.7].map((fraction) => (
+              <Line
+                key={fraction}
+                points={[
+                  rack.width * fraction,
+                  rack.height * 0.12,
+                  rack.width * fraction,
+                  rack.height * 0.88,
+                ]}
+                stroke={objectForeground}
+                strokeWidth={2 / viewport.scale}
+                listening={false}
+              />
+            ))}
+            {[0.35, 0.65].map((fraction) => (
+              <Line
+                key={fraction}
+                points={[
+                  rack.width * 0.12,
+                  rack.height * fraction,
+                  rack.width * 0.88,
+                  rack.height * fraction,
+                ]}
+                stroke={objectForeground}
+                strokeWidth={1 / viewport.scale}
+                listening={false}
+              />
+            ))}
           </>
         ) : null}
         {rack
@@ -795,6 +826,36 @@ export function WarehouseCanvas({
               () => setHoverInfo(null)
             )
           : null}
+        {mode === 'viewer' && selected && target === 'rack' ? (
+          <Group
+            x={object.width - checkBadgeSize - checkBadgeInset}
+            y={checkBadgeInset}
+            listening={false}
+          >
+            <Rect
+              width={checkBadgeSize}
+              height={checkBadgeSize}
+              cornerRadius={Math.min(4 / viewport.scale, checkBadgeSize * 0.18)}
+              fill={canvasPalette.selectionFill}
+              stroke={canvasPalette.viewerSelected}
+              strokeWidth={Math.min(1.5 / viewport.scale, checkBadgeSize * 0.08)}
+            />
+            <Line
+              points={[
+                checkBadgeSize * 0.23,
+                checkBadgeSize * 0.5,
+                checkBadgeSize * 0.42,
+                checkBadgeSize * 0.68,
+                checkBadgeSize * 0.76,
+                checkBadgeSize * 0.3,
+              ]}
+              stroke={canvasPalette.viewerSelected}
+              strokeWidth={Math.min(2 / viewport.scale, checkBadgeSize * 0.1)}
+              lineCap="round"
+              lineJoin="round"
+            />
+          </Group>
+        ) : null}
       </Group>
     )
   }
@@ -989,25 +1050,6 @@ export function WarehouseCanvas({
               </Layer>
             </Stage>
           </div>
-        </div>
-      ) : null}
-      {mode !== 'viewer' && scene.slots.length > 0 ? (
-        <div className="bg-card/95 pointer-events-none absolute bottom-3 left-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 text-[11px]">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="bg-accent size-2.5 rounded-[2px] border" aria-hidden="true" />
-            Có hàng
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="bg-card size-2.5 rounded-[2px] border" aria-hidden="true" />
-            Trống
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="bg-canvas-selection-fill border-diagram-outline size-2.5 rounded-[2px] border"
-              aria-hidden="true"
-            />
-            Đang chọn
-          </span>
         </div>
       ) : null}
       {hoverInfo ? (

@@ -3,7 +3,18 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Boxes, HelpCircle, Maximize, PencilRuler, SearchX, X, ZoomIn, ZoomOut } from 'lucide-react'
+import {
+  Boxes,
+  Check,
+  CircleSlash2,
+  HelpCircle,
+  Maximize,
+  PencilRuler,
+  SearchX,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
@@ -318,23 +329,18 @@ export function WarehouseLayoutViewerWorkspace({
       </div>
 
       <footer className="bg-surface-container-lowest flex min-h-11 shrink-0 items-center border-t px-3 py-1.5">
-        <div className="text-muted-foreground flex items-center gap-3 text-[11px]">
+        <div className="text-muted-foreground flex items-center gap-4 text-xs">
           <span className="inline-flex items-center gap-1.5">
-            <span
-              className="bg-secondary-container size-2.5 rounded-[2px] border"
-              aria-hidden="true"
-            />{' '}
-            Có hàng
+            <span className="bg-error-container text-destructive border-destructive inline-flex size-7 items-center justify-center rounded-md border">
+              <CircleSlash2 className="size-4" aria-hidden="true" />
+            </span>
+            Vị trí ngừng sử dụng
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-card size-2.5 rounded-[2px] border" aria-hidden="true" /> Trống
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="bg-canvas-selection-fill border-diagram-outline size-2.5 rounded-[2px] border-2"
-              aria-hidden="true"
-            />
-            Đang chọn
+            <span className="bg-canvas-selection-fill inline-flex size-7 items-center justify-center rounded-md border border-[#ff9800] text-[#ff9800]">
+              <Check className="size-4" aria-hidden="true" />
+            </span>
+            Vị trí đang chọn
           </span>
         </div>
         <div className="ml-auto flex items-center gap-1">

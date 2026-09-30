@@ -21,7 +21,7 @@ function createDataTransfer(protectData = false) {
 describe('layout palette drag data', () => {
   it('recognizes a drag from its type without reading protected payload data', () => {
     const dataTransfer = createDataTransfer(true)
-    writeLayoutDragData(dataTransfer, { kind: 'rack', preset: 'vertical' })
+    writeLayoutDragData(dataTransfer, { kind: 'rack', shape: 'Vertical' })
 
     expect(readLayoutDragData(dataTransfer)).toBeNull()
     expect(hasLayoutDragData(dataTransfer)).toBe(true)
@@ -32,8 +32,8 @@ describe('layout palette drag data', () => {
     writeLayoutDragData(dataTransfer, { kind: 'zone' })
     expect(readLayoutDragData(dataTransfer)).toEqual({ kind: 'zone' })
 
-    writeLayoutDragData(dataTransfer, { kind: 'rack', preset: 'double' })
-    expect(readLayoutDragData(dataTransfer)).toEqual({ kind: 'rack', preset: 'double' })
+    writeLayoutDragData(dataTransfer, { kind: 'rack', shape: 'CrossBraced' })
+    expect(readLayoutDragData(dataTransfer)).toEqual({ kind: 'rack', shape: 'CrossBraced' })
 
     writeLayoutDragData(dataTransfer, {
       kind: 'decoration',
@@ -56,12 +56,9 @@ describe('layout palette drag data', () => {
     expect(readLayoutDragData(dataTransfer)).toBeNull()
   })
 
-  it('ignores unknown rack presets', () => {
+  it('ignores unknown rack shapes', () => {
     const dataTransfer = createDataTransfer()
-    dataTransfer.setData(
-      LAYOUT_DRAG_DATA_TYPE,
-      JSON.stringify({ kind: 'rack', preset: 'ceiling-mounted' })
-    )
+    dataTransfer.setData(LAYOUT_DRAG_DATA_TYPE, JSON.stringify({ kind: 'rack', shape: 'Circular' }))
     expect(readLayoutDragData(dataTransfer)).toBeNull()
   })
 })

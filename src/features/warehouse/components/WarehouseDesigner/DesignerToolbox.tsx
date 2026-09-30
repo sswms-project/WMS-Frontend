@@ -4,8 +4,6 @@ import {
   Box,
   ChevronRight,
   ChevronsUp,
-  Columns3,
-  Grid2X2,
   Layers3,
   MapPin,
   Rows3,
@@ -24,6 +22,7 @@ import { cn } from '@/lib/utils'
 import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
+  WarehouseLayoutRackShape,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import { DECORATION_OPTIONS, writeLayoutDragData } from './designer-constants'
@@ -35,7 +34,7 @@ interface DesignerToolboxProps {
   readonly canConfigure: boolean
   readonly mode?: 'designer' | 'viewer'
   readonly onCreateZone: () => void
-  readonly onCreateRack: (preset?: 'vertical' | 'horizontal' | 'double') => void
+  readonly onCreateRack: (shape?: WarehouseLayoutRackShape) => void
   readonly onCreateDecoration: (type: WarehouseLayoutDecorationType, label: string) => void
   readonly onSelect: (selection: WarehouseLayoutSelection) => void
 }
@@ -76,6 +75,43 @@ function DisabledActionTooltip({
       </TooltipTrigger>
       {disabled ? <TooltipContent>{disabledReason}</TooltipContent> : null}
     </Tooltip>
+  )
+}
+
+function RackShapeIcon({ shape }: { readonly shape: WarehouseLayoutRackShape }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="square"
+      aria-hidden="true"
+      className="size-7"
+    >
+      {shape === 'Standard' ? <rect x="5" y="6" width="22" height="20" fill="white" /> : null}
+      {shape === 'Vertical' ? (
+        <>
+          <rect x="10" y="4" width="12" height="24" fill="white" />
+          <path d="M16 5v22" />
+        </>
+      ) : null}
+      {shape === 'CrossBraced' ? (
+        <>
+          <rect x="5" y="6" width="22" height="20" fill="white" />
+          <path d="m7 8 18 16M25 8 7 24" strokeDasharray="2 2" />
+        </>
+      ) : null}
+      {shape === 'Pallet' ? (
+        <>
+          <rect x="4" y="4" width="24" height="24" fill="#a1a8b3" stroke="none" />
+          {[9, 16, 23].flatMap((position) => [
+            <path key={`v-${position}`} d={`M${position} 6v20`} stroke="white" strokeWidth="2.4" />,
+            <path key={`h-${position}`} d={`M6 ${position}h20`} stroke="white" strokeWidth="2.4" />,
+          ])}
+        </>
+      ) : null}
+    </svg>
   )
 }
 
@@ -194,6 +230,18 @@ export function DesignerToolbox({
             </h3>
             <div className="flex flex-wrap gap-2">
               <PaletteIconAction
+                label="Kệ trống"
+                disabled={!canConfigure || !selectedZoneId}
+                disabledReason={
+                  !canConfigure
+                    ? 'Bạn chỉ có quyền xem sơ đồ.'
+                    : 'Chọn một khu vực trước khi thêm kệ.'
+                }
+                onClick={() => onCreateRack('Standard')}
+                dragData={{ kind: 'rack', shape: 'Standard' }}
+                icon={<RackShapeIcon shape="Standard" />}
+              />
+              <PaletteIconAction
                 label="Kệ dọc"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
@@ -201,33 +249,33 @@ export function DesignerToolbox({
                     ? 'Bạn chỉ có quyền xem sơ đồ.'
                     : 'Chọn một khu vực trước khi thêm kệ.'
                 }
-                onClick={() => onCreateRack('vertical')}
-                dragData={{ kind: 'rack', preset: 'vertical' }}
-                icon={<Columns3 aria-hidden="true" />}
+                onClick={() => onCreateRack('Vertical')}
+                dragData={{ kind: 'rack', shape: 'Vertical' }}
+                icon={<RackShapeIcon shape="Vertical" />}
               />
               <PaletteIconAction
-                label="Kệ ngang"
+                label="Kệ chữ X"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
                   !canConfigure
                     ? 'Bạn chỉ có quyền xem sơ đồ.'
                     : 'Chọn một khu vực trước khi thêm kệ.'
                 }
-                onClick={() => onCreateRack('horizontal')}
-                dragData={{ kind: 'rack', preset: 'horizontal' }}
-                icon={<Rows3 aria-hidden="true" />}
+                onClick={() => onCreateRack('CrossBraced')}
+                dragData={{ kind: 'rack', shape: 'CrossBraced' }}
+                icon={<RackShapeIcon shape="CrossBraced" />}
               />
               <PaletteIconAction
-                label="Kệ hai mặt"
+                label="Pallet"
                 disabled={!canConfigure || !selectedZoneId}
                 disabledReason={
                   !canConfigure
                     ? 'Bạn chỉ có quyền xem sơ đồ.'
                     : 'Chọn một khu vực trước khi thêm kệ.'
                 }
-                onClick={() => onCreateRack('double')}
-                dragData={{ kind: 'rack', preset: 'double' }}
-                icon={<Grid2X2 aria-hidden="true" />}
+                onClick={() => onCreateRack('Pallet')}
+                dragData={{ kind: 'rack', shape: 'Pallet' }}
+                icon={<RackShapeIcon shape="Pallet" />}
               />
             </div>
           </section>

@@ -12,7 +12,10 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from 'lucide-react'
-import type { WarehouseLayoutDecorationType } from '../../types/warehouse-layout-scene.types'
+import type {
+  WarehouseLayoutDecorationType,
+  WarehouseLayoutRackShape,
+} from '../../types/warehouse-layout-scene.types'
 
 export interface DecorationOption {
   type: WarehouseLayoutDecorationType
@@ -24,7 +27,7 @@ export const LAYOUT_DRAG_DATA_TYPE = 'application/x-sswms-layout-object'
 
 export type LayoutPaletteDragData =
   | { kind: 'zone' }
-  | { kind: 'rack'; preset?: 'vertical' | 'horizontal' | 'double' }
+  | { kind: 'rack'; shape?: WarehouseLayoutRackShape }
   | { kind: 'decoration'; type: WarehouseLayoutDecorationType; label: string }
 
 export function writeLayoutDragData(dataTransfer: DataTransfer, payload: LayoutPaletteDragData) {
@@ -44,7 +47,7 @@ export function readLayoutDragData(dataTransfer: DataTransfer): LayoutPaletteDra
     if (payload.kind === 'zone') return payload
     if (
       payload.kind === 'rack' &&
-      (!payload.preset || ['vertical', 'horizontal', 'double'].includes(payload.preset))
+      (!payload.shape || ['Standard', 'Vertical', 'CrossBraced', 'Pallet'].includes(payload.shape))
     )
       return payload
     if (

@@ -102,7 +102,12 @@ export function mapWarehouseLayoutScene(scene: WarehouseLayoutSceneResponse): {
     ) {
       hasGeneratedGeometry = true
     }
-    return { ...rack, ...geometry, color: rack.color ?? null }
+    return {
+      ...rack,
+      ...geometry,
+      color: rack.color ?? null,
+      layoutShape: rack.layoutShape ?? 'Standard',
+    }
   })
   const decorations = scene.decorations.map<WarehouseLayoutEditorDecoration>((decoration) => {
     const geometry = constrainLayoutGeometryToCanvas(decoration, scene.canvas, false)
@@ -171,6 +176,7 @@ export function mapEditorSceneToSaveRequest(
         rotation: rack.rotation,
         zIndex: rack.zIndex,
         color: rack.color ?? null,
+        layoutShape: rack.layoutShape ?? 'Standard',
       })),
     decorations: scene.decorations.map((decoration) => ({
       id: decoration.id || null,

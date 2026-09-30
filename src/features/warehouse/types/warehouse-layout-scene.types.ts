@@ -12,6 +12,8 @@ export type WarehouseLayoutDecorationType =
   | 'Office'
   | 'Other'
 
+export type WarehouseLayoutRackShape = 'Standard' | 'Vertical' | 'CrossBraced' | 'Pallet'
+
 export interface WarehouseLayoutCanvas {
   width: number
   height: number
@@ -50,6 +52,7 @@ export interface WarehouseLayoutRackSceneResponse {
   description: string | null
   status: string
   storageMode?: 'RackLevel' | 'SlotLevel'
+  layoutShape?: WarehouseLayoutRackShape | null
   allowsMixedProducts?: boolean
   capacity?: number | null
   rowVersion?: string | null
@@ -97,6 +100,7 @@ export interface WarehouseLayoutSceneResponse {
 export interface WarehouseLayoutGeometryRequest extends WarehouseLayoutGeometry {
   entityId: string
   color?: string | null
+  layoutShape?: WarehouseLayoutRackShape | null
 }
 
 export interface WarehouseLayoutDecorationRequest extends WarehouseLayoutGeometry {
