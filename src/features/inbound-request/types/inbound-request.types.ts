@@ -119,6 +119,15 @@ export interface PagedResponse<T> {
   pageSize: number
 }
 
+export interface InboundRequestStatusCount {
+  status: InboundRequestStatus
+  count: number
+}
+
+export interface InboundRequestListResponse extends PagedResponse<InboundRequestSummary> {
+  statusCounts: InboundRequestStatusCount[]
+}
+
 export interface AllowedActionsResponse {
   allowedActions: InboundRequestAction[]
 }

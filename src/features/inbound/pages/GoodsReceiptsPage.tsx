@@ -1,52 +1,169 @@
 'use client'
 
 import { useState } from 'react'
+import { Check } from 'lucide-react'
+import { toast } from 'sonner'
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { P } from '@/config/permissionCodes'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { getApiErrorMessage } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
+import {
+  toOperationalDateTimeEnd,
+  toOperationalDateTimeStart,
+} from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import { ReceiptDirectory } from '../components/ReceiptsPage'
-import { useGoodsReceiptsQuery } from '../hooks/use-inbound'
-import type { GoodsReceiptStatus } from '../types/inbound.types'
+import {
+  useApproveGoodsReceiptMutation,
+  useGoodsReceiptsQuery,
+  useInboundAllowedActionsQuery,
+} from '../hooks/use-inbound'
+import type { GoodsReceiptStatus, GoodsReceiptSummary } from '../types/inbound.types'
 
 export default function GoodsReceiptsPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<GoodsReceiptStatus | ''>('')
+  const [createdFrom, setCreatedFrom] = useState('')
+  const [createdTo, setCreatedTo] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [approvalTarget, setApprovalTarget] = useState<GoodsReceiptSummary | null>(null)
+  const meQuery = useMeQuery()
+  const approveMutation = useApproveGoodsReceiptMutation()
+  const allowedActionsQuery = useInboundAllowedActionsQuery(approvalTarget?.id ?? '')
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useGoodsReceiptsQuery({
     pageNumber: page,
     pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
+    ...(createdFrom ? { dateFrom: toOperationalDateTimeStart(createdFrom) } : {}),
+    ...(createdTo ? { dateTo: toOperationalDateTimeEnd(createdTo) } : {}),
   })
+
+  async function approveReceipt() {
+    if (!approvalTarget) return
+    if (allowedActionsQuery.isError) {
+      toast.error(getApiErrorMessage(allowedActionsQuery.error, 'Không thể kiểm tra quyền duyệt.'))
+      setApprovalTarget(null)
+      return
+    }
+    if (!allowedActionsQuery.data?.allowedActions.includes('Approve')) {
+      toast.error('Bạn không có quyền duyệt phiếu này hoặc phiếu không còn ở trạng thái chờ duyệt.')
+      setApprovalTarget(null)
+      return
+    }
+
+    try {
+      await approveMutation.mutateAsync(approvalTarget.id)
+      toast.success(`Đã phê duyệt phiếu ${approvalTarget.receiptCode}.`)
+      setApprovalTarget(null)
+    } catch (error) {
+      logger.error(error)
+      toast.error(getApiErrorMessage(error, 'Không thể phê duyệt phiếu nhận hàng.'))
+    }
+  }
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader title="Phiếu nhận hàng" />
-      <ReceiptDirectory
-        items={query.data?.items ?? []}
-        totalCount={query.data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        searchText={searchText}
-        status={status}
-        isLoading={query.isLoading}
-        isFetching={query.isFetching}
-        isError={query.isError}
-        onSearchChange={(value) => {
-          setSearchText(value)
-          setPage(1)
-        }}
-        onStatusChange={(value) => {
-          setStatus(value)
-          setPage(1)
-        }}
-        onPageChange={setPage}
-        onPageSizeChange={(value) => {
-          setPageSize(value)
-          setPage(1)
-        }}
-        onRetry={() => void query.refetch()}
-      />
-    </div>
+    <>
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <InboundPageHeader title="Phiếu nhận hàng" />
+        <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
+          <CardContent className="flex min-h-16 items-center justify-between gap-2">
+            <p className="text-sm font-medium">Phiếu phù hợp</p>
+            {query.isFetching ? (
+              <Skeleton className="h-7 w-10" aria-hidden="true" />
+            ) : (
+              <p className="text-primary shrink-0 text-2xl font-semibold tabular-nums">
+                {query.isError ? '—' : (query.data?.totalCount ?? 0).toLocaleString('vi-VN')}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <ReceiptDirectory
+          items={query.data?.items ?? []}
+          totalCount={query.data?.totalCount ?? 0}
+          page={page}
+          pageSize={pageSize}
+          searchText={searchText}
+          status={status}
+          createdFrom={createdFrom}
+          createdTo={createdTo}
+          isLoading={query.isFetching}
+          isFetching={query.isFetching}
+          isError={query.isError}
+          canApprove={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_APPROVE) ?? false}
+          isApproving={approveMutation.isPending}
+          onSearchChange={(value) => {
+            setSearchText(value)
+            setPage(1)
+          }}
+          onStatusChange={(value) => {
+            setStatus(value)
+            setPage(1)
+          }}
+          onCreatedFromChange={(value) => {
+            setCreatedFrom(value)
+            setPage(1)
+          }}
+          onCreatedToChange={(value) => {
+            setCreatedTo(value)
+            setPage(1)
+          }}
+          onPageChange={setPage}
+          onPageSizeChange={(value) => {
+            setPageSize(value)
+            setPage(1)
+          }}
+          onRetry={() => void query.refetch()}
+          onApprove={setApprovalTarget}
+        />
+      </div>
+      <AlertDialog
+        open={approvalTarget !== null}
+        onOpenChange={(open) => !open && !approveMutation.isPending && setApprovalTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Phê duyệt phiếu nhận hàng?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {approvalTarget
+                ? `Phiếu ${approvalTarget.receiptCode} sẽ được duyệt và số lượng thực nhận sẽ được ghi nhận.`
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={approveMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                approveMutation.isPending ||
+                allowedActionsQuery.isLoading ||
+                allowedActionsQuery.isFetching
+              }
+              onClick={(event) => {
+                event.preventDefault()
+                void approveReceipt()
+              }}
+            >
+              <Check aria-hidden="true" />
+              {approveMutation.isPending ? 'Đang duyệt…' : 'Xác nhận duyệt'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

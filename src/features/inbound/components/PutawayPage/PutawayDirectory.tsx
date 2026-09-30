@@ -17,6 +17,7 @@ import {
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import {
@@ -30,7 +31,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
-  formatOperationalDate,
+  formatOperationalDateTime,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptSummary } from '../../types/inbound.types'
@@ -44,10 +45,14 @@ interface PutawayDirectoryProps {
   readonly page: number
   readonly pageSize: number
   readonly searchText: string
+  readonly createdFrom: string
+  readonly createdTo: string
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
   readonly onSearchChange: (value: string) => void
+  readonly onCreatedFromChange: (value: string) => void
+  readonly onCreatedToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
@@ -68,10 +73,14 @@ export function PutawayDirectory({
   page,
   pageSize,
   searchText,
+  createdFrom,
+  createdTo,
   isLoading,
   isFetching,
   isError,
   onSearchChange,
+  onCreatedFromChange,
+  onCreatedToChange,
   onPageChange,
   onPageSizeChange,
   onRetry,
@@ -132,9 +141,6 @@ export function PutawayDirectory({
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold">Phiếu chờ cất hàng</h2>
-          <p className="text-muted-foreground text-xs tabular-nums">
-            {totalCount} phiếu còn hàng khả dụng
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {canAssign && (
@@ -152,6 +158,28 @@ export function PutawayDirectory({
               <ToggleGroupItem value="unassigned">Chưa giao</ToggleGroupItem>
             </ToggleGroup>
           )}
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            Tạo từ
+            <Input
+              type="date"
+              aria-label="Lọc phiếu từ ngày tạo"
+              className="w-36"
+              value={createdFrom}
+              max={createdTo || undefined}
+              onChange={(event) => onCreatedFromChange(event.target.value)}
+            />
+          </label>
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            Đến
+            <Input
+              type="date"
+              aria-label="Lọc phiếu đến ngày tạo"
+              className="w-36"
+              value={createdTo}
+              min={createdFrom || undefined}
+              onChange={(event) => onCreatedToChange(event.target.value)}
+            />
+          </label>
           <InputGroup className="min-w-0 flex-1 sm:w-72">
             <InputGroupAddon>
               <Search aria-hidden="true" />
@@ -201,6 +229,9 @@ export function PutawayDirectory({
                     {item.inboundRequestCode} · {item.warehouseName}
                   </ItemDescription>
                   <ItemDescription>
+                    Tạo lúc {formatOperationalDateTime(item.createdAt)}
+                  </ItemDescription>
+                  <ItemDescription>
                     {formatQuantity(remainingQuantity(item))} còn cất
                   </ItemDescription>
                   <div className="mt-1">
@@ -225,7 +256,7 @@ export function PutawayDirectory({
                   <TableHead className="sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
                   <TableHead className="sticky top-0 z-10">Kho</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Còn cất</TableHead>
-                  <TableHead className="sticky top-0 z-10">Ngày nhận</TableHead>
+                  <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
                   <TableHead className="sticky top-0 z-10">Người cất hàng</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
@@ -239,7 +270,9 @@ export function PutawayDirectory({
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatQuantity(remainingQuantity(item))}
                     </TableCell>
-                    <TableCell>{formatOperationalDate(item.createdAt)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatOperationalDateTime(item.createdAt)}
+                    </TableCell>
                     <TableCell className="max-w-48">
                       <TaskAssigneeCell
                         assigneeName={item.putAwayAssignedToName}

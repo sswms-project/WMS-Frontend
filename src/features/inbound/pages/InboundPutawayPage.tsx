@@ -1,7 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import {
+  toOperationalDateTimeEnd,
+  toOperationalDateTimeStart,
+} from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundPageHeader } from '../components/InboundWorkspace'
 import { PutawayDirectory, type PutawayAssignmentFilter } from '../components/PutawayPage'
 import { AssignWarehouseTaskDialog } from '../components/TaskAssignment'
@@ -13,6 +19,8 @@ import type { GoodsReceiptSummary } from '../types/inbound.types'
 export default function InboundPutawayPage() {
   const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
   const [searchText, setSearchText] = useState('')
+  const [createdFrom, setCreatedFrom] = useState('')
+  const [createdTo, setCreatedTo] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [assignmentFilter, setAssignmentFilter] = useState<PutawayAssignmentFilter>('all')
@@ -22,6 +30,8 @@ export default function InboundPutawayPage() {
     pageNumber: page,
     pageSize,
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
+    ...(createdFrom ? { createdFrom: toOperationalDateTimeStart(createdFrom) } : {}),
+    ...(createdTo ? { createdTo: toOperationalDateTimeEnd(createdTo) } : {}),
     ...(canAssign && assignmentFilter === 'unassigned' ? { unassigned: true } : {}),
   })
 
@@ -40,17 +50,39 @@ export default function InboundPutawayPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <InboundPageHeader title="Cất hàng" />
+      <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
+        <CardContent className="flex min-h-16 items-center justify-between gap-2">
+          <p className="text-sm font-medium">Phiếu chờ cất</p>
+          {query.isFetching ? (
+            <Skeleton className="h-7 w-10" aria-hidden="true" />
+          ) : (
+            <p className="text-primary shrink-0 text-2xl font-semibold tabular-nums">
+              {query.isError ? '—' : (query.data?.totalCount ?? 0).toLocaleString('vi-VN')}
+            </p>
+          )}
+        </CardContent>
+      </Card>
       <PutawayDirectory
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}
         pageSize={pageSize}
         searchText={searchText}
-        isLoading={query.isLoading}
+        createdFrom={createdFrom}
+        createdTo={createdTo}
+        isLoading={query.isFetching}
         isFetching={query.isFetching}
         isError={query.isError}
         onSearchChange={(value) => {
           setSearchText(value)
+          setPage(1)
+        }}
+        onCreatedFromChange={(value) => {
+          setCreatedFrom(value)
+          setPage(1)
+        }}
+        onCreatedToChange={(value) => {
+          setCreatedTo(value)
           setPage(1)
         }}
         onPageChange={setPage}

@@ -36,6 +36,8 @@ export interface RackResponse {
   storageMode?: 'RackLevel' | 'SlotLevel'
   allowsMixedProducts?: boolean
   capacity?: number | null
+  defaultSlotId?: string | null
+  currentOccupancy?: number | null
   rowVersion?: string | null
   slots: SlotResponse[]
 }
