@@ -183,6 +183,10 @@ export const API_ENDPOINTS = {
     deleteMany: '/inbound-requests/batch',
     submit: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/submit`,
     approve: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/approve`,
+    approveAndSend: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/approve-and-send`,
+    sendToSupplier: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/send-to-supplier`,
     reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
     allowedActions: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/allowed-actions`,

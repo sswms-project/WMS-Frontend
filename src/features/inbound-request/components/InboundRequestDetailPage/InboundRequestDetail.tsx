@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Check, Edit3, Send, X } from 'lucide-react'
+import { ArrowLeft, Check, Edit3, Mail, Send, X } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -42,6 +42,8 @@ interface InboundRequestDetailProps {
   readonly isPending: boolean
   readonly onSubmit: () => Promise<boolean>
   readonly onApprove: () => Promise<boolean>
+  readonly onApproveAndSend: () => Promise<boolean>
+  readonly onSendToSupplier: () => Promise<boolean>
   readonly onReject: (reason: string) => Promise<boolean>
 }
 
@@ -51,6 +53,8 @@ export function InboundRequestDetail({
   isPending,
   onSubmit,
   onApprove,
+  onApproveAndSend,
+  onSendToSupplier,
   onReject,
 }: InboundRequestDetailProps) {
   const [confirmationAction, setConfirmationAction] = useState<InboundRequestAction | null>(null)
@@ -59,10 +63,20 @@ export function InboundRequestDetail({
   const [reasonError, setReasonError] = useState('')
   async function confirmAction() {
     if (!confirmationAction) return
-    const succeeded =
-      confirmationAction === INBOUND_REQUEST_ACTION.Submit ? await onSubmit() : await onApprove()
+    const handlers: Partial<Record<InboundRequestAction, () => Promise<boolean>>> = {
+      [INBOUND_REQUEST_ACTION.Submit]: onSubmit,
+      [INBOUND_REQUEST_ACTION.Approve]: onApprove,
+      [INBOUND_REQUEST_ACTION.ApproveAndSend]: onApproveAndSend,
+      [INBOUND_REQUEST_ACTION.SendToSupplier]: onSendToSupplier,
+    }
+    const succeeded = await handlers[confirmationAction]?.()
     if (succeeded) setConfirmationAction(null)
   }
+
+  const supplierEmail = inboundRequest.supplierEmail
+  const canMailSupplier = Boolean(inboundRequest.supplierId)
+  const hasSentToSupplier = Boolean(inboundRequest.supplierEmailSentAt)
+  const confirmationCopy = getConfirmationCopy(confirmationAction, supplierEmail)
 
   async function reject() {
     const normalizedReason = reason.trim()
@@ -132,10 +146,34 @@ export function InboundRequestDetail({
           {allowedActions.includes(INBOUND_REQUEST_ACTION.Approve) ? (
             <Button
               type="button"
+              variant={canMailSupplier ? 'outline' : 'default'}
               onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.Approve)}
             >
               <Check aria-hidden="true" />
-              Phê duyệt
+              Chỉ phê duyệt
+            </Button>
+          ) : null}
+          {canMailSupplier && allowedActions.includes(INBOUND_REQUEST_ACTION.ApproveAndSend) ? (
+            <Button
+              type="button"
+              disabled={!supplierEmail}
+              title={supplierEmail ? undefined : 'Nhà cung cấp chưa có email'}
+              onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.ApproveAndSend)}
+            >
+              <Mail aria-hidden="true" />
+              Duyệt và gửi mail
+            </Button>
+          ) : null}
+          {canMailSupplier && allowedActions.includes(INBOUND_REQUEST_ACTION.SendToSupplier) ? (
+            <Button
+              type="button"
+              variant={hasSentToSupplier ? 'outline' : 'default'}
+              disabled={!supplierEmail}
+              title={supplierEmail ? undefined : 'Nhà cung cấp chưa có email'}
+              onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.SendToSupplier)}
+            >
+              <Mail aria-hidden="true" />
+              {hasSentToSupplier ? 'Gửi lại mail' : 'Gửi mail nhà cung cấp'}
             </Button>
           ) : null}
         </div>
@@ -160,16 +198,8 @@ export function InboundRequestDetail({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmationAction === INBOUND_REQUEST_ACTION.Approve
-                ? 'Phê duyệt yêu cầu nhập kho?'
-                : 'Gửi yêu cầu nhập kho để duyệt?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmationAction === INBOUND_REQUEST_ACTION.Approve
-                ? 'Yêu cầu nhập kho sẽ chuyển sang trạng thái sẵn sàng nhận hàng.'
-                : 'Sau khi gửi, bạn không thể chỉnh sửa cho đến khi đơn được trả lại.'}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{confirmationCopy.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmationCopy.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
@@ -230,4 +260,30 @@ export function InboundRequestDetail({
       </Dialog>
     </div>
   )
+}
+
+function getConfirmationCopy(action: InboundRequestAction | null, supplierEmail: string | null) {
+  const mailNote = `Email kèm file PDF đơn đặt hàng sẽ được gửi tới ${supplierEmail ?? 'nhà cung cấp'}, đồng thời CC người tạo và người duyệt.`
+  switch (action) {
+    case INBOUND_REQUEST_ACTION.Approve:
+      return {
+        title: 'Phê duyệt yêu cầu nhập kho?',
+        description: 'Yêu cầu nhập kho sẽ chuyển sang trạng thái sẵn sàng nhận hàng.',
+      }
+    case INBOUND_REQUEST_ACTION.ApproveAndSend:
+      return {
+        title: 'Phê duyệt và gửi mail cho nhà cung cấp?',
+        description: `Yêu cầu sẽ được phê duyệt. ${mailNote} Nếu gửi mail lỗi, yêu cầu vẫn được duyệt và bạn có thể gửi lại.`,
+      }
+    case INBOUND_REQUEST_ACTION.SendToSupplier:
+      return {
+        title: 'Gửi mail cho nhà cung cấp?',
+        description: mailNote,
+      }
+    default:
+      return {
+        title: 'Gửi yêu cầu nhập kho để duyệt?',
+        description: 'Sau khi gửi, bạn không thể chỉnh sửa cho đến khi đơn được trả lại.',
+      }
+  }
 }
