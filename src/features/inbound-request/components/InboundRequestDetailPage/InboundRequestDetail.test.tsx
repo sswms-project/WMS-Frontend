@@ -1,0 +1,117 @@
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import type {
+  InboundRequestAction,
+  InboundRequestDetail as InboundRequestDetailType,
+} from '../../types/inbound-request.types'
+import { InboundRequestDetail } from './InboundRequestDetail'
+
+function request(overrides: Partial<InboundRequestDetailType> = {}): InboundRequestDetailType {
+  return {
+    id: 'ir-1',
+    inboundRequestCode: 'IR-001',
+    warehouseId: 'wh-1',
+    warehouseCode: 'WH1',
+    warehouseName: 'Kho A',
+    supplierId: 'sup-1',
+    supplierName: 'Nhà cung cấp A',
+    sourceType: 'Supplier',
+    sourceName: null,
+    sourceReference: null,
+    status: 'PendingApproval',
+    expectedDate: null,
+    createdBy: 'user-1',
+    createdByName: 'Người tạo',
+    createdAt: '2026-09-30T00:00:00Z',
+    approvedBy: null,
+    approvedByName: null,
+    modifiedAt: null,
+    submittedAt: null,
+    approvedAt: null,
+    rejectionReason: null,
+    supplierEmail: 'ncc@example.com',
+    supplierEmailSentAt: null,
+    supplierEmailSentTo: null,
+    supplierEmailSentByName: null,
+    lines: [],
+    history: [],
+    ...overrides,
+  } as InboundRequestDetailType
+}
+
+function renderDetail(
+  inboundRequest: InboundRequestDetailType,
+  allowedActions: readonly InboundRequestAction[]
+) {
+  const handlers = {
+    onSubmit: vi.fn().mockResolvedValue(true),
+    onApprove: vi.fn().mockResolvedValue(true),
+    onApproveAndSend: vi.fn().mockResolvedValue(true),
+    onSendToSupplier: vi.fn().mockResolvedValue(true),
+    onReject: vi.fn().mockResolvedValue(true),
+  }
+  render(
+    <InboundRequestDetail
+      inboundRequest={inboundRequest}
+      allowedActions={allowedActions}
+      isPending={false}
+      {...handlers}
+    />
+  )
+  return handlers
+}
+
+describe('InboundRequestDetail supplier email actions', () => {
+  it('offers approve-only and approve-and-send when the request is pending approval', () => {
+    renderDetail(request(), ['Approve', 'ApproveAndSend'])
+
+    expect(screen.getByRole('button', { name: /Chỉ phê duyệt/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Duyệt và gửi mail/ })).toBeEnabled()
+  })
+
+  it('disables approve-and-send when the supplier has no email', () => {
+    renderDetail(request({ supplierEmail: null }), ['Approve', 'ApproveAndSend'])
+
+    const sendButton = screen.getByRole('button', { name: /Duyệt và gửi mail/ })
+    expect(sendButton).toBeDisabled()
+    expect(sendButton).toHaveAccessibleDescription(/chưa có email/)
+    expect(screen.getByRole('note')).toHaveTextContent(/cập nhật email của nhà cung cấp/)
+    expect(screen.getByRole('button', { name: /Chỉ phê duyệt/ })).toBeEnabled()
+  })
+
+  it('hides the email buttons for requests without a supplier', () => {
+    renderDetail(request({ supplierId: null, supplierEmail: null }), ['Approve', 'ApproveAndSend'])
+
+    expect(screen.queryByRole('button', { name: /Duyệt và gửi mail/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Chỉ phê duyệt/ })).toBeEnabled()
+  })
+
+  it('confirms with the recipient address before approving and sending', async () => {
+    const user = userEvent.setup()
+    const handlers = renderDetail(request(), ['Approve', 'ApproveAndSend'])
+
+    await user.click(screen.getByRole('button', { name: /Duyệt và gửi mail/ }))
+    const dialog = screen.getByRole('alertdialog')
+    expect(within(dialog).getByText(/ncc@example\.com/)).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận' }))
+
+    expect(handlers.onApproveAndSend).toHaveBeenCalledTimes(1)
+    expect(handlers.onApprove).not.toHaveBeenCalled()
+  })
+
+  it('labels the send button as resend once the order email was already sent', () => {
+    renderDetail(
+      request({
+        status: 'Approved',
+        supplierEmailSentAt: '2026-09-30T01:00:00Z',
+        supplierEmailSentTo: 'ncc@example.com',
+        supplierEmailSentByName: 'Người duyệt',
+      }),
+      ['SendToSupplier']
+    )
+
+    expect(screen.getByRole('button', { name: /Gửi lại mail/ })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /Gửi mail nhà cung cấp/ })).not.toBeInTheDocument()
+  })
+})

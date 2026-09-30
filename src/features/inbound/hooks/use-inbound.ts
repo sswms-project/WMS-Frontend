@@ -6,6 +6,7 @@ import { inboundService } from '../services/inbound.service'
 import type {
   AssignableWarehouseStaff,
   AssignWarehouseTaskRequest,
+  UnassignReceivingTaskRequest,
   InboundAllowedActionsResponse,
   InboundDocumentImport,
   InboundListQuery,
@@ -40,6 +41,11 @@ interface PutawayVariables {
 interface CancelPutawayTaskVariables {
   receiptId: string
   request: CancelPutawayTaskRequest
+}
+
+interface UnassignReceivingTaskVariables {
+  inboundRequestId: string
+  request: UnassignReceivingTaskRequest
 }
 
 interface AssignReceivingTaskVariables {
@@ -260,6 +266,16 @@ export function useAssignReceivingTaskMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, AssignReceivingTaskVariables>({
     mutationFn: ({ inboundRequestId, request }) =>
       inboundService.assignReceivingTask(inboundRequestId, request),
+    onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useUnassignReceivingTaskMutation() {
+  const invalidate = useInvalidateAssignments()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, UnassignReceivingTaskVariables>({
+    mutationFn: ({ inboundRequestId, request }) =>
+      inboundService.unassignReceivingTask(inboundRequestId, request),
     onSuccess: () => invalidate(),
     onError: (error) => logger.error(error),
   })

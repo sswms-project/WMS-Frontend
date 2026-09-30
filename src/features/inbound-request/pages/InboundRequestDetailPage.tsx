@@ -8,13 +8,33 @@ import {
 import { logger } from '@/lib/logger'
 import { InboundRequestDetail } from '../components/InboundRequestDetailPage'
 import {
+  useApproveAndSendInboundRequestMutation,
   useApproveInboundRequestMutation,
   useInboundRequestAllowedActionsQuery,
   useInboundRequestQuery,
   useRejectInboundRequestMutation,
+  useSendInboundRequestToSupplierMutation,
   useSubmitInboundRequestMutation,
 } from '../hooks/use-inbound-requests'
-import { INBOUND_REQUEST_ACTION, type InboundRequestAction } from '../types/inbound-request.types'
+import {
+  INBOUND_REQUEST_ACTION,
+  type InboundRequestAction,
+  type SupplierEmailDispatch,
+} from '../types/inbound-request.types'
+
+function notifyDispatch(dispatch: SupplierEmailDispatch, approvedNow: boolean) {
+  if (dispatch.sent) {
+    toast.success(
+      approvedNow
+        ? `Đã duyệt và gửi email đơn hàng tới ${dispatch.sentTo}.`
+        : `Đã gửi email đơn hàng tới ${dispatch.sentTo}.`
+    )
+    return
+  }
+  const reason = dispatch.error ?? 'Không thể gửi email cho nhà cung cấp.'
+  if (approvedNow) toast.warning(`Đã duyệt yêu cầu nhưng chưa gửi được email. ${reason}`)
+  else toast.error(reason)
+}
 
 export default function InboundRequestDetailPage({
   inboundRequestId,
@@ -25,10 +45,23 @@ export default function InboundRequestDetailPage({
   const actionsQuery = useInboundRequestAllowedActionsQuery(inboundRequestId)
   const submitMutation = useSubmitInboundRequestMutation()
   const approveMutation = useApproveInboundRequestMutation()
+  const approveAndSendMutation = useApproveAndSendInboundRequestMutation()
+  const sendToSupplierMutation = useSendInboundRequestToSupplierMutation()
   const rejectMutation = useRejectInboundRequestMutation()
 
   async function runAction(action: InboundRequestAction, reason?: string) {
     try {
+      if (
+        action === INBOUND_REQUEST_ACTION.ApproveAndSend ||
+        action === INBOUND_REQUEST_ACTION.SendToSupplier
+      ) {
+        const approvedNow = action === INBOUND_REQUEST_ACTION.ApproveAndSend
+        const response = approvedNow
+          ? await approveAndSendMutation.mutateAsync(inboundRequestId)
+          : await sendToSupplierMutation.mutateAsync(inboundRequestId)
+        notifyDispatch(response.data, approvedNow)
+        return approvedNow || response.data.sent
+      }
       if (action === INBOUND_REQUEST_ACTION.Submit)
         await submitMutation.mutateAsync(inboundRequestId)
       else if (action === INBOUND_REQUEST_ACTION.Reject) {
@@ -66,9 +99,17 @@ export default function InboundRequestDetailPage({
     <InboundRequestDetail
       inboundRequest={detailQuery.data}
       allowedActions={actionsQuery.data?.allowedActions ?? []}
-      isPending={submitMutation.isPending || approveMutation.isPending || rejectMutation.isPending}
+      isPending={
+        submitMutation.isPending ||
+        approveMutation.isPending ||
+        approveAndSendMutation.isPending ||
+        sendToSupplierMutation.isPending ||
+        rejectMutation.isPending
+      }
       onSubmit={() => runAction(INBOUND_REQUEST_ACTION.Submit)}
       onApprove={() => runAction(INBOUND_REQUEST_ACTION.Approve)}
+      onApproveAndSend={() => runAction(INBOUND_REQUEST_ACTION.ApproveAndSend)}
+      onSendToSupplier={() => runAction(INBOUND_REQUEST_ACTION.SendToSupplier)}
       onReject={(reason) => runAction(INBOUND_REQUEST_ACTION.Reject, reason)}
     />
   )
