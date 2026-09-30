@@ -2,6 +2,29 @@ import { CheckCircle2 } from 'lucide-react'
 import type { LifecycleEvent } from '@/features/inbound-request/types/inbound-request.types'
 import { formatOperationalDateTime } from '@/features/inbound-request/utils/inbound-request-format'
 
+const ACTION_LABELS: Record<string, string> = {
+  Create: 'Tạo mới',
+  Update: 'Cập nhật',
+  Duplicate: 'Nhân bản',
+  Delete: 'Xóa',
+  Submit: 'Gửi duyệt',
+  Approve: 'Phê duyệt',
+  Reject: 'Từ chối',
+  Withdraw: 'Rút lại',
+  Receive: 'Nhận hàng',
+  PutAway: 'Cất hàng',
+  AddEvidence: 'Thêm bằng chứng',
+  SendToSupplier: 'Gửi mail cho nhà cung cấp',
+  ResendToSupplier: 'Gửi lại mail cho nhà cung cấp',
+}
+
+const SUPPLIER_MAIL_ACTIONS = new Set(['SendToSupplier', 'ResendToSupplier'])
+
+function formatDetail(action: string, reason: string) {
+  if (!SUPPLIER_MAIL_ACTIONS.has(action)) return `Lý do: ${reason}`
+  return `Người nhận: ${reason.replace(/^To=/, '')}`
+}
+
 export function LifecycleTimeline({ events }: { readonly events: readonly LifecycleEvent[] }) {
   if (events.length === 0) {
     return <p className="text-muted-foreground py-4 text-xs">Chưa có lịch sử xử lý.</p>
@@ -22,11 +45,13 @@ export function LifecycleTimeline({ events }: { readonly events: readonly Lifecy
             aria-hidden="true"
           />
           <div className="min-w-0">
-            <p className="font-medium">{event.action}</p>
+            <p className="font-medium">{ACTION_LABELS[event.action] ?? event.action}</p>
             <p className="text-muted-foreground text-xs">
               {event.actorName} · {formatOperationalDateTime(event.createdAt)}
             </p>
-            {event.reason ? <p className="mt-1 text-xs">Lý do: {event.reason}</p> : null}
+            {event.reason ? (
+              <p className="mt-1 text-xs">{formatDetail(event.action, event.reason)}</p>
+            ) : null}
           </div>
         </li>
       ))}
