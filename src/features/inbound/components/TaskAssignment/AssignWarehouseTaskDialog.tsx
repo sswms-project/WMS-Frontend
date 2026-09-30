@@ -42,7 +42,6 @@ interface AssignWarehouseTaskDialogProps {
   readonly isPending: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: () => void
-  /** Chỉ dùng cho việc nhận hàng đã giao: trả về trạng thái chưa giao. */
   readonly onUnassign?: () => void
 }
 
