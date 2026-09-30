@@ -665,6 +665,7 @@ export function WarehouseDesignerWorkspace({
         isReadOnly={!canConfigure}
         onZoomIn={() => canvasRef.current?.zoomIn()}
         onZoomOut={() => canvasRef.current?.zoomOut()}
+        onZoomTo={(nextZoomPercent) => canvasRef.current?.zoomTo(nextZoomPercent)}
         onFit={() => canvasRef.current?.fit()}
         onCancel={closeDesigner}
         onSave={() => onSave(scene, baseVersionRef.current)}

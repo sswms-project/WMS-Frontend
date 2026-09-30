@@ -82,6 +82,7 @@ interface WarehouseCanvasProps {
 export interface WarehouseCanvasHandle {
   zoomIn: () => void
   zoomOut: () => void
+  zoomTo: (zoomPercent: number) => void
   fit: () => void
 }
 
@@ -214,10 +215,13 @@ function renderDecorationSymbol(
   palette: CanvasPalette,
   foreground?: string
 ) {
-  const iconSize = Math.min(38, Math.max(20, Math.min(width, height) * 0.38))
+  const iconSize = Math.min(
+    56,
+    Math.max(20, Math.min(width, height - (height >= 58 ? 18 : 0)) * 0.62)
+  )
   const scale = iconSize / 24
   const x = (width - iconSize) / 2
-  const y = Math.max(6, (height - iconSize - (height >= 58 ? 18 : 0)) / 2)
+  const y = Math.max(0, (height - iconSize - (height >= 58 ? 18 : 0)) / 2)
   const stroke = foreground ?? palette.foreground
   const strokeWidth = 1.6
   let symbol: React.ReactNode
@@ -447,15 +451,28 @@ export function WarehouseCanvas({
     },
     [size.height, size.width, viewport]
   )
+  const zoomTo = useCallback(
+    (zoomPercent: number) => {
+      if (!size.width || !size.height) return
+      isFitMode.current = false
+      pendingCenter.current = {
+        x: (size.width / 2 - viewport.x) / viewport.scale,
+        y: (size.height / 2 - viewport.y) / viewport.scale,
+      }
+      setScale(Math.min(MAX_SCALE, Math.max(MIN_SCALE, zoomPercent / 100)))
+    },
+    [size.height, size.width, viewport]
+  )
 
   useImperativeHandle(
     ref,
     () => ({
       zoomIn: () => zoomAtCenter(ZOOM_FACTOR),
       zoomOut: () => zoomAtCenter(1 / ZOOM_FACTOR),
+      zoomTo,
       fit,
     }),
-    [fit, zoomAtCenter]
+    [fit, zoomAtCenter, zoomTo]
   )
 
   useEffect(() => {

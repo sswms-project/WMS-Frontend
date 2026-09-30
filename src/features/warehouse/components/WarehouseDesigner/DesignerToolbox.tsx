@@ -39,45 +39,6 @@ interface DesignerToolboxProps {
   readonly onSelect: (selection: WarehouseLayoutSelection) => void
 }
 
-function DisabledActionTooltip({
-  label,
-  disabledReason,
-  disabled,
-  onClick,
-  icon,
-  dragData,
-}: {
-  readonly label: string
-  readonly disabledReason: string
-  readonly disabled: boolean
-  readonly onClick: () => void
-  readonly icon: React.ReactNode
-  readonly dragData: LayoutPaletteDragData
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="block">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="bg-muted/70 hover:bg-accent size-14 rounded-md border border-transparent hover:border-current/10"
-            disabled={disabled}
-            draggable={!disabled}
-            aria-label={label}
-            onDragStart={(event) => writeLayoutDragData(event.dataTransfer, dragData)}
-            onClick={onClick}
-          >
-            {icon}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      {disabled ? <TooltipContent>{disabledReason}</TooltipContent> : null}
-    </Tooltip>
-  )
-}
-
 function RackShapeIcon({ shape }: { readonly shape: WarehouseLayoutRackShape }) {
   return (
     <svg
@@ -87,7 +48,7 @@ function RackShapeIcon({ shape }: { readonly shape: WarehouseLayoutRackShape }) 
       strokeWidth="1.6"
       strokeLinecap="square"
       aria-hidden="true"
-      className="size-7"
+      className="size-8"
     >
       {shape === 'Standard' ? <rect x="3" y="10" width="26" height="12" fill="white" /> : null}
       {shape === 'Vertical' ? (
@@ -138,7 +99,7 @@ function PaletteIconAction({
             type="button"
             variant="ghost"
             size="icon"
-            className="bg-muted/70 hover:bg-accent size-14 rounded-md border border-transparent hover:border-current/10 [&_svg]:size-7"
+            className="bg-surface-container-low hover:bg-surface-container-high text-foreground hover:border-border focus-visible:ring-ring aspect-square h-auto max-h-16 w-full min-w-0 rounded-lg border border-transparent p-0 transition-colors focus-visible:ring-2 [&_svg]:size-8"
             disabled={disabled}
             draggable={!disabled}
             aria-label={label}
@@ -208,14 +169,14 @@ export function DesignerToolbox({
             >
               Khu vực lưu trữ
             </h3>
-            <div className="flex flex-wrap gap-2">
-              <DisabledActionTooltip
+            <div className="grid grid-cols-4 gap-2">
+              <PaletteIconAction
                 label="Khu vực"
                 disabled={!canConfigure}
                 disabledReason="Bạn chỉ có quyền xem sơ đồ."
                 onClick={onCreateZone}
                 dragData={{ kind: 'zone' }}
-                icon={<SquareDashed className="size-7" aria-hidden="true" />}
+                icon={<SquareDashed className="size-8" aria-hidden="true" />}
               />
             </div>
           </section>
@@ -228,7 +189,7 @@ export function DesignerToolbox({
             >
               Kệ hàng
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <PaletteIconAction
                 label="Kệ"
                 disabled={!canConfigure || !selectedZoneId}
@@ -286,36 +247,19 @@ export function DesignerToolbox({
               id="decoration-tools-title"
               className="text-muted-foreground mb-2 text-[11px] font-medium"
             >
-              Cửa, lối đi & khu chức năng
+              Khác
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {DECORATION_OPTIONS.map((option) => (
-                <Tooltip key={option.type}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="bg-muted/70 hover:bg-accent size-14 rounded-md border border-transparent hover:border-current/10 [&_svg]:size-7"
-                      disabled={!canConfigure}
-                      draggable={canConfigure}
-                      onDragStart={(event) =>
-                        writeLayoutDragData(event.dataTransfer, {
-                          kind: 'decoration',
-                          type: option.type,
-                          label: option.label,
-                        })
-                      }
-                      aria-label={option.label}
-                      onClick={() => onCreateDecoration(option.type, option.label)}
-                    >
-                      <option.icon aria-hidden="true" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {canConfigure ? option.label : `${option.label}: Bạn chỉ có quyền xem sơ đồ.`}
-                  </TooltipContent>
-                </Tooltip>
+                <PaletteIconAction
+                  key={option.type}
+                  label={option.label}
+                  disabled={!canConfigure}
+                  disabledReason="Bạn chỉ có quyền xem sơ đồ."
+                  onClick={() => onCreateDecoration(option.type, option.label)}
+                  dragData={{ kind: 'decoration', type: option.type, label: option.label }}
+                  icon={<option.icon aria-hidden="true" />}
+                />
               ))}
             </div>
           </section>

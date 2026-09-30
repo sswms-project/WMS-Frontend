@@ -284,6 +284,7 @@ export function DesignerFooter({
   isReadOnly,
   onZoomIn,
   onZoomOut,
+  onZoomTo,
   onFit,
   onCancel,
   onSave,
@@ -294,6 +295,7 @@ export function DesignerFooter({
   readonly isReadOnly: boolean
   readonly onZoomIn: () => void
   readonly onZoomOut: () => void
+  readonly onZoomTo: (zoomPercent: number) => void
   readonly onFit: () => void
   readonly onCancel: () => void
   readonly onSave: () => void
@@ -304,12 +306,16 @@ export function DesignerFooter({
         <ToolbarIconButton label="Thu nhỏ" onClick={onZoomOut}>
           <ZoomOut aria-hidden="true" />
         </ToolbarIconButton>
-        <div className="bg-muted h-1 w-28 overflow-hidden rounded-full" aria-hidden="true">
-          <div
-            className="bg-primary h-full rounded-full"
-            style={{ width: `${Math.min(100, Math.max(5, zoomPercent / 2))}%` }}
-          />
-        </div>
+        <input
+          type="range"
+          min={20}
+          max={400}
+          step={5}
+          value={zoomPercent}
+          aria-label="Thu phóng sơ đồ"
+          className="accent-primary focus-visible:ring-ring w-28 cursor-pointer focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          onChange={(event) => onZoomTo(Number(event.currentTarget.value))}
+        />
         <ToolbarIconButton label="Phóng to" onClick={onZoomIn}>
           <ZoomIn aria-hidden="true" />
         </ToolbarIconButton>
