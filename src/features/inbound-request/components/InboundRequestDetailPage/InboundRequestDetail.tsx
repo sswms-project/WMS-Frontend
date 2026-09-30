@@ -36,6 +36,8 @@ import { InboundRequestStatusBadge } from '../InboundRequestsPage'
 import { InboundRequestOverview } from './InboundRequestOverview'
 import { InboundRequestLines } from './InboundRequestLines'
 
+const MISSING_SUPPLIER_EMAIL_HINT_ID = 'inbound-request-missing-supplier-email'
+
 interface InboundRequestDetailProps {
   readonly inboundRequest: InboundRequestDetailType
   readonly allowedActions: readonly InboundRequestAction[]
@@ -77,6 +79,11 @@ export function InboundRequestDetail({
   const canMailSupplier = Boolean(inboundRequest.supplierId)
   const hasSentToSupplier = Boolean(inboundRequest.supplierEmailSentAt)
   const confirmationCopy = getConfirmationCopy(confirmationAction, supplierEmail)
+  const showMissingEmailHint =
+    canMailSupplier &&
+    !supplierEmail &&
+    (allowedActions.includes(INBOUND_REQUEST_ACTION.ApproveAndSend) ||
+      allowedActions.includes(INBOUND_REQUEST_ACTION.SendToSupplier))
 
   async function reject() {
     const normalizedReason = reason.trim()
@@ -157,7 +164,7 @@ export function InboundRequestDetail({
             <Button
               type="button"
               disabled={!supplierEmail}
-              title={supplierEmail ? undefined : 'Nhà cung cấp chưa có email'}
+              aria-describedby={supplierEmail ? undefined : MISSING_SUPPLIER_EMAIL_HINT_ID}
               onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.ApproveAndSend)}
             >
               <Mail aria-hidden="true" />
@@ -169,7 +176,7 @@ export function InboundRequestDetail({
               type="button"
               variant={hasSentToSupplier ? 'outline' : 'default'}
               disabled={!supplierEmail}
-              title={supplierEmail ? undefined : 'Nhà cung cấp chưa có email'}
+              aria-describedby={supplierEmail ? undefined : MISSING_SUPPLIER_EMAIL_HINT_ID}
               onClick={() => setConfirmationAction(INBOUND_REQUEST_ACTION.SendToSupplier)}
             >
               <Mail aria-hidden="true" />
@@ -178,6 +185,17 @@ export function InboundRequestDetail({
           ) : null}
         </div>
       </header>
+
+      {showMissingEmailHint ? (
+        <p
+          id={MISSING_SUPPLIER_EMAIL_HINT_ID}
+          className="text-muted-foreground -mt-2 text-xs"
+          role="note"
+        >
+          Nhà cung cấp chưa có email nên chưa thể gửi mail đơn hàng. Hãy cập nhật email của nhà cung
+          cấp trước.
+        </p>
+      ) : null}
 
       <InboundRequestOverview request={inboundRequest} />
 

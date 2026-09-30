@@ -73,7 +73,10 @@ describe('InboundRequestDetail supplier email actions', () => {
   it('disables approve-and-send when the supplier has no email', () => {
     renderDetail(request({ supplierEmail: null }), ['Approve', 'ApproveAndSend'])
 
-    expect(screen.getByRole('button', { name: /Duyệt và gửi mail/ })).toBeDisabled()
+    const sendButton = screen.getByRole('button', { name: /Duyệt và gửi mail/ })
+    expect(sendButton).toBeDisabled()
+    expect(sendButton).toHaveAccessibleDescription(/chưa có email/)
+    expect(screen.getByRole('note')).toHaveTextContent(/cập nhật email của nhà cung cấp/)
     expect(screen.getByRole('button', { name: /Chỉ phê duyệt/ })).toBeEnabled()
   })
 
