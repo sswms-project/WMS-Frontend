@@ -405,6 +405,7 @@ Legend: `[ ]` not started, `[~]` in progress, `[x]` completed, `[!]` blocked or 
 - [x] Create implementation plan and task breakdown.
 - [x] Implement Phase 1 backend scene persistence.
 - [x] Implement Phase 2 desktop designer.
+- [x] Apply the AMIS-inspired full-screen diagram workspace and icon-based editing workflow.
 - [~] Implement Phase 3 mobile and rack structure workflows.
 - [ ] Implement Phase 4 operational overlays.
 
@@ -616,3 +617,27 @@ Verification after hierarchical outline update:
 - `pnpm lint`, `pnpm build`, Prettier, and `git diff --check`: passed.
 - Browser desktop/mobile screenshot QA remains blocked during connection by runtime `os error 3`;
   no screenshot QA completion is claimed.
+
+### 15.9 AMIS-inspired designer refresh - 2026-09-30
+
+- Reworked the designer into a full-screen workspace with a fixed, centered floor plan, dotted
+  work surface, AMIS-style blue canvas outline, icon palette, contextual object actions, and a
+  bottom zoom/save bar. Existing Konva scene data and warehouse APIs remain the source of truth.
+- Kept rack creation connected to the selected Zone and existing rack form. Dropping a rack icon
+  onto the canvas records the drop position, opens the form, and applies that position after the
+  existing create request succeeds. Create forms now label the primary action `Lưu`.
+- Fixed native drag-and-drop acceptance: `DataTransfer.getData()` is protected during `dragover`,
+  so the canvas now checks the transfer type before calling `preventDefault()`. Added regression
+  coverage for protected payload reads.
+- Compared the AMIS diagram list/detail/editor reference with the local designer. Browser QA
+  confirmed that dropping a rack into a selected Zone opens the rack form; the form was cancelled
+  without creating a Rack or saving the scene.
+
+Verification after designer refresh:
+
+- `pnpm test`: 34 files and 93 tests passed.
+- `pnpm lint` and `pnpm typecheck`: passed.
+- Manual local browser QA: diagram opens full-screen; palette icons and contextual actions render;
+  rack drop opens the creation form with the `Lưu` label.
+- Production build was not rerun while the local development server was active. No business data
+  was created or modified during this verification.

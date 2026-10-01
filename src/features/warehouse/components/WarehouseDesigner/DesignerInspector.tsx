@@ -1,18 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  Copy,
-  Loader2,
-  RotateCcw,
-  Save,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { Loader2, Save, X } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -28,13 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   warehouseLayoutDecorationSchema,
-  warehouseLayoutGeometrySchema,
   type WarehouseLayoutDecorationFormValues,
-  type WarehouseLayoutGeometryFormValues,
 } from '../../schemas/warehouse-layout-scene.schema'
 import { rackNameSchema } from '../../schemas/warehouse.schema'
 import type {
@@ -42,27 +28,21 @@ import type {
   WarehouseLayoutEditorRack,
   WarehouseLayoutEditorScene,
   WarehouseLayoutEditorZone,
-  WarehouseLayoutGeometry,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import { formatWarehouseStatus } from '../../utils/warehouse-labels'
-import { DECORATION_OPTIONS, getDecorationLabel, LAYOUT_COLOR_SWATCHES } from './designer-constants'
+import { DECORATION_OPTIONS, getDecorationLabel } from './designer-constants'
 
 interface DesignerInspectorProps {
   readonly scene: WarehouseLayoutEditorScene
   readonly selection: WarehouseLayoutSelection
   readonly canConfigure: boolean
-  readonly onGeometryChange: (geometry: WarehouseLayoutGeometry) => void
-  readonly onColorChange: (color: string | null) => void
   readonly isUpdatingRack: boolean
   readonly isDeactivatingRack: boolean
   readonly onRackNameChange: (rackName: string) => Promise<boolean>
-  readonly onDeactivateRack: () => void
   readonly onDecorationChange: (
     decoration: Omit<WarehouseLayoutEditorDecoration, 'clientKey' | 'id' | 'color'>
   ) => void
-  readonly onDuplicateDecoration: () => void
-  readonly onDeleteDecoration: () => void
   readonly onClose: () => void
 }
 
@@ -90,228 +70,7 @@ function InspectorHeader({
   )
 }
 
-function GeometryForm({
-  geometry,
-  gridSize,
-  disabled,
-  onSubmit,
-}: {
-  readonly geometry: WarehouseLayoutGeometry
-  readonly gridSize: number
-  readonly disabled: boolean
-  readonly onSubmit: (geometry: WarehouseLayoutGeometry) => void
-}) {
-  const form = useForm<WarehouseLayoutGeometryFormValues>({
-    resolver: zodResolver(warehouseLayoutGeometrySchema),
-    values: geometry,
-  })
-  const { errors } = form.formState
-
-  function nudge(xDelta: number, yDelta: number) {
-    const current = form.getValues()
-    const next = { ...current, x: current.x + xDelta, y: current.y + yDelta }
-    form.setValue('x', next.x, { shouldDirty: true })
-    form.setValue('y', next.y, { shouldDirty: true })
-    onSubmit(next)
-  }
-
-  return (
-    <form className="flex flex-col gap-3 px-4 py-3" onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold">Hình học</h3>
-        <div className="flex items-center gap-0.5" aria-label="Di chuyển theo bước lưới">
-          <NudgeButton label="Sang trái" disabled={disabled} onClick={() => nudge(-gridSize, 0)}>
-            <ArrowLeft aria-hidden="true" />
-          </NudgeButton>
-          <NudgeButton label="Lên trên" disabled={disabled} onClick={() => nudge(0, -gridSize)}>
-            <ArrowUp aria-hidden="true" />
-          </NudgeButton>
-          <NudgeButton label="Xuống dưới" disabled={disabled} onClick={() => nudge(0, gridSize)}>
-            <ArrowDown aria-hidden="true" />
-          </NudgeButton>
-          <NudgeButton label="Sang phải" disabled={disabled} onClick={() => nudge(gridSize, 0)}>
-            <ArrowRight aria-hidden="true" />
-          </NudgeButton>
-        </div>
-      </div>
-      <FieldGroup className="grid grid-cols-2 gap-3">
-        <GeometryNumberField form={form} name="x" label="X" disabled={disabled} />
-        <GeometryNumberField form={form} name="y" label="Y" disabled={disabled} />
-        <GeometryNumberField form={form} name="width" label="Rộng" disabled={disabled} />
-        <GeometryNumberField form={form} name="height" label="Cao" disabled={disabled} />
-        <GeometryNumberField form={form} name="rotation" label="Góc xoay" disabled={disabled} />
-        <GeometryNumberField form={form} name="zIndex" label="Lớp" disabled={disabled} />
-      </FieldGroup>
-      <Button
-        type="submit"
-        size="sm"
-        className="w-full"
-        disabled={disabled || Object.keys(errors).length > 0}
-      >
-        <Save data-icon="inline-start" aria-hidden="true" />
-        Áp dụng thuộc tính
-      </Button>
-    </form>
-  )
-}
-
-function GeometryNumberField({
-  form,
-  name,
-  label,
-  disabled,
-}: {
-  readonly form: ReturnType<typeof useForm<WarehouseLayoutGeometryFormValues>>
-  readonly name: keyof WarehouseLayoutGeometryFormValues
-  readonly label: string
-  readonly disabled: boolean
-}) {
-  const error = form.formState.errors[name]
-  return (
-    <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor={`geometry-${name}`}>{label}</FieldLabel>
-      <Input
-        id={`geometry-${name}`}
-        type="number"
-        step="1"
-        inputMode="decimal"
-        autoComplete="off"
-        disabled={disabled || form.formState.isSubmitting}
-        aria-invalid={Boolean(error)}
-        {...form.register(name, { valueAsNumber: true })}
-      />
-      <FieldError errors={[error]} />
-    </Field>
-  )
-}
-
-function NudgeButton({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  readonly label: string
-  readonly disabled: boolean
-  readonly onClick: () => void
-  readonly children: React.ReactNode
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <Button
-            type="button"
-            size="icon-xs"
-            variant="outline"
-            disabled={disabled}
-            aria-label={label}
-            onClick={onClick}
-          >
-            {children}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
-function AppearanceColorField({
-  color,
-  disabled,
-  onChange,
-}: {
-  readonly color?: string | null
-  readonly disabled: boolean
-  readonly onChange: (color: string | null) => void
-}) {
-  const pickerValue = color ?? LAYOUT_COLOR_SWATCHES[0]
-
-  return (
-    <div className="flex flex-col gap-3 px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xs font-semibold">Màu hiển thị</h3>
-          <p className="text-muted-foreground text-[11px]">Dùng để phân biệt trên sơ đồ.</p>
-        </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                disabled={disabled || !color}
-                aria-label="Khôi phục màu mặc định"
-                onClick={() => onChange(null)}
-              >
-                <RotateCcw aria-hidden="true" />
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>Khôi phục màu mặc định</TooltipContent>
-        </Tooltip>
-      </div>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Màu có sẵn">
-        {LAYOUT_COLOR_SWATCHES.map((swatch) => (
-          <Tooltip key={swatch}>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="outline"
-                className="relative size-8 p-1"
-                disabled={disabled}
-                aria-label={`Chọn màu ${swatch}`}
-                aria-pressed={color === swatch}
-                onClick={() => onChange(swatch)}
-              >
-                <span
-                  className="size-full rounded-[2px] border"
-                  style={{ backgroundColor: swatch }}
-                  aria-hidden="true"
-                />
-                {color === swatch ? (
-                  <span className="ring-primary pointer-events-none absolute inset-0 ring-2 ring-inset" />
-                ) : null}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{swatch}</TooltipContent>
-          </Tooltip>
-        ))}
-        <Field className="ml-auto w-auto">
-          <FieldLabel htmlFor="layout-color-picker" className="sr-only">
-            Chọn màu tùy chỉnh
-          </FieldLabel>
-          <Input
-            id="layout-color-picker"
-            type="color"
-            value={pickerValue}
-            className="h-8 w-10 cursor-pointer p-1"
-            disabled={disabled}
-            aria-label="Chọn màu tùy chỉnh"
-            onChange={(event) => onChange(event.target.value.toUpperCase())}
-          />
-        </Field>
-      </div>
-    </div>
-  )
-}
-
-function ZoneInspector({
-  zone,
-  gridSize,
-  canConfigure,
-  onGeometryChange,
-  onColorChange,
-}: {
-  readonly zone: WarehouseLayoutEditorZone
-  readonly gridSize: number
-  readonly canConfigure: boolean
-  readonly onGeometryChange: (geometry: WarehouseLayoutGeometry) => void
-  readonly onColorChange: (color: string | null) => void
-}) {
+function ZoneInspector({ zone }: { readonly zone: WarehouseLayoutEditorZone }) {
   return (
     <>
       <InspectorHeader title="Khu vực" code={zone.zoneCode} status={zone.status} />
@@ -319,39 +78,26 @@ function ZoneInspector({
         <dt className="text-muted-foreground">Tên</dt>
         <dd className="truncate">{zone.zoneName}</dd>
       </dl>
-      <Separator />
-      <AppearanceColorField color={zone.color} disabled={!canConfigure} onChange={onColorChange} />
-      <Separator />
-      <GeometryForm
-        geometry={zone}
-        gridSize={gridSize}
-        disabled={!canConfigure}
-        onSubmit={onGeometryChange}
-      />
+      <p className="text-muted-foreground border-t px-4 py-3 text-xs leading-relaxed">
+        Kéo các điểm điều khiển trực tiếp trên sơ đồ để thay đổi kích thước; dùng toolbar nổi để đổi
+        màu hoặc xoay khu vực.
+      </p>
     </>
   )
 }
 
 function RackInspector({
   rack,
-  gridSize,
   canConfigure,
-  onGeometryChange,
-  onColorChange,
   isUpdating,
   isDeactivating,
   onNameChange,
-  onDeactivate,
 }: {
   readonly rack: WarehouseLayoutEditorRack
-  readonly gridSize: number
   readonly canConfigure: boolean
-  readonly onGeometryChange: (geometry: WarehouseLayoutGeometry) => void
-  readonly onColorChange: (color: string | null) => void
   readonly isUpdating: boolean
   readonly isDeactivating: boolean
   readonly onNameChange: (rackName: string) => Promise<boolean>
-  readonly onDeactivate: () => void
 }) {
   const [rackName, setRackName] = useState(rack.rackName)
   const parsedName = rackNameSchema.safeParse({ rackName })
@@ -409,37 +155,9 @@ function RackInspector({
           <dd className="truncate">{rack.rackName}</dd>
         </dl>
       )}
-      <Separator />
-      <AppearanceColorField color={rack.color} disabled={!canConfigure} onChange={onColorChange} />
-      <Separator />
-      <GeometryForm
-        geometry={rack}
-        gridSize={gridSize}
-        disabled={!canConfigure}
-        onSubmit={onGeometryChange}
-      />
-      {canConfigure ? (
-        <>
-          <Separator />
-          <div className="p-4">
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="w-full"
-              disabled={isUpdating || isDeactivating}
-              onClick={onDeactivate}
-            >
-              {isDeactivating ? (
-                <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Trash2 data-icon="inline-start" aria-hidden="true" />
-              )}
-              Ngừng hoạt động kệ
-            </Button>
-          </div>
-        </>
-      ) : null}
+      <p className="text-muted-foreground border-t px-4 py-3 text-xs leading-relaxed">
+        Màu, góc xoay và thao tác ngừng hoạt động nằm trên toolbar của kệ đang chọn.
+      </p>
     </>
   )
 }
@@ -448,18 +166,12 @@ function DecorationInspector({
   decoration,
   canConfigure,
   onChange,
-  onColorChange,
-  onDuplicate,
-  onDelete,
 }: {
   readonly decoration: WarehouseLayoutEditorDecoration
   readonly canConfigure: boolean
   readonly onChange: (
     decoration: Omit<WarehouseLayoutEditorDecoration, 'clientKey' | 'id' | 'color'>
   ) => void
-  readonly onColorChange: (color: string | null) => void
-  readonly onDuplicate: () => void
-  readonly onDelete: () => void
 }) {
   const form = useForm<WarehouseLayoutDecorationFormValues>({
     resolver: zodResolver(warehouseLayoutDecorationSchema),
@@ -470,12 +182,6 @@ function DecorationInspector({
   return (
     <>
       <InspectorHeader title="Khu chức năng" code={decoration.label} />
-      <AppearanceColorField
-        color={decoration.color}
-        disabled={!canConfigure}
-        onChange={onColorChange}
-      />
-      <Separator />
       <form className="flex flex-col gap-3 px-4 py-3" onSubmit={form.handleSubmit(onChange)}>
         <FieldGroup>
           <Field data-invalid={Boolean(errors.label)}>
@@ -514,65 +220,16 @@ function DecorationInspector({
             <FieldError errors={[errors.type]} />
           </Field>
         </FieldGroup>
-        <FieldGroup className="grid grid-cols-2 gap-3">
-          {(['x', 'y', 'width', 'height', 'rotation', 'zIndex'] as const).map((name) => (
-            <Field key={name} data-invalid={Boolean(errors[name])}>
-              <FieldLabel htmlFor={`decoration-${name}`}>{getGeometryLabel(name)}</FieldLabel>
-              <Input
-                id={`decoration-${name}`}
-                type="number"
-                step="1"
-                disabled={!canConfigure}
-                autoComplete="off"
-                aria-invalid={Boolean(errors[name])}
-                {...form.register(name, { valueAsNumber: true })}
-              />
-              <FieldError errors={[errors[name]]} />
-            </Field>
-          ))}
-        </FieldGroup>
         <Button type="submit" size="sm" className="w-full" disabled={!canConfigure}>
           <Save data-icon="inline-start" aria-hidden="true" />
           Áp dụng thuộc tính
         </Button>
       </form>
-      <Separator />
-      <div className="grid grid-cols-2 gap-2 p-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!canConfigure}
-          onClick={onDuplicate}
-        >
-          <Copy data-icon="inline-start" aria-hidden="true" />
-          Nhân bản
-        </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          disabled={!canConfigure}
-          onClick={onDelete}
-        >
-          <Trash2 data-icon="inline-start" aria-hidden="true" />
-          Xóa
-        </Button>
-      </div>
+      <p className="text-muted-foreground border-t px-4 py-3 text-xs leading-relaxed">
+        Di chuyển, đổi màu, xoay, nhân bản hoặc xóa biểu tượng bằng toolbar nổi trên sơ đồ.
+      </p>
     </>
   )
-}
-
-function getGeometryLabel(name: keyof WarehouseLayoutGeometry): string {
-  const labels: Record<keyof WarehouseLayoutGeometry, string> = {
-    x: 'X',
-    y: 'Y',
-    width: 'Rộng',
-    height: 'Cao',
-    rotation: 'Góc xoay',
-    zIndex: 'Lớp',
-  }
-  return labels[name]
 }
 
 function SlotInspector({
@@ -611,29 +268,16 @@ export function DesignerInspector({
   scene,
   selection,
   canConfigure,
-  onGeometryChange,
-  onColorChange,
   isUpdatingRack,
   isDeactivatingRack,
   onRackNameChange,
-  onDeactivateRack,
   onDecorationChange,
-  onDuplicateDecoration,
-  onDeleteDecoration,
   onClose,
 }: DesignerInspectorProps) {
   const content = (() => {
     if (selection.kind === 'zone') {
       const zone = scene.zones.find((item) => item.id === selection.id)
-      return zone ? (
-        <ZoneInspector
-          zone={zone}
-          gridSize={scene.canvas.gridSize}
-          canConfigure={canConfigure}
-          onGeometryChange={onGeometryChange}
-          onColorChange={onColorChange}
-        />
-      ) : null
+      return zone ? <ZoneInspector zone={zone} /> : null
     }
     if (selection.kind === 'rack') {
       const rack = scene.racks.find((item) => item.id === selection.id)
@@ -641,14 +285,10 @@ export function DesignerInspector({
         <RackInspector
           key={`${rack.id}:${rack.rackName}`}
           rack={rack}
-          gridSize={scene.canvas.gridSize}
           canConfigure={canConfigure}
-          onGeometryChange={onGeometryChange}
-          onColorChange={onColorChange}
           isUpdating={isUpdatingRack}
           isDeactivating={isDeactivatingRack}
           onNameChange={onRackNameChange}
-          onDeactivate={onDeactivateRack}
         />
       ) : null
     }
@@ -659,9 +299,6 @@ export function DesignerInspector({
           decoration={decoration}
           canConfigure={canConfigure}
           onChange={onDecorationChange}
-          onColorChange={onColorChange}
-          onDuplicate={onDuplicateDecoration}
-          onDelete={onDeleteDecoration}
         />
       ) : null
     }

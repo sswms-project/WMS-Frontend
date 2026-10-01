@@ -1,12 +1,23 @@
+import type { WarehousePhysicalDetailsResponse } from './warehouse.types'
+
 export type WarehouseLayoutDecorationType =
   | 'Door'
+  | 'DoubleDoor'
   | 'Aisle'
+  | 'DirectionArrow'
+  | 'Exit'
+  | 'Forklift'
   | 'Receiving'
   | 'Packing'
   | 'Picking'
   | 'Damaged'
   | 'Office'
   | 'Other'
+  | 'Gate'
+  | 'DoubleGate'
+  | 'PalletTruck'
+
+export type WarehouseLayoutRackShape = 'Standard' | 'Vertical' | 'CrossBraced' | 'Pallet'
 
 export interface WarehouseLayoutCanvas {
   width: number
@@ -23,11 +34,13 @@ export interface WarehouseLayoutGeometry {
   zIndex: number
 }
 
-export interface WarehouseLayoutZoneSceneResponse {
+export interface WarehouseLayoutZoneSceneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneCode: string
   zoneName: string
+  description?: string | null
   status: string
+  rowVersion?: string | null
   x: number | null
   y: number | null
   width: number | null
@@ -37,14 +50,16 @@ export interface WarehouseLayoutZoneSceneResponse {
   color?: string | null
 }
 
-export interface WarehouseLayoutRackSceneResponse {
+export interface WarehouseLayoutRackSceneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneId: string
   zoneCode: string
   rackCode: string
   rackName: string
+  description: string | null
   status: string
   storageMode?: 'RackLevel' | 'SlotLevel'
+  layoutShape?: WarehouseLayoutRackShape | null
   allowsMixedProducts?: boolean
   capacity?: number | null
   rowVersion?: string | null
@@ -57,17 +72,20 @@ export interface WarehouseLayoutRackSceneResponse {
   color?: string | null
 }
 
-export interface WarehouseLayoutSlotSceneResponse {
+export interface WarehouseLayoutSlotSceneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneId: string
   rackId: string
   slotCode: string
+  slotName: string
+  description: string | null
   occupancyStatus: string
   isActive: boolean
   isOutboundStaging?: boolean
   allowsMixedProducts?: boolean
   capacity: number | null
   currentOccupancy: number
+  rowVersion?: string | null
 }
 
 export interface WarehouseLayoutDecorationResponse extends WarehouseLayoutGeometry {
@@ -90,6 +108,7 @@ export interface WarehouseLayoutSceneResponse {
 export interface WarehouseLayoutGeometryRequest extends WarehouseLayoutGeometry {
   entityId: string
   color?: string | null
+  layoutShape?: WarehouseLayoutRackShape | null
 }
 
 export interface WarehouseLayoutDecorationRequest extends WarehouseLayoutGeometry {

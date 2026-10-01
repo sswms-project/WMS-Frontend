@@ -3,8 +3,19 @@
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { logger } from '@/lib/logger'
+import { cn } from '@/lib/utils'
 import { AlertCircle, Boxes, Info, RefreshCw, X } from 'lucide-react'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Drawer,
@@ -24,15 +35,18 @@ import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
   WarehouseLayoutEditorRack,
+  WarehouseLayoutEditorZone,
   WarehouseLayoutGeometry,
   WarehouseLayoutGeometryTarget,
+  WarehouseLayoutRackShape,
   WarehouseLayoutSelection,
-  WarehouseLayoutTool,
 } from '../../types/warehouse-layout-scene.types'
-import { normalizeLayoutGeometry } from '../../utils/layout-grid'
+import type { LayoutPaletteDragData } from './designer-constants'
+import { constrainLayoutGeometryToCanvas, getRackPresetSize } from '../../utils/layout-grid'
 import { WarehouseLocationDeactivateDialog } from '../WarehouseDetailPage'
 import { DesignerInspector } from './DesignerInspector'
-import { DesignerToolbar } from './DesignerToolbar'
+import { DesignerContextToolbar } from './DesignerContextToolbar'
+import { DesignerFooter, DesignerToolbar } from './DesignerToolbar'
 import { DesignerToolbox } from './DesignerToolbox'
 import type { WarehouseCanvasHandle } from './WarehouseCanvas'
 
@@ -43,6 +57,7 @@ const WarehouseCanvas = dynamic(
 
 interface WarehouseDesignerWorkspaceProps {
   readonly warehouseId: string
+  readonly warehouseName: string
   readonly sceneVersion: number
   readonly resetRevision: number
   readonly initialScene: WarehouseLayoutEditorScene
@@ -50,15 +65,34 @@ interface WarehouseDesignerWorkspaceProps {
   readonly canConfigure: boolean
   readonly isSaving: boolean
   readonly isUpdatingRack: boolean
+  readonly isDeactivatingZone: boolean
   readonly isDeactivatingRack: boolean
   readonly saveError: string | null
   readonly hasConflict: boolean
-  readonly onCreateZone: () => void
-  readonly onCreateRack: (zoneId: string) => void
+  readonly placementToApply: WarehouseLayoutCreatedPlacement | null
+  readonly onPlacementApplied: () => void
+  readonly onCreateZone: (position?: WarehouseLayoutDropPosition) => void
+  readonly onCreateRack: (zoneId: string, position?: WarehouseLayoutDropPosition) => void
+  readonly onOpenLocationDetails: (selection: WarehouseLayoutSelection) => void
   readonly onUpdateRackName: (rack: WarehouseLayoutEditorRack, rackName: string) => Promise<void>
+  readonly onDeactivateZone: (zone: WarehouseLayoutEditorZone) => Promise<void>
   readonly onDeactivateRack: (rack: WarehouseLayoutEditorRack) => Promise<void>
   readonly onSave: (scene: WarehouseLayoutEditorScene, baseVersion: number) => void
   readonly onReload: () => void
+  readonly isClosing: boolean
+  readonly onClose: () => void
+}
+
+export interface WarehouseLayoutDropPosition {
+  readonly x: number
+  readonly y: number
+  readonly width?: number
+  readonly height?: number
+  readonly layoutShape?: WarehouseLayoutRackShape
+}
+export interface WarehouseLayoutCreatedPlacement extends WarehouseLayoutDropPosition {
+  readonly kind: 'zone' | 'rack'
+  readonly entityId: string
 }
 
 function createClientKey() {
@@ -82,6 +116,7 @@ function isFormControl(target: EventTarget | null): boolean {
 
 export function WarehouseDesignerWorkspace({
   warehouseId,
+  warehouseName,
   sceneVersion,
   resetRevision,
   initialScene,
@@ -89,26 +124,35 @@ export function WarehouseDesignerWorkspace({
   canConfigure,
   isSaving,
   isUpdatingRack,
+  isDeactivatingZone,
   isDeactivatingRack,
   saveError,
   hasConflict,
   onCreateZone,
   onCreateRack,
+  onOpenLocationDetails,
+  placementToApply,
+  onPlacementApplied,
   onUpdateRackName,
+  onDeactivateZone,
   onDeactivateRack,
   onSave,
   onReload,
+  isClosing,
+  onClose,
 }: WarehouseDesignerWorkspaceProps) {
   const [history, dispatch] = useLayoutEditorHistory(initialScene)
   const [selection, setSelection] = useState<WarehouseLayoutSelection | null>(null)
-  const [isControlPressed, setIsControlPressed] = useState(false)
   const [isGridVisible, setIsGridVisible] = useState(true)
   const [zoomPercent, setZoomPercent] = useState(100)
   const [isToolboxOpen, setIsToolboxOpen] = useState(false)
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
+  const [zoneDeactivateTarget, setZoneDeactivateTarget] =
+    useState<WarehouseLayoutEditorZone | null>(null)
   const [rackDeactivateTarget, setRackDeactivateTarget] =
     useState<WarehouseLayoutEditorRack | null>(null)
-  const [rackDeactivateError, setRackDeactivateError] = useState<string | null>(null)
+  const [locationDeactivateError, setLocationDeactivateError] = useState<string | null>(null)
   const canvasRef = useRef<WarehouseCanvasHandle>(null)
   const initialSceneRef = useRef(initialScene)
   const resetRevisionRef = useRef(resetRevision)
@@ -117,26 +161,6 @@ export function WarehouseDesignerWorkspace({
   const setWarehouseDirty = useWarehouseLayoutEditorStore((state) => state.setWarehouseDirty)
   const scene = history.present
   const isDirty = hasGeneratedGeometry || history.past.length > 0
-  const activeTool: WarehouseLayoutTool = isControlPressed ? 'pan' : 'select'
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Control') setIsControlPressed(true)
-    }
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'Control') setIsControlPressed(false)
-    }
-    const handleWindowBlur = () => setIsControlPressed(false)
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    window.addEventListener('blur', handleWindowBlur)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-      window.removeEventListener('blur', handleWindowBlur)
-    }
-  }, [])
 
   useEffect(() => {
     const resetRequested = resetRevisionRef.current !== resetRevision
@@ -157,6 +181,34 @@ export function WarehouseDesignerWorkspace({
   }, [dispatch, initialScene, isDirty, resetRevision, sceneVersion])
 
   useEffect(() => {
+    if (!placementToApply) return
+    const entity =
+      placementToApply.kind === 'zone'
+        ? scene.zones.find((zone) => zone.id === placementToApply.entityId)
+        : scene.racks.find((rack) => rack.id === placementToApply.entityId)
+    if (!entity) return
+    dispatch({
+      type: 'update-geometry',
+      target: placementToApply.kind,
+      id: placementToApply.entityId,
+      geometry: constrainLayoutGeometryToCanvas(
+        {
+          ...entity,
+          x: placementToApply.x,
+          y: placementToApply.y,
+          width: placementToApply.width ?? entity.width,
+          height: placementToApply.height ?? entity.height,
+        },
+        scene.canvas
+      ),
+      ...(placementToApply.kind === 'rack'
+        ? { rackShape: placementToApply.layoutShape ?? 'Standard' }
+        : {}),
+    })
+    onPlacementApplied()
+  }, [dispatch, onPlacementApplied, placementToApply, scene.canvas, scene.racks, scene.zones])
+
+  useEffect(() => {
     setWarehouseDirty(warehouseId, isDirty && canConfigure)
   }, [canConfigure, isDirty, setWarehouseDirty, warehouseId])
 
@@ -175,7 +227,12 @@ export function WarehouseDesignerWorkspace({
     geometry: WarehouseLayoutGeometry
   ) {
     if (!canConfigure) return
-    dispatch({ type: 'update-geometry', target, id, geometry })
+    dispatch({
+      type: 'update-geometry',
+      target,
+      id,
+      geometry: constrainLayoutGeometryToCanvas(geometry, scene.canvas),
+    })
   }
 
   function updateColor(target: WarehouseLayoutGeometryTarget, id: string, color: string | null) {
@@ -183,14 +240,18 @@ export function WarehouseDesignerWorkspace({
     dispatch({ type: 'update-color', target, id, color })
   }
 
-  function addDecoration(type: WarehouseLayoutDecorationType, label: string) {
+  function addDecoration(
+    type: WarehouseLayoutDecorationType,
+    label: string,
+    position?: WarehouseLayoutDropPosition
+  ) {
     if (!canConfigure) return
     const clientKey = createClientKey()
     const offset = scene.decorations.length * scene.canvas.gridSize
-    const geometry = normalizeLayoutGeometry(
+    const geometry = constrainLayoutGeometryToCanvas(
       {
-        x: scene.canvas.gridSize * 5 + offset,
-        y: scene.canvas.gridSize * 5 + offset,
+        x: position?.x ?? scene.canvas.gridSize * 5 + offset,
+        y: position?.y ?? scene.canvas.gridSize * 5 + offset,
         width: type === 'Aisle' ? scene.canvas.gridSize * 12 : scene.canvas.gridSize * 8,
         height: type === 'Aisle' ? scene.canvas.gridSize * 3 : scene.canvas.gridSize * 5,
         rotation: 0,
@@ -203,8 +264,25 @@ export function WarehouseDesignerWorkspace({
       decoration: { id: '', clientKey, type, label, color: null, ...geometry },
     })
     setSelection({ kind: 'decoration', id: clientKey })
-    setIsInspectorOpen(true)
+    setIsInspectorOpen(false)
     setIsToolboxOpen(false)
+  }
+
+  function handlePaletteDrop(payload: LayoutPaletteDragData, x: number, y: number) {
+    if (!canConfigure) return
+    const position = { x, y }
+    if (payload.kind === 'zone') onCreateZone(position)
+    else if (payload.kind === 'rack') {
+      const zoneId = getSelectedZoneId()
+      const rackSize = getRackPresetSize()
+      if (zoneId)
+        onCreateRack(zoneId, {
+          ...position,
+          ...rackSize,
+          layoutShape: payload.shape ?? 'Standard',
+        })
+      else toast.error('Chọn một khu vực trước khi đặt kệ hàng.')
+    } else addDecoration(payload.type, payload.label, position)
   }
 
   function getSelectedZoneId() {
@@ -226,7 +304,7 @@ export function WarehouseDesignerWorkspace({
     const source = scene.decorations.find((decoration) => decoration.clientKey === selection.id)
     if (!source) return
     const clientKey = createClientKey()
-    const geometry = normalizeLayoutGeometry(
+    const geometry = constrainLayoutGeometryToCanvas(
       {
         ...source,
         x: source.x + scene.canvas.gridSize,
@@ -246,7 +324,7 @@ export function WarehouseDesignerWorkspace({
       },
     })
     setSelection({ kind: 'decoration', id: clientKey })
-    setIsInspectorOpen(true)
+    setIsInspectorOpen(false)
   }
 
   function deleteSelectedDecoration() {
@@ -256,16 +334,56 @@ export function WarehouseDesignerWorkspace({
     setIsInspectorOpen(false)
   }
 
+  function rotateSelectedObject() {
+    if (!selection || selection.kind === 'slot' || !canConfigure) return
+    const object =
+      selection.kind === 'zone'
+        ? scene.zones.find((zone) => zone.id === selection.id)
+        : selection.kind === 'rack'
+          ? scene.racks.find((rack) => rack.id === selection.id)
+          : scene.decorations.find((decoration) => decoration.clientKey === selection.id)
+    if (!object) return
+    updateGeometry(selection.kind, selection.id, {
+      ...object,
+      rotation: (object.rotation + 90) % 360,
+    })
+  }
+
+  function getSelectedObjectColor() {
+    if (!selection || selection.kind === 'slot') return null
+    if (selection.kind === 'zone') {
+      return scene.zones.find((zone) => zone.id === selection.id)?.color ?? null
+    }
+    if (selection.kind === 'rack') {
+      return scene.racks.find((rack) => rack.id === selection.id)?.color ?? null
+    }
+    return (
+      scene.decorations.find((decoration) => decoration.clientKey === selection.id)?.color ?? null
+    )
+  }
+
   function getSelectedActiveRack() {
     if (selection?.kind !== 'rack' || !canConfigure) return null
     const rack = scene.racks.find((candidate) => candidate.id === selection.id)
     return rack?.status === 'Active' && activeZoneContainsRack(scene, rack) ? rack : null
   }
 
+  function getSelectedActiveZone() {
+    if (selection?.kind !== 'zone' || !canConfigure) return null
+    return scene.zones.find((zone) => zone.id === selection.id && zone.status === 'Active') ?? null
+  }
+
+  function requestDeactivateSelectedZone() {
+    const zone = getSelectedActiveZone()
+    if (!zone) return
+    setLocationDeactivateError(null)
+    setZoneDeactivateTarget(zone)
+  }
+
   function requestDeactivateSelectedRack() {
     const rack = getSelectedActiveRack()
     if (!rack) return
-    setRackDeactivateError(null)
+    setLocationDeactivateError(null)
     setRackDeactivateTarget(rack)
   }
 
@@ -289,20 +407,37 @@ export function WarehouseDesignerWorkspace({
       await onDeactivateRack(rackDeactivateTarget)
       toast.success('Đã ngừng hoạt động kệ hàng và gỡ khỏi sơ đồ.')
       setRackDeactivateTarget(null)
-      setRackDeactivateError(null)
+      setLocationDeactivateError(null)
       setSelection(null)
       setIsInspectorOpen(false)
     } catch (error) {
       logger.error(error)
-      setRackDeactivateError(
+      setLocationDeactivateError(
         getActionError(error, 'Không thể ngừng hoạt động kệ. Vui lòng thử lại.')
+      )
+    }
+  }
+
+  async function confirmDeactivateZone() {
+    if (!zoneDeactivateTarget) return
+    try {
+      await onDeactivateZone(zoneDeactivateTarget)
+      toast.success('Đã ngừng hoạt động khu vực và gỡ khỏi sơ đồ.')
+      setZoneDeactivateTarget(null)
+      setLocationDeactivateError(null)
+      setSelection(null)
+      setIsInspectorOpen(false)
+    } catch (error) {
+      logger.error(error)
+      setLocationDeactivateError(
+        getActionError(error, 'Không thể ngừng hoạt động khu vực. Vui lòng thử lại.')
       )
     }
   }
 
   function handleSelectionChange(nextSelection: WarehouseLayoutSelection | null) {
     setSelection(nextSelection)
-    setIsInspectorOpen(Boolean(nextSelection))
+    setIsInspectorOpen(false)
   }
 
   function handleWorkspaceKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -323,15 +458,23 @@ export function WarehouseDesignerWorkspace({
       dispatch({ type: 'redo' })
       return
     }
-    if ((event.key === 'Delete' || event.key === 'Backspace') && selection?.kind === 'rack') {
-      event.preventDefault()
-      requestDeactivateSelectedRack()
-      return
-    }
     if ((event.key === 'Delete' || event.key === 'Backspace') && selection?.kind === 'decoration') {
       event.preventDefault()
       deleteSelectedDecoration()
     }
+  }
+
+  function closeDesigner() {
+    if (isDirty && canConfigure) {
+      setIsCloseDialogOpen(true)
+      return
+    }
+    onClose()
+  }
+
+  function confirmCloseDesigner() {
+    setIsCloseDialogOpen(false)
+    onClose()
   }
 
   const toolbox = (
@@ -343,11 +486,21 @@ export function WarehouseDesignerWorkspace({
         setIsToolboxOpen(false)
         onCreateZone()
       }}
-      onCreateRack={() => {
+      onCreateRack={(shape) => {
         const zoneId = getSelectedZoneId()
         if (zoneId) {
           setIsToolboxOpen(false)
-          onCreateRack(zoneId)
+          onCreateRack(
+            zoneId,
+            shape
+              ? {
+                  x: scene.canvas.gridSize * 5,
+                  y: scene.canvas.gridSize * 5,
+                  ...getRackPresetSize(),
+                  layoutShape: shape,
+                }
+              : undefined
+          )
         }
       }}
       onCreateDecoration={addDecoration}
@@ -366,21 +519,12 @@ export function WarehouseDesignerWorkspace({
       canConfigure={canConfigure && isSelectionEditable(scene, selection)}
       isUpdatingRack={isUpdatingRack}
       isDeactivatingRack={isDeactivatingRack}
-      onGeometryChange={(geometry) => {
-        if (selection.kind !== 'slot') updateGeometry(selection.kind, selection.id, geometry)
-      }}
-      onColorChange={(color) => {
-        if (selection.kind !== 'slot') updateColor(selection.kind, selection.id, color)
-      }}
       onRackNameChange={updateSelectedRackName}
-      onDeactivateRack={requestDeactivateSelectedRack}
       onDecorationChange={(decoration) => {
         if (selection.kind === 'decoration' && canConfigure) {
           dispatch({ type: 'update-decoration', id: selection.id, decoration })
         }
       }}
-      onDuplicateDecoration={duplicateSelectedDecoration}
-      onDeleteDecoration={deleteSelectedDecoration}
       onClose={() => setIsInspectorOpen(false)}
     />
   ) : null
@@ -390,39 +534,75 @@ export function WarehouseDesignerWorkspace({
       ref={canvasRef}
       scene={scene}
       selection={selection}
-      tool={activeTool}
       canConfigure={canConfigure}
       isGridVisible={isGridVisible}
       onSelect={handleSelectionChange}
       onGeometryChange={updateGeometry}
       onZoomChange={setZoomPercent}
+      onPaletteDrop={handlePaletteDrop}
     />
   )
 
+  const contextToolbar = selection ? (
+    <DesignerContextToolbar
+      selection={selection}
+      color={getSelectedObjectColor()}
+      canConfigure={canConfigure && isSelectionEditable(scene, selection)}
+      canCreateRack={selection.kind === 'zone' && Boolean(getSelectedZoneId())}
+      canDuplicate={selection.kind === 'decoration'}
+      canRemove={
+        selection.kind === 'decoration' || selection.kind === 'rack' || selection.kind === 'zone'
+      }
+      removeDisabled={selectionHasInventory(scene, selection)}
+      removeDisabledReason="Vị trí còn tồn kho nên chưa thể ngừng sử dụng."
+      removeLabel={selection.kind === 'decoration' ? 'Xóa' : 'Ngừng dùng'}
+      onOpenDetails={() => {
+        if (
+          selection.kind === 'decoration' ||
+          !canConfigure ||
+          !isSelectionEditable(scene, selection)
+        )
+          setIsInspectorOpen(true)
+        else onOpenLocationDetails(selection)
+      }}
+      onCreateRack={() => {
+        const zoneId = getSelectedZoneId()
+        if (zoneId) onCreateRack(zoneId)
+      }}
+      onColorChange={(color) => {
+        if (selection.kind !== 'slot') updateColor(selection.kind, selection.id, color)
+      }}
+      onRotate={rotateSelectedObject}
+      onDuplicate={duplicateSelectedDecoration}
+      onRemove={() => {
+        if (selection.kind === 'decoration') deleteSelectedDecoration()
+        else if (selection.kind === 'rack') requestDeactivateSelectedRack()
+        else if (selection.kind === 'zone') requestDeactivateSelectedZone()
+      }}
+    />
+  ) : null
+
   return (
     <section
-      className="bg-surface-container-lowest flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border"
+      className={cn(
+        'bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden transition-transform duration-200 ease-in motion-reduce:duration-0',
+        isClosing ? 'pointer-events-none translate-y-full' : 'translate-y-0'
+      )}
       aria-label="Trình thiết kế bố cục kho"
       onKeyDown={handleWorkspaceKeyDown}
     >
       <DesignerToolbar
-        tool={activeTool}
+        title={`Thiết lập sơ đồ ${warehouseName}`}
         canvas={scene.canvas}
-        zoomPercent={zoomPercent}
         isGridVisible={isGridVisible}
         canUndo={history.past.length > 0}
         canRedo={history.future.length > 0}
-        canSave={isDirty && canConfigure}
-        isSaving={isSaving}
         isReadOnly={!canConfigure}
         onUndo={() => dispatch({ type: 'undo' })}
         onRedo={() => dispatch({ type: 'redo' })}
         onToggleGrid={() => setIsGridVisible((visible) => !visible)}
-        onZoomIn={() => canvasRef.current?.zoomIn()}
-        onZoomOut={() => canvasRef.current?.zoomOut()}
-        onFit={() => canvasRef.current?.fit()}
         onCanvasChange={(nextCanvas) => dispatch({ type: 'update-canvas', canvas: nextCanvas })}
-        onSave={() => onSave(scene, baseVersionRef.current)}
+        onClose={closeDesigner}
       />
 
       {!canConfigure ? (
@@ -430,16 +610,7 @@ export function WarehouseDesignerWorkspace({
           <Info aria-hidden="true" />
           <AlertTitle>Chế độ xem</AlertTitle>
           <AlertDescription>
-            Bạn có thể di chuyển khung nhìn và kiểm tra đối tượng, nhưng không thể sửa sơ đồ.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      {hasGeneratedGeometry ? (
-        <Alert className="border-x-0 border-t-0">
-          <Info aria-hidden="true" />
-          <AlertTitle>Đã tự sắp xếp đối tượng chưa có vị trí</AlertTitle>
-          <AlertDescription>
-            Kiểm tra vị trí mặc định rồi lưu để ghi nhận sơ đồ lần đầu.
+            Bạn có thể chọn và kiểm tra đối tượng, nhưng không thể thay đổi sơ đồ.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -480,7 +651,14 @@ export function WarehouseDesignerWorkspace({
               Chạm đối tượng để xem thuộc tính
             </span>
           </div>
-          <div className="min-h-0 flex-1">{canvas}</div>
+          <div className="relative min-h-0 flex-1">
+            {canvas}
+            {contextToolbar ? (
+              <div className="pointer-events-auto absolute top-3 left-1/2 z-20 -translate-x-1/2">
+                {contextToolbar}
+              </div>
+            ) : null}
+          </div>
           <Drawer open={isToolboxOpen} onOpenChange={setIsToolboxOpen}>
             <DrawerContent className="h-[76dvh] overscroll-contain">
               <DrawerHeader className="sr-only">
@@ -513,37 +691,89 @@ export function WarehouseDesignerWorkspace({
         </>
       ) : (
         <ResizablePanelGroup orientation="horizontal" className="h-0 min-h-0 min-w-0 flex-1">
-          <ResizablePanel defaultSize="18%" minSize="14%" maxSize="24%">
+          <ResizablePanel defaultSize="18%" minSize="16%" maxSize="22%">
             {toolbox}
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={selection && isInspectorOpen ? '54%' : '82%'} minSize="42%">
-            {canvas}
+          <ResizablePanel defaultSize="82%" minSize="60%">
+            <div className="relative h-full min-h-0">
+              {canvas}
+              {contextToolbar ? (
+                <div className="pointer-events-auto absolute top-4 left-1/2 z-20 -translate-x-1/2">
+                  {contextToolbar}
+                </div>
+              ) : null}
+            </div>
           </ResizablePanel>
-          {selection && isInspectorOpen ? (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize="28%" minSize="24%" maxSize="36%">
-                {inspector}
-              </ResizablePanel>
-            </>
-          ) : null}
         </ResizablePanelGroup>
       )}
+      <DesignerFooter
+        zoomPercent={zoomPercent}
+        canSave={isDirty && canConfigure}
+        isSaving={isSaving}
+        isReadOnly={!canConfigure}
+        onZoomIn={() => canvasRef.current?.zoomIn()}
+        onZoomOut={() => canvasRef.current?.zoomOut()}
+        onZoomTo={(nextZoomPercent) => canvasRef.current?.zoomTo(nextZoomPercent)}
+        onFit={() => canvasRef.current?.fit()}
+        onCancel={closeDesigner}
+        onSave={() => onSave(scene, baseVersionRef.current)}
+      />
+      {!isCompact && selection && isInspectorOpen ? (
+        <Drawer open onOpenChange={setIsInspectorOpen} direction="right">
+          <DrawerContent className="h-dvh w-full max-w-md overscroll-contain">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>Chi tiết đối tượng</DrawerTitle>
+              <DrawerDescription>Xem và chỉnh sửa đối tượng đang chọn.</DrawerDescription>
+            </DrawerHeader>
+            {inspector}
+          </DrawerContent>
+        </Drawer>
+      ) : null}
       <WarehouseLocationDeactivateDialog
         open={Boolean(rackDeactivateTarget)}
         locationLabel="kệ hàng"
         locationCode={rackDeactivateTarget?.rackCode ?? ''}
         isPending={isDeactivatingRack}
-        errorMessage={rackDeactivateError}
+        errorMessage={locationDeactivateError}
         onOpenChange={(open) => {
           if (!open) {
             setRackDeactivateTarget(null)
-            setRackDeactivateError(null)
+            setLocationDeactivateError(null)
           }
         }}
         onConfirm={() => void confirmDeactivateRack()}
       />
+      <WarehouseLocationDeactivateDialog
+        open={Boolean(zoneDeactivateTarget)}
+        locationLabel="khu vực"
+        locationCode={zoneDeactivateTarget?.zoneCode ?? ''}
+        isPending={isDeactivatingZone}
+        errorMessage={locationDeactivateError}
+        onOpenChange={(open) => {
+          if (!open) {
+            setZoneDeactivateTarget(null)
+            setLocationDeactivateError(null)
+          }
+        }}
+        onConfirm={() => void confirmDeactivateZone()}
+      />
+      <AlertDialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bỏ thay đổi chưa lưu?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Các thay đổi trên sơ đồ sẽ bị mất nếu bạn đóng trang ngay bây giờ.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Tiếp tục chỉnh sửa</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmCloseDesigner}>
+              Đóng và bỏ thay đổi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }
@@ -553,6 +783,19 @@ function activeZoneContainsRack(
   rack: WarehouseLayoutEditorRack
 ) {
   return scene.zones.some((zone) => zone.id === rack.zoneId && zone.status === 'Active')
+}
+
+function selectionHasInventory(
+  scene: WarehouseLayoutEditorScene,
+  selection: WarehouseLayoutSelection
+): boolean {
+  if (selection.kind === 'rack') {
+    return scene.slots.some((slot) => slot.rackId === selection.id && slot.currentOccupancy > 0)
+  }
+  if (selection.kind === 'zone') {
+    return scene.slots.some((slot) => slot.zoneId === selection.id && slot.currentOccupancy > 0)
+  }
+  return false
 }
 
 function getActionError(error: unknown, fallback: string) {

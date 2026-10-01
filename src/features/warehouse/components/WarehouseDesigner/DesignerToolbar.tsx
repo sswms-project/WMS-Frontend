@@ -4,22 +4,23 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Check,
   Grid3X3,
-  Hand,
+  HelpCircle,
+  Keyboard,
   LoaderCircle,
-  Maximize,
-  MousePointer2,
   Redo2,
   Save,
   Settings2,
   Undo2,
   ZoomIn,
   ZoomOut,
+  X,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Sheet,
   SheetContent,
@@ -35,29 +36,20 @@ import {
   warehouseLayoutCanvasSchema,
   type WarehouseLayoutCanvasFormValues,
 } from '../../schemas/warehouse-layout-scene.schema'
-import type {
-  WarehouseLayoutCanvas,
-  WarehouseLayoutTool,
-} from '../../types/warehouse-layout-scene.types'
+import type { WarehouseLayoutCanvas } from '../../types/warehouse-layout-scene.types'
 
 interface DesignerToolbarProps {
-  readonly tool: WarehouseLayoutTool
+  readonly title: string
   readonly canvas: WarehouseLayoutCanvas
-  readonly zoomPercent: number
   readonly isGridVisible: boolean
   readonly canUndo: boolean
   readonly canRedo: boolean
-  readonly canSave: boolean
-  readonly isSaving: boolean
   readonly isReadOnly: boolean
   readonly onUndo: () => void
   readonly onRedo: () => void
   readonly onToggleGrid: () => void
-  readonly onZoomIn: () => void
-  readonly onZoomOut: () => void
-  readonly onFit: () => void
   readonly onCanvasChange: (canvas: WarehouseLayoutCanvas) => void
-  readonly onSave: () => void
+  readonly onClose: () => void
 }
 
 interface ToolbarIconButtonProps {
@@ -97,6 +89,34 @@ function ToolbarIconButton({
   )
 }
 
+function ToolbarInfoPopover({
+  label,
+  icon,
+  children,
+}: {
+  readonly label: string
+  readonly icon: React.ReactNode
+  readonly children: React.ReactNode
+}) {
+  return (
+    <Popover>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button type="button" size="icon-sm" variant="ghost" aria-label={label}>
+              {icon}
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+      <PopoverContent align="end" className="w-72 text-sm">
+        {children}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function CanvasSettingsSheet({
   canvas,
   disabled,
@@ -128,9 +148,7 @@ function CanvasSettingsSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-sm">
         <SheetHeader>
           <SheetTitle>Cài đặt nền</SheetTitle>
-          <SheetDescription>
-            Đặt kích thước nền tối thiểu và bước lưới. Nền tự mở rộng khi đối tượng vượt biên.
-          </SheetDescription>
+          <SheetDescription>Đặt kích thước cố định và bước lưới của mặt bằng kho.</SheetDescription>
         </SheetHeader>
         <form
           className="flex flex-1 flex-col"
@@ -142,13 +160,13 @@ function CanvasSettingsSheet({
           <FieldGroup className="p-4">
             <CanvasNumberField
               id="canvas-width"
-              label="Chiều rộng tối thiểu"
+              label="Chiều rộng mặt bằng"
               error={errors.width}
               registration={form.register('width', { valueAsNumber: true })}
             />
             <CanvasNumberField
               id="canvas-height"
-              label="Chiều cao tối thiểu"
+              label="Chiều cao mặt bằng"
               error={errors.height}
               registration={form.register('height', { valueAsNumber: true })}
             />
@@ -205,43 +223,21 @@ function CanvasNumberField({
 }
 
 export function DesignerToolbar({
-  tool,
+  title,
   canvas,
-  zoomPercent,
   isGridVisible,
   canUndo,
   canRedo,
-  canSave,
-  isSaving,
   isReadOnly,
   onUndo,
   onRedo,
   onToggleGrid,
-  onZoomIn,
-  onZoomOut,
-  onFit,
   onCanvasChange,
-  onSave,
+  onClose,
 }: DesignerToolbarProps) {
   return (
-    <div className="bg-surface-container-lowest flex min-h-11 flex-wrap items-center gap-1 border-b px-2 py-1.5">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className="bg-secondary text-secondary-foreground flex size-7 items-center justify-center rounded-sm border [&_svg]:size-4"
-            role="status"
-            tabIndex={0}
-            aria-label={tool === 'pan' ? 'Đang di chuyển khung nhìn' : 'Đang chọn đối tượng'}
-          >
-            {tool === 'pan' ? <Hand aria-hidden="true" /> : <MousePointer2 aria-hidden="true" />}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          {tool === 'pan' ? 'Đang di chuyển khung nhìn' : 'Giữ Ctrl để di chuyển khung nhìn'}
-        </TooltipContent>
-      </Tooltip>
-
-      <Separator orientation="vertical" className="mx-1 h-6" />
+    <header className="bg-surface-container-lowest flex min-h-16 shrink-0 items-center gap-1 border-b px-5 py-2">
+      <h1 className="mr-auto truncate text-xl font-semibold">{title}</h1>
       <ToolbarIconButton label="Hoàn tác" disabled={!canUndo || isReadOnly} onClick={onUndo}>
         <Undo2 aria-hidden="true" />
       </ToolbarIconButton>
@@ -252,39 +248,103 @@ export function DesignerToolbar({
         <Grid3X3 aria-hidden="true" />
       </ToolbarIconButton>
 
-      <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
-      <ToolbarIconButton label="Thu nhỏ" onClick={onZoomOut}>
-        <ZoomOut aria-hidden="true" />
-      </ToolbarIconButton>
-      <output className="text-muted-foreground w-12 text-center font-mono text-[11px] tabular-nums">
-        {zoomPercent}%
-      </output>
-      <ToolbarIconButton label="Phóng to" onClick={onZoomIn}>
-        <ZoomIn aria-hidden="true" />
-      </ToolbarIconButton>
-      <ToolbarIconButton label="Vừa màn hình" onClick={onFit}>
-        <Maximize aria-hidden="true" />
-      </ToolbarIconButton>
       <CanvasSettingsSheet canvas={canvas} disabled={isReadOnly} onSubmit={onCanvasChange} />
+      <ToolbarInfoPopover label="Phím tắt" icon={<Keyboard aria-hidden="true" />}>
+        <p className="mb-2 font-medium">Phím tắt thiết kế</p>
+        <dl className="text-muted-foreground grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs">
+          <dt className="text-foreground font-mono">Ctrl + Z</dt>
+          <dd>Hoàn tác</dd>
+          <dt className="text-foreground font-mono">Ctrl + Y</dt>
+          <dd>Làm lại</dd>
+          <dt className="text-foreground font-mono">Delete</dt>
+          <dd>Xóa biểu tượng đang chọn</dd>
+          <dt className="text-foreground font-mono">Esc</dt>
+          <dd>Bỏ chọn đối tượng</dd>
+        </dl>
+      </ToolbarInfoPopover>
+      <ToolbarInfoPopover label="Trợ giúp" icon={<HelpCircle aria-hidden="true" />}>
+        <p className="font-medium">Thiết kế sơ đồ kho</p>
+        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+          Kéo biểu tượng từ bảng bên trái vào mặt bằng. Chọn đối tượng để đổi màu, xoay hoặc mở
+          thông tin chi tiết.
+        </p>
+      </ToolbarInfoPopover>
+      <Separator orientation="vertical" className="mx-1 h-7" />
+      <ToolbarIconButton label="Đóng trình thiết kế" onClick={onClose}>
+        <X aria-hidden="true" />
+      </ToolbarIconButton>
+    </header>
+  )
+}
 
-      <div className="ml-auto flex items-center gap-2">
-        {canSave ? (
-          <span className="text-muted-foreground hidden text-[11px] sm:inline">Chưa lưu</span>
-        ) : null}
-        <Button
+export function DesignerFooter({
+  zoomPercent,
+  canSave,
+  isSaving,
+  isReadOnly,
+  onZoomIn,
+  onZoomOut,
+  onZoomTo,
+  onFit,
+  onCancel,
+  onSave,
+}: {
+  readonly zoomPercent: number
+  readonly canSave: boolean
+  readonly isSaving: boolean
+  readonly isReadOnly: boolean
+  readonly onZoomIn: () => void
+  readonly onZoomOut: () => void
+  readonly onZoomTo: (zoomPercent: number) => void
+  readonly onFit: () => void
+  readonly onCancel: () => void
+  readonly onSave: () => void
+}) {
+  return (
+    <footer className="bg-surface-container-lowest flex min-h-14 shrink-0 items-center border-t px-5 py-2">
+      <div className="ml-auto flex items-center gap-1">
+        <ToolbarIconButton label="Thu nhỏ" onClick={onZoomOut}>
+          <ZoomOut aria-hidden="true" />
+        </ToolbarIconButton>
+        <input
+          type="range"
+          min={20}
+          max={400}
+          step={5}
+          value={zoomPercent}
+          aria-label="Thu phóng sơ đồ"
+          className="accent-primary focus-visible:ring-ring w-28 cursor-pointer focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          onChange={(event) => onZoomTo(Number(event.currentTarget.value))}
+        />
+        <ToolbarIconButton label="Phóng to" onClick={onZoomIn}>
+          <ZoomIn aria-hidden="true" />
+        </ToolbarIconButton>
+        <button
           type="button"
-          size="sm"
-          disabled={!canSave || isSaving || isReadOnly}
-          onClick={onSave}
+          className="text-muted-foreground hover:text-foreground w-12 text-center font-mono text-xs tabular-nums"
+          onClick={onFit}
+          aria-label="Đưa sơ đồ vừa màn hình"
         >
-          {isSaving ? (
-            <LoaderCircle data-icon="inline-start" className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Save data-icon="inline-start" aria-hidden="true" />
-          )}
-          {isSaving ? 'Đang lưu…' : 'Lưu sơ đồ'}
-        </Button>
+          {zoomPercent}%
+        </button>
       </div>
-    </div>
+      <Separator orientation="vertical" className="mx-4 h-7" />
+      <Button type="button" variant="outline" className="min-w-24" onClick={onCancel}>
+        Hủy
+      </Button>
+      <Button
+        type="button"
+        className="ml-2 min-w-24"
+        disabled={!canSave || isSaving || isReadOnly}
+        onClick={onSave}
+      >
+        {isSaving ? (
+          <LoaderCircle data-icon="inline-start" className="animate-spin" aria-hidden="true" />
+        ) : (
+          <Save data-icon="inline-start" aria-hidden="true" />
+        )}
+        {isSaving ? 'Đang lưu…' : 'Lưu'}
+      </Button>
+    </footer>
   )
 }

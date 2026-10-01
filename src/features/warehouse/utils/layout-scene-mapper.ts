@@ -7,12 +7,10 @@ import type {
   WarehouseLayoutGeometry,
   WarehouseLayoutSceneResponse,
 } from '../types/warehouse-layout-scene.types'
-import { normalizeLayoutGeometry } from './layout-grid'
+import { constrainLayoutGeometryToCanvas, getRackPresetSize } from './layout-grid'
 
 const DEFAULT_ZONE_WIDTH = 520
 const DEFAULT_ZONE_HEIGHT = 320
-const DEFAULT_RACK_WIDTH = 160
-const DEFAULT_RACK_HEIGHT = 60
 
 function hasGeometry(object: {
   x: number | null
@@ -28,7 +26,7 @@ function getDefaultZoneGeometry(
   scene: WarehouseLayoutSceneResponse
 ): WarehouseLayoutGeometry {
   const columns = Math.max(1, Math.floor(scene.canvas.width / 600))
-  return normalizeLayoutGeometry(
+  return constrainLayoutGeometryToCanvas(
     {
       x: 60 + (index % columns) * 600,
       y: 60 + Math.floor(index / columns) * 400,
@@ -46,13 +44,13 @@ function getDefaultRackGeometry(
   zone: WarehouseLayoutEditorZone,
   scene: WarehouseLayoutSceneResponse
 ): WarehouseLayoutGeometry {
-  const columns = Math.max(1, Math.floor(Math.max(zone.width - 60, 1) / (DEFAULT_RACK_WIDTH + 20)))
-  return normalizeLayoutGeometry(
+  const rackSize = getRackPresetSize()
+  const columns = Math.max(1, Math.floor(Math.max(zone.width - 60, 1) / (rackSize.width + 20)))
+  return constrainLayoutGeometryToCanvas(
     {
-      x: zone.x + 30 + (rackIndex % columns) * (DEFAULT_RACK_WIDTH + 20),
-      y: zone.y + 70 + Math.floor(rackIndex / columns) * (DEFAULT_RACK_HEIGHT + 24),
-      width: DEFAULT_RACK_WIDTH,
-      height: DEFAULT_RACK_HEIGHT,
+      x: zone.x + 30 + (rackIndex % columns) * (rackSize.width + 20),
+      y: zone.y + 70 + Math.floor(rackIndex / columns) * (rackSize.height + 24),
+      ...rackSize,
       rotation: 0,
       zIndex: 100 + rackIndex,
     },
@@ -67,9 +65,11 @@ export function mapWarehouseLayoutScene(scene: WarehouseLayoutSceneResponse): {
   let hasGeneratedGeometry = false
   const zones = scene.zones.map<WarehouseLayoutEditorZone>((zone, index) => {
     const geometry = hasGeometry(zone)
-      ? normalizeLayoutGeometry(zone, scene.canvas, false)
+      ? constrainLayoutGeometryToCanvas(zone, scene.canvas, false)
       : getDefaultZoneGeometry(index, scene)
-    if (!hasGeometry(zone) && zone.status === 'Active') hasGeneratedGeometry = true
+    if (zone.status === 'Active' && (!hasGeometry(zone) || hasGeometryChanged(zone, geometry))) {
+      hasGeneratedGeometry = true
+    }
     return { ...zone, ...geometry, color: zone.color ?? null }
   })
   const zoneById = new Map(zones.map((zone) => [zone.id, zone]))
@@ -79,35 +79,62 @@ export function mapWarehouseLayoutScene(scene: WarehouseLayoutSceneResponse): {
     const rackIndex = rackIndexByZone.get(rack.zoneId) ?? 0
     rackIndexByZone.set(rack.zoneId, rackIndex + 1)
     const geometry = hasGeometry(rack)
-      ? normalizeLayoutGeometry(rack, scene.canvas, false)
+      ? constrainLayoutGeometryToCanvas(rack, scene.canvas, false)
       : zone
         ? getDefaultRackGeometry(rackIndex, zone, scene)
-        : normalizeLayoutGeometry(
+        : constrainLayoutGeometryToCanvas(
             {
               x: 40 + index * 20,
               y: 40 + index * 20,
-              width: DEFAULT_RACK_WIDTH,
-              height: DEFAULT_RACK_HEIGHT,
+              ...getRackPresetSize(),
               rotation: 0,
               zIndex: 100 + index,
             },
             scene.canvas
           )
-    if (!hasGeometry(rack) && rack.status === 'Active' && zone?.status === 'Active') {
+    if (
+      rack.status === 'Active' &&
+      zone?.status === 'Active' &&
+      (!hasGeometry(rack) || hasGeometryChanged(rack, geometry))
+    ) {
       hasGeneratedGeometry = true
     }
-    return { ...rack, ...geometry, color: rack.color ?? null }
+    return {
+      ...rack,
+      ...geometry,
+      color: rack.color ?? null,
+      layoutShape: rack.layoutShape ?? 'Standard',
+    }
   })
-  const decorations = scene.decorations.map<WarehouseLayoutEditorDecoration>((decoration) => ({
-    ...decoration,
-    color: decoration.color ?? null,
-    clientKey: decoration.id,
-  }))
+  const decorations = scene.decorations.map<WarehouseLayoutEditorDecoration>((decoration) => {
+    const geometry = constrainLayoutGeometryToCanvas(decoration, scene.canvas, false)
+    if (hasGeometryChanged(decoration, geometry)) hasGeneratedGeometry = true
+    return {
+      ...decoration,
+      ...geometry,
+      color: decoration.color ?? null,
+      clientKey: decoration.id,
+    }
+  })
 
   return {
     editorScene: { canvas: scene.canvas, zones, racks, slots: scene.slots, decorations },
     hasGeneratedGeometry,
   }
+}
+
+function hasGeometryChanged(
+  source: WarehouseLayoutGeometry,
+  constrained: WarehouseLayoutGeometry
+): boolean {
+  return (
+    source.x !== constrained.x ||
+    source.y !== constrained.y ||
+    source.width !== constrained.width ||
+    source.height !== constrained.height ||
+    source.rotation !== constrained.rotation ||
+    source.zIndex !== constrained.zIndex
+  )
 }
 
 export function mapEditorSceneToSaveRequest(
@@ -146,6 +173,7 @@ export function mapEditorSceneToSaveRequest(
         rotation: rack.rotation,
         zIndex: rack.zIndex,
         color: rack.color ?? null,
+        layoutShape: rack.layoutShape ?? 'Standard',
       })),
     decorations: scene.decorations.map((decoration) => ({
       id: decoration.id || null,
