@@ -53,7 +53,12 @@ export function WarehouseList({ warehouses }: WarehouseListProps) {
                   {warehouse.warehouseCode}
                 </TableCell>
                 <TableCell className="max-w-52 truncate font-medium">
-                  {warehouse.warehouseName}
+                  <Link
+                    href={APP_ROUTES.warehouseDetail(warehouse.id)}
+                    className="text-primary hover:underline focus-visible:underline focus-visible:outline-none"
+                  >
+                    {warehouse.warehouseName}
+                  </Link>
                 </TableCell>
                 <TableCell className="text-muted-foreground max-w-72 truncate">
                   {warehouse.address || 'Chưa cập nhật'}
@@ -89,7 +94,12 @@ export function WarehouseList({ warehouses }: WarehouseListProps) {
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{warehouse.warehouseName}</p>
+                  <Link
+                    href={APP_ROUTES.warehouseDetail(warehouse.id)}
+                    className="text-primary block truncate text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none"
+                  >
+                    {warehouse.warehouseName}
+                  </Link>
                   <p className="text-muted-foreground mt-0.5 truncate font-mono text-xs">
                     {warehouse.warehouseCode}
                   </p>

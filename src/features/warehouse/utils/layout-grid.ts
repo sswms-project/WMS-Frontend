@@ -6,6 +6,10 @@ import type {
 export const MIN_LAYOUT_OBJECT_SIZE = 20
 export const MAX_LAYOUT_EXTENT = 100_000
 
+export function getRackPresetSize() {
+  return { width: 160, height: 60 }
+}
+
 export interface LayoutBounds {
   minX: number
   minY: number
@@ -31,15 +35,17 @@ export function getLayoutGeometryBounds(geometry: WarehouseLayoutGeometry): Layo
   const radians = (geometry.rotation * Math.PI) / 180
   const cosine = Math.cos(radians)
   const sine = Math.sin(radians)
+  const centerX = geometry.width / 2
+  const centerY = geometry.height / 2
   const corners = [
-    { x: 0, y: 0 },
-    { x: geometry.width * cosine, y: geometry.width * sine },
-    { x: -geometry.height * sine, y: geometry.height * cosine },
-    {
-      x: geometry.width * cosine - geometry.height * sine,
-      y: geometry.width * sine + geometry.height * cosine,
-    },
-  ]
+    { x: -centerX, y: -centerY },
+    { x: centerX, y: -centerY },
+    { x: -centerX, y: centerY },
+    { x: centerX, y: centerY },
+  ].map((corner) => ({
+    x: centerX + corner.x * cosine - corner.y * sine,
+    y: centerY + corner.x * sine + corner.y * cosine,
+  }))
 
   return {
     minX: geometry.x + Math.min(...corners.map((corner) => corner.x)),
@@ -66,6 +72,63 @@ export function normalizeLayoutGeometry(
     height: clamp(normalizeValue(geometry.height), minimumHeight, MAX_LAYOUT_EXTENT),
     rotation: normalizeRotation(geometry.rotation),
     zIndex: clamp(Math.round(geometry.zIndex), -1000, 1000),
+  }
+}
+
+export function constrainLayoutGeometryToCanvas(
+  geometry: WarehouseLayoutGeometry,
+  canvas: WarehouseLayoutCanvas,
+  shouldSnap = true
+): WarehouseLayoutGeometry {
+  const normalized = normalizeLayoutGeometry(geometry, canvas, shouldSnap)
+  let constrained = {
+    ...normalized,
+    width: Math.min(normalized.width, canvas.width),
+    height: Math.min(normalized.height, canvas.height),
+  }
+  const projectedBounds = getLayoutGeometryBounds({ ...constrained, x: 0, y: 0 })
+  const projectedWidth = projectedBounds.maxX - projectedBounds.minX
+  const projectedHeight = projectedBounds.maxY - projectedBounds.minY
+  const scaleToFit = Math.min(1, canvas.width / projectedWidth, canvas.height / projectedHeight)
+  if (scaleToFit < 1) {
+    const scaleDimension = (value: number) =>
+      shouldSnap
+        ? Math.floor((value * scaleToFit) / canvas.gridSize) * canvas.gridSize
+        : value * scaleToFit
+    constrained = {
+      ...constrained,
+      width: Math.max(MIN_LAYOUT_OBJECT_SIZE, scaleDimension(constrained.width)),
+      height: Math.max(MIN_LAYOUT_OBJECT_SIZE, scaleDimension(constrained.height)),
+    }
+  }
+  const bounds = getLayoutGeometryBounds(constrained)
+  const offsetX =
+    bounds.minX < 0 ? -bounds.minX : bounds.maxX > canvas.width ? canvas.width - bounds.maxX : 0
+  const offsetY =
+    bounds.minY < 0 ? -bounds.minY : bounds.maxY > canvas.height ? canvas.height - bounds.maxY : 0
+  constrained = {
+    ...constrained,
+    x: shouldSnap ? snapToGrid(constrained.x + offsetX, canvas.gridSize) : constrained.x + offsetX,
+    y: shouldSnap ? snapToGrid(constrained.y + offsetY, canvas.gridSize) : constrained.y + offsetY,
+  }
+  const snappedBounds = getLayoutGeometryBounds(constrained)
+  const finalOffsetX =
+    snappedBounds.minX < 0
+      ? -snappedBounds.minX
+      : snappedBounds.maxX > canvas.width
+        ? canvas.width - snappedBounds.maxX
+        : 0
+  const finalOffsetY =
+    snappedBounds.minY < 0
+      ? -snappedBounds.minY
+      : snappedBounds.maxY > canvas.height
+        ? canvas.height - snappedBounds.maxY
+        : 0
+
+  return {
+    ...constrained,
+    x: constrained.x + finalOffsetX,
+    y: constrained.y + finalOffsetY,
   }
 }
 

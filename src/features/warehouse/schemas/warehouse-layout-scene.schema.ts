@@ -24,7 +24,23 @@ export const warehouseLayoutCanvasSchema = z
 
 export const warehouseLayoutDecorationSchema = warehouseLayoutGeometrySchema.extend({
   label: z.string().trim().min(1, 'Tên đối tượng là bắt buộc.').max(100),
-  type: z.enum(['Door', 'Aisle', 'Receiving', 'Packing', 'Picking', 'Damaged', 'Office', 'Other']),
+  type: z.enum([
+    'Door',
+    'DoubleDoor',
+    'Aisle',
+    'DirectionArrow',
+    'Exit',
+    'Forklift',
+    'Receiving',
+    'Packing',
+    'Picking',
+    'Damaged',
+    'Office',
+    'Other',
+    'Gate',
+    'DoubleGate',
+    'PalletTruck',
+  ]),
 })
 
 export type WarehouseLayoutGeometryFormValues = z.infer<typeof warehouseLayoutGeometrySchema>

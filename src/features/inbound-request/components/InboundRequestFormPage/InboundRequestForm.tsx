@@ -106,7 +106,7 @@ export function InboundRequestForm({
   const lines = watch('lines')
 
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
+    <div className="flex w-full flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Button
@@ -301,7 +301,12 @@ export function InboundRequestForm({
         </Card>
 
         <div className="flex justify-end border-t pt-4">
-          <FormActions isPending={isPending} autoApprove={autoApprove} onSaveDraft={onSaveDraft} />
+          <FormActions
+            isPending={isPending}
+            autoApprove={autoApprove}
+            onSaveDraft={onSaveDraft}
+            onSaveAndSubmit={onSaveAndSubmit}
+          />
         </div>
       </form>
     </div>

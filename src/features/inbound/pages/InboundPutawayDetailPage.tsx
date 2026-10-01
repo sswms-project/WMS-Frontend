@@ -14,6 +14,7 @@ import {
 } from '@/components/operations/OperationalState'
 import { useWarehouseLayoutQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { logger } from '@/lib/logger'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { CancelPutawayDialog, PutawayForm, type SlotOption } from '../components/PutawayDetailPage'
 import {
@@ -28,6 +29,7 @@ import {
   type CancelPutawayTaskFormValues,
   type PutawayFormValues,
 } from '../schemas/inbound.schema'
+import { getPutawayAllocationState } from '../schemas/putaway-allocation.schema'
 
 const EMPTY_ALLOCATION = { goodsReceiptItemId: '', slotId: '', quantity: 1 }
 
@@ -45,6 +47,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
   const reconcileMutation = useReconcilePutawayCancellationMutation()
   const form = useForm<PutawayFormValues>({
     resolver: zodResolver(putawaySchema),
+    mode: 'onChange',
     defaultValues: { lines: [EMPTY_ALLOCATION] },
   })
   const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
@@ -53,53 +56,61 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     defaultValues: { reason: '', hasUnrecordedPhysicalMovement: false },
   })
   const slots: SlotOption[] = (layoutQuery.data ?? []).flatMap((zone) =>
-    zone.status === 'Active'
-      ? zone.racks.flatMap((rack) =>
-          rack.status === 'Active'
-            ? rack.slots
-                .filter(
-                  (slot) =>
-                    slot.isActive &&
-                    (slot.capacity === null || slot.capacity > slot.currentOccupancy)
-                )
-                .map((slot) => ({
-                  id: slot.id,
-                  code: slot.slotCode,
-                  hierarchy: `${zone.zoneCode} / ${rack.rackCode}`,
-                  availableCapacity:
-                    slot.capacity === null
-                      ? Number.MAX_SAFE_INTEGER
-                      : slot.capacity - slot.currentOccupancy,
-                }))
-            : []
-        )
-      : []
+    zone.status !== 'Active'
+      ? []
+      : zone.racks.flatMap((rack) => {
+          if (rack.status !== 'Active') return []
+          const hierarchy = `${zone.zoneCode} / ${rack.rackCode}`
+          const zoneLabel = `${zone.zoneCode} - ${zone.zoneName}`
+          const rackSlots = rack.slots
+            .filter(
+              (slot) =>
+                slot.isActive &&
+                !slot.isOutboundStaging &&
+                (slot.capacity === null || slot.capacity > slot.currentOccupancy)
+            )
+            .map((slot) => ({
+              id: slot.id,
+              code: slot.slotCode,
+              name: '',
+              zoneId: zone.id,
+              zoneLabel,
+              hierarchy,
+              allowsMixedProducts: slot.allowsMixedProducts ?? rack.allowsMixedProducts,
+              availableCapacity:
+                slot.capacity === null ? null : slot.capacity - slot.currentOccupancy,
+            }))
+          if (rack.storageMode !== 'RackLevel' || !rack.defaultSlotId) return rackSlots
+          if (rack.capacity !== null && rack.currentOccupancy == null) return rackSlots
+          const currentOccupancy = rack.currentOccupancy ?? 0
+          const availableCapacity =
+            rack.capacity === null || rack.capacity === undefined
+              ? null
+              : rack.capacity - currentOccupancy
+          return availableCapacity === null || availableCapacity > 0
+            ? [
+                ...rackSlots,
+                {
+                  id: rack.defaultSlotId,
+                  code: rack.rackCode,
+                  name: rack.rackName,
+                  zoneId: zone.id,
+                  zoneLabel,
+                  hierarchy: zoneLabel,
+                  allowsMixedProducts: rack.allowsMixedProducts,
+                  availableCapacity,
+                },
+              ]
+            : rackSlots
+        })
   )
 
   async function submit(values: PutawayFormValues) {
     const receipt = receiptQuery.data
     if (!receipt) return
-    const quantitiesByItem = new Map<string, number>()
-    for (const line of values.lines)
-      quantitiesByItem.set(
-        line.goodsReceiptItemId,
-        (quantitiesByItem.get(line.goodsReceiptItemId) ?? 0) + line.quantity
-      )
-    const exceedsReceipt = receipt.items.some(
-      (item) => (quantitiesByItem.get(item.id) ?? 0) > item.remainingPutAwayQuantity
-    )
-    const quantitiesBySlot = new Map<string, number>()
-    for (const line of values.lines)
-      quantitiesBySlot.set(line.slotId, (quantitiesBySlot.get(line.slotId) ?? 0) + line.quantity)
-    const exceedsSlot = slots.some(
-      (slot) => (quantitiesBySlot.get(slot.id) ?? 0) > slot.availableCapacity
-    )
-    if (exceedsReceipt) {
-      toast.error('Tổng phân bổ vượt số lượng còn phải cất của sản phẩm.')
-      return
-    }
-    if (exceedsSlot) {
-      toast.error('Tổng số lượng phân bổ vượt sức chứa còn lại của vị trí.')
+    const allocation = getPutawayAllocationState(values.lines, receipt.items, slots)
+    if (!allocation.canSubmit) {
+      toast.error('Phân bổ chưa hợp lệ. Vui lòng kiểm tra lỗi tại từng dòng.')
       return
     }
     try {
@@ -108,7 +119,12 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
       router.push(APP_ROUTES.goodsReceiptDetail(receiptId) as Route)
     } catch (error) {
       logger.error(error)
-      toast.error('Không thể cất hàng. Dữ liệu vị trí có thể đã thay đổi, vui lòng tải lại.')
+      form.setError('root.server', {
+        message: getApiErrorMessage(error, 'Không thể cất hàng. Vui lòng tải lại dữ liệu.'),
+      })
+      toast.error(getApiErrorMessage(error))
+      void receiptQuery.refetch()
+      void layoutQuery.refetch()
     }
   }
 

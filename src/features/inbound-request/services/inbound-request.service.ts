@@ -5,19 +5,19 @@ import type {
   AllowedActionsResponse,
   LookupListResponse,
   LookupQuery,
-  PagedResponse,
+  InboundRequestListResponse,
   ProductOption,
   InboundRequestDetail,
   InboundRequestListQuery,
-  InboundRequestSummary,
   SaveInboundRequestRequest,
+  SupplierEmailDispatch,
   SupplierOption,
 } from '../types/inbound-request.types'
 
 export const inboundRequestService = {
   getInboundRequests: (params: InboundRequestListQuery) =>
     axiosClient
-      .get<ApiResponse<PagedResponse<InboundRequestSummary>>>(API_ENDPOINTS.inboundRequests.list, {
+      .get<ApiResponse<InboundRequestListResponse>>(API_ENDPOINTS.inboundRequests.list, {
         params,
       })
       .then((response) => response.data),
@@ -67,9 +67,29 @@ export const inboundRequestService = {
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.submit(inboundRequestId))
       .then((response) => response.data),
+  submitInboundRequests: (ids: readonly string[]) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.submitMany, { ids })
+      .then((response) => response.data),
   approveInboundRequest: (inboundRequestId: string) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.approve(inboundRequestId))
+      .then((response) => response.data),
+  approveInboundRequests: (ids: readonly string[]) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.approveMany, { ids })
+      .then((response) => response.data),
+  approveAndSendInboundRequest: (inboundRequestId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<SupplierEmailDispatch>
+      >(API_ENDPOINTS.inboundRequests.approveAndSend(inboundRequestId))
+      .then((response) => response.data),
+  sendInboundRequestToSupplier: (inboundRequestId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<SupplierEmailDispatch>
+      >(API_ENDPOINTS.inboundRequests.sendToSupplier(inboundRequestId))
       .then((response) => response.data),
   rejectInboundRequest: (inboundRequestId: string, reason: string) =>
     axiosClient

@@ -41,6 +41,8 @@ export interface ReceivingTaskQuery {
   supplierId?: string
   expectedFrom?: string
   expectedTo?: string
+  createdFrom?: string
+  createdTo?: string
   unassigned?: boolean
 }
 
@@ -49,6 +51,8 @@ export interface PutawayTaskQuery {
   pageSize: number
   searchTerm?: string
   warehouseId?: string
+  createdFrom?: string
+  createdTo?: string
   unassigned?: boolean
 }
 
@@ -72,15 +76,25 @@ export interface ReceivingTask {
   supplierId: string
   supplierName: string
   expectedDate: string | null
+  createdAt?: string | null
   orderedQuantity: number
   receivedQuantity: number
   remainingQuantity: number
   activeDocumentImportId: string | null
+  activeGoodsReceiptId: string | null
+  activeGoodsReceiptStatus: string | null
   assignedTo: string | null
   assignedToName: string | null
   assignedAt: string | null
   executionStatus: WarehouseTaskExecutionStatus
   lines: ReceivingTaskLine[]
+}
+
+export interface ReceivingTaskStats {
+  totalOpenCount: number
+  unassignedCount: number
+  inProgressCount: number
+  pausedCount: number
 }
 
 export interface GoodsReceiptSummary {
@@ -214,6 +228,11 @@ export interface AssignableWarehouseStaff {
   hasTaskInProgress: boolean
 }
 
+export interface UnassignReceivingTaskRequest {
+  expectedStaffId: string | null
+  reason: string
+}
+
 export interface AssignWarehouseTaskRequest {
   staffId: string
   expectedStaffId: string | null
@@ -225,7 +244,9 @@ export interface InboundAllowedActionsResponse {
 }
 
 export type GoodsReceiptListResponse = PagedResponse<GoodsReceiptSummary>
-export type ReceivingTaskListResponse = PagedResponse<ReceivingTask>
+export type ReceivingTaskListResponse = PagedResponse<ReceivingTask> & {
+  taskStats: ReceivingTaskStats
+}
 
 export const INBOUND_DOCUMENT_IMPORT_STATUSES = [
   'Pending',

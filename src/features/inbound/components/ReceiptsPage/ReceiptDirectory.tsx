@@ -1,4 +1,4 @@
-import { Eye, RefreshCw, Search } from 'lucide-react'
+import { Check, Eye, RefreshCw, Search } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import {
@@ -9,6 +9,7 @@ import {
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -25,7 +26,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import type { GoodsReceiptStatus, GoodsReceiptSummary } from '../../types/inbound.types'
 import { INBOUND_STATUS_LABELS } from '../../utils/inbound-format'
 import {
-  formatOperationalDate,
+  formatOperationalDateTime,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundStatusBadge } from '../InboundWorkspace'
@@ -37,14 +38,21 @@ interface ReceiptDirectoryProps {
   readonly pageSize: number
   readonly searchText: string
   readonly status: GoodsReceiptStatus | ''
+  readonly createdFrom: string
+  readonly createdTo: string
   readonly isLoading: boolean
   readonly isFetching: boolean
   readonly isError: boolean
+  readonly canApprove: boolean
+  readonly isApproving: boolean
   readonly onSearchChange: (value: string) => void
   readonly onStatusChange: (value: GoodsReceiptStatus | '') => void
+  readonly onCreatedFromChange: (value: string) => void
+  readonly onCreatedToChange: (value: string) => void
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
+  readonly onApprove: (item: GoodsReceiptSummary) => void
 }
 
 export function ReceiptDirectory({
@@ -54,23 +62,29 @@ export function ReceiptDirectory({
   pageSize,
   searchText,
   status,
+  createdFrom,
+  createdTo,
   isLoading,
   isFetching,
   isError,
+  canApprove,
+  isApproving,
   onSearchChange,
   onStatusChange,
+  onCreatedFromChange,
+  onCreatedToChange,
   onPageChange,
   onPageSizeChange,
   onRetry,
+  onApprove,
 }: ReceiptDirectoryProps) {
   return (
     <OperationalListPanel aria-label="Danh sách phiếu nhận hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-sm font-semibold">Danh sách phiếu nhận hàng</h2>
-          <p className="text-muted-foreground text-xs tabular-nums">{totalCount} phiếu</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-wrap items-center gap-2">
           <InputGroup className="min-w-0 flex-1 sm:w-64">
             <InputGroupAddon>
               <Search aria-hidden="true" />
@@ -94,6 +108,28 @@ export function ReceiptDirectory({
               </NativeSelectOption>
             ))}
           </NativeSelect>
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            Tạo từ
+            <Input
+              type="date"
+              aria-label="Lọc phiếu từ ngày tạo"
+              className="w-36"
+              value={createdFrom}
+              max={createdTo || undefined}
+              onChange={(event) => onCreatedFromChange(event.target.value)}
+            />
+          </label>
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            Đến
+            <Input
+              type="date"
+              aria-label="Lọc phiếu đến ngày tạo"
+              className="w-36"
+              value={createdTo}
+              min={createdFrom || undefined}
+              onChange={(event) => onCreatedToChange(event.target.value)}
+            />
+          </label>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -138,10 +174,25 @@ export function ReceiptDirectory({
                     {item.inboundRequestCode} · {item.warehouseName}
                   </ItemDescription>
                   <ItemDescription>
+                    Tạo lúc {formatOperationalDateTime(item.createdAt)}
+                  </ItemDescription>
+                  <ItemDescription>
                     Nhận {formatQuantity(item.receivedQuantity)} · Hỏng{' '}
                     {formatQuantity(item.damagedQuantity)}
                   </ItemDescription>
                 </ItemContent>
+                {canApprove && item.status === 'PendingApproval' ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isApproving}
+                    onClick={() => onApprove(item)}
+                  >
+                    <Check aria-hidden="true" />
+                    Phê duyệt
+                  </Button>
+                ) : null}
               </Item>
             ))}
           </ItemGroup>
@@ -182,16 +233,37 @@ export function ReceiptDirectory({
                       {formatQuantity(item.damagedQuantity)}
                     </TableCell>
                     <TableCell>{item.createdByName}</TableCell>
-                    <TableCell>{formatOperationalDate(item.createdAt)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatOperationalDateTime(item.createdAt)}
+                    </TableCell>
                     <TableCell>
-                      <Button asChild variant="ghost" size="icon-sm">
-                        <Link
-                          href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
-                          aria-label={`Xem ${item.receiptCode}`}
-                        >
-                          <Eye aria-hidden="true" />
-                        </Link>
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        {canApprove && item.status === 'PendingApproval' ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Phê duyệt ${item.receiptCode}`}
+                                disabled={isApproving}
+                                onClick={() => onApprove(item)}
+                              >
+                                <Check className="text-primary" aria-hidden="true" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Phê duyệt phiếu</TooltipContent>
+                          </Tooltip>
+                        ) : null}
+                        <Button asChild variant="ghost" size="icon-sm">
+                          <Link
+                            href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
+                            aria-label={`Xem ${item.receiptCode}`}
+                          >
+                            <Eye aria-hidden="true" />
+                          </Link>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

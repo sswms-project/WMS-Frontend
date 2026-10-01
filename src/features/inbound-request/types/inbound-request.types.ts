@@ -17,6 +17,8 @@ export const INBOUND_REQUEST_ACTION = {
   Update: 'Update',
   Submit: 'Submit',
   Approve: 'Approve',
+  ApproveAndSend: 'ApproveAndSend',
+  SendToSupplier: 'SendToSupplier',
   Reject: 'Reject',
 } as const
 export type InboundRequestAction =
@@ -108,8 +110,18 @@ export interface InboundRequestDetail extends Omit<
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
+  supplierEmail: string | null
+  supplierEmailSentAt: string | null
+  supplierEmailSentTo: string | null
+  supplierEmailSentByName: string | null
   lines: InboundRequestLine[]
   history: LifecycleEvent[]
+}
+
+export interface SupplierEmailDispatch {
+  sent: boolean
+  sentTo: string | null
+  error: string | null
 }
 
 export interface PagedResponse<T> {
@@ -117,6 +129,15 @@ export interface PagedResponse<T> {
   totalCount: number
   pageNumber: number
   pageSize: number
+}
+
+export interface InboundRequestStatusCount {
+  status: InboundRequestStatus
+  count: number
+}
+
+export interface InboundRequestListResponse extends PagedResponse<InboundRequestSummary> {
+  statusCounts: InboundRequestStatusCount[]
 }
 
 export interface AllowedActionsResponse {

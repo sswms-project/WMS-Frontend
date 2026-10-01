@@ -3,6 +3,7 @@ import { QueryProvider } from '@/providers/query-provider'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
+import NextTopLoader from 'nextjs-toploader'
 import { Baloo_2, Inter, JetBrains_Mono } from 'next/font/google'
 import './index.css'
 
@@ -42,6 +43,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
+          <NextTopLoader color="var(--primary)" height={3} showSpinner={false} />
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
         <Toaster richColors position="bottom-right" />
