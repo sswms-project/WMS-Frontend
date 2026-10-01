@@ -15,7 +15,9 @@ export interface WarehouseDetailResponse extends WarehouseResponse {
   modifiedAt: string | null
 }
 
-export interface SlotResponse {
+import type { WarehousePhysicalDetailsResponse } from '@/features/warehouse/types/warehouse.types'
+
+export interface SlotResponse extends WarehousePhysicalDetailsResponse {
   id: string
   slotCode: string
   slotName: string
@@ -30,7 +32,7 @@ export interface SlotResponse {
   rowVersion?: string | null
 }
 
-export interface RackResponse {
+export interface RackResponse extends WarehousePhysicalDetailsResponse {
   id: string
   rackCode: string
   rackName: string
@@ -43,7 +45,7 @@ export interface RackResponse {
   slots: SlotResponse[]
 }
 
-export interface ZoneResponse {
+export interface ZoneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneCode: string
   zoneName: string

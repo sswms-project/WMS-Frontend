@@ -16,7 +16,6 @@ import {
   ZoomOut,
 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
@@ -39,6 +38,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
 import { useLayoutDesignerCompact } from '../../hooks/use-layout-designer-compact'
 import {
@@ -63,6 +63,9 @@ interface WarehouseLayoutViewerWorkspaceProps {
   readonly warehouseName: string
   readonly scene: WarehouseLayoutEditorScene
   readonly canConfigure: boolean
+  readonly isClosing: boolean
+  readonly onClose: () => void
+  readonly onEdit?: () => void
 }
 
 function ViewerIconButton({
@@ -91,8 +94,10 @@ export function WarehouseLayoutViewerWorkspace({
   warehouseName,
   scene,
   canConfigure,
+  isClosing,
+  onClose,
+  onEdit,
 }: WarehouseLayoutViewerWorkspaceProps) {
-  const router = useRouter()
   const isCompact = useLayoutDesignerCompact()
   const canvasRef = useRef<WarehouseCanvasHandle>(null)
   const [selection, setSelection] = useState<WarehouseLayoutSelection | null>(null)
@@ -272,7 +277,10 @@ export function WarehouseLayoutViewerWorkspace({
 
   return (
     <section
-      className="bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden"
+      className={cn(
+        'bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden transition-transform duration-200 ease-in motion-reduce:duration-0',
+        isClosing ? 'pointer-events-none translate-y-full' : 'translate-y-0'
+      )}
       aria-label={`Sơ đồ ${warehouseName}`}
     >
       <header className="flex min-h-16 shrink-0 items-center gap-3 border-b px-5 py-2">
@@ -280,22 +288,26 @@ export function WarehouseLayoutViewerWorkspace({
           <h1 className="truncate text-xl font-semibold">Sơ đồ {warehouseName}</h1>
         </div>
         {canConfigure ? (
-          <Button asChild size="sm" className="ml-auto">
-            <Link href={APP_ROUTES.warehouseLayoutDesigner(warehouseId) as Route}>
+          onEdit ? (
+            <Button type="button" size="sm" className="ml-auto" onClick={onEdit}>
               <PencilRuler data-icon="inline-start" aria-hidden="true" />
               Sửa
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild size="sm" className="ml-auto">
+              <Link replace href={APP_ROUTES.warehouseLayoutDesigner(warehouseId) as Route}>
+                <PencilRuler data-icon="inline-start" aria-hidden="true" />
+                Sửa
+              </Link>
+            </Button>
+          )
         ) : (
           <span className="ml-auto" />
         )}
         <ViewerIconButton label="Trợ giúp" onClick={() => setIsLocationSheetOpen(true)}>
           <HelpCircle aria-hidden="true" />
         </ViewerIconButton>
-        <ViewerIconButton
-          label="Đóng sơ đồ"
-          onClick={() => router.replace(APP_ROUTES.warehouseLayouts)}
-        >
+        <ViewerIconButton label="Đóng sơ đồ" onClick={onClose}>
           <X aria-hidden="true" />
         </ViewerIconButton>
       </header>

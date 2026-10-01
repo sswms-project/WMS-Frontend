@@ -8,6 +8,22 @@ import {
 const canvas = { width: 1000, height: 600, gridSize: 20 }
 
 describe('constrainLayoutGeometryToCanvas', () => {
+  it('calculates rotated bounds around the same center used by the canvas', () => {
+    const bounds = getLayoutGeometryBounds({
+      x: 40,
+      y: 0,
+      width: 80,
+      height: 20,
+      rotation: 90,
+      zIndex: 1,
+    })
+
+    expect(bounds.minX).toBeCloseTo(70)
+    expect(bounds.maxX).toBeCloseTo(90)
+    expect(bounds.minY).toBeCloseTo(-30)
+    expect(bounds.maxY).toBeCloseTo(50)
+  })
+
   it('keeps a dropped object inside the fixed canvas', () => {
     const geometry = constrainLayoutGeometryToCanvas(
       { x: 960, y: 580, width: 180, height: 100, rotation: 0, zIndex: 1 },

@@ -27,6 +27,30 @@ export interface WarehouseLifecycleRequest {
 export type WarehouseLocationType = 'Zone' | 'Rack' | 'Slot'
 export type LocationLifecycleStatus = 'Active' | 'Inactive'
 export type SlotOccupancyStatus = 'Vacant' | 'Occupied' | 'Reserved' | 'Full'
+export type StorageMassUnit = 'Ton' | 'Kilogram' | 'Gram'
+export type StorageLengthUnit = 'Kilometer' | 'Meter' | 'Decimeter' | 'Centimeter'
+
+export interface WarehousePhysicalDetails {
+  storageCapacity: number | null
+  storageCapacityUnit: StorageMassUnit | null
+  physicalLength: number | null
+  physicalLengthUnit: StorageLengthUnit | null
+  physicalWidth: number | null
+  physicalWidthUnit: StorageLengthUnit | null
+  physicalHeight: number | null
+  physicalHeightUnit: StorageLengthUnit | null
+}
+
+export interface WarehousePhysicalDetailsResponse {
+  storageCapacity?: number | null
+  storageCapacityUnit?: StorageMassUnit | null
+  physicalLength?: number | null
+  physicalLengthUnit?: StorageLengthUnit | null
+  physicalWidth?: number | null
+  physicalWidthUnit?: StorageLengthUnit | null
+  physicalHeight?: number | null
+  physicalHeightUnit?: StorageLengthUnit | null
+}
 
 export interface WarehouseLocationQuery extends QueryInfo {
   top: number
@@ -66,7 +90,7 @@ export interface LocationFilterState {
   rackId: string
 }
 
-export interface CreateZoneRequest {
+export interface CreateZoneRequest extends WarehousePhysicalDetails {
   zoneCode: string
   zoneName: string
   description: string
@@ -78,7 +102,7 @@ export interface UpdateZoneRequest extends CreateZoneRequest {
 
 export type RackStorageMode = 'RackLevel' | 'SlotLevel'
 
-export interface CreateRackRequest {
+export interface CreateRackRequest extends WarehousePhysicalDetails {
   rackCode: string
   rackName: string
   description: string | null
@@ -91,7 +115,7 @@ export interface UpdateRackRequest extends CreateRackRequest {
   expectedRowVersion: string
 }
 
-export interface CreateSlotRequest {
+export interface CreateSlotRequest extends WarehousePhysicalDetails {
   slotCode: string
   slotName: string
   description: string | null

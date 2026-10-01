@@ -1,9 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { logger } from '@/lib/logger'
+import { cn } from '@/lib/utils'
 import { AlertCircle, Boxes, Info, RefreshCw, X } from 'lucide-react'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
@@ -31,7 +31,6 @@ import { toast } from 'sonner'
 import { useWarehouseLayoutEditorStore } from '@/stores/warehouse-layout-editor.store'
 import { useLayoutDesignerCompact } from '../../hooks/use-layout-designer-compact'
 import { useLayoutEditorHistory } from '../../hooks/use-layout-editor-history'
-import { APP_ROUTES } from '@/routes/app-routes'
 import type {
   WarehouseLayoutDecorationType,
   WarehouseLayoutEditorScene,
@@ -74,11 +73,14 @@ interface WarehouseDesignerWorkspaceProps {
   readonly onPlacementApplied: () => void
   readonly onCreateZone: (position?: WarehouseLayoutDropPosition) => void
   readonly onCreateRack: (zoneId: string, position?: WarehouseLayoutDropPosition) => void
+  readonly onOpenLocationDetails: (selection: WarehouseLayoutSelection) => void
   readonly onUpdateRackName: (rack: WarehouseLayoutEditorRack, rackName: string) => Promise<void>
   readonly onDeactivateZone: (zone: WarehouseLayoutEditorZone) => Promise<void>
   readonly onDeactivateRack: (rack: WarehouseLayoutEditorRack) => Promise<void>
   readonly onSave: (scene: WarehouseLayoutEditorScene, baseVersion: number) => void
   readonly onReload: () => void
+  readonly isClosing: boolean
+  readonly onClose: () => void
 }
 
 export interface WarehouseLayoutDropPosition {
@@ -128,6 +130,7 @@ export function WarehouseDesignerWorkspace({
   hasConflict,
   onCreateZone,
   onCreateRack,
+  onOpenLocationDetails,
   placementToApply,
   onPlacementApplied,
   onUpdateRackName,
@@ -135,8 +138,9 @@ export function WarehouseDesignerWorkspace({
   onDeactivateRack,
   onSave,
   onReload,
+  isClosing,
+  onClose,
 }: WarehouseDesignerWorkspaceProps) {
-  const router = useRouter()
   const [history, dispatch] = useLayoutEditorHistory(initialScene)
   const [selection, setSelection] = useState<WarehouseLayoutSelection | null>(null)
   const [isGridVisible, setIsGridVisible] = useState(true)
@@ -465,12 +469,12 @@ export function WarehouseDesignerWorkspace({
       setIsCloseDialogOpen(true)
       return
     }
-    router.replace(APP_ROUTES.warehouseLayouts)
+    onClose()
   }
 
   function confirmCloseDesigner() {
     setIsCloseDialogOpen(false)
-    router.replace(APP_ROUTES.warehouseLayouts)
+    onClose()
   }
 
   const toolbox = (
@@ -552,7 +556,15 @@ export function WarehouseDesignerWorkspace({
       removeDisabled={selectionHasInventory(scene, selection)}
       removeDisabledReason="Vị trí còn tồn kho nên chưa thể ngừng sử dụng."
       removeLabel={selection.kind === 'decoration' ? 'Xóa' : 'Ngừng dùng'}
-      onOpenDetails={() => setIsInspectorOpen(true)}
+      onOpenDetails={() => {
+        if (
+          selection.kind === 'decoration' ||
+          !canConfigure ||
+          !isSelectionEditable(scene, selection)
+        )
+          setIsInspectorOpen(true)
+        else onOpenLocationDetails(selection)
+      }}
       onCreateRack={() => {
         const zoneId = getSelectedZoneId()
         if (zoneId) onCreateRack(zoneId)
@@ -572,7 +584,10 @@ export function WarehouseDesignerWorkspace({
 
   return (
     <section
-      className="bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden"
+      className={cn(
+        'bg-surface-container-lowest fixed inset-0 z-40 flex min-h-0 min-w-0 flex-col overflow-hidden transition-transform duration-200 ease-in motion-reduce:duration-0',
+        isClosing ? 'pointer-events-none translate-y-full' : 'translate-y-0'
+      )}
       aria-label="Trình thiết kế bố cục kho"
       onKeyDown={handleWorkspaceKeyDown}
     >

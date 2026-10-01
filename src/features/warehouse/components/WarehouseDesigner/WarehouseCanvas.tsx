@@ -28,6 +28,7 @@ import {
 } from '../../utils/layout-grid'
 import {
   hasLayoutDragData,
+  isPaletteDecorationType,
   readLayoutDragData,
   type LayoutPaletteDragData,
 } from './designer-constants'
@@ -215,9 +216,11 @@ function renderDecorationSymbol(
   width: number,
   height: number,
   palette: CanvasPalette,
-  foreground?: string
+  foreground?: string,
+  sizeMultiplier = 1
 ) {
-  const iconSize = Math.max(20, Math.min(width, height - (height >= 58 ? 18 : 0)) * 0.62)
+  const iconSize =
+    Math.max(20, Math.min(width, height - (height >= 58 ? 18 : 0)) * 0.62) * sizeMultiplier
   const scale = iconSize / 24
   const x = (width - iconSize) / 2
   const y = Math.max(0, (height - iconSize - (height >= 58 ? 18 : 0)) / 2)
@@ -1100,6 +1103,16 @@ export function WarehouseCanvas({
                         strokeWidth={selected ? (mode === 'viewer' ? 1.5 : 1) / viewport.scale : 0}
                         cornerRadius={2}
                       />
+                      {isPaletteDecorationType(decoration.type)
+                        ? renderDecorationSymbol(
+                            decoration.type,
+                            decoration.width,
+                            decoration.height,
+                            canvasPalette,
+                            canvasPalette.background,
+                            1.14
+                          )
+                        : null}
                       {renderDecorationSymbol(
                         decoration.type,
                         decoration.width,

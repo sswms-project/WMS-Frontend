@@ -35,15 +35,17 @@ export function getLayoutGeometryBounds(geometry: WarehouseLayoutGeometry): Layo
   const radians = (geometry.rotation * Math.PI) / 180
   const cosine = Math.cos(radians)
   const sine = Math.sin(radians)
+  const centerX = geometry.width / 2
+  const centerY = geometry.height / 2
   const corners = [
-    { x: 0, y: 0 },
-    { x: geometry.width * cosine, y: geometry.width * sine },
-    { x: -geometry.height * sine, y: geometry.height * cosine },
-    {
-      x: geometry.width * cosine - geometry.height * sine,
-      y: geometry.width * sine + geometry.height * cosine,
-    },
-  ]
+    { x: -centerX, y: -centerY },
+    { x: centerX, y: -centerY },
+    { x: -centerX, y: centerY },
+    { x: centerX, y: centerY },
+  ].map((corner) => ({
+    x: centerX + corner.x * cosine - corner.y * sine,
+    y: centerY + corner.x * sine + corner.y * cosine,
+  }))
 
   return {
     minX: geometry.x + Math.min(...corners.map((corner) => corner.x)),

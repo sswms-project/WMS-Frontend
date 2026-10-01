@@ -403,7 +403,7 @@ function getNodeDetails(node: WarehouseLocationTreeNode) {
     parent: node.rack.rackName,
     description: node.slot.description,
     capacity: formatCapacityLimit(node.slot.capacity),
-    status: node.slot.status,
+    status: node.slot.isActive ? 'Active' : 'Inactive',
   }
 }
 

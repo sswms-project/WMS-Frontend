@@ -44,9 +44,12 @@ export const APP_ROUTES = {
   goodsReceiptDetail: (receiptId: string) => `/inbound/receipts/${receiptId}`,
   inboundPutaway: '/inbound/putaway',
   inboundPutawayDetail: (receiptId: string) => `/inbound/putaway/${receiptId}`,
-  warehouseDetail: (warehouseId: string) => `/warehouses/${warehouseId}`,
+  warehouseDetail: (warehouseId: string): Route => `/warehouses/${warehouseId}` as Route,
   warehouseLayout: (warehouseId: string) => `/warehouses/${warehouseId}/layout`,
-  warehouseLayoutDesigner: (warehouseId: string) => `/warehouses/${warehouseId}/layout/designer`,
+  warehouseLayoutViewer: (warehouseId: string): Route =>
+    `/warehouse-layouts/${warehouseId}` as Route,
+  warehouseLayoutDesigner: (warehouseId: string): Route =>
+    `/warehouse-layouts/${warehouseId}/designer` as Route,
   warehouseLocations: (warehouseId: string) => `/warehouses/${warehouseId}/locations`,
   warehouseLocationBarcode: (warehouseId: string, locationType: string, locationId: string) =>
     `/warehouses/${warehouseId}/locations/${locationType.toLowerCase()}/${locationId}/barcode`,

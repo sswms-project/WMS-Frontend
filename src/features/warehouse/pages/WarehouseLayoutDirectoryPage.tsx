@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { ArrowRight, MapPinned, PencilRuler, RefreshCw, TriangleAlert } from 'lucide-react'
-import type { Route } from 'next'
-import Link from 'next/link'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
@@ -17,14 +15,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { APP_ROUTES } from '@/routes/app-routes'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '../hooks/use-warehouse'
+import { WarehouseDesignerPage } from './WarehouseDesignerPage'
+
+type OpenLayout = {
+  readonly warehouseId: string
+  readonly mode: 'viewer' | 'designer'
+}
 
 export default function WarehouseLayoutDirectoryPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [openLayout, setOpenLayout] = useState<OpenLayout | null>(null)
   const warehousesQuery = useWarehousesQuery({
     top: pageSize,
     skip: (page - 1) * pageSize,
@@ -132,24 +136,27 @@ export default function WarehouseLayoutDirectoryPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button asChild size="sm" variant="outline">
-                              <Link
-                                href={
-                                  `${APP_ROUTES.warehouseLayoutDesigner(warehouse.id)}?mode=view` as Route
-                                }
-                              >
-                                Mở sơ đồ
-                                <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                              </Link>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setOpenLayout({ warehouseId: warehouse.id, mode: 'viewer' })
+                              }
+                            >
+                              Mở sơ đồ
+                              <ArrowRight data-icon="inline-end" aria-hidden="true" />
                             </Button>
                             {canConfigure ? (
-                              <Button asChild size="sm">
-                                <Link
-                                  href={APP_ROUTES.warehouseLayoutDesigner(warehouse.id) as Route}
-                                >
-                                  <PencilRuler data-icon="inline-start" aria-hidden="true" />
-                                  Thiết lập
-                                </Link>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() =>
+                                  setOpenLayout({ warehouseId: warehouse.id, mode: 'designer' })
+                                }
+                              >
+                                <PencilRuler data-icon="inline-start" aria-hidden="true" />
+                                Thiết lập
                               </Button>
                             ) : null}
                           </div>
@@ -170,15 +177,13 @@ export default function WarehouseLayoutDirectoryPage() {
                         {warehouse.warehouseCode}
                       </p>
                     </div>
-                    <Button asChild size="sm">
-                      <Link
-                        href={
-                          `${APP_ROUTES.warehouseLayoutDesigner(warehouse.id)}?mode=view` as Route
-                        }
-                      >
-                        Mở sơ đồ
-                        <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                      </Link>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setOpenLayout({ warehouseId: warehouse.id, mode: 'viewer' })}
+                    >
+                      Mở sơ đồ
+                      <ArrowRight data-icon="inline-end" aria-hidden="true" />
                     </Button>
                   </article>
                 ))}
@@ -199,6 +204,20 @@ export default function WarehouseLayoutDirectoryPage() {
           />
         ) : null}
       </OperationalListPanel>
+
+      {openLayout ? (
+        <WarehouseDesignerPage
+          warehouseId={openLayout.warehouseId}
+          viewOnly={openLayout.mode === 'viewer'}
+          onClose={() => setOpenLayout(null)}
+          onEdit={() =>
+            setOpenLayout((current) => (current ? { ...current, mode: 'designer' } : current))
+          }
+          onShowViewer={() =>
+            setOpenLayout((current) => (current ? { ...current, mode: 'viewer' } : current))
+          }
+        />
+      ) : null}
     </div>
   )
 }

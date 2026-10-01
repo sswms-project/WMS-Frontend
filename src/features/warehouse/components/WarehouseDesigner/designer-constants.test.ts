@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   LAYOUT_DRAG_DATA_TYPE,
   hasLayoutDragData,
+  isPaletteDecorationType,
   readLayoutDragData,
   writeLayoutDragData,
 } from './designer-constants'
@@ -60,5 +61,11 @@ describe('layout palette drag data', () => {
     const dataTransfer = createDataTransfer()
     dataTransfer.setData(LAYOUT_DRAG_DATA_TYPE, JSON.stringify({ kind: 'rack', shape: 'Circular' }))
     expect(readLayoutDragData(dataTransfer)).toBeNull()
+  })
+
+  it('identifies only facility icons from the Khác palette group', () => {
+    expect(isPaletteDecorationType('Door')).toBe(true)
+    expect(isPaletteDecorationType('Forklift')).toBe(true)
+    expect(isPaletteDecorationType('Office')).toBe(false)
   })
 })

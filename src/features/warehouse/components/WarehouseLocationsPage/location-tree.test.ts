@@ -28,7 +28,7 @@ const zones: ZoneResponse[] = [
             slotCode: '__SYSTEM_DEFAULT__',
             slotName: 'Vị trí mặc định',
             description: null,
-            status: 'Active',
+            status: 'Vacant',
             isActive: true,
             capacity: null,
             currentOccupancy: 0,
@@ -39,7 +39,7 @@ const zones: ZoneResponse[] = [
             slotCode: 'A.01',
             slotName: 'Ô số 1',
             description: 'Gần cửa',
-            status: 'Active',
+            status: 'Occupied',
             isActive: true,
             capacity: 10,
             currentOccupancy: 2,
@@ -63,6 +63,24 @@ describe('warehouse location tree', () => {
     expect(
       flattenExpandedLocationTree(tree, getExpandableLocationIds(tree)).map((node) => node.id)
     ).toEqual(['zone-1', 'rack-1', 'slot-1'])
+  })
+
+  it('filters slot lifecycle by isActive instead of occupancy status', () => {
+    const tree = buildWarehouseLocationTree(zones)
+
+    expect(
+      flattenExpandedLocationTree(
+        filterWarehouseLocationTree(tree, '', 'Active'),
+        getExpandableLocationIds(tree)
+      ).map((node) => node.id)
+    ).toContain('slot-1')
+
+    expect(
+      flattenExpandedLocationTree(
+        filterWarehouseLocationTree(tree, '', 'Inactive'),
+        getExpandableLocationIds(tree)
+      ).map((node) => node.id)
+    ).not.toContain('slot-1')
   })
 
   it('collapses children when their parent is not expanded', () => {

@@ -90,8 +90,12 @@ const PALETTE_DECORATION_TYPES = new Set<WarehouseLayoutDecorationType>([
   'Exit',
 ])
 
+export function isPaletteDecorationType(type: WarehouseLayoutDecorationType): boolean {
+  return PALETTE_DECORATION_TYPES.has(type)
+}
+
 export const PALETTE_DECORATION_OPTIONS = DECORATION_OPTIONS.filter((option) =>
-  PALETTE_DECORATION_TYPES.has(option.type)
+  isPaletteDecorationType(option.type)
 )
 
 export function getDecorationLabel(type: WarehouseLayoutDecorationType): string {

@@ -1,3 +1,5 @@
+import type { WarehousePhysicalDetailsResponse } from './warehouse.types'
+
 export type WarehouseLayoutDecorationType =
   | 'Door'
   | 'DoubleDoor'
@@ -32,10 +34,11 @@ export interface WarehouseLayoutGeometry {
   zIndex: number
 }
 
-export interface WarehouseLayoutZoneSceneResponse {
+export interface WarehouseLayoutZoneSceneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneCode: string
   zoneName: string
+  description?: string | null
   status: string
   rowVersion?: string | null
   x: number | null
@@ -47,7 +50,7 @@ export interface WarehouseLayoutZoneSceneResponse {
   color?: string | null
 }
 
-export interface WarehouseLayoutRackSceneResponse {
+export interface WarehouseLayoutRackSceneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneId: string
   zoneCode: string
@@ -69,7 +72,7 @@ export interface WarehouseLayoutRackSceneResponse {
   color?: string | null
 }
 
-export interface WarehouseLayoutSlotSceneResponse {
+export interface WarehouseLayoutSlotSceneResponse extends WarehousePhysicalDetailsResponse {
   id: string
   zoneId: string
   rackId: string
@@ -82,6 +85,7 @@ export interface WarehouseLayoutSlotSceneResponse {
   allowsMixedProducts?: boolean
   capacity: number | null
   currentOccupancy: number
+  rowVersion?: string | null
 }
 
 export interface WarehouseLayoutDecorationResponse extends WarehouseLayoutGeometry {

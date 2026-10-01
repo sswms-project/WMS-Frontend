@@ -83,7 +83,9 @@ export function filterWarehouseLocationTree(
         ? node.zone.status
         : node.kind === 'rack'
           ? node.rack.status
-          : node.slot.status
+          : node.slot.isActive
+            ? 'Active'
+            : 'Inactive'
     return (
       (!lifecycleStatus || status === lifecycleStatus) &&
       (!term || values.some((value) => value?.toLocaleLowerCase('vi').includes(term)))

@@ -37,6 +37,10 @@ import {
   useWarehouseQuery,
 } from '../hooks/use-warehouse'
 import type { RackFormValues, SlotFormValues, ZoneFormValues } from '../schemas/warehouse.schema'
+import {
+  EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+  getWarehousePhysicalDetails,
+} from '../utils/warehouse-physical-details'
 import { getWarehouseCapabilities } from '../utils/warehouse-capabilities'
 import {
   buildWarehouseLayoutHref,
@@ -166,6 +170,14 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
             storageMode: values.storageMode,
             allowsMixedProducts: values.allowsMixedProducts,
             capacity: values.capacity,
+            storageCapacity: values.storageCapacity,
+            storageCapacityUnit: values.storageCapacityUnit,
+            physicalLength: values.physicalLength,
+            physicalLengthUnit: values.physicalLengthUnit,
+            physicalWidth: values.physicalWidth,
+            physicalWidthUnit: values.physicalWidthUnit,
+            physicalHeight: values.physicalHeight,
+            physicalHeightUnit: values.physicalHeightUnit,
           },
         })
         toast.success('Đã thêm kệ hàng.')
@@ -199,6 +211,14 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
             description: values.description || null,
             allowsMixedProducts: values.allowsMixedProducts,
             capacity: values.capacity,
+            storageCapacity: values.storageCapacity,
+            storageCapacityUnit: values.storageCapacityUnit,
+            physicalLength: values.physicalLength,
+            physicalLengthUnit: values.physicalLengthUnit,
+            physicalWidth: values.physicalWidth,
+            physicalWidthUnit: values.physicalWidthUnit,
+            physicalHeight: values.physicalHeight,
+            physicalHeightUnit: values.physicalHeightUnit,
           },
         })
         toast.success('Đã thêm vị trí lưu trữ.')
@@ -236,7 +256,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         ? deactivateTarget.zone.status === 'Inactive'
         : deactivateTarget.type === 'Rack'
           ? deactivateTarget.rack.status === 'Inactive'
-          : deactivateTarget.slot.status === 'Inactive'
+          : !deactivateTarget.slot.isActive
     try {
       if (deactivateTarget.type === 'Zone') {
         const variables = { warehouseId, zoneId: deactivateTarget.zone.id, request }
@@ -296,7 +316,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       : deactivateTarget?.type === 'Rack'
         ? deactivateTarget.rack.status === 'Inactive'
         : deactivateTarget?.type === 'Slot'
-          ? deactivateTarget.slot.status === 'Inactive'
+          ? !deactivateTarget.slot.isActive
           : false
   const deactivateCode =
     deactivateTarget?.type === 'Zone'
@@ -371,8 +391,14 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   zoneCode: zoneFormTarget.zone.zoneCode,
                   zoneName: zoneFormTarget.zone.zoneName,
                   description: zoneFormTarget.zone.description ?? '',
+                  ...getWarehousePhysicalDetails(zoneFormTarget.zone),
                 }
-              : { zoneCode: '', zoneName: '', description: '' }
+              : {
+                  zoneCode: '',
+                  zoneName: '',
+                  description: '',
+                  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+                }
           }
           onOpenChange={(open) => !open && setZoneFormTarget(null)}
           onSubmit={submitZone}
@@ -394,6 +420,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   allowsMixedProducts: rackFormTarget.rack.allowsMixedProducts ?? true,
                   capacity: rackFormTarget.rack.capacity ?? null,
                   expectedRowVersion: rackFormTarget.rack.rowVersion ?? '',
+                  ...getWarehousePhysicalDetails(rackFormTarget.rack),
                 }
               : {
                   rackCode: '',
@@ -402,6 +429,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   storageMode: 'SlotLevel',
                   allowsMixedProducts: true,
                   capacity: null,
+                  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }
           onOpenChange={(open) => !open && setRackFormTarget(null)}
@@ -423,6 +451,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   allowsMixedProducts: slotFormTarget.slot.allowsMixedProducts ?? true,
                   capacity: slotFormTarget.slot.capacity,
                   expectedRowVersion: slotFormTarget.slot.rowVersion ?? '',
+                  ...getWarehousePhysicalDetails(slotFormTarget.slot),
                 }
               : {
                   slotCode: '',
@@ -430,6 +459,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   description: '',
                   allowsMixedProducts: true,
                   capacity: null,
+                  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }
           onOpenChange={(open) => !open && setSlotFormTarget(null)}
