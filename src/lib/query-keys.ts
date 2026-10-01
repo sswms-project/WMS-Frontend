@@ -61,6 +61,7 @@ export const queryKeys = {
   notifications: {
     all: ['notifications'] as const,
     list: (params: NotificationQuery) => ['notifications', 'list', params] as const,
+    infinite: (pageSize: number) => ['notifications', 'infinite', pageSize] as const,
   },
   auditLogs: {
     all: ['audit-logs'] as const,

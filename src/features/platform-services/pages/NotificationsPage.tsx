@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { APP_ROUTES } from '@/routes/app-routes'
@@ -8,13 +8,12 @@ import {
   NotificationDirectory,
   type NotificationFilterValues,
 } from '../components/NotificationsPage'
+import { useOpenNotification } from '../hooks/use-open-notification'
 import {
   useMarkAllNotificationsReadMutation,
-  useMarkNotificationReadMutation,
   useNotificationsQuery,
 } from '../hooks/use-platform-services'
 import { notificationFiltersSchema } from '../schemas/platform-services.schema'
-import type { NotificationItem } from '../types/platform-services.types'
 import { buildNotificationQuery } from '../utils/platform-services-query'
 
 export default function NotificationsPage() {
@@ -24,9 +23,8 @@ export default function NotificationsPage() {
   const queryParams = useMemo(() => buildNotificationQuery(params), [params])
   const notificationsQuery = useNotificationsQuery(queryParams)
   const unreadQuery = useNotificationsQuery({ pageNumber: 1, pageSize: 1, isRead: false })
-  const markReadMutation = useMarkNotificationReadMutation()
   const markAllMutation = useMarkAllNotificationsReadMutation()
-  const [pendingNotificationId, setPendingNotificationId] = useState<string | null>(null)
+  const { pendingNotificationId, markRead, open } = useOpenNotification()
 
   const filters: NotificationFilterValues = {
     search: params.get('search') ?? '',
@@ -56,14 +54,6 @@ export default function NotificationsPage() {
     setIfPresent(next, 'dateFrom', result.data.dateFrom)
     setIfPresent(next, 'dateTo', result.data.dateTo)
     navigate(next)
-  }
-
-  function markRead(notification: NotificationItem) {
-    if (notification.isRead) return
-    setPendingNotificationId(notification.id)
-    markReadMutation.mutate(notification.id, {
-      onSettled: () => setPendingNotificationId(null),
-    })
   }
 
   function markAllRead() {
@@ -110,6 +100,7 @@ export default function NotificationsPage() {
         navigate(next)
       }}
       onMarkRead={markRead}
+      onOpen={open}
       onMarkAllRead={markAllRead}
       onRetry={() => void notificationsQuery.refetch()}
     />
