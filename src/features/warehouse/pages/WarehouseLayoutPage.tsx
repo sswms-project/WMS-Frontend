@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
@@ -38,6 +37,10 @@ import {
   useWarehouseQuery,
 } from '../hooks/use-warehouse'
 import type { RackFormValues, SlotFormValues, ZoneFormValues } from '../schemas/warehouse.schema'
+import {
+  EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+  getWarehousePhysicalDetails,
+} from '../utils/warehouse-physical-details'
 import { getWarehouseCapabilities } from '../utils/warehouse-capabilities'
 import {
   buildWarehouseLayoutHref,
@@ -93,18 +96,6 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
     searchParams.get('zone'),
     searchParams.get('rack')
   )
-  const selectedRack = zones
-    .find((zone) => zone.id === selection.selectedZoneId)
-    ?.racks.find((rack) => rack.id === selection.selectedRackId)
-  const inventoryQuery = useInventoryQuery(
-    {
-      pageNumber: 1,
-      pageSize: 100,
-      warehouseId,
-      rackId: selectedRack?.id,
-    },
-    Boolean(selectedRack)
-  )
 
   if (layoutQuery.isLoading || warehouseQuery.isLoading || meQuery.isLoading)
     return <Skeleton className="h-[32rem]" />
@@ -116,7 +107,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           <EmptyMedia variant="icon">
             <TriangleAlert className="text-destructive" aria-hidden="true" />
           </EmptyMedia>
-          <EmptyTitle>Không thể tải bố cục kho</EmptyTitle>
+          <EmptyTitle>Không thể tải vị trí vật tư, hàng hóa</EmptyTitle>
           <EmptyDescription>
             Dữ liệu chưa sẵn sàng hoặc bạn không có quyền truy cập.
           </EmptyDescription>
@@ -175,9 +166,18 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           request: {
             rackCode: values.rackCode,
             rackName: values.rackName,
+            description: values.description || null,
             storageMode: values.storageMode,
             allowsMixedProducts: values.allowsMixedProducts,
             capacity: values.capacity,
+            storageCapacity: values.storageCapacity,
+            storageCapacityUnit: values.storageCapacityUnit,
+            physicalLength: values.physicalLength,
+            physicalLengthUnit: values.physicalLengthUnit,
+            physicalWidth: values.physicalWidth,
+            physicalWidthUnit: values.physicalWidthUnit,
+            physicalHeight: values.physicalHeight,
+            physicalHeightUnit: values.physicalHeightUnit,
           },
         })
         toast.success('Đã thêm kệ hàng.')
@@ -207,8 +207,18 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           rackId: slotFormTarget.rack.id,
           request: {
             slotCode: values.slotCode,
+            slotName: values.slotName,
+            description: values.description || null,
             allowsMixedProducts: values.allowsMixedProducts,
             capacity: values.capacity,
+            storageCapacity: values.storageCapacity,
+            storageCapacityUnit: values.storageCapacityUnit,
+            physicalLength: values.physicalLength,
+            physicalLengthUnit: values.physicalLengthUnit,
+            physicalWidth: values.physicalWidth,
+            physicalWidthUnit: values.physicalWidthUnit,
+            physicalHeight: values.physicalHeight,
+            physicalHeightUnit: values.physicalHeightUnit,
           },
         })
         toast.success('Đã thêm vị trí lưu trữ.')
@@ -246,7 +256,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         ? deactivateTarget.zone.status === 'Inactive'
         : deactivateTarget.type === 'Rack'
           ? deactivateTarget.rack.status === 'Inactive'
-          : deactivateTarget.slot.status === 'Inactive'
+          : !deactivateTarget.slot.isActive
     try {
       if (deactivateTarget.type === 'Zone') {
         const variables = { warehouseId, zoneId: deactivateTarget.zone.id, request }
@@ -306,7 +316,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       : deactivateTarget?.type === 'Rack'
         ? deactivateTarget.rack.status === 'Inactive'
         : deactivateTarget?.type === 'Slot'
-          ? deactivateTarget.slot.status === 'Inactive'
+          ? !deactivateTarget.slot.isActive
           : false
   const deactivateCode =
     deactivateTarget?.type === 'Zone'
@@ -353,9 +363,6 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
         canConfigure={capabilities.canConfigureLayout}
         canGenerateBarcode={capabilities.canGenerateLocationBarcode}
         isWarehouseActive={isWarehouseActive}
-        inventoryItems={inventoryQuery.data?.items ?? []}
-        isInventoryLoading={inventoryQuery.isLoading}
-        isInventoryError={inventoryQuery.isError}
         onCreateZone={() => setZoneFormTarget({ mode: 'create' })}
         onCreateRack={(zone) => setRackFormTarget({ mode: 'create', zone })}
         onCreateSlot={(rack) => setSlotFormTarget({ mode: 'create', rack })}
@@ -384,8 +391,14 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   zoneCode: zoneFormTarget.zone.zoneCode,
                   zoneName: zoneFormTarget.zone.zoneName,
                   description: zoneFormTarget.zone.description ?? '',
+                  ...getWarehousePhysicalDetails(zoneFormTarget.zone),
                 }
-              : { zoneCode: '', zoneName: '', description: '' }
+              : {
+                  zoneCode: '',
+                  zoneName: '',
+                  description: '',
+                  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+                }
           }
           onOpenChange={(open) => !open && setZoneFormTarget(null)}
           onSubmit={submitZone}
@@ -402,17 +415,21 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
               ? {
                   rackCode: rackFormTarget.rack.rackCode,
                   rackName: rackFormTarget.rack.rackName,
+                  description: rackFormTarget.rack.description ?? '',
                   storageMode: rackFormTarget.rack.storageMode ?? 'SlotLevel',
                   allowsMixedProducts: rackFormTarget.rack.allowsMixedProducts ?? true,
                   capacity: rackFormTarget.rack.capacity ?? null,
                   expectedRowVersion: rackFormTarget.rack.rowVersion ?? '',
+                  ...getWarehousePhysicalDetails(rackFormTarget.rack),
                 }
               : {
                   rackCode: '',
                   rackName: '',
+                  description: '',
                   storageMode: 'SlotLevel',
                   allowsMixedProducts: true,
                   capacity: null,
+                  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }
           onOpenChange={(open) => !open && setRackFormTarget(null)}
@@ -429,11 +446,21 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
             slotFormTarget.mode === 'update'
               ? {
                   slotCode: slotFormTarget.slot.slotCode,
+                  slotName: slotFormTarget.slot.slotName,
+                  description: slotFormTarget.slot.description ?? '',
                   allowsMixedProducts: slotFormTarget.slot.allowsMixedProducts ?? true,
                   capacity: slotFormTarget.slot.capacity,
                   expectedRowVersion: slotFormTarget.slot.rowVersion ?? '',
+                  ...getWarehousePhysicalDetails(slotFormTarget.slot),
                 }
-              : { slotCode: '', allowsMixedProducts: true, capacity: null }
+              : {
+                  slotCode: '',
+                  slotName: '',
+                  description: '',
+                  allowsMixedProducts: true,
+                  capacity: null,
+                  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+                }
           }
           onOpenChange={(open) => !open && setSlotFormTarget(null)}
           onSubmit={submitSlot}

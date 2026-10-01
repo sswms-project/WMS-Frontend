@@ -4,11 +4,9 @@ import { useState, type MouseEvent, type ReactNode } from 'react'
 import {
   ArrowLeft,
   CircleOff,
-  DraftingCompass,
   Edit3,
   Ellipsis,
   LayoutPanelTop,
-  MapPinned,
   RefreshCw,
   RotateCcw,
   TriangleAlert,
@@ -188,11 +186,9 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
   const overviewHref = APP_ROUTES.warehouseDetail(warehouseId)
   const layoutHref = APP_ROUTES.warehouseLayout(warehouseId)
   const designerHref = APP_ROUTES.warehouseLayoutDesigner(warehouseId)
-  const locationsHref = APP_ROUTES.warehouseLocations(warehouseId)
   const isOverviewActive = pathname === overviewHref
   const isLayoutActive = pathname === layoutHref
   const isDesignerActive = pathname === designerHref
-  const isLocationsActive = pathname === locationsHref || pathname.startsWith(`${locationsHref}/`)
   const canChangeLifecycle = capabilities.canDeactivateWarehouse && isOverviewActive
   const hasHeaderActions = (isActive && capabilities.canEditWarehouse) || canChangeLifecycle
 
@@ -280,32 +276,16 @@ export function WarehouseWorkspaceLayout({ warehouseId, children }: WarehouseWor
             onClick={(event) => handleWorkspaceNavigation(event, layoutHref as Route)}
           >
             <LayoutPanelTop data-icon="inline-start" aria-hidden="true" />
-            Bố cục kho
-          </Link>
-        </Button>
-        <Button asChild variant={isDesignerActive ? 'secondary' : 'ghost'} size="sm">
-          <Link
-            href={designerHref as Route}
-            aria-current={isDesignerActive ? 'page' : undefined}
-            onClick={(event) => handleWorkspaceNavigation(event, designerHref as Route)}
-          >
-            <DraftingCompass data-icon="inline-start" aria-hidden="true" />
-            Thiết kế
-          </Link>
-        </Button>
-        <Button asChild variant={isLocationsActive ? 'secondary' : 'ghost'} size="sm">
-          <Link
-            href={locationsHref as Route}
-            aria-current={isLocationsActive ? 'page' : undefined}
-            onClick={(event) => handleWorkspaceNavigation(event, locationsHref as Route)}
-          >
-            <MapPinned data-icon="inline-start" aria-hidden="true" />
-            Vị trí
+            Vị trí VTHH
           </Link>
         </Button>
       </nav>
 
-      <main className={isDesignerActive ? 'flex min-h-0 min-w-0 flex-1 flex-col' : undefined}>
+      <main
+        className={
+          isLayoutActive || isDesignerActive ? 'flex min-h-0 min-w-0 flex-1 flex-col' : undefined
+        }
+      >
         {children}
       </main>
 
