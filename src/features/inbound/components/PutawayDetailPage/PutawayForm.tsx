@@ -3,7 +3,7 @@
 import { ArrowLeft, Ban, PackageCheck, Plus, Trash2 } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
+import { useWatch, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -11,13 +11,20 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { PutawayFormValues } from '../../schemas/inbound.schema'
+import { getPutawayAllocationState } from '../../schemas/putaway-allocation.schema'
+import { cn } from '@/lib/utils'
 import type { GoodsReceiptDetail } from '../../types/inbound.types'
+import { PutawayLocationSelect } from './PutawayLocationSelect'
 
 export interface SlotOption {
   id: string
   code: string
+  name: string
+  zoneId: string
+  zoneLabel: string
   hierarchy: string
-  availableCapacity: number
+  allowsMixedProducts?: boolean
+  availableCapacity: number | null
 }
 
 interface PutawayFormProps {
@@ -50,14 +57,11 @@ export function PutawayForm({
   const {
     register,
     setValue,
-    watch,
-    formState: { errors },
+    formState: { errors, isSubmitted, touchedFields },
   } = form
+  const lines = useWatch({ control: form.control, name: 'lines' })
+  const allocation = getPutawayAllocationState(lines, receipt.items, slots)
   const totalRemaining = receipt.items.reduce((sum, item) => sum + item.remainingPutAwayQuantity, 0)
-  const totalAssigned = watch('lines').reduce(
-    (sum, line) => sum + (Number.isFinite(line.quantity) ? line.quantity : 0),
-    0
-  )
 
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
@@ -83,7 +87,7 @@ export function PutawayForm({
               {cancelLabel}
             </Button>
           ) : null}
-          <Button type="button" disabled={isPending || fields.length === 0} onClick={onSubmit}>
+          <Button type="button" disabled={isPending || !allocation.canSubmit} onClick={onSubmit}>
             <PackageCheck aria-hidden="true" />
             Xác nhận cất hàng
           </Button>
@@ -92,38 +96,85 @@ export function PutawayForm({
       <section className="bg-card border">
         <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3">
           <Metric label="Còn phải cất" value={formatQuantity(totalRemaining)} />
-          <Metric label="Đã phân bổ" value={formatQuantity(totalAssigned)} />
-          <Metric label="Chênh lệch" value={formatQuantity(totalRemaining - totalAssigned)} />
+          <Metric label="Đã phân bổ hợp lệ" value={formatQuantity(allocation.totalAssigned)} />
+          <Metric
+            label="Chưa phân bổ"
+            value={formatQuantity(
+              Math.max(0, Math.round((totalRemaining - allocation.totalAssigned) * 100) / 100)
+            )}
+          />
+        </div>
+        <div className="divide-y border-t">
+          {receipt.items
+            .filter((item) => item.remainingPutAwayQuantity > 0)
+            .map((item) => {
+              const requested = (allocation.requestedByItem.get(item.id) ?? 0) / 100
+              const excess = Math.round((requested - item.remainingPutAwayQuantity) * 100) / 100
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs"
+                >
+                  <span className="font-medium">
+                    {item.productSKU} - {item.productName}
+                    {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
+                  </span>
+                  <span
+                    className={cn(
+                      'tabular-nums',
+                      excess > 0 ? 'text-destructive font-medium' : 'text-muted-foreground'
+                    )}
+                  >
+                    Cần cất {formatQuantity(item.remainingPutAwayQuantity)} · Đang nhập{' '}
+                    {formatQuantity(requested)}
+                    {excess > 0 ? ` · Vượt ${formatQuantity(excess)}` : ''}
+                  </span>
+                </div>
+              )
+            })}
         </div>
       </section>
+      {errors.root?.server?.message ? <FieldError>{errors.root.server.message}</FieldError> : null}
       <section className="bg-card border">
         <div className="flex items-center justify-between gap-3 border-b p-4">
           <div>
             <h2 className="text-sm font-semibold">Phân bổ vị trí</h2>
             <p className="text-muted-foreground text-xs">
-              Có thể chia một sản phẩm vào nhiều vị trí.
+              Có thể chia một sản phẩm vào nhiều vị trí. Giới hạn được tính riêng theo từng dòng
+              hàng, không cộng gộp giữa các sản phẩm.
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={onAdd}>
+          <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={onAdd}>
             <Plus aria-hidden="true" />
             Thêm phân bổ
           </Button>
         </div>
         <div className="divide-y">
           {fields.map((field, index) => {
-            const selectedItemId = watch(`lines.${index}.goodsReceiptItemId`)
+            const line = lines[index]
+            if (!line) return null
+            const row = allocation.rows[index]!
+            const showErrors =
+              isSubmitted ||
+              Boolean(touchedFields.lines?.[index]) ||
+              Boolean(line.goodsReceiptItemId || line.slotId) ||
+              line.quantity !== 1
+            const lineErrors = showErrors ? row.errors : {}
+            const selectedItemId = line.goodsReceiptItemId
             const selectedItem = receipt.items.find((item) => item.id === selectedItemId)
             return (
               <div
                 key={field.id}
                 className="grid gap-3 p-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(120px,.6fr)_auto]"
               >
-                <Field data-invalid={Boolean(errors.lines?.[index]?.goodsReceiptItemId)}>
+                <Field data-invalid={Boolean(lineErrors.goodsReceiptItemId)}>
                   <FieldLabel htmlFor={`putaway-item-${index}`}>Sản phẩm</FieldLabel>
                   <NativeSelect
                     id={`putaway-item-${index}`}
                     className="w-full"
-                    aria-invalid={Boolean(errors.lines?.[index]?.goodsReceiptItemId)}
+                    disabled={isPending}
+                    aria-invalid={Boolean(lineErrors.goodsReceiptItemId)}
+                    aria-describedby={`putaway-item-${index}-error`}
                     value={selectedItemId}
                     onChange={(event) =>
                       setValue(`lines.${index}.goodsReceiptItemId`, event.target.value, {
@@ -134,63 +185,70 @@ export function PutawayForm({
                   >
                     <NativeSelectOption value="">Chọn sản phẩm</NativeSelectOption>
                     {receipt.items
-                      .filter((item) => item.remainingPutAwayQuantity > 0)
+                      .filter(
+                        (item) =>
+                          item.id === selectedItemId ||
+                          (item.inboundRequestItemId &&
+                            Math.round(item.remainingPutAwayQuantity * 100) >
+                              (allocation.assignedByItem.get(item.id) ?? 0))
+                      )
                       .map((item) => (
                         <NativeSelectOption key={item.id} value={item.id}>
                           {item.productSKU} - {item.productName}
+                          {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
                         </NativeSelectOption>
                       ))}
                   </NativeSelect>
-                  <FieldError>{errors.lines?.[index]?.goodsReceiptItemId?.message}</FieldError>
+                  <FieldError id={`putaway-item-${index}-error`}>
+                    {lineErrors.goodsReceiptItemId}
+                  </FieldError>
                   {selectedItem ? (
                     <p className="text-muted-foreground text-xs">
-                      Còn {formatQuantity(selectedItem.remainingPutAwayQuantity)}
+                      Cần cất {formatQuantity(selectedItem.remainingPutAwayQuantity)} · Dòng này tối
+                      đa {formatQuantity(row.itemAvailable)}
                     </p>
                   ) : null}
                 </Field>
-                <Field data-invalid={Boolean(errors.lines?.[index]?.slotId)}>
+                <Field data-invalid={Boolean(lineErrors.slotId)}>
                   <FieldLabel htmlFor={`putaway-slot-${index}`}>Vị trí lưu trữ</FieldLabel>
-                  <NativeSelect
+                  <PutawayLocationSelect
                     id={`putaway-slot-${index}`}
-                    className="w-full"
-                    aria-invalid={Boolean(errors.lines?.[index]?.slotId)}
-                    value={watch(`lines.${index}.slotId`)}
-                    onChange={(event) =>
-                      setValue(`lines.${index}.slotId`, event.target.value, {
+                    invalid={Boolean(lineErrors.slotId)}
+                    disabled={isPending}
+                    slots={slots}
+                    value={line.slotId}
+                    onChange={(slotId) =>
+                      setValue(`lines.${index}.slotId`, slotId, {
                         shouldDirty: true,
                         shouldValidate: true,
                       })
                     }
-                  >
-                    <NativeSelectOption value="">
-                      {slots.length > 0 ? 'Chọn vị trí' : 'Không có vị trí khả dụng'}
-                    </NativeSelectOption>
-                    {slots.map((slot) => (
-                      <NativeSelectOption key={slot.id} value={slot.id}>
-                        {slot.code} · {slot.hierarchy} · trống{' '}
-                        {formatQuantity(slot.availableCapacity)}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                  <FieldError>{errors.lines?.[index]?.slotId?.message}</FieldError>
+                  />
+                  <FieldError id={`putaway-slot-${index}-error`}>{lineErrors.slotId}</FieldError>
                 </Field>
-                <Field data-invalid={Boolean(errors.lines?.[index]?.quantity)}>
+                <Field data-invalid={Boolean(lineErrors.quantity)}>
                   <FieldLabel htmlFor={`putaway-quantity-${index}`}>Số lượng</FieldLabel>
                   <Input
                     id={`putaway-quantity-${index}`}
                     type="number"
                     min="0.01"
                     step="0.01"
-                    aria-invalid={Boolean(errors.lines?.[index]?.quantity)}
+                    max={row.maxQuantity}
+                    disabled={isPending}
+                    aria-invalid={Boolean(lineErrors.quantity)}
+                    aria-describedby={`putaway-quantity-${index}-error`}
                     {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
                   />
-                  <FieldError>{errors.lines?.[index]?.quantity?.message}</FieldError>
+                  <FieldError id={`putaway-quantity-${index}-error`}>
+                    {lineErrors.quantity}
+                  </FieldError>
                 </Field>
                 <div className="flex items-end">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
+                    disabled={isPending}
                     aria-label={`Xóa phân bổ ${index + 1}`}
                     onClick={() => onRemove(index)}
                   >
@@ -201,6 +259,12 @@ export function PutawayForm({
             )
           })}
         </div>
+        {!allocation.canSubmit ? (
+          <p className="text-muted-foreground border-t px-4 py-3 text-xs" role="status">
+            Chọn đủ sản phẩm, vị trí và nhập số lượng trong giới hạn để xác nhận. Chỉ các dòng hợp
+            lệ được tính vào tổng phân bổ.
+          </p>
+        ) : null}
         {errors.lines?.root?.message ? (
           <div className="border-t p-3">
             <FieldError>{errors.lines.root.message}</FieldError>
