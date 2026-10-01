@@ -5,9 +5,11 @@ import { formatOperationalDateTime } from '@/features/inbound-request/utils/inbo
 export function LifecycleTimeline({
   events,
   actionLabels,
+  reasonLabels,
 }: {
   readonly events: readonly LifecycleEvent[]
   readonly actionLabels?: Readonly<Record<string, string>>
+  readonly reasonLabels?: Readonly<Record<string, string>>
 }) {
   if (events.length === 0) {
     return <p className="text-muted-foreground py-4 text-sm">Chưa có lịch sử xử lý.</p>
@@ -37,7 +39,9 @@ export function LifecycleTimeline({
               </p>
               <p className="text-muted-foreground text-xs">{event.actorName}</p>
               {event.reason ? (
-                <p className="text-muted-foreground mt-1 text-xs">Lý do: {event.reason}</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {reasonLabels?.[event.action] ?? 'Lý do'}: {event.reason}
+                </p>
               ) : null}
             </div>
             <time

@@ -13,6 +13,7 @@ import type {
   InboundRequestDetail,
   InboundRequestListQuery,
   SaveInboundRequestRequest,
+  SupplierEmailDispatch,
   SupplierOption,
 } from '../types/inbound-request.types'
 
@@ -182,6 +183,24 @@ export function useApproveInboundRequestsMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, readonly string[]>({
     mutationFn: inboundRequestService.approveInboundRequests,
     onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useApproveAndSendInboundRequestMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<SupplierEmailDispatch>, ApiErrorResponse, string>({
+    mutationFn: inboundRequestService.approveAndSendInboundRequest,
+    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useSendInboundRequestToSupplierMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<SupplierEmailDispatch>, ApiErrorResponse, string>({
+    mutationFn: inboundRequestService.sendInboundRequestToSupplier,
+    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
     onError: (error) => logger.error(error),
   })
 }

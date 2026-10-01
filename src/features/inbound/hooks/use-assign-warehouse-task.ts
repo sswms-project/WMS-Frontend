@@ -14,6 +14,7 @@ import {
   useAssignableStaffQuery,
   useAssignPutawayTaskMutation,
   useAssignReceivingTaskMutation,
+  useUnassignReceivingTaskMutation,
 } from './use-inbound'
 
 const TASK_LABELS = {
@@ -35,7 +36,11 @@ export function useAssignWarehouseTask() {
   const staffQuery = useAssignableStaffQuery(target?.warehouseId ?? null)
   const assignReceivingMutation = useAssignReceivingTaskMutation()
   const assignPutawayMutation = useAssignPutawayTaskMutation()
-  const isPending = assignReceivingMutation.isPending || assignPutawayMutation.isPending
+  const unassignReceivingMutation = useUnassignReceivingTaskMutation()
+  const isPending =
+    assignReceivingMutation.isPending ||
+    assignPutawayMutation.isPending ||
+    unassignReceivingMutation.isPending
 
   function open(nextTarget: AssignWarehouseTaskTarget) {
     form.reset({ staffId: '', reason: '' })
@@ -86,6 +91,25 @@ export function useAssignWarehouseTask() {
     }
   }
 
+  async function handleUnassign(values: AssignWarehouseTaskFormValues) {
+    if (!target || target.kind !== 'Receiving' || !target.currentAssigneeId) return
+    const reason = values.reason.trim()
+    if (!reason) {
+      form.setError('reason', { message: 'Vui lòng nhập lý do hủy giao công việc.' })
+      return
+    }
+    try {
+      await unassignReceivingMutation.mutateAsync({
+        inboundRequestId: target.id,
+        request: { expectedStaffId: target.currentAssigneeId, reason },
+      })
+      toast.success(`Đã hủy giao việc nhận hàng ${target.referenceCode}.`)
+      setTarget(null)
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Không thể hủy giao việc nhận hàng. Vui lòng thử lại.'))
+    }
+  }
+
   return {
     target,
     open,
@@ -98,5 +122,6 @@ export function useAssignWarehouseTask() {
     isFetchingStaff: staffQuery.isFetching,
     onRetryStaff: () => void staffQuery.refetch(),
     onSubmit: () => void form.handleSubmit(handleSubmit)(),
+    onUnassign: () => void handleUnassign(form.getValues()),
   }
 }
