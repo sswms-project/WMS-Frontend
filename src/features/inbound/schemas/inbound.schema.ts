@@ -59,17 +59,18 @@ export const goodsReceiptSchema = z.object({
   lines: z.array(receiptLineSchema).min(1, 'Phiếu nhận hàng phải có ít nhất một sản phẩm.'),
 })
 
+export const putawayLineSchema = z.object({
+  goodsReceiptItemId: dotNetGuidSchema('Vui lòng chọn sản phẩm thuộc phiếu nhận hàng.'),
+  slotId: dotNetGuidSchema('Vui lòng chọn vị trí lưu trữ.'),
+  quantity: z
+    .number({ error: 'Vui lòng nhập số lượng hợp lệ.' })
+    .positive('Số lượng cất phải lớn hơn 0.')
+    .multipleOf(0.01, 'Số lượng chỉ được có tối đa hai chữ số thập phân.'),
+})
+
 export const putawaySchema = z
   .object({
-    lines: z
-      .array(
-        z.object({
-          goodsReceiptItemId: dotNetGuidSchema('Dòng phiếu nhận hàng không hợp lệ.'),
-          slotId: dotNetGuidSchema('Vui lòng chọn vị trí lưu trữ.'),
-          quantity: z.number().positive('Số lượng cất phải lớn hơn 0.'),
-        })
-      )
-      .min(1, 'Vui lòng thêm ít nhất một phân bổ vị trí.'),
+    lines: z.array(putawayLineSchema).min(1, 'Vui lòng thêm ít nhất một phân bổ vị trí.'),
   })
   .superRefine((values, context) => {
     const allocations = new Set<string>()

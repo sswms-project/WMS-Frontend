@@ -72,7 +72,6 @@ const INBOUND_REQUEST_HISTORY_REASON_LABELS: Readonly<Record<string, string>> = 
   ResendToSupplier: 'Người nhận',
   SendToSupplier: 'Người nhận',
 }
-
 export function InboundRequestDetail({
   inboundRequest,
   allowedActions,
