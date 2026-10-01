@@ -182,7 +182,13 @@ export const API_ENDPOINTS = {
     delete: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}`,
     deleteMany: '/inbound-requests/batch',
     submit: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/submit`,
+    submitMany: '/inbound-requests/batch/submit',
     approve: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/approve`,
+    approveMany: '/inbound-requests/batch/approve',
+    approveAndSend: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/approve-and-send`,
+    sendToSupplier: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/send-to-supplier`,
     reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
     allowedActions: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/allowed-actions`,
@@ -197,6 +203,8 @@ export const API_ENDPOINTS = {
     assignableStaff: '/goods-receipts/assignable-staff',
     assignReceivingTask: (inboundRequestId: string) =>
       `/goods-receipts/receiving-tasks/${inboundRequestId}/assignment`,
+    unassignReceivingTask: (inboundRequestId: string) =>
+      `/goods-receipts/receiving-tasks/${inboundRequestId}/assignment/cancel`,
     assignPutawayTask: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-assignment`,
     submit: (receiptId: string) => `/goods-receipts/${receiptId}/submit`,
     approve: (receiptId: string) => `/goods-receipts/${receiptId}/approve`,

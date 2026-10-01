@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/sidebar'
 import { USER_ROLES } from '@/config/roles'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/stores/auth.store'
 import { getVisibleNavSections } from '../nav-config'
@@ -22,12 +23,30 @@ export function AppSidebar() {
   const meQuery = useMeQuery()
   const pathname = usePathname()
   const { isMobile, setOpenMobile, open, setOpen } = useSidebar()
+  const [, setStoredOpen] = useLocalStorage('sidebar_state', true)
   const hoverOpenRef = useRef(false)
+  const initializedRef = useRef(false)
+  const skipInitialPersistRef = useRef(true)
   const permissions = new Set(meQuery.data?.permissions ?? [])
   const hasPermissionData = meQuery.data !== undefined
   const sections =
     user?.role && hasPermissionData ? getVisibleNavSections(user.role, permissions) : []
   const appearance: SidebarAppearance = user?.role === USER_ROLES.TenantOwner ? 'tenant' : 'default'
+
+  useEffect(() => {
+    if (initializedRef.current) return
+    const storedOpen = localStorage.getItem('sidebar_state')
+    if (storedOpen !== null) setOpen(storedOpen === 'true')
+    initializedRef.current = true
+  }, [setOpen])
+
+  useEffect(() => {
+    if (skipInitialPersistRef.current) {
+      skipInitialPersistRef.current = false
+      return
+    }
+    setStoredOpen(open)
+  }, [open, setStoredOpen])
 
   useEffect(() => {
     if (!meQuery.isError) return

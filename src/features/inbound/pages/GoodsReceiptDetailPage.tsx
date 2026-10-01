@@ -149,10 +149,13 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     supplierId: '',
     supplierName: '',
     expectedDate: null,
+    createdAt: receipt.createdAt,
     orderedQuantity: receipt.items.reduce((sum, item) => sum + item.orderedQuantity, 0),
     receivedQuantity: receipt.items.reduce((sum, item) => sum + item.receivedQuantity, 0),
     remainingQuantity: 0,
     activeDocumentImportId: null,
+    activeGoodsReceiptId: receipt.id,
+    activeGoodsReceiptStatus: receipt.status,
     assignedTo: receipt.receivingAssignedTo,
     assignedToName: receipt.receivingAssignedToName,
     assignedAt: null,
@@ -204,6 +207,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         isPending={assignment.isPending}
         onOpenChange={(open) => !open && assignment.close()}
         onSubmit={assignment.onSubmit}
+        onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
         task={isEditing ? editTask : null}

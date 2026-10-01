@@ -1,6 +1,6 @@
 'use client'
 
-import { LoaderCircle, RefreshCw, UserCheck, UsersRound } from 'lucide-react'
+import { LoaderCircle, RefreshCw, UserCheck, UserMinus, UsersRound } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +42,7 @@ interface AssignWarehouseTaskDialogProps {
   readonly isPending: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: () => void
+  readonly onUnassign?: () => void
 }
 
 const TASK_LABELS = {
@@ -60,6 +61,7 @@ export function AssignWarehouseTaskDialog({
   isPending,
   onOpenChange,
   onSubmit,
+  onUnassign,
 }: AssignWarehouseTaskDialogProps) {
   const {
     control,
@@ -68,6 +70,8 @@ export function AssignWarehouseTaskDialog({
   } = form
   const isReassignment = Boolean(target?.currentAssigneeId)
   const taskLabel = target ? TASK_LABELS[target.kind] : ''
+  const canUnassign = Boolean(onUnassign) && isReassignment && target?.kind === 'Receiving'
+  const hasOtherStaff = staff.some((person) => person.id !== target?.currentAssigneeId)
 
   return (
     <Dialog open={Boolean(target)} onOpenChange={(open) => !isPending && onOpenChange(open)}>
@@ -126,6 +130,16 @@ export function AssignWarehouseTaskDialog({
                     tại Danh bạ nhân sự trước khi giao việc.
                   </span>
                 </div>
+              ) : isReassignment && !hasOtherStaff ? (
+                <div className="text-muted-foreground flex items-start gap-3 border border-dashed p-3 text-sm">
+                  <UsersRound className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  <span>
+                    Kho này chưa có Nhân viên kho nào khác để giao lại.
+                    {canUnassign
+                      ? ' Bạn có thể hủy giao việc, hoặc phân công thêm nhân viên vào kho tại Danh bạ nhân sự.'
+                      : ' Hãy phân công thêm nhân viên vào kho tại Danh bạ nhân sự.'}
+                  </span>
+                </div>
               ) : (
                 <Controller
                   control={control}
@@ -154,7 +168,9 @@ export function AssignWarehouseTaskDialog({
 
             {isReassignment && (
               <Field data-invalid={Boolean(errors.reason)}>
-                <FieldLabel htmlFor="assign-task-reason">Lý do giao lại</FieldLabel>
+                <FieldLabel htmlFor="assign-task-reason">
+                  {canUnassign ? 'Lý do giao lại hoặc hủy giao' : 'Lý do giao lại'}
+                </FieldLabel>
                 <Textarea
                   id="assign-task-reason"
                   rows={3}
@@ -164,24 +180,38 @@ export function AssignWarehouseTaskDialog({
                   {...register('reason')}
                 />
                 <FieldDescription>
-                  Lý do được ghi vào nhật ký hoạt động và gửi thông báo cho cả hai nhân viên.
+                  {canUnassign
+                    ? 'Lý do được ghi vào nhật ký hoạt động và gửi thông báo cho nhân viên đang được giao.'
+                    : 'Lý do được ghi vào nhật ký hoạt động và gửi thông báo cho cả hai nhân viên.'}
                 </FieldDescription>
                 <FieldError>{errors.reason?.message}</FieldError>
               </Field>
             )}
 
             <DialogFooter>
+              {canUnassign ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="sm:mr-auto"
+                  disabled={isPending}
+                  onClick={onUnassign}
+                >
+                  <UserMinus aria-hidden="true" />
+                  Hủy giao việc
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="outline"
                 disabled={isPending}
                 onClick={() => onOpenChange(false)}
               >
-                Hủy
+                Đóng
               </Button>
               <Button
                 type="button"
-                disabled={isPending || isLoadingStaff || staff.length === 0}
+                disabled={isPending || isLoadingStaff || !hasOtherStaff}
                 onClick={onSubmit}
               >
                 {isPending ? (

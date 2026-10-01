@@ -41,6 +41,8 @@ export interface RackResponse extends WarehousePhysicalDetailsResponse {
   storageMode?: 'RackLevel' | 'SlotLevel'
   allowsMixedProducts?: boolean
   capacity?: number | null
+  defaultSlotId?: string | null
+  currentOccupancy?: number | null
   rowVersion?: string | null
   slots: SlotResponse[]
 }

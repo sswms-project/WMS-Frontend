@@ -53,27 +53,46 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     defaultValues: { reason: '', hasUnrecordedPhysicalMovement: false },
   })
   const slots: SlotOption[] = (layoutQuery.data ?? []).flatMap((zone) =>
-    zone.status === 'Active'
-      ? zone.racks.flatMap((rack) =>
-          rack.status === 'Active'
-            ? rack.slots
-                .filter(
-                  (slot) =>
-                    slot.isActive &&
-                    (slot.capacity === null || slot.capacity > slot.currentOccupancy)
-                )
-                .map((slot) => ({
-                  id: slot.id,
-                  code: slot.slotCode,
-                  hierarchy: `${zone.zoneCode} / ${rack.rackCode}`,
-                  availableCapacity:
-                    slot.capacity === null
-                      ? Number.MAX_SAFE_INTEGER
-                      : slot.capacity - slot.currentOccupancy,
-                }))
-            : []
-        )
-      : []
+    zone.status !== 'Active'
+      ? []
+      : zone.racks.flatMap((rack) => {
+          if (rack.status !== 'Active') return []
+          const hierarchy = `${zone.zoneCode} / ${rack.rackCode}`
+          const rackSlots = rack.slots
+            .filter(
+              (slot) =>
+                slot.isActive &&
+                !slot.isOutboundStaging &&
+                (slot.capacity === null || slot.capacity > slot.currentOccupancy)
+            )
+            .map((slot) => ({
+              id: slot.id,
+              code: slot.slotCode,
+              hierarchy,
+              availableCapacity:
+                slot.capacity === null
+                  ? Number.MAX_SAFE_INTEGER
+                  : slot.capacity - slot.currentOccupancy,
+            }))
+          if (rack.storageMode !== 'RackLevel' || !rack.defaultSlotId) return rackSlots
+          if (rack.capacity !== null && rack.currentOccupancy == null) return rackSlots
+          const currentOccupancy = rack.currentOccupancy ?? 0
+          const availableCapacity =
+            rack.capacity === null || rack.capacity === undefined
+              ? Number.MAX_SAFE_INTEGER
+              : rack.capacity - currentOccupancy
+          return availableCapacity > 0
+            ? [
+                ...rackSlots,
+                {
+                  id: rack.defaultSlotId,
+                  code: rack.rackCode,
+                  hierarchy,
+                  availableCapacity,
+                },
+              ]
+            : rackSlots
+        })
   )
 
   async function submit(values: PutawayFormValues) {

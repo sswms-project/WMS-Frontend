@@ -8,12 +8,12 @@ import type {
   AllowedActionsResponse,
   LookupListResponse,
   LookupQuery,
-  PagedResponse,
+  InboundRequestListResponse,
   ProductOption,
   InboundRequestDetail,
   InboundRequestListQuery,
-  InboundRequestSummary,
   SaveInboundRequestRequest,
+  SupplierEmailDispatch,
   SupplierOption,
 } from '../types/inbound-request.types'
 
@@ -28,7 +28,7 @@ interface RejectInboundRequestVariables {
 }
 
 export function useInboundRequestsQuery(params: InboundRequestListQuery) {
-  return useQuery<PagedResponse<InboundRequestSummary>, ApiErrorResponse>({
+  return useQuery<InboundRequestListResponse, ApiErrorResponse>({
     queryKey: queryKeys.inboundRequests.list(params),
     queryFn: () =>
       inboundRequestService.getInboundRequests(params).then((response) => response.data),
@@ -160,10 +160,46 @@ export function useSubmitInboundRequestMutation() {
   })
 }
 
+export function useSubmitInboundRequestsMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, readonly string[]>({
+    mutationFn: inboundRequestService.submitInboundRequests,
+    onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
+}
+
 export function useApproveInboundRequestMutation() {
   const invalidate = useInvalidateInboundRequests()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: inboundRequestService.approveInboundRequest,
+    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useApproveInboundRequestsMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, readonly string[]>({
+    mutationFn: inboundRequestService.approveInboundRequests,
+    onSuccess: () => invalidate(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useApproveAndSendInboundRequestMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<SupplierEmailDispatch>, ApiErrorResponse, string>({
+    mutationFn: inboundRequestService.approveAndSendInboundRequest,
+    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useSendInboundRequestToSupplierMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<SupplierEmailDispatch>, ApiErrorResponse, string>({
+    mutationFn: inboundRequestService.sendInboundRequestToSupplier,
     onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
     onError: (error) => logger.error(error),
   })

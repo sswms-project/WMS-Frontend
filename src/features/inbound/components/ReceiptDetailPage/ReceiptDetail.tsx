@@ -326,7 +326,25 @@ export function ReceiptDetail({
       ) : null}
       <section className="bg-card border p-4">
         <h2 className="mb-4 text-sm font-semibold">Lịch sử xử lý</h2>
-        <LifecycleTimeline events={receipt.history} />
+        <LifecycleTimeline
+          events={receipt.history}
+          actionLabels={{
+            Approve: 'Phê duyệt phiếu nhận hàng',
+            AssignPutAwayTask: 'Phân công nhiệm vụ cất hàng',
+            CancelPutAwayRemaining: 'Hủy phần cất hàng còn lại',
+            CompletePutAwayCancellationReconciliation: 'Hoàn tất đối soát hủy cất hàng',
+            Create: 'Tạo phiếu nhận hàng',
+            PauseForPutAwayReconciliation: 'Tạm dừng để đối soát cất hàng',
+            PauseWarehouseTask: 'Tạm dừng nhiệm vụ cất hàng',
+            PutAway: 'Cất hàng',
+            ReassignPutAwayTask: 'Phân công lại nhiệm vụ cất hàng',
+            Reject: 'Trả phiếu nhận hàng để chỉnh sửa',
+            ReturnWarehouseTask: 'Trả nhiệm vụ cất hàng về hàng đợi',
+            StartWarehouseTask: 'Bắt đầu nhiệm vụ cất hàng',
+            Submit: 'Gửi phiếu nhận hàng duyệt',
+            Update: 'Cập nhật phiếu nhận hàng',
+          }}
+        />
       </section>
       <AlertDialog
         open={Boolean(confirmationAction)}
