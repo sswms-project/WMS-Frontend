@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { RackFormSheet, SlotFormSheet, ZoneFormSheet } from './WarehouseLocationFormSheets'
 import { EMPTY_WAREHOUSE_PHYSICAL_DETAILS } from '../../utils/warehouse-physical-details'
 import type { UnitResponse } from '@/features/product/types/product.types'
@@ -99,6 +99,60 @@ describe('WarehouseLocationFormSheets', () => {
 })
 
 describe('location capacity fields', () => {
+  const scrollIntoViewDescriptor = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    'scrollIntoView'
+  )
+  beforeAll(() => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    })
+  })
+  afterAll(() => {
+    if (scrollIntoViewDescriptor) {
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', scrollIntoViewDescriptor)
+    } else {
+      Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+    }
+  })
+  it('confirms clearing Quantity settings and lets cancellation preserve them', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(true)
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={slotValues}
+        {...capacityProps}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    async function chooseUnlimited() {
+      fireEvent.keyDown(screen.getByLabelText('Loại sức chứa'), { key: 'ArrowDown' })
+      fireEvent.click(await screen.findByRole('option', { name: 'Không giới hạn' }))
+      await screen.findByRole('alertdialog')
+    }
+    await chooseUnlimited()
+    fireEvent.click(screen.getByRole('button', { name: 'Giữ cấu hình' }))
+    expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
+    expect(onSubmit).not.toHaveBeenCalled()
+    await chooseUnlimited()
+    fireEvent.click(screen.getByRole('button', { name: /^Chuyển sang không giới hạn$/ }))
+    expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          capacityType: 'None',
+          capacity: null,
+          capacityUnitId: null,
+        })
+      )
+    )
+  })
   it('shows Quantity controls for mixed SKU and locks type/unit when stocked', () => {
     render(
       <SlotFormSheet
@@ -121,7 +175,11 @@ describe('location capacity fields', () => {
     expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
     expect(screen.getByLabelText('Loại sức chứa')).toBeDisabled()
     expect(screen.getByLabelText('Đơn vị sức chứa')).toBeDisabled()
-    expect(screen.getByText('8 / 20 Thùng · Còn 12')).toBeInTheDocument()
+    expect(screen.getByText('8 / 20')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Mức sử dụng sức chứa' })).toHaveAttribute(
+      'aria-valuenow',
+      '8'
+    )
     fireEvent.click(screen.getByLabelText('Cho phép nhiều sản phẩm trong cùng vị trí'))
     expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
   })
@@ -142,6 +200,7 @@ describe('location capacity fields', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     await screen.findByText('Sức chứa tối đa không được thấp hơn sức chứa đã dùng.')
     expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Sức chứa tối đa')).toHaveFocus()
   })
   it('blocks inactive/missing capacity units and keeps values in the form', async () => {
     const onSubmit = vi.fn()
@@ -160,6 +219,26 @@ describe('location capacity fields', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
     await screen.findByText('Vui lòng chọn đơn vị sức chứa đang hoạt động.')
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+  it('keeps a numeric capacity after blur before submission', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(true)
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={slotValues}
+        {...capacityProps}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    fireEvent.change(screen.getByLabelText('Sức chứa tối đa'), { target: { value: '21' } })
+    fireEvent.blur(screen.getByLabelText('Sức chứa tối đa'))
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ capacity: 21 }))
+    )
   })
   it('hides operational fields for a SlotLevel rack', () => {
     render(

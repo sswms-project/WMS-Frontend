@@ -76,7 +76,15 @@ describe('viewer capacity summary', () => {
       </TooltipProvider>
     )
     fireEvent.click(screen.getByRole('button', { name: 'Chọn kệ canvas' }))
-    expect(screen.getByText('Sức chứa: 8 / 20 Thùng · Còn 12 · 40%')).toBeInTheDocument()
+    expect(screen.getByText('8 / 20')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Mức sử dụng sức chứa' })).toHaveAttribute(
+      'aria-valuenow',
+      '8'
+    )
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuetext',
+      '8 / 20 Thùng · Còn chỗ'
+    )
   })
   it('shows a pending warning and edit action only for permitted viewers', () => {
     const onEdit = vi.fn()

@@ -1,6 +1,17 @@
 'use client'
 
-import { useFormContext, useWatch } from 'react-hook-form'
+import { useRef, useState } from 'react'
+import { Controller, useFormContext, useWatch } from 'react-hook-form'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,7 +33,8 @@ import {
 } from '@/components/ui/select'
 import type { UnitResponse } from '@/features/product/types/product.types'
 import type { SlotFormValues } from '../../schemas/warehouse.schema'
-import { formatStorageCapacity, type CapacityLocation } from '../../utils/storage-capacity'
+import type { CapacityLocation } from '../../utils/storage-capacity'
+import { StorageCapacitySummary } from './StorageCapacitySummary'
 
 export interface StorageCapacityFieldsProps {
   readonly units: readonly UnitResponse[]
@@ -40,6 +52,8 @@ export function StorageCapacityFields({
   location,
 }: StorageCapacityFieldsProps) {
   const form = useFormContext<SlotFormValues>()
+  const [confirmUnlimited, setConfirmUnlimited] = useState(false)
+  const typeTriggerRef = useRef<HTMLButtonElement>(null)
   const [capacityType, capacity, capacityUnitId] = useWatch({
     control: form.control,
     name: ['capacityType', 'capacity', 'capacityUnitId'],
@@ -48,9 +62,21 @@ export function StorageCapacityFields({
   const locked = location?.capacityType === 'Quantity' && (location.currentOccupancy ?? 0) > 0
   const activeUnits = units.filter((unit) => unit.status === 'Active')
   const selectedUnit = activeUnits.find((unit) => unit.id === capacityUnitId)
+  const unitLabel = selectedUnit
+    ? `${selectedUnit.unitName}${selectedUnit.symbol ? ` (${selectedUnit.symbol})` : ''}`
+    : locked
+      ? (location?.capacityUnitName ?? location?.capacityUnitSymbol)
+      : undefined
+
+  function applyUnlimited() {
+    form.setValue('capacity', null, { shouldDirty: true })
+    form.setValue('capacityUnitId', null, { shouldDirty: true })
+    form.setValue('capacityType', 'None', { shouldDirty: true, shouldValidate: true })
+    form.clearErrors(['capacity', 'capacityUnitId'])
+  }
   return (
-    <FieldSet className="md:col-span-2">
-      <FieldLegend>Chính sách sức chứa</FieldLegend>
+    <FieldSet className="min-w-0">
+      <FieldLegend variant="label">Chính sách sức chứa</FieldLegend>
       {location?.requiresCapacityConfiguration ? (
         <Alert>
           <AlertDescription>
@@ -59,9 +85,7 @@ export function StorageCapacityFields({
           </AlertDescription>
         </Alert>
       ) : null}
-      {location ? (
-        <p className="text-muted-foreground text-sm">{formatStorageCapacity(location)}</p>
-      ) : null}
+      {location ? <StorageCapacitySummary location={location} /> : null}
       {locked ? (
         <p className="text-muted-foreground text-xs">
           Vị trí đang chứa hàng: không thể đổi loại hoặc đơn vị sức chứa.
@@ -76,14 +100,19 @@ export function StorageCapacityFields({
             onValueChange={(value) => {
               if (value !== 'None' && value !== 'Quantity') return
               if (value === 'None') {
-                form.setValue('capacity', null)
-                form.setValue('capacityUnitId', null)
+                if (capacityType === 'Quantity' && (capacity != null || capacityUnitId)) {
+                  setConfirmUnlimited(true)
+                  return
+                }
+                applyUnlimited()
+                return
               }
               form.setValue('capacityType', value, { shouldDirty: true, shouldValidate: true })
             }}
           >
             <SelectTrigger
               id="capacity-type"
+              ref={typeTriggerRef}
               className="w-full"
               aria-invalid={Boolean(errors.capacityType)}
             >
@@ -100,11 +129,14 @@ export function StorageCapacityFields({
         </Field>
         {capacityType === 'Quantity' ? (
           <>
-            <Field data-invalid={Boolean(errors.capacity)}>
+            <Field data-invalid={Boolean(errors.capacity)} className="min-w-0">
               <FieldLabel htmlFor="capacity-value">Sức chứa tối đa</FieldLabel>
               <Input
                 id="capacity-value"
-                name="capacity"
+                {...form.register('capacity', {
+                  setValueAs: (value: string | number | null) =>
+                    value === '' || value === null ? null : Number(value),
+                })}
                 autoComplete="off"
                 type="number"
                 inputMode="decimal"
@@ -112,6 +144,7 @@ export function StorageCapacityFields({
                 step="0.000001"
                 value={capacity ?? ''}
                 aria-invalid={Boolean(errors.capacity)}
+                aria-describedby={errors.capacity ? 'capacity-value-error' : undefined}
                 onChange={(event) =>
                   form.setValue(
                     'capacity',
@@ -120,48 +153,60 @@ export function StorageCapacityFields({
                   )
                 }
               />
-              <FieldError errors={[errors.capacity]} />
+              <FieldError id="capacity-value-error" errors={[errors.capacity]} />
             </Field>
             <Field
               data-invalid={Boolean(errors.capacityUnitId)}
               data-disabled={locked || unitsLoading || unitsError}
             >
               <FieldLabel htmlFor="capacity-unit">Đơn vị sức chứa</FieldLabel>
-              <Select
-                value={capacityUnitId ?? ''}
-                disabled={locked || unitsLoading || unitsError}
-                onValueChange={(value) =>
-                  form.setValue('capacityUnitId', value, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger
-                  id="capacity-unit"
-                  className="w-full"
-                  aria-invalid={Boolean(errors.capacityUnitId)}
-                >
-                  <SelectValue
-                    placeholder={unitsLoading ? 'Đang tải đơn vị…' : 'Chọn đơn vị sức chứa'}
+              <Controller
+                control={form.control}
+                name="capacityUnitId"
+                render={({ field }) => (
+                  <Select
+                    value={capacityUnitId ?? ''}
+                    disabled={locked || unitsLoading || unitsError}
+                    onValueChange={(value) =>
+                      form.setValue('capacityUnitId', value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
                   >
-                    {locked && !selectedUnit
-                      ? (location?.capacityUnitName ?? location?.capacityUnitSymbol)
-                      : undefined}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent align="start" sideOffset={4}>
-                  <SelectGroup>
-                    {activeUnits.map((unit) => (
-                      <SelectItem key={unit.id} value={unit.id}>
-                        {unit.unitName}
-                        {unit.symbol ? ` (${unit.symbol})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <FieldError errors={[errors.capacityUnitId]} />
+                    <SelectTrigger
+                      id="capacity-unit"
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      className="w-full min-w-0"
+                      title={unitLabel ?? undefined}
+                      aria-invalid={Boolean(errors.capacityUnitId)}
+                      aria-describedby={errors.capacityUnitId ? 'capacity-unit-error' : undefined}
+                    >
+                      <SelectValue
+                        placeholder={unitsLoading ? 'Đang tải đơn vị…' : 'Chọn đơn vị sức chứa'}
+                      >
+                        {unitLabel ? (
+                          <span className="block min-w-0 truncate">{unitLabel}</span>
+                        ) : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent align="start" sideOffset={4}>
+                      <SelectGroup>
+                        {activeUnits.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            <span className="block max-w-64 truncate" title={unit.unitName}>
+                              {unit.unitName}
+                              {unit.symbol ? ` (${unit.symbol})` : ''}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError id="capacity-unit-error" errors={[errors.capacityUnitId]} />
             </Field>
             {unitsError ? (
               <Alert variant="destructive">
@@ -180,6 +225,28 @@ export function StorageCapacityFields({
           </>
         ) : null}
       </FieldGroup>
+      <AlertDialog open={confirmUnlimited} onOpenChange={setConfirmUnlimited}>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            typeTriggerRef.current?.focus()
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Chuyển sang không giới hạn sức chứa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sức chứa tối đa và đơn vị sức chứa đang nhập sẽ được bỏ khỏi form. Thay đổi chỉ được
+              áp dụng khi bạn lưu vị trí.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Giữ cấu hình</AlertDialogCancel>
+            <AlertDialogAction onClick={applyUnlimited}>
+              Chuyển sang không giới hạn
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </FieldSet>
   )
 }

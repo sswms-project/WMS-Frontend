@@ -51,7 +51,7 @@ import type {
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import { DesignerToolbox } from './DesignerToolbox'
-import { formatStorageCapacity } from '../../utils/storage-capacity'
+import { StorageCapacitySummary } from '../WarehouseDetailPage'
 import type { WarehouseCanvasHandle } from './WarehouseCanvas'
 
 const WarehouseCanvas = dynamic(
@@ -159,7 +159,7 @@ export function WarehouseLayoutViewerWorkspace({
             Tên vị trí: <strong className="break-words">{selectedLocation.name}</strong>
           </span>
           {selectedLocation.capacity ? (
-            <span className="w-full break-words">Sức chứa: {selectedLocation.capacity}</span>
+            <StorageCapacitySummary location={selectedLocation.capacity} />
           ) : null}
           {selectedLocation.pending && canConfigure && onEdit ? (
             <Button type="button" variant="outline" size="sm" onClick={onEdit}>
@@ -416,7 +416,7 @@ function getSelectedLocation(
       ? {
           code: rack.rackCode,
           name: rack.rackName,
-          capacity: rack.storageMode === 'RackLevel' ? formatStorageCapacity(rack) : null,
+          capacity: rack.storageMode === 'RackLevel' ? rack : null,
           pending: rack.requiresCapacityConfiguration,
         }
       : null
@@ -426,7 +426,7 @@ function getSelectedLocation(
     ? {
         code: slot.slotCode,
         name: slot.slotName,
-        capacity: formatStorageCapacity(slot),
+        capacity: slot,
         pending: slot.requiresCapacityConfiguration,
       }
     : null

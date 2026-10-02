@@ -6,6 +6,31 @@ export interface CapacityLocation extends StorageCapacityResponse {
   isOutboundStaging?: boolean
 }
 
+const CAPACITY_WARNING_PERCENT = 80
+
+export function getCapacityUtilization(location: CapacityLocation) {
+  if (
+    location.capacityType !== 'Quantity' ||
+    location.requiresCapacityConfiguration ||
+    location.capacityUsed == null ||
+    location.capacity == null ||
+    !Number.isFinite(location.capacityUsed) ||
+    !Number.isFinite(location.capacity) ||
+    location.capacityUsed < 0 ||
+    location.capacity <= 0
+  )
+    return null
+  const rawPercent = (location.capacityUsed / location.capacity) * 100
+  return {
+    used: location.capacityUsed,
+    maximum: location.capacity,
+    rawPercent,
+    percent: Math.min(rawPercent, 100),
+    status:
+      rawPercent >= 100 ? 'full' : rawPercent >= CAPACITY_WARNING_PERCENT ? 'warning' : 'normal',
+  }
+}
+
 export function formatStorageCapacity(location: CapacityLocation) {
   if (location.requiresCapacityConfiguration) return 'Cần cấu hình đơn vị sức chứa'
   if (location.capacityType == null)

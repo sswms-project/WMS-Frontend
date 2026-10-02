@@ -31,7 +31,7 @@ import type {
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import { formatWarehouseStatus } from '../../utils/warehouse-labels'
-import { formatStorageCapacity } from '../../utils/storage-capacity'
+import { StorageCapacitySummary } from '../WarehouseDetailPage'
 import { DECORATION_OPTIONS, getDecorationLabel } from './designer-constants'
 
 interface DesignerInspectorProps {
@@ -252,7 +252,9 @@ function SlotInspector({
           {rack?.rackCode ?? '—'}
         </dd>
         <dt className="text-muted-foreground">Sức chứa</dt>
-        <dd className="font-mono tabular-nums">{formatStorageCapacity(slot)}</dd>
+        <dd className="min-w-0">
+          <StorageCapacitySummary location={slot} />
+        </dd>
         <dt className="text-muted-foreground">Vòng đời</dt>
         <dd>{slot.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}</dd>
       </dl>

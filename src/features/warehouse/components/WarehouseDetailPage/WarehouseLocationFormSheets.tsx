@@ -270,10 +270,11 @@ export function RackFormSheet({
                       Cho phép nhiều sản phẩm trong cùng kệ
                     </FieldLabel>
                   </Field>
-                  <StorageCapacityFields {...capacityProps} />
                 </>
               ) : null}
-              <PhysicalDetailsFields />
+              <PhysicalDetailsFields>
+                {storageMode === 'RackLevel' ? <StorageCapacityFields {...capacityProps} /> : null}
+              </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
@@ -375,10 +376,11 @@ export function SlotFormSheet({
                   Cho phép nhiều sản phẩm trong cùng vị trí
                 </FieldLabel>
               </Field>
-              {!capacityProps.location?.isOutboundStaging ? (
-                <StorageCapacityFields {...capacityProps} />
-              ) : null}
-              <PhysicalDetailsFields />
+              <PhysicalDetailsFields>
+                {!capacityProps.location?.isOutboundStaging ? (
+                  <StorageCapacityFields {...capacityProps} />
+                ) : null}
+              </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
@@ -403,7 +405,11 @@ function validateCapacitySubmission(
     props.unitsError ||
     !props.units.some((unit) => unit.id === values.capacityUnitId && unit.status === 'Active')
   ) {
-    form.setError('capacityUnitId', { message: 'Vui lòng chọn đơn vị sức chứa đang hoạt động.' })
+    form.setError(
+      'capacityUnitId',
+      { message: 'Vui lòng chọn đơn vị sức chứa đang hoạt động.' },
+      { shouldFocus: true }
+    )
     return false
   }
   if (
@@ -413,7 +419,11 @@ function validateCapacitySubmission(
     props.location.capacityUsed != null &&
     values.capacity < props.location.capacityUsed
   ) {
-    form.setError('capacity', { message: 'Sức chứa tối đa không được thấp hơn sức chứa đã dùng.' })
+    form.setError(
+      'capacity',
+      { message: 'Sức chứa tối đa không được thấp hơn sức chứa đã dùng.' },
+      { shouldFocus: true }
+    )
     return false
   }
   return true
@@ -426,16 +436,25 @@ const LENGTH_UNITS: ReadonlyArray<{ value: StorageLengthUnit; label: string }> =
   { value: 'Centimeter', label: 'cm' },
 ]
 
-function PhysicalDetailsFields() {
+interface PhysicalDetailsFieldsProps {
+  readonly children?: React.ReactNode
+}
+
+function PhysicalDetailsFields({ children }: PhysicalDetailsFieldsProps) {
   const form = useFormContext<WarehousePhysicalDetails>()
   const values = useWatch({ control: form.control })
   const errors = form.formState.errors
 
   return (
-    <section className="space-y-3 pt-2 md:col-span-2" aria-labelledby="physical-details-heading">
+    <section
+      className="flex min-w-0 flex-col gap-4 pt-2 md:col-span-2"
+      aria-labelledby="physical-details-heading"
+    >
       <h3 id="physical-details-heading" className="text-base font-semibold">
         Thông tin chi tiết
       </h3>
+      {children}
+      <p className="text-muted-foreground text-xs font-medium">Kích thước vật lý</p>
       <div className="overflow-x-auto rounded-md border">
         <div className="bg-muted/70 grid min-w-[38rem] grid-cols-[minmax(9rem,1.4fr)_5rem_minmax(8rem,1fr)_minmax(7rem,0.8fr)] border-b px-3 py-2 text-sm font-medium">
           <span>Thông tin</span>

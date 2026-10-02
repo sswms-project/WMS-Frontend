@@ -1,9 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { formatStorageCapacity, getCapacityFormValues } from './storage-capacity'
+import {
+  formatStorageCapacity,
+  getCapacityFormValues,
+  getCapacityUtilization,
+} from './storage-capacity'
 import { mapWarehouseLayoutScene } from './layout-scene-mapper'
 import type { WarehouseLayoutSceneResponse } from '../types/warehouse-layout-scene.types'
 
 describe('storage capacity display and mapping', () => {
+  it('centralizes warning/full thresholds and clamps the visual bar without hiding over-capacity', () => {
+    const location = { capacityType: 'Quantity' as const, capacity: 20 }
+    expect(getCapacityUtilization({ ...location, capacityUsed: 15.99 })?.status).toBe('normal')
+    expect(getCapacityUtilization({ ...location, capacityUsed: 16 })?.status).toBe('warning')
+    expect(getCapacityUtilization({ ...location, capacityUsed: 22 })).toMatchObject({
+      status: 'full',
+      percent: 100,
+    })
+    expect(getCapacityUtilization({ ...location, capacityUsed: 22 })?.rawPercent).toBeCloseTo(110)
+    expect(getCapacityUtilization({ ...location, capacity: 0, capacityUsed: 0 })).toBeNull()
+    expect(getCapacityUtilization({ ...location, capacityUsed: Number.NaN })).toBeNull()
+  })
   it('uses normalized capacityUsed, not the legacy/base occupancy', () => {
     expect(
       formatStorageCapacity({
