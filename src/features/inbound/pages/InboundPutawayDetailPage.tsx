@@ -30,6 +30,7 @@ import {
   type PutawayFormValues,
 } from '../schemas/inbound.schema'
 import { getPutawayAllocationState } from '../schemas/putaway-allocation.schema'
+import { getPutawaySlotOptions } from '../utils/putaway-slot-options'
 
 const EMPTY_ALLOCATION = { goodsReceiptItemId: '', slotId: '', quantity: 1 }
 
@@ -55,55 +56,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     resolver: zodResolver(cancelPutawayTaskSchema),
     defaultValues: { reason: '', hasUnrecordedPhysicalMovement: false },
   })
-  const slots: SlotOption[] = (layoutQuery.data ?? []).flatMap((zone) =>
-    zone.status !== 'Active'
-      ? []
-      : zone.racks.flatMap((rack) => {
-          if (rack.status !== 'Active') return []
-          const hierarchy = `${zone.zoneCode} / ${rack.rackCode}`
-          const zoneLabel = `${zone.zoneCode} - ${zone.zoneName}`
-          const rackSlots = rack.slots
-            .filter(
-              (slot) =>
-                slot.isActive &&
-                !slot.isOutboundStaging &&
-                (slot.capacity === null || slot.capacity > slot.currentOccupancy)
-            )
-            .map((slot) => ({
-              id: slot.id,
-              code: slot.slotCode,
-              name: '',
-              zoneId: zone.id,
-              zoneLabel,
-              hierarchy,
-              allowsMixedProducts: slot.allowsMixedProducts ?? rack.allowsMixedProducts,
-              availableCapacity:
-                slot.capacity === null ? null : slot.capacity - slot.currentOccupancy,
-            }))
-          if (rack.storageMode !== 'RackLevel' || !rack.defaultSlotId) return rackSlots
-          if (rack.capacity !== null && rack.currentOccupancy == null) return rackSlots
-          const currentOccupancy = rack.currentOccupancy ?? 0
-          const availableCapacity =
-            rack.capacity === null || rack.capacity === undefined
-              ? null
-              : rack.capacity - currentOccupancy
-          return availableCapacity === null || availableCapacity > 0
-            ? [
-                ...rackSlots,
-                {
-                  id: rack.defaultSlotId,
-                  code: rack.rackCode,
-                  name: rack.rackName,
-                  zoneId: zone.id,
-                  zoneLabel,
-                  hierarchy: zoneLabel,
-                  allowsMixedProducts: rack.allowsMixedProducts,
-                  availableCapacity,
-                },
-              ]
-            : rackSlots
-        })
-  )
+  const slots: SlotOption[] = getPutawaySlotOptions(layoutQuery.data ?? [])
 
   async function submit(values: PutawayFormValues) {
     const receipt = receiptQuery.data
@@ -118,7 +71,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
       toast.success('Đã ghi nhận cất hàng vào vị trí lưu trữ.')
       router.push(APP_ROUTES.goodsReceiptDetail(receiptId) as Route)
     } catch (error) {
-      logger.error(error)
+      logger.warn(getApiErrorMessage(error))
       form.setError('root.server', {
         message: getApiErrorMessage(error, 'Không thể cất hàng. Vui lòng tải lại dữ liệu.'),
       })

@@ -29,9 +29,12 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
         </Button>
       </div>
       <NotificationFilters
+        key={props.filters.search}
         filters={props.filters}
+        isFetching={props.isFetching}
         onApply={props.onApplyFilters}
         onClear={props.onClearFilters}
+        onRetry={props.onRetry}
       />
       <OperationalListPanel aria-label="Danh sách thông báo">
         <div className="shrink-0 border-b px-4 py-3">

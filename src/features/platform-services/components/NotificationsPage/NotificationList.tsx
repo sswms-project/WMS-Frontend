@@ -6,10 +6,27 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { NotificationItem } from '../../types/platform-services.types'
 import {
-  formatPlatformDateTime,
+  formatNotificationTime,
+  getNotificationDateGroup,
   getNotificationReferenceRoute,
 } from '../../utils/platform-services-format'
 import { TYPE_LABELS } from './NotificationFilters'
+
+const DATE_GROUP_ORDER = ['Hôm nay', 'Hôm qua', 'Tuần này', 'Cũ hơn'] as const
+
+function groupByDate(items: NotificationItem[]): { label: string; items: NotificationItem[] }[] {
+  const map = new Map<string, NotificationItem[]>()
+  for (const item of items) {
+    const label = getNotificationDateGroup(item.createdAt)
+    const group = map.get(label) ?? []
+    group.push(item)
+    map.set(label, group)
+  }
+  return DATE_GROUP_ORDER.flatMap((label) => {
+    const grouped = map.get(label)
+    return grouped ? [{ label, items: grouped }] : []
+  })
+}
 
 interface NotificationListProps {
   readonly items: NotificationItem[]
@@ -27,17 +44,29 @@ export function NotificationList(props: NotificationListProps) {
   if (props.isError) return <NotificationErrorState onRetry={props.onRetry} />
   if (props.items.length === 0)
     return <NotificationEmptyState hasActiveFilters={props.hasActiveFilters} />
+  const groups = groupByDate(props.items)
   return (
-    <ul className="divide-y" aria-busy={props.isFetching}>
-      {props.items.map((notification) => (
-        <NotificationRow
-          key={notification.id}
-          notification={notification}
-          isPending={props.pendingNotificationId === notification.id}
-          onMarkRead={props.onMarkRead}
-        />
+    <div aria-busy={props.isFetching}>
+      {groups.map((group) => (
+        <section key={group.label} aria-labelledby={`group-${group.label}`}>
+          <div className="bg-muted/40 border-b px-4 py-2">
+            <h4 id={`group-${group.label}`} className="text-muted-foreground text-xs font-medium">
+              {group.label}
+            </h4>
+          </div>
+          <ul className="divide-y">
+            {group.items.map((notification) => (
+              <NotificationRow
+                key={notification.id}
+                notification={notification}
+                isPending={props.pendingNotificationId === notification.id}
+                onMarkRead={props.onMarkRead}
+              />
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   )
 }
 
@@ -67,7 +96,7 @@ function NotificationRow({ notification, isPending, onMarkRead }: NotificationRo
         </div>
         <p className="text-muted-foreground text-sm break-words">{notification.message}</p>
         <p className="text-muted-foreground text-xs">
-          {formatPlatformDateTime(notification.createdAt)}
+          {formatNotificationTime(notification.createdAt)}
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           {!notification.isRead ? (

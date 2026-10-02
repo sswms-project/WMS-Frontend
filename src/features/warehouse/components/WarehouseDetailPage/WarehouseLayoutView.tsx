@@ -47,7 +47,8 @@ import {
   getExpandableLocationIds,
   type WarehouseLocationTreeNode,
 } from '../WarehouseLocationsPage/location-tree'
-import { formatCapacityLimit, formatWarehouseStatus } from '../../utils/warehouse-labels'
+import { formatWarehouseStatus } from '../../utils/warehouse-labels'
+import { formatStorageCapacity } from '../../utils/storage-capacity'
 
 interface WarehouseLayoutViewProps {
   readonly zones: readonly ZoneResponse[]
@@ -394,7 +395,7 @@ function getNodeDetails(node: WarehouseLocationTreeNode) {
       name: node.rack.rackName,
       parent: node.zone.zoneName,
       description: node.rack.description,
-      capacity: formatCapacityLimit(node.rack.capacity),
+      capacity: node.rack.storageMode === 'RackLevel' ? formatStorageCapacity(node.rack) : '—',
       status: node.rack.status,
     }
   return {
@@ -402,7 +403,7 @@ function getNodeDetails(node: WarehouseLocationTreeNode) {
     name: node.slot.slotName,
     parent: node.rack.rackName,
     description: node.slot.description,
-    capacity: formatCapacityLimit(node.slot.capacity),
+    capacity: formatStorageCapacity(node.slot),
     status: node.slot.isActive ? 'Active' : 'Inactive',
   }
 }

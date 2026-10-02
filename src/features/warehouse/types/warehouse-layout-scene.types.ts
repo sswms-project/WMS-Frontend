@@ -1,4 +1,4 @@
-import type { WarehousePhysicalDetailsResponse } from './warehouse.types'
+import type { StorageCapacityResponse, WarehousePhysicalDetailsResponse } from './warehouse.types'
 
 export type WarehouseLayoutDecorationType =
   | 'Door'
@@ -50,7 +50,8 @@ export interface WarehouseLayoutZoneSceneResponse extends WarehousePhysicalDetai
   color?: string | null
 }
 
-export interface WarehouseLayoutRackSceneResponse extends WarehousePhysicalDetailsResponse {
+export interface WarehouseLayoutRackSceneResponse
+  extends WarehousePhysicalDetailsResponse, StorageCapacityResponse {
   id: string
   zoneId: string
   zoneCode: string
@@ -62,6 +63,7 @@ export interface WarehouseLayoutRackSceneResponse extends WarehousePhysicalDetai
   layoutShape?: WarehouseLayoutRackShape | null
   allowsMixedProducts?: boolean
   capacity?: number | null
+  currentOccupancy?: number | null
   rowVersion?: string | null
   x: number | null
   y: number | null
@@ -72,7 +74,8 @@ export interface WarehouseLayoutRackSceneResponse extends WarehousePhysicalDetai
   color?: string | null
 }
 
-export interface WarehouseLayoutSlotSceneResponse extends WarehousePhysicalDetailsResponse {
+export interface WarehouseLayoutSlotSceneResponse
+  extends WarehousePhysicalDetailsResponse, StorageCapacityResponse {
   id: string
   zoneId: string
   rackId: string

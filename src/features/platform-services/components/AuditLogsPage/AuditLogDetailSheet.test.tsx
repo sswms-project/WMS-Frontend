@@ -34,6 +34,29 @@ const auditLog: AuditLogItem = {
 }
 
 describe('AuditLogDetailSheet', () => {
+  it('uses a right-side half-width desktop panel with a separately scrolling body', () => {
+    render(<AuditLogDetailSheet log={auditLog} onOpenChange={vi.fn()} />)
+    const panel = screen.getByRole('dialog')
+    expect(panel).toHaveAttribute('data-side', 'right')
+    expect(panel).toHaveClass('data-[side=right]:lg:w-1/2', 'data-[side=right]:sm:max-w-none')
+    expect(screen.getByText('Mô tả chi tiết').closest('section')?.parentElement).toHaveClass(
+      'overflow-y-auto',
+      'min-h-0'
+    )
+  })
+
+  it('wraps long references and change values within their own columns', () => {
+    const reference = 'NCC-' + 'A'.repeat(200)
+    render(
+      <AuditLogDetailSheet
+        log={{ ...auditLog, referenceDisplay: reference }}
+        onOpenChange={vi.fn()}
+      />
+    )
+    expect(screen.getByText(reference)).toHaveClass('wrap-anywhere')
+    expect(screen.getByText('Xem công việc được giao')).toHaveClass('wrap-anywhere')
+  })
+
   it('shows business values without technical identifiers or raw permission keys', () => {
     render(<AuditLogDetailSheet log={auditLog} onOpenChange={vi.fn()} />)
 

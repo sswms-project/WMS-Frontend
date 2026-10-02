@@ -1,8 +1,26 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircle, Save } from 'lucide-react'
-import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form'
+import { Info, LoaderCircle, Save } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+  type UseFormReturn,
+} from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -25,11 +43,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import type {
-  StorageLengthUnit,
-  StorageMassUnit,
-  WarehousePhysicalDetails,
-} from '../../types/warehouse.types'
+import type { StorageLengthUnit, WarehousePhysicalDetails } from '../../types/warehouse.types'
 import {
   rackSchema,
   slotSchema,
@@ -38,6 +52,7 @@ import {
   type SlotFormValues,
   type ZoneFormValues,
 } from '../../schemas/warehouse.schema'
+import { StorageCapacityFields, type StorageCapacityFieldsProps } from './StorageCapacityFields'
 
 interface LocationFormSheetProps<TValues> {
   readonly open: boolean
@@ -45,7 +60,8 @@ interface LocationFormSheetProps<TValues> {
   readonly isPending: boolean
   readonly defaultValues: TValues
   readonly onOpenChange: (open: boolean) => void
-  readonly onSubmit: (values: TValues) => Promise<boolean>
+  readonly onSubmit: (values: TValues, preserveLegacyCapacity?: boolean) => Promise<boolean>
+  readonly conflict?: { readonly reload: () => Promise<boolean> }
 }
 
 const LOCATION_FORM_SHEET_CLASS =
@@ -66,9 +82,12 @@ export function ZoneFormSheet({
   const form = useForm<ZoneFormValues>({ resolver: zodResolver(zoneSchema), defaultValues })
   const { errors } = form.formState
 
+  const [isClosing, setIsClosing] = useState(false)
+
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
-    onOpenChange(nextOpen)
+    if (!nextOpen && (isPending || form.formState.isSubmitting)) return
+    if (!nextOpen) setIsClosing(true)
+    else onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: ZoneFormValues) {
@@ -76,8 +95,16 @@ export function ZoneFormSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className={LOCATION_FORM_SHEET_CLASS}>
+    <Sheet open={open && !isClosing} onOpenChange={handleOpenChange}>
+      <SheetContent
+        className={LOCATION_FORM_SHEET_CLASS}
+        onCloseAutoFocus={() => {
+          if (isClosing) {
+            form.reset(defaultValues)
+            onOpenChange(false)
+          }
+        }}
+      >
         <SheetHeader className={LOCATION_FORM_HEADER_CLASS}>
           <SheetTitle className="text-base font-semibold">
             {mode === 'create' ? 'Thêm khu vực' : 'Chỉnh sửa khu vực'}
@@ -130,7 +157,7 @@ export function ZoneFormSheet({
             </FieldGroup>
             <FormFooter
               mode={mode}
-              isPending={isPending}
+              isPending={isPending || form.formState.isSubmitting}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
@@ -147,25 +174,68 @@ export function RackFormSheet({
   defaultValues,
   onOpenChange,
   onSubmit,
-}: LocationFormSheetProps<RackFormValues>) {
+  conflict,
+  ...capacityProps
+}: LocationFormSheetProps<RackFormValues> & StorageCapacityFieldsProps) {
   const form = useForm<RackFormValues>({ resolver: zodResolver(rackSchema), defaultValues })
-  const { errors } = form.formState
+  const { errors, dirtyFields } = form.formState
+  const [hasPolicyChoice, setHasPolicyChoice] = useState(false)
+  const rebaseKey = `${defaultValues.expectedRowVersion}:${defaultValues.capacityType}:${defaultValues.capacityUnitId}:${defaultValues.capacity}:${capacityProps.location?.currentOccupancy}`
+  const versionRef = useRef(rebaseKey)
+  useEffect(() => {
+    if (versionRef.current === rebaseKey) return
+    versionRef.current = rebaseKey
+    form.reset(defaultValues, { keepDirtyValues: true })
+    if ((capacityProps.location?.currentOccupancy ?? 0) > 0) {
+      form.setValue('storageMode', defaultValues.storageMode)
+      form.setValue('capacityType', defaultValues.capacityType)
+      form.setValue('capacityUnitId', defaultValues.capacityUnitId)
+    }
+  }, [defaultValues, form, capacityProps.location?.currentOccupancy, rebaseKey])
   const storageMode = useWatch({ control: form.control, name: 'storageMode' })
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
-  const capacity = useWatch({ control: form.control, name: 'capacity' })
+  const [confirmSlotMode, setConfirmSlotMode] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+  const storageModeRef = useRef<HTMLDivElement>(null)
+
+  function applySlotMode() {
+    form.setValue('allowsMixedProducts', true, { shouldDirty: true })
+    form.setValue('capacity', null, { shouldDirty: true })
+    form.setValue('capacityType', 'None', { shouldDirty: true })
+    form.setValue('capacityUnitId', null, { shouldDirty: true })
+    form.setValue('storageMode', 'SlotLevel', { shouldDirty: true, shouldValidate: true })
+    form.clearErrors(['capacity', 'capacityUnitId'])
+  }
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
-    onOpenChange(nextOpen)
+    if (!nextOpen && (isPending || form.formState.isSubmitting)) return
+    if (!nextOpen) setIsClosing(true)
+    else onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: RackFormValues) {
-    if (await onSubmit(values)) form.reset(defaultValues)
+    if (conflict) return
+    if (!validateCapacitySubmission(form, values, capacityProps)) return
+    const preserveLegacy = Boolean(
+      capacityProps.location?.requiresCapacityConfiguration &&
+      !hasPolicyChoice &&
+      !dirtyFields.storageMode
+    )
+    if (await (preserveLegacy ? onSubmit(values, true) : onSubmit(values)))
+      form.reset(defaultValues)
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className={LOCATION_FORM_SHEET_CLASS}>
+    <Sheet open={open && !isClosing} onOpenChange={handleOpenChange}>
+      <SheetContent
+        className={LOCATION_FORM_SHEET_CLASS}
+        onCloseAutoFocus={() => {
+          if (isClosing) {
+            form.reset(defaultValues)
+            onOpenChange(false)
+          }
+        }}
+      >
         <SheetHeader className={LOCATION_FORM_HEADER_CLASS}>
           <SheetTitle className="text-base font-semibold">
             {mode === 'create' ? 'Thêm kệ hàng' : 'Chỉnh sửa kệ hàng'}
@@ -178,6 +248,7 @@ export function RackFormSheet({
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FieldGroup className={LOCATION_FORM_BODY_CLASS}>
+              {conflict ? <LocationConflictAlert reload={conflict.reload} /> : null}
               <Field data-invalid={Boolean(errors.rackCode)}>
                 <FieldLabel htmlFor="rack-code">Mã kệ</FieldLabel>
                 <Input
@@ -214,15 +285,25 @@ export function RackFormSheet({
               <Field className="md:col-span-2">
                 <FieldLabel>Phương thức quản lý vị trí</FieldLabel>
                 <RadioGroup
+                  ref={storageModeRef}
                   aria-label="Phương thức quản lý vị trí"
                   value={storageMode}
+                  disabled={(capacityProps.location?.currentOccupancy ?? 0) > 0}
                   onValueChange={(value) => {
                     if (value !== 'RackLevel' && value !== 'SlotLevel') return
-                    form.setValue('storageMode', value, { shouldDirty: true, shouldValidate: true })
                     if (value === 'SlotLevel') {
-                      form.setValue('allowsMixedProducts', true)
-                      form.setValue('capacity', null)
+                      const values = form.getValues()
+                      if (
+                        values.capacityType === 'Quantity' &&
+                        (values.capacity != null || values.capacityUnitId)
+                      ) {
+                        setConfirmSlotMode(true)
+                        return
+                      }
+                      applySlotMode()
+                      return
                     }
+                    form.setValue('storageMode', value, { shouldDirty: true, shouldValidate: true })
                   }}
                   className="gap-2"
                 >
@@ -257,38 +338,59 @@ export function RackFormSheet({
                           shouldDirty: true,
                           shouldValidate: true,
                         })
-                        if (checked === true) form.setValue('capacity', null)
                       }}
                     />
                     <FieldLabel htmlFor="rack-allows-mixed-products">
                       Cho phép nhiều sản phẩm trong cùng kệ
                     </FieldLabel>
                   </Field>
-                  {!allowsMixedProducts ? (
-                    <CapacityField
-                      id="rack-capacity"
-                      value={capacity}
-                      errorMessage={errors.capacity?.message}
-                      onChange={(capacity) =>
-                        form.setValue('capacity', capacity, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        })
-                      }
-                    />
-                  ) : (
-                    <p className="text-muted-foreground text-xs md:col-span-2">
-                      Không áp dụng giới hạn số lượng chung khi kệ chứa nhiều sản phẩm có thể khác
-                      đơn vị tính.
+                  <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed md:col-span-2">
+                    <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    <p>
+                      Bật để chứa nhiều mã sản phẩm trong cùng kệ; tắt để chỉ chứa một mã.
+                      <br />
+                      VD: Bật → nước ngọt và bánh có thể chung kệ, nhưng vẫn phải đủ sức chứa.
                     </p>
-                  )}
+                  </div>
                 </>
               ) : null}
-              <PhysicalDetailsFields />
+              <AlertDialog open={confirmSlotMode} onOpenChange={setConfirmSlotMode}>
+                <AlertDialogContent
+                  onCloseAutoFocus={(event) => {
+                    event.preventDefault()
+                    storageModeRef.current
+                      ?.querySelector<HTMLButtonElement>('[data-state="checked"]')
+                      ?.focus()
+                  }}
+                >
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Chuyển sang quản lý theo vị trí lưu trữ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Sức chứa tối đa và đơn vị sức chứa của kệ sẽ được bỏ khỏi form. Bạn cần cấu
+                      hình sức chứa riêng cho từng vị trí. Thay đổi chỉ áp dụng khi lưu.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Giữ cấu hình kệ</AlertDialogCancel>
+                    <AlertDialogAction onClick={applySlotMode}>
+                      Chuyển phương thức quản lý
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <PhysicalDetailsFields>
+                {storageMode === 'RackLevel' ? (
+                  <StorageCapacityFields
+                    {...capacityProps}
+                    onPolicyChange={() => setHasPolicyChoice(true)}
+                  />
+                ) : null}
+              </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
-              isPending={isPending}
+              isPending={isPending || form.formState.isSubmitting}
+              isSaveBlocked={Boolean(conflict)}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
@@ -305,30 +407,65 @@ export function SlotFormSheet({
   defaultValues,
   onOpenChange,
   onSubmit,
-}: LocationFormSheetProps<SlotFormValues>) {
+  conflict,
+  ...capacityProps
+}: LocationFormSheetProps<SlotFormValues> & StorageCapacityFieldsProps) {
   const form = useForm<SlotFormValues>({ resolver: zodResolver(slotSchema), defaultValues })
-  const { errors } = form.formState
+  const { errors, dirtyFields } = form.formState
+  const [hasPolicyChoice, setHasPolicyChoice] = useState(false)
+  const rebaseKey = `${defaultValues.expectedRowVersion}:${defaultValues.capacityType}:${defaultValues.capacityUnitId}:${defaultValues.capacity}:${capacityProps.location?.currentOccupancy}`
+  const versionRef = useRef(rebaseKey)
+  useEffect(() => {
+    if (versionRef.current === rebaseKey) return
+    versionRef.current = rebaseKey
+    form.reset(defaultValues, { keepDirtyValues: true })
+    if (
+      capacityProps.location?.capacityType === 'Quantity' &&
+      (capacityProps.location.currentOccupancy ?? 0) > 0
+    ) {
+      form.setValue('capacityType', defaultValues.capacityType)
+      form.setValue('capacityUnitId', defaultValues.capacityUnitId)
+    }
+  }, [defaultValues, form, capacityProps.location, rebaseKey])
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
-  const capacity = useWatch({ control: form.control, name: 'capacity' })
 
+  const [isClosing, setIsClosing] = useState(false)
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
-    onOpenChange(nextOpen)
+    if (!nextOpen && (isPending || form.formState.isSubmitting)) return
+    if (!nextOpen) setIsClosing(true)
+    else onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: SlotFormValues) {
-    if (await onSubmit(values)) form.reset(defaultValues)
+    if (conflict) return
+    if (!validateCapacitySubmission(form, values, capacityProps)) return
+    const preserveLegacy = Boolean(
+      capacityProps.location?.requiresCapacityConfiguration &&
+      !hasPolicyChoice &&
+      !dirtyFields.capacityType &&
+      !dirtyFields.capacityUnitId
+    )
+    if (await (preserveLegacy ? onSubmit(values, true) : onSubmit(values)))
+      form.reset(defaultValues)
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className={LOCATION_FORM_SHEET_CLASS}>
+    <Sheet open={open && !isClosing} onOpenChange={handleOpenChange}>
+      <SheetContent
+        className={LOCATION_FORM_SHEET_CLASS}
+        onCloseAutoFocus={() => {
+          if (isClosing) {
+            form.reset(defaultValues)
+            onOpenChange(false)
+          }
+        }}
+      >
         <SheetHeader className={LOCATION_FORM_HEADER_CLASS}>
           <SheetTitle className="text-base font-semibold">
             {mode === 'create' ? 'Thêm vị trí lưu trữ' : 'Chỉnh sửa vị trí'}
           </SheetTitle>
           <SheetDescription>
-            Giới hạn số lượng không thể thấp hơn lượng hàng đang có hoặc lượng đã giữ.
+            Sức chứa tối đa không thể thấp hơn sức chứa đã dùng theo đơn vị đã chọn.
           </SheetDescription>
         </SheetHeader>
         <FormProvider {...form}>
@@ -337,6 +474,7 @@ export function SlotFormSheet({
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FieldGroup className={LOCATION_FORM_BODY_CLASS}>
+              {conflict ? <LocationConflictAlert reload={conflict.reload} /> : null}
               <Field data-invalid={Boolean(errors.slotCode)}>
                 <FieldLabel htmlFor="slot-code">Mã vị trí</FieldLabel>
                 <Input
@@ -379,36 +517,33 @@ export function SlotFormSheet({
                       shouldDirty: true,
                       shouldValidate: true,
                     })
-                    if (checked === true) form.setValue('capacity', null)
                   }}
                 />
                 <FieldLabel htmlFor="slot-allows-mixed-products">
                   Cho phép nhiều sản phẩm trong cùng vị trí
                 </FieldLabel>
               </Field>
-              {!allowsMixedProducts ? (
-                <CapacityField
-                  id="slot-capacity"
-                  value={capacity}
-                  errorMessage={errors.capacity?.message}
-                  onChange={(capacity) =>
-                    form.setValue('capacity', capacity, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                />
-              ) : (
-                <p className="text-muted-foreground text-xs md:col-span-2">
-                  Không áp dụng giới hạn số lượng chung khi vị trí chứa nhiều sản phẩm có thể khác
-                  đơn vị tính.
+              <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed md:col-span-2">
+                <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <p>
+                  Bật để chứa nhiều mã sản phẩm trong cùng vị trí; tắt để chỉ chứa một mã.
+                  <br />
+                  VD: Bật → nước ngọt và bánh có thể chung vị trí, nhưng vẫn phải đủ sức chứa.
                 </p>
-              )}
-              <PhysicalDetailsFields />
+              </div>
+              <PhysicalDetailsFields>
+                {!capacityProps.location?.isOutboundStaging ? (
+                  <StorageCapacityFields
+                    {...capacityProps}
+                    onPolicyChange={() => setHasPolicyChoice(true)}
+                  />
+                ) : null}
+              </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
-              isPending={isPending}
+              isPending={isPending || form.formState.isSubmitting}
+              isSaveBlocked={Boolean(conflict)}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
@@ -418,44 +553,69 @@ export function SlotFormSheet({
   )
 }
 
-function CapacityField({
-  id,
-  value,
-  errorMessage,
-  onChange,
-}: {
-  readonly id: string
-  readonly value: number | null
-  readonly errorMessage?: string
-  readonly onChange: (value: number | null) => void
-}) {
+function LocationConflictAlert({ reload }: { readonly reload: () => Promise<boolean> }) {
+  const [isReloading, setIsReloading] = useState(false)
   return (
-    <Field data-invalid={Boolean(errorMessage)}>
-      <FieldLabel htmlFor={id}>Giới hạn số lượng (không bắt buộc)</FieldLabel>
-      <Input
-        id={id}
-        name={id}
-        type="number"
-        min="0.01"
-        step="0.01"
-        inputMode="decimal"
-        autoComplete="off"
-        value={value ?? ''}
-        aria-invalid={Boolean(errorMessage)}
-        onChange={(event) =>
-          onChange(event.currentTarget.value === '' ? null : Number(event.currentTarget.value))
-        }
-      />
-      {errorMessage ? <p className="text-destructive text-xs">{errorMessage}</p> : null}
-    </Field>
+    <Alert className="md:col-span-2">
+      <AlertTitle>Dữ liệu vị trí đã thay đổi</AlertTitle>
+      <AlertDescription>
+        Tải dữ liệu mới trước khi lưu lại. Bản nháp được giữ; loại, đơn vị sức chứa và phương thức
+        quản lý sẽ theo dữ liệu mới nếu vị trí đã có hàng.
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isReloading}
+          onClick={async () => {
+            setIsReloading(true)
+            try {
+              await reload()
+            } finally {
+              setIsReloading(false)
+            }
+          }}
+        >
+          {isReloading ? 'Đang tải…' : 'Tải dữ liệu mới'}
+        </Button>
+      </AlertDescription>
+    </Alert>
   )
 }
 
-const MASS_UNITS: ReadonlyArray<{ value: StorageMassUnit; label: string }> = [
-  { value: 'Ton', label: 'tấn' },
-  { value: 'Kilogram', label: 'kg' },
-  { value: 'Gram', label: 'gam' },
-]
+function validateCapacitySubmission(
+  form: UseFormReturn<SlotFormValues> | UseFormReturn<RackFormValues>,
+  values: SlotFormValues | RackFormValues,
+  props: StorageCapacityFieldsProps
+) {
+  if (values.capacityType !== 'Quantity') return true
+  if (
+    props.unitsLoading ||
+    props.unitsError ||
+    !props.units.some((unit) => unit.id === values.capacityUnitId && unit.status === 'Active')
+  ) {
+    form.setError(
+      'capacityUnitId',
+      { message: 'Vui lòng chọn đơn vị sức chứa đang hoạt động.' },
+      { shouldFocus: true }
+    )
+    return false
+  }
+  if (
+    props.location?.capacityType === 'Quantity' &&
+    values.capacityUnitId === props.location.capacityUnitId &&
+    values.capacity !== null &&
+    props.location.capacityUsed != null &&
+    values.capacity < props.location.capacityUsed
+  ) {
+    form.setError(
+      'capacity',
+      { message: 'Sức chứa tối đa không được thấp hơn sức chứa đã dùng.' },
+      { shouldFocus: true }
+    )
+    return false
+  }
+  return true
+}
 
 const LENGTH_UNITS: ReadonlyArray<{ value: StorageLengthUnit; label: string }> = [
   { value: 'Kilometer', label: 'km' },
@@ -464,16 +624,25 @@ const LENGTH_UNITS: ReadonlyArray<{ value: StorageLengthUnit; label: string }> =
   { value: 'Centimeter', label: 'cm' },
 ]
 
-function PhysicalDetailsFields() {
+interface PhysicalDetailsFieldsProps {
+  readonly children?: React.ReactNode
+}
+
+function PhysicalDetailsFields({ children }: PhysicalDetailsFieldsProps) {
   const form = useFormContext<WarehousePhysicalDetails>()
   const values = useWatch({ control: form.control })
   const errors = form.formState.errors
 
   return (
-    <section className="space-y-3 pt-2 md:col-span-2" aria-labelledby="physical-details-heading">
+    <section
+      className="flex min-w-0 flex-col gap-2 pt-2 md:col-span-2"
+      aria-labelledby="physical-details-heading"
+    >
       <h3 id="physical-details-heading" className="text-base font-semibold">
         Thông tin chi tiết
       </h3>
+      {children}
+      <p className="text-muted-foreground text-xs font-medium">Kích thước vật lý</p>
       <div className="overflow-x-auto rounded-md border">
         <div className="bg-muted/70 grid min-w-[38rem] grid-cols-[minmax(9rem,1.4fr)_5rem_minmax(8rem,1fr)_minmax(7rem,0.8fr)] border-b px-3 py-2 text-sm font-medium">
           <span>Thông tin</span>
@@ -481,31 +650,6 @@ function PhysicalDetailsFields() {
           <span>Giá trị</span>
           <span>Đơn vị tính</span>
         </div>
-        <PhysicalDetailRow
-          label="Dung lượng lưu trữ"
-          value={values.storageCapacity ?? null}
-          unit={values.storageCapacityUnit ?? null}
-          units={MASS_UNITS}
-          valueError={errors.storageCapacity?.message}
-          unitError={errors.storageCapacityUnit?.message}
-          onValueChange={(value) => {
-            form.setValue('storageCapacity', value, { shouldDirty: true, shouldValidate: true })
-            form.setValue(
-              'storageCapacityUnit',
-              value === null ? null : (values.storageCapacityUnit ?? 'Kilogram'),
-              {
-                shouldDirty: true,
-                shouldValidate: true,
-              }
-            )
-          }}
-          onUnitChange={(unit) =>
-            form.setValue('storageCapacityUnit', unit, {
-              shouldDirty: true,
-              shouldValidate: true,
-            })
-          }
-        />
         <PhysicalDetailRow
           label="Chiều dài"
           value={values.physicalLength ?? null}
@@ -657,15 +801,17 @@ function PhysicalDetailRow<TUnit extends string>({
 function FormFooter({
   mode,
   isPending,
+  isSaveBlocked = false,
   onCancel,
 }: {
   readonly mode: 'create' | 'update'
   readonly isPending: boolean
+  readonly isSaveBlocked?: boolean
   readonly onCancel: () => void
 }) {
   return (
     <SheetFooter className="bg-popover shrink-0 border-t px-5 py-4 sm:flex-row sm:justify-end">
-      <Button type="submit" disabled={isPending}>
+      <Button type="submit" disabled={isPending || isSaveBlocked}>
         {isPending ? (
           <LoaderCircle data-icon="inline-start" className="animate-spin" aria-hidden="true" />
         ) : (

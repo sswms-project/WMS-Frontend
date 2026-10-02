@@ -13,46 +13,19 @@ import {
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useState } from 'react'
-import { LifecycleTimeline } from '@/components/operations/LifecycleTimeline'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { APP_ROUTES } from '@/routes/app-routes'
-import {
-  formatOperationalDate,
-  formatQuantity,
-} from '@/features/inbound-request/utils/inbound-request-format'
 import type {
   GoodsReceiptAction,
   GoodsReceiptDetail as ReceiptDetailType,
 } from '../../types/inbound.types'
 import { InboundStatusBadge } from '../InboundWorkspace'
+import { ReceiptActionDialogs } from './ReceiptActionDialogs'
+import { ReceiptHistorySheet } from './ReceiptHistorySheet'
+import { ReceiptItemsTable } from './ReceiptItemsTable'
+import { ReceiptOverview } from './ReceiptOverview'
+import { ReceiptPutAwayTable } from './ReceiptPutAwayTable'
 
 interface ReceiptDetailProps {
   readonly receipt: ReceiptDetailType
@@ -77,8 +50,8 @@ export function ReceiptDetail({
 }: ReceiptDetailProps) {
   const [confirmationAction, setConfirmationAction] = useState<'Submit' | 'Approve' | null>(null)
   const [isRejectOpen, setIsRejectOpen] = useState(false)
-  const [reason, setReason] = useState('')
-  const [reasonError, setReasonError] = useState('')
+
+  const hasPutAwayDetails = receipt.items.some((item) => item.putAwayDetails.length > 0)
 
   async function confirm() {
     if (!confirmationAction) return
@@ -86,350 +59,127 @@ export function ReceiptDetail({
     if (succeeded) setConfirmationAction(null)
   }
 
-  async function reject() {
-    const normalized = reason.trim()
-    if (!normalized) {
-      setReasonError('Vui lòng nhập lý do trả sửa.')
-      return
-    }
-    if (normalized.length > 500) {
-      setReasonError('Lý do không được vượt quá 500 ký tự.')
-      return
-    }
-    if (await onReject(normalized)) {
-      setIsRejectOpen(false)
-      setReason('')
-      setReasonError('')
-    }
-  }
-
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
-      <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex items-start gap-3">
-          <Button asChild variant="outline" size="icon">
-            <Link href={APP_ROUTES.goodsReceipts as Route} aria-label="Quay lại danh sách">
-              <ArrowLeft aria-hidden="true" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-mono text-xl font-semibold">{receipt.receiptCode}</h1>
-              <InboundStatusBadge status={receipt.status} />
-            </div>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-              Yêu cầu nhập kho {receipt.inboundRequestCode} · {receipt.warehouseName}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {allowedActions.includes('Update') ? (
-            <Button type="button" variant="outline" disabled={isPending} onClick={onUpdate}>
-              <Pencil aria-hidden="true" />
-              Chỉnh sửa
-            </Button>
-          ) : null}
-          {allowedActions.includes('Submit') ? (
-            <Button type="button" onClick={() => setConfirmationAction('Submit')}>
-              <Send aria-hidden="true" />
-              Gửi duyệt
-            </Button>
-          ) : null}
-          {allowedActions.includes('Reject') ? (
-            <Button type="button" variant="outline" onClick={() => setIsRejectOpen(true)}>
-              <Undo2 aria-hidden="true" />
-              Trả sửa
-            </Button>
-          ) : null}
-          {allowedActions.includes('Approve') ? (
-            <Button type="button" onClick={() => setConfirmationAction('Approve')}>
-              <Check aria-hidden="true" />
-              Phê duyệt
-            </Button>
-          ) : null}
-          {allowedActions.includes('AssignPutAway') && onAssignPutAway ? (
-            <Button
-              type="button"
-              variant={receipt.putAwayAssignedTo ? 'outline' : 'default'}
-              onClick={onAssignPutAway}
-            >
-              {receipt.putAwayAssignedTo ? (
-                <UserRoundCog aria-hidden="true" />
-              ) : (
-                <UserCheck aria-hidden="true" />
-              )}
-              {receipt.putAwayAssignedTo ? 'Giao lại cất hàng' : 'Giao việc cất hàng'}
-            </Button>
-          ) : null}
-          {allowedActions.includes('PutAway') ? (
-            <Button asChild>
-              <Link href={APP_ROUTES.inboundPutawayDetail(receipt.id) as Route}>
-                <PackageCheck aria-hidden="true" />
-                Cất hàng
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
+      <header className="shrink-0 border-b px-4 py-3 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-3">
+            <Button asChild variant="outline" size="icon">
+              <Link href={APP_ROUTES.goodsReceipts as Route} aria-label="Quay lại danh sách">
+                <ArrowLeft aria-hidden="true" />
               </Link>
             </Button>
-          ) : null}
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-mono text-xl font-semibold">{receipt.receiptCode}</h1>
+                <InboundStatusBadge status={receipt.status} />
+              </div>
+              <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm">
+                Yêu cầu nhập kho {receipt.inboundRequestCode} · {receipt.warehouseName}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ReceiptHistorySheet events={receipt.history} receiptCode={receipt.receiptCode} />
+            {allowedActions.includes('Update') ? (
+              <Button type="button" variant="outline" disabled={isPending} onClick={onUpdate}>
+                <Pencil aria-hidden="true" />
+                Chỉnh sửa
+              </Button>
+            ) : null}
+            {allowedActions.includes('Submit') ? (
+              <Button type="button" onClick={() => setConfirmationAction('Submit')}>
+                <Send aria-hidden="true" />
+                Gửi duyệt
+              </Button>
+            ) : null}
+            {allowedActions.includes('Reject') ? (
+              <Button type="button" variant="outline" onClick={() => setIsRejectOpen(true)}>
+                <Undo2 aria-hidden="true" />
+                Trả sửa
+              </Button>
+            ) : null}
+            {allowedActions.includes('Approve') ? (
+              <Button type="button" onClick={() => setConfirmationAction('Approve')}>
+                <Check aria-hidden="true" />
+                Phê duyệt
+              </Button>
+            ) : null}
+            {allowedActions.includes('AssignPutAway') && onAssignPutAway ? (
+              <Button
+                type="button"
+                variant={receipt.putAwayAssignedTo ? 'outline' : 'default'}
+                onClick={onAssignPutAway}
+              >
+                {receipt.putAwayAssignedTo ? (
+                  <UserRoundCog aria-hidden="true" />
+                ) : (
+                  <UserCheck aria-hidden="true" />
+                )}
+                {receipt.putAwayAssignedTo ? 'Giao lại cất hàng' : 'Giao việc cất hàng'}
+              </Button>
+            ) : null}
+            {allowedActions.includes('PutAway') ? (
+              <Button asChild>
+                <Link href={APP_ROUTES.inboundPutawayDetail(receipt.id) as Route}>
+                  <PackageCheck aria-hidden="true" />
+                  Cất hàng
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
       </header>
-      <section className="bg-card border">
-        <div className="border-b p-4">
-          <h2 className="text-sm font-semibold">Tổng quan phiếu nhận hàng</h2>
-        </div>
-        <dl className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-4">
-          <Metadata label="Yêu cầu nhập kho" value={receipt.inboundRequestCode} />
-          <Metadata label="Kho nhận" value={receipt.warehouseName} />
-          <Metadata
-            label="Người ghi nhận"
-            value={receipt.receivingAssignedToName ?? receipt.createdByName}
-          />
-          <Metadata label="Ngày tạo" value={formatOperationalDate(receipt.createdAt)} />
-          {receipt.status === 'Approved' || receipt.status === 'Completed' ? (
-            <Metadata label="Người cất hàng" value={receipt.putAwayAssignedToName ?? 'Chưa giao'} />
-          ) : null}
-          {receipt.approvedByName ? (
-            <Metadata label="Người duyệt" value={receipt.approvedByName} />
-          ) : null}
-        </dl>
-        {receipt.rejectionReason ? (
-          <div className="border-t p-4">
-            <p className="text-destructive text-xs font-medium">Yêu cầu chỉnh sửa</p>
-            <p className="mt-1 text-xs">{receipt.rejectionReason}</p>
-          </div>
-        ) : null}
-      </section>
-      <section className="bg-card border">
-        <div className="border-b p-4">
-          <h2 className="text-sm font-semibold">Hàng hóa thực nhận</h2>
-          <p className="text-muted-foreground text-xs">
-            Số lượng hỏng không được đưa vào cất hàng.
-          </p>
-        </div>
-        <div className="hidden overflow-x-auto md:block">
-          <Table className="min-w-[820px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sản phẩm</TableHead>
-                <TableHead className="text-right">Theo PO</TableHead>
-                <TableHead className="text-right">Thực nhận</TableHead>
-                <TableHead className="text-right">Hỏng</TableHead>
-                <TableHead className="text-right">Khả dụng</TableHead>
-                <TableHead className="text-right">Còn cất</TableHead>
-                <TableHead>Lô hàng</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {receipt.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <p className="font-medium">{item.productName}</p>
-                    <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
-                    {item.exceptionReason ? (
-                      <p className="text-destructive mt-1 text-xs">{item.exceptionReason}</p>
-                    ) : null}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(item.orderedQuantity)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(item.receivedQuantity)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(item.damagedQuantity)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(item.usableQuantity)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatQuantity(item.remainingPutAwayQuantity)}
-                  </TableCell>
-                  <TableCell>
-                    {item.lotNumber ? (
-                      <div className="text-xs">
-                        <p className="font-mono font-medium">{item.lotNumber}</p>
-                        <p className="text-muted-foreground">
-                          SX {item.manufacturedDate ?? '—'} · HSD {item.expiryDate ?? '—'}
-                        </p>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">Theo số lượng</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="divide-y md:hidden">
-          {receipt.items.map((item) => (
-            <div key={item.id} className="p-4">
-              <p className="font-medium">{item.productName}</p>
-              <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
-              {item.lotNumber ? (
-                <p className="mt-1 font-mono text-xs">Lô {item.lotNumber}</p>
-              ) : null}
-              <dl className="mt-3 grid grid-cols-3 gap-3">
-                <Metadata label="Nhận" value={formatQuantity(item.receivedQuantity)} />
-                <Metadata label="Hỏng" value={formatQuantity(item.damagedQuantity)} />
-                <Metadata label="Còn cất" value={formatQuantity(item.remainingPutAwayQuantity)} />
-              </dl>
-              {item.exceptionReason ? (
-                <p className="text-destructive mt-2 text-xs">{item.exceptionReason}</p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </section>
-      {receipt.items.some((item) => item.putAwayDetails.length > 0) ? (
-        <section className="bg-card border">
-          <div className="border-b p-4">
-            <h2 className="text-sm font-semibold">Chi tiết cất hàng</h2>
-            <p className="text-muted-foreground text-xs">
-              Mỗi dòng thể hiện vị trí, lô và biến động tồn kho đã phát sinh.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <Table className="min-w-[920px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Sản phẩm</TableHead>
-                  <TableHead>Vị trí</TableHead>
-                  <TableHead>Lô</TableHead>
-                  <TableHead>Chất lượng</TableHead>
-                  <TableHead className="text-right">Số lượng</TableHead>
-                  <TableHead>Người thực hiện</TableHead>
-                  <TableHead>Thời điểm</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {receipt.items.flatMap((item) =>
-                  item.putAwayDetails.map((detail) => (
-                    <TableRow key={detail.id}>
-                      <TableCell>
-                        <p className="font-medium">{item.productName}</p>
-                        <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
-                      </TableCell>
-                      <TableCell className="font-mono">{detail.slotCode}</TableCell>
-                      <TableCell className="font-mono">{detail.lotNumber ?? '—'}</TableCell>
-                      <TableCell>{detail.qualityStatus}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatQuantity(detail.quantity)}
-                      </TableCell>
-                      <TableCell>{detail.performedByName}</TableCell>
-                      <TableCell>{formatOperationalDate(detail.putAwayAt)}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </section>
-      ) : null}
-      <section className="bg-card border p-4">
-        <h2 className="mb-4 text-sm font-semibold">Lịch sử xử lý</h2>
-        <LifecycleTimeline
-          events={receipt.history}
-          actionLabels={{
-            Approve: 'Phê duyệt phiếu nhận hàng',
-            AssignPutAwayTask: 'Phân công nhiệm vụ cất hàng',
-            CancelPutAwayRemaining: 'Hủy phần cất hàng còn lại',
-            CompletePutAwayCancellationReconciliation: 'Hoàn tất đối soát hủy cất hàng',
-            Create: 'Tạo phiếu nhận hàng',
-            PauseForPutAwayReconciliation: 'Tạm dừng để đối soát cất hàng',
-            PauseWarehouseTask: 'Tạm dừng nhiệm vụ cất hàng',
-            PutAway: 'Cất hàng',
-            ReassignPutAwayTask: 'Phân công lại nhiệm vụ cất hàng',
-            Reject: 'Trả phiếu nhận hàng để chỉnh sửa',
-            ReturnWarehouseTask: 'Trả nhiệm vụ cất hàng về hàng đợi',
-            StartWarehouseTask: 'Bắt đầu nhiệm vụ cất hàng',
-            Submit: 'Gửi phiếu nhận hàng duyệt',
-            Update: 'Cập nhật phiếu nhận hàng',
-          }}
-        />
-      </section>
-      <AlertDialog
-        open={Boolean(confirmationAction)}
-        onOpenChange={(open) => {
-          if (!open) setConfirmationAction(null)
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmationAction === 'Approve'
-                ? 'Phê duyệt phiếu nhận hàng?'
-                : 'Gửi phiếu nhận hàng để duyệt?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmationAction === 'Approve'
-                ? 'Số lượng nhận sẽ được ghi nhận vào yêu cầu nhập kho và chuyển sang chờ cất hàng.'
-                : 'Phiếu sẽ được khóa chỉnh sửa trong lúc chờ quản lý duyệt.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isPending}
-              onClick={(event) => {
-                event.preventDefault()
-                void confirm()
-              }}
-            >
-              Xác nhận
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Trả sửa phiếu nhận hàng</DialogTitle>
-            <DialogDescription>
-              Ghi rõ số lượng hoặc tình trạng hàng cần kiểm tra lại.
-            </DialogDescription>
-          </DialogHeader>
-          <Field data-invalid={Boolean(reasonError)}>
-            <FieldLabel htmlFor="receipt-rejection-reason">Lý do</FieldLabel>
-            <Textarea
-              id="receipt-rejection-reason"
-              value={reason}
-              maxLength={500}
-              aria-invalid={Boolean(reasonError)}
-              onChange={(event) => {
-                setReason(event.target.value)
-                setReasonError('')
-              }}
-            />
-            <FieldError>{reasonError}</FieldError>
-          </Field>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => setIsRejectOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={isPending}
-              onClick={() => void reject()}
-            >
-              Trả sửa phiếu
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
 
-function Metadata({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="mt-1 truncate text-sm font-medium">{value}</dd>
+      <div className="mx-auto flex min-h-0 w-full max-w-[1180px] flex-1 flex-col gap-4 px-4 py-4 lg:px-8">
+        <ReceiptOverview receipt={receipt} />
+
+        <Tabs defaultValue="items" className="flex min-h-0 flex-1 flex-col">
+          <TabsList variant="line" className="shrink-0">
+            <TabsTrigger value="items">
+              Hàng hóa thực nhận
+              <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1.5 py-0.5 text-xs tabular-nums">
+                {receipt.items.length}
+              </span>
+            </TabsTrigger>
+            {hasPutAwayDetails ? (
+              <TabsTrigger value="putaway">Chi tiết cất hàng</TabsTrigger>
+            ) : null}
+          </TabsList>
+
+          <div className="bg-card min-h-0 flex-1 border">
+            <div className="border-b px-4 py-3">
+              <p className="text-muted-foreground text-xs">
+                Số lượng hỏng không được đưa vào cất hàng.
+              </p>
+            </div>
+            <TabsContent
+              value="items"
+              className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+            >
+              <ReceiptItemsTable items={receipt.items} />
+            </TabsContent>
+            {hasPutAwayDetails ? (
+              <TabsContent
+                value="putaway"
+                className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+              >
+                <ReceiptPutAwayTable items={receipt.items} />
+              </TabsContent>
+            ) : null}
+          </div>
+        </Tabs>
+      </div>
+
+      <ReceiptActionDialogs
+        confirmationAction={confirmationAction}
+        isRejectOpen={isRejectOpen}
+        isPending={isPending}
+        onConfirm={confirm}
+        onCancelConfirmation={() => setConfirmationAction(null)}
+        onReject={onReject}
+        onRejectOpenChange={setIsRejectOpen}
+      />
     </div>
   )
 }

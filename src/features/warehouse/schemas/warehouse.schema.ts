@@ -42,6 +42,15 @@ const physicalDetailsShape = {
 
 type PhysicalDetailsValues = z.infer<z.ZodObject<typeof physicalDetailsShape>>
 
+function normalizeOptionalDimensions<T extends PhysicalDetailsValues>(values: T): T {
+  return {
+    ...values,
+    physicalLengthUnit: values.physicalLength === null ? null : values.physicalLengthUnit,
+    physicalWidthUnit: values.physicalWidth === null ? null : values.physicalWidthUnit,
+    physicalHeightUnit: values.physicalHeight === null ? null : values.physicalHeightUnit,
+  }
+}
+
 function validatePhysicalDetails(values: PhysicalDetailsValues, context: z.RefinementCtx) {
   const pairs = [
     ['storageCapacity', 'storageCapacityUnit', 'Dung lượng lưu trữ'],
@@ -83,12 +92,61 @@ export const zoneSchema = z
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     ...physicalDetailsShape,
   })
+  .transform(normalizeOptionalDimensions)
   .superRefine(validatePhysicalDetails)
 
 const optionalCapacitySchema = z
   .number({ error: 'Giới hạn số lượng phải là số.' })
   .positive('Giới hạn số lượng phải lớn hơn 0.')
+  .lt(1_000_000_000_000, 'Sức chứa tối đa phải nhỏ hơn 1.000.000.000.000.')
+  .refine((value) => {
+    const [coefficient = '', exponent = '0'] = value.toString().split('e')
+    return (coefficient.split('.')[1]?.length ?? 0) - Number(exponent) <= 6
+  }, 'Sức chứa tối đa có tối đa 6 chữ số thập phân.')
   .nullable()
+
+const capacityShape = {
+  capacityType: z.enum(['None', 'Quantity']),
+  capacity: optionalCapacitySchema,
+  // Tenant reference IDs are .NET GUIDs, not necessarily RFC-versioned UUIDs.
+  capacityUnitId: z
+    .guid('Đơn vị sức chứa không hợp lệ.')
+    .refine((id) => id !== '00000000-0000-0000-0000-000000000000', 'Đơn vị sức chứa không hợp lệ.')
+    .nullable(),
+}
+
+function validateCapacity(
+  values: z.infer<z.ZodObject<typeof capacityShape>>,
+  context: z.RefinementCtx
+) {
+  if (values.capacityType === 'Quantity') {
+    if (values.capacity === null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacity'],
+        message: 'Vui lòng nhập sức chứa tối đa.',
+      })
+    if (values.capacityUnitId === null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacityUnitId'],
+        message: 'Vui lòng chọn đơn vị sức chứa.',
+      })
+  } else {
+    if (values.capacity !== null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacity'],
+        message: 'Không nhập sức chứa khi không giới hạn.',
+      })
+    if (values.capacityUnitId !== null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacityUnitId'],
+        message: 'Không chọn đơn vị khi không giới hạn.',
+      })
+  }
+}
 
 export const rackSchema = z
   .object({
@@ -97,17 +155,19 @@ export const rackSchema = z
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     storageMode: z.enum(['RackLevel', 'SlotLevel']),
     allowsMixedProducts: z.boolean(),
-    capacity: optionalCapacitySchema,
+    ...capacityShape,
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
   })
+  .transform(normalizeOptionalDimensions)
   .superRefine((values, context) => {
     validatePhysicalDetails(values, context)
-    if (values.allowsMixedProducts && values.capacity !== null) {
+    validateCapacity(values, context)
+    if (values.storageMode === 'SlotLevel' && values.capacityType === 'Quantity') {
       context.addIssue({
         code: 'custom',
         path: ['capacity'],
-        message: 'Không áp dụng giới hạn chung khi kệ cho phép nhiều sản phẩm.',
+        message: 'Sức chứa được cấu hình tại từng vị trí lưu trữ, không phải kệ chứa vị trí.',
       })
     }
   })
@@ -130,19 +190,14 @@ export const slotSchema = z
       .max(255, 'Tên vị trí tối đa 255 ký tự.'),
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     allowsMixedProducts: z.boolean(),
-    capacity: optionalCapacitySchema,
+    ...capacityShape,
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
   })
+  .transform(normalizeOptionalDimensions)
   .superRefine((values, context) => {
     validatePhysicalDetails(values, context)
-    if (values.allowsMixedProducts && values.capacity !== null) {
-      context.addIssue({
-        code: 'custom',
-        path: ['capacity'],
-        message: 'Không áp dụng giới hạn chung khi vị trí cho phép nhiều sản phẩm.',
-      })
-    }
+    validateCapacity(values, context)
   })
 
 export type ZoneFormValues = z.infer<typeof zoneSchema>

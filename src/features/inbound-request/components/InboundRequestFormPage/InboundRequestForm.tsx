@@ -39,7 +39,6 @@ import { LookupCombobox } from './LookupCombobox'
 
 interface InboundRequestFormProps {
   readonly title: string
-  readonly description: string
   readonly autoApprove: boolean
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly fields: readonly FieldArrayWithId<InboundRequestFormValues, 'lines', 'id'>[]
@@ -69,7 +68,6 @@ interface InboundRequestFormProps {
 
 export function InboundRequestForm({
   title,
-  description,
   autoApprove,
   form,
   fields,
@@ -107,34 +105,21 @@ export function InboundRequestForm({
 
   return (
     <div className="flex w-full flex-col gap-5">
-      <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Quay lại"
-            onClick={onCancel}
-          >
-            <ArrowLeft aria-hidden="true" />
-          </Button>
-          <div>
-            <p className="text-primary text-xs font-medium">Nhập kho / Yêu cầu</p>
-            <h1 className="text-xl font-semibold">{title}</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">{description}</p>
-            {autoApprove ? (
-              <p className="text-primary mt-1 text-xs">
-                Yêu cầu do Chủ doanh nghiệp tạo được duyệt ngay.
-              </p>
-            ) : null}
-          </div>
+      <header className="flex shrink-0 items-center gap-3 border-b pb-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Quay lại"
+          onClick={onCancel}
+        >
+          <ArrowLeft aria-hidden="true" />
+        </Button>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="text-muted-foreground shrink-0 text-xs">Nhập kho / Yêu cầu</span>
+          <span className="text-muted-foreground text-xs">›</span>
+          <h1 className="truncate text-sm font-semibold">{title}</h1>
         </div>
-        <FormActions
-          isPending={isPending}
-          autoApprove={autoApprove}
-          onSaveDraft={onSaveDraft}
-          onSaveAndSubmit={onSaveAndSubmit}
-        />
       </header>
 
       <form
@@ -274,24 +259,36 @@ export function InboundRequestForm({
                   </Button>
                 </div>
               ) : null}
-              <div className="divide-y border">
-                {fields.map((field, index) => (
-                  <InboundRequestLineRow
-                    key={field.id}
-                    field={field}
-                    index={index}
-                    lineCount={fields.length}
-                    form={form}
-                    product={productsById[lines[index]?.productId ?? '']}
-                    options={productOptions}
-                    conversions={conversionsByProductId[lines[index]?.productId ?? ''] ?? []}
-                    units={units}
-                    isProductSearchLoading={isProductSearchLoading}
-                    isUnitLoading={isUnitLoading}
-                    onProductSearchChange={onProductSearchChange}
-                    onRemove={onRemoveLine}
-                  />
-                ))}
+              <div className="border">
+                <div className="bg-card sticky top-0 z-10 hidden border-b px-3 py-2 lg:grid lg:grid-cols-[28px_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_32px] lg:items-center lg:gap-3">
+                  <span className="text-muted-foreground text-center text-xs font-medium">#</span>
+                  <span className="text-muted-foreground text-xs font-medium">Sản phẩm</span>
+                  <span className="text-muted-foreground text-xs font-medium">Đơn vị tính</span>
+                  <span className="text-muted-foreground text-xs font-medium">Số lượng</span>
+                  <span className="text-muted-foreground text-xs font-medium">
+                    Quy đổi về đơn vị cơ sở
+                  </span>
+                  <span />
+                </div>
+                <div className="divide-y overflow-y-auto lg:max-h-96">
+                  {fields.map((field, index) => (
+                    <InboundRequestLineRow
+                      key={field.id}
+                      field={field}
+                      index={index}
+                      lineCount={fields.length}
+                      form={form}
+                      product={productsById[lines[index]?.productId ?? '']}
+                      options={productOptions}
+                      conversions={conversionsByProductId[lines[index]?.productId ?? ''] ?? []}
+                      units={units}
+                      isProductSearchLoading={isProductSearchLoading}
+                      isUnitLoading={isUnitLoading}
+                      onProductSearchChange={onProductSearchChange}
+                      onRemove={onRemoveLine}
+                    />
+                  ))}
+                </div>
               </div>
             </FieldSet>
           </CardContent>
