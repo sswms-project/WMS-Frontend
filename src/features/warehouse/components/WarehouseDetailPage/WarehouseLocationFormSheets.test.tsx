@@ -161,11 +161,18 @@ describe('location capacity fields', () => {
       const bodyRow = rows[1]
       if (!bodyRow) throw new Error('Missing capacity policy row')
       expect(within(bodyRow).getAllByRole('cell')).toHaveLength(3)
+      expect(
+        screen.getByText(/Bật để chứa nhiều mã sản phẩm trong cùng vị trí/)
+      ).toBeInTheDocument()
       expect(within(bodyRow).getByLabelText('Loại sức chứa')).toBeInTheDocument()
       if (capacityType === 'Quantity') {
+        expect(screen.getByText(/đang có 8 thùng → còn nhận tối đa 12 thùng/)).toBeInTheDocument()
         expect(within(bodyRow).getByLabelText('Sức chứa tối đa')).toHaveValue(20)
         expect(within(bodyRow).getByLabelText('Đơn vị sức chứa')).toBeInTheDocument()
       } else {
+        expect(
+          screen.getByText(/hệ thống không kiểm tra sức chứa tối đa khi cất hàng/)
+        ).toBeInTheDocument()
         expect(within(bodyRow).queryByRole('spinbutton')).not.toBeInTheDocument()
         expect(within(bodyRow).getByLabelText('Không áp dụng sức chứa tối đa')).toBeInTheDocument()
         expect(within(bodyRow).getByLabelText('Không áp dụng đơn vị sức chứa')).toBeInTheDocument()

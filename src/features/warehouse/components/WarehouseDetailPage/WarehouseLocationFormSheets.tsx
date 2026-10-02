@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircle, Save } from 'lucide-react'
+import { Info, LoaderCircle, Save } from 'lucide-react'
 import { useRef, useState } from 'react'
 import {
   AlertDialog,
@@ -320,6 +320,14 @@ export function RackFormSheet({
                       Cho phép nhiều sản phẩm trong cùng kệ
                     </FieldLabel>
                   </Field>
+                  <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed md:col-span-2">
+                    <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    <p>
+                      Bật để chứa nhiều mã sản phẩm trong cùng kệ; tắt để chỉ chứa một mã.
+                      <br />
+                      VD: Bật → nước ngọt và bánh có thể chung kệ, nhưng vẫn phải đủ sức chứa.
+                    </p>
+                  </div>
                 </>
               ) : null}
               <AlertDialog open={confirmSlotMode} onOpenChange={setConfirmSlotMode}>
@@ -460,6 +468,14 @@ export function SlotFormSheet({
                   Cho phép nhiều sản phẩm trong cùng vị trí
                 </FieldLabel>
               </Field>
+              <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed md:col-span-2">
+                <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <p>
+                  Bật để chứa nhiều mã sản phẩm trong cùng vị trí; tắt để chỉ chứa một mã.
+                  <br />
+                  VD: Bật → nước ngọt và bánh có thể chung vị trí, nhưng vẫn phải đủ sức chứa.
+                </p>
+              </div>
               <PhysicalDetailsFields>
                 {!capacityProps.location?.isOutboundStaging ? (
                   <StorageCapacityFields {...capacityProps} />
