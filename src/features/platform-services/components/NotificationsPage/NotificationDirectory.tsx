@@ -29,6 +29,7 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
         </Button>
       </div>
       <NotificationFilters
+        key={props.filters.search}
         filters={props.filters}
         isFetching={props.isFetching}
         onApply={props.onApplyFilters}

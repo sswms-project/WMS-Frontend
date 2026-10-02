@@ -51,6 +51,7 @@ import type {
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import { DesignerToolbox } from './DesignerToolbox'
+import { StorageCapacitySummary } from '../WarehouseDetailPage'
 import type { WarehouseCanvasHandle } from './WarehouseCanvas'
 
 const WarehouseCanvas = dynamic(
@@ -157,6 +158,14 @@ export function WarehouseLayoutViewerWorkspace({
           <span className="min-w-0">
             Tên vị trí: <strong className="break-words">{selectedLocation.name}</strong>
           </span>
+          {selectedLocation.capacity ? (
+            <StorageCapacitySummary location={selectedLocation.capacity} />
+          ) : null}
+          {selectedLocation.pending && canConfigure && onEdit ? (
+            <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+              Cấu hình sức chứa
+            </Button>
+          ) : null}
         </div>
       ) : null}
       <OperationalListPanel aria-label="Danh sách hàng hóa tại vị trí" className="border-0">
@@ -397,12 +406,28 @@ function getSelectedLocation(
   if (!selection || selection.kind === 'decoration') return null
   if (selection.kind === 'zone') {
     const zone = scene.zones.find((item) => item.id === selection.id)
-    return zone ? { code: zone.zoneCode, name: zone.zoneName } : null
+    return zone
+      ? { code: zone.zoneCode, name: zone.zoneName, capacity: null, pending: false }
+      : null
   }
   if (selection.kind === 'rack') {
     const rack = scene.racks.find((item) => item.id === selection.id)
-    return rack ? { code: rack.rackCode, name: rack.rackName } : null
+    return rack
+      ? {
+          code: rack.rackCode,
+          name: rack.rackName,
+          capacity: rack.storageMode === 'RackLevel' ? rack : null,
+          pending: rack.requiresCapacityConfiguration,
+        }
+      : null
   }
   const slot = scene.slots.find((item) => item.id === selection.id)
-  return slot ? { code: slot.slotCode, name: slot.slotName } : null
+  return slot
+    ? {
+        code: slot.slotCode,
+        name: slot.slotName,
+        capacity: slot,
+        pending: slot.requiresCapacityConfiguration,
+      }
+    : null
 }
