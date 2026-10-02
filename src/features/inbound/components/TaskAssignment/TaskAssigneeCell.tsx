@@ -1,5 +1,6 @@
 import { CircleDashed, UserRound } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { formatOperationalDateTime } from '@/features/inbound-request/utils/inbound-request-format'
 import type { WarehouseTaskExecutionStatus } from '../../types/inbound.types'
 
 const EXECUTION_LABELS: Record<WarehouseTaskExecutionStatus, string> = {
@@ -11,12 +12,14 @@ const EXECUTION_LABELS: Record<WarehouseTaskExecutionStatus, string> = {
 
 interface TaskAssigneeCellProps {
   readonly assigneeName: string | null
+  readonly assignedAt?: string | null
   readonly executionStatus?: WarehouseTaskExecutionStatus
   readonly isCurrentUser?: boolean
 }
 
 export function TaskAssigneeCell({
   assigneeName,
+  assignedAt,
   executionStatus,
   isCurrentUser = false,
 }: TaskAssigneeCellProps) {
@@ -37,6 +40,11 @@ export function TaskAssigneeCell({
           {isCurrentUser ? `${assigneeName} (bạn)` : assigneeName}
         </span>
       </span>
+      {assignedAt && (
+        <span className="text-muted-foreground text-xs">
+          Giao {formatOperationalDateTime(assignedAt)}
+        </span>
+      )}
       {executionStatus && executionStatus !== 'Queued' && (
         <Badge
           variant={executionStatus === 'InProgress' ? 'default' : 'secondary'}
