@@ -80,10 +80,12 @@ export function ZoneFormSheet({
   const form = useForm<ZoneFormValues>({ resolver: zodResolver(zoneSchema), defaultValues })
   const { errors } = form.formState
 
+  const [isClosing, setIsClosing] = useState(false)
+
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && (isPending || form.formState.isSubmitting)) return
-    if (!nextOpen) form.reset(defaultValues)
-    onOpenChange(nextOpen)
+    if (!nextOpen) setIsClosing(true)
+    else onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: ZoneFormValues) {
@@ -91,8 +93,16 @@ export function ZoneFormSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className={LOCATION_FORM_SHEET_CLASS}>
+    <Sheet open={open && !isClosing} onOpenChange={handleOpenChange}>
+      <SheetContent
+        className={LOCATION_FORM_SHEET_CLASS}
+        onCloseAutoFocus={() => {
+          if (isClosing) {
+            form.reset(defaultValues)
+            onOpenChange(false)
+          }
+        }}
+      >
         <SheetHeader className={LOCATION_FORM_HEADER_CLASS}>
           <SheetTitle className="text-base font-semibold">
             {mode === 'create' ? 'Thêm khu vực' : 'Chỉnh sửa khu vực'}
@@ -169,6 +179,7 @@ export function RackFormSheet({
   const storageMode = useWatch({ control: form.control, name: 'storageMode' })
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
   const [confirmSlotMode, setConfirmSlotMode] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const storageModeRef = useRef<HTMLDivElement>(null)
 
   function applySlotMode() {
@@ -182,8 +193,8 @@ export function RackFormSheet({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && (isPending || form.formState.isSubmitting)) return
-    if (!nextOpen) form.reset(defaultValues)
-    onOpenChange(nextOpen)
+    if (!nextOpen) setIsClosing(true)
+    else onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: RackFormValues) {
@@ -192,8 +203,16 @@ export function RackFormSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className={LOCATION_FORM_SHEET_CLASS}>
+    <Sheet open={open && !isClosing} onOpenChange={handleOpenChange}>
+      <SheetContent
+        className={LOCATION_FORM_SHEET_CLASS}
+        onCloseAutoFocus={() => {
+          if (isClosing) {
+            form.reset(defaultValues)
+            onOpenChange(false)
+          }
+        }}
+      >
         <SheetHeader className={LOCATION_FORM_HEADER_CLASS}>
           <SheetTitle className="text-base font-semibold">
             {mode === 'create' ? 'Thêm kệ hàng' : 'Chỉnh sửa kệ hàng'}
@@ -356,10 +375,11 @@ export function SlotFormSheet({
   const { errors } = form.formState
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
 
+  const [isClosing, setIsClosing] = useState(false)
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && (isPending || form.formState.isSubmitting)) return
-    if (!nextOpen) form.reset(defaultValues)
-    onOpenChange(nextOpen)
+    if (!nextOpen) setIsClosing(true)
+    else onOpenChange(nextOpen)
   }
 
   async function handleSubmit(values: SlotFormValues) {
@@ -368,8 +388,16 @@ export function SlotFormSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className={LOCATION_FORM_SHEET_CLASS}>
+    <Sheet open={open && !isClosing} onOpenChange={handleOpenChange}>
+      <SheetContent
+        className={LOCATION_FORM_SHEET_CLASS}
+        onCloseAutoFocus={() => {
+          if (isClosing) {
+            form.reset(defaultValues)
+            onOpenChange(false)
+          }
+        }}
+      >
         <SheetHeader className={LOCATION_FORM_HEADER_CLASS}>
           <SheetTitle className="text-base font-semibold">
             {mode === 'create' ? 'Thêm vị trí lưu trữ' : 'Chỉnh sửa vị trí'}

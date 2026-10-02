@@ -99,6 +99,38 @@ describe('WarehouseLocationFormSheets', () => {
 })
 
 describe('location capacity fields', () => {
+  it('submits optional blank dimensions as null even after selecting their units', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(true)
+    render(
+      <SlotFormSheet
+        open
+        mode="create"
+        isPending={false}
+        {...capacityProps}
+        defaultValues={{
+          ...slotValues,
+          physicalLengthUnit: 'Meter',
+          physicalWidthUnit: 'Kilometer',
+          physicalHeightUnit: 'Centimeter',
+        }}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          physicalLength: null,
+          physicalLengthUnit: null,
+          physicalWidth: null,
+          physicalWidthUnit: null,
+          physicalHeight: null,
+          physicalHeightUnit: null,
+        })
+      )
+    )
+  })
   it.each(['Quantity', 'None'] as const)(
     'keeps the %s capacity policy in one three-column table row',
     (capacityType) => {
@@ -214,7 +246,7 @@ describe('location capacity fields', () => {
     )
     expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-    expect(onOpenChange).toHaveBeenCalledWith(false)
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
   })
   it('confirms discarding rack capacity on mode change without saving automatically', async () => {
     const onSubmit = vi.fn().mockResolvedValue(true)
@@ -415,7 +447,7 @@ describe('location capacity fields', () => {
     expect(screen.queryByLabelText('Loại sức chứa')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
   })
-  it('shows the legacy warning and submits explicit nulls for None while preserving hidden mass data', async () => {
+  it('omits the legacy warning and submits explicit nulls for None while preserving hidden mass data', async () => {
     const onSubmit = vi.fn().mockResolvedValue(true)
     render(
       <SlotFormSheet
@@ -436,7 +468,7 @@ describe('location capacity fields', () => {
         onSubmit={onSubmit}
       />
     )
-    expect(screen.getByText(/Cần cấu hình đơn vị sức chứa trước/)).toBeInTheDocument()
+    expect(screen.queryByText(/Cần cấu hình đơn vị sức chứa/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     await waitFor(() =>

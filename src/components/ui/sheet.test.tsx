@@ -21,6 +21,7 @@ describe('shared Sheet animation', () => {
         `data-[side=${side}]:data-[state=open]:slide-in-from-${side}`,
         `data-[side=${side}]:data-[state=closed]:slide-out-to-${side}`,
         'animation-duration-300',
+        'data-[state=closed]:animation-duration-180',
         'motion-reduce:animate-none'
       )
       expect(document.querySelector('[data-slot="sheet-overlay"]')).toHaveClass(

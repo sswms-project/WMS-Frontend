@@ -78,15 +78,9 @@ export function StorageCapacityFields({
   return (
     <FieldSet className="min-w-0">
       <FieldLegend variant="label">Chính sách sức chứa</FieldLegend>
-      {location?.requiresCapacityConfiguration ? (
-        <Alert>
-          <AlertDescription>
-            Cần cấu hình đơn vị sức chứa trước khi cất thêm hàng. Chọn theo số lượng và đơn vị phù
-            hợp.
-          </AlertDescription>
-        </Alert>
+      {location && !location.requiresCapacityConfiguration ? (
+        <StorageCapacitySummary location={location} />
       ) : null}
-      {location ? <StorageCapacitySummary location={location} /> : null}
       {locked ? (
         <p className="text-muted-foreground text-xs">
           Vị trí đang chứa hàng: không thể đổi loại hoặc đơn vị sức chứa.

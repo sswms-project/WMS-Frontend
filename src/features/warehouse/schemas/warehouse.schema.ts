@@ -42,6 +42,15 @@ const physicalDetailsShape = {
 
 type PhysicalDetailsValues = z.infer<z.ZodObject<typeof physicalDetailsShape>>
 
+function normalizeOptionalDimensions<T extends PhysicalDetailsValues>(values: T): T {
+  return {
+    ...values,
+    physicalLengthUnit: values.physicalLength === null ? null : values.physicalLengthUnit,
+    physicalWidthUnit: values.physicalWidth === null ? null : values.physicalWidthUnit,
+    physicalHeightUnit: values.physicalHeight === null ? null : values.physicalHeightUnit,
+  }
+}
+
 function validatePhysicalDetails(values: PhysicalDetailsValues, context: z.RefinementCtx) {
   const pairs = [
     ['storageCapacity', 'storageCapacityUnit', 'Dung lượng lưu trữ'],
@@ -83,6 +92,7 @@ export const zoneSchema = z
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     ...physicalDetailsShape,
   })
+  .transform(normalizeOptionalDimensions)
   .superRefine(validatePhysicalDetails)
 
 const optionalCapacitySchema = z
@@ -144,6 +154,7 @@ export const rackSchema = z
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
   })
+  .transform(normalizeOptionalDimensions)
   .superRefine((values, context) => {
     validatePhysicalDetails(values, context)
     validateCapacity(values, context)
@@ -178,6 +189,7 @@ export const slotSchema = z
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
   })
+  .transform(normalizeOptionalDimensions)
   .superRefine((values, context) => {
     validatePhysicalDetails(values, context)
     validateCapacity(values, context)

@@ -35,18 +35,14 @@ describe('warehouse location physical details', () => {
     }
   })
 
-  it('rejects a unit without its physical value', () => {
+  it('ignores a selected dimension unit without its optional physical value', () => {
     const result = zoneSchema.safeParse({
       ...validZone,
       physicalHeight: null,
     })
 
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues).toContainEqual(
-        expect.objectContaining({ path: ['physicalHeight'] })
-      )
-    }
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.physicalHeightUnit).toBeNull()
   })
 })
 
@@ -67,6 +63,31 @@ const quantity = {
 }
 
 describe('quantity storage capacity contracts', () => {
+  it.each(['Kilometer', 'Meter', 'Decimeter', 'Centimeter'])(
+    'clears unused %s dimensions on rack and slot payloads',
+    (unit) => {
+      const dimensions = {
+        physicalLengthUnit: unit,
+        physicalWidthUnit: unit,
+        physicalHeightUnit: unit,
+      }
+      const results = [
+        slotSchema.parse({ ...slot, ...dimensions }),
+        rackSchema.parse({
+          ...slot,
+          ...dimensions,
+          rackCode: 'R',
+          rackName: 'Rack',
+          storageMode: 'RackLevel',
+        }),
+      ]
+      for (const result of results) {
+        expect(result.physicalLengthUnit).toBeNull()
+        expect(result.physicalWidthUnit).toBeNull()
+        expect(result.physicalHeightUnit).toBeNull()
+      }
+    }
+  )
   it('accepts seeded .NET GUID unit IDs on rack and slot forms', () => {
     const policy = { ...quantity, capacityUnitId: '09dcfa34-643a-b355-d8b0-45a0f0caadbf' }
     expect(slotSchema.safeParse({ ...slot, ...policy }).success).toBe(true)

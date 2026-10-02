@@ -32,6 +32,7 @@ function SheetOverlay({
       data-slot="sheet-overlay"
       className={cn(
         'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 animation-duration-300 fixed inset-0 z-50 bg-black/10 text-xs/relaxed supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none',
+        'data-[state=closed]:animation-duration-180',
         className
       )}
       {...props}
@@ -57,6 +58,7 @@ function SheetContent({
         data-side={side}
         className={cn(
           'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[side=bottom]:data-[state=open]:slide-in-from-bottom data-[side=left]:data-[state=open]:slide-in-from-left data-[side=right]:data-[state=open]:slide-in-from-right data-[side=top]:data-[state=open]:slide-in-from-top data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[side=bottom]:data-[state=closed]:slide-out-to-bottom data-[side=left]:data-[state=closed]:slide-out-to-left data-[side=right]:data-[state=closed]:slide-out-to-right data-[side=top]:data-[state=closed]:slide-out-to-top animation-duration-300 fixed z-50 flex flex-col bg-clip-padding text-xs/relaxed shadow-lg ease-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b motion-reduce:animate-none data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm',
+          'data-[state=closed]:animation-duration-180',
           className
         )}
         {...props}
