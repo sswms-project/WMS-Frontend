@@ -46,7 +46,11 @@ import type {
   AuditLogQuery,
   NotificationQuery,
 } from '@/features/platform-services/types/platform-services.types'
-import type { AdminSubscriptionPlanQuery, TenantQuery } from '@/features/admin/types/admin.types'
+import type {
+  AdminSubscriptionPlanQuery,
+  AnnouncementHistoryQuery,
+  TenantQuery,
+} from '@/features/admin/types/admin.types'
 import type { TenantUserPermissionSubjectQuery } from '@/features/access-control/types/tenant-access-control.types'
 
 export const queryKeys = {
@@ -56,6 +60,9 @@ export const queryKeys = {
     tenants: ['platform-admin', 'tenants'] as const,
     tenantList: (params: TenantQuery) => ['platform-admin', 'tenants', params] as const,
     tenantDetail: (tenantId: string) => ['platform-admin', 'tenants', tenantId] as const,
+    announcements: ['platform-admin', 'announcements'] as const,
+    announcementList: (params: AnnouncementHistoryQuery) =>
+      ['platform-admin', 'announcements', params] as const,
     plans: (params: AdminSubscriptionPlanQuery) => ['platform-admin', 'plans', params] as const,
   },
   notifications: {

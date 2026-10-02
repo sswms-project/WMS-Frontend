@@ -117,4 +117,6 @@ export const notificationActionRoutes: Record<string, NotificationActionRoute> =
   ChooseSubscriptionPlan: { to: () => APP_ROUTES.subscription },
   ViewSubscription: { to: () => APP_ROUTES.subscription },
   ViewSubscriptionPayments: { to: () => APP_ROUTES.subscriptionPayments },
+  ViewPlatformTenant: { to: APP_ROUTES.admin.tenantDetail, requiresId: true },
+  ViewPlatformTenants: { to: () => APP_ROUTES.admin.tenants },
 }
