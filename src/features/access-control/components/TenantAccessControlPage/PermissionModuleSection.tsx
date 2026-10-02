@@ -48,7 +48,7 @@ export function PermissionModuleSection({
         />
         <AccordionTrigger className="min-w-0 flex-1 py-3 hover:no-underline">
           <span className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
-            <span className="text-foreground min-w-0 truncate text-sm font-semibold">
+            <span className="text-foreground min-w-0 text-left text-sm font-semibold break-words whitespace-normal">
               {group.moduleDisplayName}
             </span>
             <span className="flex shrink-0 items-center gap-2">

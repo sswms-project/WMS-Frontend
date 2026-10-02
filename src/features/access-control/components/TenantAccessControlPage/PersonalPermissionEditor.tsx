@@ -66,9 +66,6 @@ export function PersonalPermissionEditor({
 }: PersonalPermissionEditorProps) {
   const [openModules, setOpenModules] = useState<string[]>([])
   const hasFilter = Boolean(searchText.trim()) || filter === 'customized'
-  const visibleOpenModules = hasFilter
-    ? groups.flatMap((category) => category.modules.map((module) => module.module))
-    : openModules
 
   return (
     <div className="border-border bg-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border">
@@ -130,7 +127,7 @@ export function PersonalPermissionEditor({
           selectedIds: draftIds,
           roleDefaultIds,
         }}
-        openModules={visibleOpenModules}
+        openModules={openModules}
         disabled={busy || !canManage}
         hasSearch={hasFilter}
         emptyTitle={filter === 'customized' ? 'Không có quyền tùy chỉnh' : undefined}
@@ -139,9 +136,7 @@ export function PersonalPermissionEditor({
             ? 'Nhân sự đang dùng đúng quyền mặc định theo vai trò trong phạm vi tìm kiếm.'
             : undefined
         }
-        onOpenModulesChange={(modules) => {
-          if (!hasFilter) setOpenModules(modules)
-        }}
+        onOpenModulesChange={setOpenModules}
         onTogglePermission={onTogglePermission}
         onToggleModule={onToggleModule}
       />
