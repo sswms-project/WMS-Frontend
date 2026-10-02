@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { RackFormSheet, SlotFormSheet, ZoneFormSheet } from './WarehouseLocationFormSheets'
 import { EMPTY_WAREHOUSE_PHYSICAL_DETAILS } from '../../utils/warehouse-physical-details'
@@ -99,6 +99,47 @@ describe('WarehouseLocationFormSheets', () => {
 })
 
 describe('location capacity fields', () => {
+  it.each(['Quantity', 'None'] as const)(
+    'keeps the %s capacity policy in one three-column table row',
+    (capacityType) => {
+      render(
+        <SlotFormSheet
+          open
+          mode="update"
+          isPending={false}
+          {...capacityProps}
+          defaultValues={{
+            ...slotValues,
+            capacityType,
+            capacity: capacityType === 'None' ? null : 20,
+            capacityUnitId: capacityType === 'None' ? null : unit.id,
+          }}
+          onOpenChange={vi.fn()}
+          onSubmit={vi.fn()}
+        />
+      )
+      const table = screen.getByRole('table', { name: 'Chính sách sức chứa' })
+      expect(
+        within(table)
+          .getAllByRole('columnheader')
+          .map((header) => header.textContent)
+      ).toEqual(['Loại sức chứa', 'Sức chứa tối đa', 'Đơn vị sức chứa'])
+      const rows = within(table).getAllByRole('row')
+      expect(rows).toHaveLength(2)
+      const bodyRow = rows[1]
+      if (!bodyRow) throw new Error('Missing capacity policy row')
+      expect(within(bodyRow).getAllByRole('cell')).toHaveLength(3)
+      expect(within(bodyRow).getByLabelText('Loại sức chứa')).toBeInTheDocument()
+      if (capacityType === 'Quantity') {
+        expect(within(bodyRow).getByLabelText('Sức chứa tối đa')).toHaveValue(20)
+        expect(within(bodyRow).getByLabelText('Đơn vị sức chứa')).toBeInTheDocument()
+      } else {
+        expect(within(bodyRow).queryByRole('spinbutton')).not.toBeInTheDocument()
+        expect(within(bodyRow).getByLabelText('Không áp dụng sức chứa tối đa')).toBeInTheDocument()
+        expect(within(bodyRow).getByLabelText('Không áp dụng đơn vị sức chứa')).toBeInTheDocument()
+      }
+    }
+  )
   it.each(['zone', 'rack', 'slot'] as const)(
     'blocks dismissal of a pending %s form',
     async (kind) => {

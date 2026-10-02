@@ -14,15 +14,16 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field'
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import {
   Select,
   SelectContent,
@@ -91,140 +92,191 @@ export function StorageCapacityFields({
           Vị trí đang chứa hàng: không thể đổi loại hoặc đơn vị sức chứa.
         </p>
       ) : null}
-      <FieldGroup className="grid gap-4 md:grid-cols-2">
-        <Field data-invalid={Boolean(errors.capacityType)} data-disabled={locked}>
-          <FieldLabel htmlFor="capacity-type">Loại sức chứa</FieldLabel>
-          <Select
-            value={capacityType}
-            disabled={locked}
-            onValueChange={(value) => {
-              if (value !== 'None' && value !== 'Quantity') return
-              if (value === 'None') {
-                if (capacityType === 'Quantity' && (capacity != null || capacityUnitId)) {
-                  setConfirmUnlimited(true)
-                  return
-                }
-                applyUnlimited()
-                return
-              }
-              form.setValue('capacityType', value, { shouldDirty: true, shouldValidate: true })
-            }}
-          >
-            <SelectTrigger
-              id="capacity-type"
-              ref={typeTriggerRef}
-              className="w-full"
-              aria-invalid={Boolean(errors.capacityType)}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="start" sideOffset={4}>
-              <SelectGroup>
-                <SelectItem value="None">Không giới hạn</SelectItem>
-                <SelectItem value="Quantity">Theo số lượng</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <FieldError errors={[errors.capacityType]} />
-        </Field>
-        {capacityType === 'Quantity' ? (
-          <>
-            <Field data-invalid={Boolean(errors.capacity)} className="min-w-0">
-              <FieldLabel htmlFor="capacity-value">Sức chứa tối đa</FieldLabel>
-              <Input
-                id="capacity-value"
-                {...form.register('capacity', {
-                  setValueAs: (value: string | number | null) =>
-                    value === '' || value === null ? null : Number(value),
-                })}
-                autoComplete="off"
-                type="number"
-                inputMode="decimal"
-                min="0.000001"
-                step="0.000001"
-                value={capacity ?? ''}
-                aria-invalid={Boolean(errors.capacity)}
-                aria-describedby={errors.capacity ? 'capacity-value-error' : undefined}
-                onChange={(event) =>
-                  form.setValue(
-                    'capacity',
-                    event.target.value === '' ? null : Number(event.target.value),
-                    { shouldDirty: true, shouldValidate: true }
-                  )
-                }
-              />
-              <FieldError id="capacity-value-error" errors={[errors.capacity]} />
-            </Field>
-            <Field
-              data-invalid={Boolean(errors.capacityUnitId)}
-              data-disabled={locked || unitsLoading || unitsError}
-            >
-              <FieldLabel htmlFor="capacity-unit">Đơn vị sức chứa</FieldLabel>
-              <Controller
-                control={form.control}
-                name="capacityUnitId"
-                render={({ field }) => (
+      <div className="min-w-0 overflow-hidden rounded-md border">
+        <Table aria-label="Chính sách sức chứa" className="min-w-[34rem] table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead scope="col">Loại sức chứa</TableHead>
+              <TableHead scope="col">Sức chứa tối đa</TableHead>
+              <TableHead scope="col">Đơn vị sức chứa</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow className="hover:bg-transparent">
+              <TableCell className="align-top whitespace-normal">
+                <Field data-invalid={Boolean(errors.capacityType)} data-disabled={locked}>
+                  <FieldLabel className="sr-only" htmlFor="capacity-type">
+                    Loại sức chứa
+                  </FieldLabel>
                   <Select
-                    value={capacityUnitId ?? ''}
-                    disabled={locked || unitsLoading || unitsError}
-                    onValueChange={(value) =>
-                      form.setValue('capacityUnitId', value, {
+                    value={capacityType}
+                    disabled={locked}
+                    onValueChange={(value) => {
+                      if (value !== 'None' && value !== 'Quantity') return
+                      if (value === 'None') {
+                        if (capacityType === 'Quantity' && (capacity != null || capacityUnitId)) {
+                          setConfirmUnlimited(true)
+                          return
+                        }
+                        applyUnlimited()
+                        return
+                      }
+                      form.setValue('capacityType', value, {
                         shouldDirty: true,
                         shouldValidate: true,
                       })
-                    }
+                    }}
                   >
                     <SelectTrigger
-                      id="capacity-unit"
-                      ref={field.ref}
-                      onBlur={field.onBlur}
-                      className="w-full min-w-0"
-                      title={unitLabel ?? undefined}
-                      aria-invalid={Boolean(errors.capacityUnitId)}
-                      aria-describedby={errors.capacityUnitId ? 'capacity-unit-error' : undefined}
+                      id="capacity-type"
+                      ref={typeTriggerRef}
+                      className="w-full"
+                      aria-invalid={Boolean(errors.capacityType)}
                     >
-                      <SelectValue
-                        placeholder={unitsLoading ? 'Đang tải đơn vị…' : 'Chọn đơn vị sức chứa'}
-                      >
-                        {unitLabel ? (
-                          <span className="block min-w-0 truncate">{unitLabel}</span>
-                        ) : undefined}
-                      </SelectValue>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent align="start" sideOffset={4}>
                       <SelectGroup>
-                        {activeUnits.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
-                            <span className="block max-w-64 truncate" title={unit.unitName}>
-                              {unit.unitName}
-                              {unit.symbol ? ` (${unit.symbol})` : ''}
-                            </span>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="None">Không giới hạn</SelectItem>
+                        <SelectItem value="Quantity">Theo số lượng</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                )}
-              />
-              <FieldError id="capacity-unit-error" errors={[errors.capacityUnitId]} />
-            </Field>
-            {unitsError ? (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  Không thể tải đơn vị sức chứa.{' '}
-                  <Button type="button" variant="link" onClick={onRetryUnits}>
-                    Thử lại
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            ) : null}
-            <p className="text-muted-foreground text-xs md:col-span-2">
-              Sản phẩm phải có đơn vị gốc hoặc quy đổi đang hoạt động sang đơn vị sức chứa. Hệ thống
-              kiểm tra lại khi cất hàng.
-            </p>
-          </>
-        ) : null}
-      </FieldGroup>
+                  <FieldError errors={[errors.capacityType]} />
+                </Field>
+              </TableCell>
+              {capacityType === 'Quantity' ? (
+                <>
+                  <TableCell className="align-top whitespace-normal">
+                    <Field data-invalid={Boolean(errors.capacity)} className="min-w-0">
+                      <FieldLabel className="sr-only" htmlFor="capacity-value">
+                        Sức chứa tối đa
+                      </FieldLabel>
+                      <Input
+                        id="capacity-value"
+                        {...form.register('capacity', {
+                          setValueAs: (value: string | number | null) =>
+                            value === '' || value === null ? null : Number(value),
+                        })}
+                        autoComplete="off"
+                        type="number"
+                        inputMode="decimal"
+                        min="0.000001"
+                        step="0.000001"
+                        value={capacity ?? ''}
+                        aria-invalid={Boolean(errors.capacity)}
+                        aria-describedby={errors.capacity ? 'capacity-value-error' : undefined}
+                        onChange={(event) =>
+                          form.setValue(
+                            'capacity',
+                            event.target.value === '' ? null : Number(event.target.value),
+                            { shouldDirty: true, shouldValidate: true }
+                          )
+                        }
+                      />
+                      <FieldError id="capacity-value-error" errors={[errors.capacity]} />
+                    </Field>
+                  </TableCell>
+                  <TableCell className="align-top whitespace-normal">
+                    <Field
+                      data-invalid={Boolean(errors.capacityUnitId)}
+                      data-disabled={locked || unitsLoading || unitsError}
+                    >
+                      <FieldLabel className="sr-only" htmlFor="capacity-unit">
+                        Đơn vị sức chứa
+                      </FieldLabel>
+                      <Controller
+                        control={form.control}
+                        name="capacityUnitId"
+                        render={({ field }) => (
+                          <Select
+                            value={capacityUnitId ?? ''}
+                            disabled={locked || unitsLoading || unitsError}
+                            onValueChange={(value) =>
+                              form.setValue('capacityUnitId', value, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              })
+                            }
+                          >
+                            <SelectTrigger
+                              id="capacity-unit"
+                              ref={field.ref}
+                              onBlur={field.onBlur}
+                              className="w-full min-w-0"
+                              title={unitLabel ?? undefined}
+                              aria-invalid={Boolean(errors.capacityUnitId)}
+                              aria-describedby={
+                                errors.capacityUnitId ? 'capacity-unit-error' : undefined
+                              }
+                            >
+                              <SelectValue
+                                placeholder={
+                                  unitsLoading ? 'Đang tải đơn vị…' : 'Chọn đơn vị sức chứa'
+                                }
+                              >
+                                {unitLabel ? (
+                                  <span className="block min-w-0 truncate">{unitLabel}</span>
+                                ) : undefined}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent align="start" sideOffset={4}>
+                              <SelectGroup>
+                                {activeUnits.map((unit) => (
+                                  <SelectItem key={unit.id} value={unit.id}>
+                                    <span className="block max-w-64 truncate" title={unit.unitName}>
+                                      {unit.unitName}
+                                      {unit.symbol ? ` (${unit.symbol})` : ''}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      <FieldError id="capacity-unit-error" errors={[errors.capacityUnitId]} />
+                    </Field>
+                  </TableCell>
+                </>
+              ) : (
+                <>
+                  <TableCell
+                    className="text-muted-foreground"
+                    aria-label="Không áp dụng sức chứa tối đa"
+                  >
+                    —
+                  </TableCell>
+                  <TableCell
+                    className="text-muted-foreground"
+                    aria-label="Không áp dụng đơn vị sức chứa"
+                  >
+                    —
+                  </TableCell>
+                </>
+              )}
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+      {capacityType === 'Quantity' ? (
+        <>
+          {unitsError ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Không thể tải đơn vị sức chứa.{' '}
+                <Button type="button" variant="link" onClick={onRetryUnits}>
+                  Thử lại
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          <p className="text-muted-foreground text-xs">
+            Sản phẩm phải có đơn vị gốc hoặc quy đổi đang hoạt động sang đơn vị sức chứa. Hệ thống
+            kiểm tra lại khi cất hàng.
+          </p>
+        </>
+      ) : null}
       <AlertDialog open={confirmUnlimited} onOpenChange={setConfirmUnlimited}>
         <AlertDialogContent
           onCloseAutoFocus={(event) => {
