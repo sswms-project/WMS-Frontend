@@ -159,14 +159,14 @@ describe('PermissionCatalog', () => {
     const catalogButton = within(navigation).getByRole('button', { name: /Danh mục/ })
     const warehouseButton = within(navigation).getByRole('button', { name: /Quản lý kho/ })
 
-    expect(catalogButton).toHaveAttribute('aria-current', 'page')
+    expect(catalogButton).toHaveAttribute('aria-current', 'true')
     expect(
       screen.queryByRole('checkbox', { name: 'Chọn tất cả quyền trong Danh mục' })
     ).not.toBeInTheDocument()
 
     await user.click(warehouseButton)
 
-    expect(warehouseButton).toHaveAttribute('aria-current', 'page')
+    expect(warehouseButton).toHaveAttribute('aria-current', 'true')
     expect(screen.getByRole('heading', { name: 'Quản lý kho' })).toBeInTheDocument()
     expect(screen.getByText('Kho hàng và cấu trúc lưu trữ.')).toBeInTheDocument()
     expect(handlers.onTogglePermission).not.toHaveBeenCalled()

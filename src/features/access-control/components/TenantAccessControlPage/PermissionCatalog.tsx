@@ -121,7 +121,7 @@ export function PermissionCatalog({
   }
 
   return (
-    <div className="border-border bg-card grid h-full min-h-[28rem] min-w-0 flex-1 overflow-hidden rounded-md border lg:min-h-0 lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)]">
+    <div className="border-border bg-card grid h-full min-h-0 min-w-0 flex-1 overflow-hidden rounded-md border lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)]">
       <aside className="border-border hidden min-h-0 border-r lg:flex lg:flex-col">
         <div className="border-border border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Danh mục quyền</h3>
@@ -139,7 +139,7 @@ export function PermissionCatalog({
                   key={category.category}
                   type="button"
                   variant={active ? 'secondary' : 'ghost'}
-                  aria-current={active ? 'page' : undefined}
+                  aria-current={active ? 'true' : undefined}
                   className="h-auto min-h-11 w-full justify-start gap-2.5 px-3 py-2 text-left"
                   onClick={() => setPreferredCategory(category.category)}
                 >
