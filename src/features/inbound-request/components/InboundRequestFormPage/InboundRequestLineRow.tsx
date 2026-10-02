@@ -1,9 +1,10 @@
-import { Trash2 } from 'lucide-react'
+import { Info, Trash2 } from 'lucide-react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type {
   ProductResponse,
   ProductUnitConversion,
@@ -57,41 +58,88 @@ export function InboundRequestLineRow({
   const errors = form.formState.errors.lines?.[index]
 
   return (
-    <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] lg:items-start">
+    <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[28px_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_32px] lg:items-center lg:gap-3 lg:px-3 lg:py-2">
+      <div className="flex items-center justify-between lg:justify-center">
+        <span className="text-muted-foreground text-xs">{index + 1}</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="lg:hidden"
+          aria-label={`Xóa dòng ${index + 1}`}
+          disabled={lineCount === 1}
+          onClick={() => onRemove(index)}
+        >
+          <Trash2 aria-hidden="true" />
+        </Button>
+      </div>
       <div>
-        <div className="mb-1 flex items-center justify-between lg:hidden">
-          <span className="text-muted-foreground text-xs font-medium">Dòng {index + 1}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Xóa dòng ${index + 1}`}
-            disabled={lineCount === 1}
-            onClick={() => onRemove(index)}
-          >
-            <Trash2 aria-hidden="true" />
-          </Button>
-        </div>
-        <FieldLabel className="mb-2 block text-xs" htmlFor={`product-${index}`}>
+        <FieldLabel className="mb-1 block text-xs lg:sr-only" htmlFor={`product-${index}`}>
           Sản phẩm
         </FieldLabel>
-        <ProductSelect
-          inputId={`product-${index}`}
-          searchScope={field.id}
-          index={index}
-          form={form}
-          options={options}
-          isLoading={isProductSearchLoading}
-          selectedOption={
-            product
-              ? { value: product.id, label: `${product.sku} - ${product.productName}` }
-              : undefined
-          }
-          onSearchChange={onProductSearchChange}
-        />
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1">
+            <ProductSelect
+              inputId={`product-${index}`}
+              searchScope={field.id}
+              index={index}
+              form={form}
+              options={options}
+              isLoading={isProductSearchLoading}
+              selectedOption={
+                product
+                  ? { value: product.id, label: `${product.sku} - ${product.productName}` }
+                  : undefined
+              }
+              onSearchChange={onProductSearchChange}
+            />
+          </div>
+          {product ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Chi tiết sản phẩm ${product.productName}`}
+                >
+                  <Info className="text-muted-foreground size-3.5" aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-64">
+                <div className="font-medium">{product.productName}</div>
+                <div className="text-muted-foreground">{product.sku}</div>
+                <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  {product.categoryName ? (
+                    <>
+                      <span className="text-muted-foreground">Danh mục</span>
+                      <span>{product.categoryName}</span>
+                    </>
+                  ) : null}
+                  <span className="text-muted-foreground">Đơn vị cơ sở</span>
+                  <span>{product.unitName}</span>
+                  <span className="text-muted-foreground">Tồn kho</span>
+                  <span className="tabular-nums">
+                    {formatQuantity(product.availableQuantity)} {product.unitName}
+                  </span>
+                  <span className="text-muted-foreground">Theo lô</span>
+                  <span>{product.isLotTracked ? 'Có' : 'Không'}</span>
+                  {product.shelfLifeDays ? (
+                    <>
+                      <span className="text-muted-foreground">Hạn sử dụng</span>
+                      <span>{product.shelfLifeDays} ngày</span>
+                    </>
+                  ) : null}
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : null}
+        </div>
       </div>
       <Field data-invalid={Boolean(errors?.unitId)}>
-        <FieldLabel htmlFor={`unit-${index}`}>Đơn vị tính</FieldLabel>
+        <FieldLabel className="lg:sr-only" htmlFor={`unit-${index}`}>
+          Đơn vị tính
+        </FieldLabel>
         <NativeSelect
           id={`unit-${index}`}
           className="w-full"
@@ -124,7 +172,9 @@ export function InboundRequestLineRow({
         <FieldError>{errors?.unitId?.message}</FieldError>
       </Field>
       <Field data-invalid={Boolean(errors?.quantity)}>
-        <FieldLabel htmlFor={`quantity-${index}`}>Số lượng</FieldLabel>
+        <FieldLabel className="lg:sr-only" htmlFor={`quantity-${index}`}>
+          Số lượng
+        </FieldLabel>
         <Input
           id={`quantity-${index}`}
           type="number"
@@ -135,12 +185,16 @@ export function InboundRequestLineRow({
         />
         <FieldError>{errors?.quantity?.message}</FieldError>
       </Field>
-      <div className="bg-muted/60 border px-3 py-2 text-sm" aria-live="polite">
-        <span className="text-muted-foreground block text-xs">Quy đổi về đơn vị cơ sở</span>
-        <span className="font-medium tabular-nums">
-          {product && factor !== undefined && Number.isFinite(baseQuantity)
-            ? `${formatQuantity(baseQuantity)} ${baseUnit?.unitName ?? ''}`
-            : 'Chọn sản phẩm và đơn vị'}
+      <div aria-live="polite">
+        <span className="text-muted-foreground mb-0.5 block text-xs lg:hidden">
+          Quy đổi về đơn vị cơ sở
+        </span>
+        <span className="text-sm font-medium tabular-nums">
+          {product && factor !== undefined && Number.isFinite(baseQuantity) ? (
+            `${formatQuantity(baseQuantity)} ${baseUnit?.unitName ?? ''}`
+          ) : (
+            <span className="text-muted-foreground text-xs">—</span>
+          )}
         </span>
         {product &&
         factor !== undefined &&
@@ -155,7 +209,7 @@ export function InboundRequestLineRow({
         type="button"
         variant="ghost"
         size="icon-sm"
-        className="mt-7 hidden lg:inline-flex"
+        className="hidden lg:inline-flex"
         aria-label={`Xóa dòng ${index + 1}`}
         disabled={lineCount === 1}
         onClick={() => onRemove(index)}
