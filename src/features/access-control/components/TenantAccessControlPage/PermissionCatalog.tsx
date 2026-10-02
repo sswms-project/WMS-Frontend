@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import type {
   PermissionCategoryGroup,
   PermissionCatalogContext,
@@ -124,7 +125,7 @@ export function PermissionCatalog({
     <div className="border-border bg-card grid h-full min-h-0 min-w-0 flex-1 overflow-hidden rounded-md border lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)]">
       <aside className="border-border hidden min-h-0 border-r lg:flex lg:flex-col">
         <div className="border-border border-b px-4 py-3">
-          <h3 className="text-sm font-semibold">Danh mục quyền</h3>
+          <h3 className="text-base font-semibold">Danh mục quyền</h3>
           <p className="text-muted-foreground mt-0.5 text-xs">Chọn danh mục để xem các phân hệ.</p>
         </div>
         <ScrollArea className="min-h-0 flex-1">
@@ -138,18 +139,21 @@ export function PermissionCatalog({
                 <Button
                   key={category.category}
                   type="button"
-                  variant={active ? 'secondary' : 'ghost'}
+                  variant={active ? 'default' : 'ghost'}
                   aria-current={active ? 'true' : undefined}
                   className="h-auto min-h-11 w-full justify-start gap-2.5 px-3 py-2 text-left"
                   onClick={() => setPreferredCategory(category.category)}
                 >
-                  <Icon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+                  <Icon className="size-4 shrink-0" aria-hidden="true" />
                   <span className="min-w-0 flex-1 text-sm font-medium break-words whitespace-normal">
                     {category.categoryDisplayName}
                   </span>
                   <Badge
-                    variant={counts.selected > 0 ? 'secondary' : 'outline'}
-                    className="shrink-0 tabular-nums"
+                    variant={active ? 'outline' : counts.selected > 0 ? 'secondary' : 'outline'}
+                    className={cn(
+                      'shrink-0 tabular-nums',
+                      active && 'border-primary-foreground/50 text-primary-foreground'
+                    )}
                     aria-label={`${counts.selected} trên ${counts.total} quyền đã chọn`}
                   >
                     {counts.selected}/{counts.total}
