@@ -226,7 +226,7 @@ export default function InboundReceivingPage() {
     try {
       const response = await createDraftMutation.mutateAsync(importId)
       setDraftReceiptId(response.data)
-      toast.success('Đã tạo phiếu nhận hàng nháp. Mở phiếu để gửi duyệt hoặc phê duyệt.')
+      toast.success('Đã tạo phiếu nhận hàng nháp. Mở phiếu để gửi duyệt hoặc xác nhận hàng đến.')
     } catch (error) {
       logger.error(error)
       toast.error('Không thể tạo phiếu nhận hàng nháp. Vui lòng kiểm tra lại dữ liệu mới nhất.')

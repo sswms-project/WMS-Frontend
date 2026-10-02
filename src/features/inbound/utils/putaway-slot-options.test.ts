@@ -108,6 +108,7 @@ describe('putaway capacity units', () => {
             ...rack,
             slots: [
               { ...slot, isOutboundStaging: true },
+              { ...slot, id: 'receiving-hold', isInboundStaging: true },
               { ...slot, id: 'inactive', isActive: false },
             ],
           })),

@@ -190,6 +190,9 @@ export const API_ENDPOINTS = {
     sendToSupplier: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/send-to-supplier`,
     reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
+    cancel: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/cancel`,
+    closeRemaining: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/close-remaining`,
     allowedActions: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },

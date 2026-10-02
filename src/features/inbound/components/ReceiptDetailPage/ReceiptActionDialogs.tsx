@@ -25,6 +25,7 @@ interface ReceiptActionDialogsProps {
   readonly confirmationAction: 'Submit' | 'Approve' | null
   readonly isRejectOpen: boolean
   readonly isPending: boolean
+  readonly selfApprovalRequired: boolean
   readonly onConfirm: () => Promise<void>
   readonly onCancelConfirmation: () => void
   readonly onReject: (reason: string) => Promise<boolean>
@@ -35,6 +36,7 @@ export function ReceiptActionDialogs({
   confirmationAction,
   isRejectOpen,
   isPending,
+  selfApprovalRequired,
   onConfirm,
   onCancelConfirmation,
   onReject,
@@ -72,12 +74,14 @@ export function ReceiptActionDialogs({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmationAction === 'Approve'
-                ? 'Phê duyệt phiếu nhận hàng?'
+                ? 'Xác nhận hàng đã đến kho?'
                 : 'Gửi phiếu nhận hàng để duyệt?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmationAction === 'Approve'
-                ? 'Số lượng nhận sẽ được ghi nhận vào yêu cầu nhập kho và chuyển sang chờ cất hàng.'
+                ? selfApprovalRequired
+                  ? 'Bạn là người ghi nhận phiếu này. Khi xác nhận, hệ thống sẽ lưu hành động tự phê duyệt và ghi hàng vào khu chờ.'
+                  : 'Số lượng nhận sẽ được ghi nhận vào yêu cầu nhập kho và chuyển sang chờ cất hàng.'
                 : 'Phiếu sẽ được khóa chỉnh sửa trong lúc chờ quản lý duyệt.'}
             </AlertDialogDescription>
           </AlertDialogHeader>

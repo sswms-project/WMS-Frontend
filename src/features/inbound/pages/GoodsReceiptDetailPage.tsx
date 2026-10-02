@@ -110,13 +110,21 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
   async function perform(action: 'submit' | 'approve' | 'reject', reason?: string) {
     try {
       if (action === 'submit') await submitMutation.mutateAsync(receiptId)
-      else if (action === 'approve') await approveMutation.mutateAsync(receiptId)
+      else if (action === 'approve') {
+        const receipt = detailQuery.data
+        if (!receipt) return false
+        await approveMutation.mutateAsync({
+          receiptId,
+          expectedVersion: receipt.version,
+          selfApprovalAcknowledged: actionsQuery.data?.selfApprovalRequired === true,
+        })
+      }
       else await rejectMutation.mutateAsync({ receiptId, reason: reason ?? '' })
       toast.success(
         action === 'submit'
           ? 'Đã gửi phiếu nhận hàng để duyệt.'
           : action === 'approve'
-            ? 'Đã phê duyệt phiếu nhận hàng.'
+            ? 'Đã xác nhận hàng đến và ghi nhận vào khu chờ.'
             : 'Đã trả phiếu nhận hàng để chỉnh sửa.'
       )
       return true
@@ -189,6 +197,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       <ReceiptDetail
         receipt={receipt}
         allowedActions={actionsQuery.data?.allowedActions ?? []}
+        selfApprovalRequired={actionsQuery.data?.selfApprovalRequired ?? false}
         isPending={isPending}
         onUpdate={openEditor}
         onSubmit={() => perform('submit')}

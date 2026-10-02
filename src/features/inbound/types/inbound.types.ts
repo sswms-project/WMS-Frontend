@@ -171,6 +171,9 @@ export interface GoodsReceiptDetail extends Omit<
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
+  arrivalConfirmedBy: string | null
+  arrivalConfirmedAt: string | null
+  receivingHoldSlotId: string | null
   putAwayTaskExecutionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
   putAwayTaskCancelledAt: string | null
   putAwayTaskCancellationReason: string | null
@@ -207,6 +210,12 @@ export interface PutawayRequest {
   lines: PutawayLineRequest[]
 }
 
+export interface ConfirmPhysicalArrivalRequest {
+  expectedVersion: string
+  commandId: string
+  selfApprovalAcknowledged: boolean
+}
+
 export interface CancelPutawayTaskRequest {
   reason: string
   expectedVersion: string
@@ -241,6 +250,9 @@ export interface AssignWarehouseTaskRequest {
 
 export interface InboundAllowedActionsResponse {
   allowedActions: GoodsReceiptAction[]
+  selfApprovalRequired: boolean
+  currentVersion: string | null
+  denialReasonCode: string | null
 }
 
 export type GoodsReceiptListResponse = PagedResponse<GoodsReceiptSummary>

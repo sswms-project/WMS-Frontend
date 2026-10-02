@@ -85,6 +85,7 @@ export interface WarehouseLayoutSlotSceneResponse
   occupancyStatus: string
   isActive: boolean
   isOutboundStaging?: boolean
+  isInboundStaging?: boolean
   allowsMixedProducts?: boolean
   capacity: number | null
   currentOccupancy: number
