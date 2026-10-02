@@ -225,9 +225,22 @@ export function useRejectGoodsReceiptMutation() {
 
 export function usePutawayMutation() {
   const invalidate = useInvalidateInbound()
+  const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, PutawayVariables>({
     mutationFn: ({ receiptId, request }) => inboundService.putaway(receiptId, request),
-    onSuccess: (_, variables) => invalidate(variables.receiptId),
+    onSuccess: async (_, variables) => {
+      const warehouseId = queryClient.getQueryData<GoodsReceiptDetail>(
+        queryKeys.goodsReceipts.detail(variables.receiptId)
+      )?.warehouseId
+      await Promise.all([
+        invalidate(variables.receiptId),
+        queryClient.invalidateQueries({
+          queryKey: warehouseId
+            ? queryKeys.warehouses.detail(warehouseId)
+            : queryKeys.warehouses.all,
+        }),
+      ])
+    },
     onError: (error) => {
       if (isApiErrorResponse(error) && [400, 409].includes(error.statusCode))
         logger.warn(error.message)

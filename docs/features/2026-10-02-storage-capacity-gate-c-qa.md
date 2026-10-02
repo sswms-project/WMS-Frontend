@@ -44,3 +44,11 @@ No database deletion, reset, rollback, migration or bulk cleanup.
 - Compatible/incompatible mixed-SKU put-away flows were browser-verified in Gate B and remain covered by BE regression tests in this gate.
 - No new browser error/warning attributable to the capacity UI was observed. Existing Staff inventory denial is explicitly documented above.
 - Self-verification is not an independent code review. No PR/push is authorized by this gate.
+
+## Review fixes — 2026-10-02
+
+- Put-away success invalidates the warehouse detail query prefix (including layout, scene and location lists). The warehouse is resolved from cached receipt data before invalidation; missing receipt data falls back to invalidating warehouse queries without another API request.
+- Zone, rack and slot Sheets refuse dismissal while either the mutation or React Hook Form submission is pending. Save/cancel actions use both pending states. Failed submissions retain the form and permit dismissal after settling.
+- Switching a Quantity-configured rack to SlotLevel asks for confirmation before clearing its maximum/unit. Cancellation preserves the rack configuration; acceptance changes only form values until Save.
+- Added seven regression cases: scoped/fallback cache invalidation, pending dismissal for all three forms, asynchronous submit/failure recovery, and rack-mode confirmation/cancellation.
+- Automated FE suite: 47 files / 165 tests passed. These review fixes were tested with mocks; no deployed database writes or migrations were performed.

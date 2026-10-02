@@ -5,9 +5,47 @@ import { logger } from '@/lib/logger'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { inboundService } from '../services/inbound.service'
 import { usePutawayMutation } from './use-inbound'
+import { queryKeys } from '@/lib/query-keys'
 
 describe('putaway capacity rejection', () => {
   afterEach(() => vi.restoreAllMocks())
+  it.each([true, false])(
+    'invalidates capacity caches after success (cached receipt: %s)',
+    async (hasReceipt) => {
+      vi.spyOn(inboundService, 'putaway').mockResolvedValueOnce({
+        isSuccess: true,
+        statusCode: 200,
+        message: '',
+        data: null,
+      })
+      const client = new QueryClient({
+        defaultOptions: { queries: { staleTime: Infinity }, mutations: { retry: false } },
+      })
+      const warehouseId = 'warehouse-a'
+      const keys = [
+        queryKeys.warehouses.layout(warehouseId),
+        queryKeys.warehouses.layoutScene(warehouseId),
+        queryKeys.warehouses.locationsAll(warehouseId),
+      ]
+      for (const key of keys) client.setQueryData(key, [])
+      client.setQueryData(queryKeys.warehouses.layout('warehouse-b'), [])
+      if (hasReceipt)
+        client.setQueryData(queryKeys.goodsReceipts.detail('receipt'), { warehouseId })
+      const hook = renderHook(() => usePutawayMutation(), {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        ),
+      })
+      await act(async () => {
+        await hook.result.current.mutateAsync({ receiptId: 'receipt', request: { lines: [] } })
+      })
+      for (const key of keys) expect(client.getQueryState(key)?.isInvalidated).toBe(true)
+      expect(client.getQueryState(queryKeys.warehouses.layout('warehouse-b'))?.isInvalidated).toBe(
+        !hasReceipt
+      )
+      client.clear()
+    }
+  )
   it.each([
     'Vị trí A01 không còn đủ sức chứa.',
     'Sản phẩm chưa có quy đổi đang hoạt động sang đơn vị sức chứa.',

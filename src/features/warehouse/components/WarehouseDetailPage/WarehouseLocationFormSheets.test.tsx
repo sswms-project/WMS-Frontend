@@ -99,6 +99,117 @@ describe('WarehouseLocationFormSheets', () => {
 })
 
 describe('location capacity fields', () => {
+  it.each(['zone', 'rack', 'slot'] as const)(
+    'blocks dismissal of a pending %s form',
+    async (kind) => {
+      const onOpenChange = vi.fn()
+      const common = {
+        open: true,
+        mode: 'update' as const,
+        isPending: true,
+        onOpenChange,
+        onSubmit: vi.fn(),
+      }
+      render(
+        kind === 'zone' ? (
+          <ZoneFormSheet
+            {...common}
+            defaultValues={{
+              zoneCode: 'Z',
+              zoneName: 'Zone',
+              description: '',
+              ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+            }}
+          />
+        ) : kind === 'rack' ? (
+          <RackFormSheet
+            {...common}
+            {...capacityProps}
+            defaultValues={{
+              ...slotValues,
+              rackCode: 'R',
+              rackName: 'Rack',
+              storageMode: 'RackLevel',
+            }}
+          />
+        ) : (
+          <SlotFormSheet {...common} {...capacityProps} defaultValues={slotValues} />
+        )
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+      expect(onOpenChange).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
+    }
+  )
+  it('keeps a submitting form open until its request settles, then allows closing after failure', async () => {
+    let finish: (success: boolean) => void = () => undefined
+    const onSubmit = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          finish = resolve
+        })
+    )
+    const onOpenChange = vi.fn()
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={slotValues}
+        {...capacityProps}
+        onOpenChange={onOpenChange}
+        onSubmit={onSubmit}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onOpenChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
+    finish(false)
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).not.toBeDisabled()
+    )
+    expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+  it('confirms discarding rack capacity on mode change without saving automatically', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(true)
+    render(
+      <RackFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={{ ...slotValues, rackCode: 'R', rackName: 'Rack', storageMode: 'RackLevel' }}
+        {...capacityProps}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    const mode = screen.getByRole('radio', { name: /Quản lý theo vị trí lưu trữ/ })
+    fireEvent.click(mode)
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Giữ cấu hình kệ' }))
+    expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
+    expect(screen.getByRole('radio', { name: /^Quản lý theo kệ/ })).toBeChecked()
+    fireEvent.click(mode)
+    fireEvent.click(await screen.findByRole('button', { name: 'Chuyển phương thức quản lý' }))
+    expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          storageMode: 'SlotLevel',
+          capacityType: 'None',
+          capacity: null,
+          capacityUnitId: null,
+        })
+      )
+    )
+  })
   const scrollIntoViewDescriptor = Object.getOwnPropertyDescriptor(
     HTMLElement.prototype,
     'scrollIntoView'

@@ -2,6 +2,17 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Save } from 'lucide-react'
+import { useRef, useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   FormProvider,
   useForm,
@@ -70,7 +81,8 @@ export function ZoneFormSheet({
   const { errors } = form.formState
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
+    if (!nextOpen && (isPending || form.formState.isSubmitting)) return
+    if (!nextOpen) form.reset(defaultValues)
     onOpenChange(nextOpen)
   }
 
@@ -133,7 +145,7 @@ export function ZoneFormSheet({
             </FieldGroup>
             <FormFooter
               mode={mode}
-              isPending={isPending}
+              isPending={isPending || form.formState.isSubmitting}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
@@ -156,9 +168,21 @@ export function RackFormSheet({
   const { errors } = form.formState
   const storageMode = useWatch({ control: form.control, name: 'storageMode' })
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
+  const [confirmSlotMode, setConfirmSlotMode] = useState(false)
+  const storageModeRef = useRef<HTMLDivElement>(null)
+
+  function applySlotMode() {
+    form.setValue('allowsMixedProducts', true, { shouldDirty: true })
+    form.setValue('capacity', null, { shouldDirty: true })
+    form.setValue('capacityType', 'None', { shouldDirty: true })
+    form.setValue('capacityUnitId', null, { shouldDirty: true })
+    form.setValue('storageMode', 'SlotLevel', { shouldDirty: true, shouldValidate: true })
+    form.clearErrors(['capacity', 'capacityUnitId'])
+  }
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
+    if (!nextOpen && (isPending || form.formState.isSubmitting)) return
+    if (!nextOpen) form.reset(defaultValues)
     onOpenChange(nextOpen)
   }
 
@@ -218,18 +242,25 @@ export function RackFormSheet({
               <Field className="md:col-span-2">
                 <FieldLabel>Phương thức quản lý vị trí</FieldLabel>
                 <RadioGroup
+                  ref={storageModeRef}
                   aria-label="Phương thức quản lý vị trí"
                   value={storageMode}
                   disabled={(capacityProps.location?.currentOccupancy ?? 0) > 0}
                   onValueChange={(value) => {
                     if (value !== 'RackLevel' && value !== 'SlotLevel') return
-                    form.setValue('storageMode', value, { shouldDirty: true, shouldValidate: true })
                     if (value === 'SlotLevel') {
-                      form.setValue('allowsMixedProducts', true)
-                      form.setValue('capacity', null)
-                      form.setValue('capacityType', 'None')
-                      form.setValue('capacityUnitId', null)
+                      const values = form.getValues()
+                      if (
+                        values.capacityType === 'Quantity' &&
+                        (values.capacity != null || values.capacityUnitId)
+                      ) {
+                        setConfirmSlotMode(true)
+                        return
+                      }
+                      applySlotMode()
+                      return
                     }
+                    form.setValue('storageMode', value, { shouldDirty: true, shouldValidate: true })
                   }}
                   className="gap-2"
                 >
@@ -272,13 +303,37 @@ export function RackFormSheet({
                   </Field>
                 </>
               ) : null}
+              <AlertDialog open={confirmSlotMode} onOpenChange={setConfirmSlotMode}>
+                <AlertDialogContent
+                  onCloseAutoFocus={(event) => {
+                    event.preventDefault()
+                    storageModeRef.current
+                      ?.querySelector<HTMLButtonElement>('[data-state="checked"]')
+                      ?.focus()
+                  }}
+                >
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Chuyển sang quản lý theo vị trí lưu trữ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Sức chứa tối đa và đơn vị sức chứa của kệ sẽ được bỏ khỏi form. Bạn cần cấu
+                      hình sức chứa riêng cho từng vị trí. Thay đổi chỉ áp dụng khi lưu.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Giữ cấu hình kệ</AlertDialogCancel>
+                    <AlertDialogAction onClick={applySlotMode}>
+                      Chuyển phương thức quản lý
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <PhysicalDetailsFields>
                 {storageMode === 'RackLevel' ? <StorageCapacityFields {...capacityProps} /> : null}
               </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
-              isPending={isPending}
+              isPending={isPending || form.formState.isSubmitting}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
@@ -302,7 +357,8 @@ export function SlotFormSheet({
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isPending) form.reset(defaultValues)
+    if (!nextOpen && (isPending || form.formState.isSubmitting)) return
+    if (!nextOpen) form.reset(defaultValues)
     onOpenChange(nextOpen)
   }
 
@@ -384,7 +440,7 @@ export function SlotFormSheet({
             </FieldGroup>
             <FormFooter
               mode={mode}
-              isPending={isPending}
+              isPending={isPending || form.formState.isSubmitting}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
