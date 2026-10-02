@@ -1,23 +1,24 @@
+import { useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import type {
-  PermissionModuleGroup,
+  PermissionCategoryGroup,
   PersonalPermissionFilter,
   TenantUserPermissionWorkspace,
 } from '../../types/tenant-access-control.types'
 import type { PersonalPermissionRecovery } from '../../utils/tenant-user-permission-error'
 import { PermissionCustomizationFilter } from './PermissionCustomizationFilter'
 import { PermissionSearch } from './PermissionSearch'
-import { PersonalPermissionCatalog } from './PersonalPermissionCatalog'
+import { PermissionCatalog } from './PermissionCatalog'
 import { PermissionSubjectSummary } from './PermissionSubjectSummary'
 
 interface PersonalPermissionEditorProps {
   readonly workspace: TenantUserPermissionWorkspace
   readonly canManage: boolean
-  readonly groups: PermissionModuleGroup[]
+  readonly groups: PermissionCategoryGroup[]
   readonly draftIds: ReadonlySet<string>
   readonly roleDefaultIds: ReadonlySet<string>
   readonly customizedCount: number
@@ -63,6 +64,12 @@ export function PersonalPermissionEditor({
   onDiscard,
   onSave,
 }: PersonalPermissionEditorProps) {
+  const [openModules, setOpenModules] = useState<string[]>([])
+  const hasFilter = Boolean(searchText.trim()) || filter === 'customized'
+  const visibleOpenModules = hasFilter
+    ? groups.flatMap((category) => category.modules.map((module) => module.module))
+    : openModules
+
   return (
     <div className="border-border bg-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border">
       <PermissionSubjectSummary workspace={workspace} customizedCount={customizedCount} />
@@ -115,19 +122,26 @@ export function PersonalPermissionEditor({
         </Alert>
       )}
 
-      <PersonalPermissionCatalog
+      <PermissionCatalog
         groups={groups}
-        subjectId={workspace.subject.userId}
-        selectedIds={draftIds}
-        roleDefaultIds={roleDefaultIds}
+        context={{
+          kind: 'personal',
+          subjectId: workspace.subject.userId,
+          selectedIds: draftIds,
+          roleDefaultIds,
+        }}
+        openModules={visibleOpenModules}
         disabled={busy || !canManage}
-        hasSearch={Boolean(searchText.trim()) || filter === 'customized'}
+        hasSearch={hasFilter}
         emptyTitle={filter === 'customized' ? 'Không có quyền tùy chỉnh' : undefined}
         emptyDescription={
           filter === 'customized'
             ? 'Nhân sự đang dùng đúng quyền mặc định theo vai trò trong phạm vi tìm kiếm.'
             : undefined
         }
+        onOpenModulesChange={(modules) => {
+          if (!hasFilter) setOpenModules(modules)
+        }}
         onTogglePermission={onTogglePermission}
         onToggleModule={onToggleModule}
       />

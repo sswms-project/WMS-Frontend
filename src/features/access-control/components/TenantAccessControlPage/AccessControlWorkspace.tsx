@@ -108,7 +108,7 @@ export function AccessControlWorkspace({
   )
   const isDirty = !arePermissionSetsEqual(draftIds, baselineIds)
   const visibleOpenModules = searchText.trim()
-    ? filteredGroups.map((group) => group.module)
+    ? filteredGroups.flatMap((category) => category.modules.map((module) => module.module))
     : openModules
 
   useEffect(() => {
@@ -309,7 +309,10 @@ export function AccessControlWorkspace({
           <PermissionEditorHeader
             selectedCount={draftIds.size}
             permissionCount={workspace.permissions.length}
-            moduleCount={permissionGroups.length}
+            moduleCount={permissionGroups.reduce(
+              (total, category) => total + category.modules.length,
+              0
+            )}
             searchText={searchText}
             canManage={canManage}
             dirty={isDirty}

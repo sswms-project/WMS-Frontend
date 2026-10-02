@@ -1,8 +1,8 @@
 import { USER_ROLES } from '@/config/roles'
 import type {
   AccessControlMode,
+  PermissionCategoryGroup,
   PersonalPermissionFilter,
-  PermissionModuleGroup,
   PermissionRowViewModel,
   TenantAssignablePermission,
   TenantRolePolicy,
@@ -66,50 +66,86 @@ export function rebasePermissionDraft(
 
 export function groupTenantPermissions(
   permissions: TenantAssignablePermission[]
-): PermissionModuleGroup[] {
-  const groups = new Map<string, PermissionModuleGroup>()
+): PermissionCategoryGroup[] {
+  const categories = new Map<string, PermissionCategoryGroup>()
 
   for (const permission of permissions) {
-    const existing = groups.get(permission.module)
-    if (existing) {
-      existing.permissions.push(permission)
-      continue
+    let category = categories.get(permission.category)
+    if (!category) {
+      category = {
+        category: permission.category,
+        categoryDisplayName: permission.categoryDisplayName,
+        categoryDescription: permission.categoryDescription,
+        categoryOrder: permission.categoryOrder,
+        modules: [],
+      }
+      categories.set(permission.category, category)
     }
 
-    groups.set(permission.module, {
-      module: permission.module,
-      moduleDisplayName: permission.moduleDisplayName,
-      permissions: [permission],
-    })
+    const permissionModule = category.modules.find((group) => group.module === permission.module)
+    if (permissionModule) permissionModule.permissions.push(permission)
+    else {
+      category.modules.push({
+        module: permission.module,
+        moduleDisplayName: permission.moduleDisplayName,
+        moduleOrder: permission.moduleOrder,
+        permissions: [permission],
+      })
+    }
   }
 
-  return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      permissions: group.permissions.toSorted((left, right) =>
-        left.displayName.localeCompare(right.displayName, 'vi')
-      ),
+  return [...categories.values()]
+    .map((category) => ({
+      ...category,
+      modules: category.modules
+        .map((module) => ({
+          ...module,
+          permissions: module.permissions.toSorted((left, right) =>
+            left.displayName.localeCompare(right.displayName, 'vi')
+          ),
+        }))
+        .toSorted((left, right) => left.moduleOrder - right.moduleOrder),
     }))
-    .toSorted((left, right) => left.moduleDisplayName.localeCompare(right.moduleDisplayName, 'vi'))
+    .toSorted((left, right) => left.categoryOrder - right.categoryOrder)
 }
 
-export function filterPermissionGroups(groups: PermissionModuleGroup[], searchText: string) {
+export function filterPermissionGroups(groups: PermissionCategoryGroup[], searchText: string) {
   const normalizedSearch = searchText.trim().toLocaleLowerCase('vi')
   if (!normalizedSearch) return groups
 
   return groups
-    .map((group) => ({
-      ...group,
-      permissions: group.permissions.filter((permission) =>
-        [
-          group.moduleDisplayName,
-          permission.displayName,
-          permission.description,
-          permission.permissionKey,
-        ].some((value) => value.toLocaleLowerCase('vi').includes(normalizedSearch))
-      ),
-    }))
-    .filter((group) => group.permissions.length > 0)
+    .map((category) => {
+      const categoryMatches = [
+        category.category,
+        category.categoryDisplayName,
+        category.categoryDescription,
+      ].some((value) => value.toLocaleLowerCase('vi').includes(normalizedSearch))
+
+      return {
+        ...category,
+        modules: category.modules
+          .map((module) => {
+            const moduleMatches = [module.module, module.moduleDisplayName].some((value) =>
+              value.toLocaleLowerCase('vi').includes(normalizedSearch)
+            )
+            return {
+              ...module,
+              permissions:
+                categoryMatches || moduleMatches
+                  ? module.permissions
+                  : module.permissions.filter((permission) =>
+                      [
+                        permission.displayName,
+                        permission.description,
+                        permission.permissionKey,
+                      ].some((value) => value.toLocaleLowerCase('vi').includes(normalizedSearch))
+                    ),
+            }
+          })
+          .filter((module) => module.permissions.length > 0),
+      }
+    })
+    .filter((category) => category.modules.length > 0)
 }
 
 export function getRoleById(roles: TenantRolePolicy[], roleId: string) {
@@ -117,15 +153,20 @@ export function getRoleById(roles: TenantRolePolicy[], roleId: string) {
 }
 
 export function filterPermissionGroupsByIds(
-  groups: PermissionModuleGroup[],
+  groups: PermissionCategoryGroup[],
   permissionIds: ReadonlySet<string>
 ) {
   return groups
-    .map((group) => ({
-      ...group,
-      permissions: group.permissions.filter((permission) => permissionIds.has(permission.id)),
+    .map((category) => ({
+      ...category,
+      modules: category.modules
+        .map((module) => ({
+          ...module,
+          permissions: module.permissions.filter((permission) => permissionIds.has(permission.id)),
+        }))
+        .filter((module) => module.permissions.length > 0),
     }))
-    .filter((group) => group.permissions.length > 0)
+    .filter((category) => category.modules.length > 0)
 }
 
 export function getCustomizedPermissionIds(
