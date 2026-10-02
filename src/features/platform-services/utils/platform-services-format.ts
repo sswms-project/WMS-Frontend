@@ -1,6 +1,8 @@
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { NotificationItem } from '../types/platform-services.types'
 
+const TZ = 'Asia/Ho_Chi_Minh'
+
 const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
   month: '2-digit',
@@ -8,6 +10,32 @@ const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
   hour: '2-digit',
   minute: '2-digit',
 })
+
+const vnDateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
+const vnTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: TZ,
+})
+
+export function getNotificationDateGroup(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Cũ hơn'
+  const now = new Date()
+  const dateStr = vnDateFormatter.format(date)
+  const today = vnDateFormatter.format(now)
+  const yesterday = vnDateFormatter.format(new Date(now.getTime() - 86_400_000))
+  const weekAgo = vnDateFormatter.format(new Date(now.getTime() - 6 * 86_400_000))
+  if (dateStr === today) return 'Hôm nay'
+  if (dateStr === yesterday) return 'Hôm qua'
+  if (dateStr >= weekAgo) return 'Tuần này'
+  return 'Cũ hơn'
+}
+
+export function formatNotificationTime(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '' : vnTimeFormatter.format(date)
+}
 
 export function formatPlatformDateTime(value: string): string {
   const date = new Date(value)

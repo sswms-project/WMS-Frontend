@@ -29,7 +29,28 @@ export function InboundRequestOverview({ request }: { readonly request: InboundR
           />
           <Metadata label="Kho nhận" value={request.warehouseName ?? 'Chưa xác định'} />
           <Metadata label="Ngày dự kiến" value={formatOperationalDate(request.expectedDate)} />
-          <Metadata label="Người tạo" value={request.createdByName} />
+          <Metadata
+            label="Người tạo"
+            value={`${request.createdByName} · ${formatOperationalDateTime(request.createdAt)}`}
+          />
+          {request.submittedAt ? (
+            <Metadata
+              label="Ngày gửi duyệt"
+              value={formatOperationalDateTime(request.submittedAt)}
+            />
+          ) : null}
+          {request.approvedByName ? (
+            <Metadata
+              label="Người duyệt"
+              value={`${request.approvedByName}${request.approvedAt ? ` · ${formatOperationalDateTime(request.approvedAt)}` : ''}`}
+            />
+          ) : null}
+          {request.modifiedAt ? (
+            <Metadata
+              label="Cập nhật lần cuối"
+              value={formatOperationalDateTime(request.modifiedAt)}
+            />
+          ) : null}
           {request.supplierId ? (
             <Metadata label="Email nhà cung cấp" value={request.supplierEmail ?? 'Chưa có email'} />
           ) : null}

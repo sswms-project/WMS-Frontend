@@ -1,15 +1,16 @@
-import { Search } from 'lucide-react'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { CalendarRange, RefreshCw, Search, X } from 'lucide-react'
+import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Calendar } from '@/components/ui/calendar'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
+import { dateToIsoDateString, formatDisplayDate, isoDateStringToDate } from '@/lib/date-format'
 import type { NotificationType } from '../../types/platform-services.types'
 import type { NotificationFilterValues } from './types'
 
@@ -37,88 +38,164 @@ const TYPE_LABELS: Record<NotificationType, string> = {
 
 interface NotificationFiltersProps {
   readonly filters: NotificationFilterValues
+  readonly isFetching: boolean
   readonly onApply: (filters: NotificationFilterValues) => void
   readonly onClear: () => void
+  readonly onRetry: () => void
 }
 
-export function NotificationFilters({ filters, onApply, onClear }: NotificationFiltersProps) {
+export function NotificationFilters({
+  filters,
+  isFetching,
+  onApply,
+  onClear,
+  onRetry,
+}: NotificationFiltersProps) {
+  const [localSearch, setLocalSearch] = useState(filters.search)
+
+  useEffect(() => {
+    setLocalSearch(filters.search)
+  }, [filters.search])
+
+  const hasDateFilter = Boolean(filters.dateFrom || filters.dateTo)
+  const hasActiveFilters =
+    Boolean(localSearch) || Boolean(filters.type) || filters.readState !== 'all' || hasDateFilter
+
+  const dateRange: DateRange = {
+    from: isoDateStringToDate(filters.dateFrom),
+    to: isoDateStringToDate(filters.dateTo),
+  }
+
+  function handleDateRangeSelect(range: DateRange | undefined) {
+    onApply({
+      ...filters,
+      dateFrom: range?.from ? dateToIsoDateString(range.from) : '',
+      dateTo: range?.to ? dateToIsoDateString(range.to) : '',
+    })
+  }
+
+  function buildDateLabel() {
+    const from = dateRange.from ? formatDisplayDate(dateRange.from) : null
+    const to = dateRange.to ? formatDisplayDate(dateRange.to) : null
+    if (from && to) return `${from} – ${to}`
+    if (from) return `Từ ${from}`
+    if (to) return `Đến ${to}`
+    return 'Khoảng ngày'
+  }
+
+  function commitSearch() {
+    if (localSearch !== filters.search) {
+      onApply({ ...filters, search: localSearch })
+    }
+  }
+
   return (
-    <form
-      key={JSON.stringify(filters)}
-      className="bg-card grid gap-3 rounded-md border p-3 sm:grid-cols-2 xl:grid-cols-6"
-      onSubmit={(event) => {
-        event.preventDefault()
-        const data = new FormData(event.currentTarget)
-        onApply({
-          search: String(data.get('search') ?? ''),
-          type: String(data.get('type') ?? ''),
-          readState: String(data.get('readState') ?? 'all'),
-          dateFrom: String(data.get('dateFrom') ?? ''),
-          dateTo: String(data.get('dateTo') ?? ''),
-        })
-      }}
-    >
-      <div className="space-y-1 sm:col-span-2 xl:col-span-2">
-        <Label htmlFor="notification-search">Tìm kiếm</Label>
-        <Input
-          id="notification-search"
-          name="search"
-          defaultValue={filters.search}
-          placeholder="Ví dụ: yêu cầu xuất kho đã được xác nhận…"
-          autoComplete="off"
+    <div className="flex flex-wrap items-center gap-2">
+      <InputGroup className="min-w-0 flex-1 sm:w-72 sm:flex-none">
+        <InputGroupAddon>
+          <Search className="text-primary" aria-hidden="true" />
+        </InputGroupAddon>
+        <InputGroupInput
+          aria-label="Tìm thông báo"
+          placeholder="Tìm thông báo…"
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          onBlur={commitSearch}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitSearch()
+          }}
         />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="notification-type">Loại</Label>
-        <Select name="type" defaultValue={filters.type || 'all'}>
-          <SelectTrigger id="notification-type" className="w-full">
-            <SelectValue placeholder="Tất cả" />
-          </SelectTrigger>
-          <SelectContent align="start" sideOffset={4}>
-            <SelectGroup>
-              <SelectItem value="all">Tất cả</SelectItem>
-              {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="notification-read-state">Trạng thái</Label>
-        <Select name="readState" defaultValue={filters.readState}>
-          <SelectTrigger id="notification-read-state" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="start" sideOffset={4}>
-            <SelectGroup>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="unread">Chưa đọc</SelectItem>
-              <SelectItem value="read">Đã đọc</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="notification-from">Từ ngày</Label>
-        <Input id="notification-from" name="dateFrom" type="date" defaultValue={filters.dateFrom} />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="notification-to">Đến ngày</Label>
-        <Input id="notification-to" name="dateTo" type="date" defaultValue={filters.dateTo} />
-      </div>
-      <div className="flex gap-2 sm:col-span-2 xl:col-span-6">
-        <Button type="submit">
-          <Search data-icon="inline-start" aria-hidden="true" />
-          Áp dụng
-        </Button>
-        <Button type="button" variant="ghost" onClick={onClear}>
+      </InputGroup>
+
+      <NativeSelect
+        aria-label="Lọc theo loại"
+        value={filters.type || 'all'}
+        onChange={(e) =>
+          onApply({ ...filters, type: e.target.value === 'all' ? '' : e.target.value })
+        }
+      >
+        <NativeSelectOption value="all">Tất cả loại</NativeSelectOption>
+        {Object.entries(TYPE_LABELS).map(([value, label]) => (
+          <NativeSelectOption key={value} value={value}>
+            {label}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+
+      <NativeSelect
+        aria-label="Lọc theo trạng thái đọc"
+        value={filters.readState}
+        onChange={(e) => onApply({ ...filters, readState: e.target.value })}
+      >
+        <NativeSelectOption value="all">Tất cả</NativeSelectOption>
+        <NativeSelectOption value="unread">Chưa đọc</NativeSelectOption>
+        <NativeSelectOption value="read">Đã đọc</NativeSelectOption>
+      </NativeSelect>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant={hasDateFilter ? 'default' : 'outline'}
+            size="sm"
+            aria-label="Lọc theo khoảng ngày"
+          >
+            <CalendarRange aria-hidden="true" />
+            {buildDateLabel()}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <div className="border-b p-3">
+            <PopoverTitle>Khoảng ngày thông báo</PopoverTitle>
+          </div>
+          <Calendar
+            mode="range"
+            selected={dateRange}
+            onSelect={handleDateRangeSelect}
+            numberOfMonths={1}
+          />
+          {hasDateFilter ? (
+            <div className="border-t p-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => onApply({ ...filters, dateFrom: '', dateTo: '' })}
+              >
+                <X aria-hidden="true" />
+                Xoá lọc ngày
+              </Button>
+            </div>
+          ) : null}
+        </PopoverContent>
+      </Popover>
+
+      {hasActiveFilters ? (
+        <Button type="button" variant="ghost" size="sm" onClick={onClear}>
+          <X aria-hidden="true" />
           Xóa lọc
         </Button>
-      </div>
-    </form>
+      ) : null}
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Tải lại danh sách"
+            onClick={onRetry}
+          >
+            <RefreshCw
+              className={cn('text-primary', isFetching && 'animate-spin')}
+              aria-hidden="true"
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Tải lại</TooltipContent>
+      </Tooltip>
+    </div>
   )
 }
 

@@ -1,6 +1,7 @@
-import { Check, Eye, RefreshCw, Search } from 'lucide-react'
+import { CalendarRange, Check, Eye, RefreshCw, Search, X } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
+import type { DateRange } from 'react-day-picker'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -9,10 +10,11 @@ import {
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Calendar } from '@/components/ui/calendar'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import {
   Table,
   TableBody,
@@ -22,6 +24,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { dateToIsoDateString, formatDisplayDate, isoDateStringToDate } from '@/lib/date-format'
+import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { GoodsReceiptStatus, GoodsReceiptSummary } from '../../types/inbound.types'
 import { INBOUND_STATUS_LABELS } from '../../utils/inbound-format'
@@ -30,6 +34,7 @@ import {
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundStatusBadge } from '../InboundWorkspace'
+import { TaskAssigneeCell } from '../TaskAssignment'
 
 interface ReceiptDirectoryProps {
   readonly items: readonly GoodsReceiptSummary[]
@@ -108,28 +113,62 @@ export function ReceiptDirectory({
               </NativeSelectOption>
             ))}
           </NativeSelect>
-          <label className="text-muted-foreground flex items-center gap-2 text-xs">
-            Tạo từ
-            <Input
-              type="date"
-              aria-label="Lọc phiếu từ ngày tạo"
-              className="w-36"
-              value={createdFrom}
-              max={createdTo || undefined}
-              onChange={(event) => onCreatedFromChange(event.target.value)}
-            />
-          </label>
-          <label className="text-muted-foreground flex items-center gap-2 text-xs">
-            Đến
-            <Input
-              type="date"
-              aria-label="Lọc phiếu đến ngày tạo"
-              className="w-36"
-              value={createdTo}
-              min={createdFrom || undefined}
-              onChange={(event) => onCreatedToChange(event.target.value)}
-            />
-          </label>
+          {(() => {
+            const hasDate = Boolean(createdFrom || createdTo)
+            const dateRange: DateRange = {
+              from: isoDateStringToDate(createdFrom),
+              to: isoDateStringToDate(createdTo),
+            }
+            const f = dateRange.from ? formatDisplayDate(dateRange.from) : null
+            const t = dateRange.to ? formatDisplayDate(dateRange.to) : null
+            const label = f && t ? `${f} – ${t}` : f ? `Từ ${f}` : t ? `Đến ${t}` : 'Khoảng ngày'
+            return (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={hasDate ? 'default' : 'outline'}
+                    size="sm"
+                    aria-label="Lọc theo khoảng ngày tạo"
+                  >
+                    <CalendarRange aria-hidden="true" />
+                    {label}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <div className="border-b p-3">
+                    <PopoverTitle>Khoảng ngày tạo</PopoverTitle>
+                  </div>
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={(range) => {
+                      onCreatedFromChange(range?.from ? dateToIsoDateString(range.from) : '')
+                      onCreatedToChange(range?.to ? dateToIsoDateString(range.to) : '')
+                    }}
+                    numberOfMonths={1}
+                  />
+                  {hasDate ? (
+                    <div className="border-t p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          onCreatedFromChange('')
+                          onCreatedToChange('')
+                        }}
+                      >
+                        <X aria-hidden="true" />
+                        Xoá lọc ngày
+                      </Button>
+                    </div>
+                  ) : null}
+                </PopoverContent>
+              </Popover>
+            )
+          })()}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -139,7 +178,10 @@ export function ReceiptDirectory({
                 aria-label="Tải lại"
                 onClick={onRetry}
               >
-                <RefreshCw className={isFetching ? 'animate-spin' : undefined} aria-hidden="true" />
+                <RefreshCw
+                  className={cn('text-primary', isFetching && 'animate-spin')}
+                  aria-hidden="true"
+                />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Tải lại</TooltipContent>
@@ -174,12 +216,21 @@ export function ReceiptDirectory({
                     {item.inboundRequestCode} · {item.warehouseName}
                   </ItemDescription>
                   <ItemDescription>
-                    Tạo lúc {formatOperationalDateTime(item.createdAt)}
+                    {item.lineCount} mặt hàng · Tạo lúc {formatOperationalDateTime(item.createdAt)}
                   </ItemDescription>
                   <ItemDescription>
                     Nhận {formatQuantity(item.receivedQuantity)} · Hỏng{' '}
-                    {formatQuantity(item.damagedQuantity)}
+                    {formatQuantity(item.damagedQuantity)} · Đã cất{' '}
+                    {formatQuantity(item.putAwayQuantity)}
                   </ItemDescription>
+                  {item.putAwayAssignedToName && (
+                    <div className="mt-1">
+                      <TaskAssigneeCell
+                        assigneeName={item.putAwayAssignedToName}
+                        executionStatus={item.putAwayExecutionStatus}
+                      />
+                    </div>
+                  )}
                 </ItemContent>
                 {canApprove && item.status === 'PendingApproval' ? (
                   <Button
@@ -197,14 +248,17 @@ export function ReceiptDirectory({
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[900px]">
+            <Table className="min-w-[1200px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
                   <TableHead className="sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
                   <TableHead className="sticky top-0 z-10">Kho</TableHead>
                   <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Mặt hàng</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Nhận / Hỏng</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Đã cất / Còn cất</TableHead>
+                  <TableHead className="sticky top-0 z-10">Người cất hàng</TableHead>
                   <TableHead className="sticky top-0 z-10">Người tạo</TableHead>
                   <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
                   <TableHead className="sticky top-0 z-10">
@@ -228,9 +282,26 @@ export function ReceiptDirectory({
                     <TableCell>
                       <InboundStatusBadge status={item.status} />
                     </TableCell>
+                    <TableCell className="text-right tabular-nums">{item.lineCount}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatQuantity(item.receivedQuantity)} /{' '}
                       {formatQuantity(item.damagedQuantity)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatQuantity(item.putAwayQuantity)} /{' '}
+                      {formatQuantity(
+                        Math.max(
+                          0,
+                          item.receivedQuantity - item.damagedQuantity - item.putAwayQuantity
+                        )
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-40">
+                      <TaskAssigneeCell
+                        assigneeName={item.putAwayAssignedToName}
+                        assignedAt={item.putAwayAssignedAt}
+                        executionStatus={item.putAwayExecutionStatus}
+                      />
                     </TableCell>
                     <TableCell>{item.createdByName}</TableCell>
                     <TableCell className="whitespace-nowrap">
