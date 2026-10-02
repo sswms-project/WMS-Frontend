@@ -16,15 +16,22 @@ interface AuditLogDetailSheetProps {
 export function AuditLogDetailSheet({ log, onOpenChange }: AuditLogDetailSheetProps) {
   return (
     <Sheet open={log !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto overscroll-contain sm:max-w-2xl lg:max-w-[50vw]">
+      <SheetContent
+        side="right"
+        className="w-full max-w-full overflow-hidden data-[side=right]:w-full data-[side=right]:sm:w-full data-[side=right]:sm:max-w-none data-[side=right]:lg:w-1/2"
+      >
         {log ? (
           <>
-            <SheetHeader>
-              <SheetTitle>{log.actionLabel}</SheetTitle>
+            <SheetHeader className="shrink-0 border-b px-6 py-5 pr-12">
+              <SheetTitle>Chi tiết nhật ký hoạt động</SheetTitle>
               <SheetDescription>{formatPlatformDateTime(log.createdAt)}</SheetDescription>
             </SheetHeader>
-            <div className="flex flex-col gap-5 px-4 pb-6">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-6">
+              <section className="bg-muted rounded-lg border p-4" aria-label="Hoạt động">
+                <p className="text-muted-foreground text-xs">Thao tác</p>
+                <p className="mt-1 text-base font-semibold wrap-anywhere">{log.actionLabel}</p>
+              </section>
+              <dl className="grid gap-3 sm:grid-cols-2">
                 <Detail label="Người thực hiện" value={log.actorName} hint={log.actorEmail} />
                 <Detail label="Đối tượng thao tác" value={log.entityTypeLabel} />
                 <Detail label="Tham chiếu" value={log.referenceDisplay} />
@@ -34,13 +41,13 @@ export function AuditLogDetailSheet({ log, onOpenChange }: AuditLogDetailSheetPr
                     value={[log.warehouseCode, log.warehouseName].filter(Boolean).join(' · ')}
                   />
                 ) : null}
-              </div>
+              </dl>
 
-              <section className="border p-4" aria-labelledby="audit-summary-title">
+              <section className="rounded-lg border p-4" aria-labelledby="audit-summary-title">
                 <h3 id="audit-summary-title" className="text-sm font-semibold">
                   Mô tả chi tiết
                 </h3>
-                <p className="mt-2 text-sm">{log.summary}</p>
+                <p className="mt-2 text-sm wrap-anywhere whitespace-pre-wrap">{log.summary}</p>
               </section>
 
               {log.changes.length > 0 ? (
@@ -48,11 +55,11 @@ export function AuditLogDetailSheet({ log, onOpenChange }: AuditLogDetailSheetPr
                   <h3 id="audit-changes-title" className="mb-2 text-sm font-semibold">
                     Nội dung thay đổi
                   </h3>
-                  <div className="divide-y border">
+                  <div className="divide-y overflow-hidden rounded-lg border">
                     {log.changes.map((change, index) => (
-                      <div key={`${change.label}-${index}`} className="space-y-2 p-3">
-                        <p className="text-sm font-medium">{change.label}</p>
-                        <div className="grid grid-cols-2 gap-4">
+                      <div key={`${change.label}-${index}`} className="flex flex-col gap-3 p-4">
+                        <p className="text-sm font-medium wrap-anywhere">{change.label}</p>
+                        <div className="grid gap-3 sm:grid-cols-2">
                           <ChangeValue label="Trước" value={change.before} />
                           <ChangeValue label="Sau" value={change.after} />
                         </div>
@@ -79,19 +86,19 @@ function Detail({
   readonly hint?: string
 }) {
   return (
-    <div>
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-sm font-medium break-words">{value}</p>
-      {hint ? <p className="text-muted-foreground text-xs break-all">{hint}</p> : null}
+    <div className="min-w-0 rounded-lg border p-3">
+      <dt className="text-muted-foreground text-xs">{label}</dt>
+      <dd className="mt-1 text-sm font-medium wrap-anywhere">{value}</dd>
+      {hint ? <dd className="text-muted-foreground mt-1 text-xs wrap-anywhere">{hint}</dd> : null}
     </div>
   )
 }
 
 function ChangeValue({ label, value }: { readonly label: string; readonly value: string | null }) {
   return (
-    <div>
+    <div className="bg-muted min-w-0 rounded-md p-3">
       <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-sm break-words">{value ?? '—'}</p>
+      <p className="mt-1 text-sm wrap-anywhere whitespace-pre-wrap">{value ?? '—'}</p>
     </div>
   )
 }

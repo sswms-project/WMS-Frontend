@@ -127,7 +127,7 @@ export function InboundRequestDetail({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
+    <div className="flex w-full min-w-0 flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon">
