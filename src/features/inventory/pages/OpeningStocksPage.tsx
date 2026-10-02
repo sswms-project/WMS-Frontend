@@ -169,7 +169,8 @@ export default function OpeningStocksPage() {
     item: OpeningStockRecord,
     actionName: 'submit' | 'approve' | 'review' | 'cancel' | 'withdraw',
     decision?: 'Returned' | 'Rejected' | 'Cancelled',
-    reason?: string
+    reason?: string,
+    selfApprovalAcknowledged = false
   ) {
     if (!item.version) {
       toast.error('Chứng từ chưa có phiên bản. Vui lòng tải lại.')
@@ -183,6 +184,7 @@ export default function OpeningStocksPage() {
           expectedVersion: item.version,
           decision,
           reason: reason ?? '',
+          selfApprovalAcknowledged,
         })
       else if (actionName === 'cancel')
         await actionMutation.mutateAsync({
@@ -198,9 +200,16 @@ export default function OpeningStocksPage() {
           expectedVersion: item.version,
           reason: reason ?? '',
         })
-      else if (actionName !== 'review')
+      else if (actionName === 'approve')
         await actionMutation.mutateAsync({
-          action: actionName,
+          action: 'approve',
+          id: item.id,
+          expectedVersion: item.version,
+          selfApprovalAcknowledged,
+        })
+      else if (actionName === 'submit')
+        await actionMutation.mutateAsync({
+          action: 'submit',
           id: item.id,
           expectedVersion: item.version,
         })
@@ -264,6 +273,7 @@ export default function OpeningStocksPage() {
       }
       canCreate={permissions.includes(P.INVENTORY_RESERVE)}
       canApprove={permissions.includes(P.STOCK_ADJUSTMENTS_APPROVE)}
+      canSelfApprove={permissions.includes(P.INVENTORY_SELF_APPROVE_OPENING_STOCK)}
       onRetry={() => void recordsQuery.refetch()}
       onCreate={create}
       onUpdate={update}

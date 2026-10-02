@@ -241,7 +241,7 @@ export function ReceiptDirectory({
                     onClick={() => onApprove(item)}
                   >
                     <Check aria-hidden="true" />
-                    Phê duyệt
+                    Xác nhận hàng đến
                   </Button>
                 ) : null}
               </Item>
@@ -316,14 +316,14 @@ export function ReceiptDirectory({
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={`Phê duyệt ${item.receiptCode}`}
+                                aria-label={`Xác nhận hàng đến ${item.receiptCode}`}
                                 disabled={isApproving}
                                 onClick={() => onApprove(item)}
                               >
                                 <Check className="text-primary" aria-hidden="true" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Phê duyệt phiếu</TooltipContent>
+                            <TooltipContent>Xác nhận hàng đến</TooltipContent>
                           </Tooltip>
                         ) : null}
                         <Button asChild variant="ghost" size="icon-sm">

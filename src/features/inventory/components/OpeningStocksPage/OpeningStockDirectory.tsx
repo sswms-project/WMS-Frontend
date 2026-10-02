@@ -5,6 +5,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import { PackagePlus, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -64,6 +65,7 @@ interface OpeningStockDirectoryProps {
   readonly isPending: boolean
   readonly canCreate: boolean
   readonly canApprove: boolean
+  readonly canSelfApprove: boolean
   readonly onRetry: () => void
   readonly onPageChange: (page: number) => void
   readonly onFilterWarehouseChange: (value: string) => void
@@ -79,7 +81,8 @@ interface OpeningStockDirectoryProps {
     item: OpeningStockRecord,
     action: 'submit' | 'approve' | 'review' | 'cancel' | 'withdraw',
     decision?: 'Returned' | 'Rejected' | 'Cancelled',
-    reason?: string
+    reason?: string,
+    selfApprovalAcknowledged?: boolean
   ) => Promise<void>
 }
 
@@ -118,6 +121,7 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
     'Returned'
   )
   const [reason, setReason] = useState('')
+  const [selfApprovalAcknowledged, setSelfApprovalAcknowledged] = useState(false)
   const [draftLines, setDraftLines] = useState<OpeningStockDraftLine[]>([])
   const [editItem, setEditItem] = useState<OpeningStockRecord | null>(null)
   const [detailItem, setDetailItem] = useState<OpeningStockRecord | null>(null)
@@ -257,10 +261,25 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
         reviewItem,
         decision === 'Cancelled' ? 'cancel' : 'review',
         decision,
-        reason
+        reason,
+        selfApprovalAcknowledged
       )
     setReviewItem(null)
     setReason('')
+    setSelfApprovalAcknowledged(false)
+  }
+
+  async function approve(item: OpeningStockRecord) {
+    const isMaker =
+      item.createdByUserId === props.currentUserId || item.submittedByUserId === props.currentUserId
+    if (
+      isMaker &&
+      !window.confirm(
+        'Bạn đang tự phê duyệt chứng từ do chính mình lập hoặc gửi. Xác nhận tiếp tục?'
+      )
+    )
+      return
+    await props.onAction(item, 'approve', undefined, undefined, isMaker)
   }
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -411,20 +430,22 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
                         ) : null}
                         {item.status === 'PendingApproval' &&
                         props.canApprove &&
-                        item.createdByUserId !== props.currentUserId &&
-                        item.submittedByUserId !== props.currentUserId ? (
+                        ((item.createdByUserId !== props.currentUserId &&
+                          item.submittedByUserId !== props.currentUserId) ||
+                          props.canSelfApprove) ? (
                           <Button
                             size="sm"
                             disabled={props.isPending}
-                            onClick={() => void props.onAction(item, 'approve')}
+                            onClick={() => void approve(item)}
                           >
                             Duyệt & ghi sổ
                           </Button>
                         ) : null}
                         {item.status === 'PendingApproval' &&
                         props.canApprove &&
-                        item.createdByUserId !== props.currentUserId &&
-                        item.submittedByUserId !== props.currentUserId ? (
+                        ((item.createdByUserId !== props.currentUserId &&
+                          item.submittedByUserId !== props.currentUserId) ||
+                          props.canSelfApprove) ? (
                           <Button
                             size="sm"
                             variant="outline"
@@ -729,7 +750,10 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
       <Dialog
         open={Boolean(reviewItem)}
         onOpenChange={(open) => {
-          if (!open) setReviewItem(null)
+          if (!open) {
+            setReviewItem(null)
+            setSelfApprovalAcknowledged(false)
+          }
         }}
       >
         <DialogContent>
@@ -766,11 +790,36 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
               onChange={(event) => setReason(event.target.value)}
             />
           </Field>
+          {reviewItem &&
+          decision !== 'Cancelled' &&
+          decision !== 'Withdraw' &&
+          (reviewItem.createdByUserId === props.currentUserId ||
+            reviewItem.submittedByUserId === props.currentUserId) ? (
+            <label className="flex items-start gap-3 text-sm">
+              <Checkbox
+                checked={selfApprovalAcknowledged}
+                onCheckedChange={(checked) => setSelfApprovalAcknowledged(checked === true)}
+              />
+              Tôi xác nhận đang tự xử lý chứng từ do chính mình lập hoặc gửi.
+            </label>
+          ) : null}
           <DialogFooter>
             <Button variant="outline" onClick={() => setReviewItem(null)}>
               Đóng
             </Button>
-            <Button disabled={!reason.trim() || props.isPending} onClick={() => void review()}>
+            <Button
+              disabled={
+                !reason.trim() ||
+                props.isPending ||
+                (Boolean(reviewItem) &&
+                  decision !== 'Cancelled' &&
+                  decision !== 'Withdraw' &&
+                  (reviewItem?.createdByUserId === props.currentUserId ||
+                    reviewItem?.submittedByUserId === props.currentUserId) &&
+                  !selfApprovalAcknowledged)
+              }
+              onClick={() => void review()}
+            >
               Xác nhận
             </Button>
           </DialogFooter>

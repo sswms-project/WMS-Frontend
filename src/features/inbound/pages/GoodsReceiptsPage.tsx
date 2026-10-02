@@ -28,6 +28,7 @@ import { InboundPageHeader } from '../components/InboundWorkspace'
 import { ReceiptDirectory } from '../components/ReceiptsPage'
 import {
   useApproveGoodsReceiptMutation,
+  useGoodsReceiptQuery,
   useGoodsReceiptsQuery,
   useInboundAllowedActionsQuery,
 } from '../hooks/use-inbound'
@@ -43,6 +44,7 @@ export default function GoodsReceiptsPage() {
   const [approvalTarget, setApprovalTarget] = useState<GoodsReceiptSummary | null>(null)
   const meQuery = useMeQuery()
   const approveMutation = useApproveGoodsReceiptMutation()
+  const approvalDetailQuery = useGoodsReceiptQuery(approvalTarget?.id ?? '')
   const allowedActionsQuery = useInboundAllowedActionsQuery(approvalTarget?.id ?? '')
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useGoodsReceiptsQuery({
@@ -67,13 +69,22 @@ export default function GoodsReceiptsPage() {
       return
     }
 
+    if (!approvalDetailQuery.data) {
+      toast.error('Không thể tải phiên bản mới nhất của phiếu nhận hàng.')
+      return
+    }
+
     try {
-      await approveMutation.mutateAsync(approvalTarget.id)
-      toast.success(`Đã phê duyệt phiếu ${approvalTarget.receiptCode}.`)
+      await approveMutation.mutateAsync({
+        receiptId: approvalTarget.id,
+        expectedVersion: approvalDetailQuery.data.version,
+        selfApprovalAcknowledged: allowedActionsQuery.data.selfApprovalRequired,
+      })
+      toast.success(`Đã xác nhận hàng đến cho phiếu ${approvalTarget.receiptCode}.`)
       setApprovalTarget(null)
     } catch (error) {
       logger.error(error)
-      toast.error(getApiErrorMessage(error, 'Không thể phê duyệt phiếu nhận hàng.'))
+      toast.error(getApiErrorMessage(error, 'Không thể xác nhận hàng đến.'))
     }
   }
 
@@ -138,10 +149,12 @@ export default function GoodsReceiptsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Phê duyệt phiếu nhận hàng?</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận hàng đã đến kho?</AlertDialogTitle>
             <AlertDialogDescription>
               {approvalTarget
-                ? `Phiếu ${approvalTarget.receiptCode} sẽ được duyệt và số lượng thực nhận sẽ được ghi nhận.`
+                ? allowedActionsQuery.data?.selfApprovalRequired
+                  ? `Bạn là người ghi nhận phiếu ${approvalTarget.receiptCode}. Hệ thống sẽ lưu hành động tự phê duyệt và ghi hàng vào khu chờ.`
+                  : `Số lượng thực nhận của phiếu ${approvalTarget.receiptCode} sẽ được ghi vào vị trí chờ nhận hàng trước khi cất hàng.`
                 : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -150,6 +163,8 @@ export default function GoodsReceiptsPage() {
             <AlertDialogAction
               disabled={
                 approveMutation.isPending ||
+                approvalDetailQuery.isLoading ||
+                approvalDetailQuery.isFetching ||
                 allowedActionsQuery.isLoading ||
                 allowedActionsQuery.isFetching
               }
@@ -159,7 +174,7 @@ export default function GoodsReceiptsPage() {
               }}
             >
               <Check aria-hidden="true" />
-              {approveMutation.isPending ? 'Đang duyệt…' : 'Xác nhận duyệt'}
+              {approveMutation.isPending ? 'Đang xác nhận…' : 'Xác nhận hàng đến'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

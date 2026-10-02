@@ -28,6 +28,7 @@ export const P = {
   GOODS_RECEIPTS_SUBMIT: 'goods-receipts:submit',
   GOODS_RECEIPTS_PUTAWAY: 'goods-receipts:putaway',
   GOODS_RECEIPTS_APPROVE: 'goods-receipts:approve',
+  GOODS_RECEIPTS_SELF_APPROVE: 'goods-receipts:self-approve',
   GOODS_RECEIPTS_REJECT: 'goods-receipts:reject',
 
   // Warehouse Tasks (công việc được giao của Nhân viên kho)
@@ -47,11 +48,15 @@ export const P = {
   INBOUND_REQUESTS_SUBMIT: 'inbound-requests:submit',
   INBOUND_REQUESTS_APPROVE: 'inbound-requests:approve',
   INBOUND_REQUESTS_REJECT: 'inbound-requests:reject',
+  INBOUND_REQUESTS_SELF_APPROVE: 'inbound-requests:self-approve',
+  INBOUND_REQUESTS_CANCEL: 'inbound-requests:cancel',
+  INBOUND_REQUESTS_CLOSE_REMAINING: 'inbound-requests:close-remaining',
 
   // Inventory
   INVENTORY_VIEW: 'inventory:view',
   INVENTORY_RESERVE: 'inventory:reserve',
   INVENTORY_REPORT_DAMAGED: 'inventory:report-damaged',
+  INVENTORY_SELF_APPROVE_OPENING_STOCK: 'inventory:self-approve-opening-stock',
 
   // Notifications
   NOTIFICATIONS_VIEW: 'notifications:view',

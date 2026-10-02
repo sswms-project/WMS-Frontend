@@ -39,7 +39,9 @@ export function getPutawaySlotOptions(zones: readonly ZoneResponse[]): SlotOptio
             ]
           }
           return rack.slots
-            .filter((slot) => slot.isActive && !slot.isOutboundStaging)
+            .filter(
+              (slot) => slot.isActive && !slot.isOutboundStaging && !slot.isInboundStaging
+            )
             .map((slot) => ({
               id: slot.id,
               code: slot.slotCode,

@@ -190,6 +190,7 @@ export const slotSchema = z
       .max(255, 'Tên vị trí tối đa 255 ký tự.'),
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     allowsMixedProducts: z.boolean(),
+    isInboundStaging: z.boolean().optional(),
     ...capacityShape,
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
