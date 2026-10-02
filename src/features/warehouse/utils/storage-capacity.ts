@@ -50,3 +50,12 @@ export function getCapacityFormValues(location?: CapacityLocation) {
       location?.capacityType === 'Quantity' ? (location.capacityUnitId ?? null) : null,
   }
 }
+
+export function getCapacityUpdateValues(
+  location: CapacityLocation,
+  preserveLegacyCapacity: boolean
+) {
+  return location.requiresCapacityConfiguration && preserveLegacyCapacity
+    ? { capacityType: undefined, capacity: location.capacity ?? null, capacityUnitId: null }
+    : {}
+}

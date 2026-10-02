@@ -98,6 +98,11 @@ export const zoneSchema = z
 const optionalCapacitySchema = z
   .number({ error: 'Giới hạn số lượng phải là số.' })
   .positive('Giới hạn số lượng phải lớn hơn 0.')
+  .lt(1_000_000_000_000, 'Sức chứa tối đa phải nhỏ hơn 1.000.000.000.000.')
+  .refine((value) => {
+    const [coefficient = '', exponent = '0'] = value.toString().split('e')
+    return (coefficient.split('.')[1]?.length ?? 0) - Number(exponent) <= 6
+  }, 'Sức chứa tối đa có tối đa 6 chữ số thập phân.')
   .nullable()
 
 const capacityShape = {

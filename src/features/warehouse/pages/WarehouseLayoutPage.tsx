@@ -10,8 +10,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useUnitsQuery } from '@/features/product/hooks/use-products'
-import { getCapacityFormValues } from '../utils/storage-capacity'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { getCapacityFormValues, getCapacityUpdateValues } from '../utils/storage-capacity'
+import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import type { RackResponse, SlotResponse, ZoneResponse } from '@/types/warehouse'
@@ -90,6 +90,8 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   const [zoneFormTarget, setZoneFormTarget] = useState<ZoneFormTarget | null>(null)
   const [rackFormTarget, setRackFormTarget] = useState<RackFormTarget | null>(null)
   const [slotFormTarget, setSlotFormTarget] = useState<SlotFormTarget | null>(null)
+  const [rackConflictTarget, setRackConflictTarget] = useState<string | null>(null)
+  const [slotConflictTarget, setSlotConflictTarget] = useState<string | null>(null)
   const unitsQuery = useUnitsQuery(Boolean(rackFormTarget || slotFormTarget), 'Active')
   const capacityFormProps = {
     units: unitsQuery.data ?? [],
@@ -109,7 +111,15 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   if (layoutQuery.isLoading || warehouseQuery.isLoading || meQuery.isLoading)
     return <Skeleton className="h-[32rem]" />
 
-  if (layoutQuery.isError || warehouseQuery.isError || meQuery.isError || !warehouseQuery.data) {
+  if (
+    (layoutQuery.isError &&
+      (!layoutQuery.data ||
+        layoutQuery.error.statusCode === 401 ||
+        layoutQuery.error.statusCode === 403)) ||
+    warehouseQuery.isError ||
+    meQuery.isError ||
+    !warehouseQuery.data
+  ) {
     return (
       <Empty className="min-h-72 border">
         <EmptyHeader>
@@ -165,7 +175,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
     }
   }
 
-  async function submitRack(values: RackFormValues) {
+  async function submitRack(values: RackFormValues, preserveLegacyCapacity = false) {
     if (!rackFormTarget) return false
     try {
       if (rackFormTarget.mode === 'create') {
@@ -197,19 +207,26 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           warehouseId,
           zoneId: rackFormTarget.zone.id,
           rackId: rackFormTarget.rack.id,
-          request: { ...values, expectedRowVersion: rackFormTarget.rack.rowVersion ?? '' },
+          request: {
+            ...values,
+            ...getCapacityUpdateValues(rackFormTarget.rack, preserveLegacyCapacity),
+            expectedRowVersion: rackFormTarget.rack.rowVersion ?? '',
+          },
         })
         toast.success('Đã cập nhật kệ hàng.')
       }
       setRackFormTarget(null)
+      setRackConflictTarget(null)
       return true
     } catch (error) {
+      if (isApiErrorResponse(error) && error.statusCode === 409 && rackFormTarget.mode === 'update')
+        setRackConflictTarget(rackFormTarget.rack.id)
       toast.error(getApiErrorMessage(error, 'Không thể lưu kệ hàng. Vui lòng thử lại.'))
       return false
     }
   }
 
-  async function submitSlot(values: SlotFormValues) {
+  async function submitSlot(values: SlotFormValues, preserveLegacyCapacity = false) {
     if (!slotFormTarget) return false
     try {
       if (slotFormTarget.mode === 'create') {
@@ -240,16 +257,55 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
           warehouseId,
           rackId: slotFormTarget.rack.id,
           slotId: slotFormTarget.slot.id,
-          request: { ...values, expectedRowVersion: slotFormTarget.slot.rowVersion ?? '' },
+          request: {
+            ...values,
+            ...getCapacityUpdateValues(slotFormTarget.slot, preserveLegacyCapacity),
+            expectedRowVersion: slotFormTarget.slot.rowVersion ?? '',
+          },
         })
         toast.success('Đã cập nhật vị trí lưu trữ.')
       }
       setSlotFormTarget(null)
+      setSlotConflictTarget(null)
       return true
     } catch (error) {
+      if (isApiErrorResponse(error) && error.statusCode === 409 && slotFormTarget.mode === 'update')
+        setSlotConflictTarget(slotFormTarget.slot.id)
       toast.error(getApiErrorMessage(error, 'Không thể lưu vị trí. Vui lòng thử lại.'))
       return false
     }
+  }
+
+  async function reloadLocationForm(kind: 'rack' | 'slot') {
+    const result = await layoutQuery.refetch()
+    if (result.isError || !result.data) {
+      toast.error('Không thể tải dữ liệu mới. Bản nháp vẫn được giữ, vui lòng thử lại.')
+      return false
+    }
+    if (kind === 'rack' && rackFormTarget?.mode === 'update') {
+      const zone = result.data.find((item) =>
+        item.racks.some((rack) => rack.id === rackFormTarget.rack.id)
+      )
+      const rack = zone?.racks.find((item) => item.id === rackFormTarget.rack.id)
+      if (zone && rack) {
+        setRackFormTarget({ mode: 'update', zone, rack })
+        setRackConflictTarget(null)
+        return true
+      }
+    }
+    if (kind === 'slot' && slotFormTarget?.mode === 'update') {
+      const rack = result.data
+        .flatMap((zone) => zone.racks)
+        .find((item) => item.slots.some((slot) => slot.id === slotFormTarget.slot.id))
+      const slot = rack?.slots.find((item) => item.id === slotFormTarget.slot.id)
+      if (rack && slot) {
+        setSlotFormTarget({ mode: 'update', rack, slot })
+        setSlotConflictTarget(null)
+        return true
+      }
+    }
+    toast.error('Vị trí không còn trong danh sách. Vui lòng đóng form và kiểm tra lại.')
+    return false
   }
 
   async function confirmLifecycle(reason: string | null, cascadeToChildren: boolean) {
@@ -421,6 +477,11 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       {rackFormTarget ? (
         <RackFormSheet
           {...capacityFormProps}
+          conflict={
+            rackFormTarget.mode === 'update' && rackConflictTarget === rackFormTarget.rack.id
+              ? { reload: () => reloadLocationForm('rack') }
+              : undefined
+          }
           location={rackFormTarget.mode === 'update' ? rackFormTarget.rack : undefined}
           open
           mode={rackFormTarget.mode}
@@ -447,7 +508,12 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }
-          onOpenChange={(open) => !open && setRackFormTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRackFormTarget(null)
+              setRackConflictTarget(null)
+            }
+          }}
           onSubmit={submitRack}
         />
       ) : null}
@@ -455,6 +521,11 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
       {slotFormTarget ? (
         <SlotFormSheet
           {...capacityFormProps}
+          conflict={
+            slotFormTarget.mode === 'update' && slotConflictTarget === slotFormTarget.slot.id
+              ? { reload: () => reloadLocationForm('slot') }
+              : undefined
+          }
           location={slotFormTarget.mode === 'update' ? slotFormTarget.slot : undefined}
           open
           mode={slotFormTarget.mode}
@@ -479,7 +550,12 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }
-          onOpenChange={(open) => !open && setSlotFormTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSlotFormTarget(null)
+              setSlotConflictTarget(null)
+            }
+          }}
           onSubmit={submitSlot}
         />
       ) : null}

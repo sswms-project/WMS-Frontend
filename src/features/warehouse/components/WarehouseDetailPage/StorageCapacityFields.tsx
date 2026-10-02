@@ -44,6 +44,7 @@ export interface StorageCapacityFieldsProps {
   readonly unitsError: boolean
   readonly onRetryUnits: () => void
   readonly location?: CapacityLocation
+  readonly onPolicyChange?: () => void
 }
 
 export function StorageCapacityFields({
@@ -52,9 +53,11 @@ export function StorageCapacityFields({
   unitsError,
   onRetryUnits,
   location,
+  onPolicyChange,
 }: StorageCapacityFieldsProps) {
   const form = useFormContext<SlotFormValues>()
   const [confirmUnlimited, setConfirmUnlimited] = useState(false)
+  const [hasPolicyChoice, setHasPolicyChoice] = useState(false)
   const typeTriggerRef = useRef<HTMLButtonElement>(null)
   const [capacityType, capacity, capacityUnitId] = useWatch({
     control: form.control,
@@ -71,6 +74,8 @@ export function StorageCapacityFields({
       : undefined
 
   function applyUnlimited() {
+    setHasPolicyChoice(true)
+    onPolicyChange?.()
     form.setValue('capacity', null, { shouldDirty: true })
     form.setValue('capacityUnitId', null, { shouldDirty: true })
     form.setValue('capacityType', 'None', { shouldDirty: true, shouldValidate: true })
@@ -82,7 +87,13 @@ export function StorageCapacityFields({
       <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed">
         <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
         <p>
-          {capacityType === 'Quantity' ? (
+          {location?.requiresCapacityConfiguration && !hasPolicyChoice ? (
+            <>
+              Giữ chính sách hiện tại nếu chưa chọn loại sức chứa mới.
+              <br />
+              VD: Chỉ sửa tên vị trí sẽ không bỏ giới hạn cũ.
+            </>
+          ) : capacityType === 'Quantity' ? (
             <>
               Giới hạn tổng lượng hàng sau quy đổi về đơn vị sức chứa.
               <br />
@@ -122,7 +133,11 @@ export function StorageCapacityFields({
                     Loại sức chứa
                   </FieldLabel>
                   <Select
-                    value={capacityType}
+                    value={
+                      location?.requiresCapacityConfiguration && !hasPolicyChoice
+                        ? ''
+                        : capacityType
+                    }
                     disabled={locked}
                     onValueChange={(value) => {
                       if (value !== 'None' && value !== 'Quantity') return
@@ -134,6 +149,8 @@ export function StorageCapacityFields({
                         applyUnlimited()
                         return
                       }
+                      setHasPolicyChoice(true)
+                      onPolicyChange?.()
                       form.setValue('capacityType', value, {
                         shouldDirty: true,
                         shouldValidate: true,
@@ -146,7 +163,7 @@ export function StorageCapacityFields({
                       className="w-full"
                       aria-invalid={Boolean(errors.capacityType)}
                     >
-                      <SelectValue />
+                      <SelectValue placeholder="Giữ chính sách hiện tại" />
                     </SelectTrigger>
                     <SelectContent align="start" sideOffset={4}>
                       <SelectGroup>

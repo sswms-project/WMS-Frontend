@@ -6,14 +6,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useUnitsQuery } from '@/features/product/hooks/use-products'
-import { getCapacityFormValues } from '../utils/storage-capacity'
+import { getCapacityFormValues, getCapacityUpdateValues } from '../utils/storage-capacity'
 import { useAuthStore } from '@/stores/auth.store'
 import { RackFormSheet, SlotFormSheet, ZoneFormSheet } from '../components/WarehouseDetailPage'
 import {
@@ -92,6 +92,7 @@ export function WarehouseDesignerPage({
   const [isZoneFormOpen, setIsZoneFormOpen] = useState(false)
   const [rackZoneId, setRackZoneId] = useState<string | null>(null)
   const [locationEditTarget, setLocationEditTarget] = useState<LocationEditTarget | null>(null)
+  const [locationConflictTarget, setLocationConflictTarget] = useState<string | null>(null)
   const unitsQuery = useUnitsQuery(
     Boolean(
       rackZoneId || locationEditTarget?.kind === 'rack' || locationEditTarget?.kind === 'slot'
@@ -163,7 +164,10 @@ export function WarehouseDesignerPage({
 
   if (
     warehouseQuery.isError ||
-    sceneQuery.isError ||
+    (sceneQuery.isError &&
+      (!sceneQuery.data ||
+        sceneQuery.error.statusCode === 401 ||
+        sceneQuery.error.statusCode === 403)) ||
     meQuery.isError ||
     !warehouseQuery.data ||
     !sceneQuery.data ||
@@ -323,40 +327,81 @@ export function WarehouseDesignerPage({
     }
   }
 
-  async function updateRackDetails(values: RackFormValues) {
+  async function updateRackDetails(values: RackFormValues, preserveLegacyCapacity = false) {
     if (locationEditTarget?.kind !== 'rack') return false
     try {
       await updateRackMutation.mutateAsync({
         warehouseId,
         zoneId: locationEditTarget.location.zoneId,
         rackId: locationEditTarget.location.id,
-        request: { ...values, expectedRowVersion: locationEditTarget.location.rowVersion ?? '' },
+        request: {
+          ...values,
+          ...getCapacityUpdateValues(locationEditTarget.location, preserveLegacyCapacity),
+          expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
+        },
       })
       toast.success('Đã cập nhật kệ hàng.')
       setLocationEditTarget(null)
+      setLocationConflictTarget(null)
       return true
     } catch (error) {
+      if (isApiErrorResponse(error) && error.statusCode === 409)
+        setLocationConflictTarget(locationEditTarget.location.id)
       toast.error(getApiErrorMessage(error, 'Không thể cập nhật kệ hàng. Vui lòng thử lại.'))
       return false
     }
   }
 
-  async function updateSlotDetails(values: SlotFormValues) {
+  async function updateSlotDetails(values: SlotFormValues, preserveLegacyCapacity = false) {
     if (locationEditTarget?.kind !== 'slot') return false
     try {
       await updateSlotMutation.mutateAsync({
         warehouseId,
         rackId: locationEditTarget.location.rackId,
         slotId: locationEditTarget.location.id,
-        request: { ...values, expectedRowVersion: locationEditTarget.location.rowVersion ?? '' },
+        request: {
+          ...values,
+          ...getCapacityUpdateValues(locationEditTarget.location, preserveLegacyCapacity),
+          expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
+        },
       })
       toast.success('Đã cập nhật vị trí lưu trữ.')
       setLocationEditTarget(null)
+      setLocationConflictTarget(null)
       return true
     } catch (error) {
+      if (isApiErrorResponse(error) && error.statusCode === 409)
+        setLocationConflictTarget(locationEditTarget.location.id)
       toast.error(getApiErrorMessage(error, 'Không thể cập nhật vị trí. Vui lòng thử lại.'))
       return false
     }
+  }
+
+  async function reloadLocationDetails() {
+    const result = await sceneQuery.refetch()
+    if (result.isError || !result.data) {
+      toast.error('Không thể tải dữ liệu mới. Bản nháp vẫn được giữ, vui lòng thử lại.')
+      return false
+    }
+    const latest = mapWarehouseLayoutScene(result.data).editorScene
+    if (locationEditTarget?.kind === 'rack') {
+      const location = latest.racks.find((rack) => rack.id === locationEditTarget.location.id)
+      if (location) {
+        setLocationEditTarget({ kind: 'rack', location })
+        setLocationConflictTarget(null)
+        return true
+      }
+    }
+    if (locationEditTarget?.kind === 'slot') {
+      const location = latest.slots.find((slot) => slot.id === locationEditTarget.location.id)
+      if (location) {
+        setLocationEditTarget({ kind: 'slot', location })
+        setLocationConflictTarget(null)
+        return true
+      }
+    }
+    toast.error('Vị trí không còn trong danh sách. Vui lòng đóng form và kiểm tra lại.')
+    return false
   }
 
   async function reloadScene() {
@@ -513,6 +558,11 @@ export function WarehouseDesignerPage({
       {locationEditTarget?.kind === 'rack' ? (
         <RackFormSheet
           {...capacityFormProps}
+          conflict={
+            locationConflictTarget === locationEditTarget.location.id
+              ? { reload: reloadLocationDetails }
+              : undefined
+          }
           location={locationEditTarget.location}
           open
           mode="update"
@@ -527,7 +577,12 @@ export function WarehouseDesignerPage({
             expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
             ...getWarehousePhysicalDetails(locationEditTarget.location),
           }}
-          onOpenChange={(open) => !open && setLocationEditTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setLocationEditTarget(null)
+              setLocationConflictTarget(null)
+            }
+          }}
           onSubmit={updateRackDetails}
         />
       ) : null}
@@ -535,6 +590,11 @@ export function WarehouseDesignerPage({
       {locationEditTarget?.kind === 'slot' ? (
         <SlotFormSheet
           {...capacityFormProps}
+          conflict={
+            locationConflictTarget === locationEditTarget.location.id
+              ? { reload: reloadLocationDetails }
+              : undefined
+          }
           location={locationEditTarget.location}
           open
           mode="update"
@@ -548,7 +608,12 @@ export function WarehouseDesignerPage({
             expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
             ...getWarehousePhysicalDetails(locationEditTarget.location),
           }}
-          onOpenChange={(open) => !open && setLocationEditTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setLocationEditTarget(null)
+              setLocationConflictTarget(null)
+            }
+          }}
           onSubmit={updateSlotDetails}
         />
       ) : null}

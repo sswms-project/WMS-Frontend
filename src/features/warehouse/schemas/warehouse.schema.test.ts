@@ -63,6 +63,26 @@ const quantity = {
 }
 
 describe('quantity storage capacity contracts', () => {
+  it.each([
+    [0.000001, true],
+    [20.123456, true],
+    [999999999999, true],
+    [1000000000000, false],
+    [0.0000001, false],
+    [20.1234567, false],
+  ])('enforces decimal(18,6) for capacity %s', (capacity, valid) => {
+    expect(slotSchema.safeParse({ ...slot, ...quantity, capacity }).success).toBe(valid)
+    expect(
+      rackSchema.safeParse({
+        ...slot,
+        ...quantity,
+        capacity,
+        rackCode: 'R',
+        rackName: 'Rack',
+        storageMode: 'RackLevel',
+      }).success
+    ).toBe(valid)
+  })
   it.each(['Kilometer', 'Meter', 'Decimeter', 'Centimeter'])(
     'clears unused %s dimensions on rack and slot payloads',
     (unit) => {

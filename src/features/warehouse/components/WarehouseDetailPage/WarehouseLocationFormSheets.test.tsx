@@ -454,7 +454,7 @@ describe('location capacity fields', () => {
     expect(screen.queryByLabelText('Loại sức chứa')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
   })
-  it('omits the legacy warning and submits explicit nulls for None while preserving hidden mass data', async () => {
+  it('preserves a pending legacy policy on unrelated edits without showing the removed warning', async () => {
     const onSubmit = vi.fn().mockResolvedValue(true)
     render(
       <SlotFormSheet
@@ -486,6 +486,87 @@ describe('location capacity fields', () => {
           capacityUnitId: null,
           storageCapacity: 100,
           storageCapacityUnit: 'Kilogram',
+        }),
+        true
+      )
+    )
+  })
+  it('requires an explicit policy choice before clearing a pending legacy limit', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(false)
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        {...capacityProps}
+        defaultValues={{
+          ...slotValues,
+          capacityType: 'None',
+          capacity: null,
+          capacityUnitId: null,
+        }}
+        location={{ capacityType: 'None', capacity: 20, requiresCapacityConfiguration: true }}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    expect(screen.getByText('Giữ chính sách hiện tại')).toBeInTheDocument()
+    fireEvent.keyDown(screen.getByLabelText('Loại sức chứa'), { key: ' ' })
+    fireEvent.click(await screen.findByRole('option', { name: 'Không giới hạn' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ capacityType: 'None', capacity: null })
+      )
+    )
+  })
+  it('keeps a slot draft during conflict reload and uses the latest version', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(false)
+    const reload = vi.fn().mockResolvedValue(true)
+    const props = {
+      open: true,
+      mode: 'update' as const,
+      isPending: false,
+      ...capacityProps,
+      defaultValues: { ...slotValues, expectedRowVersion: 'old' },
+      location: {
+        capacityType: 'Quantity' as const,
+        capacity: 20,
+        capacityUnitId: unit.id,
+        currentOccupancy: 0,
+      },
+      onOpenChange: vi.fn(),
+      onSubmit,
+    }
+    const { rerender } = render(<SlotFormSheet {...props} />)
+    fireEvent.change(screen.getByLabelText('Tên vị trí'), { target: { value: 'Tên đang soạn' } })
+    rerender(<SlotFormSheet {...props} conflict={{ reload }} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() => expect(screen.getByText('Dữ liệu vị trí đã thay đổi')).toBeInTheDocument())
+    expect(onSubmit).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Tải dữ liệu mới' }))
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce())
+    rerender(
+      <SlotFormSheet
+        {...props}
+        defaultValues={{
+          ...props.defaultValues,
+          slotName: 'Tên trên server',
+          expectedRowVersion: 'new',
+          capacity: 25,
+        }}
+        location={{ ...props.location, capacity: 25, currentOccupancy: 5 }}
+      />
+    )
+    await waitFor(() => expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(25))
+    expect(screen.getByLabelText('Tên vị trí')).toHaveValue('Tên đang soạn')
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slotName: 'Tên đang soạn',
+          expectedRowVersion: 'new',
+          capacity: 25,
         })
       )
     )

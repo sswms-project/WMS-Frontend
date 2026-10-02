@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatStorageCapacity,
   getCapacityFormValues,
+  getCapacityUpdateValues,
   getCapacityUtilization,
 } from './storage-capacity'
 import { mapWarehouseLayoutScene } from './layout-scene-mapper'
@@ -45,7 +46,7 @@ describe('storage capacity display and mapping', () => {
       })
     ).toBe('Cần cấu hình đơn vị sức chứa')
   })
-  it('clears legacy numeric limits in the explicit form policy without mutating the response', () => {
+  it('keeps legacy limits in update payloads unless the user explicitly changes policy', () => {
     const legacy = {
       capacity: 20,
       capacityType: 'None' as const,
@@ -57,6 +58,13 @@ describe('storage capacity display and mapping', () => {
       capacityUnitId: null,
     })
     expect(legacy.capacity).toBe(20)
+    expect(getCapacityUpdateValues(legacy, true)).toEqual({
+      capacityType: undefined,
+      capacity: 20,
+      capacityUnitId: null,
+    })
+    expect(getCapacityUpdateValues(legacy, false)).toEqual({})
+    expect(getCapacityUpdateValues({ capacityType: 'None' }, true)).toEqual({})
   })
   it('preserves capacity metadata when mapping a scene to the editor', () => {
     const scene: WarehouseLayoutSceneResponse = {

@@ -54,7 +54,7 @@ interface CreateSlotVariables {
   request: CreateSlotRequest
 }
 
-interface UpdateSlotVariables extends CreateSlotVariables {
+interface UpdateSlotVariables extends Omit<CreateSlotVariables, 'request'> {
   slotId: string
   request: UpdateSlotRequest
 }
@@ -290,7 +290,10 @@ export function useUpdateRackMutation() {
     mutationFn: ({ warehouseId, zoneId, rackId, request }) =>
       warehouseService.updateRack(warehouseId, zoneId, rackId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: logWarehouseMutationError,
+    onError: async (error, variables) => {
+      logWarehouseMutationError(error)
+      if (error.statusCode === 409) await invalidateStructure(variables.warehouseId)
+    },
   })
 }
 
@@ -330,7 +333,10 @@ export function useUpdateSlotMutation() {
     mutationFn: ({ warehouseId, rackId, slotId, request }) =>
       warehouseService.updateSlot(warehouseId, rackId, slotId, request),
     onSuccess: async (_, variables) => invalidateStructure(variables.warehouseId),
-    onError: logWarehouseMutationError,
+    onError: async (error, variables) => {
+      logWarehouseMutationError(error)
+      if (error.statusCode === 409) await invalidateStructure(variables.warehouseId)
+    },
   })
 }
 

@@ -142,7 +142,8 @@ export interface CreateSlotRequest extends WarehousePhysicalDetails {
   capacityUnitId: string | null
 }
 
-export interface UpdateSlotRequest extends CreateSlotRequest {
+export interface UpdateSlotRequest extends Omit<CreateSlotRequest, 'capacityType'> {
+  capacityType?: StorageCapacityType
   expectedRowVersion: string
 }
 

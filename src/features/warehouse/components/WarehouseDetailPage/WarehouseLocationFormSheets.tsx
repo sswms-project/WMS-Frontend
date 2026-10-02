@@ -2,7 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Info, LoaderCircle, Save } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,7 +60,8 @@ interface LocationFormSheetProps<TValues> {
   readonly isPending: boolean
   readonly defaultValues: TValues
   readonly onOpenChange: (open: boolean) => void
-  readonly onSubmit: (values: TValues) => Promise<boolean>
+  readonly onSubmit: (values: TValues, preserveLegacyCapacity?: boolean) => Promise<boolean>
+  readonly conflict?: { readonly reload: () => Promise<boolean> }
 }
 
 const LOCATION_FORM_SHEET_CLASS =
@@ -172,10 +174,24 @@ export function RackFormSheet({
   defaultValues,
   onOpenChange,
   onSubmit,
+  conflict,
   ...capacityProps
 }: LocationFormSheetProps<RackFormValues> & StorageCapacityFieldsProps) {
   const form = useForm<RackFormValues>({ resolver: zodResolver(rackSchema), defaultValues })
-  const { errors } = form.formState
+  const { errors, dirtyFields } = form.formState
+  const [hasPolicyChoice, setHasPolicyChoice] = useState(false)
+  const rebaseKey = `${defaultValues.expectedRowVersion}:${defaultValues.capacityType}:${defaultValues.capacityUnitId}:${defaultValues.capacity}:${capacityProps.location?.currentOccupancy}`
+  const versionRef = useRef(rebaseKey)
+  useEffect(() => {
+    if (versionRef.current === rebaseKey) return
+    versionRef.current = rebaseKey
+    form.reset(defaultValues, { keepDirtyValues: true })
+    if ((capacityProps.location?.currentOccupancy ?? 0) > 0) {
+      form.setValue('storageMode', defaultValues.storageMode)
+      form.setValue('capacityType', defaultValues.capacityType)
+      form.setValue('capacityUnitId', defaultValues.capacityUnitId)
+    }
+  }, [defaultValues, form, capacityProps.location?.currentOccupancy, rebaseKey])
   const storageMode = useWatch({ control: form.control, name: 'storageMode' })
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
   const [confirmSlotMode, setConfirmSlotMode] = useState(false)
@@ -198,8 +214,15 @@ export function RackFormSheet({
   }
 
   async function handleSubmit(values: RackFormValues) {
+    if (conflict) return
     if (!validateCapacitySubmission(form, values, capacityProps)) return
-    if (await onSubmit(values)) form.reset(defaultValues)
+    const preserveLegacy = Boolean(
+      capacityProps.location?.requiresCapacityConfiguration &&
+      !hasPolicyChoice &&
+      !dirtyFields.storageMode
+    )
+    if (await (preserveLegacy ? onSubmit(values, true) : onSubmit(values)))
+      form.reset(defaultValues)
   }
 
   return (
@@ -225,6 +248,7 @@ export function RackFormSheet({
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FieldGroup className={LOCATION_FORM_BODY_CLASS}>
+              {conflict ? <LocationConflictAlert reload={conflict.reload} /> : null}
               <Field data-invalid={Boolean(errors.rackCode)}>
                 <FieldLabel htmlFor="rack-code">Mã kệ</FieldLabel>
                 <Input
@@ -355,12 +379,18 @@ export function RackFormSheet({
                 </AlertDialogContent>
               </AlertDialog>
               <PhysicalDetailsFields>
-                {storageMode === 'RackLevel' ? <StorageCapacityFields {...capacityProps} /> : null}
+                {storageMode === 'RackLevel' ? (
+                  <StorageCapacityFields
+                    {...capacityProps}
+                    onPolicyChange={() => setHasPolicyChoice(true)}
+                  />
+                ) : null}
               </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
               isPending={isPending || form.formState.isSubmitting}
+              isSaveBlocked={Boolean(conflict)}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
@@ -377,10 +407,26 @@ export function SlotFormSheet({
   defaultValues,
   onOpenChange,
   onSubmit,
+  conflict,
   ...capacityProps
 }: LocationFormSheetProps<SlotFormValues> & StorageCapacityFieldsProps) {
   const form = useForm<SlotFormValues>({ resolver: zodResolver(slotSchema), defaultValues })
-  const { errors } = form.formState
+  const { errors, dirtyFields } = form.formState
+  const [hasPolicyChoice, setHasPolicyChoice] = useState(false)
+  const rebaseKey = `${defaultValues.expectedRowVersion}:${defaultValues.capacityType}:${defaultValues.capacityUnitId}:${defaultValues.capacity}:${capacityProps.location?.currentOccupancy}`
+  const versionRef = useRef(rebaseKey)
+  useEffect(() => {
+    if (versionRef.current === rebaseKey) return
+    versionRef.current = rebaseKey
+    form.reset(defaultValues, { keepDirtyValues: true })
+    if (
+      capacityProps.location?.capacityType === 'Quantity' &&
+      (capacityProps.location.currentOccupancy ?? 0) > 0
+    ) {
+      form.setValue('capacityType', defaultValues.capacityType)
+      form.setValue('capacityUnitId', defaultValues.capacityUnitId)
+    }
+  }, [defaultValues, form, capacityProps.location, rebaseKey])
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
 
   const [isClosing, setIsClosing] = useState(false)
@@ -391,8 +437,16 @@ export function SlotFormSheet({
   }
 
   async function handleSubmit(values: SlotFormValues) {
+    if (conflict) return
     if (!validateCapacitySubmission(form, values, capacityProps)) return
-    if (await onSubmit(values)) form.reset(defaultValues)
+    const preserveLegacy = Boolean(
+      capacityProps.location?.requiresCapacityConfiguration &&
+      !hasPolicyChoice &&
+      !dirtyFields.capacityType &&
+      !dirtyFields.capacityUnitId
+    )
+    if (await (preserveLegacy ? onSubmit(values, true) : onSubmit(values)))
+      form.reset(defaultValues)
   }
 
   return (
@@ -420,6 +474,7 @@ export function SlotFormSheet({
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FieldGroup className={LOCATION_FORM_BODY_CLASS}>
+              {conflict ? <LocationConflictAlert reload={conflict.reload} /> : null}
               <Field data-invalid={Boolean(errors.slotCode)}>
                 <FieldLabel htmlFor="slot-code">Mã vị trí</FieldLabel>
                 <Input
@@ -478,19 +533,52 @@ export function SlotFormSheet({
               </div>
               <PhysicalDetailsFields>
                 {!capacityProps.location?.isOutboundStaging ? (
-                  <StorageCapacityFields {...capacityProps} />
+                  <StorageCapacityFields
+                    {...capacityProps}
+                    onPolicyChange={() => setHasPolicyChoice(true)}
+                  />
                 ) : null}
               </PhysicalDetailsFields>
             </FieldGroup>
             <FormFooter
               mode={mode}
               isPending={isPending || form.formState.isSubmitting}
+              isSaveBlocked={Boolean(conflict)}
               onCancel={() => handleOpenChange(false)}
             />
           </form>
         </FormProvider>
       </SheetContent>
     </Sheet>
+  )
+}
+
+function LocationConflictAlert({ reload }: { readonly reload: () => Promise<boolean> }) {
+  const [isReloading, setIsReloading] = useState(false)
+  return (
+    <Alert className="md:col-span-2">
+      <AlertTitle>Dữ liệu vị trí đã thay đổi</AlertTitle>
+      <AlertDescription>
+        Tải dữ liệu mới trước khi lưu lại. Bản nháp được giữ; loại, đơn vị sức chứa và phương thức
+        quản lý sẽ theo dữ liệu mới nếu vị trí đã có hàng.
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isReloading}
+          onClick={async () => {
+            setIsReloading(true)
+            try {
+              await reload()
+            } finally {
+              setIsReloading(false)
+            }
+          }}
+        >
+          {isReloading ? 'Đang tải…' : 'Tải dữ liệu mới'}
+        </Button>
+      </AlertDescription>
+    </Alert>
   )
 }
 
@@ -713,15 +801,17 @@ function PhysicalDetailRow<TUnit extends string>({
 function FormFooter({
   mode,
   isPending,
+  isSaveBlocked = false,
   onCancel,
 }: {
   readonly mode: 'create' | 'update'
   readonly isPending: boolean
+  readonly isSaveBlocked?: boolean
   readonly onCancel: () => void
 }) {
   return (
     <SheetFooter className="bg-popover shrink-0 border-t px-5 py-4 sm:flex-row sm:justify-end">
-      <Button type="submit" disabled={isPending}>
+      <Button type="submit" disabled={isPending || isSaveBlocked}>
         {isPending ? (
           <LoaderCircle data-icon="inline-start" className="animate-spin" aria-hidden="true" />
         ) : (
