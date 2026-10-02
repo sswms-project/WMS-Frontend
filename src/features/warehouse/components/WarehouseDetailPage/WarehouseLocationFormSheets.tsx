@@ -547,7 +547,7 @@ function PhysicalDetailsFields({ children }: PhysicalDetailsFieldsProps) {
 
   return (
     <section
-      className="flex min-w-0 flex-col gap-4 pt-2 md:col-span-2"
+      className="flex min-w-0 flex-col gap-2 pt-2 md:col-span-2"
       aria-labelledby="physical-details-heading"
     >
       <h3 id="physical-details-heading" className="text-base font-semibold">

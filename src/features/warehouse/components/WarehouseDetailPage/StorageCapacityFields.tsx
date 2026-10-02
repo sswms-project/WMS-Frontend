@@ -79,6 +79,24 @@ export function StorageCapacityFields({
   return (
     <FieldSet className="min-w-0">
       <FieldLegend variant="label">Chính sách sức chứa</FieldLegend>
+      <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed">
+        <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <p>
+          {capacityType === 'Quantity' ? (
+            <>
+              Giới hạn tổng lượng hàng sau quy đổi về đơn vị sức chứa.
+              <br />
+              VD: Sức chứa 20 thùng, đang có 8 thùng → còn nhận tối đa 12 thùng.
+            </>
+          ) : (
+            <>
+              Không giới hạn: hệ thống không kiểm tra sức chứa tối đa khi cất hàng.
+              <br />
+              VD: Không chặn theo số lượng; quy tắc một hay nhiều sản phẩm vẫn áp dụng.
+            </>
+          )}
+        </p>
+      </div>
       {location && !location.requiresCapacityConfiguration ? (
         <StorageCapacitySummary location={location} />
       ) : null}
@@ -253,24 +271,6 @@ export function StorageCapacityFields({
             </TableRow>
           </TableBody>
         </Table>
-      </div>
-      <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed">
-        <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-        <p>
-          {capacityType === 'Quantity' ? (
-            <>
-              Giới hạn tổng lượng hàng sau quy đổi về đơn vị sức chứa.
-              <br />
-              VD: Sức chứa 20 thùng, đang có 8 thùng → còn nhận tối đa 12 thùng.
-            </>
-          ) : (
-            <>
-              Không giới hạn: hệ thống không kiểm tra sức chứa tối đa khi cất hàng.
-              <br />
-              VD: Không chặn theo số lượng; quy tắc một hay nhiều sản phẩm vẫn áp dụng.
-            </>
-          )}
-        </p>
       </div>
       {capacityType === 'Quantity' ? (
         <>
