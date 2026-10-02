@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
+import { isApiErrorResponse } from '@/lib/api-error'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inboundService } from '../services/inbound.service'
@@ -227,7 +228,11 @@ export function usePutawayMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, PutawayVariables>({
     mutationFn: ({ receiptId, request }) => inboundService.putaway(receiptId, request),
     onSuccess: (_, variables) => invalidate(variables.receiptId),
-    onError: (error) => logger.error(error),
+    onError: (error) => {
+      if (isApiErrorResponse(error) && [400, 409].includes(error.statusCode))
+        logger.warn(error.message)
+      else logger.error(error)
+    },
   })
 }
 

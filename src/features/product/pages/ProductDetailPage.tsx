@@ -237,7 +237,6 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
       }
       setIsConversionOpen(false)
     } catch (error) {
-      logger.error(formatApiError(error))
       toast.error(getApiErrorMessage(error, 'Không thể lưu quy đổi đơn vị.'))
     }
   }
@@ -248,7 +247,6 @@ export default function ProductDetailPage({ productId }: ProductDetailPageProps)
       await conversionStatusMutation.mutateAsync({ conversionId: conversion.id, status })
       toast.success(status === 'Active' ? 'Đã kích hoạt quy đổi.' : 'Đã ngừng quy đổi.')
     } catch (error) {
-      logger.error(formatApiError(error))
       toast.error(getApiErrorMessage(error, 'Không thể thay đổi trạng thái quy đổi.'))
     }
   }

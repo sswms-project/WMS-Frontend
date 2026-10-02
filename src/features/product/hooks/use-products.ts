@@ -229,7 +229,10 @@ export function useUpdateProductUnitConversionMutation(id: string) {
       productService.updateUnitConversion(id, conversionId, request),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.products.unitConversions(id) }),
-    onError: (error) => logger.error(formatApiError(error)),
+    onError: (error) => {
+      if (error.statusCode === 409 || error.statusCode === 400) logger.warn(formatApiError(error))
+      else logger.error(formatApiError(error))
+    },
   })
 }
 
@@ -244,7 +247,10 @@ export function useChangeProductUnitConversionStatusMutation(id: string) {
       productService.changeUnitConversionStatus(id, conversionId, status),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.products.unitConversions(id) }),
-    onError: (error) => logger.error(formatApiError(error)),
+    onError: (error) => {
+      if (error.statusCode === 409 || error.statusCode === 400) logger.warn(formatApiError(error))
+      else logger.error(formatApiError(error))
+    },
   })
 }
 

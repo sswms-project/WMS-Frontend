@@ -12,7 +12,6 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import { cn } from '@/lib/utils'
 import type { SlotOption } from './PutawayForm'
 
@@ -30,9 +29,7 @@ function locationLabel(slot: SlotOption) {
 }
 
 function capacityLabel(slot: SlotOption) {
-  return slot.availableCapacity === null
-    ? 'Chưa đặt sức chứa'
-    : `Còn ${formatQuantity(slot.availableCapacity)}`
+  return slot.capacityLabel
 }
 
 export function PutawayLocationSelect({
@@ -119,6 +116,7 @@ export function PutawayLocationSelect({
                       value={slot.id}
                       keywords={[slot.code, slot.name, slot.hierarchy, slot.zoneLabel]}
                       data-checked={slot.id === value}
+                      disabled={Boolean(slot.unavailableReason)}
                       className="data-[selected=true]:bg-accent data-[checked=true]:bg-accent/60 items-start gap-2 px-3 py-3"
                       onSelect={() => {
                         onChange(slot.id)
@@ -129,7 +127,7 @@ export function PutawayLocationSelect({
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                           <span className="font-medium break-words">{locationLabel(slot)}</span>
                           <span className="text-muted-foreground text-xs tabular-nums">
-                            {capacityLabel(slot)}
+                            {slot.unavailableReason ?? capacityLabel(slot)}
                           </span>
                         </div>
                         <p className="text-muted-foreground text-xs">

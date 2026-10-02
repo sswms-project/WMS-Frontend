@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { useUnitsQuery } from '@/features/product/hooks/use-products'
+import { getCapacityFormValues } from '../utils/storage-capacity'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
@@ -88,6 +90,13 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
   const [zoneFormTarget, setZoneFormTarget] = useState<ZoneFormTarget | null>(null)
   const [rackFormTarget, setRackFormTarget] = useState<RackFormTarget | null>(null)
   const [slotFormTarget, setSlotFormTarget] = useState<SlotFormTarget | null>(null)
+  const unitsQuery = useUnitsQuery(Boolean(rackFormTarget || slotFormTarget), 'Active')
+  const capacityFormProps = {
+    units: unitsQuery.data ?? [],
+    unitsLoading: unitsQuery.isPending,
+    unitsError: unitsQuery.isError,
+    onRetryUnits: () => void unitsQuery.refetch(),
+  }
   const [deactivateTarget, setDeactivateTarget] = useState<DeactivateTarget | null>(null)
   const [deactivateErrorMessage, setDeactivateErrorMessage] = useState<string | null>(null)
   const zones = layoutQuery.data ?? []
@@ -170,6 +179,8 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
             storageMode: values.storageMode,
             allowsMixedProducts: values.allowsMixedProducts,
             capacity: values.capacity,
+            capacityType: values.capacityType,
+            capacityUnitId: values.capacityUnitId,
             storageCapacity: values.storageCapacity,
             storageCapacityUnit: values.storageCapacityUnit,
             physicalLength: values.physicalLength,
@@ -211,6 +222,8 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
             description: values.description || null,
             allowsMixedProducts: values.allowsMixedProducts,
             capacity: values.capacity,
+            capacityType: values.capacityType,
+            capacityUnitId: values.capacityUnitId,
             storageCapacity: values.storageCapacity,
             storageCapacityUnit: values.storageCapacityUnit,
             physicalLength: values.physicalLength,
@@ -407,6 +420,8 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
 
       {rackFormTarget ? (
         <RackFormSheet
+          {...capacityFormProps}
+          location={rackFormTarget.mode === 'update' ? rackFormTarget.rack : undefined}
           open
           mode={rackFormTarget.mode}
           isPending={createRackMutation.isPending || updateRackMutation.isPending}
@@ -418,7 +433,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   description: rackFormTarget.rack.description ?? '',
                   storageMode: rackFormTarget.rack.storageMode ?? 'SlotLevel',
                   allowsMixedProducts: rackFormTarget.rack.allowsMixedProducts ?? true,
-                  capacity: rackFormTarget.rack.capacity ?? null,
+                  ...getCapacityFormValues(rackFormTarget.rack),
                   expectedRowVersion: rackFormTarget.rack.rowVersion ?? '',
                   ...getWarehousePhysicalDetails(rackFormTarget.rack),
                 }
@@ -428,7 +443,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   description: '',
                   storageMode: 'SlotLevel',
                   allowsMixedProducts: true,
-                  capacity: null,
+                  ...getCapacityFormValues(),
                   ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }
@@ -439,6 +454,8 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
 
       {slotFormTarget ? (
         <SlotFormSheet
+          {...capacityFormProps}
+          location={slotFormTarget.mode === 'update' ? slotFormTarget.slot : undefined}
           open
           mode={slotFormTarget.mode}
           isPending={createSlotMutation.isPending || updateSlotMutation.isPending}
@@ -449,7 +466,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   slotName: slotFormTarget.slot.slotName,
                   description: slotFormTarget.slot.description ?? '',
                   allowsMixedProducts: slotFormTarget.slot.allowsMixedProducts ?? true,
-                  capacity: slotFormTarget.slot.capacity,
+                  ...getCapacityFormValues(slotFormTarget.slot),
                   expectedRowVersion: slotFormTarget.slot.rowVersion ?? '',
                   ...getWarehousePhysicalDetails(slotFormTarget.slot),
                 }
@@ -458,7 +475,7 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   slotName: '',
                   description: '',
                   allowsMixedProducts: true,
-                  capacity: null,
+                  ...getCapacityFormValues(),
                   ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }
           }

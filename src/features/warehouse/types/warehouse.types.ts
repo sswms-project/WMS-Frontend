@@ -63,7 +63,7 @@ export interface WarehouseLocationQuery extends QueryInfo {
   rackId?: string
 }
 
-export interface LocationSearchResponse {
+export interface LocationSearchResponse extends StorageCapacityResponse {
   id: string
   type: WarehouseLocationType
   code: string
@@ -102,6 +102,19 @@ export interface UpdateZoneRequest extends CreateZoneRequest {
 
 export type RackStorageMode = 'RackLevel' | 'SlotLevel'
 
+export type StorageCapacityType = 'None' | 'Quantity'
+
+export interface StorageCapacityResponse {
+  capacityType?: StorageCapacityType | null
+  capacityUnitId?: string | null
+  capacityUnitName?: string | null
+  capacityUnitSymbol?: string | null
+  capacityUsed?: number | null
+  remainingCapacity?: number | null
+  utilizationPercent?: number | null
+  requiresCapacityConfiguration?: boolean
+}
+
 export interface CreateRackRequest extends WarehousePhysicalDetails {
   rackCode: string
   rackName: string
@@ -109,9 +122,13 @@ export interface CreateRackRequest extends WarehousePhysicalDetails {
   storageMode: RackStorageMode
   allowsMixedProducts: boolean
   capacity: number | null
+  capacityType: StorageCapacityType
+  capacityUnitId: string | null
 }
 
-export interface UpdateRackRequest extends CreateRackRequest {
+export interface UpdateRackRequest extends Omit<CreateRackRequest, 'capacityType'> {
+  // Rename-only updates preserve a pending legacy policy by omitting CapacityType.
+  capacityType?: StorageCapacityType
   expectedRowVersion: string
 }
 
@@ -121,6 +138,8 @@ export interface CreateSlotRequest extends WarehousePhysicalDetails {
   description: string | null
   allowsMixedProducts: boolean
   capacity: number | null
+  capacityType: StorageCapacityType
+  capacityUnitId: string | null
 }
 
 export interface UpdateSlotRequest extends CreateSlotRequest {

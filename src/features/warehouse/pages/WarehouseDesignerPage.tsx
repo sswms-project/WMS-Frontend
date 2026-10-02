@@ -6,11 +6,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { useUnitsQuery } from '@/features/product/hooks/use-products'
+import { getCapacityFormValues } from '../utils/storage-capacity'
 import { useAuthStore } from '@/stores/auth.store'
 import { RackFormSheet, SlotFormSheet, ZoneFormSheet } from '../components/WarehouseDetailPage'
 import {
@@ -89,6 +92,18 @@ export function WarehouseDesignerPage({
   const [isZoneFormOpen, setIsZoneFormOpen] = useState(false)
   const [rackZoneId, setRackZoneId] = useState<string | null>(null)
   const [locationEditTarget, setLocationEditTarget] = useState<LocationEditTarget | null>(null)
+  const unitsQuery = useUnitsQuery(
+    Boolean(
+      rackZoneId || locationEditTarget?.kind === 'rack' || locationEditTarget?.kind === 'slot'
+    ),
+    'Active'
+  )
+  const capacityFormProps = {
+    units: unitsQuery.data ?? [],
+    unitsLoading: unitsQuery.isPending,
+    unitsError: unitsQuery.isError,
+    onRetryUnits: () => void unitsQuery.refetch(),
+  }
   const [pendingDrop, setPendingDrop] = useState<
     ({ kind: 'zone' | 'rack' } & WarehouseLayoutDropPosition) | null
   >(null)
@@ -265,8 +280,7 @@ export function WarehouseDesignerPage({
       setRackZoneId(null)
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể thêm kệ hàng. Vui lòng thử lại.')
+      toast.error(getApiErrorMessage(error, 'Không thể thêm kệ hàng. Vui lòng thử lại.'))
       return false
     }
   }
@@ -322,8 +336,7 @@ export function WarehouseDesignerPage({
       setLocationEditTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể cập nhật kệ hàng. Vui lòng thử lại.')
+      toast.error(getApiErrorMessage(error, 'Không thể cập nhật kệ hàng. Vui lòng thử lại.'))
       return false
     }
   }
@@ -341,8 +354,7 @@ export function WarehouseDesignerPage({
       setLocationEditTarget(null)
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể cập nhật vị trí. Vui lòng thử lại.')
+      toast.error(getApiErrorMessage(error, 'Không thể cập nhật vị trí. Vui lòng thử lại.'))
       return false
     }
   }
@@ -365,7 +377,10 @@ export function WarehouseDesignerPage({
         description: rack.description,
         storageMode: rack.storageMode ?? 'SlotLevel',
         allowsMixedProducts: rack.allowsMixedProducts ?? true,
-        capacity: rack.capacity ?? null,
+        ...getCapacityFormValues(rack),
+        ...(rack.requiresCapacityConfiguration
+          ? { capacityType: undefined, capacity: rack.capacity ?? null }
+          : {}),
         expectedRowVersion: rack.rowVersion ?? '',
         ...getWarehousePhysicalDetails(rack),
       },
@@ -456,6 +471,7 @@ export function WarehouseDesignerPage({
 
       {rackZoneId ? (
         <RackFormSheet
+          {...capacityFormProps}
           open
           mode="create"
           isPending={createRackMutation.isPending}
@@ -465,7 +481,7 @@ export function WarehouseDesignerPage({
             description: '',
             storageMode: 'SlotLevel',
             allowsMixedProducts: true,
-            capacity: null,
+            ...getCapacityFormValues(),
             ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
           }}
           onOpenChange={(open) => {
@@ -496,6 +512,8 @@ export function WarehouseDesignerPage({
 
       {locationEditTarget?.kind === 'rack' ? (
         <RackFormSheet
+          {...capacityFormProps}
+          location={locationEditTarget.location}
           open
           mode="update"
           isPending={updateRackMutation.isPending}
@@ -505,7 +523,7 @@ export function WarehouseDesignerPage({
             description: locationEditTarget.location.description ?? '',
             storageMode: locationEditTarget.location.storageMode ?? 'SlotLevel',
             allowsMixedProducts: locationEditTarget.location.allowsMixedProducts ?? true,
-            capacity: locationEditTarget.location.capacity ?? null,
+            ...getCapacityFormValues(locationEditTarget.location),
             expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
             ...getWarehousePhysicalDetails(locationEditTarget.location),
           }}
@@ -516,6 +534,8 @@ export function WarehouseDesignerPage({
 
       {locationEditTarget?.kind === 'slot' ? (
         <SlotFormSheet
+          {...capacityFormProps}
+          location={locationEditTarget.location}
           open
           mode="update"
           isPending={updateSlotMutation.isPending}
@@ -524,7 +544,7 @@ export function WarehouseDesignerPage({
             slotName: locationEditTarget.location.slotName,
             description: locationEditTarget.location.description ?? '',
             allowsMixedProducts: locationEditTarget.location.allowsMixedProducts ?? true,
-            capacity: locationEditTarget.location.capacity,
+            ...getCapacityFormValues(locationEditTarget.location),
             expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
             ...getWarehousePhysicalDetails(locationEditTarget.location),
           }}

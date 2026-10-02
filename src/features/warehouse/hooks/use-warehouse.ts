@@ -43,7 +43,7 @@ interface CreateRackVariables {
   request: CreateRackRequest
 }
 
-interface UpdateRackVariables extends CreateRackVariables {
+interface UpdateRackVariables extends Omit<CreateRackVariables, 'request'> {
   rackId: string
   request: UpdateRackRequest
 }

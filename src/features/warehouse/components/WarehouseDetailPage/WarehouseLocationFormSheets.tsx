@@ -2,7 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Save } from 'lucide-react'
-import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form'
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+  type UseFormReturn,
+} from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -25,11 +31,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import type {
-  StorageLengthUnit,
-  StorageMassUnit,
-  WarehousePhysicalDetails,
-} from '../../types/warehouse.types'
+import type { StorageLengthUnit, WarehousePhysicalDetails } from '../../types/warehouse.types'
 import {
   rackSchema,
   slotSchema,
@@ -38,6 +40,7 @@ import {
   type SlotFormValues,
   type ZoneFormValues,
 } from '../../schemas/warehouse.schema'
+import { StorageCapacityFields, type StorageCapacityFieldsProps } from './StorageCapacityFields'
 
 interface LocationFormSheetProps<TValues> {
   readonly open: boolean
@@ -147,12 +150,12 @@ export function RackFormSheet({
   defaultValues,
   onOpenChange,
   onSubmit,
-}: LocationFormSheetProps<RackFormValues>) {
+  ...capacityProps
+}: LocationFormSheetProps<RackFormValues> & StorageCapacityFieldsProps) {
   const form = useForm<RackFormValues>({ resolver: zodResolver(rackSchema), defaultValues })
   const { errors } = form.formState
   const storageMode = useWatch({ control: form.control, name: 'storageMode' })
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
-  const capacity = useWatch({ control: form.control, name: 'capacity' })
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && !isPending) form.reset(defaultValues)
@@ -160,6 +163,7 @@ export function RackFormSheet({
   }
 
   async function handleSubmit(values: RackFormValues) {
+    if (!validateCapacitySubmission(form, values, capacityProps)) return
     if (await onSubmit(values)) form.reset(defaultValues)
   }
 
@@ -216,12 +220,15 @@ export function RackFormSheet({
                 <RadioGroup
                   aria-label="Phương thức quản lý vị trí"
                   value={storageMode}
+                  disabled={(capacityProps.location?.currentOccupancy ?? 0) > 0}
                   onValueChange={(value) => {
                     if (value !== 'RackLevel' && value !== 'SlotLevel') return
                     form.setValue('storageMode', value, { shouldDirty: true, shouldValidate: true })
                     if (value === 'SlotLevel') {
                       form.setValue('allowsMixedProducts', true)
                       form.setValue('capacity', null)
+                      form.setValue('capacityType', 'None')
+                      form.setValue('capacityUnitId', null)
                     }
                   }}
                   className="gap-2"
@@ -257,31 +264,13 @@ export function RackFormSheet({
                           shouldDirty: true,
                           shouldValidate: true,
                         })
-                        if (checked === true) form.setValue('capacity', null)
                       }}
                     />
                     <FieldLabel htmlFor="rack-allows-mixed-products">
                       Cho phép nhiều sản phẩm trong cùng kệ
                     </FieldLabel>
                   </Field>
-                  {!allowsMixedProducts ? (
-                    <CapacityField
-                      id="rack-capacity"
-                      value={capacity}
-                      errorMessage={errors.capacity?.message}
-                      onChange={(capacity) =>
-                        form.setValue('capacity', capacity, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        })
-                      }
-                    />
-                  ) : (
-                    <p className="text-muted-foreground text-xs md:col-span-2">
-                      Không áp dụng giới hạn số lượng chung khi kệ chứa nhiều sản phẩm có thể khác
-                      đơn vị tính.
-                    </p>
-                  )}
+                  <StorageCapacityFields {...capacityProps} />
                 </>
               ) : null}
               <PhysicalDetailsFields />
@@ -305,11 +294,11 @@ export function SlotFormSheet({
   defaultValues,
   onOpenChange,
   onSubmit,
-}: LocationFormSheetProps<SlotFormValues>) {
+  ...capacityProps
+}: LocationFormSheetProps<SlotFormValues> & StorageCapacityFieldsProps) {
   const form = useForm<SlotFormValues>({ resolver: zodResolver(slotSchema), defaultValues })
   const { errors } = form.formState
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
-  const capacity = useWatch({ control: form.control, name: 'capacity' })
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && !isPending) form.reset(defaultValues)
@@ -317,6 +306,7 @@ export function SlotFormSheet({
   }
 
   async function handleSubmit(values: SlotFormValues) {
+    if (!validateCapacitySubmission(form, values, capacityProps)) return
     if (await onSubmit(values)) form.reset(defaultValues)
   }
 
@@ -328,7 +318,7 @@ export function SlotFormSheet({
             {mode === 'create' ? 'Thêm vị trí lưu trữ' : 'Chỉnh sửa vị trí'}
           </SheetTitle>
           <SheetDescription>
-            Giới hạn số lượng không thể thấp hơn lượng hàng đang có hoặc lượng đã giữ.
+            Sức chứa tối đa không thể thấp hơn sức chứa đã dùng theo đơn vị đã chọn.
           </SheetDescription>
         </SheetHeader>
         <FormProvider {...form}>
@@ -379,31 +369,15 @@ export function SlotFormSheet({
                       shouldDirty: true,
                       shouldValidate: true,
                     })
-                    if (checked === true) form.setValue('capacity', null)
                   }}
                 />
                 <FieldLabel htmlFor="slot-allows-mixed-products">
                   Cho phép nhiều sản phẩm trong cùng vị trí
                 </FieldLabel>
               </Field>
-              {!allowsMixedProducts ? (
-                <CapacityField
-                  id="slot-capacity"
-                  value={capacity}
-                  errorMessage={errors.capacity?.message}
-                  onChange={(capacity) =>
-                    form.setValue('capacity', capacity, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                />
-              ) : (
-                <p className="text-muted-foreground text-xs md:col-span-2">
-                  Không áp dụng giới hạn số lượng chung khi vị trí chứa nhiều sản phẩm có thể khác
-                  đơn vị tính.
-                </p>
-              )}
+              {!capacityProps.location?.isOutboundStaging ? (
+                <StorageCapacityFields {...capacityProps} />
+              ) : null}
               <PhysicalDetailsFields />
             </FieldGroup>
             <FormFooter
@@ -418,44 +392,32 @@ export function SlotFormSheet({
   )
 }
 
-function CapacityField({
-  id,
-  value,
-  errorMessage,
-  onChange,
-}: {
-  readonly id: string
-  readonly value: number | null
-  readonly errorMessage?: string
-  readonly onChange: (value: number | null) => void
-}) {
-  return (
-    <Field data-invalid={Boolean(errorMessage)}>
-      <FieldLabel htmlFor={id}>Giới hạn số lượng (không bắt buộc)</FieldLabel>
-      <Input
-        id={id}
-        name={id}
-        type="number"
-        min="0.01"
-        step="0.01"
-        inputMode="decimal"
-        autoComplete="off"
-        value={value ?? ''}
-        aria-invalid={Boolean(errorMessage)}
-        onChange={(event) =>
-          onChange(event.currentTarget.value === '' ? null : Number(event.currentTarget.value))
-        }
-      />
-      {errorMessage ? <p className="text-destructive text-xs">{errorMessage}</p> : null}
-    </Field>
-  )
+function validateCapacitySubmission(
+  form: UseFormReturn<SlotFormValues> | UseFormReturn<RackFormValues>,
+  values: SlotFormValues | RackFormValues,
+  props: StorageCapacityFieldsProps
+) {
+  if (values.capacityType !== 'Quantity') return true
+  if (
+    props.unitsLoading ||
+    props.unitsError ||
+    !props.units.some((unit) => unit.id === values.capacityUnitId && unit.status === 'Active')
+  ) {
+    form.setError('capacityUnitId', { message: 'Vui lòng chọn đơn vị sức chứa đang hoạt động.' })
+    return false
+  }
+  if (
+    props.location?.capacityType === 'Quantity' &&
+    values.capacityUnitId === props.location.capacityUnitId &&
+    values.capacity !== null &&
+    props.location.capacityUsed != null &&
+    values.capacity < props.location.capacityUsed
+  ) {
+    form.setError('capacity', { message: 'Sức chứa tối đa không được thấp hơn sức chứa đã dùng.' })
+    return false
+  }
+  return true
 }
-
-const MASS_UNITS: ReadonlyArray<{ value: StorageMassUnit; label: string }> = [
-  { value: 'Ton', label: 'tấn' },
-  { value: 'Kilogram', label: 'kg' },
-  { value: 'Gram', label: 'gam' },
-]
 
 const LENGTH_UNITS: ReadonlyArray<{ value: StorageLengthUnit; label: string }> = [
   { value: 'Kilometer', label: 'km' },
@@ -481,31 +443,6 @@ function PhysicalDetailsFields() {
           <span>Giá trị</span>
           <span>Đơn vị tính</span>
         </div>
-        <PhysicalDetailRow
-          label="Dung lượng lưu trữ"
-          value={values.storageCapacity ?? null}
-          unit={values.storageCapacityUnit ?? null}
-          units={MASS_UNITS}
-          valueError={errors.storageCapacity?.message}
-          unitError={errors.storageCapacityUnit?.message}
-          onValueChange={(value) => {
-            form.setValue('storageCapacity', value, { shouldDirty: true, shouldValidate: true })
-            form.setValue(
-              'storageCapacityUnit',
-              value === null ? null : (values.storageCapacityUnit ?? 'Kilogram'),
-              {
-                shouldDirty: true,
-                shouldValidate: true,
-              }
-            )
-          }}
-          onUnitChange={(unit) =>
-            form.setValue('storageCapacityUnit', unit, {
-              shouldDirty: true,
-              shouldValidate: true,
-            })
-          }
-        />
         <PhysicalDetailRow
           label="Chiều dài"
           value={values.physicalLength ?? null}

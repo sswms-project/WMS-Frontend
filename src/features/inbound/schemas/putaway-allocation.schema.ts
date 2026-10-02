@@ -6,8 +6,8 @@ type AllocationField = keyof PutawayFormValues['lines'][number]
 interface AllocationSlot {
   id: string
   code: string
-  availableCapacity: number | null
   allowsMixedProducts?: boolean
+  unavailableReason?: string
 }
 
 // Reserve only complete, valid rows in display order. Hundredths avoid 0.1 + 0.2 rounding drift.
@@ -19,7 +19,6 @@ export function getPutawayAllocationState(
   const itemById = new Map(items.map((item) => [item.id, item]))
   const slotById = new Map(slots.map((slot) => [slot.id, slot]))
   const assignedByItem = new Map<string, number>()
-  const assignedBySlot = new Map<string, number>()
   const productBySlot = new Map<string, string>()
   const requestedByItem = new Map<string, number>()
   const allocations = new Set<string>()
@@ -35,13 +34,6 @@ export function getPutawayAllocationState(
         Math.round((item?.remainingPutAwayQuantity ?? 0) * 100) -
           (assignedByItem.get(line.goodsReceiptItemId) ?? 0)
       ) / 100
-    const slotAvailable =
-      slot?.availableCapacity == null
-        ? null
-        : Math.max(
-            0,
-            Math.round(slot.availableCapacity * 100) - (assignedBySlot.get(slot.id) ?? 0)
-          ) / 100
     const allocationKey = `${line.goodsReceiptItemId}:${line.slotId}`
     if (item && Number.isFinite(quantity) && quantity > 0)
       requestedByItem.set(item.id, (requestedByItem.get(item.id) ?? 0) + quantity)
@@ -59,11 +51,7 @@ export function getPutawayAllocationState(
           )
         if (!slot) error('slotId', 'Vui lòng chọn vị trí lưu trữ còn khả dụng.')
         else {
-          if (slotAvailable !== null && value.quantity > slotAvailable)
-            error(
-              'quantity',
-              `Vị trí ${slot.code} chỉ còn phân bổ được ${formatQuantity(slotAvailable)}.`
-            )
+          if (slot.unavailableReason) error('slotId', slot.unavailableReason)
           if (
             slot.allowsMixedProducts === false &&
             item &&
@@ -87,7 +75,6 @@ export function getPutawayAllocationState(
         line.goodsReceiptItemId,
         (assignedByItem.get(line.goodsReceiptItemId) ?? 0) + quantity
       )
-      assignedBySlot.set(line.slotId, (assignedBySlot.get(line.slotId) ?? 0) + quantity)
       productBySlot.set(line.slotId, item!.productId)
       allocations.add(allocationKey)
       totalAssigned += quantity
@@ -95,7 +82,8 @@ export function getPutawayAllocationState(
     return {
       errors,
       itemAvailable,
-      maxQuantity: Math.min(itemAvailable, slotAvailable ?? itemAvailable),
+      // Capacity is in its own UOM; only BE can validate the projected converted occupancy.
+      maxQuantity: itemAvailable,
     }
   })
 

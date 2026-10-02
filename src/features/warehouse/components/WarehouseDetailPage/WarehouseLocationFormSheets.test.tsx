@@ -1,6 +1,36 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { ZoneFormSheet } from './WarehouseLocationFormSheets'
+import { RackFormSheet, SlotFormSheet, ZoneFormSheet } from './WarehouseLocationFormSheets'
+import { EMPTY_WAREHOUSE_PHYSICAL_DETAILS } from '../../utils/warehouse-physical-details'
+import type { UnitResponse } from '@/features/product/types/product.types'
+
+const unit: UnitResponse = {
+  id: '10000000-0000-4000-8000-000000000001',
+  unitCode: 'THUNG',
+  unitName: 'Thùng',
+  symbol: null,
+  quantityPrecision: 0,
+  description: null,
+  status: 'Active',
+  createdAt: '',
+  modifiedAt: null,
+}
+const capacityProps = {
+  units: [unit],
+  unitsLoading: false,
+  unitsError: false,
+  onRetryUnits: vi.fn(),
+}
+const slotValues = {
+  slotCode: 'A01',
+  slotName: 'Vị trí A01',
+  description: '',
+  allowsMixedProducts: true,
+  capacityType: 'Quantity' as const,
+  capacity: 20,
+  capacityUnitId: unit.id,
+  ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
+}
 
 describe('WarehouseLocationFormSheets', () => {
   it('shows the shared physical detail fields when editing a location', () => {
@@ -28,7 +58,7 @@ describe('WarehouseLocationFormSheets', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Thông tin chi tiết' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Dung lượng lưu trữ')).toHaveValue(1_000)
+    expect(screen.queryByLabelText('Dung lượng lưu trữ')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Chiều dài')).toHaveValue(12)
     expect(screen.getByLabelText('Chiều rộng')).toHaveValue(8)
     expect(screen.getByLabelText('Chiều cao')).toHaveValue(4)
@@ -65,5 +95,129 @@ describe('WarehouseLocationFormSheets', () => {
       'overflow-hidden'
     )
     expect(document.querySelector('[data-slot="field-group"]')).toHaveClass('content-start')
+  })
+})
+
+describe('location capacity fields', () => {
+  it('shows Quantity controls for mixed SKU and locks type/unit when stocked', () => {
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={slotValues}
+        {...capacityProps}
+        location={{
+          ...slotValues,
+          capacityUsed: 8,
+          currentOccupancy: 192,
+          remainingCapacity: 12,
+          capacityUnitName: 'Thùng',
+        }}
+        onOpenChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    )
+    expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
+    expect(screen.getByLabelText('Loại sức chứa')).toBeDisabled()
+    expect(screen.getByLabelText('Đơn vị sức chứa')).toBeDisabled()
+    expect(screen.getByText('8 / 20 Thùng · Còn 12')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Cho phép nhiều sản phẩm trong cùng vị trí'))
+    expect(screen.getByLabelText('Sức chứa tối đa')).toHaveValue(20)
+  })
+  it('blocks reducing maximum below normalized usage without calling the API callback', async () => {
+    const onSubmit = vi.fn()
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={{ ...slotValues, capacity: 7 }}
+        {...capacityProps}
+        location={{ ...slotValues, capacityUsed: 8, currentOccupancy: 192 }}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await screen.findByText('Sức chứa tối đa không được thấp hơn sức chứa đã dùng.')
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+  it('blocks inactive/missing capacity units and keeps values in the form', async () => {
+    const onSubmit = vi.fn()
+    render(
+      <SlotFormSheet
+        open
+        mode="create"
+        isPending={false}
+        defaultValues={slotValues}
+        {...capacityProps}
+        units={[{ ...unit, status: 'Inactive' }]}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+    await screen.findByText('Vui lòng chọn đơn vị sức chứa đang hoạt động.')
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+  it('hides operational fields for a SlotLevel rack', () => {
+    render(
+      <RackFormSheet
+        open
+        mode="create"
+        isPending={false}
+        defaultValues={{
+          ...slotValues,
+          rackCode: 'R01',
+          rackName: 'Kệ 1',
+          storageMode: 'SlotLevel',
+          capacityType: 'None',
+          capacity: null,
+          capacityUnitId: null,
+        }}
+        {...capacityProps}
+        onOpenChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    )
+    expect(screen.queryByLabelText('Loại sức chứa')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
+  })
+  it('shows the legacy warning and submits explicit nulls for None while preserving hidden mass data', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(true)
+    render(
+      <SlotFormSheet
+        open
+        mode="update"
+        isPending={false}
+        defaultValues={{
+          ...slotValues,
+          capacityType: 'None',
+          capacity: null,
+          capacityUnitId: null,
+          storageCapacity: 100,
+          storageCapacityUnit: 'Kilogram',
+        }}
+        {...capacityProps}
+        location={{ capacityType: 'None', capacity: 20, requiresCapacityConfiguration: true }}
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    )
+    expect(screen.getByText(/Cần cấu hình đơn vị sức chứa trước/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Sức chứa tối đa')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          capacityType: 'None',
+          capacity: null,
+          capacityUnitId: null,
+          storageCapacity: 100,
+          storageCapacityUnit: 'Kilogram',
+        })
+      )
+    )
   })
 })

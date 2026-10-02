@@ -90,6 +90,49 @@ const optionalCapacitySchema = z
   .positive('Giới hạn số lượng phải lớn hơn 0.')
   .nullable()
 
+const capacityShape = {
+  capacityType: z.enum(['None', 'Quantity']),
+  capacity: optionalCapacitySchema,
+  // Tenant reference IDs are .NET GUIDs, not necessarily RFC-versioned UUIDs.
+  capacityUnitId: z
+    .guid('Đơn vị sức chứa không hợp lệ.')
+    .refine((id) => id !== '00000000-0000-0000-0000-000000000000', 'Đơn vị sức chứa không hợp lệ.')
+    .nullable(),
+}
+
+function validateCapacity(
+  values: z.infer<z.ZodObject<typeof capacityShape>>,
+  context: z.RefinementCtx
+) {
+  if (values.capacityType === 'Quantity') {
+    if (values.capacity === null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacity'],
+        message: 'Vui lòng nhập sức chứa tối đa.',
+      })
+    if (values.capacityUnitId === null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacityUnitId'],
+        message: 'Vui lòng chọn đơn vị sức chứa.',
+      })
+  } else {
+    if (values.capacity !== null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacity'],
+        message: 'Không nhập sức chứa khi không giới hạn.',
+      })
+    if (values.capacityUnitId !== null)
+      context.addIssue({
+        code: 'custom',
+        path: ['capacityUnitId'],
+        message: 'Không chọn đơn vị khi không giới hạn.',
+      })
+  }
+}
+
 export const rackSchema = z
   .object({
     rackCode: z.string().trim().min(1, 'Mã kệ là bắt buộc.').max(50, 'Mã kệ tối đa 50 ký tự.'),
@@ -97,17 +140,18 @@ export const rackSchema = z
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     storageMode: z.enum(['RackLevel', 'SlotLevel']),
     allowsMixedProducts: z.boolean(),
-    capacity: optionalCapacitySchema,
+    ...capacityShape,
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
   })
   .superRefine((values, context) => {
     validatePhysicalDetails(values, context)
-    if (values.allowsMixedProducts && values.capacity !== null) {
+    validateCapacity(values, context)
+    if (values.storageMode === 'SlotLevel' && values.capacityType === 'Quantity') {
       context.addIssue({
         code: 'custom',
         path: ['capacity'],
-        message: 'Không áp dụng giới hạn chung khi kệ cho phép nhiều sản phẩm.',
+        message: 'Sức chứa được cấu hình tại từng vị trí lưu trữ, không phải kệ chứa vị trí.',
       })
     }
   })
@@ -130,19 +174,13 @@ export const slotSchema = z
       .max(255, 'Tên vị trí tối đa 255 ký tự.'),
     description: z.string().trim().max(500, 'Mô tả tối đa 500 ký tự.'),
     allowsMixedProducts: z.boolean(),
-    capacity: optionalCapacitySchema,
+    ...capacityShape,
     expectedRowVersion: z.string().optional(),
     ...physicalDetailsShape,
   })
   .superRefine((values, context) => {
     validatePhysicalDetails(values, context)
-    if (values.allowsMixedProducts && values.capacity !== null) {
-      context.addIssue({
-        code: 'custom',
-        path: ['capacity'],
-        message: 'Không áp dụng giới hạn chung khi vị trí cho phép nhiều sản phẩm.',
-      })
-    }
+    validateCapacity(values, context)
   })
 
 export type ZoneFormValues = z.infer<typeof zoneSchema>
