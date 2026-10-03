@@ -1,6 +1,7 @@
 import { ArrowRight, ClipboardList, RefreshCw } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -31,9 +32,12 @@ interface WarehouseTaskDirectoryProps {
   readonly isFetching: boolean
   readonly isError: boolean
   readonly canManage?: boolean
+  readonly currentUserId?: string
+  readonly headerAction?: ReactNode
   readonly onPageChange: (page: number) => void
   readonly onRetry: () => void
   readonly onAction?: (task: MyWarehouseTask, action: 'Start' | 'Pause' | 'Return') => void
+  readonly onOpenRelocation?: (task: MyWarehouseTask) => void
 }
 
 const executionLabel: Record<MyWarehouseTask['executionStatus'], string> = {
@@ -41,6 +45,7 @@ const executionLabel: Record<MyWarehouseTask['executionStatus'], string> = {
   InProgress: 'Đang làm',
   Paused: 'Tạm dừng',
   Completed: 'Hoàn tất',
+  Cancelled: 'Đã hủy',
 }
 
 const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
@@ -48,6 +53,7 @@ const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
   PutAway: 'Cất hàng',
   CycleCount: 'Kiểm kê',
   DamagedStock: 'Hàng hỏng',
+  Relocation: 'Điều chuyển vị trí',
 }
 
 export function WarehouseTaskDirectory({
@@ -61,12 +67,21 @@ export function WarehouseTaskDirectory({
   isFetching,
   isError,
   canManage = false,
+  currentUserId,
+  headerAction,
   onPageChange,
   onRetry,
   onAction,
+  onOpenRelocation,
 }: WarehouseTaskDirectoryProps) {
   function renderActions(item: MyWarehouseTask) {
-    if (!canManage || !onAction || item.taskType === 'DamagedStock') return null
+    if (
+      !canManage ||
+      !onAction ||
+      item.taskType === 'DamagedStock' ||
+      item.assignedTo !== currentUserId
+    )
+      return null
     const isInProgress = item.executionStatus === 'InProgress'
     return (
       <>
@@ -96,9 +111,18 @@ export function WarehouseTaskDirectory({
           <h1 className="text-xl font-semibold">{title}</h1>
           <p className="text-muted-foreground text-sm">{description}</p>
         </div>
-        <Button type="button" variant="outline" size="icon" aria-label="Tải lại" onClick={onRetry}>
-          <RefreshCw className={isFetching ? 'animate-spin' : undefined} aria-hidden="true" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Tải lại"
+            onClick={onRetry}
+          >
+            <RefreshCw className={isFetching ? 'animate-spin' : undefined} aria-hidden="true" />
+          </Button>
+        </div>
       </div>
       <section className="bg-card flex min-h-0 flex-1 flex-col border">
         {isLoading ? (
@@ -119,6 +143,7 @@ export function WarehouseTaskDirectory({
                     <TableHead className="sticky top-0 z-10">Công việc</TableHead>
                     <TableHead className="sticky top-0 z-10">Mã tham chiếu</TableHead>
                     <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                    <TableHead className="sticky top-0 z-10">Người phụ trách</TableHead>
                     <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
                     <TableHead className="sticky top-0 z-10">Cập nhật</TableHead>
                     <TableHead className="sticky top-0 z-10 text-right">Mở</TableHead>
@@ -130,6 +155,7 @@ export function WarehouseTaskDirectory({
                       <TableCell>{taskTypeLabel[item.taskType]}</TableCell>
                       <TableCell className="font-mono font-medium">{item.referenceCode}</TableCell>
                       <TableCell>{item.warehouseName}</TableCell>
+                      <TableCell>{item.assignedToName ?? 'Chưa giao'}</TableCell>
                       <TableCell>
                         <Badge
                           variant={item.executionStatus === 'InProgress' ? 'default' : 'secondary'}
@@ -155,11 +181,23 @@ export function WarehouseTaskDirectory({
                       </TableCell>
                       <TableCell className="space-x-1 text-right">
                         {renderActions(item)}
-                        <Button asChild size="icon-sm" variant="ghost">
-                          <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
+                        {item.taskType === 'Relocation' && onOpenRelocation ? (
+                          <Button
+                            type="button"
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => onOpenRelocation(item)}
+                            aria-label={`Mở ${item.referenceCode}`}
+                          >
                             <ArrowRight aria-hidden="true" />
-                          </Link>
-                        </Button>
+                          </Button>
+                        ) : item.taskType !== 'Relocation' ? (
+                          <Button asChild size="icon-sm" variant="ghost">
+                            <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
+                              <ArrowRight aria-hidden="true" />
+                            </Link>
+                          </Button>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -181,11 +219,23 @@ export function WarehouseTaskDirectory({
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     {renderActions(item)}
-                    <Button asChild size="icon-sm" variant="ghost">
-                      <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
+                    {item.taskType === 'Relocation' && onOpenRelocation ? (
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => onOpenRelocation(item)}
+                        aria-label={`Mở ${item.referenceCode}`}
+                      >
                         <ArrowRight aria-hidden="true" />
-                      </Link>
-                    </Button>
+                      </Button>
+                    ) : item.taskType !== 'Relocation' ? (
+                      <Button asChild size="icon-sm" variant="ghost">
+                        <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
+                          <ArrowRight aria-hidden="true" />
+                        </Link>
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}

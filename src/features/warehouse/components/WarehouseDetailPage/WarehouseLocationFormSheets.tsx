@@ -428,6 +428,7 @@ export function SlotFormSheet({
     }
   }, [defaultValues, form, capacityProps.location, rebaseKey])
   const allowsMixedProducts = useWatch({ control: form.control, name: 'allowsMixedProducts' })
+  const isInboundStaging = useWatch({ control: form.control, name: 'isInboundStaging' })
 
   const [isClosing, setIsClosing] = useState(false)
   function handleOpenChange(nextOpen: boolean) {
@@ -523,6 +524,26 @@ export function SlotFormSheet({
                   Cho phép nhiều sản phẩm trong cùng vị trí
                 </FieldLabel>
               </Field>
+              {mode === 'update' ? (
+                <Field orientation="horizontal" className="md:col-span-2">
+                  <Checkbox
+                    id="slot-inbound-staging"
+                    checked={isInboundStaging === true}
+                    onCheckedChange={(checked) => {
+                      const enabled = checked === true
+                      form.setValue('isInboundStaging', enabled, { shouldDirty: true })
+                      if (enabled)
+                        form.setValue('allowsMixedProducts', true, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                    }}
+                  />
+                  <FieldLabel htmlFor="slot-inbound-staging">
+                    Dùng làm vị trí chờ nhận hàng
+                  </FieldLabel>
+                </Field>
+              ) : null}
               <div className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed md:col-span-2">
                 <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <p>

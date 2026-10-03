@@ -33,6 +33,7 @@ export const INBOUND_REQUEST_STATUS_LABELS: Record<InboundRequestStatus, string>
   PartiallyReceived: 'Nhận một phần',
   Received: 'Đã nhận đủ',
   Cancelled: 'Đã hủy',
+  Closed: 'Đã đóng phần còn lại',
 }
 
 function parseOperationalDate(value: string | null | undefined): Date | null {

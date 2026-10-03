@@ -50,11 +50,13 @@ function renderDetail(
     onApproveAndSend: vi.fn().mockResolvedValue(true),
     onSendToSupplier: vi.fn().mockResolvedValue(true),
     onReject: vi.fn().mockResolvedValue(true),
+    onReconcile: vi.fn().mockResolvedValue(true),
   }
   render(
     <InboundRequestDetail
       inboundRequest={inboundRequest}
       allowedActions={allowedActions}
+      selfApprovalRequired={false}
       isPending={false}
       {...handlers}
     />

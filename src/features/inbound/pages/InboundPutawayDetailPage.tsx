@@ -67,7 +67,14 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
       return
     }
     try {
-      await mutation.mutateAsync({ receiptId, request: { lines: values.lines } })
+      await mutation.mutateAsync({
+        receiptId,
+        request: {
+          lines: values.lines,
+          expectedVersion: receipt.version,
+          commandId: crypto.randomUUID(),
+        },
+      })
       toast.success('Đã ghi nhận cất hàng vào vị trí lưu trữ.')
       router.push(APP_ROUTES.goodsReceiptDetail(receiptId) as Route)
     } catch (error) {

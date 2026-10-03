@@ -17,6 +17,33 @@ export interface PermissionResponse {
   displayName: string
   moduleDisplayName: string
   description: string | null
+  category: string
+  categoryDisplayName: string
+  categoryDescription: string
+  categoryOrder: number
+  moduleOrder: number
+  scope: PermissionScope
+}
+
+export type PermissionScope =
+  | 'Unclassified'
+  | 'PlatformOnly'
+  | 'TenantOwnerDefault'
+  | 'TenantDelegatable'
+
+export interface AdminPermissionModuleGroup {
+  readonly module: string
+  readonly moduleDisplayName: string
+  readonly moduleOrder: number
+  readonly permissions: PermissionResponse[]
+}
+
+export interface AdminPermissionCategoryGroup {
+  readonly category: string
+  readonly categoryDisplayName: string
+  readonly categoryDescription: string
+  readonly categoryOrder: number
+  readonly modules: AdminPermissionModuleGroup[]
 }
 
 export type AssignPermissionsRequest = PermissionDeltaInput
@@ -171,6 +198,47 @@ export interface AdminSubscriptionPlanQuery {
 
 export interface AdminSubscriptionPlanListResponse {
   readonly items: SubscriptionPlanResponse[]
+  readonly totalCount: number
+  readonly pageNumber: number
+  readonly pageSize: number
+}
+
+export interface SendAnnouncementRequest {
+  readonly title: string
+  readonly message: string
+  readonly audience: 'AllActiveTenants' | 'ByPlan' | 'SpecificTenants'
+  readonly planIds: string[] | null
+  readonly tenantIds: string[] | null
+  readonly sendEmail: boolean
+  readonly action?: string | null
+}
+
+export interface SendAnnouncementResponse {
+  readonly recipientCount: number
+  readonly emailQueuedCount: number
+}
+
+export interface AnnouncementHistoryQuery {
+  readonly pageNumber: number
+  readonly pageSize: number
+}
+
+export interface AnnouncementHistoryItem {
+  readonly id: string
+  readonly title: string
+  readonly message: string
+  readonly audience: 'AllActiveTenants' | 'ByPlan' | 'SpecificTenants'
+  readonly action: string | null
+  readonly recipientCount: number
+  readonly sendEmail: boolean
+  readonly emailSentCount: number
+  readonly emailPendingCount: number
+  readonly emailFailedCount: number
+  readonly createdAt: string
+}
+
+export interface AnnouncementHistoryListResponse {
+  readonly items: AnnouncementHistoryItem[]
   readonly totalCount: number
   readonly pageNumber: number
   readonly pageSize: number

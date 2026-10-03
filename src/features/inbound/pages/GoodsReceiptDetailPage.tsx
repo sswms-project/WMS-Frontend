@@ -80,10 +80,17 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
           })),
         },
       })
-      if (shouldSubmit) await submitMutation.mutateAsync(receiptId)
+      if (shouldSubmit) {
+        const refreshed = await detailQuery.refetch()
+        if (!refreshed.data?.version) throw new Error('Missing receipt version')
+        await submitMutation.mutateAsync({
+          receiptId,
+          expectedVersion: refreshed.data.version,
+        })
+      }
       toast.success(
         shouldSubmit
-          ? 'Đã cập nhật và gửi phiếu nhận hàng để duyệt.'
+          ? 'Đã cập nhật, xác nhận hàng đến và gửi kết quả kiểm hàng để duyệt.'
           : 'Đã cập nhật phiếu nhận hàng.'
       )
       setIsEditing(false)
@@ -109,14 +116,24 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
 
   async function perform(action: 'submit' | 'approve' | 'reject', reason?: string) {
     try {
-      if (action === 'submit') await submitMutation.mutateAsync(receiptId)
-      else if (action === 'approve') await approveMutation.mutateAsync(receiptId)
-      else await rejectMutation.mutateAsync({ receiptId, reason: reason ?? '' })
+      if (action === 'submit') {
+        const receipt = detailQuery.data
+        if (!receipt?.version) return false
+        await submitMutation.mutateAsync({ receiptId, expectedVersion: receipt.version })
+      } else if (action === 'approve') {
+        const receipt = detailQuery.data
+        if (!receipt) return false
+        await approveMutation.mutateAsync({
+          receiptId,
+          expectedVersion: receipt.version,
+          selfApprovalAcknowledged: actionsQuery.data?.selfApprovalRequired === true,
+        })
+      } else await rejectMutation.mutateAsync({ receiptId, reason: reason ?? '' })
       toast.success(
         action === 'submit'
-          ? 'Đã gửi phiếu nhận hàng để duyệt.'
+          ? 'Đã xác nhận hàng đến và gửi kết quả kiểm hàng để duyệt.'
           : action === 'approve'
-            ? 'Đã phê duyệt phiếu nhận hàng.'
+            ? 'Đã duyệt kết quả kiểm hàng; hàng sẵn sàng để cất.'
             : 'Đã trả phiếu nhận hàng để chỉnh sửa.'
       )
       return true
@@ -189,6 +206,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       <ReceiptDetail
         receipt={receipt}
         allowedActions={actionsQuery.data?.allowedActions ?? []}
+        selfApprovalRequired={actionsQuery.data?.selfApprovalRequired ?? false}
         isPending={isPending}
         onUpdate={openEditor}
         onSubmit={() => perform('submit')}

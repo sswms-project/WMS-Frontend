@@ -4,9 +4,9 @@ import { INBOUND_STATUS_LABELS } from '../../utils/inbound-format'
 
 export function InboundStatusBadge({ status }: { readonly status: GoodsReceiptStatus }) {
   const variant =
-    status === 'Rejected'
+    status === 'Cancelled'
       ? 'destructive'
-      : status === 'Draft'
+      : status === 'Draft' || status === 'InspectionCorrectionRequired'
         ? 'outline'
         : status === 'PendingApproval'
           ? 'secondary'

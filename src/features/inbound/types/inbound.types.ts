@@ -6,9 +6,10 @@ import type {
 export const GOODS_RECEIPT_STATUSES = [
   'Draft',
   'PendingApproval',
+  'InspectionCorrectionRequired',
   'Approved',
   'Completed',
-  'Rejected',
+  'Cancelled',
 ] as const
 
 export type GoodsReceiptStatus = (typeof GOODS_RECEIPT_STATUSES)[number]
@@ -171,6 +172,9 @@ export interface GoodsReceiptDetail extends Omit<
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
+  arrivalConfirmedBy: string | null
+  arrivalConfirmedAt: string | null
+  receivingHoldSlotId: string | null
   putAwayTaskExecutionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
   putAwayTaskCancelledAt: string | null
   putAwayTaskCancellationReason: string | null
@@ -205,6 +209,15 @@ export interface PutawayLineRequest {
 
 export interface PutawayRequest {
   lines: PutawayLineRequest[]
+  expectedVersion: string
+  commandId: string
+  overrideReason?: string | null
+}
+
+export interface ConfirmPhysicalArrivalRequest {
+  expectedVersion: string
+  commandId: string
+  selfApprovalAcknowledged?: boolean
 }
 
 export interface CancelPutawayTaskRequest {
@@ -241,6 +254,9 @@ export interface AssignWarehouseTaskRequest {
 
 export interface InboundAllowedActionsResponse {
   allowedActions: GoodsReceiptAction[]
+  selfApprovalRequired: boolean
+  currentVersion: string | null
+  denialReasonCode: string | null
 }
 
 export type GoodsReceiptListResponse = PagedResponse<GoodsReceiptSummary>

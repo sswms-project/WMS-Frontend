@@ -26,6 +26,7 @@ export interface NotificationDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onMarkRead: (notification: NotificationItem) => void
+  readonly onOpen: (notification: NotificationItem) => void
   readonly onMarkAllRead: () => void
   readonly onRetry: () => void
 }

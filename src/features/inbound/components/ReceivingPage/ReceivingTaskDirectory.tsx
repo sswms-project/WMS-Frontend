@@ -105,6 +105,7 @@ export function ReceivingTaskDirectory({
   function renderActions(item: ReceivingTask, layout: 'row' | 'stack') {
     const isMine = Boolean(currentUserId) && item.assignedTo === currentUserId
     const receiptPendingApproval = item.activeGoodsReceiptStatus === 'PendingApproval'
+    const receiptNeedsCorrection = item.activeGoodsReceiptStatus === 'InspectionCorrectionRequired'
     return (
       <div className={layout === 'row' ? 'flex justify-end gap-2' : 'flex shrink-0 flex-col gap-1'}>
         {canAssign && (
@@ -135,7 +136,11 @@ export function ReceivingTaskDirectory({
             {!receiptPendingApproval && (
               <Button type="button" size="sm" onClick={() => onReceive(item)}>
                 <PackagePlus aria-hidden="true" />
-                Nhập thủ công
+                {receiptNeedsCorrection
+                  ? 'Sửa kiểm hàng'
+                  : item.activeGoodsReceiptId
+                    ? 'Mở phiếu nhập'
+                    : 'Nhập thủ công'}
               </Button>
             )}
             {receiptPendingApproval && (
@@ -294,6 +299,11 @@ export function ReceivingTaskDirectory({
                   {item.activeGoodsReceiptStatus === 'PendingApproval' && (
                     <ItemDescription className="text-warning">Phiếu chờ duyệt</ItemDescription>
                   )}
+                  {item.activeGoodsReceiptStatus === 'InspectionCorrectionRequired' && (
+                    <ItemDescription className="text-destructive">
+                      Cần sửa kiểm hàng
+                    </ItemDescription>
+                  )}
                   <div className="mt-1">
                     <TaskAssigneeCell
                       assigneeName={item.assignedToName}
@@ -332,6 +342,11 @@ export function ReceivingTaskDirectory({
                       {item.activeGoodsReceiptStatus === 'Draft' && (
                         <p className="text-muted-foreground mt-0.5 text-xs font-normal">
                           Đang nhập phiếu
+                        </p>
+                      )}
+                      {item.activeGoodsReceiptStatus === 'InspectionCorrectionRequired' && (
+                        <p className="text-destructive mt-0.5 text-xs font-normal">
+                          Cần sửa kiểm hàng
                         </p>
                       )}
                     </TableCell>

@@ -18,6 +18,7 @@ import type {
   StartInboundDocumentImportRequest,
   ReviewInboundDocumentImportRequest,
   CancelPutawayTaskRequest,
+  ConfirmPhysicalArrivalRequest,
   ReconcilePutawayCancellationRequest,
 } from '../types/inbound.types'
 
@@ -78,13 +79,13 @@ export const inboundService = {
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.update(receiptId), request)
       .then((response) => response.data),
-  submitReceipt: (receiptId: string) =>
+  submitReceipt: (receiptId: string, request: ConfirmPhysicalArrivalRequest) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.submit(receiptId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.submit(receiptId), request)
       .then((response) => response.data),
-  approveReceipt: (receiptId: string) =>
+  approveReceipt: (receiptId: string, request: ConfirmPhysicalArrivalRequest) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.approve(receiptId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.approve(receiptId), request)
       .then((response) => response.data),
   rejectReceipt: (receiptId: string, reason: string) =>
     axiosClient

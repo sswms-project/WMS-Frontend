@@ -79,6 +79,7 @@ export interface LocationSearchResponse extends StorageCapacityResponse {
   currentOccupancy: number | null
   barcodeValue: string | null
   isOutboundStaging: boolean
+  isInboundStaging: boolean
   rowVersion?: string | null
 }
 
@@ -145,6 +146,7 @@ export interface CreateSlotRequest extends WarehousePhysicalDetails {
 export interface UpdateSlotRequest extends Omit<CreateSlotRequest, 'capacityType'> {
   capacityType?: StorageCapacityType
   expectedRowVersion: string
+  isInboundStaging?: boolean
 }
 
 export interface LocationBarcodeResponse {

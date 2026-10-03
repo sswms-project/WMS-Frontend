@@ -41,7 +41,10 @@ describe('application navigation visibility', () => {
       }))
     ).toEqual([
       { label: null, items: ['Tổng quan'] },
-      { label: 'Quản trị nền tảng', items: ['Đơn vị thuê', 'Phân quyền', 'Gói đăng ký'] },
+      {
+        label: 'Quản trị nền tảng',
+        items: ['Đơn vị thuê', 'Phân quyền', 'Gói đăng ký', 'Thông báo hệ thống'],
+      },
       { label: 'Hệ thống', items: ['Nhật ký hoạt động', 'Cài đặt'] },
     ])
   })

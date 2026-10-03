@@ -8,7 +8,7 @@ import { PermissionSearch } from './PermissionSearch'
 interface PermissionEditorHeaderProps {
   readonly selectedCount: number
   readonly permissionCount: number
-  readonly moduleCount: number
+  readonly categoryCount: number
   readonly searchText: string
   readonly canManage: boolean
   readonly dirty: boolean
@@ -23,7 +23,7 @@ interface PermissionEditorHeaderProps {
 export function PermissionEditorHeader({
   selectedCount,
   permissionCount,
-  moduleCount,
+  categoryCount,
   searchText,
   canManage,
   dirty,
@@ -48,8 +48,8 @@ export function PermissionEditorHeader({
             <dd className="text-foreground font-semibold tabular-nums">{permissionCount}</dd>
           </div>
           <div className="flex items-baseline gap-1.5 px-3">
-            <dt className="text-muted-foreground">Phân hệ</dt>
-            <dd className="text-foreground font-semibold tabular-nums">{moduleCount}</dd>
+            <dt className="text-muted-foreground">Danh mục</dt>
+            <dd className="text-foreground font-semibold tabular-nums">{categoryCount}</dd>
           </div>
         </dl>
         <PermissionSearch value={searchText} onChange={onSearchChange} />
