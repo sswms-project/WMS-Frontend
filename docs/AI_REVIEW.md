@@ -1,5 +1,15 @@
 # AI Review Handoff
 
+## 2026-10-03 — Warehouse layout viewer sidebar search
+
+- Role: Codex implementing the requested viewer-only UI adjustment.
+- State: `READY_FOR_CODEX_REVIEW` (self-verification only; not independent approval).
+- Increased the desktop viewer's left-panel resize ceiling from 33.333% to 40% while preserving the 30% default, 25% minimum and compact Sheet behavior.
+- Moved the location search beside `Danh sách vị trí` and added a debounced inventory API search beside `Hàng hóa tại vị trí`; changing location clears the inventory search and returns pagination to page 1.
+- Added regressions for header/search alignment, the 40% resize ceiling, disabled inventory search before selecting a location, debounce and search reset.
+- Verification: focused tests 4/4, full suite 220/220, typecheck, lint and production build passed.
+- No Backend contract, dependency, database, migration, designer interaction or layout persistence changed.
+
 ## 2026-10-02 — Permission catalog categories Gate C
 
 - Role: Codex implementing the authorized UI/UX gate.

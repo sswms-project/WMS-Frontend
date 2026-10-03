@@ -1,11 +1,21 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
   WarehouseLayoutEditorScene,
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import { WarehouseLayoutViewerWorkspace } from './WarehouseLayoutViewerWorkspace'
 import { TooltipProvider } from '@/components/ui/tooltip'
+
+const { inventoryQueryMock } = vi.hoisted(() => ({
+  inventoryQueryMock: vi.fn(() => ({
+    data: { items: [], totalCount: 0 },
+    isPending: false,
+    isFetching: false,
+    isPlaceholderData: false,
+    isError: false,
+  })),
+}))
 
 vi.mock('next/dynamic', () => ({
   default: () =>
@@ -17,17 +27,32 @@ vi.mock('../../hooks/use-layout-designer-compact', () => ({
   useLayoutDesignerCompact: () => false,
 }))
 vi.mock('@/features/inventory/hooks/use-inventory', () => ({
-  useInventoryQuery: () => ({
-    data: { items: [], totalCount: 0 },
-    isPending: false,
-    isError: false,
-  }),
+  useInventoryQuery: inventoryQueryMock,
 }))
 vi.mock('@/components/ui/resizable', () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ResizablePanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ResizablePanel: ({
+    children,
+    defaultSize,
+    minSize,
+    maxSize,
+  }: {
+    children: React.ReactNode
+    defaultSize?: string
+    minSize?: string
+    maxSize?: string
+  }) => (
+    <div data-default-size={defaultSize} data-min-size={minSize} data-max-size={maxSize}>
+      {children}
+    </div>
+  ),
   ResizableHandle: () => null,
 }))
+
+afterEach(() => {
+  vi.useRealTimers()
+  inventoryQueryMock.mockClear()
+})
 
 const scene: WarehouseLayoutEditorScene = {
   canvas: { width: 800, height: 600, gridSize: 10 },
@@ -62,6 +87,85 @@ const scene: WarehouseLayoutEditorScene = {
 }
 
 describe('viewer capacity summary', () => {
+  it('keeps both searches beside their headings and lets the left panel grow to forty percent', () => {
+    render(
+      <TooltipProvider>
+        <WarehouseLayoutViewerWorkspace
+          warehouseId="warehouse"
+          warehouseName="Kho"
+          scene={scene}
+          canConfigure={false}
+          isClosing={false}
+          onClose={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+
+    const locationSearch = screen.getByRole('searchbox', { name: 'Tìm vị trí trên sơ đồ' })
+    const inventorySearch = screen.getByRole('searchbox', { name: 'Tìm hàng hóa tại vị trí' })
+
+    expect(
+      screen.getByRole('heading', { name: 'Danh sách vị trí' }).parentElement
+    ).toContainElement(locationSearch)
+    expect(
+      screen.getByRole('heading', { name: 'Hàng hóa tại vị trí' }).parentElement
+    ).toContainElement(inventorySearch)
+    expect(inventorySearch).toBeDisabled()
+    expect(document.querySelector('[data-max-size="40%"]')).toHaveAttribute(
+      'data-default-size',
+      '30%'
+    )
+  })
+
+  it('debounces inventory search and resets it when the selected location changes', () => {
+    vi.useFakeTimers()
+    render(
+      <TooltipProvider>
+        <WarehouseLayoutViewerWorkspace
+          warehouseId="warehouse"
+          warehouseName="Kho"
+          scene={scene}
+          canConfigure={false}
+          isClosing={false}
+          onClose={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn kệ canvas' }))
+    const inventorySearch = screen.getByRole('searchbox', { name: 'Tìm hàng hóa tại vị trí' })
+    fireEvent.change(inventorySearch, { target: { value: 'Bàn phím' } })
+    act(() => vi.advanceTimersByTime(300))
+
+    expect(inventoryQueryMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ searchTerm: 'Bàn phím' }),
+      true
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn kệ canvas' }))
+    expect(inventorySearch).toHaveValue('')
+  })
+
+  it('opens viewer guidance instead of the location sheet from the help button', () => {
+    render(
+      <TooltipProvider>
+        <WarehouseLayoutViewerWorkspace
+          warehouseId="warehouse"
+          warehouseName="Kho"
+          scene={scene}
+          canConfigure={false}
+          isClosing={false}
+          onClose={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Trợ giúp' }))
+
+    expect(screen.getByText('Xem sơ đồ kho')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Vị trí và hàng hóa' })).not.toBeInTheDocument()
+  })
+
   it('shows normalized usage and capacity unit for the selected rack', () => {
     render(
       <TooltipProvider>
