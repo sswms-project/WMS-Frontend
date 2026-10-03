@@ -61,10 +61,18 @@ export const API_ENDPOINTS = {
     history: '/my-warehouse-tasks/history',
     action: (taskType: string, taskId: string) =>
       `/my-warehouse-tasks/${taskType}/${taskId}/actions`,
+    relocationDetail: (taskId: string) => `/my-warehouse-tasks/relocation/${taskId}`,
+    relocationRecommendations: (taskId: string, lineId: string) =>
+      `/my-warehouse-tasks/relocation/${taskId}/lines/${lineId}/recommendations`,
+    executeRelocation: (taskId: string) => `/my-warehouse-tasks/relocation/${taskId}/execute`,
   },
   warehouseTasks: {
     list: '/warehouse-tasks',
     history: '/warehouse-tasks/history',
+    detail: (taskId: string) => `/warehouse-tasks/${taskId}`,
+    assignment: (taskId: string) => `/warehouse-tasks/${taskId}/assignment`,
+    recommendations: (taskId: string, lineId: string) =>
+      `/warehouse-tasks/${taskId}/lines/${lineId}/recommendations`,
   },
   staff: {
     managers: '/managers',
