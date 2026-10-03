@@ -29,6 +29,7 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
         </Button>
       </div>
       <NotificationFilters
+        key={props.filters.search}
         filters={props.filters}
         isFetching={props.isFetching}
         onApply={props.onApplyFilters}
@@ -48,6 +49,7 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
             hasActiveFilters={props.hasActiveFilters}
             pendingNotificationId={props.pendingNotificationId}
             onMarkRead={props.onMarkRead}
+            onOpen={props.onOpen}
             onRetry={props.onRetry}
           />
         </div>

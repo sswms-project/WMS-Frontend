@@ -6,6 +6,7 @@ import { OperationalListPanel } from '@/components/operations/OperationalListPan
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { USER_ROLES } from '@/config/roles'
 import {
   PermissionsCatalog,
   RolePermissionsSheet,
@@ -117,10 +118,12 @@ export default function RolesPage() {
         </OperationalListPanel>
       </TabsContent>
 
-      <TabsContent value="permissions" className="mt-0 min-h-0 min-w-0 flex-1 overflow-y-auto">
+      <TabsContent value="permissions" className="mt-0 min-h-0 min-w-0 flex-1">
         <PermissionsCatalog
           permissions={permissionsQuery.data ?? []}
           isLoading={permissionsQuery.isLoading}
+          isError={permissionsQuery.isError}
+          onRetry={() => void permissionsQuery.refetch()}
         />
       </TabsContent>
 
@@ -129,11 +132,14 @@ export default function RolesPage() {
         open={Boolean(selectedRole)}
         role={selectedRole}
         permissions={permissionsQuery.data ?? []}
+        canManagePlatformPermissions={selectedRole?.roleName === USER_ROLES.SystemAdmin}
         isLoading={permissionsQuery.isLoading}
+        isError={permissionsQuery.isError}
         isSaving={assignMutation.isPending}
         onOpenChange={(open) => {
           if (!open) setSelectedRole(null)
         }}
+        onRetry={() => void permissionsQuery.refetch()}
         onSave={savePermissions}
       />
     </Tabs>

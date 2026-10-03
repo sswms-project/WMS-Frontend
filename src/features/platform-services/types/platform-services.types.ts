@@ -40,6 +40,7 @@ export interface NotificationItem {
   readonly isRead: boolean
   readonly referenceType: string | null
   readonly referenceId: string | null
+  readonly action?: string | null
   readonly createdAt: string
 }
 

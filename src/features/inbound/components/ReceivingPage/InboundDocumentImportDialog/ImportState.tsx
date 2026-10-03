@@ -27,7 +27,8 @@ export function ImportState({
         <div className="flex flex-col gap-1">
           <h3 className="text-base font-semibold">Đã tạo phiếu nhận hàng nháp</h3>
           <p className="text-muted-foreground max-w-md text-sm">
-            Phiếu vẫn cần được gửi và phê duyệt trước khi hàng được cất vào vị trí kho.
+            Phiếu vẫn cần được gửi và xác nhận hàng đến khu chờ trước khi hàng được cất vào vị trí
+            kho.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">

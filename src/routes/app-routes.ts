@@ -83,6 +83,8 @@ export const APP_ROUTES = {
     tenantDetail: (tenantId: string): Route => `/admin/tenants/${tenantId}` as Route,
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
+    announcements: '/admin/announcements',
+    payments: '/admin/payments',
   },
   products: '/products',
   productDetail: (id: string) => `/products/${id}`,

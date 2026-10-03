@@ -121,6 +121,7 @@ export default function ProductListPage() {
   const categoriesQuery = useCategoriesQuery(true, 'Active')
 
   const listData = listQuery.isPlaceholderData ? undefined : listQuery.data
+  const stockStatusCounts = listQuery.data?.stockStatusCounts
   const products = listData?.items ?? []
   const isListLoading = listQuery.isLoading || listQuery.isPlaceholderData
   const canCreate = permissions.has(P.PRODUCTS_CREATE)
@@ -273,14 +274,17 @@ export default function ProductListPage() {
                   : 'Tất cả sản phẩm'}
             </h2>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {listData?.totalCount ?? 0} sản phẩm
+              {listData?.totalCount ?? '…'} sản phẩm
             </p>
           </div>
-          {canViewInventory && listData?.stockStatusCounts ? (
-            <div className="min-w-0 justify-self-center sm:col-start-2 sm:row-start-1">
+          {canViewInventory && stockStatusCounts ? (
+            <div
+              aria-busy={listQuery.isFetching}
+              className="min-w-0 justify-self-center sm:col-start-2 sm:row-start-1"
+            >
               <ProductStockStatusFilter
                 value={stockStatus}
-                counts={listData.stockStatusCounts}
+                counts={stockStatusCounts}
                 onValueChange={(value) => {
                   updateListParams({ stock: value || null, page: null })
                 }}

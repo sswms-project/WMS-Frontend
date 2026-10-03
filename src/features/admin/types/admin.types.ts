@@ -17,6 +17,33 @@ export interface PermissionResponse {
   displayName: string
   moduleDisplayName: string
   description: string | null
+  category: string
+  categoryDisplayName: string
+  categoryDescription: string
+  categoryOrder: number
+  moduleOrder: number
+  scope: PermissionScope
+}
+
+export type PermissionScope =
+  | 'Unclassified'
+  | 'PlatformOnly'
+  | 'TenantOwnerDefault'
+  | 'TenantDelegatable'
+
+export interface AdminPermissionModuleGroup {
+  readonly module: string
+  readonly moduleDisplayName: string
+  readonly moduleOrder: number
+  readonly permissions: PermissionResponse[]
+}
+
+export interface AdminPermissionCategoryGroup {
+  readonly category: string
+  readonly categoryDisplayName: string
+  readonly categoryDescription: string
+  readonly categoryOrder: number
+  readonly modules: AdminPermissionModuleGroup[]
 }
 
 export type AssignPermissionsRequest = PermissionDeltaInput
@@ -43,6 +70,44 @@ export interface TenantQuery {
   readonly planId?: string
   readonly sortBy?: 'createdAt' | 'tenantName' | 'status' | 'subscriptionEndDate'
   readonly sortDirection?: SortDirection
+}
+
+export interface AdminPaymentQuery {
+  readonly pageNumber: number
+  readonly pageSize: number
+  readonly search?: string
+  readonly status?: string
+  readonly tenantId?: string
+  readonly planId?: string
+  readonly dateFrom?: string
+  readonly dateTo?: string
+  readonly sortBy?: 'createdAt' | 'paidAt' | 'amount' | 'status'
+  readonly sortDirection?: SortDirection
+}
+
+export interface AdminPaymentResponse {
+  readonly id: string
+  readonly tenantId: string | null
+  readonly tenantName: string | null
+  readonly invoiceNumber: string
+  readonly planName: string | null
+  readonly billingCycle: string | null
+  readonly type: string
+  readonly amount: number
+  readonly currency: string
+  readonly status: string
+  readonly providerStatus: string | null
+  readonly payOSOrderCode: number | null
+  readonly paidAt: string | null
+  readonly createdAt: string
+}
+
+export interface AdminPaymentListResponse {
+  readonly items: readonly AdminPaymentResponse[]
+  readonly totalCount: number
+  readonly pageNumber: number
+  readonly pageSize: number
+  readonly totalCompletedAmount: number
 }
 
 export interface TenantSummaryResponse {
@@ -171,6 +236,47 @@ export interface AdminSubscriptionPlanQuery {
 
 export interface AdminSubscriptionPlanListResponse {
   readonly items: SubscriptionPlanResponse[]
+  readonly totalCount: number
+  readonly pageNumber: number
+  readonly pageSize: number
+}
+
+export interface SendAnnouncementRequest {
+  readonly title: string
+  readonly message: string
+  readonly audience: 'AllActiveTenants' | 'ByPlan' | 'SpecificTenants'
+  readonly planIds: string[] | null
+  readonly tenantIds: string[] | null
+  readonly sendEmail: boolean
+  readonly action?: string | null
+}
+
+export interface SendAnnouncementResponse {
+  readonly recipientCount: number
+  readonly emailQueuedCount: number
+}
+
+export interface AnnouncementHistoryQuery {
+  readonly pageNumber: number
+  readonly pageSize: number
+}
+
+export interface AnnouncementHistoryItem {
+  readonly id: string
+  readonly title: string
+  readonly message: string
+  readonly audience: 'AllActiveTenants' | 'ByPlan' | 'SpecificTenants'
+  readonly action: string | null
+  readonly recipientCount: number
+  readonly sendEmail: boolean
+  readonly emailSentCount: number
+  readonly emailPendingCount: number
+  readonly emailFailedCount: number
+  readonly createdAt: string
+}
+
+export interface AnnouncementHistoryListResponse {
+  readonly items: AnnouncementHistoryItem[]
   readonly totalCount: number
   readonly pageNumber: number
   readonly pageSize: number

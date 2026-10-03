@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
@@ -9,6 +9,19 @@ export function useNotificationsQuery(params: NotificationQuery) {
   return useQuery({
     queryKey: queryKeys.notifications.list(params),
     queryFn: () => platformServicesService.getNotifications(params),
+  })
+}
+
+export function useInfiniteNotificationsQuery(pageSize: number) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.notifications.infinite(pageSize),
+    queryFn: ({ pageParam }) =>
+      platformServicesService.getNotifications({ pageNumber: pageParam, pageSize }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageNumber * lastPage.pageSize < lastPage.totalCount
+        ? lastPage.pageNumber + 1
+        : undefined,
   })
 }
 

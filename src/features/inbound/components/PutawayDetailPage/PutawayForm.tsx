@@ -24,7 +24,8 @@ export interface SlotOption {
   zoneLabel: string
   hierarchy: string
   allowsMixedProducts?: boolean
-  availableCapacity: number | null
+  capacityLabel: string
+  unavailableReason?: string
 }
 
 interface PutawayFormProps {

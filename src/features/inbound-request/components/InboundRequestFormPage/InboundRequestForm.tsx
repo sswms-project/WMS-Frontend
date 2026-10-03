@@ -39,7 +39,6 @@ import { LookupCombobox } from './LookupCombobox'
 
 interface InboundRequestFormProps {
   readonly title: string
-  readonly description: string
   readonly autoApprove: boolean
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly fields: readonly FieldArrayWithId<InboundRequestFormValues, 'lines', 'id'>[]
@@ -69,7 +68,6 @@ interface InboundRequestFormProps {
 
 export function InboundRequestForm({
   title,
-  description,
   autoApprove,
   form,
   fields,

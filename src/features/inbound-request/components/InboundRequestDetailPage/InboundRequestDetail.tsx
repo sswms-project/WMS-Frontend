@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -41,12 +42,17 @@ const MISSING_SUPPLIER_EMAIL_HINT_ID = 'inbound-request-missing-supplier-email'
 interface InboundRequestDetailProps {
   readonly inboundRequest: InboundRequestDetailType
   readonly allowedActions: readonly InboundRequestAction[]
+  readonly selfApprovalRequired: boolean
   readonly isPending: boolean
   readonly onSubmit: () => Promise<boolean>
-  readonly onApprove: () => Promise<boolean>
-  readonly onApproveAndSend: () => Promise<boolean>
+  readonly onApprove: (selfApprovalAcknowledged: boolean) => Promise<boolean>
+  readonly onApproveAndSend: (selfApprovalAcknowledged: boolean) => Promise<boolean>
   readonly onSendToSupplier: () => Promise<boolean>
-  readonly onReject: (reason: string) => Promise<boolean>
+  readonly onReject: (reason: string, selfApprovalAcknowledged: boolean) => Promise<boolean>
+  readonly onReconcile: (
+    action: typeof INBOUND_REQUEST_ACTION.Cancel | typeof INBOUND_REQUEST_ACTION.CloseRemaining,
+    reason: string
+  ) => Promise<boolean>
 }
 
 const INBOUND_REQUEST_HISTORY_ACTION_LABELS: Readonly<Record<string, string>> = {
@@ -75,27 +81,36 @@ const INBOUND_REQUEST_HISTORY_REASON_LABELS: Readonly<Record<string, string>> = 
 export function InboundRequestDetail({
   inboundRequest,
   allowedActions,
+  selfApprovalRequired,
   isPending,
   onSubmit,
   onApprove,
   onApproveAndSend,
   onSendToSupplier,
   onReject,
+  onReconcile,
 }: InboundRequestDetailProps) {
   const [confirmationAction, setConfirmationAction] = useState<InboundRequestAction | null>(null)
   const [isRejectOpen, setIsRejectOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState('')
+  const [selfApprovalAcknowledged, setSelfApprovalAcknowledged] = useState(false)
+  const [reconciliationAction, setReconciliationAction] = useState<
+    typeof INBOUND_REQUEST_ACTION.Cancel | typeof INBOUND_REQUEST_ACTION.CloseRemaining | null
+  >(null)
   async function confirmAction() {
     if (!confirmationAction) return
     const handlers: Partial<Record<InboundRequestAction, () => Promise<boolean>>> = {
       [INBOUND_REQUEST_ACTION.Submit]: onSubmit,
-      [INBOUND_REQUEST_ACTION.Approve]: onApprove,
-      [INBOUND_REQUEST_ACTION.ApproveAndSend]: onApproveAndSend,
+      [INBOUND_REQUEST_ACTION.Approve]: () => onApprove(selfApprovalAcknowledged),
+      [INBOUND_REQUEST_ACTION.ApproveAndSend]: () => onApproveAndSend(selfApprovalAcknowledged),
       [INBOUND_REQUEST_ACTION.SendToSupplier]: onSendToSupplier,
     }
     const succeeded = await handlers[confirmationAction]?.()
-    if (succeeded) setConfirmationAction(null)
+    if (succeeded) {
+      setConfirmationAction(null)
+      setSelfApprovalAcknowledged(false)
+    }
   }
 
   const supplierEmail = inboundRequest.supplierEmail
@@ -118,16 +133,32 @@ export function InboundRequestDetail({
       setReasonError('Lý do không được vượt quá 500 ký tự.')
       return
     }
-    const succeeded = await onReject(normalizedReason)
+    const succeeded = await onReject(normalizedReason, selfApprovalAcknowledged)
     if (succeeded) {
       setIsRejectOpen(false)
+      setReason('')
+      setReasonError('')
+      setSelfApprovalAcknowledged(false)
+    }
+  }
+
+  async function reconcile() {
+    if (!reconciliationAction) return
+    const normalizedReason = reason.trim()
+    if (!normalizedReason) {
+      setReasonError('Vui lòng nhập lý do.')
+      return
+    }
+    const succeeded = await onReconcile(reconciliationAction, normalizedReason)
+    if (succeeded) {
+      setReconciliationAction(null)
       setReason('')
       setReasonError('')
     }
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
+    <div className="flex w-full min-w-0 flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon">
@@ -171,6 +202,31 @@ export function InboundRequestDetail({
             <Button type="button" variant="outline" onClick={() => setIsRejectOpen(true)}>
               <X aria-hidden="true" />
               Từ chối
+            </Button>
+          ) : null}
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.Cancel) ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                setReason('')
+                setReconciliationAction(INBOUND_REQUEST_ACTION.Cancel)
+              }}
+            >
+              <X aria-hidden="true" />
+              Hủy yêu cầu
+            </Button>
+          ) : null}
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.CloseRemaining) ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setReason('')
+                setReconciliationAction(INBOUND_REQUEST_ACTION.CloseRemaining)
+              }}
+            >
+              Đóng số lượng còn lại
             </Button>
           ) : null}
           {allowedActions.includes(INBOUND_REQUEST_ACTION.Approve) ? (
@@ -251,7 +307,10 @@ export function InboundRequestDetail({
       <AlertDialog
         open={Boolean(confirmationAction)}
         onOpenChange={(open) => {
-          if (!open) setConfirmationAction(null)
+          if (!open) {
+            setConfirmationAction(null)
+            setSelfApprovalAcknowledged(false)
+          }
         }}
       >
         <AlertDialogContent>
@@ -259,10 +318,27 @@ export function InboundRequestDetail({
             <AlertDialogTitle>{confirmationCopy.title}</AlertDialogTitle>
             <AlertDialogDescription>{confirmationCopy.description}</AlertDialogDescription>
           </AlertDialogHeader>
+          {selfApprovalRequired &&
+          confirmationAction !== INBOUND_REQUEST_ACTION.Submit &&
+          confirmationAction !== INBOUND_REQUEST_ACTION.SendToSupplier ? (
+            <label className="flex items-start gap-3 text-sm">
+              <Checkbox
+                checked={selfApprovalAcknowledged}
+                onCheckedChange={(checked) => setSelfApprovalAcknowledged(checked === true)}
+              />
+              Tôi xác nhận đang tự phê duyệt yêu cầu do chính mình lập hoặc gửi.
+            </label>
+          ) : null}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              disabled={isPending}
+              disabled={
+                isPending ||
+                (selfApprovalRequired &&
+                  confirmationAction !== INBOUND_REQUEST_ACTION.Submit &&
+                  confirmationAction !== INBOUND_REQUEST_ACTION.SendToSupplier &&
+                  !selfApprovalAcknowledged)
+              }
               onClick={(event) => {
                 event.preventDefault()
                 void confirmAction()
@@ -274,7 +350,13 @@ export function InboundRequestDetail({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+      <Dialog
+        open={isRejectOpen}
+        onOpenChange={(open) => {
+          setIsRejectOpen(open)
+          if (!open) setSelfApprovalAcknowledged(false)
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Từ chối yêu cầu nhập kho</DialogTitle>
@@ -296,6 +378,15 @@ export function InboundRequestDetail({
             />
             <FieldError>{reasonError}</FieldError>
           </Field>
+          {selfApprovalRequired ? (
+            <label className="flex items-start gap-3 text-sm">
+              <Checkbox
+                checked={selfApprovalAcknowledged}
+                onCheckedChange={(checked) => setSelfApprovalAcknowledged(checked === true)}
+              />
+              Tôi xác nhận đang tự từ chối yêu cầu do chính mình lập hoặc gửi.
+            </label>
+          ) : null}
           <DialogFooter>
             <Button
               type="button"
@@ -308,10 +399,70 @@ export function InboundRequestDetail({
             <Button
               type="button"
               variant="destructive"
-              disabled={isPending}
+              disabled={isPending || (selfApprovalRequired && !selfApprovalAcknowledged)}
               onClick={() => void reject()}
             >
               Từ chối đơn
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(reconciliationAction)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReconciliationAction(null)
+            setReason('')
+            setReasonError('')
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {reconciliationAction === INBOUND_REQUEST_ACTION.Cancel
+                ? 'Hủy yêu cầu nhập kho'
+                : 'Đóng số lượng nhập còn lại'}
+            </DialogTitle>
+            <DialogDescription>
+              {reconciliationAction === INBOUND_REQUEST_ACTION.Cancel
+                ? 'Chỉ hủy được khi chưa phát sinh nhận hàng. Yêu cầu và lịch sử vẫn được lưu.'
+                : 'Phần đã nhận và tồn kho hiện có không thay đổi. Hệ thống chỉ đóng phần sẽ không giao tiếp.'}
+            </DialogDescription>
+          </DialogHeader>
+          <Field data-invalid={Boolean(reasonError)}>
+            <FieldLabel htmlFor="inbound-reconciliation-reason">Lý do</FieldLabel>
+            <Textarea
+              id="inbound-reconciliation-reason"
+              value={reason}
+              maxLength={500}
+              aria-invalid={Boolean(reasonError)}
+              onChange={(event) => {
+                setReason(event.target.value)
+                setReasonError('')
+              }}
+            />
+            <FieldError>{reasonError}</FieldError>
+          </Field>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => setReconciliationAction(null)}
+            >
+              Quay lại
+            </Button>
+            <Button
+              type="button"
+              variant={
+                reconciliationAction === INBOUND_REQUEST_ACTION.Cancel ? 'destructive' : 'default'
+              }
+              disabled={isPending || !reason.trim()}
+              onClick={() => void reconcile()}
+            >
+              Xác nhận
             </Button>
           </DialogFooter>
         </DialogContent>

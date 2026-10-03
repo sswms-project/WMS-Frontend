@@ -6,8 +6,10 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { supplierService } from '../services/supplier.service'
 import type {
+  ImportSuppliersRequest,
   SaveSupplierRequest,
   Supplier,
+  SupplierImportPreview,
   SupplierListQuery,
   SupplierListResponse,
   UpdateSupplierVariables,
@@ -56,6 +58,30 @@ export function useCreateSupplierMutation() {
   return useMutation<ApiResponse<string>, ApiErrorResponse, SaveSupplierRequest>({
     mutationFn: supplierService.createSupplier,
     onSuccess: () => invalidateSuppliers(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useImportSuppliersMutation() {
+  const invalidateSuppliers = useInvalidateSuppliers()
+
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ImportSuppliersRequest>({
+    mutationFn: supplierService.importSuppliers,
+    onSuccess: () => invalidateSuppliers(),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useSupplierImportTemplateMutation() {
+  return useMutation<void, ApiErrorResponse, void>({
+    mutationFn: supplierService.downloadImportTemplate,
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function usePreviewSupplierImportMutation() {
+  return useMutation<ApiResponse<SupplierImportPreview>, ApiErrorResponse, File>({
+    mutationFn: supplierService.previewImport,
     onError: (error) => logger.error(error),
   })
 }

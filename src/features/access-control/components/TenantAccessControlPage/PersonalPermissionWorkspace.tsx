@@ -209,6 +209,7 @@ export function PersonalPermissionWorkspace({
           workspace={workspace}
           canManage={canManage}
           groups={editor.filteredGroups}
+          completeGroups={editor.groupedPermissions}
           draftIds={editor.draftIds}
           roleDefaultIds={editor.roleDefaultIds}
           customizedCount={editor.customizedIds.size}

@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import type { ApiErrorResponse } from '@/types/api'
 import type {
@@ -107,9 +106,6 @@ export function AccessControlWorkspace({
     [permissionGroups, searchText]
   )
   const isDirty = !arePermissionSetsEqual(draftIds, baselineIds)
-  const visibleOpenModules = searchText.trim()
-    ? filteredGroups.map((group) => group.module)
-    : openModules
 
   useEffect(() => {
     if (getRoleById(workspace.roles, selectedRoleId)) return
@@ -309,7 +305,7 @@ export function AccessControlWorkspace({
           <PermissionEditorHeader
             selectedCount={draftIds.size}
             permissionCount={workspace.permissions.length}
-            moduleCount={permissionGroups.length}
+            categoryCount={permissionGroups.length}
             searchText={searchText}
             canManage={canManage}
             dirty={isDirty}
@@ -343,26 +339,23 @@ export function AccessControlWorkspace({
             </Alert>
           )}
 
-          <ScrollArea className="bg-muted/10 min-h-0 flex-1">
-            <div className="p-3 sm:p-4">
-              <PermissionCatalog
-                groups={filteredGroups}
-                context={{
-                  kind: 'role',
-                  subjectId: selectedRole.roleId,
-                  selectedIds: draftIds,
-                }}
-                openModules={visibleOpenModules}
-                disabled={saving || !canManage}
-                hasSearch={Boolean(searchText.trim())}
-                onOpenModulesChange={(modules) => {
-                  if (!searchText.trim()) setOpenModules(modules)
-                }}
-                onTogglePermission={togglePermission}
-                onToggleModule={toggleModule}
-              />
-            </div>
-          </ScrollArea>
+          <div className="bg-muted/10 min-h-0 flex-1 p-3 sm:p-4">
+            <PermissionCatalog
+              groups={filteredGroups}
+              completeGroups={permissionGroups}
+              context={{
+                kind: 'role',
+                subjectId: selectedRole.roleId,
+                selectedIds: draftIds,
+              }}
+              openModules={openModules}
+              disabled={saving || !canManage}
+              hasSearch={Boolean(searchText.trim())}
+              onOpenModulesChange={setOpenModules}
+              onTogglePermission={togglePermission}
+              onToggleModule={toggleModule}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 

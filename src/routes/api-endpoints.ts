@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
       `/admin/tenants/${tenantId}/approve-registration`,
     rejectTenantRegistration: (tenantId: string) =>
       `/admin/tenants/${tenantId}/reject-registration`,
+    announcements: '/admin/announcements',
+    payments: '/admin/payments',
     subscriptionPlans: '/subscription-plans/admin',
     activateSubscriptionPlan: (planId: string) => `/subscription-plans/${planId}/activate`,
   },
@@ -60,6 +62,18 @@ export const API_ENDPOINTS = {
     history: '/my-warehouse-tasks/history',
     action: (taskType: string, taskId: string) =>
       `/my-warehouse-tasks/${taskType}/${taskId}/actions`,
+    relocationDetail: (taskId: string) => `/my-warehouse-tasks/relocation/${taskId}`,
+    relocationRecommendations: (taskId: string, lineId: string) =>
+      `/my-warehouse-tasks/relocation/${taskId}/lines/${lineId}/recommendations`,
+    executeRelocation: (taskId: string) => `/my-warehouse-tasks/relocation/${taskId}/execute`,
+  },
+  warehouseTasks: {
+    list: '/warehouse-tasks',
+    history: '/warehouse-tasks/history',
+    detail: (taskId: string) => `/warehouse-tasks/${taskId}`,
+    assignment: (taskId: string) => `/warehouse-tasks/${taskId}/assignment`,
+    recommendations: (taskId: string, lineId: string) =>
+      `/warehouse-tasks/${taskId}/lines/${lineId}/recommendations`,
   },
   staff: {
     managers: '/managers',
@@ -168,6 +182,9 @@ export const API_ENDPOINTS = {
     list: '/suppliers',
     create: '/suppliers',
     nextCode: '/suppliers/next-code',
+    import: '/suppliers/import',
+    importPreview: '/suppliers/import/preview',
+    importTemplate: '/suppliers/import-template',
     detail: (supplierId: string) => `/suppliers/${supplierId}`,
     update: (supplierId: string) => `/suppliers/${supplierId}`,
     deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,
@@ -190,6 +207,9 @@ export const API_ENDPOINTS = {
     sendToSupplier: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/send-to-supplier`,
     reject: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/reject`,
+    cancel: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}/cancel`,
+    closeRemaining: (inboundRequestId: string) =>
+      `/inbound-requests/${inboundRequestId}/close-remaining`,
     allowedActions: (inboundRequestId: string) =>
       `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },

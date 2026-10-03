@@ -37,6 +37,7 @@ import {
 } from '../schemas/inbound-document-import.schema'
 import { goodsReceiptSchema, type GoodsReceiptFormValues } from '../schemas/inbound.schema'
 import type { ReceivingTask, SaveGoodsReceiptRequest } from '../types/inbound.types'
+import { inboundService } from '../services/inbound.service'
 import {
   toOperationalDateTimeEnd,
   toOperationalDateTimeStart,
@@ -108,6 +109,10 @@ export default function InboundReceivingPage() {
   }, [importId, importQuery.data?.review, importForm])
 
   function openReceive(task: ReceivingTask) {
+    if (task.activeGoodsReceiptId) {
+      router.push(APP_ROUTES.goodsReceiptDetail(task.activeGoodsReceiptId) as Route)
+      return
+    }
     setSelectedTask(task)
     form.reset({
       inboundRequestId: task.inboundRequestId,
@@ -226,7 +231,7 @@ export default function InboundReceivingPage() {
     try {
       const response = await createDraftMutation.mutateAsync(importId)
       setDraftReceiptId(response.data)
-      toast.success('Đã tạo phiếu nhận hàng nháp. Mở phiếu để gửi duyệt hoặc phê duyệt.')
+      toast.success('Đã tạo phiếu nhận hàng nháp. Mở phiếu để gửi duyệt hoặc xác nhận hàng đến.')
     } catch (error) {
       logger.error(error)
       toast.error('Không thể tạo phiếu nhận hàng nháp. Vui lòng kiểm tra lại dữ liệu mới nhất.')
@@ -250,7 +255,11 @@ export default function InboundReceivingPage() {
       const response = await createMutation.mutateAsync(request)
       if (shouldSubmit) {
         try {
-          await submitMutation.mutateAsync(response.data)
+          const receipt = await inboundService.getReceipt(response.data)
+          await submitMutation.mutateAsync({
+            receiptId: response.data,
+            expectedVersion: receipt.data.version,
+          })
         } catch (error) {
           logger.error(error)
           toast.error(

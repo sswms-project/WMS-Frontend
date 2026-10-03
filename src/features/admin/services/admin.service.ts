@@ -8,6 +8,8 @@ import type {
   UpdateSubscriptionPlanRequest,
 } from '../schemas/subscription-plan.schema'
 import type {
+  AdminPaymentListResponse,
+  AdminPaymentQuery,
   AssignPermissionsRequest,
   ApproveTenantRegistrationRequest,
   AdminSubscriptionPlanListResponse,
@@ -19,6 +21,10 @@ import type {
   TenantListResponse,
   TenantQuery,
   RejectTenantRegistrationRequest,
+  AnnouncementHistoryListResponse,
+  AnnouncementHistoryQuery,
+  SendAnnouncementRequest,
+  SendAnnouncementResponse,
   TenantStateChangeRequest,
 } from '../types/admin.types'
 
@@ -47,6 +53,11 @@ export const adminService = {
       .get<ApiResponse<PlatformDashboardResponse>>(API_ENDPOINTS.platformAdmin.dashboard)
       .then((r) => r.data.data),
 
+  getPayments: (params: AdminPaymentQuery) =>
+    axiosClient
+      .get<ApiResponse<AdminPaymentListResponse>>(API_ENDPOINTS.platformAdmin.payments, { params })
+      .then((r) => r.data.data),
+
   getTenants: (params: TenantQuery) =>
     axiosClient
       .get<ApiResponse<TenantListResponse>>(API_ENDPOINTS.platformAdmin.tenants, { params })
@@ -56,6 +67,21 @@ export const adminService = {
     axiosClient
       .get<ApiResponse<TenantDetailsResponse>>(API_ENDPOINTS.platformAdmin.tenantDetail(tenantId))
       .then((r) => r.data.data),
+
+  getAnnouncements: (params: AnnouncementHistoryQuery) =>
+    axiosClient
+      .get<ApiResponse<AnnouncementHistoryListResponse>>(
+        API_ENDPOINTS.platformAdmin.announcements,
+        {
+          params,
+        }
+      )
+      .then((r) => r.data.data),
+
+  sendAnnouncement: (body: SendAnnouncementRequest) =>
+    axiosClient
+      .post<ApiResponse<SendAnnouncementResponse>>(API_ENDPOINTS.platformAdmin.announcements, body)
+      .then((r) => r.data),
 
   suspendTenant: (tenantId: string, body: TenantStateChangeRequest) =>
     axiosClient

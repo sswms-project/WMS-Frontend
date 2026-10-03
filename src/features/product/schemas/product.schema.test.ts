@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stockPolicySchema } from './product.schema'
+import { createProductSchema, stockPolicySchema } from './product.schema'
 
 const validPolicy = {
   preferredSlotId: null,
@@ -40,5 +40,32 @@ describe('stockPolicySchema', () => {
     })
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe('capacity product conversion regression', () => {
+  const product = {
+    sku: 'SKU',
+    productName: 'Lon nước',
+    description: null,
+    unitId: 'can',
+    categoryId: 'drinks',
+    isLotTracked: false,
+    shelfLifeDays: null,
+    unitConversions: [{ unitId: 'carton', conversionFactor: 24 }],
+  }
+  it('preserves the alternative-to-base factor contract', () => {
+    expect(createProductSchema.parse(product).unitConversions).toEqual([
+      { unitId: 'carton', conversionFactor: 24 },
+    ])
+  })
+  it('rejects the base unit, duplicate alternatives and non-positive factors', () => {
+    for (const unitConversions of [
+      [{ unitId: 'can', conversionFactor: 1 }],
+      [product.unitConversions[0], product.unitConversions[0]],
+      [{ unitId: 'carton', conversionFactor: 0 }],
+    ]) {
+      expect(createProductSchema.safeParse({ ...product, unitConversions }).success).toBe(false)
+    }
   })
 })

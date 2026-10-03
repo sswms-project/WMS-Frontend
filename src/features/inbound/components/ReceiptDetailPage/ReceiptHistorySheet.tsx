@@ -6,6 +6,8 @@ import type { LifecycleEvent } from '@/features/inbound-request/types/inbound-re
 
 const RECEIPT_ACTION_LABELS: Readonly<Record<string, string>> = {
   Approve: 'Phê duyệt phiếu nhận hàng',
+  ConfirmPhysicalArrival: 'Xác nhận hàng đến khu chờ',
+  SelfConfirmPhysicalArrival: 'Tự xác nhận hàng đến khu chờ',
   AssignPutAwayTask: 'Phân công nhiệm vụ cất hàng',
   CancelPutAwayRemaining: 'Hủy phần cất hàng còn lại',
   CompletePutAwayCancellationReconciliation: 'Hoàn tất đối soát hủy cất hàng',

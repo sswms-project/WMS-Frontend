@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CalendarRange, RefreshCw, Search, X } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
@@ -52,10 +52,6 @@ export function NotificationFilters({
   onRetry,
 }: NotificationFiltersProps) {
   const [localSearch, setLocalSearch] = useState(filters.search)
-
-  useEffect(() => {
-    setLocalSearch(filters.search)
-  }, [filters.search])
 
   const hasDateFilter = Boolean(filters.dateFrom || filters.dateTo)
   const hasActiveFilters =

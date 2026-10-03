@@ -50,11 +50,13 @@ function renderDetail(
     onApproveAndSend: vi.fn().mockResolvedValue(true),
     onSendToSupplier: vi.fn().mockResolvedValue(true),
     onReject: vi.fn().mockResolvedValue(true),
+    onReconcile: vi.fn().mockResolvedValue(true),
   }
   render(
     <InboundRequestDetail
       inboundRequest={inboundRequest}
       allowedActions={allowedActions}
+      selfApprovalRequired={false}
       isPending={false}
       {...handlers}
     />
@@ -63,6 +65,15 @@ function renderDetail(
 }
 
 describe('InboundRequestDetail supplier email actions', () => {
+  it('fills the shared workspace without an extra centered width limit', () => {
+    renderDetail(request(), [])
+    const workspace = screen
+      .getByRole('heading', { name: 'IR-001' })
+      .closest('header')?.parentElement
+    expect(workspace).toHaveClass('w-full', 'min-w-0')
+    expect(workspace?.className).not.toMatch(/mx-auto|max-w-/)
+  })
+
   it('offers approve-only and approve-and-send when the request is pending approval', () => {
     renderDetail(request(), ['Approve', 'ApproveAndSend'])
 

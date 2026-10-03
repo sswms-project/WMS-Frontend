@@ -21,7 +21,6 @@ import { InboundRequestDirectory } from '../components/InboundRequestsPage'
 import {
   useDeleteInboundRequestMutation,
   useDeleteInboundRequestsMutation,
-  useApproveInboundRequestMutation,
   useApproveInboundRequestsMutation,
   useDuplicateInboundRequestMutation,
   useInboundRequestsQuery,
@@ -60,10 +59,9 @@ export default function InboundRequestsPage() {
   const duplicateMutation = useDuplicateInboundRequestMutation()
   const submitMutation = useSubmitInboundRequestMutation()
   const submitManyMutation = useSubmitInboundRequestsMutation()
-  const approveMutation = useApproveInboundRequestMutation()
   const approveManyMutation = useApproveInboundRequestsMutation()
   const isSubmitting = submitMutation.isPending || submitManyMutation.isPending
-  const isApproving = approveMutation.isPending || approveManyMutation.isPending
+  const isApproving = approveManyMutation.isPending
   const isWorkflowPending = isSubmitting || isApproving
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useInboundRequestsQuery({
@@ -130,10 +128,7 @@ export default function InboundRequestsPage() {
       return
     }
 
-    if (intent.ids.length === 1) {
-      const inboundRequestId = intent.ids[0]
-      if (inboundRequestId) approveMutation.mutate(inboundRequestId, { onSuccess, onError })
-    } else approveManyMutation.mutate(intent.ids, { onSuccess, onError })
+    approveManyMutation.mutate(intent.ids, { onSuccess, onError })
   }
 
   return (

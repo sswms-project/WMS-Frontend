@@ -328,7 +328,6 @@ export default function InboundRequestFormPage({
             ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`
             : 'Tạo yêu cầu nhập kho'
         }
-        description="Chọn nguồn hàng, kho nhận và số lượng theo đơn vị phù hợp với từng sản phẩm."
         autoApprove={isOwner && !isEditing}
         form={form}
         fields={fieldArray.fields}

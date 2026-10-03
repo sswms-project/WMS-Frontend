@@ -31,6 +31,7 @@ interface ReceiptDetailProps {
   readonly receipt: ReceiptDetailType
   readonly allowedActions: readonly GoodsReceiptAction[]
   readonly isPending: boolean
+  readonly selfApprovalRequired: boolean
   readonly onUpdate: () => void
   readonly onSubmit: () => Promise<boolean>
   readonly onApprove: () => Promise<boolean>
@@ -42,6 +43,7 @@ export function ReceiptDetail({
   receipt,
   allowedActions,
   isPending,
+  selfApprovalRequired,
   onUpdate,
   onSubmit,
   onApprove,
@@ -102,7 +104,7 @@ export function ReceiptDetail({
             {allowedActions.includes('Approve') ? (
               <Button type="button" onClick={() => setConfirmationAction('Approve')}>
                 <Check aria-hidden="true" />
-                Phê duyệt
+                Xác nhận hàng đến
               </Button>
             ) : null}
             {allowedActions.includes('AssignPutAway') && onAssignPutAway ? (
@@ -175,6 +177,7 @@ export function ReceiptDetail({
         confirmationAction={confirmationAction}
         isRejectOpen={isRejectOpen}
         isPending={isPending}
+        selfApprovalRequired={selfApprovalRequired}
         onConfirm={confirm}
         onCancelConfirmation={() => setConfirmationAction(null)}
         onReject={onReject}

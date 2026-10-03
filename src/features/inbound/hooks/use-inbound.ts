@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
+import { isApiErrorResponse } from '@/lib/api-error'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inboundService } from '../services/inbound.service'
@@ -31,6 +32,17 @@ interface UpdateReceiptVariables {
 interface RejectReceiptVariables {
   receiptId: string
   reason: string
+}
+
+interface ConfirmPhysicalArrivalVariables {
+  receiptId: string
+  expectedVersion: string
+  selfApprovalAcknowledged: boolean
+}
+
+interface SubmitGoodsReceiptVariables {
+  receiptId: string
+  expectedVersion: string
 }
 
 interface PutawayVariables {
@@ -197,18 +209,27 @@ export function useUpdateGoodsReceiptMutation() {
 
 export function useSubmitGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
-  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn: inboundService.submitReceipt,
-    onSuccess: (_, receiptId) => invalidate(receiptId),
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, SubmitGoodsReceiptVariables>({
+    mutationFn: ({ receiptId, expectedVersion }) =>
+      inboundService.submitReceipt(receiptId, {
+        expectedVersion,
+        commandId: crypto.randomUUID(),
+      }),
+    onSuccess: (_, variables) => invalidate(variables.receiptId),
     onError: (error) => logger.error(error),
   })
 }
 
 export function useApproveGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
-  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn: inboundService.approveReceipt,
-    onSuccess: (_, receiptId) => invalidate(receiptId),
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ConfirmPhysicalArrivalVariables>({
+    mutationFn: ({ receiptId, expectedVersion, selfApprovalAcknowledged }) =>
+      inboundService.approveReceipt(receiptId, {
+        expectedVersion,
+        commandId: crypto.randomUUID(),
+        selfApprovalAcknowledged,
+      }),
+    onSuccess: (_, variables) => invalidate(variables.receiptId),
     onError: (error) => logger.error(error),
   })
 }
@@ -224,10 +245,27 @@ export function useRejectGoodsReceiptMutation() {
 
 export function usePutawayMutation() {
   const invalidate = useInvalidateInbound()
+  const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, PutawayVariables>({
     mutationFn: ({ receiptId, request }) => inboundService.putaway(receiptId, request),
-    onSuccess: (_, variables) => invalidate(variables.receiptId),
-    onError: (error) => logger.error(error),
+    onSuccess: async (_, variables) => {
+      const warehouseId = queryClient.getQueryData<GoodsReceiptDetail>(
+        queryKeys.goodsReceipts.detail(variables.receiptId)
+      )?.warehouseId
+      await Promise.all([
+        invalidate(variables.receiptId),
+        queryClient.invalidateQueries({
+          queryKey: warehouseId
+            ? queryKeys.warehouses.detail(warehouseId)
+            : queryKeys.warehouses.all,
+        }),
+      ])
+    },
+    onError: (error) => {
+      if (isApiErrorResponse(error) && [400, 409].includes(error.statusCode))
+        logger.warn(error.message)
+      else logger.error(error)
+    },
   })
 }
 

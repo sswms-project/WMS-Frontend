@@ -165,11 +165,14 @@ export const inventoryService = {
         expectedVersion,
       })
       .then((response) => response.data),
-  approveOpeningStock: (id: string, expectedVersion: string) =>
+  approveOpeningStock: (id: string, expectedVersion: string, selfApprovalAcknowledged = false) =>
     axiosClient
-      .post<
-        ApiResponse<string>
-      >(API_ENDPOINTS.inventory.approveOpeningStock(id), { openingStockId: id, expectedVersion, commandId: crypto.randomUUID() })
+      .post<ApiResponse<string>>(API_ENDPOINTS.inventory.approveOpeningStock(id), {
+        openingStockId: id,
+        expectedVersion,
+        selfApprovalAcknowledged,
+        commandId: crypto.randomUUID(),
+      })
       .then((response) => response.data),
   reviewOpeningStock: (
     id: string,
@@ -177,6 +180,7 @@ export const inventoryService = {
       decision: 'Returned' | 'Rejected' | 'Cancelled'
       reason: string
       expectedVersion: string
+      selfApprovalAcknowledged?: boolean
     }
   ) =>
     axiosClient

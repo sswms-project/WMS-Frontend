@@ -43,16 +43,19 @@ export function formatPlatformDateTime(value: string): string {
 }
 
 export function getNotificationReferenceRoute(
-  notification: Pick<NotificationItem, 'type' | 'referenceType' | 'referenceId'>
+  notification: Pick<NotificationItem, 'type' | 'referenceType' | 'referenceId'> & {
+    readonly action?: string | null
+  }
 ): string | null {
-  const { type, referenceType, referenceId } = notification
-  if (!referenceType || !referenceId) return null
+  const { action, referenceType, referenceId } = notification
 
-  if (referenceType === 'StockIssueRequest') {
-    if (type === 'StockIssueRequestUpdate' || type === 'TaskAssigned')
-      return APP_ROUTES.stockIssueRequests
+  const actionRoute = action ? notificationActionRoutes[action] : undefined
+  if (actionRoute) {
+    if (actionRoute.requiresId && !referenceId) return null
+    return actionRoute.to(referenceId ?? '')
   }
 
+  if (!referenceType || !referenceId) return null
   const route = notificationReferenceRoutes[referenceType]
   return route ? route(referenceId) : null
 }
@@ -74,8 +77,46 @@ const notificationReferenceRoutes: Record<string, (id: string) => string> = {
   Warehouse: APP_ROUTES.warehouseDetail,
   Product: APP_ROUTES.productDetail,
   StockTransfer: () => APP_ROUTES.transfers,
+  StockIssueRequest: () => APP_ROUTES.stockIssueRequests,
   GoodsReturnRequest: () => APP_ROUTES.goodsReturnRequests,
+  DamageCase: () => APP_ROUTES.inventoryDamageCases,
+  OpeningStockRecord: () => APP_ROUTES.inventoryOpeningStocks,
+  StockDiscrepancyReport: () => APP_ROUTES.inventoryDiscrepancies,
+  Zone: () => APP_ROUTES.warehouses,
+  Rack: () => APP_ROUTES.warehouses,
+  Slot: () => APP_ROUTES.warehouses,
+  Invitation: () => APP_ROUTES.staff,
   Tenant: () => APP_ROUTES.organization,
+  TenantSubscription: () => APP_ROUTES.subscription,
   SubscriptionPlan: () => APP_ROUTES.subscription,
   Payment: () => APP_ROUTES.subscriptionPayments,
+}
+
+interface NotificationActionRoute {
+  readonly to: (id: string) => string
+  readonly requiresId?: boolean
+}
+
+// Mirrors the backend NotificationAction enum; the backend decides the intent, this table owns the route.
+export const notificationActionRoutes: Record<string, NotificationActionRoute> = {
+  ViewInboundRequest: { to: APP_ROUTES.inboundRequestDetail, requiresId: true },
+  ViewGoodsReceipt: { to: APP_ROUTES.goodsReceiptDetail, requiresId: true },
+  ViewStockAdjustment: { to: APP_ROUTES.stockAdjustmentDetail, requiresId: true },
+  ViewCycleCount: { to: APP_ROUTES.cycleCountDetail, requiresId: true },
+  ViewWarehouse: { to: APP_ROUTES.warehouseDetail, requiresId: true },
+  ViewProduct: { to: APP_ROUTES.productDetail, requiresId: true },
+  ViewWarehouses: { to: () => APP_ROUTES.warehouses },
+  ViewStockTransfers: { to: () => APP_ROUTES.transfers },
+  ViewStockIssueRequests: { to: () => APP_ROUTES.stockIssueRequests },
+  ViewGoodsReturnRequests: { to: () => APP_ROUTES.goodsReturnRequests },
+  ViewDamageCases: { to: () => APP_ROUTES.inventoryDamageCases },
+  ViewOpeningStock: { to: () => APP_ROUTES.inventoryOpeningStocks },
+  ViewStockDiscrepancies: { to: () => APP_ROUTES.inventoryDiscrepancies },
+  ViewStaff: { to: () => APP_ROUTES.staff },
+  ViewOrganization: { to: () => APP_ROUTES.organization },
+  ChooseSubscriptionPlan: { to: () => APP_ROUTES.subscription },
+  ViewSubscription: { to: () => APP_ROUTES.subscription },
+  ViewSubscriptionPayments: { to: () => APP_ROUTES.subscriptionPayments },
+  ViewPlatformTenant: { to: APP_ROUTES.admin.tenantDetail, requiresId: true },
+  ViewPlatformTenants: { to: () => APP_ROUTES.admin.tenants },
 }

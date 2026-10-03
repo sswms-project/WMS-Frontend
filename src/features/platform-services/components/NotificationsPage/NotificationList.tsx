@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { Bell, ExternalLink, RefreshCw } from 'lucide-react'
+import { Bell, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,6 +35,7 @@ interface NotificationListProps {
   readonly hasActiveFilters: boolean
   readonly pendingNotificationId: string | null
   readonly onMarkRead: (notification: NotificationItem) => void
+  readonly onOpen: (notification: NotificationItem) => void
   readonly onRetry: () => void
 }
 
@@ -61,6 +61,7 @@ export function NotificationList(props: NotificationListProps) {
                 notification={notification}
                 isPending={props.pendingNotificationId === notification.id}
                 onMarkRead={props.onMarkRead}
+                onOpen={props.onOpen}
               />
             ))}
           </ul>
@@ -74,53 +75,64 @@ interface NotificationRowProps {
   readonly notification: NotificationItem
   readonly isPending: boolean
   readonly onMarkRead: (notification: NotificationItem) => void
+  readonly onOpen: (notification: NotificationItem) => void
 }
 
-function NotificationRow({ notification, isPending, onMarkRead }: NotificationRowProps) {
-  const referenceRoute = getNotificationReferenceRoute(notification)
+function NotificationRow({ notification, isPending, onMarkRead, onOpen }: NotificationRowProps) {
+  const hasReference = Boolean(getNotificationReferenceRoute(notification))
+  const content = <NotificationRowContent notification={notification} />
   return (
-    <li className={cn('flex gap-3 px-4 py-3', !notification.isRead && 'bg-muted/60')}>
+    <li className={cn('flex items-start gap-2 px-4 py-3', !notification.isRead && 'bg-muted/60')}>
+      {hasReference ? (
+        <button
+          type="button"
+          className="hover:bg-muted focus-visible:ring-ring/50 -m-2 flex min-w-0 flex-1 cursor-pointer gap-3 p-2 text-left outline-none focus-visible:ring-[3px]"
+          onClick={() => onOpen(notification)}
+        >
+          {content}
+        </button>
+      ) : (
+        <div className="flex min-w-0 flex-1 gap-3">{content}</div>
+      )}
+      {!notification.isRead ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="shrink-0"
+          disabled={isPending}
+          onClick={() => onMarkRead(notification)}
+        >
+          {isPending ? 'Đang lưu…' : 'Đánh dấu đã đọc'}
+        </Button>
+      ) : null}
+    </li>
+  )
+}
+
+function NotificationRowContent({ notification }: { readonly notification: NotificationItem }) {
+  return (
+    <>
       <span
         className={cn(
-          'mt-1 size-2 shrink-0 rounded-full',
+          'mt-1.5 size-2 shrink-0 rounded-full',
           notification.isRead ? 'bg-muted-foreground/30' : 'bg-primary'
         )}
         aria-label={notification.isRead ? 'Đã đọc' : 'Chưa đọc'}
       />
-      <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className={cn('text-sm', !notification.isRead && 'font-semibold')}>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className={cn('text-sm', !notification.isRead && 'font-semibold')}>
             {notification.title}
-          </p>
+          </span>
           <Badge variant="outline">{TYPE_LABELS[notification.type]}</Badge>
-        </div>
-        <p className="text-muted-foreground text-sm break-words">{notification.message}</p>
-        <p className="text-muted-foreground text-xs">
+        </span>
+        <span className="text-muted-foreground text-sm break-words">{notification.message}</span>
+        <span className="text-muted-foreground text-xs">
           {formatNotificationTime(notification.createdAt)}
-        </p>
-        <div className="flex flex-wrap gap-2 pt-1">
-          {!notification.isRead ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={isPending}
-              onClick={() => onMarkRead(notification)}
-            >
-              {isPending ? 'Đang lưu…' : 'Đánh dấu đã đọc'}
-            </Button>
-          ) : null}
-          {referenceRoute ? (
-            <Button asChild variant="ghost" size="sm">
-              <Link href={{ pathname: referenceRoute }}>
-                <ExternalLink data-icon="inline-start" aria-hidden="true" />
-                Mở liên quan
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
-    </li>
+        </span>
+      </span>
+    </>
   )
 }
 

@@ -8,6 +8,7 @@ import {
   FileChartColumn,
   FolderCog,
   LayoutDashboard,
+  Megaphone,
   Package,
   PackageCheck,
   PackageMinus,
@@ -170,6 +171,18 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           icon: CreditCard,
           requiredPermission: P.SUBSCRIPTION_PLANS_VIEW,
         },
+        {
+          href: APP_ROUTES.admin.announcements,
+          label: 'Thông báo hệ thống',
+          icon: Megaphone,
+          requiredPermission: P.ADMIN_ANNOUNCEMENTS_SEND,
+        },
+        {
+          href: APP_ROUTES.admin.payments,
+          label: 'Giao dịch thanh toán',
+          icon: ReceiptText,
+          requiredPermission: P.ADMIN_PAYMENTS_VIEW,
+        },
       ],
     },
     {
@@ -320,6 +333,18 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.manager,
         ]),
+        requiredNavItem(
+          APP_ROUTES.myTasks,
+          'Công việc kho',
+          ClipboardList,
+          P.WAREHOUSE_TASKS_VIEW_ALL
+        ),
+        requiredNavItem(
+          APP_ROUTES.myTaskHistory,
+          'Lịch sử công việc kho',
+          ScrollText,
+          P.WAREHOUSE_TASKS_VIEW_ALL
+        ),
       ],
     },
     tenantStaffSection,

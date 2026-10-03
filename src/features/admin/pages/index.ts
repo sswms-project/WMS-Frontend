@@ -1,5 +1,7 @@
+export { default as AnnouncementsPage } from './AnnouncementsPage'
 export { default as RolesPage } from './RolesPage'
 export { default as SubscriptionPlansPage } from './SubscriptionPlansPage'
 export { default as PlatformDashboardPage } from './PlatformDashboardPage'
 export { default as TenantDirectoryPage } from './TenantDirectoryPage'
 export { default as TenantDetailsPage } from './TenantDetailsPage'
+export { default as AdminPaymentsPage } from './AdminPaymentsPage'

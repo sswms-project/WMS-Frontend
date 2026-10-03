@@ -13,6 +13,7 @@ import {
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
+import { formatStorageCapacity } from '../../utils/storage-capacity'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -450,11 +451,7 @@ function LocationDesktopTable({
               </TableCell>
               <TableCell>{STATUS_LABELS[location.lifecycleStatus]}</TableCell>
               <TableCell className="tabular-nums">
-                {location.type === 'Slot'
-                  ? location.capacity == null
-                    ? 'Không áp dụng'
-                    : `${location.currentOccupancy ?? 0} / ${location.capacity}`
-                  : '—'}
+                {location.type !== 'Zone' ? formatStorageCapacity(location) : '—'}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
