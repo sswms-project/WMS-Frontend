@@ -10,6 +10,7 @@ import type {
 } from '../schemas/subscription-plan.schema'
 import { adminService } from '../services/admin.service'
 import type {
+  AdminPaymentQuery,
   AdminSubscriptionPlanQuery,
   AnnouncementHistoryQuery,
   AssignPermissionsRequest,
@@ -94,6 +95,14 @@ export function usePlatformDashboardQuery() {
   return useQuery({
     queryKey: queryKeys.platformAdmin.dashboard,
     queryFn: adminService.getPlatformDashboard,
+  })
+}
+
+export function useAdminPaymentsQuery(params: AdminPaymentQuery) {
+  return useQuery({
+    queryKey: queryKeys.platformAdmin.payments(params),
+    queryFn: () => adminService.getPayments(params),
+    placeholderData: (previous) => previous,
   })
 }
 

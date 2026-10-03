@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     rejectTenantRegistration: (tenantId: string) =>
       `/admin/tenants/${tenantId}/reject-registration`,
     announcements: '/admin/announcements',
+    payments: '/admin/payments',
     subscriptionPlans: '/subscription-plans/admin',
     activateSubscriptionPlan: (planId: string) => `/subscription-plans/${planId}/activate`,
   },
@@ -181,6 +182,9 @@ export const API_ENDPOINTS = {
     list: '/suppliers',
     create: '/suppliers',
     nextCode: '/suppliers/next-code',
+    import: '/suppliers/import',
+    importPreview: '/suppliers/import/preview',
+    importTemplate: '/suppliers/import-template',
     detail: (supplierId: string) => `/suppliers/${supplierId}`,
     update: (supplierId: string) => `/suppliers/${supplierId}`,
     deactivate: (supplierId: string) => `/suppliers/${supplierId}/deactivate`,

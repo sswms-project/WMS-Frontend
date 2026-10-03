@@ -45,3 +45,15 @@ const TENANT_STATUS_LABELS: Record<TenantStatus, string> = {
   Inactive: 'Không hoạt động',
   Suspended: 'Tạm ngưng',
 }
+
+const PAYMENT_TYPE_LABELS: Record<string, string> = {
+  NewSubscription: 'Đăng ký mới',
+  Renewal: 'Gia hạn',
+  Upgrade: 'Nâng cấp',
+  Downgrade: 'Hạ cấp',
+  ScheduledChange: 'Đổi gói theo lịch',
+}
+
+export function formatPaymentType(type: string): string {
+  return PAYMENT_TYPE_LABELS[type] ?? type
+}

@@ -7,6 +7,7 @@ import {
   Layers3,
   MapPin,
   Rows3,
+  Search,
   Square,
   TriangleAlert,
 } from 'lucide-react'
@@ -14,7 +15,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -202,29 +203,34 @@ export function DesignerToolbox({
   )?.id
   return (
     <div className="bg-surface-container-lowest flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="shrink-0 px-4 py-4">
-        <h2 className="text-base font-semibold">
-          {mode === 'viewer' ? 'Danh sách vị trí' : 'Chọn biểu tượng'}
-        </h2>
+      <div className={cn('shrink-0 px-4 py-4', mode === 'viewer' && 'pb-0')}>
+        {mode === 'viewer' ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <h2 className="shrink-0 text-base font-semibold">Danh sách vị trí</h2>
+            <InputGroup className="ml-auto max-w-64">
+              <InputGroupAddon>
+                <Search aria-hidden="true" />
+              </InputGroupAddon>
+              <InputGroupInput
+                type="search"
+                name="warehouse-layout-location-search"
+                autoComplete="off"
+                value={searchTerm}
+                placeholder="Tìm vị trí…"
+                aria-label="Tìm vị trí trên sơ đồ"
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </InputGroup>
+          </div>
+        ) : (
+          <h2 className="text-base font-semibold">Chọn biểu tượng</h2>
+        )}
         {mode === 'designer' ? (
           <p className="text-muted-foreground mt-0.5 text-[11px]">
             Nhấn hoặc kéo thả biểu tượng để thêm vào sơ đồ.
           </p>
         ) : null}
       </div>
-      {mode === 'viewer' ? (
-        <div className="shrink-0 px-3 pb-3">
-          <Input
-            type="search"
-            name="warehouse-layout-location-search"
-            autoComplete="off"
-            value={searchTerm}
-            placeholder="Tìm mã hoặc tên vị trí…"
-            aria-label="Tìm vị trí trên sơ đồ"
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </div>
-      ) : null}
       {mode === 'designer' ? (
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
           <section aria-labelledby="business-tools-title">
