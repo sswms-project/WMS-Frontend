@@ -177,6 +177,12 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
           icon: Megaphone,
           requiredPermission: P.ADMIN_ANNOUNCEMENTS_SEND,
         },
+        {
+          href: APP_ROUTES.admin.payments,
+          label: 'Giao dịch thanh toán',
+          icon: ReceiptText,
+          requiredPermission: P.ADMIN_PAYMENTS_VIEW,
+        },
       ],
     },
     {
