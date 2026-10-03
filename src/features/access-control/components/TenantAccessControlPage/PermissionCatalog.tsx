@@ -35,6 +35,7 @@ import { PermissionModuleSection } from './PermissionModuleSection'
 
 interface PermissionCatalogProps {
   readonly groups: PermissionCategoryGroup[]
+  readonly completeGroups?: PermissionCategoryGroup[]
   readonly context: PermissionCatalogContext
   readonly openModules: string[]
   readonly disabled?: boolean
@@ -68,6 +69,7 @@ function getPermissionCounts(category: PermissionCategoryGroup, selectedIds: Rea
 
 export function PermissionCatalog({
   groups,
+  completeGroups,
   context,
   openModules,
   disabled,
@@ -105,11 +107,15 @@ export function PermissionCatalog({
 
   const selectedCategory =
     groups.find((category) => category.category === preferredCategory) ?? groups[0]!
+  const catalogGroups = completeGroups ?? groups
+  const completeCategory =
+    catalogGroups.find((category) => category.category === selectedCategory.category) ??
+    selectedCategory
   const selectedCategoryModuleIds = new Set(selectedCategory.modules.map((module) => module.module))
   const visibleOpenModules = hasSearch
     ? [...selectedCategoryModuleIds]
     : openModules.filter((module) => selectedCategoryModuleIds.has(module))
-  const selectedCategoryCounts = getPermissionCounts(selectedCategory, context.selectedIds)
+  const selectedCategoryCounts = getPermissionCounts(completeCategory, context.selectedIds)
   const categoryHeadingId = `${catalogId}-category-${selectedCategory.category}`
   const categorySelectId = `${catalogId}-category-select`
 
@@ -132,7 +138,9 @@ export function PermissionCatalog({
           <nav aria-label="Chọn danh mục quyền" className="space-y-1 p-2">
             {groups.map((category) => {
               const active = category.category === selectedCategory.category
-              const counts = getPermissionCounts(category, context.selectedIds)
+              const completeCategory =
+                catalogGroups.find((item) => item.category === category.category) ?? category
+              const counts = getPermissionCounts(completeCategory, context.selectedIds)
               const Icon = CATEGORY_ICONS[category.category] ?? FolderKey
 
               return (
@@ -177,7 +185,9 @@ export function PermissionCatalog({
             <SelectContent position="popper" align="start" sideOffset={4}>
               <SelectGroup>
                 {groups.map((category) => {
-                  const counts = getPermissionCounts(category, context.selectedIds)
+                  const completeCategory =
+                    catalogGroups.find((item) => item.category === category.category) ?? category
+                  const counts = getPermissionCounts(completeCategory, context.selectedIds)
                   const Icon = CATEGORY_ICONS[category.category] ?? FolderKey
 
                   return (
@@ -222,16 +232,21 @@ export function PermissionCatalog({
             onValueChange={changeOpenModules}
             className="bg-card"
           >
-            {selectedCategory.modules.map((group) => (
-              <PermissionModuleSection
-                key={group.module}
-                group={group}
-                context={context}
-                disabled={disabled}
-                onTogglePermission={onTogglePermission}
-                onToggleModule={onToggleModule}
-              />
-            ))}
+            {selectedCategory.modules.map((group) => {
+              const completeGroup =
+                completeCategory.modules.find((module) => module.module === group.module) ?? group
+              return (
+                <PermissionModuleSection
+                  key={group.module}
+                  group={group}
+                  completeGroup={completeGroup}
+                  context={context}
+                  disabled={disabled}
+                  onTogglePermission={onTogglePermission}
+                  onToggleModule={onToggleModule}
+                />
+              )
+            })}
           </Accordion>
         </ScrollArea>
       </section>

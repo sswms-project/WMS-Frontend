@@ -19,6 +19,7 @@ interface PersonalPermissionEditorProps {
   readonly workspace: TenantUserPermissionWorkspace
   readonly canManage: boolean
   readonly groups: PermissionCategoryGroup[]
+  readonly completeGroups: PermissionCategoryGroup[]
   readonly draftIds: ReadonlySet<string>
   readonly roleDefaultIds: ReadonlySet<string>
   readonly customizedCount: number
@@ -44,6 +45,7 @@ export function PersonalPermissionEditor({
   workspace,
   canManage,
   groups,
+  completeGroups,
   draftIds,
   roleDefaultIds,
   customizedCount,
@@ -121,6 +123,7 @@ export function PersonalPermissionEditor({
 
       <PermissionCatalog
         groups={groups}
+        completeGroups={completeGroups}
         context={{
           kind: 'personal',
           subjectId: workspace.subject.userId,

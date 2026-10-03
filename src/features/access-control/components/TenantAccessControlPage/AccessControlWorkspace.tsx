@@ -342,6 +342,7 @@ export function AccessControlWorkspace({
           <div className="bg-muted/10 min-h-0 flex-1 p-3 sm:p-4">
             <PermissionCatalog
               groups={filteredGroups}
+              completeGroups={permissionGroups}
               context={{
                 kind: 'role',
                 subjectId: selectedRole.roleId,

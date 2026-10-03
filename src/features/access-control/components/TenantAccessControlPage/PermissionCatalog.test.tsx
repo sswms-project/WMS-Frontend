@@ -76,6 +76,18 @@ const groups: PermissionCategoryGroup[] = [
   },
 ]
 
+const filteredProductGroups: PermissionCategoryGroup[] = [
+  {
+    ...groups[0]!,
+    modules: [
+      {
+        ...groups[0]!.modules[0]!,
+        permissions: [groups[0]!.modules[0]!.permissions[0]!],
+      },
+    ],
+  },
+]
+
 const handlers = {
   onOpenModulesChange: vi.fn(),
   onTogglePermission: vi.fn(),
@@ -223,6 +235,62 @@ describe('PermissionCatalog', () => {
 
     expect(screen.getByText('Xem sản phẩm')).toBeInTheDocument()
     expect(screen.getByText('Tạo sản phẩm')).toBeInTheDocument()
+  })
+
+  it('keeps complete module counts and bulk selection while role search filters rows', async () => {
+    const user = userEvent.setup()
+    const onToggleModule = vi.fn()
+    render(
+      <PermissionCatalog
+        groups={filteredProductGroups}
+        completeGroups={groups}
+        context={{
+          kind: 'role',
+          subjectId: 'manager-role',
+          selectedIds: new Set(['products-view']),
+        }}
+        openModules={[]}
+        hasSearch
+        {...handlers}
+        onToggleModule={onToggleModule}
+      />
+    )
+
+    expect(screen.getAllByText('1/2')).not.toHaveLength(0)
+    expect(screen.queryByText('Tạo sản phẩm')).not.toBeInTheDocument()
+
+    const moduleCheckbox = screen.getByRole('checkbox', {
+      name: 'Chọn tất cả quyền trong Sản phẩm',
+    })
+    expect(moduleCheckbox).toHaveAttribute('data-state', 'indeterminate')
+    await user.click(moduleCheckbox)
+
+    expect(onToggleModule).toHaveBeenCalledWith(['products-view', 'products-create'])
+  })
+
+  it('keeps complete module bulk selection in the personal customized view', async () => {
+    const user = userEvent.setup()
+    const onToggleModule = vi.fn()
+    render(
+      <PermissionCatalog
+        groups={filteredProductGroups}
+        completeGroups={groups}
+        context={{
+          kind: 'personal',
+          subjectId: 'staff-user',
+          selectedIds: new Set(['products-view']),
+          roleDefaultIds: new Set(),
+        }}
+        openModules={[]}
+        hasSearch
+        {...handlers}
+        onToggleModule={onToggleModule}
+      />
+    )
+
+    await user.click(screen.getByRole('checkbox', { name: 'Chọn tất cả quyền trong Sản phẩm' }))
+
+    expect(onToggleModule).toHaveBeenCalledWith(['products-view', 'products-create'])
   })
 
   it('supports keyboard navigation between categories', async () => {

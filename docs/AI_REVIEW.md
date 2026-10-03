@@ -37,3 +37,31 @@
 - Verification: focused access-control tests 12/12 passed; full suite 199/199 passed; typecheck, lint and production build passed.
 - GitNexus pre-change impact was LOW for all changed functions/components. Final detect-changes was HIGH because the shared catalog intentionally affects both role and personal permission editor flows; direct review confirmed no other feature or save payload is involved.
 - No dependency, database, migration, seed, API write or deployment configuration was changed.
+
+---
+
+## 2026-10-03 — Permission catalog final code review
+
+- Role: Codex review-only pass over the tenant and System Admin permission catalog diff against `origin/dev`.
+- State: `APPROVED_FINAL` under the repository gate because no Blocker or High finding was identified. One non-blocking Medium finding remains below.
+
+### PERM-20261003-M1 — Medium
+
+The tenant catalog receives only the filtered hierarchy from both role search and personal search/customized-only views. `PermissionCatalog` therefore calculates category/module totals from the visible subset and passes only those visible permission IDs to the module checkbox. For example, searching a single permission in a five-permission module renders `1/1`; clicking the checked module control removes only that one permission. The System Admin catalog already preserves a `completeCategory`/`completeGroup`, so the same interaction has different semantics between the two permission workspaces. Pass the complete grouped hierarchy alongside the visible hierarchy (or resolve each visible category/module back to its complete counterpart) for counts and module bulk selection, while continuing to render only matching rows. Add regressions for role search and personal customized/search filters.
+
+### Verification and scope
+
+- Focused tenant/admin catalog tests passed **24/24** across five files; current tests do not cover bulk selection after the hierarchy has been filtered, which is the gap described above.
+- GitNexus compare analysis reports Medium blast radius across the expected tenant role, personal permission and System Admin role/catalog render flows. Direct source tracing confirmed save payloads, 409 handling, permission scope enforcement and unsaved-close protection are otherwise unchanged.
+- `git diff --check origin/dev...HEAD` passed in both repositories.
+- No application source, dependency, API write, database, migration, seed, deployment configuration, push or merge was changed by this review.
+
+### Fix verification — PERM-20261003-M1 resolved
+
+- The shared tenant catalog now receives both the visible filtered hierarchy and the complete hierarchy. Category/module counts, tri-state state and module bulk actions use the complete module; only matching permission rows are rendered.
+- Role search and personal customized/search modes now have the same full-module semantics as the System Admin catalog. Save payloads, permission drafts, authorization and API contracts are unchanged.
+- Added role and personal regressions proving a one-row filtered module still reports the complete `1/2` count and toggles both module permission IDs.
+- Verification: focused access-control tests **18/18** passed; full Frontend suite **213/213** passed across 54 files; typecheck, lint and production build passed.
+- GitNexus pre-change impact was LOW for each edited symbol. Final change detection is HIGH because the shared catalog intentionally participates in six tenant role/personal execution flows; no unexpected feature or API flow is included.
+- Web Interface Guidelines review found no new accessibility, focus, interaction, content-overflow or motion issue in the edited components.
+- No dependency, Backend source, API contract, database, migration, seed or deployment configuration was changed.

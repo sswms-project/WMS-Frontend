@@ -13,6 +13,7 @@ import { PermissionRow } from './PermissionRow'
 
 interface PermissionModuleSectionProps {
   readonly group: PermissionModuleGroup
+  readonly completeGroup: PermissionModuleGroup
   readonly context: PermissionCatalogContext
   readonly disabled?: boolean
   readonly onTogglePermission: (permissionId: string) => void
@@ -21,6 +22,7 @@ interface PermissionModuleSectionProps {
 
 export function PermissionModuleSection({
   group,
+  completeGroup,
   context,
   disabled,
   onTogglePermission,
@@ -31,11 +33,16 @@ export function PermissionModuleSection({
       ? createRolePermissionRow(permission, context.selectedIds)
       : createPersonalPermissionRow(permission, context.selectedIds, context.roleDefaultIds)
   )
-  const editableRows = rows.filter((row) => row.editable)
+  const completeRows = completeGroup.permissions.map((permission) =>
+    context.kind === 'role'
+      ? createRolePermissionRow(permission, context.selectedIds)
+      : createPersonalPermissionRow(permission, context.selectedIds, context.roleDefaultIds)
+  )
+  const editableRows = completeRows.filter((row) => row.editable)
   const selectedEditableCount = editableRows.filter((row) => row.checked).length
   const allSelected = editableRows.length > 0 && selectedEditableCount === editableRows.length
   const someSelected = selectedEditableCount > 0 && !allSelected
-  const effectiveCount = rows.filter((row) => row.checked).length
+  const effectiveCount = completeRows.filter((row) => row.checked).length
 
   return (
     <AccordionItem value={group.module} className="border-border border-b last:border-b-0">
@@ -59,7 +66,7 @@ export function PermissionModuleSection({
                 variant={effectiveCount > 0 ? 'secondary' : 'outline'}
                 className="tabular-nums"
               >
-                {effectiveCount}/{group.permissions.length}
+                {effectiveCount}/{completeGroup.permissions.length}
               </Badge>
             </span>
           </span>
