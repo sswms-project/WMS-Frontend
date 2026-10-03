@@ -8,6 +8,7 @@ export const P = {
   ADMIN_TENANTS_VIEW: 'admin:tenants:view',
   ADMIN_TENANTS_APPROVE: 'admin:tenants:approve',
   ADMIN_TENANTS_SUSPEND: 'admin:tenants:suspend',
+  ADMIN_ANNOUNCEMENTS_SEND: 'admin:announcements:send',
 
   // Audit Logs
   AUDIT_LOGS_VIEW: 'audit-logs:view',
@@ -160,6 +161,7 @@ const PLATFORM_ONLY_PERMISSION_CODES: ReadonlySet<string> = new Set([
   P.ADMIN_TENANTS_VIEW,
   P.ADMIN_TENANTS_APPROVE,
   P.ADMIN_TENANTS_SUSPEND,
+  P.ADMIN_ANNOUNCEMENTS_SEND,
   P.SUBSCRIPTION_PLANS_VIEW,
   P.SUBSCRIPTION_PLANS_CREATE,
   P.SUBSCRIPTION_PLANS_UPDATE,

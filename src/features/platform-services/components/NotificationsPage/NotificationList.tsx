@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Bell, ExternalLink, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -36,6 +35,7 @@ interface NotificationListProps {
   readonly hasActiveFilters: boolean
   readonly pendingNotificationId: string | null
   readonly onMarkRead: (notification: NotificationItem) => void
+  readonly onOpen: (notification: NotificationItem) => void
   readonly onRetry: () => void
 }
 
@@ -61,6 +61,7 @@ export function NotificationList(props: NotificationListProps) {
                 notification={notification}
                 isPending={props.pendingNotificationId === notification.id}
                 onMarkRead={props.onMarkRead}
+                onOpen={props.onOpen}
               />
             ))}
           </ul>
@@ -74,9 +75,10 @@ interface NotificationRowProps {
   readonly notification: NotificationItem
   readonly isPending: boolean
   readonly onMarkRead: (notification: NotificationItem) => void
+  readonly onOpen: (notification: NotificationItem) => void
 }
 
-function NotificationRow({ notification, isPending, onMarkRead }: NotificationRowProps) {
+function NotificationRow({ notification, isPending, onMarkRead, onOpen }: NotificationRowProps) {
   const referenceRoute = getNotificationReferenceRoute(notification)
   return (
     <li className={cn('flex gap-3 px-4 py-3', !notification.isRead && 'bg-muted/60')}>
@@ -89,9 +91,22 @@ function NotificationRow({ notification, isPending, onMarkRead }: NotificationRo
       />
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className={cn('text-sm', !notification.isRead && 'font-semibold')}>
-            {notification.title}
-          </p>
+          {referenceRoute ? (
+            <button
+              type="button"
+              className={cn(
+                'text-left text-sm hover:underline focus-visible:underline',
+                !notification.isRead && 'font-semibold'
+              )}
+              onClick={() => onOpen(notification)}
+            >
+              {notification.title}
+            </button>
+          ) : (
+            <p className={cn('text-sm', !notification.isRead && 'font-semibold')}>
+              {notification.title}
+            </p>
+          )}
           <Badge variant="outline">{TYPE_LABELS[notification.type]}</Badge>
         </div>
         <p className="text-muted-foreground text-sm break-words">{notification.message}</p>
@@ -111,11 +126,9 @@ function NotificationRow({ notification, isPending, onMarkRead }: NotificationRo
             </Button>
           ) : null}
           {referenceRoute ? (
-            <Button asChild variant="ghost" size="sm">
-              <Link href={{ pathname: referenceRoute }}>
-                <ExternalLink data-icon="inline-start" aria-hidden="true" />
-                Mở liên quan
-              </Link>
+            <Button type="button" variant="ghost" size="sm" onClick={() => onOpen(notification)}>
+              <ExternalLink data-icon="inline-start" aria-hidden="true" />
+              Mở liên quan
             </Button>
           ) : null}
         </div>

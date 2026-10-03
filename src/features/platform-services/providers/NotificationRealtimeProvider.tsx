@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getStoredAccessToken } from '@/lib/axios'
 import { logger } from '@/lib/logger'
@@ -20,6 +21,7 @@ const MAX_MANUAL_RESTARTS = 3
 export function NotificationRealtimeProvider({ children }: NotificationRealtimeProviderProps) {
   const user = useAuthStore((state) => state.user)
   const queryClient = useQueryClient()
+  const router = useRouter()
   const shownEventsRef = useRef(new Set<string>())
 
   useEffect(() => {
@@ -49,7 +51,13 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
       if (!shownEventsRef.current.has(result.data.notificationId)) {
         shownEventsRef.current.add(result.data.notificationId)
         if (shownEventsRef.current.size > 100) shownEventsRef.current.clear()
-        toast.info('Bạn có thông báo mới.', { duration: 6_000 })
+        toast.info('Bạn có thông báo mới.', {
+          duration: 6_000,
+          action: {
+            label: 'Xem',
+            onClick: () => router.push(APP_ROUTES.notifications),
+          },
+        })
       }
       void invalidateNotifications()
     })
@@ -98,7 +106,7 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
       // React Strict Mode, let start() settle and close itself instead.
       if (!isStarting) void connection.stop()
     }
-  }, [queryClient, user])
+  }, [queryClient, router, user])
 
   return children
 }

@@ -11,7 +11,9 @@ import type {
 import { adminService } from '../services/admin.service'
 import type {
   AdminSubscriptionPlanQuery,
+  AnnouncementHistoryQuery,
   AssignPermissionsRequest,
+  SendAnnouncementRequest,
   TenantDetailsResponse,
   TenantQuery,
   TenantStateChangeRequest,
@@ -27,6 +29,27 @@ export function useRolesQuery() {
   return useQuery({
     queryKey: KEYS.roles,
     queryFn: () => adminService.getRoles().then((r) => r.data),
+  })
+}
+
+export function useSendAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: SendAnnouncementRequest) => adminService.sendAnnouncement(body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.platformAdmin.announcements }),
+    onError: (error: ApiErrorResponse) => {
+      logger.error(error)
+      toast.error(error.message ?? 'Gửi thông báo thất bại')
+    },
+  })
+}
+
+export function useAnnouncementHistoryQuery(params: AnnouncementHistoryQuery) {
+  return useQuery({
+    queryKey: queryKeys.platformAdmin.announcementList(params),
+    queryFn: () => adminService.getAnnouncements(params),
+    placeholderData: (previous) => previous,
   })
 }
 

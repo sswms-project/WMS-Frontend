@@ -176,6 +176,47 @@ export interface AdminSubscriptionPlanListResponse {
   readonly pageSize: number
 }
 
+export interface SendAnnouncementRequest {
+  readonly title: string
+  readonly message: string
+  readonly audience: 'AllActiveTenants' | 'ByPlan' | 'SpecificTenants'
+  readonly planIds: string[] | null
+  readonly tenantIds: string[] | null
+  readonly sendEmail: boolean
+  readonly action?: string | null
+}
+
+export interface SendAnnouncementResponse {
+  readonly recipientCount: number
+  readonly emailQueuedCount: number
+}
+
+export interface AnnouncementHistoryQuery {
+  readonly pageNumber: number
+  readonly pageSize: number
+}
+
+export interface AnnouncementHistoryItem {
+  readonly id: string
+  readonly title: string
+  readonly message: string
+  readonly audience: 'AllActiveTenants' | 'ByPlan' | 'SpecificTenants'
+  readonly action: string | null
+  readonly recipientCount: number
+  readonly sendEmail: boolean
+  readonly emailSentCount: number
+  readonly emailPendingCount: number
+  readonly emailFailedCount: number
+  readonly createdAt: string
+}
+
+export interface AnnouncementHistoryListResponse {
+  readonly items: AnnouncementHistoryItem[]
+  readonly totalCount: number
+  readonly pageNumber: number
+  readonly pageSize: number
+}
+
 export interface TenantStateChangeRequest {
   readonly reason: string
 }

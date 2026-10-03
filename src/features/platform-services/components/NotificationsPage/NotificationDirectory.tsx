@@ -49,6 +49,7 @@ export function NotificationDirectory(props: NotificationDirectoryProps) {
             hasActiveFilters={props.hasActiveFilters}
             pendingNotificationId={props.pendingNotificationId}
             onMarkRead={props.onMarkRead}
+            onOpen={props.onOpen}
             onRetry={props.onRetry}
           />
         </div>

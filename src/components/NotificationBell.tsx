@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Bell, CheckCheck, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,9 +27,28 @@ interface NotificationBellProps {
   readonly onMarkRead: (notification: NotificationItem) => void
   readonly onMarkAllRead: () => void
   readonly onRetry: () => void
+  readonly hasMore?: boolean
+  readonly isLoadingMore?: boolean
+  readonly onLoadMore?: () => void
 }
 
 export function NotificationBell(props: NotificationBellProps) {
+  const { hasMore, isLoadingMore, onLoadMore } = props
+  const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null)
+  const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!scrollRoot || !sentinel || !hasMore || isLoadingMore || !onLoadMore) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) onLoadMore()
+      },
+      { root: scrollRoot, rootMargin: '0px 0px 48px 0px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [scrollRoot, sentinel, hasMore, isLoadingMore, onLoadMore])
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -80,8 +100,9 @@ export function NotificationBell(props: NotificationBellProps) {
         {!props.isLoading && !props.isError && props.notifications.length === 0 ? (
           <p className="text-muted-foreground px-2 py-4 text-center text-sm">Không có thông báo</p>
         ) : null}
-        {!props.isLoading && !props.isError
-          ? props.notifications.map((notification) => (
+        {!props.isLoading && !props.isError ? (
+          <div ref={setScrollRoot} className="max-h-80 overflow-y-auto overscroll-contain">
+            {props.notifications.map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
                 disabled={props.pendingNotificationId === notification.id}
@@ -114,12 +135,22 @@ export function NotificationBell(props: NotificationBellProps) {
                   {formatPlatformDateTime(notification.createdAt)}
                 </span>
               </DropdownMenuItem>
-            ))
-          : null}
+            ))}
+            {hasMore ? (
+              <div
+                ref={setSentinel}
+                role="status"
+                className="text-muted-foreground py-2 text-center text-xs"
+              >
+                {isLoadingMore ? 'Đang tải thêm…' : ' '}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <DropdownMenuSeparator />
-        <Button asChild variant="ghost" className="w-full">
+        <DropdownMenuItem asChild className="justify-center">
           <Link href={APP_ROUTES.notifications}>Xem tất cả thông báo</Link>
-        </Button>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
