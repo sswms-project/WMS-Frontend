@@ -6,6 +6,7 @@ import {
   CircleX,
   CreditCard,
   RefreshCw,
+  Users,
   WalletCards,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -14,7 +15,11 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { PlatformDashboardResponse } from '../../types/admin.types'
-import { formatAdminCurrency, formatAdminDateTime } from '../../utils/platform-admin-format'
+import {
+  formatAdminCurrency,
+  formatAdminDateTime,
+  formatTenantStatusText,
+} from '../../utils/platform-admin-format'
 
 interface PlatformDashboardViewProps {
   readonly data?: PlatformDashboardResponse
@@ -81,7 +86,18 @@ export function PlatformDashboardView({
       icon: WalletCards,
     },
   ]
+  if (data.userSummary) {
+    metrics.splice(2, 0, {
+      label: 'Người dùng hoạt động',
+      value: data.userSummary.active,
+      icon: Users,
+    })
+  }
   const maxPlanCount = Math.max(...data.planDistribution.map((item) => item.tenantCount), 1)
+  const revenueTrend = data.revenueTrend ?? []
+  const maxTrendRevenue = Math.max(...revenueTrend.map((point) => point.revenue), 1)
+  const recentTenants = data.recentTenants
+  const recentPayments = data.recentPayments
 
   return (
     <div className="w-full min-w-0 space-y-5">
@@ -99,7 +115,13 @@ export function PlatformDashboardView({
         </Button>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Chỉ số chính">
+      <section
+        className={cn(
+          'grid gap-3 sm:grid-cols-2',
+          metrics.length > 4 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'
+        )}
+        aria-label="Chỉ số chính"
+      >
         {metrics.map(({ label, value, icon: Icon }) => (
           <article key={label} className="bg-card flex min-h-24 items-center gap-4 border p-4">
             <span className="bg-primary/8 text-primary flex size-10 items-center justify-center">
@@ -228,6 +250,109 @@ export function PlatformDashboardView({
           </p>
         </section>
       </div>
+
+      {data.revenueTrend ? (
+        <section className="bg-card border p-4" aria-labelledby="revenue-trend-title">
+          <h2 id="revenue-trend-title" className="text-sm font-semibold">
+            Doanh thu 12 tháng gần nhất
+          </h2>
+          {revenueTrend.length === 0 ? (
+            <p className="text-muted-foreground py-10 text-center text-sm">
+              Chưa có doanh thu hoàn tất.
+            </p>
+          ) : (
+            <ol className="mt-4 grid grid-cols-6 gap-3 sm:grid-cols-12">
+              {revenueTrend.map((point) => (
+                <li
+                  key={`${point.year}-${point.month}`}
+                  className="flex flex-col items-center gap-2"
+                  title={`${formatAdminCurrency(point.revenue)} · ${point.paymentCount} giao dịch`}
+                >
+                  <div className="bg-muted flex h-28 w-full items-end overflow-hidden">
+                    <div
+                      className="bg-chart-1 w-full"
+                      style={{ height: `${(point.revenue / maxTrendRevenue) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-muted-foreground text-xs tabular-nums">
+                    {String(point.month).padStart(2, '0')}/{String(point.year).slice(-2)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      ) : null}
+
+      {recentTenants || recentPayments ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {recentTenants ? (
+            <section className="bg-card border p-4" aria-labelledby="recent-tenants-title">
+              <h2 id="recent-tenants-title" className="text-sm font-semibold">
+                Tenant đăng ký gần đây
+              </h2>
+              {recentTenants.length === 0 ? (
+                <p className="text-muted-foreground py-10 text-center text-sm">
+                  Chưa có tenant nào.
+                </p>
+              ) : (
+                <ul className="mt-3 divide-y">
+                  {recentTenants.map((tenant) => (
+                    <li
+                      key={tenant.tenantId}
+                      className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{tenant.tenantName}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {tenant.email} · {formatAdminDateTime(tenant.createdAt)}
+                        </p>
+                      </div>
+                      <Badge variant="outline">{formatTenantStatusText(tenant.status)}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
+
+          {recentPayments ? (
+            <section className="bg-card border p-4" aria-labelledby="recent-payments-title">
+              <h2 id="recent-payments-title" className="text-sm font-semibold">
+                Thanh toán gần đây
+              </h2>
+              {recentPayments.length === 0 ? (
+                <p className="text-muted-foreground py-10 text-center text-sm">
+                  Chưa có thanh toán hoàn tất.
+                </p>
+              ) : (
+                <ul className="mt-3 divide-y">
+                  {recentPayments.map((payment) => (
+                    <li
+                      key={payment.paymentId}
+                      className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {payment.tenantName ?? payment.invoiceNumber}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {payment.invoiceNumber}
+                          {payment.planName ? ` · ${payment.planName}` : ''} ·{' '}
+                          {formatAdminDateTime(payment.paidAt)}
+                        </p>
+                      </div>
+                      <strong className="text-sm tabular-nums">
+                        {formatAdminCurrency(payment.amount)}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
