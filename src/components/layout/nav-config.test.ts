@@ -43,7 +43,13 @@ describe('application navigation visibility', () => {
       { label: null, items: ['Tổng quan'] },
       {
         label: 'Quản trị nền tảng',
-        items: ['Đơn vị thuê', 'Phân quyền', 'Gói đăng ký', 'Thông báo hệ thống'],
+        items: [
+          'Đơn vị thuê',
+          'Phân quyền',
+          'Gói đăng ký',
+          'Thông báo hệ thống',
+          'Giao dịch thanh toán',
+        ],
       },
       { label: 'Hệ thống', items: ['Nhật ký hoạt động', 'Cài đặt'] },
     ])
