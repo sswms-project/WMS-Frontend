@@ -1,4 +1,5 @@
 export { PermissionsCatalog } from './PermissionsCatalog'
+export { PermissionCatalog } from './PermissionCatalog'
 export { PermissionModuleGroup } from './PermissionModuleGroup'
 export { RolePermissionsSheet } from './RolePermissionsSheet'
 export { RolesTable } from './RolesTable'

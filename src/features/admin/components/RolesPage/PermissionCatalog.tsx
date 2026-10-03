@@ -1,3 +1,5 @@
+'use client'
+
 import { useId, useState } from 'react'
 import {
   Building2,
@@ -8,6 +10,7 @@ import {
   PackageOpen,
   SearchX,
   Settings,
+  ShieldCheck,
   Tags,
   Users,
   Warehouse,
@@ -27,28 +30,32 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import type {
-  PermissionCategoryGroup,
-  PermissionCatalogContext,
-} from '../../types/tenant-access-control.types'
-import { PermissionModuleSection } from './PermissionModuleSection'
+import type { AdminPermissionCategoryGroup } from '../../types/admin.types'
+import { filterAdminPermissionGroups } from '../../utils/permission-catalog'
+import { PermissionModuleGroup } from './PermissionModuleGroup'
 
-interface PermissionCatalogProps {
-  readonly groups: PermissionCategoryGroup[]
-  readonly completeGroups?: PermissionCategoryGroup[]
-  readonly context: PermissionCatalogContext
-  readonly openModules: string[]
+interface PermissionCatalogBaseProps {
+  readonly groups: AdminPermissionCategoryGroup[]
+  readonly searchText: string
+}
+
+interface ReadOnlyPermissionCatalogProps extends PermissionCatalogBaseProps {
+  readonly mode: 'readOnly'
+}
+
+interface EditablePermissionCatalogProps extends PermissionCatalogBaseProps {
+  readonly mode: 'editable'
+  readonly selectedIds: ReadonlySet<string>
   readonly disabled?: boolean
-  readonly hasSearch: boolean
-  readonly emptyTitle?: string
-  readonly emptyDescription?: string
-  readonly onOpenModulesChange: (modules: string[]) => void
   readonly onTogglePermission: (permissionId: string) => void
   readonly onToggleModule: (permissionIds: string[]) => void
 }
 
+type PermissionCatalogProps = ReadOnlyPermissionCatalogProps | EditablePermissionCatalogProps
+
 const CATEGORY_ICONS: Readonly<Record<string, LucideIcon>> = {
   workspace: LayoutDashboard,
+  'platform-administration': ShieldCheck,
   'organization-management': Building2,
   'warehouse-management': Warehouse,
   subjects: Users,
@@ -59,31 +66,18 @@ const CATEGORY_ICONS: Readonly<Record<string, LucideIcon>> = {
   system: Settings,
 }
 
-function getPermissionCounts(category: PermissionCategoryGroup, selectedIds: ReadonlySet<string>) {
-  const permissions = category.modules.flatMap((module) => module.permissions)
-  return {
-    selected: permissions.filter((permission) => selectedIds.has(permission.id)).length,
-    total: permissions.length,
-  }
+function getPermissions(category: AdminPermissionCategoryGroup) {
+  return category.modules.flatMap((module) => module.permissions)
 }
 
-export function PermissionCatalog({
-  groups,
-  completeGroups,
-  context,
-  openModules,
-  disabled,
-  hasSearch,
-  emptyTitle,
-  emptyDescription,
-  onOpenModulesChange,
-  onTogglePermission,
-  onToggleModule,
-}: PermissionCatalogProps) {
+export function PermissionCatalog(props: PermissionCatalogProps) {
   const catalogId = useId()
   const [preferredCategory, setPreferredCategory] = useState('')
+  const [openModules, setOpenModules] = useState<string[]>([])
+  const visibleGroups = filterAdminPermissionGroups(props.groups, props.searchText)
+  const hasSearch = props.searchText.trim().length > 0
 
-  if (groups.length === 0) {
+  if (visibleGroups.length === 0) {
     return (
       <Empty className="h-full min-h-64">
         <EmptyHeader>
@@ -91,14 +85,12 @@ export function PermissionCatalog({
             <SearchX aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>
-            {emptyTitle ??
-              (hasSearch ? 'Không tìm thấy quyền phù hợp' : 'Chưa có quyền để cấu hình')}
+            {hasSearch ? 'Không tìm thấy quyền phù hợp' : 'Chưa có quyền để hiển thị'}
           </EmptyTitle>
           <EmptyDescription>
-            {emptyDescription ??
-              (hasSearch
-                ? 'Thử từ khóa khác theo tên quyền, mô tả hoặc phân hệ.'
-                : 'Hiện chưa có quyền nào có thể phân cho vai trò này.')}
+            {hasSearch
+              ? 'Thử từ khóa khác theo danh mục, phân hệ hoặc quyền.'
+              : 'Danh mục quyền hiện chưa có dữ liệu.'}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -106,25 +98,39 @@ export function PermissionCatalog({
   }
 
   const selectedCategory =
-    groups.find((category) => category.category === preferredCategory) ?? groups[0]!
-  const catalogGroups = completeGroups ?? groups
+    visibleGroups.find((category) => category.category === preferredCategory) ?? visibleGroups[0]!
   const completeCategory =
-    catalogGroups.find((category) => category.category === selectedCategory.category) ??
+    props.groups.find((category) => category.category === selectedCategory.category) ??
     selectedCategory
   const selectedCategoryModuleIds = new Set(selectedCategory.modules.map((module) => module.module))
   const visibleOpenModules = hasSearch
     ? [...selectedCategoryModuleIds]
     : openModules.filter((module) => selectedCategoryModuleIds.has(module))
-  const selectedCategoryCounts = getPermissionCounts(completeCategory, context.selectedIds)
+  const categoryPermissions = getPermissions(completeCategory)
+  const selectedCategoryCount =
+    props.mode === 'editable'
+      ? categoryPermissions.filter((permission) => props.selectedIds.has(permission.id)).length
+      : 0
   const categoryHeadingId = `${catalogId}-category-${selectedCategory.category}`
   const categorySelectId = `${catalogId}-category-select`
 
   function changeOpenModules(modules: string[]) {
     if (hasSearch) return
-    onOpenModulesChange([
-      ...openModules.filter((module) => !selectedCategoryModuleIds.has(module)),
+    setOpenModules((current) => [
+      ...current.filter((module) => !selectedCategoryModuleIds.has(module)),
       ...modules,
     ])
+  }
+
+  function renderCategoryCount(category: AdminPermissionCategoryGroup) {
+    const completeCategory =
+      props.groups.find((item) => item.category === category.category) ?? category
+    const permissions = getPermissions(completeCategory)
+    if (props.mode === 'readOnly') return `${permissions.length}`
+    const selectedCount = permissions.filter((permission) =>
+      props.selectedIds.has(permission.id)
+    ).length
+    return `${selectedCount}/${permissions.length}`
   }
 
   return (
@@ -135,12 +141,9 @@ export function PermissionCatalog({
           <p className="text-muted-foreground mt-0.5 text-xs">Chọn danh mục để xem các phân hệ.</p>
         </div>
         <ScrollArea className="min-h-0 flex-1">
-          <nav aria-label="Chọn danh mục quyền" className="space-y-1 p-2">
-            {groups.map((category) => {
+          <nav aria-label="Chọn danh mục quyền" className="flex flex-col gap-1 p-2">
+            {visibleGroups.map((category) => {
               const active = category.category === selectedCategory.category
-              const completeCategory =
-                catalogGroups.find((item) => item.category === category.category) ?? category
-              const counts = getPermissionCounts(completeCategory, context.selectedIds)
               const Icon = CATEGORY_ICONS[category.category] ?? FolderKey
 
               return (
@@ -152,19 +155,19 @@ export function PermissionCatalog({
                   className="h-auto min-h-11 w-full justify-start gap-2.5 px-3 py-2 text-left"
                   onClick={() => setPreferredCategory(category.category)}
                 >
-                  <Icon className="size-4 shrink-0" aria-hidden="true" />
+                  <Icon aria-hidden="true" />
                   <span className="min-w-0 flex-1 text-sm font-medium break-words whitespace-normal">
                     {category.categoryDisplayName}
                   </span>
                   <Badge
-                    variant={active ? 'outline' : counts.selected > 0 ? 'secondary' : 'outline'}
+                    variant={active ? 'outline' : 'secondary'}
                     className={cn(
                       'shrink-0 tabular-nums',
                       active && 'border-primary-foreground/50 text-primary-foreground'
                     )}
-                    aria-label={`${counts.selected} trên ${counts.total} quyền đã chọn`}
+                    aria-label={`${renderCategoryCount(category)} quyền`}
                   >
-                    {counts.selected}/{counts.total}
+                    {renderCategoryCount(category)}
                   </Badge>
                 </Button>
               )
@@ -184,12 +187,8 @@ export function PermissionCatalog({
             </SelectTrigger>
             <SelectContent position="popper" align="start" sideOffset={4}>
               <SelectGroup>
-                {groups.map((category) => {
-                  const completeCategory =
-                    catalogGroups.find((item) => item.category === category.category) ?? category
-                  const counts = getPermissionCounts(completeCategory, context.selectedIds)
+                {visibleGroups.map((category) => {
                   const Icon = CATEGORY_ICONS[category.category] ?? FolderKey
-
                   return (
                     <SelectItem
                       key={category.category}
@@ -201,7 +200,7 @@ export function PermissionCatalog({
                         {category.categoryDisplayName}
                       </span>
                       <span className="text-muted-foreground tabular-nums">
-                        {counts.selected}/{counts.total}
+                        {renderCategoryCount(category)}
                       </span>
                     </SelectItem>
                   )
@@ -221,7 +220,9 @@ export function PermissionCatalog({
             </p>
           </div>
           <Badge variant="outline" className="shrink-0 tabular-nums">
-            {selectedCategoryCounts.selected}/{selectedCategoryCounts.total} quyền
+            {props.mode === 'editable'
+              ? `${selectedCategoryCount}/${categoryPermissions.length} quyền`
+              : `${categoryPermissions.length} quyền`}
           </Badge>
         </header>
 
@@ -235,15 +236,23 @@ export function PermissionCatalog({
             {selectedCategory.modules.map((group) => {
               const completeGroup =
                 completeCategory.modules.find((module) => module.module === group.module) ?? group
-              return (
-                <PermissionModuleSection
+              return props.mode === 'editable' ? (
+                <PermissionModuleGroup
                   key={group.module}
+                  mode="editable"
                   group={group}
                   completeGroup={completeGroup}
-                  context={context}
-                  disabled={disabled}
-                  onTogglePermission={onTogglePermission}
-                  onToggleModule={onToggleModule}
+                  selectedIds={props.selectedIds}
+                  disabled={props.disabled}
+                  onTogglePermission={props.onTogglePermission}
+                  onToggleModule={props.onToggleModule}
+                />
+              ) : (
+                <PermissionModuleGroup
+                  key={group.module}
+                  mode="readOnly"
+                  group={group}
+                  completeGroup={completeGroup}
                 />
               )
             })}

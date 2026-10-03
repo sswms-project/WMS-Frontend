@@ -11,6 +11,11 @@ export interface TenantAssignablePermission {
   moduleDisplayName: string
   displayName: string
   description: string
+  category: string
+  categoryDisplayName: string
+  categoryDescription: string
+  categoryOrder: number
+  moduleOrder: number
 }
 
 export interface TenantRolePermissionWorkspace {
@@ -21,7 +26,16 @@ export interface TenantRolePermissionWorkspace {
 export interface PermissionModuleGroup {
   module: string
   moduleDisplayName: string
+  moduleOrder: number
   permissions: TenantAssignablePermission[]
+}
+
+export interface PermissionCategoryGroup {
+  category: string
+  categoryDisplayName: string
+  categoryDescription: string
+  categoryOrder: number
+  modules: PermissionModuleGroup[]
 }
 
 export interface TenantUserPermissionSubjectQuery extends QueryInfo {

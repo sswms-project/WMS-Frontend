@@ -1,54 +1,46 @@
 import { useState } from 'react'
-import { Search } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle, Search } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { PermissionResponse } from '../../types/admin.types'
+import { groupAdminPermissions } from '../../utils/permission-catalog'
+import { PermissionCatalog } from './PermissionCatalog'
 
 interface PermissionsCatalogProps {
   readonly permissions: PermissionResponse[]
   readonly isLoading: boolean
+  readonly isError: boolean
+  readonly onRetry: () => void
 }
 
-function matchesPermission(permission: PermissionResponse, query: string) {
-  const searchable = [
-    permission.permissionKey,
-    permission.displayName,
-    permission.moduleDisplayName,
-    permission.description,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLocaleLowerCase('vi-VN')
-  return searchable.includes(query.trim().toLocaleLowerCase('vi-VN'))
-}
-
-export function PermissionsCatalog({ permissions, isLoading }: PermissionsCatalogProps) {
+export function PermissionsCatalog({
+  permissions,
+  isLoading,
+  isError,
+  onRetry,
+}: PermissionsCatalogProps) {
   const [search, setSearch] = useState('')
-  const filtered = permissions.filter((permission) => matchesPermission(permission, search))
-  const grouped = filtered.reduce<Record<string, PermissionResponse[]>>((groups, permission) => {
-    const moduleName = permission.moduleDisplayName || permission.module
-    groups[moduleName] ??= []
-    groups[moduleName].push(permission)
-    return groups
-  }, {})
+  const groups = groupAdminPermissions(permissions)
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-3">
+      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-foreground text-sm font-semibold">Danh mục quyền</h2>
-          <p className="text-muted-foreground mt-1 text-xs">
-            {filtered.length}/{permissions.length} quyền từ hệ thống
-          </p>
+          <p className="text-muted-foreground mt-1 text-xs">{permissions.length} quyền hệ thống</p>
         </div>
-        <div className="relative sm:w-64">
+        <div className="relative sm:w-80">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
           <Input
+            type="search"
+            name="permission-catalog-search"
+            autoComplete="off"
+            spellCheck={false}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm quyền..."
+            placeholder="Tìm theo danh mục, phân hệ hoặc quyền…"
             aria-label="Tìm quyền"
             className="h-8 pl-8 text-xs"
           />
@@ -56,40 +48,23 @@ export function PermissionsCatalog({ permissions, isLoading }: PermissionsCatalo
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-28 rounded-xl" />
-          ))}
+        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)]">
+          <Skeleton className="h-full min-h-64 rounded-md" />
+          <Skeleton className="h-full min-h-64 rounded-md" />
         </div>
-      ) : !Object.keys(grouped).length ? (
-        <Card className="rounded-xl">
-          <CardContent className="text-muted-foreground py-14 text-center text-sm">
-            Không tìm thấy quyền phù hợp.
-          </CardContent>
-        </Card>
+      ) : isError ? (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden="true" />
+          <AlertTitle>Không thể tải danh mục quyền</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>Vui lòng kiểm tra kết nối và thử lại.</span>
+            <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+              Thử lại
+            </Button>
+          </AlertDescription>
+        </Alert>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {Object.entries(grouped).map(([moduleName, modulePermissions]) => (
-            <Card key={moduleName} className="gap-0 rounded-xl py-0">
-              <CardHeader className="flex flex-row items-center justify-between border-b px-4 py-3">
-                <CardTitle className="text-sm">{moduleName}</CardTitle>
-                <Badge variant="secondary">{modulePermissions.length}</Badge>
-              </CardHeader>
-              <CardContent className="divide-y px-4 py-1">
-                {modulePermissions.map((permission) => (
-                  <div key={permission.id} className="py-3">
-                    <p className="text-foreground text-sm font-medium">
-                      {permission.displayName || permission.permissionKey}
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-xs leading-5">
-                      {permission.description || 'Không có mô tả cho quyền này.'}
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <PermissionCatalog mode="readOnly" groups={groups} searchText={search} />
       )}
     </div>
   )

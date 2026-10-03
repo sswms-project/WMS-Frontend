@@ -21,7 +21,7 @@ describe('PermissionEditorHeader', () => {
       <PermissionEditorHeader
         selectedCount={2}
         permissionCount={4}
-        moduleCount={1}
+        categoryCount={1}
         searchText=""
         canManage={false}
         dirty={false}
@@ -32,6 +32,7 @@ describe('PermissionEditorHeader', () => {
     )
 
     expect(screen.getByText('Chỉ xem')).toBeInTheDocument()
+    expect(screen.getByText('Danh mục')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Lưu thay đổi' })).not.toBeInTheDocument()
   })
 
@@ -40,7 +41,7 @@ describe('PermissionEditorHeader', () => {
       <PermissionEditorHeader
         selectedCount={2}
         permissionCount={4}
-        moduleCount={1}
+        categoryCount={1}
         searchText=""
         canManage
         dirty

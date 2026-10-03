@@ -203,6 +203,7 @@ export function usePersonalPermissionEditorState({
     editorBlocked,
     filter,
     filteredGroups,
+    groupedPermissions,
     isDirty,
     mutationError,
     permissionSearch,
