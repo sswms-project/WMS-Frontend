@@ -72,6 +72,44 @@ export interface TenantQuery {
   readonly sortDirection?: SortDirection
 }
 
+export interface AdminPaymentQuery {
+  readonly pageNumber: number
+  readonly pageSize: number
+  readonly search?: string
+  readonly status?: string
+  readonly tenantId?: string
+  readonly planId?: string
+  readonly dateFrom?: string
+  readonly dateTo?: string
+  readonly sortBy?: 'createdAt' | 'paidAt' | 'amount' | 'status'
+  readonly sortDirection?: SortDirection
+}
+
+export interface AdminPaymentResponse {
+  readonly id: string
+  readonly tenantId: string | null
+  readonly tenantName: string | null
+  readonly invoiceNumber: string
+  readonly planName: string | null
+  readonly billingCycle: string | null
+  readonly type: string
+  readonly amount: number
+  readonly currency: string
+  readonly status: string
+  readonly providerStatus: string | null
+  readonly payOSOrderCode: number | null
+  readonly paidAt: string | null
+  readonly createdAt: string
+}
+
+export interface AdminPaymentListResponse {
+  readonly items: readonly AdminPaymentResponse[]
+  readonly totalCount: number
+  readonly pageNumber: number
+  readonly pageSize: number
+  readonly totalCompletedAmount: number
+}
+
 export interface TenantSummaryResponse {
   readonly id: string
   readonly tenantName: string

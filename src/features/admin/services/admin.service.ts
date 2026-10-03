@@ -8,6 +8,8 @@ import type {
   UpdateSubscriptionPlanRequest,
 } from '../schemas/subscription-plan.schema'
 import type {
+  AdminPaymentListResponse,
+  AdminPaymentQuery,
   AssignPermissionsRequest,
   ApproveTenantRegistrationRequest,
   AdminSubscriptionPlanListResponse,
@@ -49,6 +51,11 @@ export const adminService = {
   getPlatformDashboard: () =>
     axiosClient
       .get<ApiResponse<PlatformDashboardResponse>>(API_ENDPOINTS.platformAdmin.dashboard)
+      .then((r) => r.data.data),
+
+  getPayments: (params: AdminPaymentQuery) =>
+    axiosClient
+      .get<ApiResponse<AdminPaymentListResponse>>(API_ENDPOINTS.platformAdmin.payments, { params })
       .then((r) => r.data.data),
 
   getTenants: (params: TenantQuery) =>

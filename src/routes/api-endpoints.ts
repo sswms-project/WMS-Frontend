@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     rejectTenantRegistration: (tenantId: string) =>
       `/admin/tenants/${tenantId}/reject-registration`,
     announcements: '/admin/announcements',
+    payments: '/admin/payments',
     subscriptionPlans: '/subscription-plans/admin',
     activateSubscriptionPlan: (planId: string) => `/subscription-plans/${planId}/activate`,
   },

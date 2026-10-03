@@ -1,0 +1,1 @@
+export { AdminPaymentsView } from './AdminPaymentsView'

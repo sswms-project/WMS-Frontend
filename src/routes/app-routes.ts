@@ -84,6 +84,7 @@ export const APP_ROUTES = {
     roles: '/admin/roles',
     subscriptionPlans: '/admin/subscription-plans',
     announcements: '/admin/announcements',
+    payments: '/admin/payments',
   },
   products: '/products',
   productDetail: (id: string) => `/products/${id}`,
