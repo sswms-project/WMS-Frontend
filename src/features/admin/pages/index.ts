@@ -1,3 +1,4 @@
+export { default as AnnouncementsPage } from './AnnouncementsPage'
 export { default as RolesPage } from './RolesPage'
 export { default as SubscriptionPlansPage } from './SubscriptionPlansPage'
 export { default as PlatformDashboardPage } from './PlatformDashboardPage'
