@@ -61,6 +61,10 @@ export const API_ENDPOINTS = {
     action: (taskType: string, taskId: string) =>
       `/my-warehouse-tasks/${taskType}/${taskId}/actions`,
   },
+  warehouseTasks: {
+    list: '/warehouse-tasks',
+    history: '/warehouse-tasks/history',
+  },
   staff: {
     managers: '/managers',
     list: '/staff',

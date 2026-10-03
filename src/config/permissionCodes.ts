@@ -34,6 +34,7 @@ export const P = {
   // Warehouse Tasks (công việc được giao của Nhân viên kho)
   WAREHOUSE_TASKS_VIEW_OWN: 'warehouse-tasks:view-own',
   WAREHOUSE_TASKS_MANAGE_OWN: 'warehouse-tasks:manage-own',
+  WAREHOUSE_TASKS_VIEW_ALL: 'warehouse-tasks:view-all',
 
   // Goods Return Requests
   GOODS_RETURN_REQUESTS_VIEW: 'goods-return-requests:view',
