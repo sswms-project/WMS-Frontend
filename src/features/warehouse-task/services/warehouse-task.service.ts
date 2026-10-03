@@ -5,20 +5,26 @@ import type {
   MyWarehouseTaskListResponse,
   MyWarehouseTaskQuery,
   WarehouseTaskAction,
+  WarehouseTaskScope,
 } from '../types/warehouse-task.types'
 
 export const warehouseTaskService = {
-  getCurrent: (params: MyWarehouseTaskQuery) =>
+  getCurrent: (params: MyWarehouseTaskQuery, scope: WarehouseTaskScope = 'mine') =>
     axiosClient
       .get<
         ApiResponse<MyWarehouseTaskListResponse>
-      >(API_ENDPOINTS.myWarehouseTasks.list, { params })
+      >(scope === 'managed' ? API_ENDPOINTS.warehouseTasks.list : API_ENDPOINTS.myWarehouseTasks.list, { params })
       .then((response) => response.data),
-  getHistory: (params: MyWarehouseTaskQuery) =>
+  getHistory: (params: MyWarehouseTaskQuery, scope: WarehouseTaskScope = 'mine') =>
     axiosClient
-      .get<ApiResponse<MyWarehouseTaskListResponse>>(API_ENDPOINTS.myWarehouseTasks.history, {
-        params,
-      })
+      .get<ApiResponse<MyWarehouseTaskListResponse>>(
+        scope === 'managed'
+          ? API_ENDPOINTS.warehouseTasks.history
+          : API_ENDPOINTS.myWarehouseTasks.history,
+        {
+          params,
+        }
+      )
       .then((response) => response.data),
   action: (taskType: string, taskId: string, action: WarehouseTaskAction, reason?: string) =>
     axiosClient.post(API_ENDPOINTS.myWarehouseTasks.action(taskType, taskId), { action, reason }),

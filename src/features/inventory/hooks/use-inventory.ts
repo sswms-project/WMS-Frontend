@@ -212,7 +212,12 @@ export function useOpeningStockActionMutation() {
     ApiResponse<unknown>,
     ApiErrorResponse,
     | { action: 'submit'; id: string; expectedVersion: string }
-    | { action: 'approve'; id: string; expectedVersion: string }
+    | {
+        action: 'approve'
+        id: string
+        expectedVersion: string
+        selfApprovalAcknowledged?: boolean
+      }
     | { action: 'withdraw'; id: string; expectedVersion: string; reason: string }
     | { action: 'cancel'; id: string; expectedVersion: string; reason: string }
     | {
@@ -221,13 +226,18 @@ export function useOpeningStockActionMutation() {
         expectedVersion: string
         decision: 'Returned' | 'Rejected' | 'Cancelled'
         reason: string
+        selfApprovalAcknowledged?: boolean
       }
   >({
     mutationFn: (request) => {
       if (request.action === 'submit')
         return inventoryService.submitOpeningStock(request.id, request.expectedVersion)
       if (request.action === 'approve')
-        return inventoryService.approveOpeningStock(request.id, request.expectedVersion)
+        return inventoryService.approveOpeningStock(
+          request.id,
+          request.expectedVersion,
+          request.selfApprovalAcknowledged
+        )
       if (request.action === 'withdraw')
         return inventoryService.withdrawOpeningStock(
           request.id,
@@ -244,6 +254,7 @@ export function useOpeningStockActionMutation() {
         decision: request.decision,
         reason: request.reason,
         expectedVersion: request.expectedVersion,
+        selfApprovalAcknowledged: request.selfApprovalAcknowledged,
       })
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),

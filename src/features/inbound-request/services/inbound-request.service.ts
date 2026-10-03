@@ -9,6 +9,8 @@ import type {
   ProductOption,
   InboundRequestDetail,
   InboundRequestListQuery,
+  InboundDecisionRequest,
+  InboundReconciliationRequest,
   SaveInboundRequestRequest,
   SupplierEmailDispatch,
   SupplierOption,
@@ -71,19 +73,19 @@ export const inboundRequestService = {
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.submitMany, { ids })
       .then((response) => response.data),
-  approveInboundRequest: (inboundRequestId: string) =>
+  approveInboundRequest: (inboundRequestId: string, request: InboundDecisionRequest) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.approve(inboundRequestId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.approve(inboundRequestId), request)
       .then((response) => response.data),
   approveInboundRequests: (ids: readonly string[]) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.approveMany, { ids })
       .then((response) => response.data),
-  approveAndSendInboundRequest: (inboundRequestId: string) =>
+  approveAndSendInboundRequest: (inboundRequestId: string, request: InboundDecisionRequest) =>
     axiosClient
       .post<
         ApiResponse<SupplierEmailDispatch>
-      >(API_ENDPOINTS.inboundRequests.approveAndSend(inboundRequestId))
+      >(API_ENDPOINTS.inboundRequests.approveAndSend(inboundRequestId), request)
       .then((response) => response.data),
   sendInboundRequestToSupplier: (inboundRequestId: string) =>
     axiosClient
@@ -91,10 +93,27 @@ export const inboundRequestService = {
         ApiResponse<SupplierEmailDispatch>
       >(API_ENDPOINTS.inboundRequests.sendToSupplier(inboundRequestId))
       .then((response) => response.data),
-  rejectInboundRequest: (inboundRequestId: string, reason: string) =>
+  rejectInboundRequest: (
+    inboundRequestId: string,
+    reason: string,
+    request: InboundDecisionRequest
+  ) =>
     axiosClient
       .post<
         ApiResponse<unknown>
-      >(API_ENDPOINTS.inboundRequests.reject(inboundRequestId), { reason })
+      >(API_ENDPOINTS.inboundRequests.reject(inboundRequestId), { reason, ...request })
+      .then((response) => response.data),
+  cancelInboundRequest: (inboundRequestId: string, request: InboundReconciliationRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.cancel(inboundRequestId), request)
+      .then((response) => response.data),
+  closeRemainingInboundQuantity: (
+    inboundRequestId: string,
+    request: InboundReconciliationRequest
+  ) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.inboundRequests.closeRemaining(inboundRequestId), request)
       .then((response) => response.data),
 }

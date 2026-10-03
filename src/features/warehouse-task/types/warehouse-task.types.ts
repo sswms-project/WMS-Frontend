@@ -13,6 +13,8 @@ export interface MyWarehouseTask {
   executionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed'
   priority: 'Normal' | 'Urgent'
   pauseReason: string | null
+  assignedTo: string | null
+  assignedToName: string | null
   assignedAt: string
   updatedAt: string
 }
@@ -26,6 +28,8 @@ export interface MyWarehouseTaskQuery {
   warehouseId?: string
   status?: string
 }
+
+export type WarehouseTaskScope = 'mine' | 'managed'
 
 export interface MyWarehouseTaskListResponse {
   items: MyWarehouseTask[]

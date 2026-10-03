@@ -26,6 +26,7 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
               <TableHead className="text-right">Số lượng nhập</TableHead>
               <TableHead className="text-right">Số lượng cơ sở</TableHead>
               <TableHead className="text-right">Đã nhận</TableHead>
+              <TableHead className="text-right">Đã đóng</TableHead>
               <TableHead className="text-right">Còn lại</TableHead>
             </TableRow>
           </TableHeader>
@@ -51,6 +52,9 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
                   {formatQuantity(line.receivedQuantity)}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
+                  {formatQuantity(line.closedQuantity)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
                   {formatQuantity(line.remainingQuantity)}
                 </TableCell>
               </TableRow>
@@ -70,9 +74,10 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
                 ? ` (×${formatQuantity(line.conversionFactorSnapshot)})`
                 : ''}
             </p>
-            <dl className="mt-3 grid grid-cols-3 gap-3">
+            <dl className="mt-3 grid grid-cols-4 gap-3">
               <Metadata label="Đặt" value={formatQuantity(line.quantity)} />
               <Metadata label="Đã nhận" value={formatQuantity(line.receivedQuantity)} />
+              <Metadata label="Đã đóng" value={formatQuantity(line.closedQuantity)} />
               <Metadata label="Còn lại" value={formatQuantity(line.remainingQuantity)} />
             </dl>
           </div>

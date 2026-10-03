@@ -8,6 +8,7 @@ export const INBOUND_REQUEST_STATUS = {
   PartiallyReceived: 'PartiallyReceived',
   Received: 'Received',
   Cancelled: 'Cancelled',
+  Closed: 'Closed',
 } as const
 
 export const INBOUND_REQUEST_STATUSES = Object.values(INBOUND_REQUEST_STATUS)
@@ -20,6 +21,8 @@ export const INBOUND_REQUEST_ACTION = {
   ApproveAndSend: 'ApproveAndSend',
   SendToSupplier: 'SendToSupplier',
   Reject: 'Reject',
+  Cancel: 'Cancel',
+  CloseRemaining: 'CloseRemaining',
 } as const
 export type InboundRequestAction =
   (typeof INBOUND_REQUEST_ACTION)[keyof typeof INBOUND_REQUEST_ACTION]
@@ -97,6 +100,7 @@ export interface InboundRequestLine {
   conversionFactorSnapshot: number
   quantity: number
   receivedQuantity: number
+  closedQuantity: number
   remainingQuantity: number
 }
 
@@ -106,14 +110,22 @@ export interface InboundRequestDetail extends Omit<
 > {
   approvedBy: string | null
   approvedByName: string | null
+  submittedBy: string | null
   modifiedAt: string | null
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
+  cancelledBy: string | null
+  cancelledAt: string | null
+  cancellationReason: string | null
+  closedBy: string | null
+  closedAt: string | null
+  closureReason: string | null
   supplierEmail: string | null
   supplierEmailSentAt: string | null
   supplierEmailSentTo: string | null
   supplierEmailSentByName: string | null
+  version: string
   lines: InboundRequestLine[]
   history: LifecycleEvent[]
 }
@@ -142,6 +154,20 @@ export interface InboundRequestListResponse extends PagedResponse<InboundRequest
 
 export interface AllowedActionsResponse {
   allowedActions: InboundRequestAction[]
+  selfApprovalRequired: boolean
+  currentVersion: string | null
+  denialReasonCode: string | null
+}
+
+export interface InboundDecisionRequest {
+  expectedVersion: string
+  selfApprovalAcknowledged: boolean
+}
+
+export interface InboundReconciliationRequest {
+  reason: string
+  expectedVersion: string
+  commandId: string
 }
 
 export interface InboundRequestLineRequest {

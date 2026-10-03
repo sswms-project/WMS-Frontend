@@ -4,13 +4,17 @@ import { warehouseTaskService } from '../services/warehouse-task.service'
 import type {
   MyWarehouseTaskListResponse,
   MyWarehouseTaskQuery,
+  WarehouseTaskScope,
 } from '../types/warehouse-task.types'
 import type { WarehouseTaskAction } from '../types/warehouse-task.types'
 
-export function useMyWarehouseTasksQuery(params: MyWarehouseTaskQuery) {
+export function useMyWarehouseTasksQuery(
+  params: MyWarehouseTaskQuery,
+  scope: WarehouseTaskScope = 'mine'
+) {
   return useQuery<MyWarehouseTaskListResponse, ApiErrorResponse>({
-    queryKey: ['my-warehouse-tasks', params],
-    queryFn: () => warehouseTaskService.getCurrent(params).then((response) => response.data),
+    queryKey: ['warehouse-tasks', scope, params],
+    queryFn: () => warehouseTaskService.getCurrent(params, scope).then((response) => response.data),
     placeholderData: (previousData) => previousData,
   })
 }
@@ -33,10 +37,13 @@ export function useManageMyWarehouseTaskMutation() {
   })
 }
 
-export function useMyWarehouseTaskHistoryQuery(params: MyWarehouseTaskQuery) {
+export function useMyWarehouseTaskHistoryQuery(
+  params: MyWarehouseTaskQuery,
+  scope: WarehouseTaskScope = 'mine'
+) {
   return useQuery<MyWarehouseTaskListResponse, ApiErrorResponse>({
-    queryKey: ['my-warehouse-tasks', 'history', params],
-    queryFn: () => warehouseTaskService.getHistory(params).then((response) => response.data),
+    queryKey: ['warehouse-tasks', scope, 'history', params],
+    queryFn: () => warehouseTaskService.getHistory(params, scope).then((response) => response.data),
     placeholderData: (previousData) => previousData,
   })
 }

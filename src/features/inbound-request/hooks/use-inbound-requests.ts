@@ -25,6 +25,21 @@ interface UpdateInboundRequestVariables {
 interface RejectInboundRequestVariables {
   inboundRequestId: string
   reason: string
+  expectedVersion: string
+  selfApprovalAcknowledged: boolean
+}
+
+interface ApproveInboundRequestVariables {
+  inboundRequestId: string
+  expectedVersion: string
+  selfApprovalAcknowledged: boolean
+}
+
+interface ReconcileInboundRequestVariables {
+  inboundRequestId: string
+  action: 'cancel' | 'closeRemaining'
+  reason: string
+  expectedVersion: string
 }
 
 export function useInboundRequestsQuery(params: InboundRequestListQuery) {
@@ -171,9 +186,10 @@ export function useSubmitInboundRequestsMutation() {
 
 export function useApproveInboundRequestMutation() {
   const invalidate = useInvalidateInboundRequests()
-  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn: inboundRequestService.approveInboundRequest,
-    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ApproveInboundRequestVariables>({
+    mutationFn: ({ inboundRequestId, ...request }) =>
+      inboundRequestService.approveInboundRequest(inboundRequestId, request),
+    onSuccess: (_, variables) => invalidate(variables.inboundRequestId),
     onError: (error) => logger.error(error),
   })
 }
@@ -189,9 +205,14 @@ export function useApproveInboundRequestsMutation() {
 
 export function useApproveAndSendInboundRequestMutation() {
   const invalidate = useInvalidateInboundRequests()
-  return useMutation<ApiResponse<SupplierEmailDispatch>, ApiErrorResponse, string>({
-    mutationFn: inboundRequestService.approveAndSendInboundRequest,
-    onSuccess: (_, inboundRequestId) => invalidate(inboundRequestId),
+  return useMutation<
+    ApiResponse<SupplierEmailDispatch>,
+    ApiErrorResponse,
+    ApproveInboundRequestVariables
+  >({
+    mutationFn: ({ inboundRequestId, ...request }) =>
+      inboundRequestService.approveAndSendInboundRequest(inboundRequestId, request),
+    onSuccess: (_, variables) => invalidate(variables.inboundRequestId),
     onError: (error) => logger.error(error),
   })
 }
@@ -208,8 +229,25 @@ export function useSendInboundRequestToSupplierMutation() {
 export function useRejectInboundRequestMutation() {
   const invalidate = useInvalidateInboundRequests()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, RejectInboundRequestVariables>({
-    mutationFn: ({ inboundRequestId, reason }) =>
-      inboundRequestService.rejectInboundRequest(inboundRequestId, reason),
+    mutationFn: ({ inboundRequestId, reason, expectedVersion, selfApprovalAcknowledged }) =>
+      inboundRequestService.rejectInboundRequest(inboundRequestId, reason, {
+        expectedVersion,
+        selfApprovalAcknowledged,
+      }),
+    onSuccess: (_, variables) => invalidate(variables.inboundRequestId),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReconcileInboundRequestMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReconcileInboundRequestVariables>({
+    mutationFn: ({ inboundRequestId, action, reason, expectedVersion }) => {
+      const request = { reason, expectedVersion, commandId: crypto.randomUUID() }
+      return action === 'cancel'
+        ? inboundRequestService.cancelInboundRequest(inboundRequestId, request)
+        : inboundRequestService.closeRemainingInboundQuantity(inboundRequestId, request)
+    },
     onSuccess: (_, variables) => invalidate(variables.inboundRequestId),
     onError: (error) => logger.error(error),
   })
