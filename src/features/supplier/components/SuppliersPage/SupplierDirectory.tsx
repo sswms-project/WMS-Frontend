@@ -1,6 +1,16 @@
 'use client'
 
-import { CircleOff, Eye, Pencil, Plus, RefreshCw, RotateCcw, Search, Truck } from 'lucide-react'
+import {
+  CircleOff,
+  Eye,
+  Pencil,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  Truck,
+  Upload,
+} from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
@@ -48,6 +58,7 @@ interface SupplierDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
+  readonly onImport: () => void
   readonly onEdit: (supplier: Supplier) => void
   readonly onDeactivate: (supplier: Supplier) => void
   readonly onReactivate: (supplier: Supplier) => void
@@ -73,6 +84,7 @@ export function SupplierDirectory({
   onPageChange,
   onPageSizeChange,
   onCreate,
+  onImport,
   onEdit,
   onDeactivate,
   onReactivate,
@@ -91,10 +103,16 @@ export function SupplierDirectory({
           </div>
         </div>
         {canCreate ? (
-          <Button type="button" className="w-full sm:w-auto" onClick={onCreate}>
-            <Plus aria-hidden="true" />
-            Thêm nhà cung cấp
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onImport}>
+              <Upload aria-hidden="true" />
+              Nhập từ tệp
+            </Button>
+            <Button type="button" className="w-full sm:w-auto" onClick={onCreate}>
+              <Plus aria-hidden="true" />
+              Thêm nhà cung cấp
+            </Button>
+          </div>
         ) : null}
       </header>
 
