@@ -119,6 +119,7 @@ export function WarehouseTaskDirectory({
                     <TableHead className="sticky top-0 z-10">Công việc</TableHead>
                     <TableHead className="sticky top-0 z-10">Mã tham chiếu</TableHead>
                     <TableHead className="sticky top-0 z-10">Kho</TableHead>
+                    <TableHead className="sticky top-0 z-10">Người phụ trách</TableHead>
                     <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
                     <TableHead className="sticky top-0 z-10">Cập nhật</TableHead>
                     <TableHead className="sticky top-0 z-10 text-right">Mở</TableHead>
@@ -130,6 +131,7 @@ export function WarehouseTaskDirectory({
                       <TableCell>{taskTypeLabel[item.taskType]}</TableCell>
                       <TableCell className="font-mono font-medium">{item.referenceCode}</TableCell>
                       <TableCell>{item.warehouseName}</TableCell>
+                      <TableCell>{item.assignedToName ?? 'Chưa giao'}</TableCell>
                       <TableCell>
                         <Badge
                           variant={item.executionStatus === 'InProgress' ? 'default' : 'secondary'}

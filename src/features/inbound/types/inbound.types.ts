@@ -6,9 +6,10 @@ import type {
 export const GOODS_RECEIPT_STATUSES = [
   'Draft',
   'PendingApproval',
+  'InspectionCorrectionRequired',
   'Approved',
   'Completed',
-  'Rejected',
+  'Cancelled',
 ] as const
 
 export type GoodsReceiptStatus = (typeof GOODS_RECEIPT_STATUSES)[number]
@@ -208,12 +209,15 @@ export interface PutawayLineRequest {
 
 export interface PutawayRequest {
   lines: PutawayLineRequest[]
+  expectedVersion: string
+  commandId: string
+  overrideReason?: string | null
 }
 
 export interface ConfirmPhysicalArrivalRequest {
   expectedVersion: string
   commandId: string
-  selfApprovalAcknowledged: boolean
+  selfApprovalAcknowledged?: boolean
 }
 
 export interface CancelPutawayTaskRequest {

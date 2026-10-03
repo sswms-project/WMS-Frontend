@@ -40,6 +40,11 @@ interface ConfirmPhysicalArrivalVariables {
   selfApprovalAcknowledged: boolean
 }
 
+interface SubmitGoodsReceiptVariables {
+  receiptId: string
+  expectedVersion: string
+}
+
 interface PutawayVariables {
   receiptId: string
   request: PutawayRequest
@@ -204,9 +209,13 @@ export function useUpdateGoodsReceiptMutation() {
 
 export function useSubmitGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
-  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn: inboundService.submitReceipt,
-    onSuccess: (_, receiptId) => invalidate(receiptId),
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, SubmitGoodsReceiptVariables>({
+    mutationFn: ({ receiptId, expectedVersion }) =>
+      inboundService.submitReceipt(receiptId, {
+        expectedVersion,
+        commandId: crypto.randomUUID(),
+      }),
+    onSuccess: (_, variables) => invalidate(variables.receiptId),
     onError: (error) => logger.error(error),
   })
 }

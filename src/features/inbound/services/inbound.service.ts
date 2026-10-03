@@ -79,9 +79,9 @@ export const inboundService = {
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.update(receiptId), request)
       .then((response) => response.data),
-  submitReceipt: (receiptId: string) =>
+  submitReceipt: (receiptId: string, request: ConfirmPhysicalArrivalRequest) =>
     axiosClient
-      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.submit(receiptId))
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.submit(receiptId), request)
       .then((response) => response.data),
   approveReceipt: (receiptId: string, request: ConfirmPhysicalArrivalRequest) =>
     axiosClient

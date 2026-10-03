@@ -44,7 +44,13 @@ export default function MyWarehouseTasksPage() {
   const meQuery = useMeQuery()
   const canManageOwnTasks =
     isWarehouseStaff && (meQuery.data?.permissions ?? []).includes(P.WAREHOUSE_TASKS_MANAGE_OWN)
-  const query = useMyWarehouseTasksQuery({ pageNumber: page, pageSize: PAGE_SIZE })
+  const managesWarehouseTasks = (meQuery.data?.permissions ?? []).includes(
+    P.WAREHOUSE_TASKS_VIEW_ALL
+  )
+  const query = useMyWarehouseTasksQuery(
+    { pageNumber: page, pageSize: PAGE_SIZE },
+    managesWarehouseTasks ? 'managed' : 'mine'
+  )
   const action = useManageMyWarehouseTaskMutation()
 
   async function run(task: MyWarehouseTask, type: WarehouseTaskAction, note?: string) {
@@ -90,8 +96,12 @@ export default function MyWarehouseTasksPage() {
   return (
     <>
       <WarehouseTaskDirectory
-        title="Công việc của tôi"
-        description="Chỉ hiển thị các nhiệm vụ kho được giao cho bạn. Mỗi lúc chỉ làm một việc."
+        title={managesWarehouseTasks ? 'Công việc kho' : 'Công việc của tôi'}
+        description={
+          managesWarehouseTasks
+            ? 'Theo dõi công việc và người phụ trách trong các kho được phân quyền quản lý.'
+            : 'Chỉ hiển thị các nhiệm vụ kho được giao cho bạn. Mỗi lúc chỉ làm một việc.'
+        }
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
         page={page}

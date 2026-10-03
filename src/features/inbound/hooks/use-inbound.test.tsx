@@ -37,7 +37,10 @@ describe('putaway capacity rejection', () => {
         ),
       })
       await act(async () => {
-        await hook.result.current.mutateAsync({ receiptId: 'receipt', request: { lines: [] } })
+        await hook.result.current.mutateAsync({
+          receiptId: 'receipt',
+          request: { lines: [], expectedVersion: 'AQ==', commandId: 'command' },
+        })
       })
       for (const key of keys) expect(client.getQueryState(key)?.isInvalidated).toBe(true)
       expect(client.getQueryState(queryKeys.warehouses.layout('warehouse-b'))?.isInvalidated).toBe(
@@ -62,7 +65,10 @@ describe('putaway capacity rejection', () => {
     })
     await act(async () => {
       await expect(
-        hook.result.current.mutateAsync({ receiptId: 'receipt', request: { lines: [] } })
+        hook.result.current.mutateAsync({
+          receiptId: 'receipt',
+          request: { lines: [], expectedVersion: 'AQ==', commandId: 'command' },
+        })
       ).rejects.toEqual(error)
     })
     expect(warning).toHaveBeenCalledWith(message)
