@@ -27,30 +27,30 @@ export function StorageCapacitySummary({ location }: StorageCapacitySummaryProps
         : 'Còn chỗ'
   return (
     <div className="flex w-full min-w-0 flex-col gap-2 text-xs">
-      <div className="flex min-w-0 flex-wrap justify-between gap-1 tabular-nums">
-        <span>
+      <div className="flex min-w-0 items-center gap-2 tabular-nums">
+        <span className="shrink-0">
           Đã sử dụng:{' '}
           <strong>
             {format(utilization.used)} / {format(utilization.maximum)}
           </strong>
         </span>
-        <span className="min-w-0 truncate" title={unit}>
+        <Progress
+          value={utilization.percent}
+          aria-label="Mức sử dụng sức chứa"
+          aria-valuenow={utilization.used}
+          aria-valuemin={0}
+          aria-valuemax={utilization.maximum}
+          aria-valuetext={`${format(utilization.used)} / ${format(utilization.maximum)} ${unit} · ${status}`}
+          className={cn(
+            'h-1.5 min-w-12 flex-1 motion-reduce:[&_[data-slot=progress-indicator]]:transition-none',
+            utilization.status === 'warning' && '[&_[data-slot=progress-indicator]]:bg-warning',
+            utilization.status === 'full' && '[&_[data-slot=progress-indicator]]:bg-destructive'
+          )}
+        />
+        <span className="max-w-20 shrink-0 truncate" title={unit}>
           {unit}
         </span>
       </div>
-      <Progress
-        value={utilization.percent}
-        aria-label="Mức sử dụng sức chứa"
-        aria-valuenow={utilization.used}
-        aria-valuemin={0}
-        aria-valuemax={utilization.maximum}
-        aria-valuetext={`${format(utilization.used)} / ${format(utilization.maximum)} ${unit} · ${status}`}
-        className={cn(
-          'h-1.5 motion-reduce:[&_[data-slot=progress-indicator]]:transition-none',
-          utilization.status === 'warning' && '[&_[data-slot=progress-indicator]]:bg-warning',
-          utilization.status === 'full' && '[&_[data-slot=progress-indicator]]:bg-destructive'
-        )}
-      />
       <div className="flex flex-wrap justify-between gap-1 tabular-nums">
         <span>
           Còn trống:{' '}
