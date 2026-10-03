@@ -17,6 +17,33 @@ export interface PermissionResponse {
   displayName: string
   moduleDisplayName: string
   description: string | null
+  category: string
+  categoryDisplayName: string
+  categoryDescription: string
+  categoryOrder: number
+  moduleOrder: number
+  scope: PermissionScope
+}
+
+export type PermissionScope =
+  | 'Unclassified'
+  | 'PlatformOnly'
+  | 'TenantOwnerDefault'
+  | 'TenantDelegatable'
+
+export interface AdminPermissionModuleGroup {
+  readonly module: string
+  readonly moduleDisplayName: string
+  readonly moduleOrder: number
+  readonly permissions: PermissionResponse[]
+}
+
+export interface AdminPermissionCategoryGroup {
+  readonly category: string
+  readonly categoryDisplayName: string
+  readonly categoryDescription: string
+  readonly categoryOrder: number
+  readonly modules: AdminPermissionModuleGroup[]
 }
 
 export type AssignPermissionsRequest = PermissionDeltaInput
