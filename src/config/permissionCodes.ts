@@ -36,6 +36,8 @@ export const P = {
   WAREHOUSE_TASKS_VIEW_OWN: 'warehouse-tasks:view-own',
   WAREHOUSE_TASKS_MANAGE_OWN: 'warehouse-tasks:manage-own',
   WAREHOUSE_TASKS_VIEW_ALL: 'warehouse-tasks:view-all',
+  WAREHOUSE_TASKS_CREATE: 'warehouse-tasks:create',
+  WAREHOUSE_TASKS_ASSIGN: 'warehouse-tasks:assign',
 
   // Goods Return Requests
   GOODS_RETURN_REQUESTS_VIEW: 'goods-return-requests:view',
