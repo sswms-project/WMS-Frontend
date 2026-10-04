@@ -176,7 +176,6 @@ export interface GoodsReceiptDetail extends Omit<
   rejectionReason: string | null
   arrivalConfirmedBy: string | null
   arrivalConfirmedAt: string | null
-  receivingHoldSlotId: string | null
   putAwayTaskExecutionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
   putAwayTaskCancelledAt: string | null
   putAwayTaskCancellationReason: string | null

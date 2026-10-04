@@ -19,6 +19,34 @@ function getVisibleNavItems(
 
 describe('application navigation visibility', () => {
   it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'opens an authorized inbound entry point for %s without hiding delegated requests',
+    (role) => {
+      const requestOnlyItems = getVisibleNavItems(role, [P.INBOUND_REQUESTS_VIEW])
+      const requestEntry = requestOnlyItems.find((item) => item.label === 'Nhập kho')
+      expect(requestEntry?.href).toBe(APP_ROUTES.inboundRequests)
+      expect(requestEntry?.requiredPermission).toBe(P.INBOUND_REQUESTS_VIEW)
+      expect(isNavItemActive(`${APP_ROUTES.inboundRequests}/request-1`, requestEntry!)).toBe(true)
+      expect(requestOnlyItems.some((item) => item.href === APP_ROUTES.inbound)).toBe(false)
+
+      for (const permissions of [
+        [P.GOODS_RECEIPTS_VIEW],
+        [P.GOODS_RECEIPTS_VIEW, P.INBOUND_REQUESTS_VIEW],
+      ]) {
+        const entry = getVisibleNavItems(role, permissions).find(
+          (item) => item.label === 'Nhập kho'
+        )
+        expect(entry?.href).toBe(APP_ROUTES.inbound)
+        expect(entry?.requiredPermission).toBe(P.GOODS_RECEIPTS_VIEW)
+      }
+
+      expect(getVisibleNavItems(role, []).some((item) => item.label === 'Nhập kho')).toBe(false)
+      expect(getNavItems(role).find((item) => item.label === 'Nhập kho')?.href).toBe(
+        APP_ROUTES.inbound
+      )
+    }
+  )
+
+  it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
     'shows the warehouse workspace for %s',
     (role) => {
       expect(getNavItems(role).some((item) => item.href === APP_ROUTES.warehouses)).toBe(true)
@@ -57,23 +85,23 @@ describe('application navigation visibility', () => {
 
   it('shows permission-gated workspaces only when the current user has access', () => {
     expect(
-      getVisibleNavItems(USER_ROLES.TenantOwner, ['inbound-requests:view']).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+      getVisibleNavItems(USER_ROLES.TenantOwner, [P.GOODS_RECEIPTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(true)
     expect(
-      getVisibleNavItems(USER_ROLES.WarehouseManager, ['inbound-requests:view']).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+      getVisibleNavItems(USER_ROLES.WarehouseManager, [P.GOODS_RECEIPTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(true)
     expect(
-      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['inbound-requests:view']).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, [P.GOODS_RECEIPTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(true)
     expect(
       getVisibleNavItems(USER_ROLES.WarehouseStaff, []).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(false)
 
@@ -166,7 +194,7 @@ describe('application navigation visibility', () => {
       }))
     ).toEqual([
       { label: null, items: ['Dashboard'] },
-      { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Phân quyền', 'Nhân viên'] },
+      { label: 'Quản trị doanh nghiệp', items: ['Doanh nghiệp', 'Phân quyền', 'Nhân viên'] },
       { label: 'Quản Lý Kho', items: ['Kho hàng', 'Sơ đồ kho'] },
       { label: 'Đối tượng', items: ['Nhà cung cấp', 'Khách hàng'] },
       {
@@ -175,13 +203,7 @@ describe('application navigation visibility', () => {
       },
       {
         label: 'Hoạt Động Kho',
-        items: [
-          'Yêu cầu nhập kho',
-          'Nhập kho',
-          'Tồn kho',
-          'Điều chuyển kho',
-          'Xuất kho & Trả hàng',
-        ],
+        items: ['Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Xuất kho & Trả hàng'],
       },
       {
         label: 'Báo cáo',
@@ -251,6 +273,17 @@ describe('application navigation visibility', () => {
     expect(isNavSectionActive('/products/product-1', catalogSection!)).toBe(true)
     expect(isNavSectionActive(APP_ROUTES.categories, catalogSection!)).toBe(true)
     expect(isNavSectionActive('/inventory', catalogSection!)).toBe(false)
+  })
+
+  it('keeps the inbound menu active across the complete inbound workspace', () => {
+    const inboundItem = getNavItems(USER_ROLES.TenantOwner).find(
+      (item) => item.href === APP_ROUTES.inbound
+    )
+
+    expect(inboundItem).toBeDefined()
+    expect(isNavItemActive(APP_ROUTES.inboundRequests, inboundItem!)).toBe(true)
+    expect(isNavItemActive(APP_ROUTES.goodsReceipts, inboundItem!)).toBe(true)
+    expect(isNavItemActive(APP_ROUTES.inboundPutaway, inboundItem!)).toBe(true)
   })
 
   it.each([

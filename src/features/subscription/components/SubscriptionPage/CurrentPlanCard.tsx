@@ -83,7 +83,7 @@ export function CurrentPlanCard({
                 <h2 className="truncate text-base font-semibold">{subscription.planName}</h2>
                 <CurrentStatusBadge subscription={subscription} />
               </div>
-              <p className="text-muted-foreground text-xs">Gói hiện tại của tổ chức</p>
+              <p className="text-muted-foreground text-xs">Gói hiện tại của doanh nghiệp</p>
             </div>
           </div>
 

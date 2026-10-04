@@ -49,7 +49,7 @@ export function getPersonalPermissionErrorDetails(error: unknown): PersonalPermi
   }
   if (code === 'USER_NOT_FOUND') {
     return {
-      message: 'Nhân sự không còn thuộc tổ chức hiện tại.',
+      message: 'Nhân sự không còn thuộc doanh nghiệp hiện tại.',
       targetUnavailable: true,
     }
   }

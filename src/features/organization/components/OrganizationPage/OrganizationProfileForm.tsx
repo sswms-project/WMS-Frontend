@@ -64,7 +64,7 @@ export function OrganizationProfileForm({
     <section className="bg-card border" aria-labelledby="organization-edit-title">
       <div className="border-b px-4 py-4">
         <h2 id="organization-edit-title" className="text-base font-semibold">
-          Chỉnh sửa hồ sơ tổ chức
+          Chỉnh sửa hồ sơ doanh nghiệp
         </h2>
         <p className="text-muted-foreground mt-1 text-xs">
           Email và trạng thái do hệ thống quản lý nên không thể chỉnh sửa tại đây.
@@ -74,7 +74,7 @@ export function OrganizationProfileForm({
       <form onSubmit={form.handleSubmit(handleSubmit)} noValidate>
         <FieldGroup className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
           <Field data-invalid={Boolean(form.formState.errors.tenantName)}>
-            <FieldLabel htmlFor="tenantName">Tên tổ chức</FieldLabel>
+            <FieldLabel htmlFor="tenantName">Tên doanh nghiệp</FieldLabel>
             <Input
               id="tenantName"
               autoFocus

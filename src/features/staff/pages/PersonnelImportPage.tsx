@@ -178,7 +178,7 @@ export function PersonnelImportPage({
             </Link>
           </Button>
           <div>
-            <p className="text-primary text-xs font-medium">Tổ chức và nhân sự</p>
+            <p className="text-primary text-xs font-medium">Doanh nghiệp và nhân sự</p>
             <h1 className="text-xl font-semibold">Nhập danh sách nhân sự</h1>
             <p className="text-muted-foreground mt-1 text-sm">
               Kiểm tra dữ liệu trước khi tạo lời mời; tệp không được chứa mật khẩu.

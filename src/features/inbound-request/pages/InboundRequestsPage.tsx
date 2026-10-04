@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import {
@@ -15,7 +17,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { InboundPageHeader } from '@/features/inbound/components/InboundWorkspace'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { InboundRequestDirectory } from '../components/InboundRequestsPage'
 import {
@@ -72,6 +76,7 @@ export default function InboundRequestsPage() {
     ...(createdFrom ? { dateFrom: toOperationalDateTimeStart(createdFrom) } : {}),
     ...(createdTo ? { dateTo: toOperationalDateTimeEnd(createdTo) } : {}),
   })
+  const canCreate = meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_CREATE) ?? false
 
   function confirmDelete() {
     const intent = deleteIntent
@@ -133,77 +138,94 @@ export default function InboundRequestsPage() {
 
   return (
     <>
-      <InboundRequestDirectory
-        items={query.data?.items ?? []}
-        totalCount={query.data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        searchText={searchText}
-        status={status}
-        createdFrom={createdFrom}
-        createdTo={createdTo}
-        statusCounts={query.data?.statusCounts ?? []}
-        isLoading={query.isLoading}
-        isStatsError={query.isError}
-        isFetching={query.isFetching}
-        isError={query.isError}
-        canDelete={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_DELETE) ?? false}
-        canCreate={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_CREATE) ?? false}
-        canSubmit={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_SUBMIT) ?? false}
-        canApprove={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_APPROVE) ?? false}
-        isDeleting={deleteMutation.isPending}
-        isSubmitting={isSubmitting}
-        isApproving={isApproving}
-        isDuplicating={duplicateMutation.isPending}
-        selectedIds={selectedIds}
-        isDeletingMany={deleteManyMutation.isPending}
-        onSearchChange={(value) => {
-          setSearchText(value)
-          setPage(1)
-          setSelectedIds([])
-        }}
-        onStatusChange={(value) => {
-          setStatus(value)
-          setPage(1)
-          setSelectedIds([])
-        }}
-        onCreatedFromChange={(value) => {
-          setCreatedFrom(value)
-          setPage(1)
-          setSelectedIds([])
-        }}
-        onCreatedToChange={(value) => {
-          setCreatedTo(value)
-          setPage(1)
-          setSelectedIds([])
-        }}
-        onPageChange={(value) => {
-          setPage(value)
-          setSelectedIds([])
-        }}
-        onPageSizeChange={(value) => {
-          setPageSize(value)
-          setPage(1)
-        }}
-        onRetry={() => void query.refetch()}
-        onSelectionChange={setSelectedIds}
-        onDelete={(item) => setDeleteIntent({ kind: 'single', item })}
-        onSubmit={(item) => setWorkflowIntent({ action: 'submit', ids: [item.id] })}
-        onApprove={(item) => setWorkflowIntent({ action: 'approve', ids: [item.id] })}
-        onDuplicate={(item) =>
-          duplicateMutation.mutate(item.id, {
-            onSuccess: (response) => {
-              toast.success('Đã sao chép yêu cầu nhập kho thành bản nháp.')
-              router.push(APP_ROUTES.inboundRequestDetail(response.data) as Route)
-            },
-            onError: (error) =>
-              toast.error(error.message || 'Không thể sao chép yêu cầu nhập kho.'),
-          })
-        }
-        onDeleteMany={(ids) => ids.length > 0 && setDeleteIntent({ kind: 'many', ids })}
-        onSubmitMany={(ids) => ids.length > 0 && setWorkflowIntent({ action: 'submit', ids })}
-        onApproveMany={(ids) => ids.length > 0 && setWorkflowIntent({ action: 'approve', ids })}
-      />
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <InboundPageHeader
+          title="Yêu cầu nhập kho"
+          canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
+          canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
+          action={
+            canCreate ? (
+              <Button asChild size="sm" className="shrink-0">
+                <Link href={APP_ROUTES.inboundRequestCreate as Route}>
+                  <Plus aria-hidden="true" />
+                  Tạo yêu cầu nhập kho
+                </Link>
+              </Button>
+            ) : null
+          }
+        />
+        <InboundRequestDirectory
+          items={query.data?.items ?? []}
+          totalCount={query.data?.totalCount ?? 0}
+          page={page}
+          pageSize={pageSize}
+          searchText={searchText}
+          status={status}
+          createdFrom={createdFrom}
+          createdTo={createdTo}
+          statusCounts={query.data?.statusCounts ?? []}
+          isLoading={query.isLoading}
+          isStatsError={query.isError}
+          isFetching={query.isFetching}
+          isError={query.isError}
+          canDelete={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_DELETE) ?? false}
+          canCreate={canCreate}
+          canSubmit={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_SUBMIT) ?? false}
+          canApprove={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_APPROVE) ?? false}
+          isDeleting={deleteMutation.isPending}
+          isSubmitting={isSubmitting}
+          isApproving={isApproving}
+          isDuplicating={duplicateMutation.isPending}
+          selectedIds={selectedIds}
+          isDeletingMany={deleteManyMutation.isPending}
+          onSearchChange={(value) => {
+            setSearchText(value)
+            setPage(1)
+            setSelectedIds([])
+          }}
+          onStatusChange={(value) => {
+            setStatus(value)
+            setPage(1)
+            setSelectedIds([])
+          }}
+          onCreatedFromChange={(value) => {
+            setCreatedFrom(value)
+            setPage(1)
+            setSelectedIds([])
+          }}
+          onCreatedToChange={(value) => {
+            setCreatedTo(value)
+            setPage(1)
+            setSelectedIds([])
+          }}
+          onPageChange={(value) => {
+            setPage(value)
+            setSelectedIds([])
+          }}
+          onPageSizeChange={(value) => {
+            setPageSize(value)
+            setPage(1)
+          }}
+          onRetry={() => void query.refetch()}
+          onSelectionChange={setSelectedIds}
+          onDelete={(item) => setDeleteIntent({ kind: 'single', item })}
+          onSubmit={(item) => setWorkflowIntent({ action: 'submit', ids: [item.id] })}
+          onApprove={(item) => setWorkflowIntent({ action: 'approve', ids: [item.id] })}
+          onDuplicate={(item) =>
+            duplicateMutation.mutate(item.id, {
+              onSuccess: (response) => {
+                toast.success('Đã sao chép yêu cầu nhập kho thành bản nháp.')
+                router.push(APP_ROUTES.inboundRequestDetail(response.data) as Route)
+              },
+              onError: (error) =>
+                toast.error(error.message || 'Không thể sao chép yêu cầu nhập kho.'),
+            })
+          }
+          onDeleteMany={(ids) => ids.length > 0 && setDeleteIntent({ kind: 'many', ids })}
+          onSubmitMany={(ids) => ids.length > 0 && setWorkflowIntent({ action: 'submit', ids })}
+          onApproveMany={(ids) => ids.length > 0 && setWorkflowIntent({ action: 'approve', ids })}
+        />
+      </div>
       <AlertDialog
         open={deleteIntent !== null}
         onOpenChange={(open) => !open && setDeleteIntent(null)}

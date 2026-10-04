@@ -89,7 +89,7 @@ describe('putaway capacity units', () => {
       ).canSubmit
     ).toBe(false)
   })
-  it('lists RackLevel default slot once and excludes staging and inactive slots', () => {
+  it('lists RackLevel default slot once and excludes outbound and inactive slots', () => {
     const racks = zone.racks.map((rack) => ({
       ...rack,
       ...slot,
@@ -108,7 +108,6 @@ describe('putaway capacity units', () => {
             ...rack,
             slots: [
               { ...slot, isOutboundStaging: true },
-              { ...slot, id: 'receiving-hold', isInboundStaging: true },
               { ...slot, id: 'inactive', isActive: false },
             ],
           })),

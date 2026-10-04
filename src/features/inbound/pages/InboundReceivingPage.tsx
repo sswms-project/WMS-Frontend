@@ -6,7 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { P } from '@/config/permissionCodes'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
@@ -44,6 +47,7 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 
 export default function InboundReceivingPage() {
+  const meQuery = useMeQuery()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
@@ -261,7 +265,8 @@ export default function InboundReceivingPage() {
             expectedVersion: receipt.data.version,
           })
         } catch (error) {
-          logger.error(error)
+          if (isApiErrorResponse(error)) logger.warn(formatApiError(error))
+          else logger.error(error)
           toast.error(
             'Phiếu nhận hàng đã được lưu nháp nhưng chưa gửi duyệt. Bạn có thể thử lại từ trang chi tiết.'
           )
@@ -299,7 +304,11 @@ export default function InboundReceivingPage() {
   const isPending = createMutation.isPending || submitMutation.isPending
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader title="Nhập kho" />
+      <InboundPageHeader
+        title="Nhập kho"
+        canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
+        canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
+      />
       <ReceivingTaskStatsCards
         taskStats={query.data?.taskStats ?? null}
         isLoading={query.isFetching}

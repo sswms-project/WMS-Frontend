@@ -3,7 +3,7 @@ import { AcceptInvitationPage } from '@/features/staff/pages'
 
 export const metadata: Metadata = {
   title: 'Chấp nhận lời mời | KOVIA',
-  description: 'Hoàn tất tài khoản từ lời mời tham gia tổ chức KOVIA',
+  description: 'Hoàn tất tài khoản từ lời mời tham gia doanh nghiệp trên KOVIA',
 }
 
 interface PageProps {
