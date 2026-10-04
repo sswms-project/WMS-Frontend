@@ -35,8 +35,13 @@ describe('application navigation visibility', () => {
         const entry = getVisibleNavItems(role, permissions).find(
           (item) => item.label === 'Nhập kho'
         )
-        expect(entry?.href).toBe(APP_ROUTES.inbound)
-        expect(entry?.requiredPermission).toBe(P.GOODS_RECEIPTS_VIEW)
+        const canViewRequests = permissions.includes(P.INBOUND_REQUESTS_VIEW)
+        expect(entry?.href).toBe(canViewRequests ? APP_ROUTES.inboundRequests : APP_ROUTES.inbound)
+        expect(entry?.requiredPermission).toBe(
+          canViewRequests ? P.INBOUND_REQUESTS_VIEW : P.GOODS_RECEIPTS_VIEW
+        )
+        expect(isNavItemActive(APP_ROUTES.goodsReceipts, entry!)).toBe(true)
+        expect(isNavItemActive(APP_ROUTES.inboundPutaway, entry!)).toBe(true)
       }
 
       expect(getVisibleNavItems(role, []).some((item) => item.label === 'Nhập kho')).toBe(false)

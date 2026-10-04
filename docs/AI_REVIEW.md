@@ -110,3 +110,64 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Verification: full suite **233/233** across 57 files; `pnpm typecheck`, `pnpm lint`, `pnpm build` and diff whitespace checks passed.
 - GitNexus pre-change impact and final detection report HIGH because the shared header/tab intentionally participates in the four inbound workspace pages; direct tracing confirmed only navigation/rendering changed. Save payloads, assignments, receipt workflow, route authorization and API contracts are unchanged.
 - No dependency, database connection/write, migration, seed or deployment configuration changed. The user's `screen/huytv` branch remains the working branch; `dev` is the shared integration target, not overwritten or force-pushed.
+
+---
+
+## 2026-10-04 — Put-away operational quantity and unit: Frontend gate
+
+- Role: Codex implementing and self-verifying the operational-unit put-away Frontend gate.
+- State: `READY_FOR_CODEX_REVIEW` (not independent approval or live end-to-end acceptance).
+- The form now sends `enteredQuantity` and `enteredUnitId` unchanged to Backend. Allowed units and original conversion snapshots come from the receipt response; Backend remains authoritative for conversion, remaining quantity, mixed-product rules and capacity enforcement.
+- Default quantities use the original receipt unit when exactly representable. Changing units preserves the physical quantity only when exactly representable; otherwise the input clears and requires correction. No silent quantity rounding is performed.
+- Added base-unit conversion previews, per-item remaining/requested/allocated quantities and `Cất toàn bộ còn lại`. The fill action excludes other valid allocations and visibly falls back to the base unit when a remainder cannot fit the packaging precision.
+- Header metrics count receipt lines instead of adding incompatible product units. Existing version checks, submission/cancellation flows and error refetch behavior remain intact.
+- Ponytail guided reuse of existing form primitives and API flow without new dependencies. Exact scaled arithmetic is confined to the conversion helper to avoid floating-point rounding of stock previews.
+- Verification: focused allocation/conversion tests **16/16**, form interaction tests **3/3**, full suite **247/247** across **58 files**; `pnpm typecheck`, `pnpm lint`, `pnpm build` and `git diff --check` passed.
+- Accessibility/responsive source review covered field labels, nearby errors, live conversion announcements, keyboard-native controls, pending-state disabling and responsive field grids. Live browser viewport/keyboard QA and deployed API end-to-end acceptance remain for the following gate.
+- GitNexus pre-change impact warned of HIGH blast radius for shared allocation/types; final detection reports Medium across the expected put-away form/page flows. New untracked helper/test files were reviewed directly because they are not in the existing index.
+- No database connection/write, migration, seed, dependency, deployment configuration, commit or push was performed. Backend gate changes and both existing working branches are preserved.
+
+### 2026-10-04 — UI/UX gate: implemented, live acceptance pending
+
+- Role: Codex implementing narrowly scoped UX refinements and running isolated interaction QA; this is self-verification, not independent review.
+- Added the snapshot conversion explanation next to the unit selector (`1 Thùng = 24 Lon`), associated with the control through `aria-describedby`.
+- Pending actions now show `Đang xử lý…`, a reused Spinner and `aria-busy`. Spinner animation is disabled under reduced motion. Action buttons stack on narrow viewports; allocation fields have zero minimum width to allow their grid columns to shrink.
+- Ponytail/shadcn guided reuse of existing Button, Spinner and FieldDescription rather than adding dependencies or bespoke loading/field components.
+- Added keyboard Tab/Enter coverage, exact-representation correction/recovery, split-row add/remove preservation and unavailable-unit metadata tests. These use React Testing Library/jsdom and do not prove real-browser layout or native-select behavior.
+- Verification: form interaction tests **7/7**; full suite **251/251** across **58 files**; typecheck, full lint, production build and diff whitespace checks passed. The final test-only addition was also linted separately.
+- GitNexus impact for PutawayForm is LOW (one direct page caller); final detection remains Medium across the two expected put-away form/page execution flows. The untracked test fixture is not indexed and was traced directly.
+- **Acceptance still pending:** real-browser desktop/tablet/mobile and 200% zoom checks, native location-picker keyboard/focus checks, and FE-to-API end-to-end put-away verification. Both browser automation entry points failed initialization with `failed to write kernel assets: The system cannot find the path specified. (os error 3)`. No claim of completed live QA is made.
+- No Backend source edits, database connection/write, migration, seed, dependency, configuration change, commit or push in this UI/UX round. No files were deleted.
+
+### 2026-10-04 — Put-away quantity/UOM and UI: review round 1
+
+- Role: Codex review-only self-review; not independent approval.
+- State: `NEEDS_CLAUDE_FIX`.
+- **PUTAWAY-20261004-H1 / High / open / pre-existing:** `InboundPutawayDetailPage.tsx:99` creates a new command ID for each submission. Error refetch at lines 110–111 and `keepDirtyValues` at line 76 retain the allocation while adopting the server's new version. A committed partial operation whose response is lost can therefore be posted again on manual retry. Preserve the uncertain command's original ID and immutable payload, reconcile its outcome before allowing another operation, and cover this with a page/handler regression. Confirmed against `HEAD`: this defect predates the new unit workflow.
+- Database-free simulation of the actual submit function and allocation helper, with mocked commit/network responses, produced two different command IDs and versions `v1`/`v2` for the same 4-carton allocation: recorded total 192 base units versus intended 96. This does not claim real API/DB reproduction.
+- **PUTAWAY-20261004-M1 / Medium / open / introduced:** `putaway-units.ts:40` converts exact BigInt hundredths back to a JS number without proving the resulting quantity preserves those hundredths. Direct execution of the current helper with quantity `90071990000`, factor `1000.000001`, entered precision 0 and base precision 2 returns `90071990090071.98` instead of exact `90071990090071.99`, even though cents are below `MAX_SAFE_INTEGER` and the input fits the request limits. This affects conversion previews and remaining-allocation validation; Backend decimal checks still protect stock posting. Reject values that cannot round-trip exactly through the UI representation or retain exact hundredths through comparisons, and add the boundary regression without silent rounding.
+- Focused Frontend allocation/conversion and form interaction tests passed **23/23** across two files. Whitespace checks passed. The prior full suite/typecheck/lint/build results are recorded above, not rerun in this review.
+- GitNexus detected Medium blast radius across the expected form/page flows. Missing FTS indexes limit keyword search; current source and diffs corroborated the findings and covered untracked helper/tests directly.
+- Real-browser responsive, native-picker keyboard/focus and FE/API end-to-end acceptance remain pending; the previous browser runtime initialization failure has not been resolved. No new live-UI pass is claimed.
+- Only this review record was appended. No application source, database connection/write, migration, seed, dependency, configuration, commit or push was performed.
+
+### 2026-10-04 — Put-away review findings: safety fixes
+
+- Role: Codex implementing the user's authorized findings fixes and performing self-verification.
+- State: `READY_FOR_FINAL_REVIEW` (not independent approval or live end-to-end acceptance).
+- **PUTAWAY-20261004-H1 / resolved:** Capture receipt ID, original version, command ID and cloned allocation lines before the first request. Uncertain network/5xx outcomes retain this exact command; retry bypasses validation against refreshed remaining stock and cannot create a fresh command. Definitive initial 400/401/403/404/409/422 rejections release the snapshot for correction. A conflict after an uncertain response does not release it, because it cannot prove whether the original operation committed.
+- Uncertain submissions lock product/unit/quantity/location edits, row addition/removal and cancellation, while enabling `Gửi lại an toàn`. A synchronous ref guard blocks rapid duplicate submissions. Back navigation from the form is blocked while locked; a native unload warning protects against accidental reload/tab close. Unresolved outcomes explicitly instruct staff not to move the goods again and to contact the manager for reconciliation. The snapshot is scoped to the mounted page, not persisted across forced navigation/browser restart; the warning is not a durable recovery mechanism.
+- **PUTAWAY-20261004-M1 / resolved:** Exact BigInt hundredths must round-trip through both displayed decimal precision and allocation hundredths before returning a numeric preview. Fill/default input also verifies that converting micro-units back to a number preserves the exact input. Unrepresentable values are rejected rather than rounded, without dependencies or changes to the API.
+- Regression coverage includes committed-response-loss retry with refreshed zero remaining stock, original receipt/version preservation, unchanged payload despite altered form values, initial definitive rejection followed by a corrected new command, uncertain retry conflict, rapid concurrent submission, unload-warning registration/cleanup, locked UI with an enabled retry action, and the reported numerical boundary plus an adjacent representable value.
+- Final verification: full Frontend suite **258/258** across **59 files**; `pnpm typecheck`, `pnpm lint`, production build and `git diff --check` passed. One earlier full-suite run while build/typecheck/lint ran concurrently hit the existing 5-second timeout in `ProductInventoryPanels.test.tsx`; the full suite passed when rerun alone. No timeout/test outside this task was modified.
+- Backend focused suite **37/37** passed from the existing Release assembly (`--no-build`); existing same-command replay/version/capacity/normalization protection is reused without Backend application edits in this fix pass.
+- Ponytail/React/shadcn guided local refs, existing form/error/button primitives and no new dependency. GitNexus pre-edit impact was LOW for the page/form; new untracked conversion helpers were absent from the index and their callers were traced directly. Final detection remains Medium across the expected put-away form/page flows.
+- Browser viewport/native-picker and deployed API end-to-end acceptance remain pending as recorded above. No application startup, database connection/write, migration, seed, configuration change, commit, push or deletion was performed.
+
+### 2026-10-04 — Put-away units: pre-PR verification after dev sync
+
+- Role: Codex final self-review and delivery preparation; not independent review or live acceptance.
+- Reviewed prior H1/M1 fixes and regression tests: uncertain retries retain the original command/version/payload; numeric previews reject quantities that cannot round-trip exactly. No remaining blocking defect identified in this diff; the unresolved snapshot remains page-local as documented above.
+- Sidebar `Nhập kho` now prefers `/inbound-requests` when authorized, retaining the receipt route for receipt-only users and active highlighting across the inbound workspace.
+- Branch includes `origin/dev` at `ed35f70`; local tracked/untracked work matches the safety stash after sync. Full suite: **265/265 tests across 62 files**. Typecheck, full lint, production build and whitespace checks passed. GitNexus reports Medium scope in the expected put-away flows; sidebar regression tests pass.
+- No migration, dependency, deployment configuration or database changes. Deploy the paired Backend first. Live browser responsive/accessibility and API end-to-end QA remain pending; automated fixtures/mocks do not establish that acceptance.

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
@@ -14,7 +14,7 @@ import {
 } from '@/components/operations/OperationalState'
 import { useWarehouseLayoutQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { logger } from '@/lib/logger'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { CancelPutawayDialog, PutawayForm, type SlotOption } from '../components/PutawayDetailPage'
 import {
@@ -30,10 +30,16 @@ import {
   type PutawayFormValues,
 } from '../schemas/inbound.schema'
 import { getPutawayAllocationState } from '../schemas/putaway-allocation.schema'
-import type { GoodsReceiptDetail } from '../types/inbound.types'
+import type { GoodsReceiptDetail, PutawayRequest } from '../types/inbound.types'
 import { getPutawaySlotOptions } from '../utils/putaway-slot-options'
+import { getPutawayRemainingInput } from '../utils/putaway-units'
 
-const EMPTY_ALLOCATION = { goodsReceiptItemId: '', slotId: '', quantity: 1 }
+const EMPTY_ALLOCATION = {
+  goodsReceiptItemId: '',
+  slotId: '',
+  enteredQuantity: 1,
+  enteredUnitId: '',
+}
 
 function buildInitialAllocations(receipt: GoodsReceiptDetail): PutawayFormValues['lines'] {
   const lines = receipt.items
@@ -41,7 +47,10 @@ function buildInitialAllocations(receipt: GoodsReceiptDetail): PutawayFormValues
     .map((item) => ({
       goodsReceiptItemId: item.id,
       slotId: '',
-      quantity: item.remainingPutAwayQuantity,
+      ...(getPutawayRemainingInput(item, item.remainingPutAwayQuantity) ?? {
+        enteredQuantity: item.remainingPutAwayQuantity,
+        enteredUnitId: '',
+      }),
     }))
   return lines.length > 0 ? lines : [EMPTY_ALLOCATION]
 }
@@ -49,6 +58,9 @@ function buildInitialAllocations(receipt: GoodsReceiptDetail): PutawayFormValues
 export default function InboundPutawayDetailPage({ receiptId }: { readonly receiptId: string }) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [hasUncertainSubmission, setHasUncertainSubmission] = useState(false)
+  const pendingRequest = useRef<{ receiptId: string; request: PutawayRequest } | null>(null)
+  const submitting = useRef(false)
   const meQuery = useMeQuery()
   const receiptQuery = useGoodsReceiptQuery(receiptId)
   const layoutQuery = useWarehouseLayoutQuery(
@@ -73,33 +85,63 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
   })
   const slots: SlotOption[] = getPutawaySlotOptions(layoutQuery.data ?? [])
 
+  useEffect(() => {
+    if (!hasUncertainSubmission && !mutation.isPending) return
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload)
+  }, [hasUncertainSubmission, mutation.isPending])
+
   async function submit(values: PutawayFormValues) {
+    if (submitting.current) return
     const receipt = receiptQuery.data
     if (!receipt) return
-    const allocation = getPutawayAllocationState(values.lines, receipt.items, slots)
-    if (!allocation.canSubmit) {
-      toast.error('Phân bổ chưa hợp lệ. Vui lòng kiểm tra lỗi tại từng dòng.')
-      return
-    }
-    try {
-      await mutation.mutateAsync({
+    if (!pendingRequest.current) {
+      const allocation = getPutawayAllocationState(values.lines, receipt.items, slots)
+      if (!allocation.canSubmit) {
+        toast.error('Phân bổ chưa hợp lệ. Vui lòng kiểm tra lỗi tại từng dòng.')
+        return
+      }
+      pendingRequest.current = {
         receiptId,
         request: {
-          lines: values.lines,
+          lines: values.lines.map((line) => ({ ...line })),
           expectedVersion: receipt.version,
           commandId: crypto.randomUUID(),
         },
-      })
+      }
+    }
+    // A lost response is not a failed write. Retry the exact command before validating new stock.
+    submitting.current = true
+    const command = pendingRequest.current
+    try {
+      await mutation.mutateAsync(command)
+      pendingRequest.current = null
+      setHasUncertainSubmission(false)
       toast.success('Đã ghi nhận cất hàng vào vị trí lưu trữ.')
-      router.push(APP_ROUTES.goodsReceiptDetail(receiptId) as Route)
+      router.push(APP_ROUTES.goodsReceiptDetail(command.receiptId) as Route)
     } catch (error) {
       logger.warn(getApiErrorMessage(error))
+      const rejected =
+        !hasUncertainSubmission &&
+        isApiErrorResponse(error) &&
+        [400, 401, 403, 404, 409, 422].includes(error.statusCode)
+      if (rejected) pendingRequest.current = null
+      else setHasUncertainSubmission(true)
+      const message = rejected
+        ? getApiErrorMessage(error, 'Không thể cất hàng. Vui lòng tải lại dữ liệu.')
+        : 'Chưa xác định kết quả cất hàng. Không cất lại hàng hoặc rời màn hình. Bấm Gửi lại an toàn để kiểm tra đúng thao tác ban đầu; nếu vẫn lỗi, liên hệ quản lý để đối soát.'
       form.setError('root.server', {
-        message: getApiErrorMessage(error, 'Không thể cất hàng. Vui lòng tải lại dữ liệu.'),
+        message,
       })
-      toast.error(getApiErrorMessage(error))
+      toast.error(message)
       void receiptQuery.refetch()
       void layoutQuery.refetch()
+    } finally {
+      submitting.current = false
     }
   }
 
@@ -166,6 +208,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
         fields={fieldArray.fields}
         slots={slots}
         isPending={mutation.isPending || cancelMutation.isPending || reconcileMutation.isPending}
+        hasUncertainSubmission={hasUncertainSubmission}
         canCancel={canCancel}
         cancelLabel={
           receipt.putAwayTaskRequiresReconciliation ? 'Hoàn tất đối soát hủy' : 'Hủy phần còn lại'
@@ -173,7 +216,9 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
         onCancel={() => setCancelOpen(true)}
         onAdd={() => fieldArray.append(EMPTY_ALLOCATION)}
         onRemove={fieldArray.remove}
-        onSubmit={() => void form.handleSubmit(submit)()}
+        onSubmit={() =>
+          hasUncertainSubmission ? void submit(form.getValues()) : void form.handleSubmit(submit)()
+        }
       />
       <CancelPutawayDialog
         open={cancelOpen}

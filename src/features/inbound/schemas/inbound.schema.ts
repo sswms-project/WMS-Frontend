@@ -62,10 +62,12 @@ export const goodsReceiptSchema = z.object({
 export const putawayLineSchema = z.object({
   goodsReceiptItemId: dotNetGuidSchema('Vui lòng chọn sản phẩm thuộc phiếu nhận hàng.'),
   slotId: dotNetGuidSchema('Vui lòng chọn vị trí lưu trữ.'),
-  quantity: z
+  enteredUnitId: dotNetGuidSchema('Vui lòng chọn đơn vị cất hàng.'),
+  enteredQuantity: z
     .number({ error: 'Vui lòng nhập số lượng hợp lệ.' })
     .positive('Số lượng cất phải lớn hơn 0.')
-    .multipleOf(0.01, 'Số lượng chỉ được có tối đa hai chữ số thập phân.'),
+    .lt(1_000_000_000_000, 'Số lượng vượt giới hạn cho phép.')
+    .multipleOf(0.000001, 'Số lượng chỉ được có tối đa sáu chữ số thập phân.'),
 })
 
 export const putawaySchema = z
