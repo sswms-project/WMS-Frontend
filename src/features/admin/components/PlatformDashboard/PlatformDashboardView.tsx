@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Activity,
   Building2,
@@ -7,12 +9,18 @@ import {
   CreditCard,
   RefreshCw,
   Users,
-  WalletCards,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { cn } from '@/lib/utils'
 import type { PlatformDashboardResponse } from '../../types/admin.types'
 import {
@@ -27,6 +35,18 @@ interface PlatformDashboardViewProps {
   readonly isError: boolean
   readonly isFetching: boolean
   readonly onRetry: () => void
+}
+
+const revenueChartConfig = {
+  revenue: { label: 'Doanh thu', color: 'var(--chart-1)' },
+} satisfies ChartConfig
+
+function formatCompactVnd(value: number) {
+  const trim = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',')
+  if (value >= 1_000_000_000) return `${trim(value / 1_000_000_000)} tỷ`
+  if (value >= 1_000_000) return `${trim(value / 1_000_000)}tr`
+  if (value >= 1_000) return `${trim(value / 1_000)}k`
+  return String(value)
 }
 
 function HealthIcon({ status }: { readonly status: string }) {
@@ -80,11 +100,6 @@ export function PlatformDashboardView({
     { label: 'Tổng tenant', value: data.tenantSummary.total, icon: Building2 },
     { label: 'Tenant hoạt động', value: data.tenantSummary.active, icon: Activity },
     { label: 'Đăng ký hiệu lực', value: data.subscriptionSummary.active, icon: CreditCard },
-    {
-      label: 'Doanh thu hoàn tất',
-      value: formatAdminCurrency(data.revenueSummary.totalCompleted),
-      icon: WalletCards,
-    },
   ]
   if (data.userSummary) {
     metrics.splice(2, 0, {
@@ -94,10 +109,14 @@ export function PlatformDashboardView({
     })
   }
   const maxPlanCount = Math.max(...data.planDistribution.map((item) => item.tenantCount), 1)
-  const revenueTrend = data.revenueTrend ?? []
-  const maxTrendRevenue = Math.max(...revenueTrend.map((point) => point.revenue), 1)
   const recentTenants = data.recentTenants
-  const recentPayments = data.recentPayments
+  const revenueTrend = data.revenueTrend ?? []
+  const revenueChartData = revenueTrend.map((point) => ({
+    label: `${String(point.month).padStart(2, '0')}/${String(point.year).slice(-2)}`,
+    revenue: point.revenue,
+    paymentCount: point.paymentCount,
+  }))
+  const totalTrendRevenue = revenueTrend.reduce((sum, point) => sum + point.revenue, 0)
 
   return (
     <div className="w-full min-w-0 space-y-5">
@@ -244,114 +263,97 @@ export function PlatformDashboardView({
               <dd className="mt-1 text-lg font-semibold">{data.subscriptionSummary.cancelled}</dd>
             </div>
           </dl>
-          <p className="text-muted-foreground mt-4 text-xs">
-            Tháng này: {formatAdminCurrency(data.revenueSummary.thisMonthCompleted)} doanh thu đã
-            hoàn tất.
-          </p>
         </section>
       </div>
 
       {data.revenueTrend ? (
         <section className="bg-card border p-4" aria-labelledby="revenue-trend-title">
-          <h2 id="revenue-trend-title" className="text-sm font-semibold">
-            Doanh thu 12 tháng gần nhất
-          </h2>
-          {revenueTrend.length === 0 ? (
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 id="revenue-trend-title" className="text-sm font-semibold">
+                Doanh thu 12 tháng gần nhất
+              </h2>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Tổng cộng {formatAdminCurrency(totalTrendRevenue)}
+              </p>
+            </div>
+          </div>
+          {revenueChartData.length === 0 ? (
             <p className="text-muted-foreground py-10 text-center text-sm">
               Chưa có doanh thu hoàn tất.
             </p>
           ) : (
-            <ol className="mt-4 grid grid-cols-6 gap-3 sm:grid-cols-12">
-              {revenueTrend.map((point) => (
-                <li
-                  key={`${point.year}-${point.month}`}
-                  className="flex flex-col items-center gap-2"
-                  title={`${formatAdminCurrency(point.revenue)} · ${point.paymentCount} giao dịch`}
-                >
-                  <div className="bg-muted flex h-28 w-full items-end overflow-hidden">
-                    <div
-                      className="bg-chart-1 w-full"
-                      style={{ height: `${(point.revenue / maxTrendRevenue) * 100}%` }}
+            <ChartContainer
+              config={revenueChartConfig}
+              className="mt-4 aspect-auto h-72 w-full"
+              role="img"
+              aria-label={`Biểu đồ cột doanh thu ${revenueChartData.length} tháng gần nhất`}
+            >
+              <BarChart data={revenueChartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={52}
+                  tickFormatter={formatCompactVnd}
+                />
+                <ChartTooltip
+                  cursor={{ fillOpacity: 0.4 }}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value, _name, item) => (
+                        <div className="grid w-full gap-1">
+                          <div className="flex justify-between gap-4">
+                            <span className="text-muted-foreground">Doanh thu</span>
+                            <span className="font-medium tabular-nums">
+                              {formatAdminCurrency(Number(value))}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <span className="text-muted-foreground">Giao dịch</span>
+                            <span className="font-medium tabular-nums">
+                              {item.payload.paymentCount}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     />
-                  </div>
-                  <span className="text-muted-foreground text-xs tabular-nums">
-                    {String(point.month).padStart(2, '0')}/{String(point.year).slice(-2)}
-                  </span>
-                </li>
-              ))}
-            </ol>
+                  }
+                />
+                <Bar dataKey="revenue" fill="var(--color-revenue)" maxBarSize={36} />
+              </BarChart>
+            </ChartContainer>
           )}
         </section>
       ) : null}
 
-      {recentTenants || recentPayments ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {recentTenants ? (
-            <section className="bg-card border p-4" aria-labelledby="recent-tenants-title">
-              <h2 id="recent-tenants-title" className="text-sm font-semibold">
-                Tenant đăng ký gần đây
-              </h2>
-              {recentTenants.length === 0 ? (
-                <p className="text-muted-foreground py-10 text-center text-sm">
-                  Chưa có tenant nào.
-                </p>
-              ) : (
-                <ul className="mt-3 divide-y">
-                  {recentTenants.map((tenant) => (
-                    <li
-                      key={tenant.tenantId}
-                      className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{tenant.tenantName}</p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {tenant.email} · {formatAdminDateTime(tenant.createdAt)}
-                        </p>
-                      </div>
-                      <Badge variant="outline">{formatTenantStatusText(tenant.status)}</Badge>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ) : null}
-
-          {recentPayments ? (
-            <section className="bg-card border p-4" aria-labelledby="recent-payments-title">
-              <h2 id="recent-payments-title" className="text-sm font-semibold">
-                Thanh toán gần đây
-              </h2>
-              {recentPayments.length === 0 ? (
-                <p className="text-muted-foreground py-10 text-center text-sm">
-                  Chưa có thanh toán hoàn tất.
-                </p>
-              ) : (
-                <ul className="mt-3 divide-y">
-                  {recentPayments.map((payment) => (
-                    <li
-                      key={payment.paymentId}
-                      className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {payment.tenantName ?? payment.invoiceNumber}
-                        </p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {payment.invoiceNumber}
-                          {payment.planName ? ` · ${payment.planName}` : ''} ·{' '}
-                          {formatAdminDateTime(payment.paidAt)}
-                        </p>
-                      </div>
-                      <strong className="text-sm tabular-nums">
-                        {formatAdminCurrency(payment.amount)}
-                      </strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ) : null}
-        </div>
+      {recentTenants ? (
+        <section className="bg-card border p-4" aria-labelledby="recent-tenants-title">
+          <h2 id="recent-tenants-title" className="text-sm font-semibold">
+            Tenant đăng ký gần đây
+          </h2>
+          {recentTenants.length === 0 ? (
+            <p className="text-muted-foreground py-10 text-center text-sm">Chưa có tenant nào.</p>
+          ) : (
+            <ul className="mt-3 divide-y">
+              {recentTenants.map((tenant) => (
+                <li
+                  key={tenant.tenantId}
+                  className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{tenant.tenantName}</p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {tenant.email} · {formatAdminDateTime(tenant.createdAt)}
+                    </p>
+                  </div>
+                  <Badge variant="outline">{formatTenantStatusText(tenant.status)}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       ) : null}
     </div>
   )
