@@ -7,6 +7,7 @@ import {
   MailPlus,
   RefreshCw,
   UserRoundSearch,
+  UserRoundX,
   Users,
   Warehouse,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
+  FormerStaffPanel,
   StaffAccountStatusDialog,
   StaffInvitation,
   InvitationManagementPanel,
@@ -70,6 +72,7 @@ const warehouseScopeQuery: WarehouseAssignmentQuery = {
 const STAFF_PAGE_VIEWS = {
   directory: 'directory',
   invitations: 'invitations',
+  former: 'former',
 } as const
 
 type StaffPageView = (typeof STAFF_PAGE_VIEWS)[keyof typeof STAFF_PAGE_VIEWS]
@@ -79,7 +82,11 @@ function isStaffDirectoryKind(value: string): value is StaffDirectoryKind {
 }
 
 function isStaffPageView(value: string): value is StaffPageView {
-  return value === STAFF_PAGE_VIEWS.directory || value === STAFF_PAGE_VIEWS.invitations
+  return (
+    value === STAFF_PAGE_VIEWS.directory ||
+    value === STAFF_PAGE_VIEWS.invitations ||
+    value === STAFF_PAGE_VIEWS.former
+  )
 }
 
 export function StaffDirectoryPage() {
@@ -88,6 +95,7 @@ export function StaffDirectoryPage() {
   const meQuery = useMeQuery()
   const permissions = new Set(meQuery.data?.permissions ?? [])
   const canInvite = permissions.has(P.STAFF_INVITE)
+  const canViewFormerStaff = permissions.has(P.STAFF_TERMINATE)
   const [kind, setKind] = useState<StaffDirectoryKind>(
     isTenantOwner ? STAFF_DIRECTORY_KINDS.managers : STAFF_DIRECTORY_KINDS.staff
   )
@@ -276,6 +284,15 @@ export function StaffDirectoryPage() {
             <Users className="size-4" aria-hidden="true" />
             Nhân sự
           </TabsTrigger>
+          {canViewFormerStaff && (
+            <TabsTrigger
+              value={STAFF_PAGE_VIEWS.former}
+              className="h-9 flex-none shrink-0 touch-manipulation rounded-sm px-3 text-xs"
+            >
+              <UserRoundX className="size-4" aria-hidden="true" />
+              Đã nghỉ việc
+            </TabsTrigger>
+          )}
           {canInvite && (
             <TabsTrigger
               value={STAFF_PAGE_VIEWS.invitations}
@@ -442,6 +459,18 @@ export function StaffDirectoryPage() {
           </OperationalListPanel>
         </TabsContent>
 
+        {canViewFormerStaff && (
+          <TabsContent
+            value={STAFF_PAGE_VIEWS.former}
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+          >
+            <FormerStaffPanel
+              enabled={activeView === STAFF_PAGE_VIEWS.former}
+              canEditHistory={canViewFormerStaff}
+            />
+          </TabsContent>
+        )}
+
         {canInvite && (
           <TabsContent
             value={STAFF_PAGE_VIEWS.invitations}
@@ -479,6 +508,7 @@ export function StaffDirectoryPage() {
         person={detailsQuery.data}
         isLoading={detailsQuery.isLoading}
         isError={detailsQuery.isError}
+        canEditEmploymentHistory={permissions.has(P.STAFF_TERMINATE)}
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
 

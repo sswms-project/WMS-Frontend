@@ -78,6 +78,10 @@ export const API_ENDPOINTS = {
     managers: '/managers',
     list: '/staff',
     detail: (userId: string) => `/staff/${userId}`,
+    former: '/staff/former',
+    employmentHistory: (userId: string) => `/staff/${userId}/employment-history`,
+    employmentPeriod: (userId: string, periodId: string) =>
+      `/staff/${userId}/employment-history/${periodId}`,
     terminate: (userId: string) => `/staff/${userId}/terminate`,
     activate: (userId: string) => `/staff/${userId}/activate`,
     deactivate: (userId: string) => `/staff/${userId}/deactivate`,
