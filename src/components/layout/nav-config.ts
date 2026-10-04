@@ -406,11 +406,7 @@ export function getVisibleNavSections(
       items: section.items
         .map((item) => {
           // The merged workspace must open a route the user is actually allowed to view.
-          if (
-            item.href === APP_ROUTES.inbound &&
-            !permissions.has(P.GOODS_RECEIPTS_VIEW) &&
-            permissions.has(P.INBOUND_REQUESTS_VIEW)
-          ) {
+          if (item.href === APP_ROUTES.inbound && permissions.has(P.INBOUND_REQUESTS_VIEW)) {
             return {
               ...item,
               href: APP_ROUTES.inboundRequests,

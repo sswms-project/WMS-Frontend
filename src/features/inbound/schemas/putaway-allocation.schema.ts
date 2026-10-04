@@ -1,6 +1,7 @@
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptItem } from '../types/inbound.types'
 import { putawayLineSchema, type PutawayFormValues } from './inbound.schema'
+import { getPutawayBaseQuantity, getPutawayRemainingInput } from '../utils/putaway-units'
 
 type AllocationField = keyof PutawayFormValues['lines'][number]
 interface AllocationSlot {
@@ -27,7 +28,10 @@ export function getPutawayAllocationState(
   const rows = lines.map((line) => {
     const item = itemById.get(line.goodsReceiptItemId)
     const slot = slotById.get(line.slotId)
-    const quantity = Math.round(line.quantity * 100)
+    const unit = item?.allowedUnits?.find((candidate) => candidate.unitId === line.enteredUnitId)
+    const baseUnit = item?.allowedUnits?.find((candidate) => candidate.unitId === item.baseUnitId)
+    const baseQuantity = getPutawayBaseQuantity(line.enteredQuantity, unit, baseUnit)
+    const quantity = baseQuantity === null ? 0 : Math.round(baseQuantity * 100)
     const itemAvailable =
       Math.max(
         0,
@@ -44,10 +48,20 @@ export function getPutawayAllocationState(
           context.addIssue({ code: 'custom', path: [field], message })
         if (!item || !item.inboundRequestItemId)
           error('goodsReceiptItemId', 'Sản phẩm không thuộc dòng yêu cầu nhập kho của phiếu này.')
-        else if (value.quantity > itemAvailable)
+        if (!unit || !baseUnit)
           error(
-            'quantity',
-            `${item.productName}: dòng này tối đa ${formatQuantity(itemAvailable)}; vượt ${formatQuantity((quantity - Math.round(itemAvailable * 100)) / 100)}. Giới hạn riêng của dòng hàng là ${formatQuantity(item.remainingPutAwayQuantity)}.`
+            'enteredUnitId',
+            'Đơn vị cất không khả dụng. Vui lòng tải lại dữ liệu hoặc chọn đơn vị khác.'
+          )
+        else if (baseQuantity === null)
+          error(
+            'enteredQuantity',
+            'Số lượng không phù hợp độ chính xác đơn vị hoặc không thể quy đổi chính xác. Hãy đổi đơn vị cất.'
+          )
+        else if (baseQuantity > itemAvailable)
+          error(
+            'enteredQuantity',
+            `Dòng này tối đa ${formatQuantity(itemAvailable)} ${item?.baseUnitName}; vượt ${formatQuantity((quantity - Math.round(itemAvailable * 100)) / 100)} ${item?.baseUnitName}.`
           )
         if (!slot) error('slotId', 'Vui lòng chọn vị trí lưu trữ còn khả dụng.')
         else {
@@ -82,8 +96,10 @@ export function getPutawayAllocationState(
     return {
       errors,
       itemAvailable,
+      baseQuantity,
+      unit,
       // Capacity is in its own UOM; only BE can validate the projected converted occupancy.
-      maxQuantity: itemAvailable,
+      maxQuantity: unit ? itemAvailable / unit.conversionFactor : 0,
     }
   })
 
@@ -94,4 +110,26 @@ export function getPutawayAllocationState(
     totalAssigned: totalAssigned / 100,
     canSubmit: rows.length > 0 && rows.every((row) => Object.keys(row.errors).length === 0),
   }
+}
+
+export function getPutawayFillRemaining(
+  lines: PutawayFormValues['lines'],
+  index: number,
+  items: readonly GoodsReceiptItem[],
+  slots: readonly AllocationSlot[]
+) {
+  const line = lines[index]
+  const item = items.find((candidate) => candidate.id === line?.goodsReceiptItemId)
+  if (!line || !item) return null
+  const others = getPutawayAllocationState(
+    lines.filter((_, candidate) => candidate !== index),
+    items,
+    slots
+  )
+  const remaining =
+    Math.max(
+      0,
+      Math.round(item.remainingPutAwayQuantity * 100) - (others.assignedByItem.get(item.id) ?? 0)
+    ) / 100
+  return remaining > 0 ? getPutawayRemainingInput(item, remaining, line.enteredUnitId) : null
 }
