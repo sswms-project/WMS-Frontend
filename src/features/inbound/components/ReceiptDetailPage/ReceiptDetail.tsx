@@ -14,7 +14,9 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type {
   GoodsReceiptAction,
@@ -54,6 +56,12 @@ export function ReceiptDetail({
   const [isRejectOpen, setIsRejectOpen] = useState(false)
 
   const hasPutAwayDetails = receipt.items.some((item) => item.putAwayDetails.length > 0)
+  const usableQuantity = receipt.items.reduce((sum, item) => sum + item.usableQuantity, 0)
+  const putAwayQuantity = receipt.items.reduce((sum, item) => sum + item.putAwayQuantity, 0)
+  const putAwayPercent =
+    usableQuantity > 0 ? Math.min(100, (putAwayQuantity / usableQuantity) * 100) : 0
+  const showPutAwayProgress =
+    usableQuantity > 0 && (hasPutAwayDetails || receipt.status === 'Approved')
 
   async function confirm() {
     if (!confirmationAction) return
@@ -136,6 +144,27 @@ export function ReceiptDetail({
       <div className="mx-auto flex min-h-0 w-full max-w-[1180px] flex-1 flex-col gap-4 px-4 py-4 lg:px-8">
         <ReceiptOverview receipt={receipt} />
 
+        {showPutAwayProgress ? (
+          <section
+            className="bg-card flex flex-col gap-2 border px-4 py-3"
+            aria-label="Tiến độ cất hàng"
+          >
+            <div className="flex items-baseline justify-between gap-2 text-sm">
+              <h2 className="font-medium">Tiến độ cất hàng</h2>
+              <p className="text-muted-foreground text-xs tabular-nums">
+                {formatQuantity(putAwayQuantity)} / {formatQuantity(usableQuantity)}
+                {putAwayQuantity < usableQuantity
+                  ? ` · còn ${formatQuantity(usableQuantity - putAwayQuantity)}`
+                  : ' · đã cất đủ'}
+              </p>
+            </div>
+            <Progress
+              value={putAwayPercent}
+              aria-label={`Đã cất ${Math.round(putAwayPercent)}% số lượng dùng được`}
+            />
+          </section>
+        ) : null}
+
         <Tabs defaultValue="items" className="flex min-h-0 flex-1 flex-col">
           <TabsList variant="line" className="shrink-0">
             <TabsTrigger value="items">
@@ -144,9 +173,7 @@ export function ReceiptDetail({
                 {receipt.items.length}
               </span>
             </TabsTrigger>
-            {hasPutAwayDetails ? (
-              <TabsTrigger value="putaway">Chi tiết cất hàng</TabsTrigger>
-            ) : null}
+            {hasPutAwayDetails ? <TabsTrigger value="putaway">Lịch sử cất hàng</TabsTrigger> : null}
           </TabsList>
 
           <div className="bg-card min-h-0 flex-1 border">

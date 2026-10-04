@@ -146,6 +146,8 @@ export interface PutAwayDetail {
   warehouseId: string
   slotId: string
   slotCode: string
+  rackCode: string
+  isSystemDefaultSlot: boolean
   lotId: string | null
   lotNumber: string | null
   qualityStatus: string
