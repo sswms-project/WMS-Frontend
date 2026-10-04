@@ -1,16 +1,6 @@
 'use client'
 
-import {
-  Eye,
-  ListFilter,
-  MoreHorizontal,
-  PackageMinus,
-  Plus,
-  RefreshCw,
-  Search,
-  Send,
-  Undo2,
-} from 'lucide-react'
+import { Eye, ListFilter, MoreHorizontal, Plus, RefreshCw, Search, Send, Undo2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
@@ -204,15 +194,13 @@ export function StockIssueRequestDirectory({
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
-      <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
-            <PackageMinus aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-primary text-xs font-medium">Xuất kho</p>
-            <h1 className="mt-0.5 text-xl font-semibold">Yêu cầu xuất kho</h1>
-          </div>
+      <header className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="sr-only">Yêu cầu xuất kho</h1>
+        <div className="min-w-0 flex-1">
+          <StockIssueWorkspaceNavigation
+            currentView="stockIssueRequests"
+            permissions={permissions}
+          />
         </div>
         {permissions.includes(P.STOCK_ISSUE_REQUESTS_CREATE) ? (
           <Button asChild className="w-full sm:w-auto">
@@ -223,8 +211,6 @@ export function StockIssueRequestDirectory({
           </Button>
         ) : null}
       </header>
-
-      <StockIssueWorkspaceNavigation currentView="stockIssueRequests" permissions={permissions} />
 
       <OperationalListPanel aria-labelledby="stock-issue-request-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">

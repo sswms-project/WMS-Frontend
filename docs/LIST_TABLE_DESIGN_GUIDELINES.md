@@ -56,6 +56,10 @@ Use `OperationalListPanel` from `src/components/operations/OperationalListPanel.
 
 ## Table behavior
 
+- The shared `Table` uses a native 6px gray rounded scrollbar in Chromium/WebKit and a thin native scrollbar fallback elsewhere. Do not add synchronized duplicate scrollbars.
+- `OperationalListPanel` gives direct tables and one-level responsive table wrappers the full remaining body height. The horizontal scrollbar stays above pagination even with few rows; wrappers must not contain toolbars or pagination.
+- Keep the header and rows in the same scroll container. The first checkbox column stays pinned on operational lists; search, filters and pagination remain outside the scrolling body.
+
 - Use the shared shadcn `Table` components.
 - Table header cells use `sticky top-0 z-10 bg-card`.
 - Long text is truncated only when the full value remains available through a detail link or tooltip.

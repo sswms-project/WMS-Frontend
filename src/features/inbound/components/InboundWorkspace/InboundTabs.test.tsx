@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { InboundTabs } from './InboundTabs'
+import { InboundPageHeader } from './InboundPageHeader'
 
 const state = vi.hoisted(() => ({
   pathname: '/inbound-requests',
@@ -18,6 +19,10 @@ describe('InboundTabs', () => {
 
   it('shows all inbound operations allowed by the current permissions', () => {
     render(<InboundTabs canViewRequests canViewReceipts />)
+    expect(screen.getByRole('navigation')).toHaveAttribute(
+      'data-slot',
+      'operational-workspace-navigation'
+    )
 
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'Yêu cầu nhập kho',
@@ -28,6 +33,22 @@ describe('InboundTabs', () => {
     expect(screen.getByRole('link', { name: 'Yêu cầu nhập kho' })).toHaveAttribute(
       'aria-current',
       'page'
+    )
+  })
+
+  it('keeps an accessible heading and create action without a visible title block', () => {
+    render(
+      <InboundPageHeader
+        title="Yêu cầu nhập kho"
+        canViewRequests
+        canViewReceipts
+        action={<a href={APP_ROUTES.inboundRequestCreate}>Tạo yêu cầu nhập kho</a>}
+      />
+    )
+    expect(screen.getByRole('heading', { level: 1 })).toHaveClass('sr-only')
+    expect(screen.getByRole('link', { name: 'Tạo yêu cầu nhập kho' })).toHaveAttribute(
+      'href',
+      APP_ROUTES.inboundRequestCreate
     )
   })
 

@@ -98,15 +98,7 @@ export function GoodsReturnRequestDirectory({
   const canApprove = permissions.includes(P.GOODS_RETURN_REQUESTS_APPROVE)
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
-      <header className="flex shrink-0 items-start gap-3 border-b pb-4">
-        <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center">
-          <Undo2 aria-hidden="true" />
-        </span>
-        <div>
-          <p className="text-primary text-xs font-medium">Xuất kho</p>
-          <h1 className="text-xl font-semibold">Yêu cầu trả hàng</h1>
-        </div>
-      </header>
+      <h1 className="sr-only">Yêu cầu trả hàng</h1>
       <StockIssueWorkspaceNavigation currentView="goodsReturnRequests" permissions={permissions} />
       <OperationalListPanel aria-label="Danh sách phiếu hoàn hàng">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">

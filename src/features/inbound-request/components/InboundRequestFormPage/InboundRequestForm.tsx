@@ -259,12 +259,11 @@ export function InboundRequestForm({
                       id="receivingAssignedTo"
                       className="w-full"
                       disabled={!watch('warehouseId') || isStaffLoading || isStaffError}
-                      aria-describedby="receiving-assignment-help"
                       aria-invalid={Boolean(errors.receivingAssignedTo)}
                       {...register('receivingAssignedTo')}
                     >
                       <NativeSelectOption value="">
-                        {isStaffLoading ? 'Đang tải nhân viên…' : 'Chưa phân công'}
+                        {isStaffLoading ? 'Đang tải nhân viên…' : 'Chọn nhân viên'}
                       </NativeSelectOption>
                       {staffOptions.map((staff) => (
                         <NativeSelectOption key={staff.value} value={staff.value}>
@@ -272,10 +271,6 @@ export function InboundRequestForm({
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                    <FieldDescription id="receiving-assignment-help">
-                      Gán một lần: nhận hàng, sau đó cất hàng khi phiếu nhận được duyệt. Quản lý vẫn
-                      có thể giao lại khi cần.
-                    </FieldDescription>
                     {isStaffError ? (
                       <Button type="button" variant="outline" size="sm" onClick={onRetryStaff}>
                         Thử tải lại nhân viên
