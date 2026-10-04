@@ -28,4 +28,15 @@ describe('tenant route boundaries', () => {
       USER_ROLES.WarehouseStaff,
     ])
   })
+
+  it('allows managers and staff to open their warehouse task workspace', () => {
+    expect(getAllowedRolesForPath(APP_ROUTES.myTasks)).toEqual([
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
+    expect(getAllowedRolesForPath(APP_ROUTES.myTaskHistory)).toEqual([
+      USER_ROLES.WarehouseManager,
+      USER_ROLES.WarehouseStaff,
+    ])
+  })
 })
