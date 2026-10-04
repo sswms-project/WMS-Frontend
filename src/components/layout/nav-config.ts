@@ -52,7 +52,7 @@ export type NavSection = {
 
 const tenantStaffSection: NavSection = {
   id: 'organization-management',
-  label: 'Quản trị tổ chức',
+  label: 'Quản trị doanh nghiệp',
   icon: Building2,
   collapsible: true,
   items: [
@@ -106,13 +106,9 @@ const tenantOperationsSection: NavSection = {
   icon: PackageOpen,
   collapsible: true,
   items: [
-    requiredNavItem(
+    requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW, [
       APP_ROUTES.inboundRequests,
-      'Yêu cầu nhập kho',
-      ClipboardList,
-      P.INBOUND_REQUESTS_VIEW
-    ),
-    requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW),
+    ]),
     requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
     requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
     requiredNavItem(
@@ -205,11 +201,11 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     },
     {
       id: 'organization-management',
-      label: 'Quản trị tổ chức',
+      label: 'Quản trị doanh nghiệp',
       icon: Building2,
       collapsible: true,
       items: [
-        requiredNavItem(APP_ROUTES.organization, 'Tổ chức', Building2, P.ORGANIZATION_VIEW),
+        requiredNavItem(APP_ROUTES.organization, 'Doanh nghiệp', Building2, P.ORGANIZATION_VIEW),
         requiredNavItem(
           APP_ROUTES.settings.accessControl,
           'Phân quyền',
@@ -260,13 +256,9 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
       collapsible: true,
       separatorBefore: true,
       items: [
-        requiredNavItem(
+        requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW, [
           APP_ROUTES.inboundRequests,
-          'Yêu cầu nhập kho',
-          ClipboardList,
-          P.INBOUND_REQUESTS_VIEW
-        ),
-        requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW),
+        ]),
         requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
         requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
         requiredNavItem(

@@ -28,7 +28,6 @@ export interface SlotResponse extends WarehousePhysicalDetailsResponse, StorageC
   status: string
   isActive: boolean
   isOutboundStaging?: boolean
-  isInboundStaging?: boolean
   allowsMixedProducts?: boolean
   capacity: number | null
   currentOccupancy: number

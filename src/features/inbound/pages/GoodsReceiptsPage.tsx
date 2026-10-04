@@ -153,8 +153,8 @@ export default function GoodsReceiptsPage() {
             <AlertDialogDescription>
               {approvalTarget
                 ? allowedActionsQuery.data?.selfApprovalRequired
-                  ? `Bạn là người ghi nhận phiếu ${approvalTarget.receiptCode}. Hệ thống sẽ lưu hành động tự phê duyệt và ghi hàng vào khu chờ.`
-                  : `Số lượng thực nhận của phiếu ${approvalTarget.receiptCode} sẽ được ghi vào vị trí chờ nhận hàng trước khi cất hàng.`
+                  ? `Bạn là người ghi nhận phiếu ${approvalTarget.receiptCode}. Hệ thống sẽ lưu hành động tự phê duyệt trước khi cất hàng.`
+                  : `Xác nhận kết quả kiểm hàng của phiếu ${approvalTarget.receiptCode} trước khi thực hiện cất hàng.`
                 : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -75,3 +75,27 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - GitNexus pre-change impact was LOW for each edited symbol. Final change detection is HIGH because the shared catalog intentionally participates in six tenant role/personal execution flows; no unexpected feature or API flow is included.
 - Web Interface Guidelines review found no new accessibility, focus, interaction, content-overflow or motion issue in the edited components.
 - No dependency, Backend source, API contract, database, migration, seed or deployment configuration was changed.
+
+---
+
+## 2026-10-04 — Remove inbound receiving staging UI
+
+- Role: Codex implementing the requested removal of the inbound staging location concept from Frontend flows.
+- State: `READY_FOR_CODEX_REVIEW` (self-verification only; not independent approval).
+- Removed inbound-staging fields, configuration controls, permission code and `ReceivingHold` status from warehouse, inbound and opening-stock UI contracts.
+- Receipt copy now describes inspection approval directly; put-away offers active real storage locations and continues to exclude outbound staging. No save payload outside the removed fields was changed.
+- Verification: full suite passed **223/223**; typecheck, lint and production build passed; source search found no remaining inbound-staging references; GitNexus final analysis covered the expected inbound, inventory and warehouse rendering flows.
+- No dependency, direct database action, migration execution, seed or deployment configuration was performed by the Frontend work.
+
+---
+
+## 2026-10-04 — Consolidate inbound workspace navigation
+
+- Role: Codex implementing the clarified inbound navigation change.
+- State: `READY_FOR_CODEX_REVIEW` (self-verification only; not independent approval).
+- Kept one `Nhập kho` destination inside `Hoạt Động Kho` and moved `Yêu cầu nhập kho` into the shared inbound tab bar alongside `Chờ nhận hàng`, `Phiếu nhận hàng` and `Chờ cất hàng`.
+- The inbound-request directory now uses the same workspace header as the other inbound pages. Its existing create action remains in the header.
+- Request and receipt tabs are filtered by their existing view permissions; routes, workflow payloads and authorization policies are unchanged.
+- Verification: focused navigation and tab tests passed **28/28**; full suite passed **226/226** across 57 files; typecheck, lint and production build passed.
+- GitNexus impact was unavailable because its local transport remained closed; direct source tracing covered the shared sidebar, inbound header/tab and inbound-request directory consumers.
+- No dependency, Backend source, API contract, database, migration, seed or deployment configuration was changed.

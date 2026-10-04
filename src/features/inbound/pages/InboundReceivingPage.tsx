@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
@@ -261,7 +262,8 @@ export default function InboundReceivingPage() {
             expectedVersion: receipt.data.version,
           })
         } catch (error) {
-          logger.error(error)
+          if (isApiErrorResponse(error)) logger.warn(formatApiError(error))
+          else logger.error(error)
           toast.error(
             'Phiếu nhận hàng đã được lưu nháp nhưng chưa gửi duyệt. Bạn có thể thử lại từ trang chi tiết.'
           )

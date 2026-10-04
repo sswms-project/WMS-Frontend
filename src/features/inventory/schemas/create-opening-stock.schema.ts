@@ -11,13 +11,7 @@ export const createOpeningStockSchema = z
     lotId: z.union([z.literal(''), z.uuid('Mã lô không hợp lệ.')]),
     quantity: z.number().positive('Số lượng phải lớn hơn 0.'),
     qualityStatus: z.enum(['Good', 'Damaged']),
-    eligibilityStatus: z.enum([
-      'Available',
-      'ReceivingHold',
-      'InspectionHold',
-      'DamageHold',
-      'Quarantine',
-    ]),
+    eligibilityStatus: z.enum(['Available', 'InspectionHold', 'DamageHold', 'Quarantine']),
   })
   .superRefine((values, context) => {
     if (values.qualityStatus === 'Damaged' && values.eligibilityStatus !== 'DamageHold') {

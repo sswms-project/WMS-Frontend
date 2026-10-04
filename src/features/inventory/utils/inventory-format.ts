@@ -15,7 +15,6 @@ export function formatQualityStatus(value: QualityStatus): string {
 export function formatEligibilityStatus(value: InventoryEligibilityStatus): string {
   return {
     Available: 'Khả dụng',
-    ReceivingHold: 'Chờ hoàn tất nhập',
     InspectionHold: 'Chờ kiểm tra',
     DamageHold: 'Giữ do hư hỏng',
     Quarantine: 'Cách ly',

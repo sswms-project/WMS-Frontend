@@ -1,16 +1,11 @@
 'use client'
 
-import { ClipboardList, Plus } from 'lucide-react'
-import Link from 'next/link'
-import type { Route } from 'next'
 import {
   OperationalEmptyState,
   OperationalErrorState,
 } from '@/components/operations/OperationalState'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
-import { Button } from '@/components/ui/button'
-import { APP_ROUTES } from '@/routes/app-routes'
 import {
   INBOUND_REQUEST_STATUS,
   type InboundRequestStatus,
@@ -138,23 +133,6 @@ export function InboundRequestDirectory({
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b pb-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center">
-            <ClipboardList className="size-4" aria-hidden="true" />
-          </span>
-          <h1 className="text-lg font-semibold">Yêu cầu nhập kho</h1>
-        </div>
-        {canCreate ? (
-          <Button asChild size="sm" className="shrink-0">
-            <Link href={APP_ROUTES.inboundRequestCreate as Route}>
-              <Plus aria-hidden="true" />
-              Tạo yêu cầu nhập kho
-            </Link>
-          </Button>
-        ) : null}
-      </header>
-
       <InboundRequestStatusStats
         counts={statusCounts}
         isLoading={isLoading}

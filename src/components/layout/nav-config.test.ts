@@ -57,23 +57,23 @@ describe('application navigation visibility', () => {
 
   it('shows permission-gated workspaces only when the current user has access', () => {
     expect(
-      getVisibleNavItems(USER_ROLES.TenantOwner, ['inbound-requests:view']).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+      getVisibleNavItems(USER_ROLES.TenantOwner, [P.GOODS_RECEIPTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(true)
     expect(
-      getVisibleNavItems(USER_ROLES.WarehouseManager, ['inbound-requests:view']).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+      getVisibleNavItems(USER_ROLES.WarehouseManager, [P.GOODS_RECEIPTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(true)
     expect(
-      getVisibleNavItems(USER_ROLES.WarehouseStaff, ['inbound-requests:view']).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+      getVisibleNavItems(USER_ROLES.WarehouseStaff, [P.GOODS_RECEIPTS_VIEW]).some(
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(true)
     expect(
       getVisibleNavItems(USER_ROLES.WarehouseStaff, []).some(
-        (item) => item.href === APP_ROUTES.inboundRequests
+        (item) => item.href === APP_ROUTES.inbound
       )
     ).toBe(false)
 
@@ -166,7 +166,7 @@ describe('application navigation visibility', () => {
       }))
     ).toEqual([
       { label: null, items: ['Dashboard'] },
-      { label: 'Quản trị tổ chức', items: ['Tổ chức', 'Phân quyền', 'Nhân viên'] },
+      { label: 'Quản trị doanh nghiệp', items: ['Doanh nghiệp', 'Phân quyền', 'Nhân viên'] },
       { label: 'Quản Lý Kho', items: ['Kho hàng', 'Sơ đồ kho'] },
       { label: 'Đối tượng', items: ['Nhà cung cấp', 'Khách hàng'] },
       {
@@ -175,13 +175,7 @@ describe('application navigation visibility', () => {
       },
       {
         label: 'Hoạt Động Kho',
-        items: [
-          'Yêu cầu nhập kho',
-          'Nhập kho',
-          'Tồn kho',
-          'Điều chuyển kho',
-          'Xuất kho & Trả hàng',
-        ],
+        items: ['Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Xuất kho & Trả hàng'],
       },
       {
         label: 'Báo cáo',
@@ -251,6 +245,17 @@ describe('application navigation visibility', () => {
     expect(isNavSectionActive('/products/product-1', catalogSection!)).toBe(true)
     expect(isNavSectionActive(APP_ROUTES.categories, catalogSection!)).toBe(true)
     expect(isNavSectionActive('/inventory', catalogSection!)).toBe(false)
+  })
+
+  it('keeps the inbound menu active across the complete inbound workspace', () => {
+    const inboundItem = getNavItems(USER_ROLES.TenantOwner).find(
+      (item) => item.href === APP_ROUTES.inbound
+    )
+
+    expect(inboundItem).toBeDefined()
+    expect(isNavItemActive(APP_ROUTES.inboundRequests, inboundItem!)).toBe(true)
+    expect(isNavItemActive(APP_ROUTES.goodsReceipts, inboundItem!)).toBe(true)
+    expect(isNavItemActive(APP_ROUTES.inboundPutaway, inboundItem!)).toBe(true)
   })
 
   it.each([

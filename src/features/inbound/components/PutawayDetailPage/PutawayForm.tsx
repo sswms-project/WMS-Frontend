@@ -65,23 +65,23 @@ export function PutawayForm({
   const totalRemaining = receipt.items.reduce((sum, item) => sum + item.remainingPutAwayQuantity, 0)
 
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
-      <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
+      <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon">
             <Link href={APP_ROUTES.inboundPutaway as Route} aria-label="Quay lại danh sách">
               <ArrowLeft aria-hidden="true" />
             </Link>
           </Button>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-primary text-xs font-medium">Cất hàng</p>
-            <h1 className="font-mono text-xl font-semibold">{receipt.receiptCode}</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+            <h1 className="font-mono text-xl font-semibold break-words">{receipt.receiptCode}</h1>
+            <p className="text-muted-foreground mt-1 text-xs break-words sm:text-sm">
               {receipt.inboundRequestCode} · {receipt.warehouseName}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {canCancel ? (
             <Button type="button" variant="destructive" disabled={isPending} onClick={onCancel}>
               <Ban aria-hidden="true" />
@@ -116,7 +116,7 @@ export function PutawayForm({
                   key={item.id}
                   className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs"
                 >
-                  <span className="font-medium">
+                  <span className="min-w-0 font-medium break-words">
                     {item.productSKU} - {item.productName}
                     {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
                   </span>
@@ -137,12 +137,12 @@ export function PutawayForm({
       </section>
       {errors.root?.server?.message ? <FieldError>{errors.root.server.message}</FieldError> : null}
       <section className="bg-card border">
-        <div className="flex items-center justify-between gap-3 border-b p-4">
-          <div>
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold">Chọn vị trí cất cho từng sản phẩm</h2>
             <p className="text-muted-foreground text-xs">
-              Hàng đang nằm ở khu nhận hàng tạm; chọn vị trí đích để chuyển vào kho. Có thể chia một
-              sản phẩm vào nhiều vị trí, giới hạn tính riêng theo từng dòng hàng.
+              Chọn vị trí đích để cất từng sản phẩm. Có thể chia một sản phẩm vào nhiều vị trí, giới
+              hạn tính riêng theo từng dòng hàng.
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={onAdd}>
