@@ -3,7 +3,9 @@ import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
   CreateStockRecipientRequest,
+  ImportStockRecipientsRequest,
   StockRecipient,
+  StockRecipientImportPreview,
   StockRecipientListQuery,
   StockRecipientListResponse,
   StockRecipientIssueHistoryQuery,
@@ -11,7 +13,38 @@ import type {
   UpdateStockRecipientRequest,
 } from '../types/stock-recipient.types'
 
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = fileName
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
 export const stockRecipientService = {
+  downloadImportTemplate: async () => {
+    const response = await axiosClient.get<Blob>(API_ENDPOINTS.stockRecipients.importTemplate, {
+      responseType: 'blob',
+    })
+    downloadBlob(response.data, 'kovia-mau-nhap-khach-hang.xlsx')
+  },
+
+  previewImport: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return axiosClient
+      .post<
+        ApiResponse<StockRecipientImportPreview>
+      >(API_ENDPOINTS.stockRecipients.importPreview, form, { headers: { 'Content-Type': null } })
+      .then((response) => response.data)
+  },
+
+  importStockRecipients: (request: ImportStockRecipientsRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.stockRecipients.import, request)
+      .then((response) => response.data),
+
   getNextCode: () =>
     axiosClient
       .get<ApiResponse<string>>(API_ENDPOINTS.stockRecipients.nextCode)

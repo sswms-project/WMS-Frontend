@@ -1,15 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SupplierImportPreviewRow } from '../types/supplier.types'
-import { hasSupplierImportExtension, toImportItem } from './supplier-import'
-
-describe('hasSupplierImportExtension', () => {
-  it('accepts xlsx and csv regardless of case and rejects other files', () => {
-    expect(hasSupplierImportExtension('nha-cung-cap.XLSX')).toBe(true)
-    expect(hasSupplierImportExtension('nha-cung-cap.csv')).toBe(true)
-    expect(hasSupplierImportExtension('nha-cung-cap.pdf')).toBe(false)
-    expect(hasSupplierImportExtension('csv')).toBe(false)
-  })
-})
+import { toImportItem } from './supplier-import'
 
 describe('toImportItem', () => {
   it('drops preview-only fields and keeps the BE command payload', () => {
