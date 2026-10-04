@@ -13,7 +13,7 @@ export function ReceiptOverview({ receipt }: ReceiptOverviewProps) {
           Tổng quan phiếu nhận hàng
         </h2>
       </div>
-      <dl className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-4">
+      <dl className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metadata label="Yêu cầu nhập kho" value={receipt.inboundRequestCode} />
         <Metadata label="Kho nhận" value={receipt.warehouseName} />
         <Metadata
@@ -42,7 +42,7 @@ function Metadata({ label, value }: { readonly label: string; readonly value: st
   return (
     <div className="min-w-0">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="mt-1 truncate text-sm font-medium">{value}</dd>
+      <dd className="mt-1 text-sm font-medium break-words">{value}</dd>
     </div>
   )
 }

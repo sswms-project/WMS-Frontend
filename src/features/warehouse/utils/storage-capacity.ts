@@ -4,7 +4,6 @@ export interface CapacityLocation extends StorageCapacityResponse {
   capacity?: number | null
   currentOccupancy?: number | null
   isOutboundStaging?: boolean
-  isInboundStaging?: boolean
 }
 
 const CAPACITY_WARNING_PERCENT = 80

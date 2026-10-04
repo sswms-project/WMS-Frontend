@@ -49,6 +49,7 @@ import type {
 import type {
   AdminSubscriptionPlanQuery,
   AnnouncementHistoryQuery,
+  AdminPaymentQuery,
   TenantQuery,
 } from '@/features/admin/types/admin.types'
 import type { TenantUserPermissionSubjectQuery } from '@/features/access-control/types/tenant-access-control.types'
@@ -63,6 +64,7 @@ export const queryKeys = {
     announcements: ['platform-admin', 'announcements'] as const,
     announcementList: (params: AnnouncementHistoryQuery) =>
       ['platform-admin', 'announcements', params] as const,
+    payments: (params: AdminPaymentQuery) => ['platform-admin', 'payments', params] as const,
     plans: (params: AdminSubscriptionPlanQuery) => ['platform-admin', 'plans', params] as const,
   },
   notifications: {

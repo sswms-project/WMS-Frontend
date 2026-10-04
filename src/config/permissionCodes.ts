@@ -8,6 +8,7 @@ export const P = {
   ADMIN_TENANTS_VIEW: 'admin:tenants:view',
   ADMIN_TENANTS_APPROVE: 'admin:tenants:approve',
   ADMIN_TENANTS_SUSPEND: 'admin:tenants:suspend',
+  ADMIN_PAYMENTS_VIEW: 'admin:payments:view',
   ADMIN_ANNOUNCEMENTS_SEND: 'admin:announcements:send',
 
   // Audit Logs
@@ -152,7 +153,6 @@ export const P = {
   WAREHOUSES_UPDATE: 'warehouses:update',
   WAREHOUSES_DEACTIVATE: 'warehouses:deactivate',
   WAREHOUSES_CONFIGURE_LAYOUT: 'warehouses:configure-layout',
-  WAREHOUSES_CONFIGURE_STAGING: 'warehouses:configure-staging',
   WAREHOUSES_GENERATE_BARCODE: 'warehouses:generate-barcode',
 } as const
 
@@ -163,6 +163,7 @@ const PLATFORM_ONLY_PERMISSION_CODES: ReadonlySet<string> = new Set([
   P.ADMIN_TENANTS_VIEW,
   P.ADMIN_TENANTS_APPROVE,
   P.ADMIN_TENANTS_SUSPEND,
+  P.ADMIN_PAYMENTS_VIEW,
   P.ADMIN_ANNOUNCEMENTS_SEND,
   P.SUBSCRIPTION_PLANS_VIEW,
   P.SUBSCRIPTION_PLANS_CREATE,

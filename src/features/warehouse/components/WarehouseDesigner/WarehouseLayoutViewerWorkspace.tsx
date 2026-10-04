@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Maximize,
   PencilRuler,
+  Search,
   SearchX,
   X,
   ZoomIn,
@@ -20,6 +21,8 @@ import { OperationalListPanel } from '@/components/operations/OperationalListPan
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import {
   Sheet,
@@ -40,6 +43,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useInventoryQuery } from '@/features/inventory/hooks/use-inventory'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useLayoutDesignerCompact } from '../../hooks/use-layout-designer-compact'
 import {
   formatInventoryDateOnly,
@@ -106,14 +110,21 @@ export function WarehouseLayoutViewerWorkspace({
   const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false)
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [inventorySearchTerm, setInventorySearchTerm] = useState('')
+  const debouncedInventorySearchTerm = useDebouncedValue(inventorySearchTerm.trim(), 300)
   const selectedLocation = useMemo(() => getSelectedLocation(scene, selection), [scene, selection])
   const inventoryParams = useMemo(() => {
-    const base = { pageNumber, pageSize, warehouseId }
+    const base = {
+      pageNumber,
+      pageSize,
+      warehouseId,
+      ...(debouncedInventorySearchTerm ? { searchTerm: debouncedInventorySearchTerm } : {}),
+    }
     if (!selection || selection.kind === 'decoration') return base
     if (selection.kind === 'zone') return { ...base, zoneId: selection.id }
     if (selection.kind === 'rack') return { ...base, rackId: selection.id }
     return { ...base, slotId: selection.id }
-  }, [pageNumber, pageSize, selection, warehouseId])
+  }, [debouncedInventorySearchTerm, pageNumber, pageSize, selection, warehouseId])
   const inventoryQuery = useInventoryQuery(
     inventoryParams,
     Boolean(selection && selection.kind !== 'decoration')
@@ -121,6 +132,7 @@ export function WarehouseLayoutViewerWorkspace({
 
   function handleSelectionChange(nextSelection: WarehouseLayoutSelection | null) {
     setSelection(nextSelection)
+    setInventorySearchTerm('')
     setPageNumber(1)
   }
 
@@ -142,10 +154,28 @@ export function WarehouseLayoutViewerWorkspace({
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-t"
       aria-labelledby="viewer-inventory-title"
     >
-      <div className="shrink-0 px-3 py-2.5">
-        <h2 id="viewer-inventory-title" className="text-sm font-semibold">
+      <div className="flex shrink-0 items-center gap-3 px-3 py-2.5">
+        <h2 id="viewer-inventory-title" className="shrink-0 text-sm font-semibold">
           Hàng hóa tại vị trí
         </h2>
+        <InputGroup className="ml-auto max-w-64">
+          <InputGroupAddon>
+            <Search aria-hidden="true" />
+          </InputGroupAddon>
+          <InputGroupInput
+            type="search"
+            name="warehouse-layout-inventory-search"
+            autoComplete="off"
+            value={inventorySearchTerm}
+            placeholder="Tìm hàng hóa…"
+            aria-label="Tìm hàng hóa tại vị trí"
+            disabled={!selectedLocation}
+            onChange={(event) => {
+              setInventorySearchTerm(event.target.value)
+              setPageNumber(1)
+            }}
+          />
+        </InputGroup>
       </div>
       {selectedLocation ? (
         <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 px-3 pb-2 text-xs">
@@ -208,7 +238,9 @@ export function WarehouseLayoutViewerWorkspace({
             data-slot="operational-list-body"
             className="text-muted-foreground flex items-center justify-center p-4 text-center text-xs"
           >
-            Vị trí chưa có hàng hóa.
+            {debouncedInventorySearchTerm
+              ? 'Không tìm thấy hàng hóa phù hợp.'
+              : 'Vị trí chưa có hàng hóa.'}
           </div>
         ) : (
           <Table className="min-w-[46rem]">
@@ -313,9 +345,25 @@ export function WarehouseLayoutViewerWorkspace({
         ) : (
           <span className="ml-auto" />
         )}
-        <ViewerIconButton label="Trợ giúp" onClick={() => setIsLocationSheetOpen(true)}>
-          <HelpCircle aria-hidden="true" />
-        </ViewerIconButton>
+        <Popover>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button type="button" size="icon-sm" variant="ghost" aria-label="Trợ giúp">
+                  <HelpCircle aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Trợ giúp</TooltipContent>
+          </Tooltip>
+          <PopoverContent align="end" className="w-72 text-sm">
+            <p className="font-medium">Xem sơ đồ kho</p>
+            <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+              Chọn vị trí trong danh sách hoặc trên sơ đồ để xem hàng hóa và sức chứa. Giữ Ctrl khi
+              lăn chuột để phóng to, thu nhỏ hoặc kéo sơ đồ.
+            </p>
+          </PopoverContent>
+        </Popover>
         <ViewerIconButton label="Đóng sơ đồ" onClick={onClose}>
           <X aria-hidden="true" />
         </ViewerIconButton>
@@ -338,10 +386,10 @@ export function WarehouseLayoutViewerWorkspace({
           </div>
         ) : (
           <ResizablePanelGroup orientation="horizontal" className="h-0 min-h-0 min-w-0 flex-1">
-            <ResizablePanel defaultSize="30%" minSize="25%" maxSize="33.333%">
+            <ResizablePanel defaultSize="30%" minSize="25%" maxSize="40%">
               <aside className="flex h-full min-h-0 min-w-0 flex-col border-r">
-                <div className="min-h-0 flex-1">{tree}</div>
-                <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">{inventory}</div>
+                <div className="min-h-0 flex-[4]">{tree}</div>
+                <div className="flex min-h-0 min-w-0 flex-[6] overflow-hidden">{inventory}</div>
               </aside>
             </ResizablePanel>
             <ResizableHandle withHandle aria-label="Thay đổi chiều rộng danh sách vị trí" />
@@ -390,8 +438,8 @@ export function WarehouseLayoutViewerWorkspace({
             <SheetDescription>Chọn vị trí và xem hàng hóa trong kho.</SheetDescription>
           </SheetHeader>
           <div className="flex min-h-0 flex-1 flex-col pt-10">
-            <div className="min-h-0 flex-1">{tree}</div>
-            <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">{inventory}</div>
+            <div className="min-h-0 flex-[4]">{tree}</div>
+            <div className="flex min-h-0 min-w-0 flex-[6] overflow-hidden">{inventory}</div>
           </div>
         </SheetContent>
       </Sheet>

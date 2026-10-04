@@ -248,7 +248,7 @@ export function StaffDirectoryPage() {
             <Users className="size-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <p className="text-primary text-xs font-medium">Tổ chức và nhân sự</p>
+            <p className="text-primary text-xs font-medium">Doanh nghiệp và nhân sự</p>
             <h1 className="mt-0.5 text-xl font-semibold">Danh bạ nhân sự</h1>
           </div>
         </div>

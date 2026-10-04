@@ -146,6 +146,8 @@ export interface PutAwayDetail {
   warehouseId: string
   slotId: string
   slotCode: string
+  rackCode: string
+  isSystemDefaultSlot: boolean
   lotId: string | null
   lotNumber: string | null
   qualityStatus: string
@@ -174,7 +176,6 @@ export interface GoodsReceiptDetail extends Omit<
   rejectionReason: string | null
   arrivalConfirmedBy: string | null
   arrivalConfirmedAt: string | null
-  receivingHoldSlotId: string | null
   putAwayTaskExecutionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
   putAwayTaskCancelledAt: string | null
   putAwayTaskCancellationReason: string | null

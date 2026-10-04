@@ -14,7 +14,9 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type {
   GoodsReceiptAction,
@@ -54,6 +56,12 @@ export function ReceiptDetail({
   const [isRejectOpen, setIsRejectOpen] = useState(false)
 
   const hasPutAwayDetails = receipt.items.some((item) => item.putAwayDetails.length > 0)
+  const usableQuantity = receipt.items.reduce((sum, item) => sum + item.usableQuantity, 0)
+  const putAwayQuantity = receipt.items.reduce((sum, item) => sum + item.putAwayQuantity, 0)
+  const putAwayPercent =
+    usableQuantity > 0 ? Math.min(100, (putAwayQuantity / usableQuantity) * 100) : 0
+  const showPutAwayProgress =
+    usableQuantity > 0 && (hasPutAwayDetails || receipt.status === 'Approved')
 
   async function confirm() {
     if (!confirmationAction) return
@@ -63,25 +71,27 @@ export function ReceiptDetail({
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
-      <header className="shrink-0 border-b px-4 py-3 lg:px-8">
-        <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-3">
+      <header className="shrink-0 border-b pb-4">
+        <div className="flex w-full min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
             <Button asChild variant="outline" size="icon">
               <Link href={APP_ROUTES.goodsReceipts as Route} aria-label="Quay lại danh sách">
                 <ArrowLeft aria-hidden="true" />
               </Link>
             </Button>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-mono text-xl font-semibold">{receipt.receiptCode}</h1>
+                <h1 className="min-w-0 font-mono text-xl font-semibold break-words">
+                  {receipt.receiptCode}
+                </h1>
                 <InboundStatusBadge status={receipt.status} />
               </div>
-              <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm">
+              <p className="text-muted-foreground mt-0.5 text-xs break-words sm:text-sm">
                 Yêu cầu nhập kho {receipt.inboundRequestCode} · {receipt.warehouseName}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
             <ReceiptHistorySheet events={receipt.history} receiptCode={receipt.receiptCode} />
             {allowedActions.includes('Update') ? (
               <Button type="button" variant="outline" disabled={isPending} onClick={onUpdate}>
@@ -133,23 +143,45 @@ export function ReceiptDetail({
         </div>
       </header>
 
-      <div className="mx-auto flex min-h-0 w-full max-w-[1180px] flex-1 flex-col gap-4 px-4 py-4 lg:px-8">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
         <ReceiptOverview receipt={receipt} />
 
-        <Tabs defaultValue="items" className="flex min-h-0 flex-1 flex-col">
-          <TabsList variant="line" className="shrink-0">
+        {showPutAwayProgress ? (
+          <section
+            className="bg-card flex flex-col gap-2 border px-4 py-3"
+            aria-label="Tiến độ cất hàng"
+          >
+            <div className="flex items-baseline justify-between gap-2 text-sm">
+              <h2 className="font-medium">Tiến độ cất hàng</h2>
+              <p className="text-muted-foreground text-xs tabular-nums">
+                {formatQuantity(putAwayQuantity)} / {formatQuantity(usableQuantity)}
+                {putAwayQuantity < usableQuantity
+                  ? ` · còn ${formatQuantity(usableQuantity - putAwayQuantity)}`
+                  : ' · đã cất đủ'}
+              </p>
+            </div>
+            <Progress
+              value={putAwayPercent}
+              aria-label={`Đã cất ${Math.round(putAwayPercent)}% số lượng dùng được`}
+            />
+          </section>
+        ) : null}
+
+        <Tabs defaultValue="items" className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <TabsList
+            variant="line"
+            className="w-full shrink-0 justify-start overflow-x-auto overflow-y-hidden"
+          >
             <TabsTrigger value="items">
               Hàng hóa thực nhận
               <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1.5 py-0.5 text-xs tabular-nums">
                 {receipt.items.length}
               </span>
             </TabsTrigger>
-            {hasPutAwayDetails ? (
-              <TabsTrigger value="putaway">Chi tiết cất hàng</TabsTrigger>
-            ) : null}
+            {hasPutAwayDetails ? <TabsTrigger value="putaway">Lịch sử cất hàng</TabsTrigger> : null}
           </TabsList>
 
-          <div className="bg-card min-h-0 flex-1 border">
+          <div className="bg-card min-h-0 min-w-0 flex-1 overflow-hidden border">
             <div className="border-b px-4 py-3">
               <p className="text-muted-foreground text-xs">
                 Số lượng hỏng không được đưa vào cất hàng.

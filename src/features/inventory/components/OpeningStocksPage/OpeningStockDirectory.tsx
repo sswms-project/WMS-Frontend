@@ -95,7 +95,7 @@ export interface OpeningStockDraftLine {
   enteredUnitName: string
   conversionFactor: number
   qualityStatus: 'Good' | 'Damaged'
-  eligibilityStatus: 'Available' | 'ReceivingHold' | 'InspectionHold' | 'DamageHold' | 'Quarantine'
+  eligibilityStatus: 'Available' | 'InspectionHold' | 'DamageHold' | 'Quarantine'
   productLabel: string
   slotLabel: string
   lotLabel?: string
@@ -648,7 +648,6 @@ export function OpeningStockDirectory(props: OpeningStockDirectoryProps) {
               <FieldLabel htmlFor="opening-eligibility">Điều kiện sử dụng</FieldLabel>
               <NativeSelect id="opening-eligibility" {...props.form.register('eligibilityStatus')}>
                 <NativeSelectOption value="Available">Khả dụng</NativeSelectOption>
-                <NativeSelectOption value="ReceivingHold">Giữ khi nhận</NativeSelectOption>
                 <NativeSelectOption value="InspectionHold">Chờ kiểm tra</NativeSelectOption>
                 <NativeSelectOption value="DamageHold">Giữ do hỏng</NativeSelectOption>
                 <NativeSelectOption value="Quarantine">Cách ly</NativeSelectOption>

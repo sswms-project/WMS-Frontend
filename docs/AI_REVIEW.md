@@ -1,5 +1,15 @@
 # AI Review Handoff
 
+## 2026-10-03 — Warehouse layout viewer sidebar search
+
+- Role: Codex implementing the requested viewer-only UI adjustment.
+- State: `READY_FOR_CODEX_REVIEW` (self-verification only; not independent approval).
+- Increased the desktop viewer's left-panel resize ceiling from 33.333% to 40% while preserving the 30% default, 25% minimum and compact Sheet behavior.
+- Moved the location search beside `Danh sách vị trí` and added a debounced inventory API search beside `Hàng hóa tại vị trí`; changing location clears the inventory search and returns pagination to page 1.
+- Added regressions for header/search alignment, the 40% resize ceiling, disabled inventory search before selecting a location, debounce and search reset.
+- Verification: focused tests 4/4, full suite 220/220, typecheck, lint and production build passed.
+- No Backend contract, dependency, database, migration, designer interaction or layout persistence changed.
+
 ## 2026-10-02 — Permission catalog categories Gate C
 
 - Role: Codex implementing the authorized UI/UX gate.
@@ -65,3 +75,38 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - GitNexus pre-change impact was LOW for each edited symbol. Final change detection is HIGH because the shared catalog intentionally participates in six tenant role/personal execution flows; no unexpected feature or API flow is included.
 - Web Interface Guidelines review found no new accessibility, focus, interaction, content-overflow or motion issue in the edited components.
 - No dependency, Backend source, API contract, database, migration, seed or deployment configuration was changed.
+
+---
+
+## 2026-10-04 — Remove inbound receiving staging UI
+
+- Role: Codex implementing the requested removal of the inbound staging location concept from Frontend flows.
+- State: `READY_FOR_CODEX_REVIEW` (self-verification only; not independent approval).
+- Removed inbound-staging fields, configuration controls, permission code and `ReceivingHold` status from warehouse, inbound and opening-stock UI contracts.
+- Receipt copy now describes inspection approval directly; put-away offers active real storage locations and continues to exclude outbound staging. No save payload outside the removed fields was changed.
+- Verification: full suite passed **223/223**; typecheck, lint and production build passed; source search found no remaining inbound-staging references; GitNexus final analysis covered the expected inbound, inventory and warehouse rendering flows.
+- No dependency, direct database action, migration execution, seed or deployment configuration was performed by the Frontend work.
+
+---
+
+## 2026-10-04 — Consolidate inbound workspace navigation
+
+- Role: Codex implementing the clarified inbound navigation change.
+- State: `READY_FOR_CODEX_REVIEW` (self-verification only; not independent approval).
+- Kept one `Nhập kho` destination inside `Hoạt Động Kho` and moved `Yêu cầu nhập kho` into the shared inbound tab bar alongside `Chờ nhận hàng`, `Phiếu nhận hàng` and `Chờ cất hàng`.
+- The inbound-request directory now uses the same workspace header as the other inbound pages. Its existing create action remains in the header.
+- Request and receipt tabs are filtered by their existing view permissions; routes, workflow payloads and authorization policies are unchanged.
+- Verification: focused navigation and tab tests passed **28/28**; full suite passed **226/226** across 57 files; typecheck, lint and production build passed.
+- GitNexus impact was unavailable because its local transport remained closed; direct source tracing covered the shared sidebar, inbound header/tab and inbound-request directory consumers.
+- No dependency, Backend source, API contract, database, migration, seed or deployment configuration was changed.
+
+### 2026-10-04 — Pre-merge navigation fixes
+
+- Role: Codex implementing the user's requested review fixes and performing self-verification.
+- State: `READY_FOR_FINAL_REVIEW` (not independent approval).
+- **High / resolved:** Request-only users no longer lose the single `Nhập kho` sidebar entry. The centralized navigation resolver opens `/inbound-requests` when only `inbound-requests:view` is granted, retains `/inbound` when receipt viewing is granted, and hides the entry when neither view permission is available. It does not mutate the static navigation catalog or broaden Backend authorization.
+- **Medium / resolved:** Shared inbound tabs no longer fetch `/auth/me` or interpret permission keys. All four workspace pages supply the view capabilities through the shared header; tabs remain presentational and retain accessible links and active-page semantics.
+- Added regressions for request-only, receipt-only, combined and absent permissions across all three tenant roles, capability updates and each active tab.
+- Verification: full suite **233/233** across 57 files; `pnpm typecheck`, `pnpm lint`, `pnpm build` and diff whitespace checks passed.
+- GitNexus pre-change impact and final detection report HIGH because the shared header/tab intentionally participates in the four inbound workspace pages; direct tracing confirmed only navigation/rendering changed. Save payloads, assignments, receipt workflow, route authorization and API contracts are unchanged.
+- No dependency, database connection/write, migration, seed or deployment configuration changed. The user's `screen/huytv` branch remains the working branch; `dev` is the shared integration target, not overwritten or force-pushed.
