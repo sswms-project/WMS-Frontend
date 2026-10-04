@@ -6,8 +6,8 @@ export const organizationFormSchema = z.object({
   tenantName: z
     .string()
     .trim()
-    .min(1, 'Tên tổ chức là bắt buộc.')
-    .max(255, 'Tên tổ chức tối đa 255 ký tự.'),
+    .min(1, 'Tên doanh nghiệp là bắt buộc.')
+    .max(255, 'Tên doanh nghiệp tối đa 255 ký tự.'),
   phone: z
     .string()
     .trim()

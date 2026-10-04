@@ -22,9 +22,9 @@ import type { AnnouncementHistoryItem } from '../../types/admin.types'
 import { formatAdminDateTime } from '../../utils/platform-admin-format'
 
 const AUDIENCE_LABELS: Record<AnnouncementHistoryItem['audience'], string> = {
-  AllActiveTenants: 'Tất cả tổ chức',
+  AllActiveTenants: 'Tất cả doanh nghiệp',
   ByPlan: 'Theo gói',
-  SpecificTenants: 'Tổ chức cụ thể',
+  SpecificTenants: 'Doanh nghiệp cụ thể',
 }
 
 function EmailStatus({ item }: { readonly item: AnnouncementHistoryItem }) {

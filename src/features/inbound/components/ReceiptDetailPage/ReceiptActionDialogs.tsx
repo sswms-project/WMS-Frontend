@@ -80,7 +80,7 @@ export function ReceiptActionDialogs({
             <AlertDialogDescription>
               {confirmationAction === 'Approve'
                 ? selfApprovalRequired
-                  ? 'Bạn là người ghi nhận phiếu này. Khi xác nhận, hệ thống sẽ lưu hành động tự phê duyệt và ghi hàng vào khu chờ.'
+                  ? 'Bạn là người ghi nhận phiếu này. Khi xác nhận, hệ thống sẽ lưu hành động tự phê duyệt trước khi cất hàng.'
                   : 'Số lượng nhận sẽ được ghi nhận vào yêu cầu nhập kho và chuyển sang chờ cất hàng.'
                 : 'Phiếu sẽ được khóa chỉnh sửa trong lúc chờ quản lý duyệt.'}
             </AlertDialogDescription>

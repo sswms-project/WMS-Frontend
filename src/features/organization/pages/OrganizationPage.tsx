@@ -86,20 +86,20 @@ export function OrganizationPage() {
 
     try {
       await updateMutation.mutateAsync(request)
-      toast.success('Đã cập nhật hồ sơ tổ chức.')
+      toast.success('Đã cập nhật hồ sơ doanh nghiệp.')
       setIsEditing(false)
       return true
     } catch (error) {
       logger.error(error)
       if (!isApiErrorResponse(error)) {
-        toast.error('Không thể cập nhật tổ chức. Vui lòng thử lại.')
+        toast.error('Không thể cập nhật doanh nghiệp. Vui lòng thử lại.')
         return false
       }
 
       if (applyServerErrors(error, context.setError)) {
-        toast.error('Vui lòng kiểm tra lại thông tin tổ chức.')
+        toast.error('Vui lòng kiểm tra lại thông tin doanh nghiệp.')
       } else {
-        toast.error(error.message || 'Không thể cập nhật tổ chức. Vui lòng thử lại.')
+        toast.error(error.message || 'Không thể cập nhật doanh nghiệp. Vui lòng thử lại.')
       }
       return false
     }
@@ -113,12 +113,12 @@ export function OrganizationPage() {
         </div>
         <div className="min-w-0">
           <p className="text-primary text-xs font-medium">Không gian tenant</p>
-          <h1 className="mt-0.5 text-xl font-semibold">Hồ sơ tổ chức</h1>
+          <h1 className="mt-0.5 text-xl font-semibold">Hồ sơ doanh nghiệp</h1>
         </div>
       </header>
 
       {organizationQuery.isLoading && (
-        <div className="bg-card space-y-4 border p-4" aria-label="Đang tải hồ sơ tổ chức">
+        <div className="bg-card space-y-4 border p-4" aria-label="Đang tải hồ sơ doanh nghiệp">
           <Skeleton className="h-10 w-72 max-w-full" />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Skeleton className="h-20" />
@@ -132,7 +132,7 @@ export function OrganizationPage() {
         <div className="bg-card flex min-h-64 flex-col items-center justify-center gap-3 border px-4 text-center">
           <TriangleAlert className="text-destructive size-9" aria-hidden="true" />
           <div>
-            <p className="text-sm font-medium">Không thể tải hồ sơ tổ chức</p>
+            <p className="text-sm font-medium">Không thể tải hồ sơ doanh nghiệp</p>
             <p className="text-muted-foreground mt-1 text-xs">
               Vui lòng kiểm tra kết nối rồi thử lại.
             </p>

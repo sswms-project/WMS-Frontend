@@ -94,7 +94,7 @@ export default function AnnouncementsPage() {
         sendEmail: values.sendEmail,
       })
       const { recipientCount, emailQueuedCount } = response.data
-      toast.success(`Đã gửi thông báo tới ${recipientCount} tổ chức`)
+      toast.success(`Đã gửi thông báo tới ${recipientCount} doanh nghiệp`)
       if (emailQueuedCount > 0) {
         toast.info(`${emailQueuedCount} email đã được xếp hàng gửi, hệ thống sẽ tự thử lại nếu lỗi`)
       }
@@ -115,9 +115,6 @@ export default function AnnouncementsPage() {
         <div className="min-w-0">
           <p className="text-primary text-xs font-medium">Vận hành nền tảng</p>
           <h1 className="text-foreground mt-0.5 text-xl font-semibold">Thông báo hệ thống</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Gửi thông báo tới chủ các tổ chức đang hoạt động, kèm email nếu cần.
-          </p>
         </div>
       </header>
 
@@ -168,7 +165,7 @@ export default function AnnouncementsPage() {
                           id="audience-all"
                           value={ANNOUNCEMENT_AUDIENCES.AllActiveTenants}
                         />
-                        <Label htmlFor="audience-all">Tất cả tổ chức đang hoạt động</Label>
+                        <Label htmlFor="audience-all">Tất cả doanh nghiệp đang hoạt động</Label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem id="audience-plan" value={ANNOUNCEMENT_AUDIENCES.ByPlan} />
@@ -179,7 +176,7 @@ export default function AnnouncementsPage() {
                           id="audience-tenants"
                           value={ANNOUNCEMENT_AUDIENCES.SpecificTenants}
                         />
-                        <Label htmlFor="audience-tenants">Tổ chức cụ thể</Label>
+                        <Label htmlFor="audience-tenants">Doanh nghiệp cụ thể</Label>
                       </div>
                     </RadioGroup>
                   )}
@@ -225,11 +222,11 @@ export default function AnnouncementsPage() {
 
               {audience === ANNOUNCEMENT_AUDIENCES.SpecificTenants && (
                 <Field data-invalid={Boolean(errors.tenantIds)}>
-                  <FieldLabel htmlFor="announcement-tenant-search">Tổ chức</FieldLabel>
+                  <FieldLabel htmlFor="announcement-tenant-search">Doanh nghiệp</FieldLabel>
                   <Input
                     id="announcement-tenant-search"
                     type="search"
-                    placeholder="Tìm theo tên tổ chức…"
+                    placeholder="Tìm theo tên doanh nghiệp…"
                     autoComplete="off"
                     value={tenantSearch}
                     onChange={(event) => setTenantSearch(event.target.value)}
@@ -260,11 +257,13 @@ export default function AnnouncementsPage() {
                             <p className="text-muted-foreground text-sm">Đang tải danh sách…</p>
                           )}
                           {!tenantsQuery.isLoading && tenants.length === 0 && (
-                            <p className="text-muted-foreground text-sm">Không tìm thấy tổ chức.</p>
+                            <p className="text-muted-foreground text-sm">
+                              Không tìm thấy doanh nghiệp.
+                            </p>
                           )}
                         </div>
                         <p className="text-muted-foreground text-sm">
-                          Đã chọn {field.value.length} tổ chức
+                          Đã chọn {field.value.length} doanh nghiệp
                         </p>
                       </>
                     )}
@@ -308,7 +307,7 @@ export default function AnnouncementsPage() {
                     />
                   )}
                 />
-                <Label htmlFor="announcement-send-email">Gửi kèm email tới chủ tổ chức</Label>
+                <Label htmlFor="announcement-send-email">Gửi kèm email tới chủ doanh nghiệp</Label>
               </div>
 
               <div className="flex justify-end">
@@ -337,10 +336,10 @@ export default function AnnouncementsPage() {
             <AlertDialogTitle>Xác nhận gửi thông báo?</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingValues?.audience === ANNOUNCEMENT_AUDIENCES.ByPlan
-                ? `Thông báo sẽ được gửi tới chủ các tổ chức thuộc ${pendingValues.planIds.length} gói đã chọn.`
+                ? `Thông báo sẽ được gửi tới chủ các doanh nghiệp thuộc ${pendingValues.planIds.length} gói đã chọn.`
                 : pendingValues?.audience === ANNOUNCEMENT_AUDIENCES.SpecificTenants
-                  ? `Thông báo sẽ được gửi tới chủ ${pendingValues.tenantIds.length} tổ chức đã chọn.`
-                  : 'Thông báo sẽ được gửi tới chủ tất cả tổ chức đang hoạt động.'}
+                  ? `Thông báo sẽ được gửi tới chủ ${pendingValues.tenantIds.length} doanh nghiệp đã chọn.`
+                  : 'Thông báo sẽ được gửi tới chủ tất cả doanh nghiệp đang hoạt động.'}
               {pendingValues?.sendEmail ? ' Email cũng sẽ được gửi.' : ''} Hành động này không thể
               hoàn tác.
             </AlertDialogDescription>

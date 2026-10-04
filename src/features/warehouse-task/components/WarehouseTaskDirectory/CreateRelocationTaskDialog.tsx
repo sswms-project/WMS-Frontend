@@ -167,12 +167,7 @@ export function CreateRelocationTaskDialog(props: CreateRelocationTaskDialogProp
                         Để hệ thống gợi ý khi thực hiện
                       </NativeSelectOption>
                       {props.slotOptions
-                        .filter(
-                          (slot) =>
-                            slot.id !== sourceSlotId &&
-                            !slot.isInboundStaging &&
-                            !slot.isOutboundStaging
-                        )
+                        .filter((slot) => slot.id !== sourceSlotId && !slot.isOutboundStaging)
                         .map((slot) => (
                           <NativeSelectOption key={slot.id} value={slot.id}>
                             {slot.code} · {slot.name ?? 'Không tên'}

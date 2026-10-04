@@ -91,7 +91,11 @@ export default function GoodsReceiptsPage() {
   return (
     <>
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <InboundPageHeader title="Phiếu nhận hàng" />
+        <InboundPageHeader
+          title="Phiếu nhận hàng"
+          canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
+          canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
+        />
         <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
           <CardContent className="flex min-h-16 items-center justify-between gap-2">
             <p className="text-sm font-medium">Phiếu phù hợp</p>
@@ -153,8 +157,8 @@ export default function GoodsReceiptsPage() {
             <AlertDialogDescription>
               {approvalTarget
                 ? allowedActionsQuery.data?.selfApprovalRequired
-                  ? `Bạn là người ghi nhận phiếu ${approvalTarget.receiptCode}. Hệ thống sẽ lưu hành động tự phê duyệt và ghi hàng vào khu chờ.`
-                  : `Số lượng thực nhận của phiếu ${approvalTarget.receiptCode} sẽ được ghi vào vị trí chờ nhận hàng trước khi cất hàng.`
+                  ? `Bạn là người ghi nhận phiếu ${approvalTarget.receiptCode}. Hệ thống sẽ lưu hành động tự phê duyệt trước khi cất hàng.`
+                  : `Xác nhận kết quả kiểm hàng của phiếu ${approvalTarget.receiptCode} trước khi thực hiện cất hàng.`
                 : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>

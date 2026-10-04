@@ -10,7 +10,7 @@ export const ANNOUNCEMENT_AUDIENCES = {
 export const ANNOUNCEMENT_ACTIONS = [
   { value: 'ViewWarehouses', label: 'Danh sách kho' },
   { value: 'ViewStaff', label: 'Nhân sự' },
-  { value: 'ViewOrganization', label: 'Thông tin tổ chức' },
+  { value: 'ViewOrganization', label: 'Thông tin doanh nghiệp' },
   { value: 'ChooseSubscriptionPlan', label: 'Chọn gói dịch vụ' },
   { value: 'ViewSubscription', label: 'Gói dịch vụ hiện tại' },
   { value: 'ViewSubscriptionPayments', label: 'Lịch sử thanh toán gói' },
@@ -47,7 +47,7 @@ export const announcementSchema = z
   .refine(
     (values) =>
       values.audience !== ANNOUNCEMENT_AUDIENCES.SpecificTenants || values.tenantIds.length > 0,
-    { path: ['tenantIds'], message: 'Vui lòng chọn ít nhất một tổ chức.' }
+    { path: ['tenantIds'], message: 'Vui lòng chọn ít nhất một doanh nghiệp.' }
   )
 
 export type AnnouncementFormValues = z.infer<typeof announcementSchema>

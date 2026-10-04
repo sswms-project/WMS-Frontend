@@ -33,7 +33,7 @@ export function SupplierDetail({
   onReactivate,
 }: SupplierDetailProps) {
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon">
@@ -41,14 +41,14 @@ export function SupplierDetail({
               <ArrowLeft aria-hidden="true" />
             </Link>
           </Button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold">{supplier.supplierName}</h1>
+              <h1 className="min-w-0 text-xl font-semibold break-words">{supplier.supplierName}</h1>
               <SupplierStatusBadge status={supplier.status} />
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {canUpdate ? (
             <Button type="button" variant="outline" onClick={onEdit}>
               <Pencil aria-hidden="true" />
@@ -76,7 +76,7 @@ export function SupplierDetail({
             Tổng quan
           </h2>
         </div>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-4 lg:grid-cols-4">
+        <dl className="grid grid-cols-1 gap-x-4 gap-y-5 p-4 sm:grid-cols-2 lg:grid-cols-4">
           <Metadata label="Mã nhà cung cấp" value={supplier.supplierCode} />
           <Metadata label="Tên nhà cung cấp" value={supplier.supplierName} />
           <Metadata label="Mã số thuế" value={formatSupplierText(supplier.taxCode)} />
@@ -92,7 +92,7 @@ export function SupplierDetail({
         </div>
         <div className="border-t p-4">
           <h3 className="text-sm font-semibold">Thông tin liên hệ</h3>
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4 lg:grid-cols-4">
+          <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
             <Metadata
               label="Người liên hệ"
               value={
@@ -126,7 +126,7 @@ function Metadata({ label, value }: { readonly label: string; readonly value: st
   return (
     <div className="min-w-0">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="mt-1 truncate text-sm font-medium">{value}</dd>
+      <dd className="mt-1 text-sm font-medium break-words">{value}</dd>
     </div>
   )
 }

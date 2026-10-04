@@ -604,7 +604,6 @@ export function WarehouseDesignerPage({
             slotName: locationEditTarget.location.slotName,
             description: locationEditTarget.location.description ?? '',
             allowsMixedProducts: locationEditTarget.location.allowsMixedProducts ?? true,
-            isInboundStaging: locationEditTarget.location.isInboundStaging ?? false,
             ...getCapacityFormValues(locationEditTarget.location),
             expectedRowVersion: locationEditTarget.location.rowVersion ?? '',
             ...getWarehousePhysicalDetails(locationEditTarget.location),

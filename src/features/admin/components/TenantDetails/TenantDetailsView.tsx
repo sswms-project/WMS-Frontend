@@ -129,7 +129,7 @@ export function TenantDetailsView({
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="flex flex-col gap-4 lg:col-span-8">
           <section className="bg-card border p-4">
-            <h2 className="text-sm font-semibold">Tổ chức và chủ sở hữu</h2>
+            <h2 className="text-sm font-semibold">Doanh nghiệp và chủ sở hữu</h2>
             <DetailList
               items={[
                 ['Email đơn vị thuê', data.email],

@@ -203,7 +203,7 @@ export function SubscriptionPage() {
               ? hasPendingInitialPayment
                 ? `Thanh toán cho gói ${subscription.planName} đang chờ xác nhận. Hãy tiếp tục checkout hiện tại hoặc chờ giao dịch kết thúc trước khi chọn gói khác.`
                 : `Gói ${subscription.planName} đang chờ kích hoạt. Tiếp tục với gói đã chọn hoặc chọn một gói khác.`
-              : 'Dữ liệu tổ chức đã được giữ nguyên. Hãy chọn rõ gói Free hoặc gói trả phí phù hợp để kích hoạt quyền vận hành kho.'
+              : 'Dữ liệu doanh nghiệp đã được giữ nguyên. Hãy chọn rõ gói Free hoặc gói trả phí phù hợp để kích hoạt quyền vận hành kho.'
           }
         />
       ) : (

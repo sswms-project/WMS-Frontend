@@ -58,7 +58,7 @@ export function OrganizationProfileView({ organization, onEdit }: OrganizationPr
                 </Badge>
               </div>
               <p className="text-muted-foreground mt-1 text-sm">
-                Không gian vận hành kho của tổ chức
+                Không gian vận hành kho của doanh nghiệp
               </p>
             </div>
           </div>
@@ -73,11 +73,11 @@ export function OrganizationProfileView({ organization, onEdit }: OrganizationPr
           <div className="mb-4">
             <h3 className="text-sm font-semibold">Thông tin liên hệ</h3>
             <p className="text-muted-foreground mt-1 text-xs">
-              Thông tin dùng cho trao đổi vận hành và nhận diện tổ chức.
+              Thông tin dùng cho trao đổi vận hành và nhận diện doanh nghiệp.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <DetailCard icon={Mail} label="Email tổ chức" value={organization.email} />
+            <DetailCard icon={Mail} label="Email doanh nghiệp" value={organization.email} />
             <DetailCard
               icon={Phone}
               label="Số điện thoại"
@@ -97,7 +97,7 @@ export function OrganizationProfileView({ organization, onEdit }: OrganizationPr
           </div>
           <DetailCard
             icon={CircleCheck}
-            label="Trạng thái tổ chức"
+            label="Trạng thái doanh nghiệp"
             value={organization.status === 'Active' ? 'Đang hoạt động' : organization.status}
           />
         </section>

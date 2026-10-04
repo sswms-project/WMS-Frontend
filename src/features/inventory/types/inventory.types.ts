@@ -12,7 +12,6 @@ export interface InventoryListQuery {
 export type QualityStatus = 'Good' | 'Damaged' | 'Quarantine'
 export type InventoryEligibilityStatus =
   | 'Available'
-  | 'ReceivingHold'
   | 'InspectionHold'
   | 'DamageHold'
   | 'Quarantine'

@@ -78,7 +78,7 @@ export function WarehouseCreateDialog({
         <DialogHeader>
           <DialogTitle>Tạo kho</DialogTitle>
           <DialogDescription>
-            Thêm một kho mới vào không gian vận hành của tổ chức.
+            Thêm một kho mới vào không gian vận hành của doanh nghiệp.
           </DialogDescription>
         </DialogHeader>
 

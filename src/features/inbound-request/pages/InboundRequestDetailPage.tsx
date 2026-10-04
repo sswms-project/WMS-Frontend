@@ -117,7 +117,7 @@ export default function InboundRequestDetailPage({
               ? 'Đã hủy yêu cầu nhập kho.'
               : action === INBOUND_REQUEST_ACTION.CloseRemaining
                 ? 'Đã đóng số lượng nhập còn lại.'
-            : 'Đã phê duyệt yêu cầu nhập kho.'
+                : 'Đã phê duyệt yêu cầu nhập kho.'
       )
       return true
     } catch (error) {
@@ -149,8 +149,8 @@ export default function InboundRequestDetailPage({
         approveMutation.isPending ||
         approveAndSendMutation.isPending ||
         sendToSupplierMutation.isPending ||
-        rejectMutation.isPending
-        || reconcileMutation.isPending
+        rejectMutation.isPending ||
+        reconcileMutation.isPending
       }
       onSubmit={() => runAction(INBOUND_REQUEST_ACTION.Submit)}
       onApprove={(acknowledged) =>

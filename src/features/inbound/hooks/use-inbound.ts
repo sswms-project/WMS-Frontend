@@ -216,7 +216,6 @@ export function useSubmitGoodsReceiptMutation() {
         commandId: crypto.randomUUID(),
       }),
     onSuccess: (_, variables) => invalidate(variables.receiptId),
-    onError: (error) => logger.error(error),
   })
 }
 
