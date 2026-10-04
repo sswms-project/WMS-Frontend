@@ -171,3 +171,23 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Sidebar `Nhập kho` now prefers `/inbound-requests` when authorized, retaining the receipt route for receipt-only users and active highlighting across the inbound workspace.
 - Branch includes `origin/dev` at `ed35f70`; local tracked/untracked work matches the safety stash after sync. Full suite: **265/265 tests across 62 files**. Typecheck, full lint, production build and whitespace checks passed. GitNexus reports Medium scope in the expected put-away flows; sidebar regression tests pass.
 - No migration, dependency, deployment configuration or database changes. Deploy the paired Backend first. Live browser responsive/accessibility and API end-to-end QA remain pending; automated fixtures/mocks do not establish that acceptance.
+
+### 2026-10-04 — Inbound UX, workflow assignment and readable units
+
+- Role: Codex implementation and self-verification, not independent review or live acceptance.
+- State: `READY_FOR_CODEX_REVIEW`.
+- Default Staff login resolves to My Tasks; an explicitly requested authorized destination remains unchanged. Put-away business rejections log a readable warning instead of a raw object/error overlay; unexpected failures remain error-level and existing toast/retry safety is preserved.
+- Request creation optionally selects the receiving/put-away staff member using existing assignable-staff data and permissions. Warehouse changes clear the selection; loading/error/retry states are explicit. Draft updates do not silently overwrite assignment and Backend remains the final authorization/eligibility authority.
+- Receipt/request lines distinguish base units from request conversions, replacing `Theo PO` with `Theo yêu cầu nhập`. Receipt history actions are Vietnamese. Put-away history explicitly labels conversion as based on the inbound request snapshot, not the original entry unit, which is not persisted per allocation. Product list includes active conversion units alongside the main unit.
+- Verification: **271 tests passed across 64 files**; typecheck, lint, production build and whitespace checks passed. Added regressions cover Staff routing, receipt conversion columns/history and business-warning logging.
+- Ponytail, React and shadcn guidance favored existing form/table/error primitives without dependencies or schema changes. GitNexus impact/change detection was corroborated with direct source/diff review; new tests were inspected outside the index.
+- Browser responsive/accessibility and deployed API end-to-end acceptance remain pending. Local Backend must be restarted/deployed with the paired changes before exercising the new assignment API. No database write, migration, seed, configuration change, application restart, commit, push or deletion was performed.
+
+### 2026-10-04 — Warehouse wall decoration overflow and inventory subtitle
+
+- Role: Codex implementing the authorized layout/subtitle fix; self-verification only. State: `READY_FOR_CODEX_REVIEW`.
+- Decorations use the same bounded 120-layout-unit outer margin on drag/resize, palette drop, duplication and scene loading. Warehouse zones/racks remain inside their original bounds. The blue wall is drawn separately from the expanded paper; fit/scroll/grid coordinates include the margin while decorative glyphs remain above the wall.
+- Removed only the requested slot/snapshot subtitle from available inventory, preserving data freshness metadata and per-stock update dates.
+- Targeted FE suite **21/21** (grid bounds, save/load mapper and inventory directory) passed; typecheck, full lint, production build and whitespace checks passed. Full FE test attempts encountered worker initialization/termination failures under host memory pressure and were stopped; they are not reported as a pass.
+- GitNexus identified HIGH impact for the shared constrain helper (10 direct callers, 3 affected processes). Its default margin remains zero; callers were traced and only decoration callers opt in. Whole dirty FE detection is High including preserved prior inbound changes. Existing primitives and React/Ponytail guidance were retained with no new dependency.
+- No database command/write, migration, seed, application restart, commit, push, configuration change or deletion. Live browser/zoom/drag end-to-end QA remains pending; paired Backend must be restarted/deployed to accept new outside-wall coordinates.

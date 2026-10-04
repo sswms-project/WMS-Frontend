@@ -6,6 +6,14 @@ import type { LifecycleEvent } from '@/features/inbound-request/types/inbound-re
 
 const RECEIPT_ACTION_LABELS: Readonly<Record<string, string>> = {
   Approve: 'Phê duyệt phiếu nhận hàng',
+  ApproveInspection: 'Duyệt kết quả kiểm hàng',
+  SelfApproveInspection: 'Tự duyệt kết quả kiểm hàng',
+  RejectInspection: 'Yêu cầu kiểm hàng lại',
+  ReturnInspectionForCorrection: 'Trả kết quả kiểm hàng để chỉnh sửa',
+  ResubmitInspection: 'Gửi lại kết quả kiểm hàng',
+  SelfRejectInspection: 'Tự yêu cầu kiểm hàng lại',
+  CorrectInspectionClassification: 'Điều chỉnh phân loại hàng đạt và hàng hỏng',
+  CreatePutAwayTask: 'Tạo nhiệm vụ cất hàng',
   ConfirmPhysicalArrival: 'Xác nhận hàng đến',
   SelfConfirmPhysicalArrival: 'Tự xác nhận hàng đến',
   AssignPutAwayTask: 'Phân công nhiệm vụ cất hàng',

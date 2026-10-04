@@ -31,6 +31,7 @@ export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
             <TableHead>Lô</TableHead>
             <TableHead>Chất lượng</TableHead>
             <TableHead className="text-right">Số lượng</TableHead>
+            <TableHead>Quy đổi theo yêu cầu nhập</TableHead>
             <TableHead>Người thực hiện</TableHead>
             <TableHead>Thời điểm</TableHead>
           </TableRow>
@@ -45,9 +46,23 @@ export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
                 </TableCell>
                 <TableCell className="font-mono">{formatPutAwayLocation(detail)}</TableCell>
                 <TableCell className="font-mono">{detail.lotNumber ?? '—'}</TableCell>
-                <TableCell>{detail.qualityStatus}</TableCell>
+                <TableCell>
+                  {detail.qualityStatus === 'Good'
+                    ? 'Đạt'
+                    : detail.qualityStatus === 'Damaged'
+                      ? 'Hỏng'
+                      : 'Chờ kiểm tra'}
+                </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {formatQuantity(detail.quantity)}
+                  {formatQuantity(detail.quantity)} {item.baseUnitName}
+                </TableCell>
+                <TableCell>
+                  {item.enteredUnitId &&
+                  item.enteredUnitId !== item.baseUnitId &&
+                  item.enteredUnitName &&
+                  item.conversionFactorSnapshot > 0
+                    ? `${formatQuantity(detail.quantity / item.conversionFactorSnapshot)} ${item.enteredUnitName} (1 ${item.enteredUnitName} = ${formatQuantity(item.conversionFactorSnapshot)} ${item.baseUnitName})`
+                    : '—'}
                 </TableCell>
                 <TableCell>{detail.performedByName}</TableCell>
                 <TableCell>{formatOperationalDate(detail.putAwayAt)}</TableCell>

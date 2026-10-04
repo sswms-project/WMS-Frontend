@@ -87,6 +87,7 @@ export interface LifecycleEvent {
 }
 
 export interface InboundRequestLine {
+  baseUnitId?: string
   id: string
   productId: string
   productSKU: string
@@ -115,6 +116,8 @@ export interface InboundRequestDetail extends Omit<
   submittedAt: string | null
   approvedAt: string | null
   rejectionReason: string | null
+  receivingAssignedTo?: string | null
+  receivingAssignedToName?: string | null
   cancelledBy: string | null
   cancelledAt: string | null
   cancellationReason: string | null
@@ -184,6 +187,10 @@ export interface SaveInboundRequestRequest {
   sourceReference: string | null
   expectedDate: string | null
   lines: InboundRequestLineRequest[]
+}
+
+export interface CreateInboundRequestRequest extends SaveInboundRequestRequest {
+  receivingAssignedTo?: string | null
 }
 
 export interface ProductOption {

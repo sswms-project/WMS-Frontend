@@ -24,7 +24,8 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
             <TableRow>
               <TableHead>Sản phẩm</TableHead>
               <TableHead className="text-right">Số lượng nhập</TableHead>
-              <TableHead className="text-right">Số lượng cơ sở</TableHead>
+              <TableHead>Đơn vị quy đổi</TableHead>
+              <TableHead className="text-right">Số lượng đơn vị chính</TableHead>
               <TableHead className="text-right">Đã nhận</TableHead>
               <TableHead className="text-right">Đã đóng</TableHead>
               <TableHead className="text-right">Còn lại</TableHead>
@@ -45,17 +46,25 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
                     </span>
                   ) : null}
                 </TableCell>
+                <TableCell>
+                  {line.enteredUnitName &&
+                  (line.baseUnitId
+                    ? line.enteredUnitId !== line.baseUnitId
+                    : line.enteredUnitName !== line.unitName)
+                    ? `1 ${line.enteredUnitName} = ${formatQuantity(line.conversionFactorSnapshot)} ${line.unitName}`
+                    : '—'}
+                </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {formatQuantity(line.quantity)} {line.unitName}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {formatQuantity(line.receivedQuantity)}
+                  {formatQuantity(line.receivedQuantity)} {line.unitName}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {formatQuantity(line.closedQuantity)}
+                  {formatQuantity(line.closedQuantity)} {line.unitName}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {formatQuantity(line.remainingQuantity)}
+                  {formatQuantity(line.remainingQuantity)} {line.unitName}
                 </TableCell>
               </TableRow>
             ))}

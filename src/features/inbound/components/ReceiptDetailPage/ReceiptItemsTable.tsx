@@ -20,7 +20,9 @@ export function ReceiptItemsTable({ items }: ReceiptItemsTableProps) {
         <TableHeader className="bg-card sticky top-0 z-10">
           <TableRow>
             <TableHead>Sản phẩm</TableHead>
-            <TableHead className="text-right">Theo PO</TableHead>
+            <TableHead className="text-right">Theo yêu cầu nhập</TableHead>
+            <TableHead>Đơn vị chính</TableHead>
+            <TableHead>Đơn vị quy đổi</TableHead>
             <TableHead className="text-right">Thực nhận</TableHead>
             <TableHead className="text-right">Hỏng</TableHead>
             <TableHead className="text-right">Khả dụng</TableHead>
@@ -40,6 +42,14 @@ export function ReceiptItemsTable({ items }: ReceiptItemsTableProps) {
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatQuantity(item.orderedQuantity)}
+              </TableCell>
+              <TableCell>{item.baseUnitName}</TableCell>
+              <TableCell>
+                {item.enteredUnitId &&
+                item.enteredUnitId !== item.baseUnitId &&
+                item.enteredUnitName
+                  ? `1 ${item.enteredUnitName} = ${formatQuantity(item.conversionFactorSnapshot)} ${item.baseUnitName}`
+                  : '—'}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatQuantity(item.receivedQuantity)}

@@ -71,7 +71,7 @@ describe('putaway capacity rejection', () => {
         })
       ).rejects.toEqual(error)
     })
-    expect(warning).toHaveBeenCalledWith(message)
+    expect(warning).toHaveBeenCalledWith(`[409] ${message}`)
     expect(consoleError).not.toHaveBeenCalled()
     await waitFor(() => expect(getApiErrorMessage(hook.result.current.error)).toBe(message))
     vi.restoreAllMocks()

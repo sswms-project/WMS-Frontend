@@ -7,7 +7,11 @@ import type {
   WarehouseLayoutGeometry,
   WarehouseLayoutSceneResponse,
 } from '../types/warehouse-layout-scene.types'
-import { constrainLayoutGeometryToCanvas, getRackPresetSize } from './layout-grid'
+import {
+  constrainLayoutGeometryToCanvas,
+  getRackPresetSize,
+  LAYOUT_DECORATION_MARGIN,
+} from './layout-grid'
 
 const DEFAULT_ZONE_WIDTH = 520
 const DEFAULT_ZONE_HEIGHT = 320
@@ -107,7 +111,12 @@ export function mapWarehouseLayoutScene(scene: WarehouseLayoutSceneResponse): {
     }
   })
   const decorations = scene.decorations.map<WarehouseLayoutEditorDecoration>((decoration) => {
-    const geometry = constrainLayoutGeometryToCanvas(decoration, scene.canvas, false)
+    const geometry = constrainLayoutGeometryToCanvas(
+      decoration,
+      scene.canvas,
+      false,
+      LAYOUT_DECORATION_MARGIN
+    )
     if (hasGeometryChanged(decoration, geometry)) hasGeneratedGeometry = true
     return {
       ...decoration,

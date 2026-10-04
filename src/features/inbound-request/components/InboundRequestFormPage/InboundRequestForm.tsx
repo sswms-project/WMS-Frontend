@@ -44,6 +44,11 @@ interface InboundRequestFormProps {
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly fields: readonly FieldArrayWithId<InboundRequestFormValues, 'lines', 'id'>[]
   readonly warehouseOptions: readonly LookupOption[]
+  readonly canAssign?: boolean
+  readonly staffOptions?: readonly LookupOption[]
+  readonly isStaffLoading?: boolean
+  readonly isStaffError?: boolean
+  readonly onRetryStaff?: () => void
   readonly supplierOptions: readonly LookupOption[]
   readonly productOptions: readonly LookupOption[]
   readonly productsById: Readonly<Record<string, ProductResponse>>
@@ -73,6 +78,11 @@ export function InboundRequestForm({
   form,
   fields,
   warehouseOptions,
+  canAssign,
+  staffOptions = [],
+  isStaffLoading,
+  isStaffError,
+  onRetryStaff,
   supplierOptions,
   productOptions,
   productsById,
@@ -149,9 +159,11 @@ export function InboundRequestForm({
                     isLoading={isWarehouseSearchLoading}
                     isInvalid={Boolean(errors.warehouseId)}
                     onSearchChange={onWarehouseSearchChange}
-                    onChange={(value) =>
+                    onChange={(value) => {
+                      if (value !== watch('warehouseId'))
+                        setValue('receivingAssignedTo', '', { shouldDirty: true })
                       setValue('warehouseId', value, { shouldDirty: true, shouldValidate: true })
-                    }
+                    }}
                   />
                   <FieldDescription>
                     Vị trí cất cụ thể sẽ được chọn ở bước Cất hàng.
@@ -235,6 +247,43 @@ export function InboundRequestForm({
                     setValue('expectedDate', value, { shouldDirty: true, shouldValidate: true })
                   }
                 />
+                {canAssign ? (
+                  <Field
+                    data-invalid={Boolean(errors.receivingAssignedTo)}
+                    aria-busy={isStaffLoading}
+                  >
+                    <FieldLabel htmlFor="receivingAssignedTo">
+                      Nhân viên nhận và cất hàng (tùy chọn)
+                    </FieldLabel>
+                    <NativeSelect
+                      id="receivingAssignedTo"
+                      className="w-full"
+                      disabled={!watch('warehouseId') || isStaffLoading || isStaffError}
+                      aria-describedby="receiving-assignment-help"
+                      aria-invalid={Boolean(errors.receivingAssignedTo)}
+                      {...register('receivingAssignedTo')}
+                    >
+                      <NativeSelectOption value="">
+                        {isStaffLoading ? 'Đang tải nhân viên…' : 'Chưa phân công'}
+                      </NativeSelectOption>
+                      {staffOptions.map((staff) => (
+                        <NativeSelectOption key={staff.value} value={staff.value}>
+                          {staff.label}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <FieldDescription id="receiving-assignment-help">
+                      Gán một lần: nhận hàng, sau đó cất hàng khi phiếu nhận được duyệt. Quản lý vẫn
+                      có thể giao lại khi cần.
+                    </FieldDescription>
+                    {isStaffError ? (
+                      <Button type="button" variant="outline" size="sm" onClick={onRetryStaff}>
+                        Thử tải lại nhân viên
+                      </Button>
+                    ) : null}
+                    <FieldError>{errors.receivingAssignedTo?.message}</FieldError>
+                  </Field>
+                ) : null}
               </FieldGroup>
             </FieldSet>
           </CardContent>
