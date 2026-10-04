@@ -24,6 +24,7 @@ import { useAssignmentWarehousesQuery } from '../../hooks/use-manager-assignment
 import type { WarehouseAssignmentQuery } from '../../types/manager-assignment.types'
 import type { StaffResponse } from '../../types/staff.types'
 import { getAssignedWarehouseIds, resolveStaffWarehouseScope } from '../../utils/staff-warehouse'
+import { StaffEmploymentHistory } from './StaffEmploymentHistory'
 import { StaffStatusBadge } from './StaffStatusBadge'
 
 const staffWarehouseQuery: WarehouseAssignmentQuery = {
@@ -37,6 +38,7 @@ interface StaffDetailsSheetProps {
   readonly person?: StaffResponse
   readonly isLoading: boolean
   readonly isError: boolean
+  readonly canEditEmploymentHistory: boolean
   readonly onOpenChange: (open: boolean) => void
 }
 
@@ -45,6 +47,7 @@ export function StaffDetailsSheet({
   person,
   isLoading,
   isError,
+  canEditEmploymentHistory,
   onOpenChange,
 }: StaffDetailsSheetProps) {
   const isWarehouseStaff = person?.role === USER_ROLES.WarehouseStaff
@@ -121,6 +124,12 @@ export function StaffDetailsSheet({
                 </div>
               ))}
             </dl>
+
+            <StaffEmploymentHistory
+              userId={person.id}
+              enabled={open}
+              canEdit={canEditEmploymentHistory}
+            />
 
             {hasWarehouseRole && (
               <section className="border-t" aria-labelledby="staff-warehouse-scope-title">

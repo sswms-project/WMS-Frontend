@@ -97,6 +97,8 @@ export const queryKeys = {
     list: (kind: StaffDirectoryKind, params: StaffQuery) =>
       ['staff', 'lists', kind, params] as const,
     detail: (userId: string) => ['staff', 'detail', userId] as const,
+    former: (params: StaffQuery) => ['staff', 'former', params] as const,
+    employmentHistory: (userId: string) => ['staff', 'employment-history', userId] as const,
     warehouseAssignments: (userId: string) => ['staff', 'warehouses', userId] as const,
     allInvitations: ['staff', 'invitations'] as const,
     invitations: (params: InvitationQuery) => ['staff', 'invitations', params] as const,

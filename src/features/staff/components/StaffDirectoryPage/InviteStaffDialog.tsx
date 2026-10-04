@@ -222,6 +222,11 @@ export function InviteStaffDialog({
                               {' '}
                               · {warehouse.warehouseName}
                             </span>
+                            <span className="text-muted-foreground mt-0.5 block text-xs">
+                              {warehouse.managerName
+                                ? `Quản lý: ${warehouse.managerName}`
+                                : 'Chưa có quản lý'}
+                            </span>
                           </span>
                         </label>
                       )
