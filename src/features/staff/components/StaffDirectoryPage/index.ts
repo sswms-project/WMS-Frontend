@@ -1,3 +1,4 @@
+export { FormerStaffPanel } from './FormerStaff'
 export { InvitationManagementPanel } from './InvitationManagementPanel'
 export { InvitationRevokeDialog } from './InvitationRevokeDialog'
 export { InviteStaffDialog } from './InviteStaffDialog'

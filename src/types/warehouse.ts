@@ -6,6 +6,8 @@ export interface WarehouseResponse {
   status: string
   createdAt: string
   rowVersion?: string | null
+  managerId?: string | null
+  managerName?: string | null
 }
 
 export interface WarehouseDetailResponse extends WarehouseResponse {
