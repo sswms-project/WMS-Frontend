@@ -165,15 +165,9 @@ export const inventoryService = {
         expectedVersion,
       })
       .then((response) => response.data),
-  approveOpeningStock: (
-    id: string,
-    expectedVersion: string,
-    selfApprovalAcknowledged = false
-  ) =>
+  approveOpeningStock: (id: string, expectedVersion: string, selfApprovalAcknowledged = false) =>
     axiosClient
-      .post<
-        ApiResponse<string>
-      >(API_ENDPOINTS.inventory.approveOpeningStock(id), {
+      .post<ApiResponse<string>>(API_ENDPOINTS.inventory.approveOpeningStock(id), {
         openingStockId: id,
         expectedVersion,
         selfApprovalAcknowledged,

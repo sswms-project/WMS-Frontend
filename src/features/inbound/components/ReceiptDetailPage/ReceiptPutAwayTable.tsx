@@ -10,10 +10,14 @@ import {
   formatOperationalDate,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import type { GoodsReceiptItem } from '../../types/inbound.types'
+import type { GoodsReceiptItem, PutAwayDetail } from '../../types/inbound.types'
 
 interface ReceiptPutAwayTableProps {
   readonly items: readonly GoodsReceiptItem[]
+}
+
+function formatPutAwayLocation(detail: PutAwayDetail) {
+  return detail.isSystemDefaultSlot ? `Kệ ${detail.rackCode} (không chia ô)` : detail.slotCode
 }
 
 export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
@@ -23,7 +27,7 @@ export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
         <TableHeader className="bg-card sticky top-0 z-10">
           <TableRow>
             <TableHead>Sản phẩm</TableHead>
-            <TableHead>Vị trí</TableHead>
+            <TableHead>Đã cất vào</TableHead>
             <TableHead>Lô</TableHead>
             <TableHead>Chất lượng</TableHead>
             <TableHead className="text-right">Số lượng</TableHead>
@@ -39,7 +43,7 @@ export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
                   <p className="font-medium">{item.productName}</p>
                   <p className="text-muted-foreground font-mono text-xs">{item.productSKU}</p>
                 </TableCell>
-                <TableCell className="font-mono">{detail.slotCode}</TableCell>
+                <TableCell className="font-mono">{formatPutAwayLocation(detail)}</TableCell>
                 <TableCell className="font-mono">{detail.lotNumber ?? '—'}</TableCell>
                 <TableCell>{detail.qualityStatus}</TableCell>
                 <TableCell className="text-right tabular-nums">

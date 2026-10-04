@@ -30,9 +30,21 @@ import {
   type PutawayFormValues,
 } from '../schemas/inbound.schema'
 import { getPutawayAllocationState } from '../schemas/putaway-allocation.schema'
+import type { GoodsReceiptDetail } from '../types/inbound.types'
 import { getPutawaySlotOptions } from '../utils/putaway-slot-options'
 
 const EMPTY_ALLOCATION = { goodsReceiptItemId: '', slotId: '', quantity: 1 }
+
+function buildInitialAllocations(receipt: GoodsReceiptDetail): PutawayFormValues['lines'] {
+  const lines = receipt.items
+    .filter((item) => item.inboundRequestItemId && item.remainingPutAwayQuantity > 0)
+    .map((item) => ({
+      goodsReceiptItemId: item.id,
+      slotId: '',
+      quantity: item.remainingPutAwayQuantity,
+    }))
+  return lines.length > 0 ? lines : [EMPTY_ALLOCATION]
+}
 
 export default function InboundPutawayDetailPage({ receiptId }: { readonly receiptId: string }) {
   const router = useRouter()
@@ -50,6 +62,9 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     resolver: zodResolver(putawaySchema),
     mode: 'onChange',
     defaultValues: { lines: [EMPTY_ALLOCATION] },
+    // Điền sẵn dòng cho phần còn phải cất; keepDirtyValues giữ lại những gì người dùng đã sửa khi refetch.
+    values: receiptQuery.data ? { lines: buildInitialAllocations(receiptQuery.data) } : undefined,
+    resetOptions: { keepDirtyValues: true },
   })
   const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
   const cancelForm = useForm<CancelPutawayTaskFormValues>({

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card'
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -152,6 +153,9 @@ export function InboundRequestForm({
                       setValue('warehouseId', value, { shouldDirty: true, shouldValidate: true })
                     }
                   />
+                  <FieldDescription>
+                    Vị trí cất cụ thể sẽ được chọn ở bước Cất hàng.
+                  </FieldDescription>
                   <FieldError>{errors.warehouseId?.message}</FieldError>
                 </Field>
                 <Field data-invalid={Boolean(errors.sourceType)}>

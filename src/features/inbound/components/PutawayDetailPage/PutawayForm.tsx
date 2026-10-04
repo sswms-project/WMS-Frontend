@@ -139,15 +139,15 @@ export function PutawayForm({
       <section className="bg-card border">
         <div className="flex items-center justify-between gap-3 border-b p-4">
           <div>
-            <h2 className="text-sm font-semibold">Phân bổ vị trí</h2>
+            <h2 className="text-sm font-semibold">Chọn vị trí cất cho từng sản phẩm</h2>
             <p className="text-muted-foreground text-xs">
-              Có thể chia một sản phẩm vào nhiều vị trí. Giới hạn được tính riêng theo từng dòng
-              hàng, không cộng gộp giữa các sản phẩm.
+              Hàng đang nằm ở khu nhận hàng tạm; chọn vị trí đích để chuyển vào kho. Có thể chia một
+              sản phẩm vào nhiều vị trí, giới hạn tính riêng theo từng dòng hàng.
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={onAdd}>
             <Plus aria-hidden="true" />
-            Thêm phân bổ
+            Chia sang vị trí khác
           </Button>
         </div>
         <div className="divide-y">
@@ -211,7 +211,7 @@ export function PutawayForm({
                   ) : null}
                 </Field>
                 <Field data-invalid={Boolean(lineErrors.slotId)}>
-                  <FieldLabel htmlFor={`putaway-slot-${index}`}>Vị trí lưu trữ</FieldLabel>
+                  <FieldLabel htmlFor={`putaway-slot-${index}`}>Cất vào vị trí</FieldLabel>
                   <PutawayLocationSelect
                     id={`putaway-slot-${index}`}
                     invalid={Boolean(lineErrors.slotId)}

@@ -103,8 +103,7 @@ export function InboundRequestDetail({
     const handlers: Partial<Record<InboundRequestAction, () => Promise<boolean>>> = {
       [INBOUND_REQUEST_ACTION.Submit]: onSubmit,
       [INBOUND_REQUEST_ACTION.Approve]: () => onApprove(selfApprovalAcknowledged),
-      [INBOUND_REQUEST_ACTION.ApproveAndSend]: () =>
-        onApproveAndSend(selfApprovalAcknowledged),
+      [INBOUND_REQUEST_ACTION.ApproveAndSend]: () => onApproveAndSend(selfApprovalAcknowledged),
       [INBOUND_REQUEST_ACTION.SendToSupplier]: onSendToSupplier,
     }
     const succeeded = await handlers[confirmationAction]?.()
@@ -458,9 +457,7 @@ export function InboundRequestDetail({
             <Button
               type="button"
               variant={
-                reconciliationAction === INBOUND_REQUEST_ACTION.Cancel
-                  ? 'destructive'
-                  : 'default'
+                reconciliationAction === INBOUND_REQUEST_ACTION.Cancel ? 'destructive' : 'default'
               }
               disabled={isPending || !reason.trim()}
               onClick={() => void reconcile()}
