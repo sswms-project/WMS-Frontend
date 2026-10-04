@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CircleOff, Eye, Pencil, Plus, RotateCcw, Search, Users } from 'lucide-react'
+import { CircleOff, Eye, Pencil, Plus, RotateCcw, Search, Upload, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -44,6 +44,7 @@ interface StockRecipientDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
+  readonly onImport: () => void
   readonly onEdit: (stockRecipient: StockRecipient) => void
   readonly onChangeStatus: (stockRecipient: StockRecipient) => void
   readonly onRetry: () => void
@@ -67,6 +68,7 @@ export function StockRecipientDirectory({
   onPageChange,
   onPageSizeChange,
   onCreate,
+  onImport,
   onEdit,
   onChangeStatus,
   onRetry,
@@ -84,10 +86,16 @@ export function StockRecipientDirectory({
           </div>
         </div>
         {canCreate ? (
-          <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" />
-            Thêm khách hàng
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onImport}>
+              <Upload data-icon="inline-start" />
+              Nhập từ tệp
+            </Button>
+            <Button onClick={onCreate}>
+              <Plus data-icon="inline-start" />
+              Thêm khách hàng
+            </Button>
+          </div>
         ) : null}
       </header>
       <OperationalListPanel aria-label="Danh sách khách hàng">

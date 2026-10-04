@@ -6,7 +6,9 @@ import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { stockRecipientService } from '../services/stock-recipient.service'
 import type {
   CreateStockRecipientRequest,
+  ImportStockRecipientsRequest,
   StockRecipient,
+  StockRecipientImportPreview,
   StockRecipientListQuery,
   StockRecipientListResponse,
   StockRecipientIssueHistoryQuery,
@@ -72,6 +74,29 @@ export function useCreateStockRecipientMutation() {
   return useMutation<ApiResponse<string>, ApiErrorResponse, CreateStockRecipientRequest>({
     mutationFn: stockRecipientService.createStockRecipient,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockRecipients.all }),
+    onError: logStockRecipientMutationError,
+  })
+}
+
+export function useImportStockRecipientsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ImportStockRecipientsRequest>({
+    mutationFn: stockRecipientService.importStockRecipients,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockRecipients.all }),
+    onError: logStockRecipientMutationError,
+  })
+}
+
+export function usePreviewStockRecipientImportMutation() {
+  return useMutation<ApiResponse<StockRecipientImportPreview>, ApiErrorResponse, File>({
+    mutationFn: stockRecipientService.previewImport,
+    onError: logStockRecipientMutationError,
+  })
+}
+
+export function useStockRecipientImportTemplateMutation() {
+  return useMutation<void, ApiErrorResponse, void>({
+    mutationFn: stockRecipientService.downloadImportTemplate,
     onError: logStockRecipientMutationError,
   })
 }
