@@ -91,7 +91,11 @@ export default function GoodsReceiptsPage() {
   return (
     <>
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <InboundPageHeader title="Phiếu nhận hàng" />
+        <InboundPageHeader
+          title="Phiếu nhận hàng"
+          canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
+          canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
+        />
         <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
           <CardContent className="flex min-h-16 items-center justify-between gap-2">
             <p className="text-sm font-medium">Phiếu phù hợp</p>

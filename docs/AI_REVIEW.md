@@ -99,3 +99,14 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Verification: focused navigation and tab tests passed **28/28**; full suite passed **226/226** across 57 files; typecheck, lint and production build passed.
 - GitNexus impact was unavailable because its local transport remained closed; direct source tracing covered the shared sidebar, inbound header/tab and inbound-request directory consumers.
 - No dependency, Backend source, API contract, database, migration, seed or deployment configuration was changed.
+
+### 2026-10-04 — Pre-merge navigation fixes
+
+- Role: Codex implementing the user's requested review fixes and performing self-verification.
+- State: `READY_FOR_FINAL_REVIEW` (not independent approval).
+- **High / resolved:** Request-only users no longer lose the single `Nhập kho` sidebar entry. The centralized navigation resolver opens `/inbound-requests` when only `inbound-requests:view` is granted, retains `/inbound` when receipt viewing is granted, and hides the entry when neither view permission is available. It does not mutate the static navigation catalog or broaden Backend authorization.
+- **Medium / resolved:** Shared inbound tabs no longer fetch `/auth/me` or interpret permission keys. All four workspace pages supply the view capabilities through the shared header; tabs remain presentational and retain accessible links and active-page semantics.
+- Added regressions for request-only, receipt-only, combined and absent permissions across all three tenant roles, capability updates and each active tab.
+- Verification: full suite **233/233** across 57 files; `pnpm typecheck`, `pnpm lint`, `pnpm build` and diff whitespace checks passed.
+- GitNexus pre-change impact and final detection report HIGH because the shared header/tab intentionally participates in the four inbound workspace pages; direct tracing confirmed only navigation/rendering changed. Save payloads, assignments, receipt workflow, route authorization and API contracts are unchanged.
+- No dependency, database connection/write, migration, seed or deployment configuration changed. The user's `screen/huytv` branch remains the working branch; `dev` is the shared integration target, not overwritten or force-pushed.

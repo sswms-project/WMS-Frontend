@@ -1,14 +1,18 @@
 import { PackageOpen } from 'lucide-react'
-import { InboundTabs } from './InboundTabs'
+import { InboundTabs, type InboundTabsProps } from './InboundTabs'
 import type { ReactNode } from 'react'
+
+interface InboundPageHeaderProps extends InboundTabsProps {
+  readonly title: string
+  readonly action?: ReactNode
+}
 
 export function InboundPageHeader({
   title,
   action,
-}: {
-  readonly title: string
-  readonly action?: ReactNode
-}) {
+  canViewRequests,
+  canViewReceipts,
+}: InboundPageHeaderProps) {
   return (
     <header className="flex shrink-0 flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
@@ -23,7 +27,7 @@ export function InboundPageHeader({
         </div>
         {action}
       </div>
-      <InboundTabs />
+      <InboundTabs canViewRequests={canViewRequests} canViewReceipts={canViewReceipts} />
     </header>
   )
 }

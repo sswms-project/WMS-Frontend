@@ -4,8 +4,6 @@ import { ClipboardCheck, ClipboardList, PackageCheck, PackageOpen } from 'lucide
 import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { P } from '@/config/permissionCodes'
-import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 
@@ -14,32 +12,34 @@ const tabs = [
     href: APP_ROUTES.inboundRequests,
     label: 'Yêu cầu nhập kho',
     icon: ClipboardList,
-    requiredPermission: P.INBOUND_REQUESTS_VIEW,
   },
   {
     href: APP_ROUTES.inbound,
     label: 'Chờ nhận hàng',
     icon: PackageOpen,
-    requiredPermission: P.GOODS_RECEIPTS_VIEW,
   },
   {
     href: APP_ROUTES.goodsReceipts,
     label: 'Phiếu nhận hàng',
     icon: ClipboardCheck,
-    requiredPermission: P.GOODS_RECEIPTS_VIEW,
   },
   {
     href: APP_ROUTES.inboundPutaway,
     label: 'Chờ cất hàng',
     icon: PackageCheck,
-    requiredPermission: P.GOODS_RECEIPTS_VIEW,
   },
 ] as const
 
-export function InboundTabs() {
+export interface InboundTabsProps {
+  readonly canViewRequests: boolean
+  readonly canViewReceipts: boolean
+}
+
+export function InboundTabs({ canViewRequests, canViewReceipts }: InboundTabsProps) {
   const pathname = usePathname()
-  const permissions = new Set(useMeQuery().data?.permissions ?? [])
-  const visibleTabs = tabs.filter((tab) => permissions.has(tab.requiredPermission))
+  const visibleTabs = tabs.filter((tab) =>
+    tab.href === APP_ROUTES.inboundRequests ? canViewRequests : canViewReceipts
+  )
 
   return (
     <nav

@@ -141,6 +141,8 @@ export default function InboundRequestsPage() {
       <div className="flex h-full min-h-0 flex-col gap-4">
         <InboundPageHeader
           title="Yêu cầu nhập kho"
+          canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
+          canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
           action={
             canCreate ? (
               <Button asChild size="sm" className="shrink-0">

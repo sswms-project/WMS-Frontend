@@ -1,32 +1,23 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { P } from '@/config/permissionCodes'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { InboundTabs } from './InboundTabs'
 
 const state = vi.hoisted(() => ({
   pathname: '/inbound-requests',
-  permissions: [] as string[],
 }))
 
 vi.mock('next/navigation', () => ({
   usePathname: () => state.pathname,
 }))
 
-vi.mock('@/features/auth/hooks/use-auth', () => ({
-  useMeQuery: () => ({ data: { permissions: state.permissions } }),
-}))
-
 describe('InboundTabs', () => {
   beforeEach(() => {
     state.pathname = APP_ROUTES.inboundRequests
-    state.permissions = []
   })
 
   it('shows all inbound operations allowed by the current permissions', () => {
-    state.permissions = [P.INBOUND_REQUESTS_VIEW, P.GOODS_RECEIPTS_VIEW]
-
-    render(<InboundTabs />)
+    render(<InboundTabs canViewRequests canViewReceipts />)
 
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'Yêu cầu nhập kho',
@@ -41,16 +32,34 @@ describe('InboundTabs', () => {
   })
 
   it('hides request and receipt operations independently', () => {
-    state.permissions = [P.INBOUND_REQUESTS_VIEW]
-    const view = render(<InboundTabs />)
+    const view = render(<InboundTabs canViewRequests canViewReceipts={false} />)
 
     expect(screen.getAllByRole('link')).toHaveLength(1)
     expect(screen.getByRole('link', { name: 'Yêu cầu nhập kho' })).toBeInTheDocument()
 
-    state.permissions = [P.GOODS_RECEIPTS_VIEW]
-    view.rerender(<InboundTabs />)
+    view.rerender(<InboundTabs canViewRequests={false} canViewReceipts />)
 
     expect(screen.queryByRole('link', { name: 'Yêu cầu nhập kho' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('link')).toHaveLength(3)
+  })
+
+  it('hides all operations until view capabilities are available', () => {
+    render(<InboundTabs canViewRequests={false} canViewReceipts={false} />)
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    [APP_ROUTES.inbound, 'Chờ nhận hàng'],
+    [APP_ROUTES.goodsReceipts, 'Phiếu nhận hàng'],
+    [APP_ROUTES.inboundPutaway, 'Chờ cất hàng'],
+  ])('marks only the matching operation active at %s', (pathname, name) => {
+    state.pathname = pathname
+    render(<InboundTabs canViewRequests canViewReceipts />)
+
+    const activeLinks = screen
+      .getAllByRole('link')
+      .filter((link) => link.hasAttribute('aria-current'))
+    expect(activeLinks).toEqual([screen.getByRole('link', { name })])
   })
 })

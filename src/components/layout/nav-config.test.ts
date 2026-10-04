@@ -19,6 +19,34 @@ function getVisibleNavItems(
 
 describe('application navigation visibility', () => {
   it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'opens an authorized inbound entry point for %s without hiding delegated requests',
+    (role) => {
+      const requestOnlyItems = getVisibleNavItems(role, [P.INBOUND_REQUESTS_VIEW])
+      const requestEntry = requestOnlyItems.find((item) => item.label === 'Nhập kho')
+      expect(requestEntry?.href).toBe(APP_ROUTES.inboundRequests)
+      expect(requestEntry?.requiredPermission).toBe(P.INBOUND_REQUESTS_VIEW)
+      expect(isNavItemActive(`${APP_ROUTES.inboundRequests}/request-1`, requestEntry!)).toBe(true)
+      expect(requestOnlyItems.some((item) => item.href === APP_ROUTES.inbound)).toBe(false)
+
+      for (const permissions of [
+        [P.GOODS_RECEIPTS_VIEW],
+        [P.GOODS_RECEIPTS_VIEW, P.INBOUND_REQUESTS_VIEW],
+      ]) {
+        const entry = getVisibleNavItems(role, permissions).find(
+          (item) => item.label === 'Nhập kho'
+        )
+        expect(entry?.href).toBe(APP_ROUTES.inbound)
+        expect(entry?.requiredPermission).toBe(P.GOODS_RECEIPTS_VIEW)
+      }
+
+      expect(getVisibleNavItems(role, []).some((item) => item.label === 'Nhập kho')).toBe(false)
+      expect(getNavItems(role).find((item) => item.label === 'Nhập kho')?.href).toBe(
+        APP_ROUTES.inbound
+      )
+    }
+  )
+
+  it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
     'shows the warehouse workspace for %s',
     (role) => {
       expect(getNavItems(role).some((item) => item.href === APP_ROUTES.warehouses)).toBe(true)
