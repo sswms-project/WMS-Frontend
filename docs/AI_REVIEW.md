@@ -338,3 +338,19 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 
 - Frontend suite `336` passed; typecheck, ESLint and production build clean. No Backend change, migration or database write in this change.
 - Live browser QA of the new pages is still pending; tests use mocks.
+
+## Put-Away Location Plan — 2026-10-05
+
+**Implementer:** Claude
+**State:** `READY_FOR_CODEX_REVIEW`
+
+### Implemented
+
+- Receipt detail: `Cấu hình vị trí cất` sheet (manager), AI suggestion button, planned-slots tab, `Khác kế hoạch` badge with reason and photo downloads in the put-away history.
+- Put-away form: pre-filled from the plan, `Làm theo kế hoạch` reset, reason + photo panel when the allocation differs from the plan. The command id and payload (reason, evidence ids) stay immutable across uncertain retries.
+- New permission code `GOODS_RECEIPTS_PLAN_PUTAWAY`; the action list from Backend (`PlanPutAway`) drives visibility. Deploy the paired Backend first.
+
+### Verification
+
+- Frontend suite `359` passed; typecheck, ESLint and production build clean.
+- Live browser/API acceptance is still pending; automated tests use mocks. GitNexus impact/change detection was not available in this session.

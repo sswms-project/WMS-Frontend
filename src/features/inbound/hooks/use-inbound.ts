@@ -14,7 +14,9 @@ import type {
   GoodsReceiptDetail,
   GoodsReceiptListResponse,
   PutawayRequest,
+  PutAwaySuggestionsResponse,
   PutawayTaskQuery,
+  SavePutAwayPlanRequest,
   ReceivingTaskListResponse,
   ReceivingTaskQuery,
   SaveGoodsReceiptRequest,
@@ -239,6 +241,26 @@ export function useRejectGoodsReceiptMutation() {
     mutationFn: ({ receiptId, reason }) => inboundService.rejectReceipt(receiptId, reason),
     onSuccess: (_, variables) => invalidate(variables.receiptId),
     onError: (error) => logger.error(error),
+  })
+}
+
+export function useSavePutawayPlanMutation() {
+  const invalidate = useInvalidateInbound()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    { receiptId: string; request: SavePutAwayPlanRequest }
+  >({
+    mutationFn: ({ receiptId, request }) => inboundService.savePutawayPlan(receiptId, request),
+    onSuccess: (_, variables) => invalidate(variables.receiptId),
+    onError: (error) => logger.warn(formatApiError(error)),
+  })
+}
+
+export function usePutawaySuggestionsMutation() {
+  return useMutation<ApiResponse<PutAwaySuggestionsResponse>, ApiErrorResponse, string>({
+    mutationFn: inboundService.suggestPutawaySlots,
+    onError: (error) => logger.warn(formatApiError(error)),
   })
 }
 

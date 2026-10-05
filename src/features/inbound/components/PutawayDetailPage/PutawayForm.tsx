@@ -4,6 +4,7 @@ import { ArrowLeft, Ban, PackageCheck, Plus, Trash2 } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useWatch, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -17,9 +18,16 @@ import {
   getPutawayFillRemaining,
 } from '../../schemas/putaway-allocation.schema'
 import { formatPutawayQuantity, getPutawayRemainingInput } from '../../utils/putaway-units'
+import {
+  hasPutawayPlan,
+  isPutawayReasonValid,
+  type PutawayPlanDeviation,
+} from '../../utils/putaway-plan'
 import { cn } from '@/lib/utils'
 import type { GoodsReceiptDetail } from '../../types/inbound.types'
+import { PutawayDeviationPanel, type PutawayEvidenceState } from './PutawayDeviationPanel'
 import { PutawayLocationSelect } from './PutawayLocationSelect'
+import { PutawayPlanNotice } from './PutawayPlanNotice'
 
 export interface SlotOption {
   id: string
@@ -40,9 +48,12 @@ interface PutawayFormProps {
   readonly slots: readonly SlotOption[]
   readonly isPending: boolean
   readonly hasUncertainSubmission?: boolean
+  readonly planDeviation: PutawayPlanDeviation
+  readonly evidence: PutawayEvidenceState
   readonly canCancel: boolean
   readonly cancelLabel?: string
   readonly onCancel: () => void
+  readonly onApplyPlan: () => void
   readonly onAdd: () => void
   readonly onRemove: (index: number) => void
   readonly onSubmit: () => void
@@ -55,9 +66,12 @@ export function PutawayForm({
   slots,
   isPending,
   hasUncertainSubmission = false,
+  planDeviation,
+  evidence,
   canCancel,
   cancelLabel = 'Hủy phần còn lại',
   onCancel,
+  onApplyPlan,
   onAdd,
   onRemove,
   onSubmit,
@@ -68,6 +82,12 @@ export function PutawayForm({
     formState: { errors, isSubmitted, touchedFields },
   } = form
   const lines = useWatch({ control: form.control, name: 'lines' })
+  const overrideReason = useWatch({ control: form.control, name: 'overrideReason' })
+  const reasonMissing = planDeviation.requiresReason && !isPutawayReasonValid(overrideReason)
+  const reasonError =
+    reasonMissing && (isSubmitted || (overrideReason ?? '').length > 0)
+      ? 'Vui lòng nhập lý do (tối thiểu 5 ký tự) khi cất khác kế hoạch.'
+      : null
   const allocationLocked = isPending || hasUncertainSubmission
   const allocation = getPutawayAllocationState(lines, receipt.items, slots)
   const pendingItems = receipt.items.filter((item) => item.remainingPutAwayQuantity > 0)
@@ -115,7 +135,9 @@ export function PutawayForm({
           ) : null}
           <Button
             type="button"
-            disabled={isPending || (!hasUncertainSubmission && !allocation.canSubmit)}
+            disabled={
+              isPending || (!hasUncertainSubmission && (!allocation.canSubmit || reasonMissing))
+            }
             aria-busy={isPending}
             onClick={onSubmit}
           >
@@ -183,6 +205,7 @@ export function PutawayForm({
             })}
         </div>
       </section>
+      <PutawayPlanNotice receipt={receipt} disabled={allocationLocked} onApplyPlan={onApplyPlan} />
       {errors.root?.server?.message ? <FieldError>{errors.root.server.message}</FieldError> : null}
       <section className="bg-card border">
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -295,6 +318,17 @@ export function PutawayForm({
                     }
                   />
                   <FieldError id={`putaway-slot-${index}-error`}>{lineErrors.slotId}</FieldError>
+                  {selectedItem && hasPutawayPlan(selectedItem) ? (
+                    <p className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
+                      {planDeviation.offPlanRows.has(index) ? (
+                        <Badge variant="outline" className="border-warning text-warning">
+                          Khác kế hoạch
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Theo kế hoạch</Badge>
+                      )}
+                    </p>
+                  ) : null}
                 </Field>
                 <Field
                   data-invalid={Boolean(lineErrors.enteredQuantity)}
@@ -421,6 +455,14 @@ export function PutawayForm({
           </div>
         ) : null}
       </section>
+      {planDeviation.requiresReason ? (
+        <PutawayDeviationPanel
+          form={form}
+          reasonError={reasonError}
+          disabled={allocationLocked}
+          evidence={evidence}
+        />
+      ) : null}
     </div>
   )
 }

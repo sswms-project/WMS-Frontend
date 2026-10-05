@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PutawayFormValues } from '../../schemas/inbound.schema'
-import type { GoodsReceiptDetail } from '../../types/inbound.types'
+import type { GoodsReceiptDetail, GoodsReceiptItem } from '../../types/inbound.types'
 import { PutawayForm, type SlotOption } from './PutawayForm'
 
 const baseUnitId = '10000000-0000-4000-8000-000000000003'
@@ -41,6 +41,7 @@ const receipt: GoodsReceiptDetail = {
   putAwayTaskRequiresReconciliation: false,
   putAwayTaskReconciledAt: null,
   putAwayTaskReconciliationNote: null,
+  putAwayPlanUpdatedAt: null,
   version: 'AQ==',
   history: [],
   items: [
@@ -82,6 +83,7 @@ const receipt: GoodsReceiptDetail = {
       remainingPutAwayQuantity: 240,
       exceptionReason: null,
       putAwayDetails: [],
+      putAwayPlan: [],
     },
   ],
 }
@@ -105,8 +107,14 @@ function TestForm({
   uncertain = false,
   remaining = 240,
   unitsAvailable = true,
+  plan = [],
+  offPlan = false,
+  onApplyPlan = vi.fn(),
   onSubmit = vi.fn(),
 }: {
+  readonly plan?: GoodsReceiptItem['putAwayPlan']
+  readonly offPlan?: boolean
+  readonly onApplyPlan?: () => void
   readonly pending?: boolean
   readonly uncertain?: boolean
   readonly remaining?: number
@@ -129,6 +137,7 @@ function TestForm({
           ...item,
           remainingPutAwayQuantity: remaining,
           allowedUnits: unitsAvailable ? item.allowedUnits : [],
+          putAwayPlan: plan,
         })),
       }}
       form={form}
@@ -136,6 +145,15 @@ function TestForm({
       slots={slots}
       isPending={pending}
       hasUncertainSubmission={uncertain}
+      planDeviation={{ offPlanRows: new Set(offPlan ? [0] : []), requiresReason: offPlan }}
+      evidence={{
+        items: [],
+        isUploading: false,
+        error: null,
+        onAdd: vi.fn(),
+        onRemove: vi.fn(),
+      }}
+      onApplyPlan={onApplyPlan}
       canCancel={false}
       onAdd={() =>
         fieldArray.append({
@@ -151,6 +169,47 @@ function TestForm({
     />
   )
 }
+
+describe('put-away location plan', () => {
+  const plan = [
+    {
+      id: 'plan-1',
+      slotId,
+      slotCode: 'A-01',
+      rackCode: 'KE-01',
+      isSystemDefaultSlot: false,
+      quantity: 96,
+    },
+  ]
+
+  it('shows the manager plan and lets the staff reset to it', async () => {
+    const applyPlan = vi.fn()
+    const user = userEvent.setup()
+    render(<TestForm plan={plan} onApplyPlan={applyPlan} />)
+
+    expect(screen.getByText('Vị trí cất do quản lý cấu hình')).toBeInTheDocument()
+    expect(screen.getByText('Theo kế hoạch')).toBeInTheDocument()
+    expect(screen.queryByText('Bạn đang cất khác kế hoạch của quản lý')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Làm theo kế hoạch' }))
+    expect(applyPlan).toHaveBeenCalledOnce()
+  })
+
+  it('requires a reason before confirming a put-away that differs from the plan', async () => {
+    const submit = vi.fn()
+    const user = userEvent.setup()
+    render(<TestForm plan={plan} offPlan onSubmit={submit} />)
+
+    expect(screen.getByText('Bạn đang cất khác kế hoạch của quản lý')).toBeInTheDocument()
+    expect(screen.getByText('Khác kế hoạch')).toBeInTheDocument()
+    const confirm = screen.getByRole('button', { name: 'Xác nhận cất hàng' })
+    expect(confirm).toBeDisabled()
+
+    await user.type(screen.getByLabelText('Lý do cất khác kế hoạch'), 'Kệ A-01 đã đầy')
+    expect(confirm).toBeEnabled()
+    await user.click(confirm)
+    expect(submit).toHaveBeenCalledOnce()
+  })
+})
 
 describe('put-away operational-unit form', () => {
   it('locks allocation and cancellation but allows exact retry even after the remainder changes', async () => {

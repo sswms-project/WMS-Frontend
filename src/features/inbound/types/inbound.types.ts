@@ -2,6 +2,7 @@ import type {
   LifecycleEvent,
   PagedResponse,
 } from '@/features/inbound-request/types/inbound-request.types'
+import type { InventoryEvidence } from '@/features/inventory/types/inventory.types'
 
 export const GOODS_RECEIPT_STATUSES = [
   'Draft',
@@ -20,6 +21,7 @@ export type GoodsReceiptAction =
   | 'Reject'
   | 'PutAway'
   | 'AssignPutAway'
+  | 'PlanPutAway'
 
 export type WarehouseTaskExecutionStatus = 'Queued' | 'InProgress' | 'Paused' | 'Completed'
 
@@ -143,6 +145,17 @@ export interface GoodsReceiptItem {
   remainingPutAwayQuantity: number
   exceptionReason: string | null
   putAwayDetails: PutAwayDetail[]
+  putAwayPlan: PutAwayPlanLine[]
+}
+
+/** Vị trí quản lý đã cấu hình; quantity là phần còn phải cất theo đơn vị gốc. */
+export interface PutAwayPlanLine {
+  id: string
+  slotId: string
+  slotCode: string
+  rackCode: string
+  isSystemDefaultSlot: boolean
+  quantity: number
 }
 
 export interface PutAwayUnit {
@@ -169,6 +182,10 @@ export interface PutAwayDetail {
   performedByName: string
   quantity: number
   putAwayAt: string
+  deviationId: string | null
+  isOffPlan: boolean
+  deviationReason: string | null
+  deviationEvidence: InventoryEvidence[]
 }
 
 export interface GoodsReceiptDetail extends Omit<
@@ -196,6 +213,7 @@ export interface GoodsReceiptDetail extends Omit<
   putAwayTaskRequiresReconciliation: boolean
   putAwayTaskReconciledAt: string | null
   putAwayTaskReconciliationNote: string | null
+  putAwayPlanUpdatedAt: string | null
   version: string
   items: GoodsReceiptItem[]
   history: LifecycleEvent[]
@@ -228,6 +246,35 @@ export interface PutawayRequest {
   expectedVersion: string
   commandId: string
   overrideReason?: string | null
+  evidenceIds?: string[]
+}
+
+export interface SavePutAwayPlanRequest {
+  expectedVersion: string
+  items: { goodsReceiptItemId: string; slots: { slotId: string; quantity: number }[] }[]
+}
+
+export interface PutAwaySlotSuggestion {
+  slotId: string
+  slotCode: string
+  rackCode: string
+  zoneName: string
+  score: number
+  reason: string
+  source: 'Ai' | 'Rules'
+  warnings: string[]
+}
+
+export interface PutAwayItemSuggestions {
+  goodsReceiptItemId: string
+  remainingQuantity: number
+  suggestions: PutAwaySlotSuggestion[]
+}
+
+export interface PutAwaySuggestionsResponse {
+  items: PutAwayItemSuggestions[]
+  isAiAssisted: boolean
+  aiNotice: string | null
 }
 
 export interface ConfirmPhysicalArrivalRequest {

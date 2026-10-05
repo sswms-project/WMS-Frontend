@@ -73,6 +73,7 @@ export const putawayLineSchema = z.object({
 export const putawaySchema = z
   .object({
     lines: z.array(putawayLineSchema).min(1, 'Vui lòng thêm ít nhất một phân bổ vị trí.'),
+    overrideReason: z.string().max(500, 'Lý do không được vượt quá 500 ký tự.').optional(),
   })
   .superRefine((values, context) => {
     const allocations = new Set<string>()

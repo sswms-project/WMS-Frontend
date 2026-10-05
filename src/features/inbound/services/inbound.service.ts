@@ -11,7 +11,9 @@ import type {
   GoodsReceiptDetail,
   GoodsReceiptListResponse,
   PutawayRequest,
+  PutAwaySuggestionsResponse,
   PutawayTaskQuery,
+  SavePutAwayPlanRequest,
   ReceivingTaskListResponse,
   ReceivingTaskQuery,
   SaveGoodsReceiptRequest,
@@ -94,6 +96,16 @@ export const inboundService = {
   putaway: (receiptId: string, request: PutawayRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.putaway(receiptId), request)
+      .then((response) => response.data),
+  savePutawayPlan: (receiptId: string, request: SavePutAwayPlanRequest) =>
+    axiosClient
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.putawayPlan(receiptId), request)
+      .then((response) => response.data),
+  suggestPutawaySlots: (receiptId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<PutAwaySuggestionsResponse>
+      >(API_ENDPOINTS.goodsReceipts.putawayPlanSuggestions(receiptId), undefined, { timeout: 60_000 })
       .then((response) => response.data),
   cancelPutawayTask: (receiptId: string, request: CancelPutawayTaskRequest) =>
     axiosClient

@@ -4,10 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { useUploadInventoryEvidenceMutation } from '@/features/inventory/hooks/use-inventory'
 import {
   OperationalErrorState,
   OperationalLoadingState,
@@ -16,7 +17,12 @@ import { useWarehouseLayoutQuery } from '@/features/warehouse/hooks/use-warehous
 import { logger } from '@/lib/logger'
 import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { CancelPutawayDialog, PutawayForm, type SlotOption } from '../components/PutawayDetailPage'
+import {
+  CancelPutawayDialog,
+  PutawayForm,
+  type PutawayEvidenceState,
+  type SlotOption,
+} from '../components/PutawayDetailPage'
 import {
   useCancelPutawayTaskMutation,
   useGoodsReceiptQuery,
@@ -32,7 +38,13 @@ import {
 import { getPutawayAllocationState } from '../schemas/putaway-allocation.schema'
 import type { GoodsReceiptDetail, PutawayRequest } from '../types/inbound.types'
 import { getPutawaySlotOptions } from '../utils/putaway-slot-options'
-import { getPutawayRemainingInput } from '../utils/putaway-units'
+import {
+  buildPlannedAllocations,
+  getPutawayEvidenceError,
+  getPutawayPlanDeviation,
+  isPutawayReasonValid,
+  type PutawayPlanDeviation,
+} from '../utils/putaway-plan'
 
 const EMPTY_ALLOCATION = {
   goodsReceiptItemId: '',
@@ -41,17 +53,18 @@ const EMPTY_ALLOCATION = {
   enteredUnitId: '',
 }
 
+const NO_DEVIATION: PutawayPlanDeviation = { offPlanRows: new Set<number>(), requiresReason: false }
+
+interface EvidenceFile {
+  readonly id: string
+  readonly fileName: string
+}
+
+// Điền sẵn theo kế hoạch của quản lý (nếu có); dòng chưa có kế hoạch để trống vị trí.
 function buildInitialAllocations(receipt: GoodsReceiptDetail): PutawayFormValues['lines'] {
   const lines = receipt.items
     .filter((item) => item.inboundRequestItemId && item.remainingPutAwayQuantity > 0)
-    .map((item) => ({
-      goodsReceiptItemId: item.id,
-      slotId: '',
-      ...(getPutawayRemainingInput(item, item.remainingPutAwayQuantity) ?? {
-        enteredQuantity: item.remainingPutAwayQuantity,
-        enteredUnitId: '',
-      }),
-    }))
+    .flatMap(buildPlannedAllocations)
   return lines.length > 0 ? lines : [EMPTY_ALLOCATION]
 }
 
@@ -59,6 +72,8 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
   const [hasUncertainSubmission, setHasUncertainSubmission] = useState(false)
+  const [evidenceFiles, setEvidenceFiles] = useState<readonly EvidenceFile[]>([])
+  const [evidenceError, setEvidenceError] = useState<string | null>(null)
   const pendingRequest = useRef<{ receiptId: string; request: PutawayRequest } | null>(null)
   const submitting = useRef(false)
   const meQuery = useMeQuery()
@@ -68,6 +83,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     Boolean(receiptQuery.data?.warehouseId)
   )
   const mutation = usePutawayMutation()
+  const uploadEvidenceMutation = useUploadInventoryEvidenceMutation()
   const cancelMutation = useCancelPutawayTaskMutation()
   const reconcileMutation = useReconcilePutawayCancellationMutation()
   const form = useForm<PutawayFormValues>({
@@ -75,7 +91,9 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     mode: 'onChange',
     defaultValues: { lines: [EMPTY_ALLOCATION] },
     // Điền sẵn dòng cho phần còn phải cất; keepDirtyValues giữ lại những gì người dùng đã sửa khi refetch.
-    values: receiptQuery.data ? { lines: buildInitialAllocations(receiptQuery.data) } : undefined,
+    values: receiptQuery.data
+      ? { lines: buildInitialAllocations(receiptQuery.data), overrideReason: '' }
+      : undefined,
     resetOptions: { keepDirtyValues: true },
   })
   const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
@@ -84,6 +102,16 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     defaultValues: { reason: '', hasUnrecordedPhysicalMovement: false },
   })
   const slots: SlotOption[] = getPutawaySlotOptions(layoutQuery.data ?? [])
+  const watchedLines = useWatch({ control: form.control, name: 'lines' })
+  const planDeviation = receiptQuery.data
+    ? getPutawayPlanDeviation(
+        watchedLines,
+        getPutawayAllocationState(watchedLines, receiptQuery.data.items, slots).rows.map(
+          (row) => row.baseQuantity
+        ),
+        receiptQuery.data.items
+      )
+    : NO_DEVIATION
 
   useEffect(() => {
     if (!hasUncertainSubmission && !mutation.isPending) return
@@ -105,12 +133,37 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
         toast.error('Phân bổ chưa hợp lệ. Vui lòng kiểm tra lỗi tại từng dòng.')
         return
       }
+      const deviation = getPutawayPlanDeviation(
+        values.lines,
+        allocation.rows.map((row) => row.baseQuantity),
+        receipt.items
+      )
+      const reason = (values.overrideReason ?? '').trim()
+      if (deviation.requiresReason && !isPutawayReasonValid(reason)) {
+        toast.error('Vui lòng nhập lý do khi cất khác kế hoạch của quản lý.')
+        return
+      }
       pendingRequest.current = {
         receiptId,
         request: {
-          lines: values.lines.map((line) => ({ ...line })),
+          lines: values.lines.map(
+            ({ goodsReceiptItemId, slotId, enteredQuantity, enteredUnitId }) => ({
+              goodsReceiptItemId,
+              slotId,
+              enteredQuantity,
+              enteredUnitId,
+            })
+          ),
           expectedVersion: receipt.version,
           commandId: crypto.randomUUID(),
+          ...(deviation.requiresReason
+            ? {
+                overrideReason: reason,
+                ...(evidenceFiles.length > 0
+                  ? { evidenceIds: evidenceFiles.map((file) => file.id) }
+                  : {}),
+              }
+            : {}),
         },
       }
     }
@@ -143,6 +196,33 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     } finally {
       submitting.current = false
     }
+  }
+
+  async function addEvidence(file: File) {
+    const receipt = receiptQuery.data
+    if (!receipt) return
+    const message = getPutawayEvidenceError(file, evidenceFiles.length)
+    setEvidenceError(message)
+    if (message) return
+    try {
+      const response = await uploadEvidenceMutation.mutateAsync({
+        warehouseId: receipt.warehouseId,
+        file,
+      })
+      setEvidenceFiles((files) => [
+        ...files,
+        { id: response.data.id, fileName: response.data.fileName },
+      ])
+    } catch (error) {
+      setEvidenceError(getApiErrorMessage(error, 'Không thể tải ảnh lên. Vui lòng thử lại.'))
+    }
+  }
+
+  function applyPlan(receipt: GoodsReceiptDetail) {
+    fieldArray.replace(buildInitialAllocations(receipt))
+    form.setValue('overrideReason', '')
+    setEvidenceFiles([])
+    setEvidenceError(null)
   }
 
   async function cancelPutaway(values: CancelPutawayTaskFormValues) {
@@ -196,6 +276,13 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
       />
     )
   const receipt = receiptQuery.data
+  const evidence: PutawayEvidenceState = {
+    items: evidenceFiles,
+    isUploading: uploadEvidenceMutation.isPending,
+    error: evidenceError,
+    onAdd: (file) => void addEvidence(file),
+    onRemove: (id) => setEvidenceFiles((files) => files.filter((file) => file.id !== id)),
+  }
   const canCancel =
     (meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_APPROVE) ?? false) &&
     receipt.items.some((item) => item.remainingPutAwayQuantity > 0) &&
@@ -209,11 +296,14 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
         slots={slots}
         isPending={mutation.isPending || cancelMutation.isPending || reconcileMutation.isPending}
         hasUncertainSubmission={hasUncertainSubmission}
+        planDeviation={planDeviation}
+        evidence={evidence}
         canCancel={canCancel}
         cancelLabel={
           receipt.putAwayTaskRequiresReconciliation ? 'Hoàn tất đối soát hủy' : 'Hủy phần còn lại'
         }
         onCancel={() => setCancelOpen(true)}
+        onApplyPlan={() => applyPlan(receipt)}
         onAdd={() => fieldArray.append(EMPTY_ALLOCATION)}
         onRemove={fieldArray.remove}
         onSubmit={() =>
