@@ -128,6 +128,7 @@ export interface GoodsReceiptItem {
   baseUnitId: string
   baseUnitName: string
   enteredUnitId: string | null
+  enteredUnitName?: string | null
   conversionFactorSnapshot: number
   allowedUnits: PutAwayUnit[]
   lotId: string | null

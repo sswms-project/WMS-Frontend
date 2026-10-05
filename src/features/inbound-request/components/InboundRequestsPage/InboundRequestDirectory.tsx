@@ -20,6 +20,8 @@ import { InboundRequestTable, InboundRequestTableSkeleton } from './InboundReque
 import { InboundRequestMobileList } from './InboundRequestMobileList'
 
 interface InboundRequestDirectoryProps {
+  readonly previewId?: string
+  readonly onPreview?: (item: InboundRequestSummary) => void
   readonly items: readonly InboundRequestSummary[]
   readonly totalCount: number
   readonly page: number
@@ -34,6 +36,7 @@ interface InboundRequestDirectoryProps {
   readonly isFetching: boolean
   readonly isError: boolean
   readonly canDelete: boolean
+  readonly canDeleteApproved?: boolean
   readonly canCreate: boolean
   readonly canSubmit: boolean
   readonly canApprove: boolean
@@ -61,6 +64,8 @@ interface InboundRequestDirectoryProps {
 }
 
 export function InboundRequestDirectory({
+  previewId,
+  onPreview,
   items,
   totalCount,
   page,
@@ -75,6 +80,7 @@ export function InboundRequestDirectory({
   isFetching,
   isError,
   canDelete,
+  canDeleteApproved = false,
   canCreate,
   canSubmit,
   canApprove,
@@ -100,36 +106,30 @@ export function InboundRequestDirectory({
   onSubmitMany,
   onApproveMany,
 }: InboundRequestDirectoryProps) {
-  const selectableItems = items.filter(
-    (item) =>
-      (item.status === INBOUND_REQUEST_STATUS.Draft && (canDelete || canSubmit)) ||
-      (item.status === INBOUND_REQUEST_STATUS.PendingApproval && canApprove)
-  )
-  const selectedStatus = items.find((item) => selectedIds.includes(item.id))?.status ?? null
-  const headerSelectionStatus =
-    selectedStatus ??
-    selectableItems.find((item) => item.status === INBOUND_REQUEST_STATUS.Draft)?.status ??
-    selectableItems[0]?.status ??
-    null
-  const selectAllIds = selectableItems
-    .filter((item) => item.status === headerSelectionStatus)
+  const selectedItems = items.filter((item) => selectedIds.includes(item.id))
+  const firstStatus = selectedItems[0]?.status ?? null
+  const selectedStatus = selectedItems.every((item) => item.status === firstStatus)
+    ? firstStatus
+    : null
+  const selectAllIds = items.map((item) => item.id)
+  const visibleSelectedIds = selectedItems.map((item) => item.id)
+  const deletableIds = selectedItems
+    .filter(
+      (item) =>
+        item.status === INBOUND_REQUEST_STATUS.Draft ||
+        (canDeleteApproved &&
+          item.status === INBOUND_REQUEST_STATUS.Approved &&
+          item.receivedQuantity === 0)
+    )
     .map((item) => item.id)
-  const selectedIdsForStatus = selectedStatus
-    ? selectedIds.filter((id) =>
-        items.some((item) => item.id === id && item.status === selectedStatus)
-      )
-    : []
-  const selectedDraftIds =
-    selectedStatus === INBOUND_REQUEST_STATUS.Draft ? selectedIdsForStatus : []
+  const selectedDraftIds = selectedStatus === INBOUND_REQUEST_STATUS.Draft ? visibleSelectedIds : []
   const selectedPendingIds =
-    selectedStatus === INBOUND_REQUEST_STATUS.PendingApproval ? selectedIdsForStatus : []
+    selectedStatus === INBOUND_REQUEST_STATUS.PendingApproval ? visibleSelectedIds : []
   const allSelected =
     selectAllIds.length > 0 && selectAllIds.every((id) => selectedIds.includes(id))
-  const hasSelectionActions = canDelete || canSubmit || canApprove
   const showDraftActions =
-    headerSelectionStatus === INBOUND_REQUEST_STATUS.Draft && (canSubmit || canDelete)
-  const showApproveAction =
-    headerSelectionStatus === INBOUND_REQUEST_STATUS.PendingApproval && canApprove
+    selectedStatus === INBOUND_REQUEST_STATUS.Draft && (canSubmit || canDelete)
+  const showApproveAction = selectedStatus === INBOUND_REQUEST_STATUS.PendingApproval && canApprove
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
@@ -141,12 +141,36 @@ export function InboundRequestDirectory({
 
       <OperationalListPanel aria-labelledby="inbound-request-directory-title">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 id="inbound-request-directory-title" className="text-sm font-semibold">
-                Danh sách yêu cầu nhập kho
-              </h2>
-              <p className="text-muted-foreground text-xs tabular-nums">{totalCount} đơn</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 2xl:basis-0">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <h2 id="inbound-request-directory-title" className="text-sm font-semibold">
+                  Danh sách yêu cầu nhập kho
+                </h2>
+                {visibleSelectedIds.length > 0 ? (
+                  <InboundRequestBulkActions
+                    hasActions={true}
+                    selectedCount={visibleSelectedIds.length}
+                    selectedStatusLabel={
+                      selectedStatus ? INBOUND_REQUEST_STATUS_LABELS[selectedStatus] : null
+                    }
+                    showDraftActions={showDraftActions}
+                    showApproveAction={showApproveAction}
+                    canDelete={canDelete}
+                    canSubmit={canSubmit}
+                    draftIds={selectedDraftIds}
+                    deletableIds={deletableIds}
+                    pendingIds={selectedPendingIds}
+                    isDeletingMany={isDeletingMany}
+                    isSubmitting={isSubmitting}
+                    isApproving={isApproving}
+                    onClearSelection={() => onSelectionChange([])}
+                    onDeleteMany={onDeleteMany}
+                    onSubmitMany={onSubmitMany}
+                    onApproveMany={onApproveMany}
+                  />
+                ) : null}
+              </div>
             </div>
             <InboundRequestFilters
               searchText={searchText}
@@ -161,28 +185,6 @@ export function InboundRequestDirectory({
               onRetry={onRetry}
             />
           </div>
-          {selectedIdsForStatus.length > 0 ? (
-            <InboundRequestBulkActions
-              hasActions={hasSelectionActions}
-              selectedCount={selectedIdsForStatus.length}
-              selectedStatusLabel={
-                selectedStatus ? INBOUND_REQUEST_STATUS_LABELS[selectedStatus] : null
-              }
-              showDraftActions={showDraftActions}
-              showApproveAction={showApproveAction}
-              canDelete={canDelete}
-              canSubmit={canSubmit}
-              draftIds={selectedDraftIds}
-              pendingIds={selectedPendingIds}
-              isDeletingMany={isDeletingMany}
-              isSubmitting={isSubmitting}
-              isApproving={isApproving}
-              onClearSelection={() => onSelectionChange([])}
-              onDeleteMany={onDeleteMany}
-              onSubmitMany={onSubmitMany}
-              onApproveMany={onApproveMany}
-            />
-          ) : null}
         </div>
 
         {isLoading ? (
@@ -198,6 +200,8 @@ export function InboundRequestDirectory({
           <>
             <div data-slot="operational-list-body" className="md:hidden">
               <InboundRequestMobileList
+                previewId={previewId}
+                onPreview={onPreview}
                 items={items}
                 canCreate={canCreate}
                 isDuplicating={isDuplicating}
@@ -205,8 +209,11 @@ export function InboundRequestDirectory({
               />
             </div>
             <InboundRequestTable
+              previewId={previewId}
+              onPreview={onPreview}
               items={items}
               canDelete={canDelete}
+              canDeleteApproved={canDeleteApproved}
               canCreate={canCreate}
               canSubmit={canSubmit}
               canApprove={canApprove}
@@ -214,8 +221,6 @@ export function InboundRequestDirectory({
               isSubmitting={isSubmitting}
               isApproving={isApproving}
               isDeletingMany={isDeletingMany}
-              selectedStatus={selectedStatus}
-              selectAllStatus={headerSelectionStatus}
               selectAllIds={selectAllIds}
               isDuplicating={isDuplicating}
               selectedIds={selectedIds}

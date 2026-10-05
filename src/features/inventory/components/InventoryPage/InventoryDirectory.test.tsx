@@ -70,6 +70,12 @@ function renderDirectory(item: InventoryStock) {
 }
 
 describe('InventoryDirectory', () => {
+  it('does not show the slot snapshot subtitle', () => {
+    renderDirectory(stock)
+    expect(screen.getByRole('heading', { name: 'Danh sách tồn kho' })).toBeInTheDocument()
+    expect(screen.queryByText(/Dữ liệu theo từng slot|Ảnh chụp/)).not.toBeInTheDocument()
+  })
+
   it('marks stock outside assigned warehouses as read-only', () => {
     renderDirectory(stock)
 

@@ -61,7 +61,6 @@ export function InvitationManagementPanel({
           <h2 id="invitations-title" className="text-sm font-semibold">
             Danh sách lời mời
           </h2>
-          <p className="text-muted-foreground text-xs">{totalCount} lời mời</p>
         </div>
         <Button type="button" variant="outline" size="sm" disabled={isFetching} onClick={onRefresh}>
           <RefreshCw className={isFetching ? 'animate-spin' : undefined} aria-hidden="true" />

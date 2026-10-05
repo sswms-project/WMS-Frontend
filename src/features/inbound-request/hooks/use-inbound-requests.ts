@@ -122,7 +122,11 @@ function useInvalidateInboundRequests() {
 
 export function useCreateInboundRequestMutation() {
   const invalidate = useInvalidateInboundRequests()
-  return useMutation<ApiResponse<string>, ApiErrorResponse, SaveInboundRequestRequest>({
+  return useMutation<
+    ApiResponse<string>,
+    ApiErrorResponse,
+    Parameters<typeof inboundRequestService.createInboundRequest>[0]
+  >({
     mutationFn: inboundRequestService.createInboundRequest,
     onSuccess: () => invalidate(),
     onError: (error) => logger.error(error),

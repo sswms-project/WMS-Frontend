@@ -6,6 +6,7 @@ import type {
   InboundRequestDetail as InboundRequestDetailType,
 } from '../../types/inbound-request.types'
 import { InboundRequestDetail } from './InboundRequestDetail'
+import { InboundRequestLines } from './InboundRequestLines'
 
 function request(overrides: Partial<InboundRequestDetailType> = {}): InboundRequestDetailType {
   return {
@@ -65,6 +66,45 @@ function renderDetail(
 }
 
 describe('InboundRequestDetail supplier email actions', () => {
+  it('distinguishes requested packaging from requested base quantity and received quantity', () => {
+    render(
+      <InboundRequestLines
+        lines={[
+          {
+            id: 'line',
+            productId: 'beer',
+            productSKU: 'BEER',
+            productName: 'Bia',
+            baseUnitId: 'can',
+            unitName: 'Lon',
+            enteredUnitId: 'carton',
+            enteredUnitName: 'Thùng',
+            unitQuantityPrecision: 0,
+            enteredUnitQuantityPrecision: 0,
+            enteredQuantity: 4,
+            conversionFactorSnapshot: 24,
+            quantity: 96,
+            receivedQuantity: 48,
+            closedQuantity: 0,
+            remainingQuantity: 48,
+          },
+        ]}
+      />
+    )
+    const table = screen.getByRole('table')
+    expect(
+      within(table).getByRole('columnheader', { name: 'SL yêu cầu (đơn vị nhập)' })
+    ).toBeInTheDocument()
+    expect(
+      within(table).getByRole('columnheader', { name: 'SL yêu cầu (ĐVT)' })
+    ).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'SL thực nhận' })).toBeInTheDocument()
+    expect(within(table).getByText('4 Thùng')).toBeInTheDocument()
+    expect(within(table).getByText('96 Lon')).toBeInTheDocument()
+    expect(within(table).getByText('1 Thùng = 24 Lon')).toBeInTheDocument()
+    expect(screen.queryByText('Số lượng đơn vị chính')).not.toBeInTheDocument()
+    expect(screen.queryByText('Số lượng nhập')).not.toBeInTheDocument()
+  })
   it('fills the shared workspace without an extra centered width limit', () => {
     renderDetail(request(), [])
     const workspace = screen
