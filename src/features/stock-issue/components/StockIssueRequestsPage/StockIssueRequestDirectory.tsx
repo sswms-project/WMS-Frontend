@@ -218,7 +218,6 @@ export function StockIssueRequestDirectory({
             <h2 id="stock-issue-request-directory-title" className="text-sm font-semibold">
               Danh sách yêu cầu xuất kho
             </h2>
-            <p className="text-muted-foreground text-xs tabular-nums">{totalCount} đơn</p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
             <InputGroup className="min-w-0 flex-1 sm:w-72">

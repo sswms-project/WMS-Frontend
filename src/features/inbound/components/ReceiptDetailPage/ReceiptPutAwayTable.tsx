@@ -11,13 +11,14 @@ import {
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptItem, PutAwayDetail } from '../../types/inbound.types'
+import { InboundColumnLabel } from '../InboundWorkspace'
 
 interface ReceiptPutAwayTableProps {
   readonly items: readonly GoodsReceiptItem[]
 }
 
 function formatPutAwayLocation(detail: PutAwayDetail) {
-  return detail.isSystemDefaultSlot ? `Kệ ${detail.rackCode} (không chia ô)` : detail.slotCode
+  return detail.isSystemDefaultSlot ? `Kệ ${detail.rackCode}` : detail.slotCode
 }
 
 export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
@@ -30,7 +31,12 @@ export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {
             <TableHead>Đã cất vào</TableHead>
             <TableHead>Lô</TableHead>
             <TableHead>Chất lượng</TableHead>
-            <TableHead className="text-right">Số lượng</TableHead>
+            <TableHead className="text-right">
+              <InboundColumnLabel
+                label="SL đã cất"
+                description="Số lượng đã cất trong lần thao tác này, tính theo đơn vị tính chính ghi cạnh số lượng."
+              />
+            </TableHead>
             <TableHead>Quy đổi theo yêu cầu nhập</TableHead>
             <TableHead>Người thực hiện</TableHead>
             <TableHead>Thời điểm</TableHead>

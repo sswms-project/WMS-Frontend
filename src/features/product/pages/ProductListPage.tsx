@@ -273,9 +273,6 @@ export default function ProductListPage() {
                   ? 'Sản phẩm hết hàng'
                   : 'Tất cả sản phẩm'}
             </h2>
-            <p className="text-muted-foreground mt-0.5 text-xs">
-              {listData?.totalCount ?? '…'} sản phẩm
-            </p>
           </div>
           {canViewInventory && stockStatusCounts ? (
             <div

@@ -18,13 +18,20 @@ import {
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import {
   toOperationalDateTimeEnd,
   toOperationalDateTimeStart,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { InboundPageHeader } from '../components/InboundWorkspace'
+import {
+  InboundPageHeader,
+  InboundMasterDetail,
+  InboundGoodsPreview,
+  INBOUND_DETAIL_STORAGE_KEY,
+} from '../components/InboundWorkspace'
+import { receiptGoodsPreviewRows } from '../utils/inbound-goods-preview'
 import { ReceiptDirectory } from '../components/ReceiptsPage'
 import {
   useApproveGoodsReceiptMutation,
@@ -41,6 +48,8 @@ export default function GoodsReceiptsPage() {
   const [createdTo, setCreatedTo] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [previewId, setPreviewId] = useState('')
+  const [isDetailExpanded, setIsDetailExpanded] = useLocalStorage(INBOUND_DETAIL_STORAGE_KEY, false)
   const [approvalTarget, setApprovalTarget] = useState<GoodsReceiptSummary | null>(null)
   const meQuery = useMeQuery()
   const approveMutation = useApproveGoodsReceiptMutation()
@@ -55,6 +64,12 @@ export default function GoodsReceiptsPage() {
     ...(createdFrom ? { dateFrom: toOperationalDateTimeStart(createdFrom) } : {}),
     ...(createdTo ? { dateTo: toOperationalDateTimeEnd(createdTo) } : {}),
   })
+
+  const preview =
+    !query.isError && !query.isPlaceholderData
+      ? query.data?.items.find((item) => item.id === previewId)
+      : undefined
+  const previewQuery = useGoodsReceiptQuery(isDetailExpanded && preview ? preview.id : '')
 
   async function approveReceipt() {
     if (!approvalTarget) return
@@ -108,44 +123,65 @@ export default function GoodsReceiptsPage() {
             )}
           </CardContent>
         </Card>
-        <ReceiptDirectory
-          items={query.data?.items ?? []}
-          totalCount={query.data?.totalCount ?? 0}
-          page={page}
-          pageSize={pageSize}
-          searchText={searchText}
-          status={status}
-          createdFrom={createdFrom}
-          createdTo={createdTo}
-          isLoading={query.isFetching}
-          isFetching={query.isFetching}
-          isError={query.isError}
-          canApprove={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_APPROVE) ?? false}
-          isApproving={approveMutation.isPending}
-          onSearchChange={(value) => {
-            setSearchText(value)
-            setPage(1)
-          }}
-          onStatusChange={(value) => {
-            setStatus(value)
-            setPage(1)
-          }}
-          onCreatedFromChange={(value) => {
-            setCreatedFrom(value)
-            setPage(1)
-          }}
-          onCreatedToChange={(value) => {
-            setCreatedTo(value)
-            setPage(1)
-          }}
-          onPageChange={setPage}
-          onPageSizeChange={(value) => {
-            setPageSize(value)
-            setPage(1)
-          }}
-          onRetry={() => void query.refetch()}
-          onApprove={setApprovalTarget}
-        />
+        <InboundMasterDetail
+          expanded={isDetailExpanded}
+          onExpandedChange={setIsDetailExpanded}
+          referenceCode={preview?.receiptCode}
+          detail={
+            <InboundGoodsPreview
+              key={preview?.id ?? ''}
+              selected={Boolean(preview)}
+              rows={receiptGoodsPreviewRows(previewQuery.data?.items ?? [])}
+              isReceipt
+              isLoading={Boolean(preview) && previewQuery.isLoading}
+              isError={previewQuery.isError}
+              onRetry={() => void previewQuery.refetch()}
+            />
+          }
+        >
+          <ReceiptDirectory
+            previewId={preview?.id}
+            onPreview={(item) => {
+              setPreviewId(item.id)
+            }}
+            items={query.data?.items ?? []}
+            totalCount={query.data?.totalCount ?? 0}
+            page={page}
+            pageSize={pageSize}
+            searchText={searchText}
+            status={status}
+            createdFrom={createdFrom}
+            createdTo={createdTo}
+            isLoading={query.isFetching}
+            isFetching={query.isFetching}
+            isError={query.isError}
+            canApprove={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_APPROVE) ?? false}
+            isApproving={approveMutation.isPending}
+            onSearchChange={(value) => {
+              setSearchText(value)
+              setPage(1)
+            }}
+            onStatusChange={(value) => {
+              setStatus(value)
+              setPage(1)
+            }}
+            onCreatedFromChange={(value) => {
+              setCreatedFrom(value)
+              setPage(1)
+            }}
+            onCreatedToChange={(value) => {
+              setCreatedTo(value)
+              setPage(1)
+            }}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value)
+              setPage(1)
+            }}
+            onRetry={() => void query.refetch()}
+            onApprove={setApprovalTarget}
+          />
+        </InboundMasterDetail>
       </div>
       <AlertDialog
         open={approvalTarget !== null}

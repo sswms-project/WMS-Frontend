@@ -64,7 +64,7 @@ export function InboundRequestStatusStats({
     >
       {STATUS_GROUPS.map((group) => (
         <Card key={group.label} size="sm" className="border-l-primary border-l-2">
-          <CardContent className="flex min-h-16 items-center justify-between gap-2">
+          <CardContent className="flex min-h-12 items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="text-sm font-medium">{group.label}</p>
               <p className="text-muted-foreground line-clamp-2 text-[10px] leading-tight">

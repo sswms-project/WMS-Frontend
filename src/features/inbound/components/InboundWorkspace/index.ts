@@ -1,3 +1,6 @@
 export { InboundPageHeader } from './InboundPageHeader'
 export { InboundStatusBadge } from './InboundStatusBadge'
 export { InboundTabs } from './InboundTabs'
+export { InboundMasterDetail, INBOUND_DETAIL_STORAGE_KEY } from './InboundMasterDetail'
+export { InboundGoodsPreview } from './InboundGoodsPreview'
+export { InboundColumnLabel } from './InboundColumnLabel'

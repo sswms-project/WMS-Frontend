@@ -48,7 +48,7 @@ Use `OperationalListPanel` from `src/components/operations/OperationalListPanel.
 
 ## Header, toolbar, and filters
 
-- Keep the list title, result count, search, and common filters in the non-scrolling top region.
+- Keep the list title, search, and common filters in the non-scrolling top region. Display the result total in the shared pagination footer only; do not repeat a count below the list title. Business-status statistics and selection counts remain separate.
 - When there are only one or two simple filters, show their `Select`/`NativeSelect` controls directly in the toolbar.
 - Use a filter sheet only when the filter set is too large for the toolbar or contains advanced dependent fields.
 - Changing search, filters, or page size resets the current page to `1`.
@@ -79,6 +79,16 @@ Use `OperationalListPanel` from `src/components/operations/OperationalListPanel.
 - Search and filter controls need visible labels or `aria-label`.
 - Icon-only actions need an accessible name and tooltip where helpful.
 - Sticky headers, keyboard focus, status text, and row actions must remain usable at 200% browser zoom.
+
+## Master/detail tables
+
+Use `OperationalMasterDetail` from `src/components/operations/OperationalMasterDetail.tsx` for a vertically resizable list and goods-detail workspace. Pass the main list as `children`, a composed `OperationalListPanel` as `detail`, its `detailId`, and controlled `expanded`/`onExpandedChange` props. The page retains its queries, selected document and persistence key; the layout component never fetches or stores document data.
+
+- The lower panel shrinks continuously to zero, with only a 1px minimum to avoid the library's early percentage-based collapse snap.
+- The centered chevron is outside the resize hit region and follows committed geometry, not a separately animated position.
+- Button reopening restores the previous usable height (at least 25%; initial height 35%). This minimum applies only to reopening, not dragging.
+- Row selection must not expand a closed panel. Hide collapsed detail content from accessibility as well as visually.
+- Inbound uses a thin `InboundMasterDetail` wrapper for its goods heading/reference. Outbound and transfers can compose their own detail tables with the same shared component; do not copy inbound API or quantity mappings.
 
 ## Review checklist
 

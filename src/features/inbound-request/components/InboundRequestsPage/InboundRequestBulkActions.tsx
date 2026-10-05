@@ -1,5 +1,6 @@
 import { Check, Send, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface InboundRequestBulkActionsProps {
   readonly hasActions: boolean
@@ -10,6 +11,7 @@ interface InboundRequestBulkActionsProps {
   readonly canDelete: boolean
   readonly canSubmit: boolean
   readonly draftIds: readonly string[]
+  readonly deletableIds: readonly string[]
   readonly pendingIds: readonly string[]
   readonly isDeletingMany: boolean
   readonly isSubmitting: boolean
@@ -29,6 +31,7 @@ export function InboundRequestBulkActions({
   canDelete,
   canSubmit,
   draftIds,
+  deletableIds,
   pendingIds,
   isDeletingMany,
   isSubmitting,
@@ -48,7 +51,7 @@ export function InboundRequestBulkActions({
       </span>
       {selectedStatusLabel ? (
         <span className="text-muted-foreground text-xs whitespace-nowrap">
-          {selectedStatusLabel} · chỉ chọn cùng trạng thái
+          {selectedStatusLabel}
         </span>
       ) : null}
       <Button
@@ -79,16 +82,27 @@ export function InboundRequestBulkActions({
           {isApproving ? 'Đang duyệt…' : 'Duyệt'}
         </Button>
       ) : null}
-      {showDraftActions && canDelete ? (
-        <Button
-          type="button"
-          variant="destructive"
-          disabled={draftIds.length === 0 || isPending}
-          onClick={() => onDeleteMany(draftIds)}
-        >
-          <Trash2 aria-hidden="true" />
-          {isDeletingMany ? 'Đang xoá…' : 'Xoá'}
-        </Button>
+      {canDelete ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span tabIndex={deletableIds.length !== selectedCount ? 0 : undefined}>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={deletableIds.length !== selectedCount || selectedCount === 0 || isPending}
+                onClick={() => onDeleteMany(deletableIds)}
+              >
+                <Trash2 aria-hidden="true" />
+                {isDeletingMany ? 'Đang xóa…' : 'Xóa chứng từ'}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {deletableIds.length === selectedCount
+              ? 'Xóa yêu cầu tạo sai. Hệ thống kiểm tra lại việc nhận hàng trước khi xóa.'
+              : 'Chỉ xóa bản nháp hoặc yêu cầu đã duyệt chưa nhận hàng với quyền chủ doanh nghiệp. Không xóa chứng từ đã nhận hàng.'}
+          </TooltipContent>
+        </Tooltip>
       ) : null}
     </div>
   )

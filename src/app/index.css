@@ -385,10 +385,6 @@ body {
 }
 
 /* Responsive table wrappers must not leave the scrollbar under the last row. */
-[data-slot='operational-list-panel'] {
-  border-bottom-color: var(--table-scrollbar-thumb);
-}
-
 [data-slot='operational-list-panel'] > footer {
   border-top-color: var(--table-scrollbar-thumb);
 }

@@ -152,6 +152,7 @@ export interface InboundRequestStatusCount {
 }
 
 export interface InboundRequestListResponse extends PagedResponse<InboundRequestSummary> {
+  canDeleteApprovedRequests?: boolean
   statusCounts: InboundRequestStatusCount[]
 }
 

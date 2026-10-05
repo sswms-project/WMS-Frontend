@@ -112,7 +112,6 @@ export function UnitCatalog({
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 className="text-sm font-semibold">Danh sách đơn vị tính</h2>
-            <p className="text-muted-foreground text-xs">{filteredItems.length} đơn vị tính</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {canManage && selectedUnits.length > 0 ? (

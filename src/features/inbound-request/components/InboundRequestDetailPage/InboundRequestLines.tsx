@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/table'
 import type { InboundRequestLine } from '../../types/inbound-request.types'
 import { formatQuantity } from '../../utils/inbound-request-format'
+import { InboundColumnLabel } from '@/features/inbound/components/InboundWorkspace'
 
 export function InboundRequestLines({ lines }: { readonly lines: readonly InboundRequestLine[] }) {
   return (
@@ -23,12 +24,42 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
           <TableHeader>
             <TableRow>
               <TableHead>Sản phẩm</TableHead>
-              <TableHead className="text-right">Số lượng nhập</TableHead>
-              <TableHead>Đơn vị quy đổi</TableHead>
-              <TableHead className="text-right">Số lượng đơn vị chính</TableHead>
-              <TableHead className="text-right">Đã nhận</TableHead>
-              <TableHead className="text-right">Đã đóng</TableHead>
-              <TableHead className="text-right">Còn lại</TableHead>
+              <TableHead className="text-right">
+                <InboundColumnLabel
+                  label="SL yêu cầu (đơn vị nhập)"
+                  description="Số lượng yêu cầu theo đơn vị được chọn khi lập yêu cầu. Ví dụ: 4 Thùng."
+                />
+              </TableHead>
+              <TableHead>
+                <InboundColumnLabel
+                  label="ĐVQĐ"
+                  description="Đơn vị quy đổi. Ví dụ: 1 Thùng = 24 Lon."
+                />
+              </TableHead>
+              <TableHead className="text-right">
+                <InboundColumnLabel
+                  label="SL yêu cầu (ĐVT)"
+                  description="Số lượng yêu cầu quy đổi về đơn vị tính chính. Ví dụ: 4 Thùng = 96 Lon."
+                />
+              </TableHead>
+              <TableHead className="text-right">
+                <InboundColumnLabel
+                  label="SL thực nhận"
+                  description="Số lượng đã thực nhận, tính theo đơn vị tính chính."
+                />
+              </TableHead>
+              <TableHead className="text-right">
+                <InboundColumnLabel
+                  label="SL đã đóng"
+                  description="Số lượng đã đóng không nhận tiếp, tính theo đơn vị tính chính."
+                />
+              </TableHead>
+              <TableHead className="text-right">
+                <InboundColumnLabel
+                  label="SL còn nhận"
+                  description="Số lượng yêu cầu còn phải nhận sau khi trừ phần đã nhận và đã đóng, tính theo đơn vị tính chính."
+                />
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -84,10 +115,22 @@ export function InboundRequestLines({ lines }: { readonly lines: readonly Inboun
                 : ''}
             </p>
             <dl className="mt-3 grid grid-cols-4 gap-3">
-              <Metadata label="Đặt" value={formatQuantity(line.quantity)} />
-              <Metadata label="Đã nhận" value={formatQuantity(line.receivedQuantity)} />
-              <Metadata label="Đã đóng" value={formatQuantity(line.closedQuantity)} />
-              <Metadata label="Còn lại" value={formatQuantity(line.remainingQuantity)} />
+              <Metadata
+                label="SL yêu cầu"
+                value={`${formatQuantity(line.quantity)} ${line.unitName ?? ''}`}
+              />
+              <Metadata
+                label="SL thực nhận"
+                value={`${formatQuantity(line.receivedQuantity)} ${line.unitName ?? ''}`}
+              />
+              <Metadata
+                label="SL đã đóng"
+                value={`${formatQuantity(line.closedQuantity)} ${line.unitName ?? ''}`}
+              />
+              <Metadata
+                label="SL còn nhận"
+                value={`${formatQuantity(line.remainingQuantity)} ${line.unitName ?? ''}`}
+              />
             </dl>
           </div>
         ))}

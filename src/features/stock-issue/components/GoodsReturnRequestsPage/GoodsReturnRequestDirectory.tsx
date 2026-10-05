@@ -104,7 +104,6 @@ export function GoodsReturnRequestDirectory({
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 className="text-sm font-semibold">Danh sách yêu cầu trả hàng</h2>
-            <p className="text-muted-foreground text-xs">{totalCount} phiếu</p>
           </div>
           <div className="grid w-full gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-5">
             <InputGroup className="min-w-0 lg:w-64">

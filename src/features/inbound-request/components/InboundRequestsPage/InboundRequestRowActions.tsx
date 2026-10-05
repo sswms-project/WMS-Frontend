@@ -21,6 +21,7 @@ interface InboundRequestRowActionsProps {
   readonly canSubmit: boolean
   readonly canApprove: boolean
   readonly canDelete: boolean
+  readonly canDeleteApproved?: boolean
   readonly isSubmitting: boolean
   readonly isApproving: boolean
   readonly isDeleting: boolean
@@ -37,6 +38,7 @@ export function InboundRequestRowActions({
   canSubmit,
   canApprove,
   canDelete,
+  canDeleteApproved = false,
   isSubmitting,
   isApproving,
   isDeleting,
@@ -50,7 +52,12 @@ export function InboundRequestRowActions({
   const isPendingApproval = item.status === INBOUND_REQUEST_STATUS.PendingApproval
   const showSubmit = canSubmit && isDraft
   const showApprove = canApprove && isPendingApproval
-  const showDelete = canDelete && isDraft
+  const showDelete =
+    canDelete &&
+    (isDraft ||
+      (canDeleteApproved &&
+        item.status === INBOUND_REQUEST_STATUS.Approved &&
+        item.receivedQuantity === 0))
 
   return (
     <DropdownMenu>
@@ -101,7 +108,7 @@ export function InboundRequestRowActions({
               onClick={() => onDelete(item)}
             >
               <Trash2 aria-hidden="true" />
-              Xoá bản nháp
+              Xóa chứng từ
             </DropdownMenuItem>
           </>
         ) : null}
