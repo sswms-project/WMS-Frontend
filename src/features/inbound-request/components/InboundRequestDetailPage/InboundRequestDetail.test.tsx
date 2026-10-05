@@ -66,6 +66,14 @@ function renderDetail(
 }
 
 describe('InboundRequestDetail supplier email actions', () => {
+  it('shows code-only edit when operational content is locked', () => {
+    renderDetail(request({ status: 'Received' }), ['UpdateCode'])
+    expect(screen.getByRole('link', { name: 'Đổi mã yêu cầu' })).toHaveAttribute(
+      'href',
+      '/inbound-requests/ir-1/edit'
+    )
+    expect(screen.queryByRole('link', { name: 'Chỉnh sửa' })).not.toBeInTheDocument()
+  })
   it('distinguishes requested packaging from requested base quantity and received quantity', () => {
     render(
       <InboundRequestLines

@@ -70,6 +70,12 @@ function renderDirectory(item: InventoryStock) {
 }
 
 describe('InventoryDirectory', () => {
+  it('identifies the base unit on desktop and mobile quantities', () => {
+    renderDirectory(stock)
+    expect(screen.getByRole('columnheader', { name: 'ĐVT chính' })).toBeInTheDocument()
+    expect(screen.getByText('10 Cái')).toBeInTheDocument()
+    expect(screen.getByText(/Thực tế 10 Cái/)).toBeInTheDocument()
+  })
   it('does not show the slot snapshot subtitle', () => {
     renderDirectory(stock)
     expect(screen.getByRole('heading', { name: 'Danh sách tồn kho' })).toBeInTheDocument()

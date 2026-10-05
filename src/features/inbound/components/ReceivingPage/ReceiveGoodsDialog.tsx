@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { getReceiptUnit } from '../../utils/receipt-units'
 import type { GoodsReceiptFormValues } from '../../schemas/inbound.schema'
 import type { ReceivingTask } from '../../types/inbound.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
@@ -25,6 +27,7 @@ interface ReceiveGoodsDialogProps {
   readonly description?: string
   readonly saveDraftLabel?: string
   readonly mode?: 'create' | 'edit'
+  readonly receiptCode?: string
   readonly onOpenChange: (open: boolean) => void
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit: () => void
@@ -38,6 +41,7 @@ export function ReceiveGoodsDialog({
   description,
   saveDraftLabel = 'Lưu nháp',
   mode = 'create',
+  receiptCode,
   onOpenChange,
   onSaveDraft,
   onSaveAndSubmit,
@@ -45,6 +49,7 @@ export function ReceiveGoodsDialog({
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = form
   return (
@@ -59,110 +64,214 @@ export function ReceiveGoodsDialog({
         </DialogHeader>
         {task ? (
           <div className="flex flex-col gap-3">
-            {task.lines.map((line, index) => {
-              const damaged = watch(`lines.${index}.damagedQty`) ?? 0
-              const received = watch(`lines.${index}.receivedQty`) ?? 0
-              return (
-                <section key={line.inboundRequestItemId} className="border p-3">
-                  <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{line.productName}</p>
-                      <p className="text-muted-foreground font-mono text-xs">{line.productSKU}</p>
-                    </div>
-                    <p className="text-muted-foreground text-xs tabular-nums">
-                      {mode === 'edit' ? (
-                        <>Số lượng trên phiếu {formatQuantity(received)}</>
-                      ) : (
-                        <>
-                          Đặt {formatQuantity(line.orderedQuantity)} · Đã nhận{' '}
-                          {formatQuantity(line.receivedQuantity)} · Còn{' '}
-                          {formatQuantity(line.remainingQuantity)}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <input type="hidden" {...register(`lines.${index}.inboundRequestItemId`)} />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field data-invalid={Boolean(errors.lines?.[index]?.receivedQty)}>
-                      <FieldLabel htmlFor={`received-${index}`}>Số lượng thực nhận</FieldLabel>
-                      <Input
-                        id={`received-${index}`}
-                        type="number"
-                        min="0.01"
-                        max={line.remainingQuantity}
-                        step="0.01"
-                        aria-invalid={Boolean(errors.lines?.[index]?.receivedQty)}
-                        {...register(`lines.${index}.receivedQty`, { valueAsNumber: true })}
-                      />
-                      <FieldError>{errors.lines?.[index]?.receivedQty?.message}</FieldError>
-                    </Field>
-                    <Field data-invalid={Boolean(errors.lines?.[index]?.damagedQty)}>
-                      <FieldLabel htmlFor={`damaged-${index}`}>Số lượng hỏng</FieldLabel>
-                      <Input
-                        id={`damaged-${index}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        aria-invalid={Boolean(errors.lines?.[index]?.damagedQty)}
-                        {...register(`lines.${index}.damagedQty`, { valueAsNumber: true })}
-                      />
-                      <FieldError>{errors.lines?.[index]?.damagedQty?.message}</FieldError>
-                    </Field>
-                  </div>
-                  {damaged > 0 ? (
-                    <Field
-                      className="mt-3"
-                      data-invalid={Boolean(errors.lines?.[index]?.exceptionReason)}
-                    >
-                      <FieldLabel htmlFor={`exception-${index}`}>Tình trạng hàng hỏng</FieldLabel>
-                      <Input
-                        id={`exception-${index}`}
-                        maxLength={500}
-                        aria-invalid={Boolean(errors.lines?.[index]?.exceptionReason)}
-                        {...register(`lines.${index}.exceptionReason`)}
-                      />
-                      <FieldError>{errors.lines?.[index]?.exceptionReason?.message}</FieldError>
-                    </Field>
-                  ) : null}
-                  {line.isLotTracked ? (
-                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                      <Field data-invalid={Boolean(errors.lines?.[index]?.lotNumber)}>
-                        <FieldLabel htmlFor={`lot-number-${index}`}>Số lô</FieldLabel>
-                        <Input
-                          id={`lot-number-${index}`}
-                          maxLength={100}
-                          aria-invalid={Boolean(errors.lines?.[index]?.lotNumber)}
-                          {...register(`lines.${index}.lotNumber`)}
-                        />
-                        <FieldError>{errors.lines?.[index]?.lotNumber?.message}</FieldError>
-                      </Field>
-                      <Field data-invalid={Boolean(errors.lines?.[index]?.manufacturedDate)}>
-                        <FieldLabel htmlFor={`manufactured-date-${index}`}>
-                          Ngày sản xuất
-                        </FieldLabel>
-                        <Input
-                          id={`manufactured-date-${index}`}
-                          type="date"
-                          aria-invalid={Boolean(errors.lines?.[index]?.manufacturedDate)}
-                          {...register(`lines.${index}.manufacturedDate`)}
-                        />
-                        <FieldError>{errors.lines?.[index]?.manufacturedDate?.message}</FieldError>
-                      </Field>
-                      <Field data-invalid={Boolean(errors.lines?.[index]?.expiryDate)}>
-                        <FieldLabel htmlFor={`expiry-date-${index}`}>Hạn sử dụng</FieldLabel>
-                        <Input
-                          id={`expiry-date-${index}`}
-                          type="date"
-                          aria-invalid={Boolean(errors.lines?.[index]?.expiryDate)}
-                          {...register(`lines.${index}.expiryDate`)}
-                        />
-                        <FieldError>{errors.lines?.[index]?.expiryDate?.message}</FieldError>
-                      </Field>
-                    </div>
-                  ) : null}
-                </section>
+            <dl className="bg-muted grid gap-3 border p-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground text-xs">Mã phiếu nhận</dt>
+                <dd className="font-medium">{receiptCode ?? 'Tự sinh khi lưu'}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs">Mã yêu cầu</dt>
+                <dd className="font-medium break-all">{task.inboundRequestCode}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs">Nhà cung cấp / nguồn hàng</dt>
+                <dd className="font-medium">
+                  {[task.supplierCode, task.supplierName || task.sourceName]
+                    .filter(Boolean)
+                    .join(' — ') || '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs">Kho nhận</dt>
+                <dd className="font-medium">
+                  {[task.warehouseCode, task.warehouseName].filter(Boolean).join(' — ')}
+                </dd>
+              </div>
+            </dl>
+            {task.lines
+              .filter((line) =>
+                form
+                  .getValues('lines')
+                  .some((value) => value.inboundRequestItemId === line.inboundRequestItemId)
               )
-            })}
+              .map((line, index) => {
+                const unitId = watch(`lines.${index}.enteredUnitId`)
+                const unit = getReceiptUnit(line, unitId)
+                const damaged = watch(`lines.${index}.damagedQty`) ?? 0
+                const received = watch(`lines.${index}.receivedQty`) ?? 0
+                return (
+                  <section key={line.inboundRequestItemId} className="border p-3">
+                    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium">{line.productName}</p>
+                        <p className="text-muted-foreground font-mono text-xs">{line.productSKU}</p>
+                      </div>
+                      <p className="text-muted-foreground text-xs tabular-nums">
+                        {mode === 'edit' ? (
+                          <>
+                            Số lượng trên phiếu {formatQuantity(received)} {unit.name}
+                          </>
+                        ) : (
+                          <>
+                            Yêu cầu {formatQuantity(line.orderedQuantity / unit.factor)} {unit.name}{' '}
+                            · Đã nhận {formatQuantity(line.receivedQuantity / unit.factor)}{' '}
+                            {unit.name} · Còn {formatQuantity(line.remainingQuantity / unit.factor)}{' '}
+                            {unit.name}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <input type="hidden" {...register(`lines.${index}.inboundRequestItemId`)} />
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <Field>
+                        <FieldLabel htmlFor={`receipt-unit-${index}`}>Đơn vị nhận</FieldLabel>
+                        <NativeSelect
+                          id={`receipt-unit-${index}`}
+                          value={unitId ?? ''}
+                          disabled={isPending || !line.baseUnitId}
+                          onChange={(event) => {
+                            setValue(`lines.${index}.enteredUnitId`, event.target.value, {
+                              shouldDirty: true,
+                            })
+                            setValue(`lines.${index}.receivedQty`, 0, { shouldDirty: true })
+                            setValue(`lines.${index}.damagedQty`, 0, { shouldDirty: true })
+                          }}
+                        >
+                          {line.baseUnitId ? (
+                            <NativeSelectOption value={line.baseUnitId}>
+                              {line.baseUnitName}
+                            </NativeSelectOption>
+                          ) : (
+                            <NativeSelectOption value="">—</NativeSelectOption>
+                          )}
+                          {line.enteredUnitId && line.enteredUnitId !== line.baseUnitId ? (
+                            <NativeSelectOption value={line.enteredUnitId}>
+                              {line.enteredUnitName}
+                            </NativeSelectOption>
+                          ) : null}
+                        </NativeSelect>
+                      </Field>
+                      <Field data-invalid={Boolean(errors.lines?.[index]?.receivedQty)}>
+                        <FieldLabel htmlFor={`received-${index}`}>Số lượng thực nhận</FieldLabel>
+                        <Input
+                          id={`received-${index}`}
+                          type="number"
+                          min={10 ** -unit.precision}
+                          max={mode === 'create' ? line.remainingQuantity / unit.factor : undefined}
+                          step={10 ** -unit.precision}
+                          disabled={isPending}
+                          aria-invalid={Boolean(errors.lines?.[index]?.receivedQty)}
+                          {...register(`lines.${index}.receivedQty`, { valueAsNumber: true })}
+                        />
+                        <FieldError>{errors.lines?.[index]?.receivedQty?.message}</FieldError>
+                      </Field>
+                      <Field data-invalid={Boolean(errors.lines?.[index]?.damagedQty)}>
+                        <FieldLabel htmlFor={`damaged-${index}`}>Số lượng hỏng</FieldLabel>
+                        <Input
+                          id={`damaged-${index}`}
+                          type="number"
+                          min="0"
+                          step={10 ** -unit.precision}
+                          disabled={isPending}
+                          aria-invalid={Boolean(errors.lines?.[index]?.damagedQty)}
+                          {...register(`lines.${index}.damagedQty`, { valueAsNumber: true })}
+                        />
+                        <FieldError>{errors.lines?.[index]?.damagedQty?.message}</FieldError>
+                      </Field>
+                    </div>
+                    <p className="text-muted-foreground mt-2 text-xs" aria-live="polite">
+                      Hàng đạt: {formatQuantity(Math.max(0, received - damaged))} {unit.name}
+                      {' · '}Quy đổi: {formatQuantity(received * unit.factor)}{' '}
+                      {line.baseUnitName ?? '—'}
+                    </p>
+                    {mode === 'create' ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        disabled={isPending}
+                        onClick={() => {
+                          const quantity = line.remainingQuantity / unit.factor
+                          const scale = 10 ** unit.precision
+                          if (
+                            Math.abs(quantity * scale - Math.round(quantity * scale)) > 1e-7 &&
+                            line.baseUnitId
+                          ) {
+                            setValue(`lines.${index}.enteredUnitId`, line.baseUnitId, {
+                              shouldDirty: true,
+                            })
+                            setValue(`lines.${index}.receivedQty`, line.remainingQuantity, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                            setValue(`lines.${index}.damagedQty`, 0, { shouldDirty: true })
+                          } else
+                            setValue(`lines.${index}.receivedQty`, quantity, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                        }}
+                      >
+                        Nhận toàn bộ còn lại
+                      </Button>
+                    ) : null}
+                    {damaged > 0 ? (
+                      <Field
+                        className="mt-3"
+                        data-invalid={Boolean(errors.lines?.[index]?.exceptionReason)}
+                      >
+                        <FieldLabel htmlFor={`exception-${index}`}>Tình trạng hàng hỏng</FieldLabel>
+                        <Input
+                          id={`exception-${index}`}
+                          maxLength={500}
+                          aria-invalid={Boolean(errors.lines?.[index]?.exceptionReason)}
+                          {...register(`lines.${index}.exceptionReason`)}
+                        />
+                        <FieldError>{errors.lines?.[index]?.exceptionReason?.message}</FieldError>
+                      </Field>
+                    ) : null}
+                    {line.isLotTracked ? (
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <Field data-invalid={Boolean(errors.lines?.[index]?.lotNumber)}>
+                          <FieldLabel htmlFor={`lot-number-${index}`}>Số lô</FieldLabel>
+                          <Input
+                            id={`lot-number-${index}`}
+                            maxLength={100}
+                            aria-invalid={Boolean(errors.lines?.[index]?.lotNumber)}
+                            {...register(`lines.${index}.lotNumber`)}
+                          />
+                          <FieldError>{errors.lines?.[index]?.lotNumber?.message}</FieldError>
+                        </Field>
+                        <Field data-invalid={Boolean(errors.lines?.[index]?.manufacturedDate)}>
+                          <FieldLabel htmlFor={`manufactured-date-${index}`}>
+                            Ngày sản xuất
+                          </FieldLabel>
+                          <Input
+                            id={`manufactured-date-${index}`}
+                            type="date"
+                            aria-invalid={Boolean(errors.lines?.[index]?.manufacturedDate)}
+                            {...register(`lines.${index}.manufacturedDate`)}
+                          />
+                          <FieldError>
+                            {errors.lines?.[index]?.manufacturedDate?.message}
+                          </FieldError>
+                        </Field>
+                        <Field data-invalid={Boolean(errors.lines?.[index]?.expiryDate)}>
+                          <FieldLabel htmlFor={`expiry-date-${index}`}>Hạn sử dụng</FieldLabel>
+                          <Input
+                            id={`expiry-date-${index}`}
+                            type="date"
+                            aria-invalid={Boolean(errors.lines?.[index]?.expiryDate)}
+                            {...register(`lines.${index}.expiryDate`)}
+                          />
+                          <FieldError>{errors.lines?.[index]?.expiryDate?.message}</FieldError>
+                        </Field>
+                      </div>
+                    ) : null}
+                  </section>
+                )
+              })}
           </div>
         ) : null}
         <DialogFooter>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 interface FormActionsProps {
   readonly isPending: boolean
   readonly autoApprove: boolean
+  readonly isApprovedEdit?: boolean
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit?: () => void
 }
@@ -11,6 +12,7 @@ interface FormActionsProps {
 export function FormActions({
   isPending,
   autoApprove,
+  isApprovedEdit,
   onSaveDraft,
   onSaveAndSubmit,
 }: FormActionsProps) {
@@ -23,9 +25,9 @@ export function FormActions({
         onClick={onSaveDraft}
       >
         <Save aria-hidden="true" />
-        {autoApprove ? 'Tạo và duyệt' : 'Lưu nháp'}
+        {isApprovedEdit ? 'Lưu thay đổi' : autoApprove ? 'Tạo và duyệt' : 'Lưu nháp'}
       </Button>
-      {!autoApprove ? (
+      {!autoApprove && !isApprovedEdit ? (
         <Button
           type={onSaveAndSubmit ? 'button' : 'submit'}
           disabled={isPending}

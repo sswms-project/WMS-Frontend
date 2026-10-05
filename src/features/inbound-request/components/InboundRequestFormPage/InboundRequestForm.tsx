@@ -41,6 +41,7 @@ import { LookupCombobox } from './LookupCombobox'
 interface InboundRequestFormProps {
   readonly title: string
   readonly autoApprove: boolean
+  readonly isApprovedEdit?: boolean
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly fields: readonly FieldArrayWithId<InboundRequestFormValues, 'lines', 'id'>[]
   readonly warehouseOptions: readonly LookupOption[]
@@ -75,6 +76,7 @@ interface InboundRequestFormProps {
 export function InboundRequestForm({
   title,
   autoApprove,
+  isApprovedEdit,
   form,
   fields,
   warehouseOptions,
@@ -147,6 +149,19 @@ export function InboundRequestForm({
           <CardContent>
             <FieldSet>
               <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Field data-invalid={Boolean(errors.inboundRequestCode)}>
+                  <FieldLabel htmlFor="inboundRequestCode">Mã yêu cầu *</FieldLabel>
+                  <Input
+                    id="inboundRequestCode"
+                    maxLength={100}
+                    aria-invalid={Boolean(errors.inboundRequestCode)}
+                    {...register('inboundRequestCode')}
+                  />
+                  <FieldDescription>
+                    Mã được gợi ý, có thể chỉnh sửa. Mã phải duy nhất trong doanh nghiệp.
+                  </FieldDescription>
+                  <FieldError>{errors.inboundRequestCode?.message}</FieldError>
+                </Field>
                 <Field data-invalid={Boolean(errors.warehouseId)}>
                   <FieldLabel htmlFor="warehouseId">Kho nhận hàng</FieldLabel>
                   <LookupCombobox
@@ -347,6 +362,7 @@ export function InboundRequestForm({
 
         <div className="flex justify-end border-t pt-4">
           <FormActions
+            isApprovedEdit={isApprovedEdit}
             isPending={isPending}
             autoApprove={autoApprove}
             onSaveDraft={onSaveDraft}

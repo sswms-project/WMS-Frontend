@@ -204,6 +204,8 @@ export default function InboundRequestsPage() {
             isError={query.isError}
             canDelete={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_DELETE) ?? false}
             canDeleteApproved={query.data?.canDeleteApprovedRequests ?? false}
+            canEdit={query.data?.canEditRequests ?? false}
+            canEditApproved={query.data?.canEditApprovedRequests ?? false}
             canCreate={canCreate}
             canSubmit={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_SUBMIT) ?? false}
             canApprove={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_APPROVE) ?? false}

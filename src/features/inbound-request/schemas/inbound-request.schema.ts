@@ -32,6 +32,11 @@ export const inboundRequestLineSchema = z.object({
 
 export const inboundRequestSchema = z
   .object({
+    inboundRequestCode: z
+      .string()
+      .trim()
+      .min(1, 'Vui lòng nhập mã yêu cầu.')
+      .max(100, 'Mã tối đa 100 ký tự.'),
     warehouseId: dotNetGuidSchema('Vui lòng chọn kho nhận hàng.'),
     receivingAssignedTo: z
       .union([z.literal(''), dotNetGuidSchema('Nhân viên không hợp lệ.')])
@@ -162,4 +167,17 @@ export const rejectionSchema = z.object({
 })
 
 export type InboundRequestFormValues = z.infer<typeof inboundRequestSchema>
+export const inboundRequestCodeSchema = z.object({
+  inboundRequestCode: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập mã yêu cầu.')
+    .max(100, 'Mã tối đa 100 ký tự.'),
+  reason: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập lý do đổi mã.')
+    .max(500, 'Lý do tối đa 500 ký tự.'),
+})
+export type InboundRequestCodeFormValues = z.infer<typeof inboundRequestCodeSchema>
 export type RejectionFormValues = z.infer<typeof rejectionSchema>

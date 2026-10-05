@@ -27,7 +27,7 @@ import type {
   ProductUnitConversion,
   UnitResponse,
 } from '@/features/product/types/product.types'
-import { InboundRequestForm } from '../components/InboundRequestFormPage'
+import { InboundRequestForm, InboundRequestCodeForm } from '../components/InboundRequestFormPage'
 import {
   useCreateInboundRequestMutation,
   useInboundRequestProductDetails,
@@ -37,9 +37,14 @@ import {
   useSubmitInboundRequestMutation,
   useSupplierOptionsQuery,
   useUpdateInboundRequestMutation,
+  useInboundRequestAllowedActionsQuery,
+  useNextInboundRequestCodeQuery,
+  useUpdateInboundRequestCodeMutation,
 } from '../hooks/use-inbound-requests'
 import {
   inboundRequestSchemaWithUnits,
+  inboundRequestCodeSchema,
+  type InboundRequestCodeFormValues,
   type InboundRequestFormValues,
 } from '../schemas/inbound-request.schema'
 import type { LookupOption, ProductSearchState } from '../types/inbound-request.types'
@@ -64,6 +69,7 @@ export default function InboundRequestFormPage({
   const canAssign =
     !inboundRequestId && Boolean(meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_CREATE))
   const hydratedInboundRequestId = useRef<string | null>(null)
+  const editingVersion = useRef('')
   const createdInboundRequestId = useRef<string | null>(null)
   const [warehouseSearchText, setWarehouseSearchText] = useState('')
   const [supplierSearchText, setSupplierSearchText] = useState('')
@@ -88,6 +94,7 @@ export default function InboundRequestFormPage({
         )
       )(values, context, options),
     defaultValues: {
+      inboundRequestCode: '',
       warehouseId: '',
       receivingAssignedTo: '',
       sourceType: INBOUND_SOURCE_TYPE.Supplier,
@@ -108,6 +115,22 @@ export default function InboundRequestFormPage({
   const productConversions = useInboundRequestUnitConversions(productIds)
   const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
   const detailQuery = useInboundRequestQuery(inboundRequestId ?? '')
+  const actionsQuery = useInboundRequestAllowedActionsQuery(inboundRequestId ?? '')
+  const nextCodeQuery = useNextInboundRequestCodeQuery(!isEditing)
+  const codeMutation = useUpdateInboundRequestCodeMutation()
+  const codeForm = useForm<InboundRequestCodeFormValues>({
+    resolver: zodResolver(inboundRequestCodeSchema),
+    defaultValues: { inboundRequestCode: '', reason: '' },
+  })
+  useEffect(() => {
+    if (
+      !isEditing &&
+      nextCodeQuery.data &&
+      !form.getFieldState('inboundRequestCode').isDirty &&
+      !form.getValues('inboundRequestCode')
+    )
+      form.setValue('inboundRequestCode', nextCodeQuery.data)
+  }, [form, isEditing, nextCodeQuery.data])
   const warehousesQuery = useWarehousesQuery({
     top: LOOKUP_PAGE_SIZE,
     skip: 0,
@@ -156,6 +179,7 @@ export default function InboundRequestFormPage({
     const detail = detailQuery.data
     if (!detail || hydratedInboundRequestId.current === detail.id) return
     form.reset({
+      inboundRequestCode: detail.inboundRequestCode,
       warehouseId: detail.warehouseId ?? '',
       sourceType: detail.sourceType,
       supplierId: detail.supplierId ?? '',
@@ -169,16 +193,18 @@ export default function InboundRequestFormPage({
       })),
     })
     hydratedInboundRequestId.current = detail.id
-  }, [detailQuery.data, form])
+    editingVersion.current = detail.version
+    codeForm.reset({ inboundRequestCode: detail.inboundRequestCode, reason: '' })
+  }, [detailQuery.data, form, codeForm])
 
   useEffect(() => {
     function warnBeforeUnload(event: BeforeUnloadEvent) {
-      if (!form.formState.isDirty) return
+      if (!form.formState.isDirty && !codeForm.formState.isDirty) return
       event.preventDefault()
     }
     window.addEventListener('beforeunload', warnBeforeUnload)
     return () => window.removeEventListener('beforeunload', warnBeforeUnload)
-  }, [form.formState.isDirty])
+  }, [form.formState.isDirty, codeForm.formState.isDirty])
 
   async function save(values: InboundRequestFormValues, shouldSubmit: boolean) {
     if (lookupIsLoading || lookupIsError) {
@@ -190,7 +216,10 @@ export default function InboundRequestFormPage({
     try {
       const request = toInboundRequestSaveRequest(values)
       if (savedId) {
-        await updateMutation.mutateAsync({ inboundRequestId: savedId, request })
+        await updateMutation.mutateAsync({
+          inboundRequestId: savedId,
+          request: { ...request, expectedVersion: editingVersion.current },
+        })
       } else {
         const response = await createMutation.mutateAsync({
           ...request,
@@ -201,7 +230,12 @@ export default function InboundRequestFormPage({
         savedId = response.data
         createdInboundRequestId.current = savedId
       }
-      if (shouldSubmit && savedId && !autoApproved) {
+      if (
+        shouldSubmit &&
+        savedId &&
+        !autoApproved &&
+        (!isEditing || detailQuery.data?.status === 'Draft')
+      ) {
         try {
           await submitMutation.mutateAsync(savedId)
         } catch (error) {
@@ -219,7 +253,7 @@ export default function InboundRequestFormPage({
           ? 'Yêu cầu nhập kho đã được tạo và phê duyệt.'
           : shouldSubmit
             ? 'Đã lưu và gửi yêu cầu nhập kho để duyệt.'
-            : 'Đã lưu bản nháp yêu cầu nhập kho.'
+            : 'Đã lưu yêu cầu nhập kho.'
       )
       if (savedId) router.push(APP_ROUTES.inboundRequestDetail(savedId) as Route)
     } catch (error) {
@@ -244,7 +278,7 @@ export default function InboundRequestFormPage({
   }
 
   function handleCancel() {
-    if (form.formState.isDirty) {
+    if (form.formState.isDirty || codeForm.formState.isDirty) {
       setShowLeaveDialog(true)
       return
     }
@@ -273,20 +307,24 @@ export default function InboundRequestFormPage({
     void suppliersQuery.refetch()
     void unitsQuery.refetch()
     if (inboundRequestId) void detailQuery.refetch()
+    if (inboundRequestId) void actionsQuery.refetch()
   }
 
+  const canEditContents = !isEditing || actionsQuery.data?.allowedActions.includes('Update')
   const isLoading =
-    warehousesQuery.isLoading ||
-    productsQuery.isLoading ||
-    suppliersQuery.isLoading ||
-    unitsQuery.isLoading ||
-    (isEditing && detailQuery.isLoading)
+    (canEditContents &&
+      (warehousesQuery.isLoading ||
+        productsQuery.isLoading ||
+        suppliersQuery.isLoading ||
+        unitsQuery.isLoading)) ||
+    (isEditing && (detailQuery.isLoading || actionsQuery.isLoading))
   const isError =
-    warehousesQuery.isError ||
-    productsQuery.isError ||
-    suppliersQuery.isError ||
-    unitsQuery.isError ||
-    (isEditing && detailQuery.isError)
+    (canEditContents &&
+      (warehousesQuery.isError ||
+        productsQuery.isError ||
+        suppliersQuery.isError ||
+        unitsQuery.isError)) ||
+    (isEditing && (detailQuery.isError || actionsQuery.isError))
   const isPending = createMutation.isPending || updateMutation.isPending || submitMutation.isPending
   const detail = detailQuery.data
   const warehouseOptions = mergeLookupOptions(
@@ -342,9 +380,54 @@ export default function InboundRequestFormPage({
     )
   }
 
+  if (isEditing && !actionsQuery.data?.allowedActions.includes('Update')) {
+    if (!actionsQuery.data?.allowedActions.includes('UpdateCode'))
+      return (
+        <OperationalErrorState
+          title="Yêu cầu hiện không được phép chỉnh sửa"
+          onRetry={() => void actionsQuery.refetch()}
+        />
+      )
+    return (
+      <>
+        <InboundRequestCodeForm
+          form={codeForm}
+          isPending={codeMutation.isPending}
+          onCancel={handleCancel}
+          onSave={() =>
+            void codeForm.handleSubmit(async (values) => {
+              if (!inboundRequestId || !detail) return
+              try {
+                await codeMutation.mutateAsync({
+                  id: inboundRequestId,
+                  request: {
+                    ...values,
+                    inboundRequestCode: values.inboundRequestCode.trim().toUpperCase(),
+                    expectedVersion: editingVersion.current,
+                  },
+                })
+                codeForm.reset(values)
+                toast.success('Đã đổi mã yêu cầu. Nội dung và chứng từ liên quan được giữ nguyên.')
+                leavePage()
+              } catch (error) {
+                toast.error(getApiErrorMessage(error, 'Không thể đổi mã yêu cầu.'))
+              }
+            })()
+          }
+        />
+        <UnsavedChangesDialog
+          open={showLeaveDialog}
+          onOpenChange={setShowLeaveDialog}
+          onDiscard={leavePage}
+        />
+      </>
+    )
+  }
+
   return (
     <>
       <InboundRequestForm
+        isApprovedEdit={isEditing && detail?.status !== 'Draft'}
         title={
           isEditing
             ? `Chỉnh sửa ${detailQuery.data?.inboundRequestCode ?? 'yêu cầu nhập kho'}`

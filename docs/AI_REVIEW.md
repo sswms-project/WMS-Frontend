@@ -338,3 +338,12 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 
 - Frontend suite `336` passed; typecheck, ESLint and production build clean. No Backend change, migration or database write in this change.
 - Live browser QA of the new pages is still pending; tests use mocks.
+
+### 2026-10-05 — Operational inbound forms, navigation and inventory units
+
+- Implementer: Codex; self-verification, not independent review. State: `READY_FOR_CODEX_REVIEW`.
+- Exact My Tasks navigation matching prevents simultaneous History activation. Inventory desktop/mobile quantities identify their base UOM.
+- Inbound request code is required, normalized and suggested without overwriting user input. Edit actions are available in list/detail; Backend allowed actions distinguish content editing from Owner-only code editing with reason/version. Unsaved-change protection is retained; background refetch does not silently update the draft's expected version.
+- Manual receiving shows receipt/request/source/warehouse context, requested/received/remaining quantities, selected UOM, good/damaged quantities and base conversion. Defaults to the request unit when exact; receiving all remaining falls back to base UOM when needed. Switching UOM resets quantities to avoid reinterpretation. Lot/manufacture/expiry controls remain.
+- Verification: **72 test files / 344 tests passed**; typecheck, ESLint and production build passed. Added task navigation, inventory UOM, receipt unit fallback and manual dialog interactions. Git diff whitespace check passed.
+- GitNexus pre-edit impact/context and final change detection reviewed; whole-change risk High (65 indexed symbols / 11 flows). No dependencies, migration, database write, restart, commit or push. Live browser acceptance remains pending; paired Backend restart/deployment is required for the new contracts.

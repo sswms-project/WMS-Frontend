@@ -359,7 +359,7 @@ function InventoryMobileList({
             <ItemTitle className="flex items-center justify-between gap-3">
               <span className="truncate">{item.productName}</span>
               <span className="text-primary shrink-0 font-mono tabular-nums">
-                {formatInventoryQuantity(item.availableQuantity)}
+                {formatInventoryQuantity(item.availableQuantity)} {item.unitName ?? '—'}
               </span>
             </ItemTitle>
             <ItemDescription>
@@ -390,9 +390,9 @@ function InventoryMobileList({
               </Button>
             ) : null}
             <ItemDescription>
-              Thực tế {formatInventoryQuantity(item.quantityOnHand)} · Đã đặt trước{' '}
-              {formatInventoryQuantity(item.reservedQuantity)} · Đang giữ{' '}
-              {formatInventoryQuantity(item.holdQuantity)}
+              Thực tế {formatInventoryQuantity(item.quantityOnHand)} {item.unitName ?? '—'} · Đã đặt
+              trước {formatInventoryQuantity(item.reservedQuantity)} {item.unitName ?? '—'} · Đang
+              giữ {formatInventoryQuantity(item.holdQuantity)} {item.unitName ?? '—'}
             </ItemDescription>
           </ItemContent>
         </Item>
@@ -418,6 +418,7 @@ function InventoryDesktopTable({
             <TableHead className="sticky top-0 z-10 w-56">Sản phẩm</TableHead>
             <TableHead className="sticky top-0 z-10 w-40">Kho / Slot</TableHead>
             <TableHead className="sticky top-0 z-10 w-40">Lô / Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24">ĐVT chính</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Đặt trước</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Đang giữ</TableHead>
@@ -455,6 +456,7 @@ function InventoryDesktopTable({
                   {formatEligibilityStatus(item.eligibilityStatus)}
                 </p>
               </TableCell>
+              <TableCell>{item.unitName ?? '—'}</TableCell>
               <TableCell className="text-right font-mono tabular-nums">
                 {formatInventoryQuantity(item.quantityOnHand)}
               </TableCell>

@@ -1,4 +1,4 @@
-import { Check, Copy, Eye, MoreHorizontal, Send, Trash2 } from 'lucide-react'
+import { Check, Copy, Eye, MoreHorizontal, Send, Trash2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,8 @@ interface InboundRequestRowActionsProps {
   readonly canApprove: boolean
   readonly canDelete: boolean
   readonly canDeleteApproved?: boolean
+  readonly canEdit?: boolean
+  readonly canEditApproved?: boolean
   readonly isSubmitting: boolean
   readonly isApproving: boolean
   readonly isDeleting: boolean
@@ -39,6 +41,8 @@ export function InboundRequestRowActions({
   canApprove,
   canDelete,
   canDeleteApproved = false,
+  canEdit = false,
+  canEditApproved = false,
   isSubmitting,
   isApproving,
   isDeleting,
@@ -81,6 +85,14 @@ export function InboundRequestRowActions({
             Xem chi tiết
           </Link>
         </DropdownMenuItem>
+        {(canEdit && isDraft) || canEditApproved ? (
+          <DropdownMenuItem asChild>
+            <Link href={APP_ROUTES.inboundRequestEdit(item.id) as Route}>
+              <Pencil aria-hidden="true" />
+              {isDraft ? 'Chỉnh sửa' : 'Chỉnh sửa / đổi mã'}
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         {showSubmit ? (
           <DropdownMenuItem disabled={isSubmitting} onClick={() => onSubmit(item)}>
             <Send aria-hidden="true" />

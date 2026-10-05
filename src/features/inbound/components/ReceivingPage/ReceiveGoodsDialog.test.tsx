@@ -1,0 +1,101 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useForm } from 'react-hook-form'
+import { describe, expect, it, vi } from 'vitest'
+import type { GoodsReceiptFormValues } from '../../schemas/inbound.schema'
+import type { ReceivingTask } from '../../types/inbound.types'
+import { ReceiveGoodsDialog } from './ReceiveGoodsDialog'
+
+const task: ReceivingTask = {
+  inboundRequestId: 'request',
+  inboundRequestCode: 'IR000001',
+  warehouseId: 'warehouse',
+  warehouseCode: 'WH01',
+  warehouseName: 'Đà Nẵng',
+  supplierId: 'supplier',
+  supplierCode: 'NCC001',
+  supplierName: 'Nhà cung cấp A',
+  expectedDate: null,
+  orderedQuantity: 240,
+  receivedQuantity: 0,
+  remainingQuantity: 240,
+  activeDocumentImportId: null,
+  activeGoodsReceiptId: null,
+  activeGoodsReceiptStatus: null,
+  assignedTo: null,
+  assignedToName: null,
+  assignedAt: null,
+  executionStatus: 'Queued',
+  lines: [
+    {
+      inboundRequestItemId: 'line',
+      productId: 'beer',
+      productSKU: 'BIA',
+      productName: 'Bia',
+      barcodeValue: null,
+      isLotTracked: false,
+      orderedQuantity: 240,
+      receivedQuantity: 0,
+      remainingQuantity: 240,
+      baseUnitId: 'lon',
+      baseUnitName: 'Lon',
+      enteredUnitId: 'thung',
+      enteredUnitName: 'Thùng',
+      conversionFactorSnapshot: 24,
+      baseUnitQuantityPrecision: 0,
+      enteredUnitQuantityPrecision: 0,
+    },
+  ],
+}
+
+function ReceiptForm() {
+  const form = useForm<GoodsReceiptFormValues>({
+    defaultValues: {
+      inboundRequestId: 'request',
+      lines: [
+        {
+          inboundRequestItemId: 'line',
+          enteredUnitId: 'thung',
+          receivedQty: 4,
+          damagedQty: 1,
+          exceptionReason: 'Hỏng',
+          isLotTracked: false,
+          lotNumber: '',
+          manufacturedDate: '',
+          expiryDate: '',
+        },
+      ],
+    },
+  })
+  return (
+    <ReceiveGoodsDialog
+      task={task}
+      form={form}
+      isPending={false}
+      onOpenChange={vi.fn()}
+      onSaveDraft={vi.fn()}
+      onSaveAndSubmit={vi.fn()}
+    />
+  )
+}
+
+describe('ReceiveGoodsDialog operational context', () => {
+  it('identifies receipt, source and warehouse and previews snapshot conversion', () => {
+    render(<ReceiptForm />)
+    expect(screen.getByText('Tự sinh khi lưu')).toBeInTheDocument()
+    expect(screen.getByText('NCC001 — Nhà cung cấp A')).toBeInTheDocument()
+    expect(screen.getByText('WH01 — Đà Nẵng')).toBeInTheDocument()
+    expect(screen.getByText(/Hàng đạt: 3 Thùng/)).toHaveTextContent('Quy đổi: 96 Lon')
+  })
+  it('fills all remaining in packaging and avoids reinterpreting quantities when changing unit', async () => {
+    const user = userEvent.setup()
+    render(<ReceiptForm />)
+    await user.click(screen.getByRole('button', { name: 'Nhận toàn bộ còn lại' }))
+    expect(screen.getByLabelText('Số lượng thực nhận')).toHaveValue(10)
+    await user.selectOptions(screen.getByLabelText('Đơn vị nhận'), 'lon')
+    expect(screen.getByLabelText('Số lượng thực nhận')).toHaveValue(0)
+    expect(screen.getByLabelText('Số lượng hỏng')).toHaveValue(0)
+    await user.click(screen.getByRole('button', { name: 'Nhận toàn bộ còn lại' }))
+    expect(screen.getByLabelText('Số lượng thực nhận')).toHaveValue(240)
+  })
+})

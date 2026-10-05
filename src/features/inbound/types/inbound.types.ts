@@ -58,6 +58,13 @@ export interface PutawayTaskQuery {
 }
 
 export interface ReceivingTaskLine {
+  baseUnitId?: string
+  baseUnitName?: string
+  enteredUnitId?: string
+  enteredUnitName?: string
+  conversionFactorSnapshot?: number
+  baseUnitQuantityPrecision?: number
+  enteredUnitQuantityPrecision?: number
   inboundRequestItemId: string
   productId: string
   productSKU: string
@@ -70,6 +77,9 @@ export interface ReceivingTaskLine {
 }
 
 export interface ReceivingTask {
+  warehouseCode?: string | null
+  supplierCode?: string | null
+  sourceName?: string | null
   inboundRequestId: string
   inboundRequestCode: string
   warehouseId: string
@@ -179,6 +189,9 @@ export interface GoodsReceiptDetail extends Omit<
   | 'putAwayQuantity'
   | 'putAwayExecutionStatus'
 > {
+  supplierCode?: string | null
+  supplierName?: string | null
+  sourceName?: string | null
   receivingAssignedTo: string | null
   receivingAssignedToName: string | null
   warehouseCode: string
@@ -202,6 +215,7 @@ export interface GoodsReceiptDetail extends Omit<
 }
 
 export interface ReceiptLineRequest {
+  enteredUnitId?: string
   inboundRequestItemId: string
   receivedQty: number
   damagedQty: number
