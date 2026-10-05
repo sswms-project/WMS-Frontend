@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ReceivingTaskLine } from '../types/inbound.types'
-import { getDefaultReceiptUnit, getReceiptUnit } from './receipt-units'
+import { getDefaultReceiptUnit, getReceiptUnit, getRemainingReceiptQuantity } from './receipt-units'
 
 const line: ReceivingTaskLine = {
   inboundRequestItemId: 'line',
@@ -22,6 +22,22 @@ const line: ReceivingTaskLine = {
 }
 
 describe('manual receipt snapshot units', () => {
+  it('normalizes floating-point division before sending an integer request unit', () => {
+    const fractional = { ...line, remainingQuantity: 0.3, conversionFactorSnapshot: 0.1 }
+    expect(getDefaultReceiptUnit(fractional)).toBe('thung')
+    expect(getRemainingReceiptQuantity(fractional, 'thung')).toEqual({
+      unitId: 'thung',
+      quantity: 3,
+    })
+    expect(JSON.stringify(getRemainingReceiptQuantity(fractional, 'thung'))).toContain(
+      '"quantity":3'
+    )
+  })
+  it('does not round a genuine remainder that is close to a complete package', () => {
+    expect(getRemainingReceiptQuantity({ ...line, remainingQuantity: 72.000001 }, 'thung')).toEqual(
+      { unitId: 'lon', quantity: 72.000001 }
+    )
+  })
   it('defaults to request packaging without live conversions', () => {
     expect(getDefaultReceiptUnit(line)).toBe('thung')
     expect(getReceiptUnit(line, 'thung')).toEqual({ factor: 24, name: 'Thùng', precision: 0 })

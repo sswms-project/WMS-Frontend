@@ -75,6 +75,7 @@ export default function InboundRequestFormPage({
   const [supplierSearchText, setSupplierSearchText] = useState('')
   const [productSearch, setProductSearch] = useState<ProductSearchState | null>(null)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
+  const [editCodeOnly, setEditCodeOnly] = useState(false)
   const debouncedWarehouseSearch = useDebouncedValue(warehouseSearchText.trim(), 300)
   const debouncedSupplierSearch = useDebouncedValue(supplierSearchText.trim(), 300)
   const debouncedProductSearch = useDebouncedValue(productSearch?.value.trim() ?? '', 300)
@@ -156,7 +157,19 @@ export default function InboundRequestFormPage({
     const product = productDetails[index]?.data
     if (product) productsById[id] = product
     const conversions = productConversions[index]?.data
-    if (conversions) conversionsByProductId[id] = conversions
+    if (conversions)
+      conversionsByProductId[id] = conversions.map((conversion) => {
+        const savedLine = detailQuery.data?.lines.find(
+          (line) => line.productId === id && line.enteredUnitId === conversion.unitId
+        )
+        const enteredLine = selectedLines.find((line) => line.productId === id)
+        // Unchanged lines retain their approved snapshot, matching the update command.
+        return savedLine &&
+          enteredLine?.quantity === savedLine.enteredQuantity &&
+          enteredLine.unitId === savedLine.enteredUnitId
+          ? { ...conversion, conversionFactor: savedLine.conversionFactorSnapshot }
+          : conversion
+      })
   })
   useEffect(() => {
     validationData.current = {
@@ -310,7 +323,8 @@ export default function InboundRequestFormPage({
     if (inboundRequestId) void actionsQuery.refetch()
   }
 
-  const canEditContents = !isEditing || actionsQuery.data?.allowedActions.includes('Update')
+  const canEditContents =
+    !editCodeOnly && (!isEditing || actionsQuery.data?.allowedActions.includes('Update'))
   const isLoading =
     (canEditContents &&
       (warehousesQuery.isLoading ||
@@ -380,7 +394,7 @@ export default function InboundRequestFormPage({
     )
   }
 
-  if (isEditing && !actionsQuery.data?.allowedActions.includes('Update')) {
+  if (isEditing && (editCodeOnly || !actionsQuery.data?.allowedActions.includes('Update'))) {
     if (!actionsQuery.data?.allowedActions.includes('UpdateCode'))
       return (
         <OperationalErrorState
@@ -427,6 +441,11 @@ export default function InboundRequestFormPage({
   return (
     <>
       <InboundRequestForm
+        onEditCode={
+          isEditing && actionsQuery.data?.allowedActions.includes('UpdateCode')
+            ? () => setEditCodeOnly(true)
+            : undefined
+        }
         isApprovedEdit={isEditing && detail?.status !== 'Draft'}
         title={
           isEditing

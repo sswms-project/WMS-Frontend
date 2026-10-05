@@ -380,6 +380,7 @@ export interface InboundDocumentReviewLine {
 export interface InboundDocumentReview {
   extraction: SupplierDocumentExtraction
   inboundRequestId: string | null
+  inboundRequestVersion?: string | null
   inboundRequestCode: string | null
   supplierId: string | null
   supplierName: string | null

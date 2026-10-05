@@ -66,6 +66,7 @@ interface InboundRequestFormProps {
   readonly onAddLine: () => void
   readonly onRemoveLine: (index: number) => void
   readonly onCancel: () => void
+  readonly onEditCode?: () => void
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit: () => void
   readonly onWarehouseSearchChange: (value: string) => void
@@ -101,6 +102,7 @@ export function InboundRequestForm({
   onAddLine,
   onRemoveLine,
   onCancel,
+  onEditCode,
   onSaveDraft,
   onSaveAndSubmit,
   onWarehouseSearchChange,
@@ -118,7 +120,7 @@ export function InboundRequestForm({
 
   return (
     <div className="flex w-full flex-col gap-5">
-      <header className="flex shrink-0 items-center gap-3 border-b pb-3">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b pb-3">
         <Button
           type="button"
           variant="ghost"
@@ -133,6 +135,23 @@ export function InboundRequestForm({
           <span className="text-muted-foreground text-xs">›</span>
           <h1 className="truncate text-sm font-semibold">{title}</h1>
         </div>
+        {onEditCode ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            disabled={isPending || form.formState.isDirty}
+            onClick={onEditCode}
+            title={
+              form.formState.isDirty
+                ? 'Lưu hoặc hủy thay đổi trước khi chuyển sang đổi mã.'
+                : 'Đổi mã mà không lưu lại nội dung yêu cầu.'
+            }
+          >
+            Chỉ đổi mã
+          </Button>
+        ) : null}
       </header>
 
       <form

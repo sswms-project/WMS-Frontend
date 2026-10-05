@@ -14,7 +14,7 @@ import {
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import { getReceiptUnit } from '../../utils/receipt-units'
+import { getReceiptUnit, getRemainingReceiptQuantity } from '../../utils/receipt-units'
 import type { GoodsReceiptFormValues } from '../../schemas/inbound.schema'
 import type { ReceivingTask } from '../../types/inbound.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
@@ -27,6 +27,7 @@ interface ReceiveGoodsDialogProps {
   readonly description?: string
   readonly saveDraftLabel?: string
   readonly mode?: 'create' | 'edit'
+  readonly canEditReceivedQuantity?: boolean
   readonly receiptCode?: string
   readonly onOpenChange: (open: boolean) => void
   readonly onSaveDraft: () => void
@@ -41,6 +42,7 @@ export function ReceiveGoodsDialog({
   description,
   saveDraftLabel = 'Lưu nháp',
   mode = 'create',
+  canEditReceivedQuantity = true,
   receiptCode,
   onOpenChange,
   onSaveDraft,
@@ -97,6 +99,7 @@ export function ReceiveGoodsDialog({
               .map((line, index) => {
                 const unitId = watch(`lines.${index}.enteredUnitId`)
                 const unit = getReceiptUnit(line, unitId)
+                const remaining = getRemainingReceiptQuantity(line, unitId)
                 const damaged = watch(`lines.${index}.damagedQty`) ?? 0
                 const received = watch(`lines.${index}.receivedQty`) ?? 0
                 return (
@@ -128,7 +131,7 @@ export function ReceiveGoodsDialog({
                         <NativeSelect
                           id={`receipt-unit-${index}`}
                           value={unitId ?? ''}
-                          disabled={isPending || !line.baseUnitId}
+                          disabled={isPending || !line.baseUnitId || !canEditReceivedQuantity}
                           onChange={(event) => {
                             setValue(`lines.${index}.enteredUnitId`, event.target.value, {
                               shouldDirty: true,
@@ -155,9 +158,16 @@ export function ReceiveGoodsDialog({
                         <FieldLabel htmlFor={`received-${index}`}>Số lượng thực nhận</FieldLabel>
                         <Input
                           id={`received-${index}`}
+                          readOnly={!canEditReceivedQuantity}
                           type="number"
                           min={10 ** -unit.precision}
-                          max={mode === 'create' ? line.remainingQuantity / unit.factor : undefined}
+                          max={
+                            mode === 'create'
+                              ? remaining.unitId === unitId
+                                ? remaining.quantity
+                                : line.remainingQuantity / unit.factor
+                              : undefined
+                          }
                           step={10 ** -unit.precision}
                           disabled={isPending}
                           aria-invalid={Boolean(errors.lines?.[index]?.receivedQty)}
@@ -192,25 +202,17 @@ export function ReceiveGoodsDialog({
                         className="mt-2"
                         disabled={isPending}
                         onClick={() => {
-                          const quantity = line.remainingQuantity / unit.factor
-                          const scale = 10 ** unit.precision
-                          if (
-                            Math.abs(quantity * scale - Math.round(quantity * scale)) > 1e-7 &&
-                            line.baseUnitId
-                          ) {
-                            setValue(`lines.${index}.enteredUnitId`, line.baseUnitId, {
+                          const remaining = getRemainingReceiptQuantity(line, unitId)
+                          if (remaining.unitId !== unitId) {
+                            setValue(`lines.${index}.enteredUnitId`, remaining.unitId, {
                               shouldDirty: true,
-                            })
-                            setValue(`lines.${index}.receivedQty`, line.remainingQuantity, {
-                              shouldDirty: true,
-                              shouldValidate: true,
                             })
                             setValue(`lines.${index}.damagedQty`, 0, { shouldDirty: true })
-                          } else
-                            setValue(`lines.${index}.receivedQty`, quantity, {
-                              shouldDirty: true,
-                              shouldValidate: true,
-                            })
+                          }
+                          setValue(`lines.${index}.receivedQty`, remaining.quantity, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
                         }}
                       >
                         Nhận toàn bộ còn lại

@@ -260,7 +260,12 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         form={form}
         isPending={isPending}
         title={`Chỉnh sửa ${receipt.receiptCode}`}
-        description="Điều chỉnh số lượng thực nhận và tình trạng hàng trước khi gửi duyệt lại."
+        description={
+          receipt.status === 'InspectionCorrectionRequired'
+            ? 'Chỉ điều chỉnh tình trạng kiểm hàng; số lượng thực nhận và đơn vị được giữ nguyên.'
+            : 'Điều chỉnh số lượng thực nhận và tình trạng hàng trước khi gửi duyệt lại.'
+        }
+        canEditReceivedQuantity={receipt.status !== 'InspectionCorrectionRequired'}
         saveDraftLabel="Lưu thay đổi"
         mode="edit"
         onOpenChange={(open) => {

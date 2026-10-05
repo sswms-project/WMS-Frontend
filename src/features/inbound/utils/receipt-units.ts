@@ -14,11 +14,19 @@ export function getReceiptUnit(line: ReceivingTaskLine, unitId?: string) {
 }
 
 export function getDefaultReceiptUnit(line: ReceivingTaskLine) {
-  const unit = getReceiptUnit(line, line.enteredUnitId)
+  return getRemainingReceiptQuantity(line, line.enteredUnitId).unitId
+}
+
+export function getRemainingReceiptQuantity(line: ReceivingTaskLine, unitId?: string) {
+  const unit = getReceiptUnit(line, unitId)
   const quantity = line.remainingQuantity / unit.factor
   const scale = 10 ** unit.precision
-  return Number.isFinite(quantity) &&
-    Math.abs(quantity * scale - Math.round(quantity * scale)) < 1e-7
-    ? (line.enteredUnitId ?? line.baseUnitId)
-    : line.baseUnitId
+  const scaled = quantity * scale
+  // Remove binary floating-point noise, not genuine partial packaging quantities.
+  const isRepresentable =
+    Number.isFinite(quantity) &&
+    Math.abs(scaled - Math.round(scaled)) <= Number.EPSILON * Math.max(1, Math.abs(scaled)) * 4
+  return isRepresentable
+    ? { unitId: unitId ?? line.baseUnitId, quantity: Number(quantity.toFixed(unit.precision)) }
+    : { unitId: line.baseUnitId, quantity: line.remainingQuantity }
 }

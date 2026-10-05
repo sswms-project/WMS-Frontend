@@ -48,7 +48,13 @@ const task: ReceivingTask = {
   ],
 }
 
-function ReceiptForm() {
+function ReceiptForm({
+  correction = false,
+  receivingTask = task,
+}: {
+  readonly correction?: boolean
+  readonly receivingTask?: ReceivingTask
+}) {
   const form = useForm<GoodsReceiptFormValues>({
     defaultValues: {
       inboundRequestId: 'request',
@@ -69,7 +75,9 @@ function ReceiptForm() {
   })
   return (
     <ReceiveGoodsDialog
-      task={task}
+      task={receivingTask}
+      mode={correction ? 'edit' : 'create'}
+      canEditReceivedQuantity={!correction}
       form={form}
       isPending={false}
       onOpenChange={vi.fn()}
@@ -80,6 +88,34 @@ function ReceiptForm() {
 }
 
 describe('ReceiveGoodsDialog operational context', () => {
+  it('keeps correction received quantity and unit fixed while allowing damage edits', async () => {
+    const user = userEvent.setup()
+    render(<ReceiptForm correction />)
+    expect(screen.getByLabelText('Đơn vị nhận')).toBeDisabled()
+    expect(screen.getByLabelText('Số lượng thực nhận')).toHaveAttribute('readonly')
+    await user.type(screen.getByLabelText('Số lượng thực nhận'), '9')
+    expect(screen.getByLabelText('Số lượng thực nhận')).toHaveValue(4)
+    await user.clear(screen.getByLabelText('Số lượng hỏng'))
+    await user.type(screen.getByLabelText('Số lượng hỏng'), '2')
+    expect(screen.getByLabelText('Số lượng hỏng')).toHaveValue(2)
+  })
+  it('receive-all sends a normalized quantity instead of binary division noise', async () => {
+    const user = userEvent.setup()
+    render(
+      <ReceiptForm
+        receivingTask={{
+          ...task,
+          lines: task.lines.map((line) => ({
+            ...line,
+            remainingQuantity: 0.3,
+            conversionFactorSnapshot: 0.1,
+          })),
+        }}
+      />
+    )
+    await user.click(screen.getByRole('button', { name: 'Nhận toàn bộ còn lại' }))
+    expect(screen.getByLabelText('Số lượng thực nhận')).toHaveValue(3)
+  })
   it('identifies receipt, source and warehouse and previews snapshot conversion', () => {
     render(<ReceiptForm />)
     expect(screen.getByText('Tự sinh khi lưu')).toBeInTheDocument()

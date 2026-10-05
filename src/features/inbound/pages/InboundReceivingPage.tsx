@@ -1,5 +1,5 @@
 'use client'
-import { getDefaultReceiptUnit, getReceiptUnit } from '../utils/receipt-units'
+import { getRemainingReceiptQuantity } from '../utils/receipt-units'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
@@ -158,9 +158,8 @@ export default function InboundReceivingPage() {
         .filter((line) => line.remainingQuantity > 0)
         .map((line) => ({
           inboundRequestItemId: line.inboundRequestItemId,
-          enteredUnitId: getDefaultReceiptUnit(line),
-          receivedQty:
-            line.remainingQuantity / getReceiptUnit(line, getDefaultReceiptUnit(line)).factor,
+          enteredUnitId: getRemainingReceiptQuantity(line, line.enteredUnitId).unitId,
+          receivedQty: getRemainingReceiptQuantity(line, line.enteredUnitId).quantity,
           damagedQty: 0,
           exceptionReason: '',
           isLotTracked: line.isLotTracked,
