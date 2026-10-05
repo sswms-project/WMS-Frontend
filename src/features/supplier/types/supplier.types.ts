@@ -54,6 +54,7 @@ export interface UpdateSupplierVariables {
 }
 
 export interface ImportSupplierItem {
+  readonly rowNumber?: number
   readonly supplierCode: string | null
   readonly supplierName: string
   readonly taxCode: string | null

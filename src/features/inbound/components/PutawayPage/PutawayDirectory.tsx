@@ -43,10 +43,13 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptSummary } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
+import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
 
 export type PutawayAssignmentFilter = 'all' | 'unassigned'
 
 interface PutawayDirectoryProps {
+  readonly previewId?: string
+  readonly onPreview?: (item: GoodsReceiptSummary) => void
   readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
@@ -75,6 +78,8 @@ function remainingQuantity(item: GoodsReceiptSummary) {
 }
 
 export function PutawayDirectory({
+  previewId,
+  onPreview,
   items,
   totalCount,
   page,
@@ -227,7 +232,7 @@ export function PutawayDirectory({
             </InputGroupAddon>
             <InputGroupInput
               aria-label="Tìm phiếu chờ cất"
-              placeholder="Tìm mã phiếu, mã PO…"
+              placeholder="Tìm mã phiếu, mã yêu cầu…"
               value={searchText}
               onChange={(event) => onSearchChange(event.target.value)}
             />
@@ -268,12 +273,26 @@ export function PutawayDirectory({
         />
       ) : (
         <>
-          <ItemGroup className="gap-0 md:hidden">
+          <ItemGroup data-slot="operational-list-body" className="gap-0 md:hidden">
             {items.map((item) => (
-              <Item key={item.id} className="border-b last:border-b-0">
+              <Item
+                key={item.id}
+                {...goodsPreviewInteractions(
+                  onPreview ? () => onPreview(item) : undefined,
+                  previewId === item.id,
+                  'border-b last:border-b-0'
+                )}
+              >
                 <PackageCheck aria-hidden="true" />
                 <ItemContent>
-                  <ItemTitle className="font-mono">{item.receiptCode}</ItemTitle>
+                  <ItemTitle className="font-mono">
+                    <Link
+                      href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      {item.receiptCode}
+                    </Link>
+                  </ItemTitle>
                   <ItemDescription>
                     {item.inboundRequestCode} · {item.warehouseName}
                   </ItemDescription>
@@ -314,8 +333,21 @@ export function PutawayDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono font-semibold">{item.receiptCode}</TableCell>
+                  <TableRow
+                    key={item.id}
+                    {...goodsPreviewInteractions(
+                      onPreview ? () => onPreview(item) : undefined,
+                      previewId === item.id
+                    )}
+                  >
+                    <TableCell className="font-mono font-semibold">
+                      <Link
+                        href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}
+                        className="text-primary hover:underline"
+                      >
+                        {item.receiptCode}
+                      </Link>
+                    </TableCell>
                     <TableCell className="font-mono">{item.inboundRequestCode}</TableCell>
                     <TableCell>{item.warehouseName}</TableCell>
                     <TableCell className="text-right tabular-nums">{item.lineCount}</TableCell>

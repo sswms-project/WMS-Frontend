@@ -60,11 +60,7 @@ describe('layout scene mapper', () => {
     const mapped = mapWarehouseLayoutScene(scene)
 
     expect(mapped.hasGeneratedGeometry).toBe(true)
-    const geometries = [
-      ...mapped.editorScene.zones,
-      ...mapped.editorScene.racks,
-      ...mapped.editorScene.decorations,
-    ]
+    const geometries = [...mapped.editorScene.zones, ...mapped.editorScene.racks]
     geometries.forEach((geometry) => {
       const bounds = getLayoutGeometryBounds(geometry)
       expect(bounds.minX).toBeGreaterThanOrEqual(0)
@@ -81,7 +77,31 @@ describe('layout scene mapper', () => {
     expect(request.zones[0]).toMatchObject({ x: 80, y: 10 })
     expect(request.racks[0]).toMatchObject({ x: 0, y: 40 })
     expect(request.racks[0]?.layoutShape).toBe('Pallet')
-    expect(request.decorations[0]).toMatchObject({ x: 80, y: 80 })
+    expect(request.decorations[0]).toMatchObject({ x: 95, y: 95 })
+  })
+
+  it('preserves the exact rotated door geometry through save and reload outside the blue wall', () => {
+    const door = {
+      ...scene.decorations[0]!,
+      type: 'Door' as const,
+      x: -35.25,
+      y: 20,
+      width: 60,
+      height: 40,
+      rotation: 90,
+    }
+    const source = { ...scene, zones: [], racks: [], decorations: [door] }
+    const mapped = mapWarehouseLayoutScene(source)
+    expect(mapped.hasGeneratedGeometry).toBe(false)
+    const saved = mapEditorSceneToSaveRequest(scene.warehouseId, scene.version, mapped.editorScene)
+    expect(saved.decorations[0]).toMatchObject({
+      x: door.x,
+      y: door.y,
+      width: door.width,
+      height: door.height,
+      rotation: door.rotation,
+    })
+    expect(mapWarehouseLayoutScene(source).editorScene.decorations[0]).toMatchObject(door)
   })
 
   it('gives a physical rack the same preset size as a rack placed from the diagram palette', () => {

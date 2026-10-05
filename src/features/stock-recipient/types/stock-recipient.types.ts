@@ -60,6 +60,7 @@ export interface CreateStockRecipientRequest {
 export type UpdateStockRecipientRequest = CreateStockRecipientRequest
 
 export interface ImportStockRecipientItem {
+  rowNumber?: number
   recipientCode: string | null
   recipientName: string
   recipientType: string | null

@@ -1,4 +1,3 @@
-import { PackageOpen } from 'lucide-react'
 import { InboundTabs, type InboundTabsProps } from './InboundTabs'
 import type { ReactNode } from 'react'
 
@@ -14,20 +13,12 @@ export function InboundPageHeader({
   canViewReceipts,
 }: InboundPageHeaderProps) {
   return (
-    <header className="flex shrink-0 flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
-            <PackageOpen aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-primary text-xs font-medium">Vận hành nhập kho</p>
-            <h1 className="truncate text-xl font-semibold">{title}</h1>
-          </div>
-        </div>
-        {action}
+    <header className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <h1 className="sr-only">{title}</h1>
+      <div className="min-w-0 flex-1">
+        <InboundTabs canViewRequests={canViewRequests} canViewReceipts={canViewReceipts} />
       </div>
-      <InboundTabs canViewRequests={canViewRequests} canViewReceipts={canViewReceipts} />
+      {action ? <div className="shrink-0">{action}</div> : null}
     </header>
   )
 }

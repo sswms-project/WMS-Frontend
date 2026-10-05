@@ -8,6 +8,9 @@ import {
   X,
 } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
+import Link from 'next/link'
+import type { Route } from 'next'
+import { APP_ROUTES } from '@/routes/app-routes'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -34,6 +37,7 @@ import { dateToIsoDateString, formatDisplayDate, isoDateStringToDate } from '@/l
 import { cn } from '@/lib/utils'
 import type { ReceivingTask } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
+import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
 import {
   formatOperationalDate,
   formatOperationalDateTime,
@@ -41,6 +45,9 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 
 interface ReceivingTaskDirectoryProps {
+  readonly canViewRequest?: boolean
+  readonly previewId?: string
+  readonly onPreview?: (item: ReceivingTask) => void
   readonly items: readonly ReceivingTask[]
   readonly totalCount: number
   readonly page: number
@@ -78,6 +85,9 @@ function buildDateLabel(from: Date | undefined, to: Date | undefined) {
 }
 
 export function ReceivingTaskDirectory({
+  canViewRequest,
+  previewId,
+  onPreview,
   items,
   totalCount,
   page,
@@ -160,9 +170,8 @@ export function ReceivingTaskDirectory({
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold">Đơn chờ nhận hàng</h2>
-          <p className="text-muted-foreground text-xs tabular-nums">{totalCount} đơn đang mở</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {canAssign && (
             <ToggleGroup
               type="single"
@@ -191,6 +200,7 @@ export function ReceivingTaskDirectory({
                     type="button"
                     variant={hasDate ? 'default' : 'outline'}
                     size="sm"
+                    className="h-8"
                     aria-label="Lọc theo khoảng ngày tạo"
                   >
                     <CalendarRange aria-hidden="true" />
@@ -237,7 +247,7 @@ export function ReceivingTaskDirectory({
             </InputGroupAddon>
             <InputGroupInput
               aria-label="Tìm đơn chờ nhận"
-              placeholder="Tìm mã PO, nhà cung cấp…"
+              placeholder="Tìm mã yêu cầu, nhà cung cấp…"
               value={searchText}
               onChange={(event) => onSearchChange(event.target.value)}
             />
@@ -278,12 +288,28 @@ export function ReceivingTaskDirectory({
         />
       ) : (
         <>
-          <ItemGroup className="gap-0 md:hidden">
+          <ItemGroup data-slot="operational-list-body" className="gap-0 md:hidden">
             {items.map((item) => (
-              <Item key={item.inboundRequestId} className="border-b last:border-b-0">
+              <Item
+                key={item.inboundRequestId}
+                {...goodsPreviewInteractions(
+                  onPreview ? () => onPreview(item) : undefined,
+                  previewId === item.inboundRequestId,
+                  'border-b last:border-b-0'
+                )}
+              >
                 <ItemContent>
                   <ItemTitle className="font-mono" translate="no">
-                    {item.inboundRequestCode}
+                    {canViewRequest ? (
+                      <Link
+                        href={APP_ROUTES.inboundRequestDetail(item.inboundRequestId) as Route}
+                        className="text-primary font-semibold hover:underline"
+                      >
+                        {item.inboundRequestCode}
+                      </Link>
+                    ) : (
+                      item.inboundRequestCode
+                    )}
                   </ItemTitle>
                   <ItemDescription>
                     {item.supplierName} · {item.warehouseName}
@@ -320,11 +346,11 @@ export function ReceivingTaskDirectory({
             <Table className="min-w-[1240px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 z-10">Mã PO</TableHead>
+                  <TableHead className="sticky top-0 z-10">Mã yêu cầu</TableHead>
                   <TableHead className="sticky top-0 z-10">Nhà cung cấp</TableHead>
                   <TableHead className="sticky top-0 z-10">Kho nhận</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Mặt hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Đã nhận / Đặt</TableHead>
+                  <TableHead className="sticky top-0 z-10 text-right">Đã nhận / Yêu cầu</TableHead>
                   <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
                   <TableHead className="sticky top-0 z-10">Ngày dự kiến</TableHead>
                   <TableHead className="sticky top-0 z-10">Người nhận việc</TableHead>
@@ -333,9 +359,24 @@ export function ReceivingTaskDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.inboundRequestId}>
+                  <TableRow
+                    key={item.inboundRequestId}
+                    {...goodsPreviewInteractions(
+                      onPreview ? () => onPreview(item) : undefined,
+                      previewId === item.inboundRequestId
+                    )}
+                  >
                     <TableCell className="font-mono font-semibold" translate="no">
-                      {item.inboundRequestCode}
+                      {canViewRequest ? (
+                        <Link
+                          href={APP_ROUTES.inboundRequestDetail(item.inboundRequestId) as Route}
+                          className="text-primary hover:underline"
+                        >
+                          {item.inboundRequestCode}
+                        </Link>
+                      ) : (
+                        item.inboundRequestCode
+                      )}
                       {item.activeGoodsReceiptStatus === 'PendingApproval' && (
                         <p className="text-warning mt-0.5 text-xs font-normal">Phiếu chờ duyệt</p>
                       )}

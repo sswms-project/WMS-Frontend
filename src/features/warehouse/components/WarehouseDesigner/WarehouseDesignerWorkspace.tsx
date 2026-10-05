@@ -42,7 +42,11 @@ import type {
   WarehouseLayoutSelection,
 } from '../../types/warehouse-layout-scene.types'
 import type { LayoutPaletteDragData } from './designer-constants'
-import { constrainLayoutGeometryToCanvas, getRackPresetSize } from '../../utils/layout-grid'
+import {
+  constrainLayoutGeometryToCanvas,
+  getRackPresetSize,
+  LAYOUT_DECORATION_MARGIN,
+} from '../../utils/layout-grid'
 import { WarehouseLocationDeactivateDialog } from '../WarehouseDetailPage'
 import { DesignerInspector } from './DesignerInspector'
 import { DesignerContextToolbar } from './DesignerContextToolbar'
@@ -231,7 +235,12 @@ export function WarehouseDesignerWorkspace({
       type: 'update-geometry',
       target,
       id,
-      geometry: constrainLayoutGeometryToCanvas(geometry, scene.canvas),
+      geometry: constrainLayoutGeometryToCanvas(
+        geometry,
+        scene.canvas,
+        true,
+        target === 'decoration' ? LAYOUT_DECORATION_MARGIN : 0
+      ),
     })
   }
 
@@ -257,7 +266,9 @@ export function WarehouseDesignerWorkspace({
         rotation: 0,
         zIndex: 500 + scene.decorations.length,
       },
-      scene.canvas
+      scene.canvas,
+      true,
+      LAYOUT_DECORATION_MARGIN
     )
     dispatch({
       type: 'add-decoration',
@@ -311,7 +322,9 @@ export function WarehouseDesignerWorkspace({
         y: source.y + scene.canvas.gridSize,
         zIndex: source.zIndex + 1,
       },
-      scene.canvas
+      scene.canvas,
+      true,
+      LAYOUT_DECORATION_MARGIN
     )
     dispatch({
       type: 'add-decoration',

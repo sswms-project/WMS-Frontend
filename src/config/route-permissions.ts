@@ -27,7 +27,10 @@ const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
     pathPrefix: APP_ROUTES.settings.accessControl,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
-  { pathPrefix: APP_ROUTES.myTasks, allowedRoles: [USER_ROLES.WarehouseStaff] },
+  {
+    pathPrefix: APP_ROUTES.myTasks,
+    allowedRoles: [USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+  },
   {
     pathPrefix: APP_ROUTES.suppliers,
     allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],

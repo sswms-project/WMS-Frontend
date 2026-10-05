@@ -13,6 +13,10 @@ import {
 } from '@/components/operations/OperationalState'
 import { logger } from '@/lib/logger'
 import { USER_ROLES } from '@/config/roles'
+import { P } from '@/config/permissionCodes'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
+import { useAssignableStaffQuery } from '@/features/inbound/hooks/use-inbound'
+import { formatApiError, getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth.store'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
@@ -56,6 +60,9 @@ export default function InboundRequestFormPage({
 }) {
   const router = useRouter()
   const isOwner = useAuthStore((state) => state.user?.role === USER_ROLES.TenantOwner)
+  const meQuery = useMeQuery()
+  const canAssign =
+    !inboundRequestId && Boolean(meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_CREATE))
   const hydratedInboundRequestId = useRef<string | null>(null)
   const createdInboundRequestId = useRef<string | null>(null)
   const [warehouseSearchText, setWarehouseSearchText] = useState('')
@@ -82,6 +89,7 @@ export default function InboundRequestFormPage({
       )(values, context, options),
     defaultValues: {
       warehouseId: '',
+      receivingAssignedTo: '',
       sourceType: INBOUND_SOURCE_TYPE.Supplier,
       supplierId: '',
       sourceName: '',
@@ -92,6 +100,8 @@ export default function InboundRequestFormPage({
   })
   const fieldArray = useFieldArray({ control: form.control, name: 'lines' })
   const selectedLines = useWatch({ control: form.control, name: 'lines' })
+  const selectedWarehouseId = useWatch({ control: form.control, name: 'warehouseId' })
+  const staffQuery = useAssignableStaffQuery(canAssign ? selectedWarehouseId : null)
   const productIds = [...new Set(selectedLines.map((line) => line.productId).filter(Boolean))]
   // ponytail: lookups grow with line count; use a batch endpoint if large inbound requests become common.
   const productDetails = useInboundRequestProductDetails(productIds)
@@ -182,7 +192,12 @@ export default function InboundRequestFormPage({
       if (savedId) {
         await updateMutation.mutateAsync({ inboundRequestId: savedId, request })
       } else {
-        const response = await createMutation.mutateAsync(request)
+        const response = await createMutation.mutateAsync({
+          ...request,
+          ...(values.receivingAssignedTo
+            ? { receivingAssignedTo: values.receivingAssignedTo }
+            : {}),
+        })
         savedId = response.data
         createdInboundRequestId.current = savedId
       }
@@ -208,8 +223,15 @@ export default function InboundRequestFormPage({
       )
       if (savedId) router.push(APP_ROUTES.inboundRequestDetail(savedId) as Route)
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể lưu yêu cầu nhập kho. Vui lòng kiểm tra dữ liệu và thử lại.')
+      if (isApiErrorResponse(error) && error.statusCode >= 400 && error.statusCode < 500)
+        logger.warn(formatApiError(error))
+      else logger.error(formatApiError(error))
+      toast.error(
+        getApiErrorMessage(
+          error,
+          'Không thể lưu yêu cầu nhập kho. Vui lòng kiểm tra dữ liệu và thử lại.'
+        )
+      )
     }
   }
 
@@ -332,6 +354,14 @@ export default function InboundRequestFormPage({
         form={form}
         fields={fieldArray.fields}
         warehouseOptions={warehouseOptions}
+        canAssign={canAssign}
+        staffOptions={(staffQuery.data ?? []).map((staff) => ({
+          value: staff.id,
+          label: `${staff.fullName} · ${staff.email}`,
+        }))}
+        isStaffLoading={staffQuery.isFetching}
+        isStaffError={staffQuery.isError}
+        onRetryStaff={() => void staffQuery.refetch()}
         supplierOptions={supplierOptions}
         productOptions={productOptions}
         productsById={productsById}

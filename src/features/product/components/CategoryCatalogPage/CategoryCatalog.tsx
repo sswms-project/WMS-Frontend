@@ -212,7 +212,6 @@ export function CategoryCatalog({
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 className="text-sm font-semibold">Danh sách nhóm vật tư hàng hóa</h2>
-            <p className="text-muted-foreground text-xs">{filteredItems.length} nhóm</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {expandableIds.length > 0 ? (
