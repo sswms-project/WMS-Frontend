@@ -14,6 +14,7 @@ import {
 } from '../hooks/use-inventory'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 export default function InventoryAbcPage() {
@@ -134,7 +135,7 @@ export default function InventoryAbcPage() {
         void runMutation
           .mutateAsync({ warehouseId, historicalPeriodDays, metric, aThreshold, bThreshold })
           .then(() => toast.success('Đã hoàn tất phân tích ưu tiên kiểm đếm.'))
-          .catch(() => toast.error('Không thể chạy phân loại ABC.'))
+          .catch((error) => toast.error(getApiErrorMessage(error, 'Không thể chạy phân loại ABC.')))
       }}
     />
   )
