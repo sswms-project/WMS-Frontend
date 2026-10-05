@@ -125,6 +125,11 @@ export interface GoodsReceiptItem {
   productId: string
   productSKU: string
   productName: string
+  baseUnitId: string
+  baseUnitName: string
+  enteredUnitId: string | null
+  conversionFactorSnapshot: number
+  allowedUnits: PutAwayUnit[]
   lotId: string | null
   lotNumber: string | null
   manufacturedDate: string | null
@@ -137,6 +142,14 @@ export interface GoodsReceiptItem {
   remainingPutAwayQuantity: number
   exceptionReason: string | null
   putAwayDetails: PutAwayDetail[]
+}
+
+export interface PutAwayUnit {
+  unitId: string
+  unitName: string
+  unitCode: string
+  quantityPrecision: number
+  conversionFactor: number
 }
 
 export interface PutAwayDetail {
@@ -176,7 +189,6 @@ export interface GoodsReceiptDetail extends Omit<
   rejectionReason: string | null
   arrivalConfirmedBy: string | null
   arrivalConfirmedAt: string | null
-  receivingHoldSlotId: string | null
   putAwayTaskExecutionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
   putAwayTaskCancelledAt: string | null
   putAwayTaskCancellationReason: string | null
@@ -206,7 +218,8 @@ export interface SaveGoodsReceiptRequest {
 export interface PutawayLineRequest {
   goodsReceiptItemId: string
   slotId: string
-  quantity: number
+  enteredQuantity: number
+  enteredUnitId: string
 }
 
 export interface PutawayRequest {

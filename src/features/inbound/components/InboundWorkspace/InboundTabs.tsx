@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardCheck, PackageCheck, PackageOpen } from 'lucide-react'
+import { ClipboardCheck, ClipboardList, PackageCheck, PackageOpen } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -8,19 +8,45 @@ import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 const tabs = [
-  { href: APP_ROUTES.inbound, label: 'Chờ nhận hàng', icon: PackageOpen },
-  { href: APP_ROUTES.goodsReceipts, label: 'Phiếu nhận hàng', icon: ClipboardCheck },
-  { href: APP_ROUTES.inboundPutaway, label: 'Chờ cất hàng', icon: PackageCheck },
+  {
+    href: APP_ROUTES.inboundRequests,
+    label: 'Yêu cầu nhập kho',
+    icon: ClipboardList,
+  },
+  {
+    href: APP_ROUTES.inbound,
+    label: 'Chờ nhận hàng',
+    icon: PackageOpen,
+  },
+  {
+    href: APP_ROUTES.goodsReceipts,
+    label: 'Phiếu nhận hàng',
+    icon: ClipboardCheck,
+  },
+  {
+    href: APP_ROUTES.inboundPutaway,
+    label: 'Chờ cất hàng',
+    icon: PackageCheck,
+  },
 ] as const
 
-export function InboundTabs() {
+export interface InboundTabsProps {
+  readonly canViewRequests: boolean
+  readonly canViewReceipts: boolean
+}
+
+export function InboundTabs({ canViewRequests, canViewReceipts }: InboundTabsProps) {
   const pathname = usePathname()
+  const visibleTabs = tabs.filter((tab) =>
+    tab.href === APP_ROUTES.inboundRequests ? canViewRequests : canViewReceipts
+  )
+
   return (
     <nav
       className="flex max-w-full gap-1 overflow-x-auto border-b px-1 pb-1"
       aria-label="Nghiệp vụ nhập kho"
     >
-      {tabs.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive =
           tab.href === APP_ROUTES.inbound ? pathname === tab.href : pathname.startsWith(tab.href)
         const Icon = tab.icon

@@ -58,3 +58,32 @@ export interface CreateStockRecipientRequest {
 }
 
 export type UpdateStockRecipientRequest = CreateStockRecipientRequest
+
+export interface ImportStockRecipientItem {
+  recipientCode: string | null
+  recipientName: string
+  recipientType: string | null
+  taxCode: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  shippingAddress: string | null
+  contactSalutation: string | null
+  contactName: string | null
+  contactMobile: string | null
+  contactChannel: string | null
+  contactChannelName: string | null
+}
+
+export interface StockRecipientImportPreviewRow extends ImportStockRecipientItem {
+  rowNumber: number
+  errors: string[]
+}
+
+export interface StockRecipientImportPreview {
+  rows: StockRecipientImportPreviewRow[]
+}
+
+export interface ImportStockRecipientsRequest {
+  items: ImportStockRecipientItem[]
+}

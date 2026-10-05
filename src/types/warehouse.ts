@@ -6,6 +6,8 @@ export interface WarehouseResponse {
   status: string
   createdAt: string
   rowVersion?: string | null
+  managerId?: string | null
+  managerName?: string | null
 }
 
 export interface WarehouseDetailResponse extends WarehouseResponse {
@@ -28,7 +30,6 @@ export interface SlotResponse extends WarehousePhysicalDetailsResponse, StorageC
   status: string
   isActive: boolean
   isOutboundStaging?: boolean
-  isInboundStaging?: boolean
   allowsMixedProducts?: boolean
   capacity: number | null
   currentOccupancy: number

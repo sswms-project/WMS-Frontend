@@ -34,7 +34,7 @@ export function StaffTerminationDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Chấm dứt làm việc</AlertDialogTitle>
           <AlertDialogDescription>
-            Xác nhận xóa quyền truy cập của nhân viên khỏi tổ chức hiện tại.
+            Xác nhận xóa quyền truy cập của nhân viên khỏi doanh nghiệp hiện tại.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -48,7 +48,7 @@ export function StaffTerminationDialog({
           <div>
             <p className="font-medium">Sau khi xác nhận:</p>
             <ul className="text-muted-foreground mt-1 list-disc pl-5 text-xs leading-5">
-              <li>Nhân viên không còn truy cập tổ chức hiện tại.</li>
+              <li>Nhân viên không còn truy cập doanh nghiệp hiện tại.</li>
               <li>Tất cả phiên đăng nhập bị thu hồi.</li>
               <li>Phân công kho và quyền cá nhân bị hủy.</li>
             </ul>

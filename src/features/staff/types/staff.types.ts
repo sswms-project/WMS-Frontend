@@ -23,3 +23,38 @@ export interface StaffQuery extends QueryInfo {
   skip: number
   needTotalCount: true
 }
+
+export interface StaffEmploymentPeriod {
+  id: string
+  userId: string
+  startDate: string
+  endDate: string | null
+  isCurrent: boolean
+  isEndDateUnknown: boolean
+  isCurrentAccount: boolean
+}
+
+export interface StaffEmploymentHistory {
+  periods: StaffEmploymentPeriod[]
+}
+
+export interface UpdateStaffEmploymentPeriodRequest {
+  startDate: string
+  endDate: string | null
+}
+
+export interface UpdateStaffEmploymentPeriodVariables {
+  userId: string
+  periodId: string
+  request: UpdateStaffEmploymentPeriodRequest
+}
+
+export interface FormerStaffResponse {
+  userId: string
+  fullName: string
+  email: string
+  role: string | null
+  periodCount: number
+  firstStartDate: string | null
+  lastEndDate: string | null
+}

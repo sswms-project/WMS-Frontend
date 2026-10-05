@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { P } from '@/config/permissionCodes'
+import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
@@ -17,6 +19,7 @@ import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-as
 import type { GoodsReceiptSummary } from '../types/inbound.types'
 
 export default function InboundPutawayPage() {
+  const meQuery = useMeQuery()
   const { currentUserId, canAssign } = useWarehouseTaskAssignmentAccess()
   const [searchText, setSearchText] = useState('')
   const [createdFrom, setCreatedFrom] = useState('')
@@ -49,7 +52,11 @@ export default function InboundPutawayPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <InboundPageHeader title="Cất hàng" />
+      <InboundPageHeader
+        title="Cất hàng"
+        canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
+        canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
+      />
       <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
         <CardContent className="flex min-h-16 items-center justify-between gap-2">
           <p className="text-sm font-medium">Phiếu chờ cất</p>

@@ -5,13 +5,18 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useWatch, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Spinner } from '@/components/ui/spinner'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { PutawayFormValues } from '../../schemas/inbound.schema'
-import { getPutawayAllocationState } from '../../schemas/putaway-allocation.schema'
+import {
+  getPutawayAllocationState,
+  getPutawayFillRemaining,
+} from '../../schemas/putaway-allocation.schema'
+import { formatPutawayQuantity, getPutawayRemainingInput } from '../../utils/putaway-units'
 import { cn } from '@/lib/utils'
 import type { GoodsReceiptDetail } from '../../types/inbound.types'
 import { PutawayLocationSelect } from './PutawayLocationSelect'
@@ -34,6 +39,7 @@ interface PutawayFormProps {
   readonly fields: readonly FieldArrayWithId<PutawayFormValues, 'lines', 'id'>[]
   readonly slots: readonly SlotOption[]
   readonly isPending: boolean
+  readonly hasUncertainSubmission?: boolean
   readonly canCancel: boolean
   readonly cancelLabel?: string
   readonly onCancel: () => void
@@ -48,6 +54,7 @@ export function PutawayForm({
   fields,
   slots,
   isPending,
+  hasUncertainSubmission = false,
   canCancel,
   cancelLabel = 'Hủy phần còn lại',
   onCancel,
@@ -61,48 +68,81 @@ export function PutawayForm({
     formState: { errors, isSubmitted, touchedFields },
   } = form
   const lines = useWatch({ control: form.control, name: 'lines' })
+  const allocationLocked = isPending || hasUncertainSubmission
   const allocation = getPutawayAllocationState(lines, receipt.items, slots)
-  const totalRemaining = receipt.items.reduce((sum, item) => sum + item.remainingPutAwayQuantity, 0)
+  const pendingItems = receipt.items.filter((item) => item.remainingPutAwayQuantity > 0)
+  const fullyAllocated = pendingItems.filter(
+    (item) =>
+      (allocation.assignedByItem.get(item.id) ?? 0) ===
+      Math.round(item.remainingPutAwayQuantity * 100)
+  ).length
 
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
-      <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
+      <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon">
-            <Link href={APP_ROUTES.inboundPutaway as Route} aria-label="Quay lại danh sách">
+            <Link
+              href={APP_ROUTES.inboundPutaway as Route}
+              aria-label="Quay lại danh sách"
+              aria-disabled={allocationLocked}
+              onClick={(event) => {
+                if (allocationLocked) event.preventDefault()
+              }}
+            >
               <ArrowLeft aria-hidden="true" />
             </Link>
           </Button>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-primary text-xs font-medium">Cất hàng</p>
-            <h1 className="font-mono text-xl font-semibold">{receipt.receiptCode}</h1>
-            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+            <h1 className="font-mono text-xl font-semibold break-words">{receipt.receiptCode}</h1>
+            <p className="text-muted-foreground mt-1 text-xs break-words sm:text-sm">
               {receipt.inboundRequestCode} · {receipt.warehouseName}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {canCancel ? (
-            <Button type="button" variant="destructive" disabled={isPending} onClick={onCancel}>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={allocationLocked}
+              onClick={onCancel}
+            >
               <Ban aria-hidden="true" />
               {cancelLabel}
             </Button>
           ) : null}
-          <Button type="button" disabled={isPending || !allocation.canSubmit} onClick={onSubmit}>
-            <PackageCheck aria-hidden="true" />
-            Xác nhận cất hàng
+          <Button
+            type="button"
+            disabled={isPending || (!hasUncertainSubmission && !allocation.canSubmit)}
+            aria-busy={isPending}
+            onClick={onSubmit}
+          >
+            {isPending ? (
+              <Spinner
+                aria-hidden="true"
+                data-icon="inline-start"
+                className="motion-reduce:animate-none"
+              />
+            ) : (
+              <PackageCheck aria-hidden="true" data-icon="inline-start" />
+            )}
+            {isPending
+              ? 'Đang xử lý…'
+              : hasUncertainSubmission
+                ? 'Gửi lại an toàn'
+                : 'Xác nhận cất hàng'}
           </Button>
         </div>
       </header>
       <section className="bg-card border">
         <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3">
-          <Metric label="Còn phải cất" value={formatQuantity(totalRemaining)} />
-          <Metric label="Đã phân bổ hợp lệ" value={formatQuantity(allocation.totalAssigned)} />
+          <Metric label="Dòng hàng cần cất" value={String(pendingItems.length)} />
+          <Metric label="Dòng đã phân bổ đủ" value={String(fullyAllocated)} />
           <Metric
-            label="Chưa phân bổ"
-            value={formatQuantity(
-              Math.max(0, Math.round((totalRemaining - allocation.totalAssigned) * 100) / 100)
-            )}
+            label="Dòng còn phải phân bổ"
+            value={String(pendingItems.length - fullyAllocated)}
           />
         </div>
         <div className="divide-y border-t">
@@ -116,7 +156,7 @@ export function PutawayForm({
                   key={item.id}
                   className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs"
                 >
-                  <span className="font-medium">
+                  <span className="min-w-0 font-medium break-words">
                     {item.productSKU} - {item.productName}
                     {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
                   </span>
@@ -126,9 +166,17 @@ export function PutawayForm({
                       excess > 0 ? 'text-destructive font-medium' : 'text-muted-foreground'
                     )}
                   >
-                    Cần cất {formatQuantity(item.remainingPutAwayQuantity)} · Đang nhập{' '}
-                    {formatQuantity(requested)}
-                    {excess > 0 ? ` · Vượt ${formatQuantity(excess)}` : ''}
+                    Còn phải cất: {formatPutawayQuantity(item, item.remainingPutAwayQuantity)} ·
+                    Đang nhập: {formatPutawayQuantity(item, requested)} · Sau phân bổ còn:{' '}
+                    {formatPutawayQuantity(
+                      item,
+                      Math.max(
+                        0,
+                        item.remainingPutAwayQuantity -
+                          (allocation.assignedByItem.get(item.id) ?? 0) / 100
+                      )
+                    )}
+                    {excess > 0 ? ` · Vượt ${formatPutawayQuantity(item, excess)}` : ''}
                   </span>
                 </div>
               )
@@ -137,15 +185,21 @@ export function PutawayForm({
       </section>
       {errors.root?.server?.message ? <FieldError>{errors.root.server.message}</FieldError> : null}
       <section className="bg-card border">
-        <div className="flex items-center justify-between gap-3 border-b p-4">
-          <div>
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold">Chọn vị trí cất cho từng sản phẩm</h2>
             <p className="text-muted-foreground text-xs">
-              Hàng đang nằm ở khu nhận hàng tạm; chọn vị trí đích để chuyển vào kho. Có thể chia một
-              sản phẩm vào nhiều vị trí, giới hạn tính riêng theo từng dòng hàng.
+              Chọn vị trí đích để cất từng sản phẩm. Có thể chia một sản phẩm vào nhiều vị trí, giới
+              hạn tính riêng theo từng dòng hàng.
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={onAdd}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={allocationLocked}
+            onClick={onAdd}
+          >
             <Plus aria-hidden="true" />
             Chia sang vị trí khác
           </Button>
@@ -159,30 +213,45 @@ export function PutawayForm({
               isSubmitted ||
               Boolean(touchedFields.lines?.[index]) ||
               Boolean(line.goodsReceiptItemId || line.slotId) ||
-              line.quantity !== 1
+              line.enteredQuantity !== 1
             const lineErrors = showErrors ? row.errors : {}
             const selectedItemId = line.goodsReceiptItemId
             const selectedItem = receipt.items.find((item) => item.id === selectedItemId)
+            const fillRemaining = getPutawayFillRemaining(lines, index, receipt.items, slots)
             return (
-              <div
+              <FieldGroup
                 key={field.id}
-                className="grid gap-3 p-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(120px,.6fr)_auto]"
+                className="grid gap-3 p-4 *:min-w-0 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,.8fr)_auto]"
               >
                 <Field data-invalid={Boolean(lineErrors.goodsReceiptItemId)}>
                   <FieldLabel htmlFor={`putaway-item-${index}`}>Sản phẩm</FieldLabel>
                   <NativeSelect
                     id={`putaway-item-${index}`}
                     className="w-full"
-                    disabled={isPending}
+                    disabled={allocationLocked}
                     aria-invalid={Boolean(lineErrors.goodsReceiptItemId)}
                     aria-describedby={`putaway-item-${index}-error`}
                     value={selectedItemId}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       setValue(`lines.${index}.goodsReceiptItemId`, event.target.value, {
                         shouldDirty: true,
                         shouldValidate: true,
                       })
-                    }
+                      const item = receipt.items.find(
+                        (candidate) => candidate.id === event.target.value
+                      )
+                      const input = item
+                        ? getPutawayRemainingInput(item, item.remainingPutAwayQuantity)
+                        : null
+                      setValue(`lines.${index}.enteredUnitId`, input?.enteredUnitId ?? '', {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                      setValue(`lines.${index}.enteredQuantity`, 1, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }}
                   >
                     <NativeSelectOption value="">Chọn sản phẩm</NativeSelectOption>
                     {receipt.items
@@ -205,8 +274,8 @@ export function PutawayForm({
                   </FieldError>
                   {selectedItem ? (
                     <p className="text-muted-foreground text-xs">
-                      Cần cất {formatQuantity(selectedItem.remainingPutAwayQuantity)} · Dòng này tối
-                      đa {formatQuantity(row.itemAvailable)}
+                      Còn phải cất:{' '}
+                      {formatPutawayQuantity(selectedItem, selectedItem.remainingPutAwayQuantity)}
                     </p>
                   ) : null}
                 </Field>
@@ -215,7 +284,7 @@ export function PutawayForm({
                   <PutawayLocationSelect
                     id={`putaway-slot-${index}`}
                     invalid={Boolean(lineErrors.slotId)}
-                    disabled={isPending}
+                    disabled={allocationLocked}
                     slots={slots}
                     value={line.slotId}
                     onChange={(slotId) =>
@@ -227,36 +296,116 @@ export function PutawayForm({
                   />
                   <FieldError id={`putaway-slot-${index}-error`}>{lineErrors.slotId}</FieldError>
                 </Field>
-                <Field data-invalid={Boolean(lineErrors.quantity)}>
-                  <FieldLabel htmlFor={`putaway-quantity-${index}`}>Số lượng</FieldLabel>
+                <Field
+                  data-invalid={Boolean(lineErrors.enteredQuantity)}
+                  data-disabled={allocationLocked}
+                >
+                  <FieldLabel htmlFor={`putaway-quantity-${index}`}>Số lượng cất</FieldLabel>
                   <Input
                     id={`putaway-quantity-${index}`}
                     type="number"
-                    min="0.01"
-                    step="0.01"
+                    min={10 ** -(row.unit?.quantityPrecision ?? 0)}
+                    step={10 ** -(row.unit?.quantityPrecision ?? 0)}
                     max={row.maxQuantity}
-                    disabled={isPending}
-                    aria-invalid={Boolean(lineErrors.quantity)}
-                    aria-describedby={`putaway-quantity-${index}-error`}
-                    {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+                    disabled={allocationLocked}
+                    aria-invalid={Boolean(lineErrors.enteredQuantity)}
+                    aria-describedby={`putaway-quantity-${index}-error putaway-conversion-${index}`}
+                    {...register(`lines.${index}.enteredQuantity`, { valueAsNumber: true })}
                   />
+                  <p
+                    id={`putaway-conversion-${index}`}
+                    className="text-muted-foreground text-xs"
+                    aria-live="polite"
+                  >
+                    {selectedItem && row.baseQuantity !== null
+                      ? `= ${formatQuantity(row.baseQuantity)} ${selectedItem.baseUnitName}`
+                      : 'Chọn đơn vị và nhập số lượng để xem quy đổi.'}
+                  </p>
                   <FieldError id={`putaway-quantity-${index}-error`}>
-                    {lineErrors.quantity}
+                    {lineErrors.enteredQuantity}
                   </FieldError>
+                </Field>
+                <Field
+                  data-invalid={Boolean(lineErrors.enteredUnitId)}
+                  data-disabled={allocationLocked}
+                >
+                  <FieldLabel htmlFor={`putaway-unit-${index}`}>Đơn vị cất</FieldLabel>
+                  <NativeSelect
+                    id={`putaway-unit-${index}`}
+                    className="w-full"
+                    disabled={allocationLocked || !selectedItem}
+                    value={line.enteredUnitId}
+                    aria-invalid={Boolean(lineErrors.enteredUnitId)}
+                    aria-describedby={`putaway-unit-${index}-error putaway-unit-${index}-description`}
+                    onChange={(event) => {
+                      const unitId = event.target.value
+                      const input =
+                        selectedItem && row.baseQuantity !== null
+                          ? getPutawayRemainingInput(selectedItem, row.baseQuantity, unitId)
+                          : null
+                      setValue(`lines.${index}.enteredUnitId`, unitId, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                      setValue(
+                        `lines.${index}.enteredQuantity`,
+                        input?.enteredUnitId === unitId ? input.enteredQuantity : Number.NaN,
+                        { shouldDirty: true, shouldValidate: true }
+                      )
+                    }}
+                  >
+                    <NativeSelectOption value="">Chọn đơn vị</NativeSelectOption>
+                    {(selectedItem?.allowedUnits ?? []).map((unit) => (
+                      <NativeSelectOption key={unit.unitId} value={unit.unitId}>
+                        {unit.unitName}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  {selectedItem && row.unit ? (
+                    <FieldDescription
+                      id={`putaway-unit-${index}-description`}
+                      className="break-words"
+                    >
+                      1 {row.unit.unitName} = {formatQuantity(row.unit.conversionFactor)}{' '}
+                      {selectedItem.baseUnitName}
+                    </FieldDescription>
+                  ) : null}
+                  <FieldError id={`putaway-unit-${index}-error`}>
+                    {lineErrors.enteredUnitId}
+                  </FieldError>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={allocationLocked || !fillRemaining}
+                    onClick={() => {
+                      if (!fillRemaining) return
+                      setValue(`lines.${index}.enteredUnitId`, fillRemaining.enteredUnitId, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                      setValue(`lines.${index}.enteredQuantity`, fillRemaining.enteredQuantity, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }}
+                  >
+                    Cất toàn bộ còn lại
+                  </Button>
                 </Field>
                 <div className="flex items-end">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    disabled={isPending}
+                    disabled={allocationLocked}
                     aria-label={`Xóa phân bổ ${index + 1}`}
                     onClick={() => onRemove(index)}
                   >
                     <Trash2 aria-hidden="true" />
                   </Button>
                 </div>
-              </div>
+              </FieldGroup>
             )
           })}
         </div>

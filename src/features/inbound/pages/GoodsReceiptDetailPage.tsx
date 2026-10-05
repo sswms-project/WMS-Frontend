@@ -8,7 +8,7 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { formatApiError, getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { ReceiptDetail } from '../components/ReceiptDetailPage'
 import { ReceiveGoodsDialog } from '../components/ReceivingPage'
@@ -38,6 +38,16 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     resolver: zodResolver(goodsReceiptSchema),
     defaultValues: { inboundRequestId: '', lines: [] },
   })
+
+  function showMutationError(error: unknown, fallback: string) {
+    const message = getApiErrorMessage(error, fallback)
+    toast.error(message)
+  }
+
+  function logMutationFailure(error: unknown) {
+    if (isApiErrorResponse(error)) logger.warn(formatApiError(error))
+    else logger.error(error)
+  }
 
   function openEditor() {
     const receipt = detailQuery.data
@@ -95,8 +105,11 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       )
       setIsEditing(false)
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể cập nhật phiếu nhận hàng. Vui lòng kiểm tra dữ liệu và thử lại.')
+      logMutationFailure(error)
+      showMutationError(
+        error,
+        'Không thể cập nhật phiếu nhận hàng. Vui lòng kiểm tra dữ liệu và thử lại.'
+      )
     }
   }
 
@@ -138,10 +151,8 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       )
       return true
     } catch (error) {
-      logger.error(error)
-      toast.error(
-        getApiErrorMessage(error, 'Không thể cập nhật phiếu nhận hàng. Vui lòng thử lại.')
-      )
+      logMutationFailure(error)
+      showMutationError(error, 'Không thể cập nhật phiếu nhận hàng. Vui lòng thử lại.')
       return false
     }
   }

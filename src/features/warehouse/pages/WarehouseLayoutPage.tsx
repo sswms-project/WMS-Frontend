@@ -537,7 +537,6 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   slotName: slotFormTarget.slot.slotName,
                   description: slotFormTarget.slot.description ?? '',
                   allowsMixedProducts: slotFormTarget.slot.allowsMixedProducts ?? true,
-                  isInboundStaging: slotFormTarget.slot.isInboundStaging ?? false,
                   ...getCapacityFormValues(slotFormTarget.slot),
                   expectedRowVersion: slotFormTarget.slot.rowVersion ?? '',
                   ...getWarehousePhysicalDetails(slotFormTarget.slot),
@@ -547,7 +546,6 @@ export function WarehouseLayoutPage({ warehouseId }: WarehouseLayoutPageProps) {
                   slotName: '',
                   description: '',
                   allowsMixedProducts: true,
-                  isInboundStaging: false,
                   ...getCapacityFormValues(),
                   ...EMPTY_WAREHOUSE_PHYSICAL_DETAILS,
                 }

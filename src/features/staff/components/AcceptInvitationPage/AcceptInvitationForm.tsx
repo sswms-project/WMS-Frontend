@@ -68,7 +68,7 @@ export function AcceptInvitationForm({
         <div className="space-y-6 p-5 sm:p-7">
           <div>
             <p className="text-primary text-xs font-medium">Lời mời tham gia KOVIA</p>
-            <h1 className="mt-1 text-2xl font-semibold">Kích hoạt quyền truy cập tổ chức</h1>
+            <h1 className="mt-1 text-2xl font-semibold">Kích hoạt quyền truy cập doanh nghiệp</h1>
             <p className="text-muted-foreground mt-2 text-sm">
               Kiểm tra thông tin do quản trị viên cung cấp trước khi tiếp tục.
             </p>
@@ -169,7 +169,7 @@ function InvitationDetails({ preview }: { readonly preview: InvitationPreviewRes
     <div className="bg-card grid gap-3 border p-4 sm:grid-cols-2">
       {preview.fullName.trim() && <ReadOnlyField label="Họ và tên" value={preview.fullName} />}
       <ReadOnlyField label="Email" value={preview.email} />
-      <ReadOnlyField label="Tổ chức" value={preview.tenantName} />
+      <ReadOnlyField label="Doanh nghiệp" value={preview.tenantName} />
       <ReadOnlyField label="Vai trò" value={getRoleLabel(preview.role)} />
       <div className="sm:col-span-2">
         <p className="text-muted-foreground text-xs">Kho ban đầu</p>
