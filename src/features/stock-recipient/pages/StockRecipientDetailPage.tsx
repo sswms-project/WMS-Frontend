@@ -232,7 +232,6 @@ export default function StockRecipientDetailPage({
       <section className="flex min-h-0 flex-1 flex-col border">
         <div className="border-b p-3">
           <h2 className="text-sm font-semibold">Lịch sử yêu cầu xuất kho</h2>
-          <p className="text-muted-foreground text-xs">{historyQuery.data?.totalCount ?? 0} đơn</p>
         </div>
         {historyQuery.isLoading ? (
           <OperationalLoadingState />

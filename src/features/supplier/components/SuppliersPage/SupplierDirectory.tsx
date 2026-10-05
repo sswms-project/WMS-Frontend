@@ -58,7 +58,6 @@ interface SupplierDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
-  readonly onImport: () => void
   readonly onEdit: (supplier: Supplier) => void
   readonly onDeactivate: (supplier: Supplier) => void
   readonly onReactivate: (supplier: Supplier) => void
@@ -84,7 +83,6 @@ export function SupplierDirectory({
   onPageChange,
   onPageSizeChange,
   onCreate,
-  onImport,
   onEdit,
   onDeactivate,
   onReactivate,
@@ -104,9 +102,11 @@ export function SupplierDirectory({
         </div>
         {canCreate ? (
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onImport}>
-              <Upload aria-hidden="true" />
-              Nhập từ tệp
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href={APP_ROUTES.supplierImport}>
+                <Upload aria-hidden="true" />
+                Nhập từ tệp
+              </Link>
             </Button>
             <Button type="button" className="w-full sm:w-auto" onClick={onCreate}>
               <Plus aria-hidden="true" />
@@ -122,7 +122,6 @@ export function SupplierDirectory({
             <h2 id="supplier-directory-title" className="text-sm font-semibold">
               Danh sách nhà cung cấp
             </h2>
-            <p className="text-muted-foreground text-xs tabular-nums">{totalCount} nhà cung cấp</p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
             <InputGroup className="min-w-0 flex-1 sm:w-72">

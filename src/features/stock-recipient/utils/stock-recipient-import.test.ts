@@ -33,7 +33,7 @@ describe('toImportItem', () => {
 
     const item = toImportItem(row)
 
-    expect(item).not.toHaveProperty('rowNumber')
+    expect(item.rowNumber).toBe(2)
     expect(item).not.toHaveProperty('errors')
     expect(item).toMatchObject({
       recipientName: 'Khách A',

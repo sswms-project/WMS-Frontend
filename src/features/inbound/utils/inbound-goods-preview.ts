@@ -1,0 +1,86 @@
+import type { InboundRequestLine } from '@/features/inbound-request/types/inbound-request.types'
+import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
+import type { GoodsReceiptItem, ReceivingTaskLine } from '../types/inbound.types'
+
+export interface InboundGoodsPreviewRow {
+  readonly id: string
+  readonly sku: string
+  readonly name: string
+  readonly unit: string
+  readonly conversion: string | null
+  readonly requested: number
+  readonly received: number
+  readonly locations: readonly {
+    readonly id: string
+    readonly label: string
+    readonly quantity: number
+  }[]
+  readonly lotNumber: string | null
+  readonly expiryDate: string | null
+}
+
+export function requestGoodsPreviewRows(
+  lines: readonly InboundRequestLine[]
+): InboundGoodsPreviewRow[] {
+  return lines.map((line) => ({
+    id: line.id,
+    sku: line.productSKU,
+    name: line.productName,
+    unit: line.unitName ?? '—',
+    conversion:
+      line.enteredUnitId !== line.baseUnitId &&
+      line.enteredUnitName &&
+      line.conversionFactorSnapshot > 0
+        ? `1 ${line.enteredUnitName} = ${formatQuantity(line.conversionFactorSnapshot)} ${line.unitName ?? ''}`
+        : null,
+    requested: line.quantity,
+    received: line.receivedQuantity,
+    locations: [],
+    lotNumber: null,
+    expiryDate: null,
+  }))
+}
+
+export function receivingGoodsPreviewRows(
+  lines: readonly ReceivingTaskLine[]
+): InboundGoodsPreviewRow[] {
+  return lines.map((line) => ({
+    id: line.inboundRequestItemId,
+    sku: line.productSKU,
+    name: line.productName,
+    unit: '—',
+    conversion: null,
+    requested: line.orderedQuantity,
+    received: line.receivedQuantity,
+    locations: [],
+    lotNumber: null,
+    expiryDate: null,
+  }))
+}
+
+export function receiptGoodsPreviewRows(
+  items: readonly GoodsReceiptItem[]
+): InboundGoodsPreviewRow[] {
+  return items.map((item) => ({
+    id: item.id,
+    sku: item.productSKU,
+    name: item.productName,
+    unit: item.baseUnitName,
+    conversion:
+      item.enteredUnitId &&
+      item.enteredUnitId !== item.baseUnitId &&
+      item.enteredUnitName &&
+      item.conversionFactorSnapshot > 0
+        ? `1 ${item.enteredUnitName} = ${formatQuantity(item.conversionFactorSnapshot)} ${item.baseUnitName}`
+        : null,
+    requested: item.orderedQuantity,
+    received: item.receivedQuantity,
+    locations: item.putAwayDetails.map((detail) => ({
+      id: detail.id,
+      label: detail.isSystemDefaultSlot ? `Kệ ${detail.rackCode}` : detail.slotCode,
+      quantity: detail.quantity,
+    })),
+    lotNumber: item.lotNumber,
+    expiryDate: item.expiryDate,
+  }))
+}

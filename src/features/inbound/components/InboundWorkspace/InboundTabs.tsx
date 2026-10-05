@@ -1,32 +1,26 @@
 'use client'
 
-import { ClipboardCheck, ClipboardList, PackageCheck, PackageOpen } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
 
 const tabs = [
   {
     href: APP_ROUTES.inboundRequests,
     label: 'Yêu cầu nhập kho',
-    icon: ClipboardList,
   },
   {
     href: APP_ROUTES.inbound,
     label: 'Chờ nhận hàng',
-    icon: PackageOpen,
   },
   {
     href: APP_ROUTES.goodsReceipts,
     label: 'Phiếu nhận hàng',
-    icon: ClipboardCheck,
   },
   {
     href: APP_ROUTES.inboundPutaway,
     label: 'Chờ cất hàng',
-    icon: PackageCheck,
   },
 ] as const
 
@@ -42,27 +36,17 @@ export function InboundTabs({ canViewRequests, canViewReceipts }: InboundTabsPro
   )
 
   return (
-    <nav
-      className="flex max-w-full gap-1 overflow-x-auto border-b px-1 pb-1"
-      aria-label="Nghiệp vụ nhập kho"
-    >
+    <nav data-slot="operational-workspace-navigation" aria-label="Nghiệp vụ nhập kho">
       {visibleTabs.map((tab) => {
         const isActive =
           tab.href === APP_ROUTES.inbound ? pathname === tab.href : pathname.startsWith(tab.href)
-        const Icon = tab.icon
         return (
           <Link
             key={tab.href}
             href={tab.href as Route}
             aria-current={isActive ? 'page' : undefined}
-            className={cn(
-              'focus-visible:ring-ring inline-flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-sm border px-3 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none',
-              isActive
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
-            )}
+            className="focus-visible:ring-ring touch-manipulation focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
           >
-            <Icon className="size-4" aria-hidden="true" />
             {tab.label}
           </Link>
         )

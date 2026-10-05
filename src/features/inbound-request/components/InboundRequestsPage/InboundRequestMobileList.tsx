@@ -1,4 +1,5 @@
 import { Copy } from 'lucide-react'
+import { goodsPreviewInteractions } from '@/features/inbound/utils/goods-preview-interactions'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,8 @@ import { inboundSourceLabels } from '../../schemas/inbound-request.schema'
 import { InboundRequestStatusBadge } from './InboundRequestStatusBadge'
 
 interface InboundRequestMobileListProps {
+  readonly previewId?: string
+  readonly onPreview?: (item: InboundRequestSummary) => void
   readonly items: readonly InboundRequestSummary[]
   readonly canCreate: boolean
   readonly isDuplicating: boolean
@@ -21,6 +24,8 @@ interface InboundRequestMobileListProps {
 }
 
 export function InboundRequestMobileList({
+  previewId,
+  onPreview,
   items,
   canCreate,
   isDuplicating,
@@ -29,7 +34,14 @@ export function InboundRequestMobileList({
   return (
     <ItemGroup className="gap-0 md:hidden">
       {items.map((item) => (
-        <Item key={item.id} className="border-b last:border-b-0">
+        <Item
+          key={item.id}
+          {...goodsPreviewInteractions(
+            onPreview ? () => onPreview(item) : undefined,
+            previewId === item.id,
+            'border-b last:border-b-0'
+          )}
+        >
           <ItemContent className="min-w-0">
             <ItemTitle className="flex flex-wrap items-center gap-2">
               <Link
@@ -53,31 +65,14 @@ export function InboundRequestMobileList({
                 </Button>
               ) : null}
             </ItemTitle>
+            <ItemDescription>Tạo lúc {formatOperationalDateTime(item.createdAt)}</ItemDescription>
             <ItemDescription>
-              <Link
-                href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                className="hover:text-primary"
-              >
-                Tạo lúc {formatOperationalDateTime(item.createdAt)}
-              </Link>
+              {item.supplierName ?? item.sourceName ?? 'Chưa xác định nguồn'} ·{' '}
+              {inboundSourceLabels[item.sourceType]} · {item.warehouseName ?? 'Chưa xác định kho'}
             </ItemDescription>
             <ItemDescription>
-              <Link
-                href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                className="hover:text-primary"
-              >
-                {item.supplierName ?? item.sourceName ?? 'Chưa xác định nguồn'} ·{' '}
-                {inboundSourceLabels[item.sourceType]} · {item.warehouseName ?? 'Chưa xác định kho'}
-              </Link>
-            </ItemDescription>
-            <ItemDescription>
-              <Link
-                href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                className="hover:text-primary"
-              >
-                {formatQuantity(item.receivedQuantity)} / {formatQuantity(item.orderedQuantity)} đã
-                nhận · {formatOperationalDate(item.expectedDate)}
-              </Link>
+              {formatQuantity(item.receivedQuantity)} / {formatQuantity(item.orderedQuantity)} đã
+              nhận · {formatOperationalDate(item.expectedDate)}
             </ItemDescription>
           </ItemContent>
         </Item>
