@@ -32,6 +32,7 @@ export const APP_ROUTES = {
   warehouses: '/warehouses',
   warehouseLayouts: '/warehouse-layouts' as Route,
   suppliers: '/suppliers',
+  supplierImport: '/suppliers/import' as Route,
   units: '/units',
   categories: '/categories',
   supplierDetail: (supplierId: string) => `/suppliers/${supplierId}`,
@@ -74,6 +75,7 @@ export const APP_ROUTES = {
   stockIssueRequestCreate: '/stock-issue-requests/new',
   goodsReturnRequests: '/goods-return-requests',
   stockRecipients: '/stock-recipients',
+  stockRecipientImport: '/stock-recipients/import' as Route,
   stockRecipientDetail: (stockRecipientId: string): Route =>
     `/stock-recipients/${stockRecipientId}` as Route,
   unauthorized: '/unauthorized',

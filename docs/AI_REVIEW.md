@@ -322,3 +322,19 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Verification: 328 tests across 69 files, typecheck and production build passed. Lint was rerun clean after removing a test-mock warning; 12 focused tests passed again. Checks cover nonzero small sizes not collapsing, saved collapse, last usable reopening size, committed-geometry tracking, pressed-transform isolation, keyboard, SSR/storage fallback and outbound/transfer composition.
 - Live Edge QA measured successive 80px drags producing 80px divider movements, kept the panel open at approximately 25px and 2.4px, then collapsed at zero. Verified matching button/gap centers, mouse close/reopen, saved closed state on reload, and expanded layout across all four inbound tabs. GitNexus impact HIGH: four direct inbound page callers. No dependency, BE/API change, database operation, migration, seed, deletion, commit or push.
 - Final visual proof: `../operational-master-detail-smooth-qa.png`.
+
+## Bulk Import — Dedicated Import Pages For Suppliers And Customers — 2026-10-05
+
+**Implementer:** Claude
+**State:** `READY_FOR_CODEX_REVIEW`
+
+### Implemented
+
+- Supplier and customer bulk import moved from a dialog to dedicated pages (`/suppliers/import`, `/stock-recipients/import`) that follow the personnel import flow: upload, preview with summary cards, search/status filter, per-row selection, confirmation dialog, result table with CSV export.
+- Shared `BulkImportPage` / `BulkImportResult` replace `BulkImportDialog`; `SupplierImportPage` and `StockRecipientImportPage` only provide columns, labels and API hooks.
+- Valid rows are preselected; invalid rows are never imported and are listed as skipped in the result. Backend contract is unchanged (stateless preview, import of the submitted rows with their original `rowNumber`).
+
+### Verification
+
+- Frontend suite `336` passed; typecheck, ESLint and production build clean. No Backend change, migration or database write in this change.
+- Live browser QA of the new pages is still pending; tests use mocks.

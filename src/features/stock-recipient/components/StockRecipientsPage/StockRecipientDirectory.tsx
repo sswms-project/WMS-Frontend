@@ -44,7 +44,6 @@ interface StockRecipientDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onCreate: () => void
-  readonly onImport: () => void
   readonly onEdit: (stockRecipient: StockRecipient) => void
   readonly onChangeStatus: (stockRecipient: StockRecipient) => void
   readonly onRetry: () => void
@@ -68,7 +67,6 @@ export function StockRecipientDirectory({
   onPageChange,
   onPageSizeChange,
   onCreate,
-  onImport,
   onEdit,
   onChangeStatus,
   onRetry,
@@ -87,9 +85,11 @@ export function StockRecipientDirectory({
         </div>
         {canCreate ? (
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={onImport}>
-              <Upload data-icon="inline-start" />
-              Nhập từ tệp
+            <Button asChild variant="outline">
+              <Link href={APP_ROUTES.stockRecipientImport}>
+                <Upload data-icon="inline-start" />
+                Nhập từ tệp
+              </Link>
             </Button>
             <Button onClick={onCreate}>
               <Plus data-icon="inline-start" />
