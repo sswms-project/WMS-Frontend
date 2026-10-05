@@ -4,6 +4,7 @@ export const SUPPLIER_IMPORT_MAX_ROWS = 500
 
 export function toImportItem(row: SupplierImportPreviewRow): ImportSupplierItem {
   return {
+    rowNumber: row.rowNumber,
     supplierCode: row.supplierCode,
     supplierName: row.supplierName,
     taxCode: row.taxCode,

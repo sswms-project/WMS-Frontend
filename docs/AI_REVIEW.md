@@ -171,3 +171,19 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Sidebar `Nhập kho` now prefers `/inbound-requests` when authorized, retaining the receipt route for receipt-only users and active highlighting across the inbound workspace.
 - Branch includes `origin/dev` at `ed35f70`; local tracked/untracked work matches the safety stash after sync. Full suite: **265/265 tests across 62 files**. Typecheck, full lint, production build and whitespace checks passed. GitNexus reports Medium scope in the expected put-away flows; sidebar regression tests pass.
 - No migration, dependency, deployment configuration or database changes. Deploy the paired Backend first. Live browser responsive/accessibility and API end-to-end QA remain pending; automated fixtures/mocks do not establish that acceptance.
+
+## Bulk Import — Dedicated Import Pages For Suppliers And Customers — 2026-10-05
+
+**Implementer:** Claude
+**State:** `READY_FOR_CODEX_REVIEW`
+
+### Implemented
+
+- Supplier and customer bulk import moved from a dialog to dedicated pages (`/suppliers/import`, `/stock-recipients/import`) that follow the personnel import flow: upload, preview with summary cards, search/status filter, per-row selection, confirmation dialog, result table with CSV export.
+- Shared `BulkImportPage` / `BulkImportResult` replace `BulkImportDialog`; `SupplierImportPage` and `StockRecipientImportPage` only provide columns, labels and API hooks.
+- Valid rows are preselected; invalid rows are never imported and are listed as skipped in the result. Backend contract is unchanged (stateless preview, import of the submitted rows with their original `rowNumber`).
+
+### Verification
+
+- Frontend suite `273` passed, typecheck and ESLint clean. No Backend change, migration or database write in this change.
+- Live browser QA of the new pages is still pending; tests use mocks.
