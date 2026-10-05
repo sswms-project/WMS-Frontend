@@ -126,7 +126,7 @@ export function InventoryAbcDirectory({
           </span>
           <div>
             <p className="text-primary text-xs font-medium">Kiểm soát tồn kho</p>
-            <h1 className="mt-0.5 text-xl font-semibold">Phân loại tồn kho ABC</h1>
+            <h1 className="mt-0.5 text-xl font-semibold">Phân loại ABC theo lịch sử xuất kho</h1>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
               Phân nhóm sản phẩm theo lịch sử xuất kho trong kỳ đã chọn.
             </p>
@@ -220,7 +220,7 @@ export function InventoryAbcDirectory({
               disabled={areWarehousesLoading}
               onChange={(event) => onWarehouseChange(event.target.value)}
             >
-              <NativeSelectOption value="">Tất cả kho</NativeSelectOption>
+              <NativeSelectOption value="">Chọn kho</NativeSelectOption>
               {warehouseOptions.map((option) => (
                 <NativeSelectOption key={option.value} value={option.value}>
                   {option.label}
@@ -328,8 +328,8 @@ export function InventoryAbcDirectory({
             title="Chưa có dữ liệu phân loại"
             description={
               warehouseId
-                ? 'Kho đã chọn chưa có tồn kho dương để phân loại.'
-                : 'Chưa có tồn kho dương để tạo phân loại ABC.'
+                ? 'Kho đã chọn chưa có kết quả phân tích. Hãy chạy phân loại với kỳ lịch sử xuất phù hợp.'
+                : 'Chọn một kho để xem hoặc chạy phân loại theo lịch sử xuất kho.'
             }
           />
         ) : (
