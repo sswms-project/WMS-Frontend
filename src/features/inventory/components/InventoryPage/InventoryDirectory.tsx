@@ -87,7 +87,6 @@ export function InventoryDirectory({
   warehouseOptions,
   productOptions,
   slotOptions,
-  snapshotAt,
   isLoading,
   isFetching,
   isError,
@@ -134,9 +133,6 @@ export function InventoryDirectory({
             <h2 id="inventory-title" className="text-sm font-semibold">
               Danh sách tồn kho
             </h2>
-            <p className="text-muted-foreground text-xs">
-              Dữ liệu theo từng slot · Ảnh chụp {formatInventoryDate(snapshotAt)}
-            </p>
             <p className="text-muted-foreground mt-1 text-xs">
               Có thể xem tồn kho toàn đơn vị. Thao tác chỉ áp dụng tại kho được phân công.
             </p>

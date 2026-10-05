@@ -43,8 +43,8 @@ interface ProductStockPolicyDialogProps {
   readonly onSubmit: (values: StockPolicyFormValues) => void
 }
 
-function optionalNumber(value: string) {
-  return value === '' ? null : Number(value)
+function optionalNumber(value: unknown) {
+  return value === '' || value === null || value === undefined ? null : Number(value)
 }
 
 export function ProductStockPolicyDialog({

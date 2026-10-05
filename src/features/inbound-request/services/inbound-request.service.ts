@@ -12,6 +12,7 @@ import type {
   InboundDecisionRequest,
   InboundReconciliationRequest,
   SaveInboundRequestRequest,
+  CreateInboundRequestRequest,
   SupplierEmailDispatch,
   SupplierOption,
 } from '../types/inbound-request.types'
@@ -45,7 +46,7 @@ export const inboundRequestService = {
         ApiResponse<LookupListResponse<SupplierOption>>
       >(API_ENDPOINTS.suppliers.list, { params })
       .then((response) => response.data),
-  createInboundRequest: (request: SaveInboundRequestRequest) =>
+  createInboundRequest: (request: CreateInboundRequestRequest) =>
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.inboundRequests.create, request)
       .then((response) => response.data),

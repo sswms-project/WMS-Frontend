@@ -12,16 +12,11 @@ import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import {
   StockRecipientDirectory,
   StockRecipientFormDialog,
-  StockRecipientImportDialog,
-  type StockRecipientImportPreviewOutcome,
 } from '../components/StockRecipientsPage'
 import {
   useCreateStockRecipientMutation,
   useChangeStockRecipientStatusMutation,
-  useImportStockRecipientsMutation,
   useNextStockRecipientCodeQuery,
-  usePreviewStockRecipientImportMutation,
-  useStockRecipientImportTemplateMutation,
   useStockRecipientsQuery,
   useUpdateStockRecipientMutation,
 } from '../hooks/use-stock-recipients'
@@ -31,8 +26,7 @@ import {
   toStockRecipientRequest,
   type StockRecipientFormValues,
 } from '../schemas/stock-recipient.schema'
-import type { StockRecipient, StockRecipientImportPreviewRow } from '../types/stock-recipient.types'
-import { toImportItem } from '../utils/stock-recipient-import'
+import type { StockRecipient } from '../types/stock-recipient.types'
 
 export default function StockRecipientPage() {
   const [page, setPage] = useState(1)
@@ -40,8 +34,6 @@ export default function StockRecipientPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<'Active' | 'Inactive' | ''>('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isImportOpen, setIsImportOpen] = useState(false)
-  const [importError, setImportError] = useState<string | null>(null)
   const [editingRecipient, setEditingRecipient] = useState<StockRecipient | null>(null)
   const [statusTarget, setStatusTarget] = useState<StockRecipient | null>(null)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
@@ -55,9 +47,6 @@ export default function StockRecipientPage() {
   const createMutation = useCreateStockRecipientMutation()
   const updateMutation = useUpdateStockRecipientMutation()
   const statusMutation = useChangeStockRecipientStatusMutation()
-  const importMutation = useImportStockRecipientsMutation()
-  const previewImportMutation = usePreviewStockRecipientImportMutation()
-  const importTemplateMutation = useStockRecipientImportTemplateMutation()
   const form = useForm<StockRecipientFormValues>({
     resolver: zodResolver(stockRecipientSchema),
     defaultValues: emptyStockRecipientFormValues,
@@ -99,40 +88,6 @@ export default function StockRecipientPage() {
           editingRecipient ? 'Không thể cập nhật khách hàng.' : 'Không thể thêm khách hàng.'
         )
       )
-    }
-  }
-
-  async function handlePreviewImport(file: File): Promise<StockRecipientImportPreviewOutcome> {
-    try {
-      const response = await previewImportMutation.mutateAsync(file)
-      return { isSucceeded: true, rows: response.data.rows }
-    } catch (error) {
-      const message = getApiErrorMessage(error, 'Không thể đọc tệp nhập. Vui lòng thử lại.')
-      toast.error(message)
-      return { isSucceeded: false, message }
-    }
-  }
-
-  async function handleDownloadImportTemplate() {
-    try {
-      await importTemplateMutation.mutateAsync()
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể tải tệp mẫu. Vui lòng thử lại.'))
-    }
-  }
-
-  async function handleImport(rows: readonly StockRecipientImportPreviewRow[]): Promise<boolean> {
-    try {
-      await importMutation.mutateAsync({ items: rows.map(toImportItem) })
-      toast.success(`Đã nhập ${rows.length} khách hàng.`)
-      setIsImportOpen(false)
-      setImportError(null)
-      return true
-    } catch (error) {
-      const message = getApiErrorMessage(error, 'Không thể nhập khách hàng. Vui lòng thử lại.')
-      setImportError(message)
-      toast.error(message)
-      return false
     }
   }
 
@@ -182,10 +137,6 @@ export default function StockRecipientPage() {
           setPageSize(value)
           setPage(1)
         }}
-        onImport={() => {
-          setImportError(null)
-          setIsImportOpen(true)
-        }}
         onCreate={() => {
           setEditingRecipient(null)
           form.reset(emptyStockRecipientFormValues)
@@ -212,20 +163,6 @@ export default function StockRecipientPage() {
         }}
         onChangeStatus={setStatusTarget}
         onRetry={() => void stockRecipientsQuery.refetch()}
-      />
-      <StockRecipientImportDialog
-        open={isImportOpen}
-        isPreviewing={previewImportMutation.isPending}
-        isImporting={importMutation.isPending}
-        isDownloadingTemplate={importTemplateMutation.isPending}
-        errorMessage={importError}
-        onOpenChange={(open) => {
-          setIsImportOpen(open)
-          if (!open) setImportError(null)
-        }}
-        onDownloadTemplate={() => void handleDownloadImportTemplate()}
-        onPreview={handlePreviewImport}
-        onImport={handleImport}
       />
       <StockRecipientFormDialog
         open={isFormOpen}

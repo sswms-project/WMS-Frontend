@@ -17,6 +17,7 @@ export function getImportRecipientTypeLabel(recipientType: string | null) {
 
 export function toImportItem(row: StockRecipientImportPreviewRow): ImportStockRecipientItem {
   return {
+    rowNumber: row.rowNumber,
     recipientCode: row.recipientCode,
     recipientName: row.recipientName,
     recipientType: row.recipientType,

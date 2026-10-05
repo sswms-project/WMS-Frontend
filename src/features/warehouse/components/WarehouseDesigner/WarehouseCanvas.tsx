@@ -23,6 +23,7 @@ import type {
 } from '../../types/warehouse-layout-scene.types'
 import {
   constrainLayoutGeometryToCanvas,
+  LAYOUT_DECORATION_MARGIN,
   snapToGrid,
   type LayoutBounds,
 } from '../../utils/layout-grid'
@@ -467,15 +468,20 @@ export function WarehouseCanvas({
   )
   const visibleRacks = useMemo(() => scene.racks, [scene.racks])
   const effectiveBounds = useMemo(
-    () => ({ minX: 0, minY: 0, maxX: scene.canvas.width, maxY: scene.canvas.height }),
+    () => ({
+      minX: -LAYOUT_DECORATION_MARGIN,
+      minY: -LAYOUT_DECORATION_MARGIN,
+      maxX: scene.canvas.width + LAYOUT_DECORATION_MARGIN,
+      maxY: scene.canvas.height + LAYOUT_DECORATION_MARGIN,
+    }),
     [scene.canvas.height, scene.canvas.width]
   )
-  const paperWidth = scene.canvas.width * scale
-  const paperHeight = scene.canvas.height * scale
+  const paperWidth = (effectiveBounds.maxX - effectiveBounds.minX) * scale
+  const paperHeight = (effectiveBounds.maxY - effectiveBounds.minY) * scale
   const contentWidth = Math.max(size.width, paperWidth + CANVAS_PADDING * 2)
   const contentHeight = Math.max(size.height, paperHeight + CANVAS_PADDING * 2)
-  const paperLeft = (contentWidth - paperWidth) / 2
-  const paperTop = (contentHeight - paperHeight) / 2
+  const paperLeft = (contentWidth - paperWidth) / 2 - effectiveBounds.minX * scale
+  const paperTop = (contentHeight - paperHeight) / 2 - effectiveBounds.minY * scale
   const viewport = useMemo(
     () => ({
       scale,
@@ -736,7 +742,12 @@ export function WarehouseCanvas({
     const nodeGeometry = getNodeGeometry(node, zIndex)
     node.scaleX(1)
     node.scaleY(1)
-    const geometry = constrainLayoutGeometryToCanvas(nodeGeometry, scene.canvas)
+    const geometry = constrainLayoutGeometryToCanvas(
+      nodeGeometry,
+      scene.canvas,
+      true,
+      target === 'decoration' ? LAYOUT_DECORATION_MARGIN : 0
+    )
     onGeometryChange(target, id, geometry)
   }
 
@@ -980,7 +991,14 @@ export function WarehouseCanvas({
           (event.clientY - bounds.top + event.currentTarget.scrollTop - paperTop) / scale,
           scene.canvas.gridSize
         )
-        if (x < 0 || y < 0 || x > scene.canvas.width || y > scene.canvas.height) return
+        const margin = payload.kind === 'decoration' ? LAYOUT_DECORATION_MARGIN : 0
+        if (
+          x < -margin ||
+          y < -margin ||
+          x > scene.canvas.width + margin ||
+          y > scene.canvas.height + margin
+        )
+          return
         onPaletteDrop(payload, x, y)
       }}
       onScroll={(event) => {
@@ -1022,8 +1040,6 @@ export function WarehouseCanvas({
                   width={effectiveBounds.maxX - effectiveBounds.minX}
                   height={effectiveBounds.maxY - effectiveBounds.minY}
                   fill={canvasPalette.background}
-                  stroke={canvasPalette.primary}
-                  strokeWidth={2 / viewport.scale}
                   onClick={() => onSelect(null)}
                   onTap={() => onSelect(null)}
                 />
@@ -1037,6 +1053,15 @@ export function WarehouseCanvas({
                     listening={false}
                   />
                 ))}
+                <Rect
+                  x={0}
+                  y={0}
+                  width={scene.canvas.width}
+                  height={scene.canvas.height}
+                  stroke={canvasPalette.primary}
+                  strokeWidth={2 / viewport.scale}
+                  listening={false}
+                />
               </Layer>
               <Layer>{sortedZones.map((zone) => renderBusinessObject('zone', zone))}</Layer>
               <Layer>{sortedRacks.map((rack) => renderBusinessObject('rack', rack))}</Layer>

@@ -218,9 +218,6 @@ export function TenantDirectoryView(props: TenantDirectoryViewProps) {
               <h2 id="tenant-list-title" className="text-sm font-semibold">
                 Danh sách đơn vị thuê
               </h2>
-              <p className="text-muted-foreground text-xs" aria-live="polite">
-                {props.totalCount} kết quả
-              </p>
             </div>
             {hasFilters ? (
               <Button variant="ghost" size="sm" onClick={props.onClear}>

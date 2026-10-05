@@ -11,7 +11,7 @@ import {
 import { ProductStatusBadge } from '../ProductStatusBadge'
 import type { ProductListItem } from '../../types/product.types'
 
-const quantityFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 })
+const quantityFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 6 })
 
 interface ProductListTableProps {
   readonly products: readonly ProductListItem[]
@@ -35,7 +35,8 @@ export function ProductListTable({
           <TableHead className="sticky top-0 z-10 w-[200px] pl-4">Mã hàng hóa</TableHead>
           <TableHead className="sticky top-0 z-10">Tên sản phẩm</TableHead>
           <TableHead className="sticky top-0 z-10">Danh mục</TableHead>
-          <TableHead className="sticky top-0 z-10">Đơn vị</TableHead>
+          <TableHead className="sticky top-0 z-10">Đơn vị chính</TableHead>
+          <TableHead className="sticky top-0 z-10">Đơn vị quy đổi</TableHead>
           {canViewInventory ? (
             <TableHead className="sticky top-0 z-10 text-right">Số lượng tồn</TableHead>
           ) : null}
@@ -54,6 +55,20 @@ export function ProductListTable({
               <span title={product.categoryPath ?? undefined}>{product.categoryName ?? '—'}</span>
             </TableCell>
             <TableCell className="text-muted-foreground text-sm">{product.unitName}</TableCell>
+            <TableCell>
+              {product.unitConversions?.length ? (
+                <div className="flex flex-col gap-1">
+                  {product.unitConversions.map((conversion) => (
+                    <span key={conversion.id}>
+                      1 {conversion.unitName} ={' '}
+                      {quantityFormatter.format(conversion.conversionFactor)} {product.unitName}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                '—'
+              )}
+            </TableCell>
             {canViewInventory ? (
               <TableCell className="text-right font-medium tabular-nums">
                 {quantityFormatter.format(product.quantityOnHand ?? 0)}

@@ -33,6 +33,9 @@ export const inboundRequestLineSchema = z.object({
 export const inboundRequestSchema = z
   .object({
     warehouseId: dotNetGuidSchema('Vui lòng chọn kho nhận hàng.'),
+    receivingAssignedTo: z
+      .union([z.literal(''), dotNetGuidSchema('Nhân viên không hợp lệ.')])
+      .optional(),
     sourceType: z.enum(inboundSourceTypes),
     supplierId: z.string(),
     sourceName: z.string().trim().max(200, 'Tên nguồn không được vượt quá 200 ký tự.'),

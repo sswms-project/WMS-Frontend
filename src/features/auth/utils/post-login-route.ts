@@ -10,7 +10,10 @@ export async function resolvePostLoginRoute(
   preferredRoute?: Route | null
 ): Promise<Route> {
   if (user.role !== USER_ROLES.TenantOwner) {
-    return preferredRoute ?? APP_ROUTES.dashboard
+    return (
+      preferredRoute ??
+      (user.role === USER_ROLES.WarehouseStaff ? APP_ROUTES.myTasks : APP_ROUTES.dashboard)
+    )
   }
 
   try {

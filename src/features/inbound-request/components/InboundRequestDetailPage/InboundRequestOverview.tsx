@@ -28,6 +28,10 @@ export function InboundRequestOverview({ request }: { readonly request: InboundR
             value={request.supplierName ?? request.sourceName ?? 'Chưa xác định'}
           />
           <Metadata label="Kho nhận" value={request.warehouseName ?? 'Chưa xác định'} />
+          <Metadata
+            label="Nhân viên nhận và cất hàng"
+            value={request.receivingAssignedToName ?? 'Chưa phân công'}
+          />
           <Metadata label="Ngày dự kiến" value={formatOperationalDate(request.expectedDate)} />
           <Metadata
             label="Người tạo"
