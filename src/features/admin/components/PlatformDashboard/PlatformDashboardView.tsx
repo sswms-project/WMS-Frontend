@@ -224,7 +224,7 @@ export function PlatformDashboardView({
               Chưa có đăng ký hiệu lực.
             </p>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 max-h-28 space-y-3 overflow-y-auto pr-2">
               {data.planDistribution.map((item) => (
                 <div key={item.planId}>
                   <div className="mb-1 flex justify-between gap-3 text-xs">
