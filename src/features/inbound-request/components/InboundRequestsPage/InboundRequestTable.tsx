@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { goodsPreviewInteractions } from '@/features/inbound/utils/goods-preview-interactions'
 import type { Route } from 'next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
@@ -14,23 +15,21 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { inboundSourceLabels } from '../../schemas/inbound-request.schema'
-import {
-  INBOUND_REQUEST_STATUS,
-  type InboundRequestStatus,
-  type InboundRequestSummary,
-} from '../../types/inbound-request.types'
+import { type InboundRequestSummary } from '../../types/inbound-request.types'
 import {
   formatOperationalDate,
   formatOperationalDateTime,
   formatQuantity,
-  INBOUND_REQUEST_STATUS_LABELS,
 } from '../../utils/inbound-request-format'
 import { InboundRequestStatusBadge } from './InboundRequestStatusBadge'
 import { InboundRequestRowActions } from './InboundRequestRowActions'
 
 interface InboundRequestTableProps {
+  readonly previewId?: string
+  readonly onPreview?: (item: InboundRequestSummary) => void
   readonly items: readonly InboundRequestSummary[]
   readonly canDelete: boolean
+  readonly canDeleteApproved?: boolean
   readonly canCreate: boolean
   readonly canSubmit: boolean
   readonly canApprove: boolean
@@ -38,8 +37,6 @@ interface InboundRequestTableProps {
   readonly isSubmitting: boolean
   readonly isApproving: boolean
   readonly isDeletingMany: boolean
-  readonly selectedStatus: InboundRequestStatus | null
-  readonly selectAllStatus: InboundRequestStatus | null
   readonly selectAllIds: readonly string[]
   readonly isDuplicating: boolean
   readonly selectedIds: readonly string[]
@@ -63,7 +60,7 @@ export function InboundRequestTableSkeleton() {
       <Table className="min-w-[1200px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-12">
+            <TableHead className="bg-card sticky top-0 z-10 w-12 p-0 text-center">
               <Skeleton className="size-4" />
             </TableHead>
             {[
@@ -123,8 +120,11 @@ export function InboundRequestTableSkeleton() {
 }
 
 export function InboundRequestTable({
+  previewId,
+  onPreview,
   items,
   canDelete,
+  canDeleteApproved = false,
   canCreate,
   canSubmit,
   canApprove,
@@ -132,8 +132,6 @@ export function InboundRequestTable({
   isSubmitting,
   isApproving,
   isDeletingMany,
-  selectedStatus,
-  selectAllStatus,
   selectAllIds,
   isDuplicating,
   selectedIds,
@@ -149,14 +147,23 @@ export function InboundRequestTable({
       <Table className="min-w-[1200px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-12">
+            <TableHead className="bg-card sticky top-0 z-10 w-12 p-0 text-center">
               <Checkbox
-                aria-label={`Chọn tất cả ${selectAllStatus ? INBOUND_REQUEST_STATUS_LABELS[selectAllStatus] : 'yêu cầu nhập kho'} trên trang`}
-                checked={allSelected}
+                className="mx-auto"
+                aria-label="Chọn tất cả yêu cầu nhập kho trên trang"
+                checked={
+                  allSelected
+                    ? true
+                    : selectedIds.some((id) => selectAllIds.includes(id))
+                      ? 'indeterminate'
+                      : false
+                }
                 disabled={
                   selectAllIds.length === 0 || isDeletingMany || isSubmitting || isApproving
                 }
-                onCheckedChange={(checked) => onSelectionChange(checked ? selectAllIds : [])}
+                onCheckedChange={(checked) =>
+                  onSelectionChange(checked === true ? selectAllIds : [])
+                }
               />
             </TableHead>
             <TableHead className="bg-card sticky top-0 z-10 w-56">Mã yêu cầu</TableHead>
@@ -173,28 +180,27 @@ export function InboundRequestTable({
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>
-                {(item.status === INBOUND_REQUEST_STATUS.Draft && (canDelete || canSubmit)) ||
-                (item.status === INBOUND_REQUEST_STATUS.PendingApproval && canApprove) ? (
-                  <Checkbox
-                    aria-label={`Chọn ${item.inboundRequestCode}`}
-                    checked={selectedIds.includes(item.id)}
-                    disabled={
-                      isDeletingMany ||
-                      isSubmitting ||
-                      isApproving ||
-                      (selectedStatus !== null && item.status !== selectedStatus)
-                    }
-                    onCheckedChange={(checked) =>
-                      onSelectionChange(
-                        checked
-                          ? [...selectedIds, item.id]
-                          : selectedIds.filter((id) => id !== item.id)
-                      )
-                    }
-                  />
-                ) : null}
+            <TableRow
+              key={item.id}
+              {...goodsPreviewInteractions(
+                onPreview ? () => onPreview(item) : undefined,
+                previewId === item.id
+              )}
+            >
+              <TableCell data-preview-ignore className="w-12 p-0 text-center">
+                <Checkbox
+                  className="mx-auto"
+                  aria-label={`Chọn ${item.inboundRequestCode}`}
+                  checked={selectedIds.includes(item.id)}
+                  disabled={isDeletingMany || isSubmitting || isApproving}
+                  onCheckedChange={(checked) =>
+                    onSelectionChange(
+                      checked === true
+                        ? Array.from(new Set([...selectedIds, item.id]))
+                        : selectedIds.filter((id) => id !== item.id)
+                    )
+                  }
+                />
               </TableCell>
               <TableCell className="min-w-0">
                 <div className="min-w-0">
@@ -216,69 +222,39 @@ export function InboundRequestTable({
                 </div>
               </TableCell>
               <TableCell className="min-w-0">
-                <Link
-                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                  className="hover:text-primary block min-w-0"
-                >
+                <div className="min-w-0">
                   <p className="truncate">
                     {item.supplierName ?? item.sourceName ?? 'Chưa xác định'}
                   </p>
                   <p className="text-muted-foreground truncate text-xs">
                     {inboundSourceLabels[item.sourceType]}
                   </p>
-                </Link>
+                </div>
               </TableCell>
               <TableCell>
-                <Link
-                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                  className="hover:text-primary block truncate"
-                >
-                  {item.warehouseName ?? 'Chưa xác định'}
-                </Link>
+                <span className="block truncate">{item.warehouseName ?? 'Chưa xác định'}</span>
               </TableCell>
               <TableCell>
-                <Link
-                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                  aria-label={`Xem yêu cầu ${item.inboundRequestCode}, trạng thái ${INBOUND_REQUEST_STATUS_LABELS[item.status]}`}
-                >
-                  <InboundRequestStatusBadge status={item.status} />
-                </Link>
+                <InboundRequestStatusBadge status={item.status} />
               </TableCell>
               <TableCell>
-                <Link
-                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                  className="hover:text-primary flex flex-col gap-1"
-                  aria-label={`Xem tiến độ nhận của ${item.inboundRequestCode}`}
-                >
+                <div className="flex flex-col gap-1">
                   <span className="text-xs tabular-nums">
                     {formatQuantity(item.receivedQuantity)} / {formatQuantity(item.orderedQuantity)}
                   </span>
                   <Progress value={receivedPercent(item)} />
-                </Link>
+                </div>
               </TableCell>
-              <TableCell>
-                <Link
-                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                  className="hover:text-primary block whitespace-nowrap"
-                >
-                  {formatOperationalDateTime(item.createdAt)}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <Link
-                  href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
-                  className="hover:text-primary block"
-                >
-                  {formatOperationalDate(item.expectedDate)}
-                </Link>
-              </TableCell>
-              <TableCell className="text-right">
+              <TableCell>{formatOperationalDateTime(item.createdAt)}</TableCell>
+              <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
+              <TableCell data-preview-ignore className="text-right">
                 <InboundRequestRowActions
                   item={item}
                   canCreate={canCreate}
                   canSubmit={canSubmit}
                   canApprove={canApprove}
                   canDelete={canDelete}
+                  canDeleteApproved={canDeleteApproved}
                   isSubmitting={isSubmitting}
                   isApproving={isApproving}
                   isDeleting={isDeleting}

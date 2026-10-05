@@ -3,11 +3,41 @@ import {
   constrainLayoutGeometryToCanvas,
   getLayoutGeometryBounds,
   getRackPresetSize,
+  LAYOUT_DECORATION_MARGIN,
 } from './layout-grid'
 
 const canvas = { width: 1000, height: 600, gridSize: 20 }
 
 describe('constrainLayoutGeometryToCanvas', () => {
+  it.each([
+    [-40, 100, 0],
+    [960, 100, 0],
+    [100, -40, 0],
+    [100, 560, 0],
+    [-40, -40, 45],
+  ])('preserves a decorative symbol crossing a wall at %s/%s/%s', (x, y, rotation) => {
+    const source = { x, y, width: 80, height: 80, rotation, zIndex: 1 }
+    expect(
+      constrainLayoutGeometryToCanvas(source, canvas, false, LAYOUT_DECORATION_MARGIN)
+    ).toEqual(source)
+  })
+
+  it.each([0, 45, 90, 270])(
+    'limits decorations to the outer margin after snapping at %s degrees',
+    (rotation) => {
+      const geometry = constrainLayoutGeometryToCanvas(
+        { x: -1000, y: 900, width: 180, height: 80, rotation, zIndex: 1 },
+        canvas,
+        true,
+        LAYOUT_DECORATION_MARGIN
+      )
+      const bounds = getLayoutGeometryBounds(geometry)
+      expect(bounds.minX).toBeGreaterThanOrEqual(-LAYOUT_DECORATION_MARGIN - 0.000001)
+      expect(bounds.minY).toBeGreaterThanOrEqual(-LAYOUT_DECORATION_MARGIN - 0.000001)
+      expect(bounds.maxX).toBeLessThanOrEqual(canvas.width + LAYOUT_DECORATION_MARGIN + 0.000001)
+      expect(bounds.maxY).toBeLessThanOrEqual(canvas.height + LAYOUT_DECORATION_MARGIN + 0.000001)
+    }
+  )
   it('calculates rotated bounds around the same center used by the canvas', () => {
     const bounds = getLayoutGeometryBounds({
       x: 40,

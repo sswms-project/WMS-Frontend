@@ -34,9 +34,12 @@ import {
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundStatusBadge } from '../InboundWorkspace'
+import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
 import { TaskAssigneeCell } from '../TaskAssignment'
 
 interface ReceiptDirectoryProps {
+  readonly previewId?: string
+  readonly onPreview?: (item: GoodsReceiptSummary) => void
   readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
@@ -61,6 +64,8 @@ interface ReceiptDirectoryProps {
 }
 
 export function ReceiptDirectory({
+  previewId,
+  onPreview,
   items,
   totalCount,
   page,
@@ -96,7 +101,7 @@ export function ReceiptDirectory({
             </InputGroupAddon>
             <InputGroupInput
               aria-label="Tìm phiếu nhận hàng"
-              placeholder="Tìm mã phiếu, mã PO…"
+              placeholder="Tìm mã phiếu, mã yêu cầu…"
               value={searchText}
               onChange={(event) => onSearchChange(event.target.value)}
             />
@@ -199,9 +204,16 @@ export function ReceiptDirectory({
         />
       ) : (
         <>
-          <ItemGroup className="gap-0 md:hidden">
+          <ItemGroup data-slot="operational-list-body" className="gap-0 md:hidden">
             {items.map((item) => (
-              <Item key={item.id} className="border-b last:border-b-0">
+              <Item
+                key={item.id}
+                {...goodsPreviewInteractions(
+                  onPreview ? () => onPreview(item) : undefined,
+                  previewId === item.id,
+                  'border-b last:border-b-0'
+                )}
+              >
                 <ItemContent>
                   <ItemTitle className="flex flex-wrap items-center gap-2">
                     <Link
@@ -268,7 +280,13 @@ export function ReceiptDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow
+                    key={item.id}
+                    {...goodsPreviewInteractions(
+                      onPreview ? () => onPreview(item) : undefined,
+                      previewId === item.id
+                    )}
+                  >
                     <TableCell>
                       <Link
                         href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}

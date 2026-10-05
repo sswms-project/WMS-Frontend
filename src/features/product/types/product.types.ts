@@ -88,6 +88,7 @@ export type ProductListItem = Omit<
   | 'reservedQuantity'
   | 'availableQuantity'
 > & {
+  unitConversions?: readonly ProductUnitConversion[]
   quantityOnHand: number | null
   reservedQuantity: number | null
   availableQuantity: number | null

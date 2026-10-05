@@ -122,7 +122,6 @@ export function SupplierDirectory({
             <h2 id="supplier-directory-title" className="text-sm font-semibold">
               Danh sách nhà cung cấp
             </h2>
-            <p className="text-muted-foreground text-xs tabular-nums">{totalCount} nhà cung cấp</p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
             <InputGroup className="min-w-0 flex-1 sm:w-72">

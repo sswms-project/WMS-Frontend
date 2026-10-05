@@ -102,7 +102,6 @@ export function StockRecipientDirectory({
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
           <div>
             <h2 className="text-sm font-semibold">Danh sách khách hàng</h2>
-            <p className="text-muted-foreground text-xs">{totalCount} khách hàng</p>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <InputGroup className="min-w-56 flex-1 sm:w-72">
