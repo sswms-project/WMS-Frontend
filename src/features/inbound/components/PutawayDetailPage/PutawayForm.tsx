@@ -244,7 +244,7 @@ export function PutawayForm({
             return (
               <FieldGroup
                 key={field.id}
-                className="grid gap-3 p-4 *:min-w-0 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,.8fr)_auto]"
+                className="animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 grid gap-3 p-4 *:min-w-0 motion-reduce:animate-none md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,.8fr)_auto]"
               >
                 <Field data-invalid={Boolean(lineErrors.goodsReceiptItemId)}>
                   <FieldLabel htmlFor={`putaway-item-${index}`}>Sản phẩm</FieldLabel>
@@ -321,11 +321,21 @@ export function PutawayForm({
                   {selectedItem && hasPutawayPlan(selectedItem) ? (
                     <p className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
                       {planDeviation.offPlanRows.has(index) ? (
-                        <Badge variant="outline" className="border-warning text-warning">
+                        <Badge
+                          key="off-plan"
+                          variant="outline"
+                          className="border-warning text-warning animate-in fade-in-0 zoom-in-95 animation-duration-150 motion-reduce:animate-none"
+                        >
                           Khác kế hoạch
                         </Badge>
                       ) : (
-                        <Badge variant="secondary">Theo kế hoạch</Badge>
+                        <Badge
+                          key="on-plan"
+                          variant="secondary"
+                          className="animate-in fade-in-0 zoom-in-95 animation-duration-150 motion-reduce:animate-none"
+                        >
+                          Theo kế hoạch
+                        </Badge>
                       )}
                     </p>
                   ) : null}

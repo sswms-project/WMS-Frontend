@@ -89,6 +89,7 @@ export function PutawayPlanSheet({
               type="button"
               variant="outline"
               size="sm"
+              className="border-tertiary/40 text-tertiary hover:text-tertiary"
               disabled={isSuggesting}
               onClick={onSuggest}
             >
@@ -164,7 +165,10 @@ export function PutawayPlanSheet({
                   </div>
 
                   {itemError ? (
-                    <p role="alert" className="text-destructive border-b px-3 py-2 text-xs">
+                    <p
+                      role="alert"
+                      className="text-destructive animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 border-b px-3 py-2 text-xs motion-reduce:animate-none"
+                    >
                       {itemError}
                     </p>
                   ) : null}
@@ -184,7 +188,7 @@ export function PutawayPlanSheet({
                         return (
                           <div
                             key={line.key}
-                            className="grid gap-3 p-3 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto]"
+                            className="animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 grid gap-3 p-3 motion-reduce:animate-none sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto]"
                           >
                             <Field data-invalid={Boolean(error)}>
                               <FieldLabel htmlFor={slotFieldId}>Vị trí {index + 1}</FieldLabel>
@@ -250,16 +254,17 @@ export function PutawayPlanSheet({
                   )}
 
                   {itemSuggestions.length > 0 ? (
-                    <div className="bg-muted/40 border-t p-3">
+                    <div className="bg-muted/40 animate-in fade-in-0 slide-in-from-top-2 animation-duration-250 border-t p-3 motion-reduce:animate-none">
                       <p className="mb-2 flex items-center gap-1.5 text-xs font-medium">
-                        <Sparkles aria-hidden="true" className="size-3" />
+                        <Sparkles aria-hidden="true" className="text-tertiary size-3" />
                         Gợi ý vị trí
                       </p>
                       <ul className="flex flex-col gap-1.5">
-                        {itemSuggestions.map((suggestion) => (
+                        {itemSuggestions.map((suggestion, suggestionIndex) => (
                           <li
                             key={suggestion.slotId}
-                            className="flex flex-wrap items-center justify-between gap-2 text-xs"
+                            style={{ animationDelay: `${suggestionIndex * 50}ms` }}
+                            className="animate-in fade-in-0 slide-in-from-left-2 fill-mode-backwards animation-duration-200 flex flex-wrap items-center justify-between gap-2 text-xs motion-reduce:animate-none"
                           >
                             <span className="min-w-0 flex-1 break-words">
                               <strong className="font-mono">{suggestion.slotCode}</strong>
@@ -268,7 +273,7 @@ export function PutawayPlanSheet({
                                 · {suggestion.zoneName} · {suggestion.reason}
                               </span>
                               {suggestion.source === 'Ai' ? (
-                                <Badge variant="secondary" className="ml-1.5">
+                                <Badge className="bg-tertiary-container text-on-tertiary-container ml-1.5">
                                   AI
                                 </Badge>
                               ) : null}
@@ -316,5 +321,3 @@ export function PutawayPlanSheet({
     </Sheet>
   )
 }
-
-export type { SlotOption }

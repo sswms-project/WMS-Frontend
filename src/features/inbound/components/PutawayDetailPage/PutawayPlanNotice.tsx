@@ -24,7 +24,10 @@ export function PutawayPlanNotice({ receipt, disabled, onApplyPlan }: PutawayPla
   if (plannedItems.length === 0) return null
 
   return (
-    <section className="bg-card border" aria-labelledby="putaway-plan-title">
+    <section
+      className="bg-card animate-in fade-in-0 slide-in-from-top-2 animation-duration-250 border motion-reduce:animate-none"
+      aria-labelledby="putaway-plan-title"
+    >
       <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center">

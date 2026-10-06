@@ -57,7 +57,7 @@ export function ReceiptPutAwayTable({ items, onDownloadEvidence }: ReceiptPutAwa
                 <TableCell>
                   <p className="font-mono">{formatPutAwayLocation(detail)}</p>
                   {detail.isOffPlan ? (
-                    <div className="mt-1 flex max-w-64 flex-col gap-1">
+                    <div className="animate-in fade-in-0 animation-duration-200 mt-1 flex max-w-64 flex-col gap-1 motion-reduce:animate-none">
                       <Badge variant="outline" className="border-warning text-warning w-fit">
                         Khác kế hoạch
                       </Badge>

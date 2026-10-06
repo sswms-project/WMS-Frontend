@@ -134,6 +134,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     try {
       await inventoryService.downloadEvidence(evidence.id, evidence.fileName)
     } catch (error) {
+      logMutationFailure(error)
       showMutationError(error, 'Không thể tải ảnh. Vui lòng thử lại.')
     }
   }

@@ -1,4 +1,6 @@
 export { PutawayForm, type SlotOption } from './PutawayForm'
 export { CancelPutawayDialog } from './CancelPutawayDialog'
 export { PutawayLocationSelect } from './PutawayLocationSelect'
-export type { PutawayEvidenceState } from './PutawayDeviationPanel'
+export { PutawayDeviationPanel } from './PutawayDeviationPanel'
+export type { PutawayEvidenceItem, PutawayEvidenceState } from './PutawayDeviationPanel'
+export { PutawayPlanNotice } from './PutawayPlanNotice'

@@ -48,7 +48,7 @@ export function PutawayDeviationPanel({
 
   return (
     <section
-      className="bg-card border-l-warning border border-l-4"
+      className="bg-card border-l-warning animate-in fade-in-0 slide-in-from-top-2 animation-duration-250 border border-l-4 motion-reduce:animate-none"
       aria-labelledby={`${reasonId}-title`}
     >
       <div className="flex items-start gap-3 border-b p-4">
@@ -128,7 +128,7 @@ export function PutawayDeviationPanel({
               {evidence.items.map((item) => (
                 <li
                   key={item.id}
-                  className="flex items-center justify-between gap-2 border px-2 py-1 text-xs"
+                  className="animate-in fade-in-0 slide-in-from-left-2 animation-duration-200 flex items-center justify-between gap-2 border px-2 py-1 text-xs motion-reduce:animate-none"
                 >
                   <span className="min-w-0 truncate">{item.fileName}</span>
                   <Button
