@@ -72,6 +72,7 @@ const INBOUND_REQUEST_HISTORY_ACTION_LABELS: Readonly<Record<string, string>> = 
   Submit: 'Gửi yêu cầu duyệt',
   UnassignReceivingTask: 'Hủy giao nhiệm vụ nhận hàng',
   Update: 'Cập nhật yêu cầu',
+  UpdateInboundRequestCode: 'Đổi mã yêu cầu nhập kho',
 }
 
 const INBOUND_REQUEST_HISTORY_REASON_LABELS: Readonly<Record<string, string>> = {
@@ -181,11 +182,14 @@ export function InboundRequestDetail({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {allowedActions.includes(INBOUND_REQUEST_ACTION.Update) ? (
+          {allowedActions.includes(INBOUND_REQUEST_ACTION.Update) ||
+          allowedActions.includes('UpdateCode') ? (
             <Button asChild variant="outline">
               <Link href={APP_ROUTES.inboundRequestEdit(inboundRequest.id) as Route}>
                 <Edit3 aria-hidden="true" />
-                Chỉnh sửa
+                {allowedActions.includes(INBOUND_REQUEST_ACTION.Update)
+                  ? 'Chỉnh sửa'
+                  : 'Đổi mã yêu cầu'}
               </Link>
             </Button>
           ) : null}

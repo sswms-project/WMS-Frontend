@@ -30,13 +30,13 @@ const stock: InventoryStock = {
   canManageWarehouse: false,
 }
 
-function renderDirectory(item: InventoryStock) {
+function renderDirectory(item: InventoryStock, otherItem?: InventoryStock) {
   render(
     <TooltipProvider>
       <InventoryDirectory
         permissions={[]}
-        items={[item]}
-        totalCount={1}
+        items={otherItem ? [item, otherItem] : [item]}
+        totalCount={otherItem ? 2 : 1}
         page={1}
         pageSize={20}
         searchText=""
@@ -70,6 +70,37 @@ function renderDirectory(item: InventoryStock) {
 }
 
 describe('InventoryDirectory', () => {
+  it('distinguishes the same product in two rack locations without exposing technical slot codes', () => {
+    renderDirectory(
+      {
+        ...stock,
+        slotCode: '__SYSTEM_DEFAULT__',
+        isSystemDefaultSlot: true,
+        zoneCode: 'Z-01',
+        rackCode: 'R-01',
+      },
+      {
+        ...stock,
+        id: 'stock-2',
+        slotId: 'slot-2',
+        slotCode: '__SYSTEM_DEFAULT__',
+        isSystemDefaultSlot: true,
+        zoneCode: 'Z-01',
+        rackCode: 'R-02',
+      }
+    )
+    expect(screen.getByRole('columnheader', { name: 'Kho / Vị trí' })).toBeInTheDocument()
+    expect(screen.getByTitle('Khu vực Z-01 / Kệ R-01')).toBeInTheDocument()
+    expect(screen.getByTitle('Khu vực Z-01 / Kệ R-02')).toBeInTheDocument()
+    expect(screen.getAllByText(stock.productName)).toHaveLength(4)
+    expect(screen.queryByText('__SYSTEM_DEFAULT__')).not.toBeInTheDocument()
+  })
+  it('identifies the base unit on desktop and mobile quantities', () => {
+    renderDirectory(stock)
+    expect(screen.getByRole('columnheader', { name: 'ĐVT chính' })).toBeInTheDocument()
+    expect(screen.getByText('10 Cái')).toBeInTheDocument()
+    expect(screen.getByText(/Thực tế 10 Cái/)).toBeInTheDocument()
+  })
   it('does not show the slot snapshot subtitle', () => {
     renderDirectory(stock)
     expect(screen.getByRole('heading', { name: 'Danh sách tồn kho' })).toBeInTheDocument()

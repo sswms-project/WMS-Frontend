@@ -71,6 +71,7 @@ export function toInboundRequestSaveRequest(
   values: InboundRequestFormValues
 ): SaveInboundRequestRequest {
   return {
+    inboundRequestCode: values.inboundRequestCode.trim().toUpperCase(),
     warehouseId: values.warehouseId,
     sourceType: values.sourceType,
     supplierId: values.sourceType === INBOUND_SOURCE_TYPE.Supplier ? values.supplierId : null,

@@ -186,6 +186,7 @@ export const queryKeys = {
     nextCode: ['suppliers', 'next-code'] as const,
   },
   inboundRequests: {
+    nextCode: ['inbound-requests', 'next-code'] as const,
     all: ['inbound-requests'] as const,
     lists: ['inbound-requests', 'list'] as const,
     list: (params: InboundRequestListQuery) => ['inbound-requests', 'list', params] as const,

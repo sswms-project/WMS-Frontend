@@ -18,6 +18,18 @@ function getVisibleNavItems(
 }
 
 describe('application navigation visibility', () => {
+  it.each([USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'activates only task history for %s',
+    (role) => {
+      const items = getNavItems(role)
+      const tasks = items.find((item) => item.href === APP_ROUTES.myTasks)!
+      const history = items.find((item) => item.href === APP_ROUTES.myTaskHistory)!
+      expect(isNavItemActive(APP_ROUTES.myTaskHistory, tasks)).toBe(false)
+      expect(isNavItemActive(APP_ROUTES.myTaskHistory, history)).toBe(true)
+      expect(isNavItemActive(APP_ROUTES.myTasks, tasks)).toBe(true)
+      expect(isNavItemActive(APP_ROUTES.myTasks, history)).toBe(false)
+    }
+  )
   it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
     'opens an authorized inbound entry point for %s without hiding delegated requests',
     (role) => {

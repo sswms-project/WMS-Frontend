@@ -37,6 +37,8 @@ interface InboundRequestDirectoryProps {
   readonly isError: boolean
   readonly canDelete: boolean
   readonly canDeleteApproved?: boolean
+  readonly canEdit?: boolean
+  readonly canEditApproved?: boolean
   readonly canCreate: boolean
   readonly canSubmit: boolean
   readonly canApprove: boolean
@@ -81,6 +83,8 @@ export function InboundRequestDirectory({
   isError,
   canDelete,
   canDeleteApproved = false,
+  canEdit = false,
+  canEditApproved = false,
   canCreate,
   canSubmit,
   canApprove,
@@ -214,6 +218,8 @@ export function InboundRequestDirectory({
               items={items}
               canDelete={canDelete}
               canDeleteApproved={canDeleteApproved}
+              canEdit={canEdit}
+              canEditApproved={canEditApproved}
               canCreate={canCreate}
               canSubmit={canSubmit}
               canApprove={canApprove}
