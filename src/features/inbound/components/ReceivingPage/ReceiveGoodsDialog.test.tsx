@@ -51,13 +51,18 @@ const task: ReceivingTask = {
 function ReceiptForm({
   correction = false,
   receivingTask = task,
+  codeSuggestionError = false,
+  pending = false,
 }: {
   readonly correction?: boolean
   readonly receivingTask?: ReceivingTask
+  readonly codeSuggestionError?: boolean
+  readonly pending?: boolean
 }) {
   const form = useForm<GoodsReceiptFormValues>({
     defaultValues: {
       inboundRequestId: 'request',
+      receiptCode: 'PN000001',
       lines: [
         {
           inboundRequestItemId: 'line',
@@ -79,7 +84,8 @@ function ReceiptForm({
       mode={correction ? 'edit' : 'create'}
       canEditReceivedQuantity={!correction}
       form={form}
-      isPending={false}
+      isPending={pending}
+      isCodeSuggestionError={codeSuggestionError}
       onOpenChange={vi.fn()}
       onSaveDraft={vi.fn()}
       onSaveAndSubmit={vi.fn()}
@@ -88,10 +94,35 @@ function ReceiptForm({
 }
 
 describe('ReceiveGoodsDialog operational context', () => {
+  it('allows replacing the suggested code with a tenant-specific code', async () => {
+    const user = userEvent.setup()
+    render(<ReceiptForm />)
+    const input = screen.getByLabelText('Mã phiếu nhận *')
+    await user.clear(input)
+    await user.type(input, 'DN-PN0099')
+    expect(input).toHaveValue('DN-PN0099')
+    expect(input).toHaveAttribute('maxlength', '100')
+    expect(input).toHaveAttribute('aria-describedby', 'receipt-code-help')
+  })
+  it('shows an accessible suggestion error without blocking manual entry', async () => {
+    const user = userEvent.setup()
+    render(<ReceiptForm codeSuggestionError />)
+    const input = screen.getByLabelText('Mã phiếu nhận *')
+    expect(input).not.toBeDisabled()
+    expect(screen.getByRole('alert')).toHaveTextContent('Bạn có thể nhập mã thủ công.')
+    await user.clear(input)
+    await user.type(input, 'CUSTOM01')
+    expect(input).toHaveValue('CUSTOM01')
+  })
+  it('prevents code edits while the receipt is being saved', () => {
+    render(<ReceiptForm pending />)
+    expect(screen.getByLabelText('Mã phiếu nhận *')).toBeDisabled()
+  })
   it('keeps correction received quantity and unit fixed while allowing damage edits', async () => {
     const user = userEvent.setup()
     render(<ReceiptForm correction />)
     expect(screen.getByLabelText('Đơn vị nhận')).toBeDisabled()
+    expect(screen.getByLabelText('Mã phiếu nhận *')).toHaveAttribute('readonly')
     expect(screen.getByLabelText('Số lượng thực nhận')).toHaveAttribute('readonly')
     await user.type(screen.getByLabelText('Số lượng thực nhận'), '9')
     expect(screen.getByLabelText('Số lượng thực nhận')).toHaveValue(4)
@@ -118,7 +149,8 @@ describe('ReceiveGoodsDialog operational context', () => {
   })
   it('identifies receipt, source and warehouse and previews snapshot conversion', () => {
     render(<ReceiptForm />)
-    expect(screen.getByText('Tự sinh khi lưu')).toBeInTheDocument()
+    expect(screen.getByLabelText('Mã phiếu nhận *')).toHaveValue('PN000001')
+    expect(screen.getByText('Mã được gợi ý, có thể chỉnh sửa.')).toBeInTheDocument()
     expect(screen.getByText('NCC001 — Nhà cung cấp A')).toBeInTheDocument()
     expect(screen.getByText('WH01 — Đà Nẵng')).toBeInTheDocument()
     expect(screen.getByText(/Hàng đạt: 3 Thùng/)).toHaveTextContent('Quy đổi: 96 Lon')

@@ -11,7 +11,12 @@ import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useLocalStorage } from '@/hooks/use-local-storage'
-import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
+import {
+  formatApiError,
+  getApiErrorCode,
+  getApiErrorMessage,
+  isApiErrorResponse,
+} from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
@@ -40,6 +45,7 @@ import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-as
 import {
   useCreateDraftFromDocumentMutation,
   useCreateGoodsReceiptMutation,
+  useNextGoodsReceiptCodeQuery,
   useInboundDocumentImportQuery,
   useReceivingTasksQuery,
   useGoodsReceiptQuery,
@@ -81,6 +87,7 @@ export default function InboundReceivingPage() {
   const [draftReceiptId, setDraftReceiptId] = useState<string | null>(null)
   const [isDiscardImportOpen, setIsDiscardImportOpen] = useState(false)
   const initializedImportIdRef = useRef('')
+  const receiptCodeEditedRef = useRef(false)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useReceivingTasksQuery({
     pageNumber: page,
@@ -116,8 +123,24 @@ export default function InboundReceivingPage() {
   const createDraftMutation = useCreateDraftFromDocumentMutation()
   const form = useForm<GoodsReceiptFormValues>({
     resolver: zodResolver(goodsReceiptSchema),
-    defaultValues: { inboundRequestId: '', lines: [] },
+    defaultValues: { inboundRequestId: '', receiptCode: '', lines: [] },
   })
+  const nextCodeQuery = useNextGoodsReceiptCodeQuery(Boolean(selectedTask))
+
+  useEffect(() => {
+    if (
+      selectedTask &&
+      nextCodeQuery.data &&
+      !nextCodeQuery.isFetching &&
+      !nextCodeQuery.isError &&
+      !receiptCodeEditedRef.current &&
+      !form.getValues('receiptCode')
+    ) {
+      form.setValue('receiptCode', nextCodeQuery.data, {
+        shouldValidate: form.formState.isSubmitted,
+      })
+    }
+  }, [selectedTask, nextCodeQuery.data, nextCodeQuery.isFetching, nextCodeQuery.isError, form])
   const importForm = useForm<InboundDocumentReviewFormValues>({
     resolver: zodResolver(inboundDocumentReviewSchema),
     defaultValues: { inboundRequestId: '', acknowledgeWarehouseMismatch: false, lines: [] },
@@ -152,8 +175,10 @@ export default function InboundReceivingPage() {
       return
     }
     setSelectedTask(task)
+    receiptCodeEditedRef.current = false
     form.reset({
       inboundRequestId: task.inboundRequestId,
+      receiptCode: '',
       lines: task.lines
         .filter((line) => line.remainingQuantity > 0)
         .map((line) => ({
@@ -281,6 +306,7 @@ export default function InboundReceivingPage() {
     try {
       const request: SaveGoodsReceiptRequest = {
         inboundRequestId: values.inboundRequestId,
+        receiptCode: values.receiptCode,
         lines: values.lines.map((line) => ({
           inboundRequestItemId: line.inboundRequestItemId,
           receivedQty: line.receivedQty,
@@ -320,8 +346,16 @@ export default function InboundReceivingPage() {
       setSelectedTask(null)
       form.reset()
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể lưu phiếu nhận hàng. Kiểm tra số lượng và thử lại.')
+      if (isApiErrorResponse(error)) logger.warn(formatApiError(error))
+      else logger.error(error)
+      const message = getApiErrorMessage(
+        error,
+        'Không thể lưu phiếu nhận hàng. Kiểm tra số lượng và thử lại.'
+      )
+      if (getApiErrorCode(error) === 'GOODS_RECEIPT_CODE_CONFLICT') {
+        form.setError('receiptCode', { type: 'server', message }, { shouldFocus: true })
+      }
+      toast.error(message)
     }
   }
 
@@ -433,6 +467,11 @@ export default function InboundReceivingPage() {
         onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
+        isLoadingCode={nextCodeQuery.isFetching}
+        isCodeSuggestionError={nextCodeQuery.isError}
+        onReceiptCodeChange={() => {
+          receiptCodeEditedRef.current = true
+        }}
         task={selectedTask}
         form={form}
         isPending={isPending}

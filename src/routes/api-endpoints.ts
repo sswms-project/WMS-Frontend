@@ -220,6 +220,7 @@ export const API_ENDPOINTS = {
       `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },
   goodsReceipts: {
+    nextCode: '/goods-receipts/next-code',
     list: '/goods-receipts',
     create: '/goods-receipts',
     detail: (receiptId: string) => `/goods-receipts/${receiptId}`,

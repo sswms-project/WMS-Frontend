@@ -56,6 +56,12 @@ export const receiptLineSchema = z
   })
 
 export const goodsReceiptSchema = z.object({
+  receiptCode: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập mã phiếu nhận.')
+    .max(100, 'Mã phiếu nhận không được vượt quá 100 ký tự.')
+    .toUpperCase(),
   inboundRequestId: dotNetGuidSchema('Yêu cầu nhập kho không hợp lệ.'),
   lines: z.array(receiptLineSchema).min(1, 'Phiếu nhận hàng phải có ít nhất một sản phẩm.'),
 })

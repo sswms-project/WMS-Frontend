@@ -28,7 +28,9 @@ interface ReceiveGoodsDialogProps {
   readonly saveDraftLabel?: string
   readonly mode?: 'create' | 'edit'
   readonly canEditReceivedQuantity?: boolean
-  readonly receiptCode?: string
+  readonly isLoadingCode?: boolean
+  readonly isCodeSuggestionError?: boolean
+  readonly onReceiptCodeChange?: () => void
   readonly onOpenChange: (open: boolean) => void
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit: () => void
@@ -43,7 +45,9 @@ export function ReceiveGoodsDialog({
   saveDraftLabel = 'Lưu nháp',
   mode = 'create',
   canEditReceivedQuantity = true,
-  receiptCode,
+  isLoadingCode = false,
+  isCodeSuggestionError = false,
+  onReceiptCodeChange,
   onOpenChange,
   onSaveDraft,
   onSaveAndSubmit,
@@ -66,30 +70,67 @@ export function ReceiveGoodsDialog({
         </DialogHeader>
         {task ? (
           <div className="flex flex-col gap-3">
-            <dl className="bg-muted grid gap-3 border p-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-muted-foreground text-xs">Mã phiếu nhận</dt>
-                <dd className="font-medium">{receiptCode ?? 'Tự sinh khi lưu'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs">Mã yêu cầu</dt>
-                <dd className="font-medium break-all">{task.inboundRequestCode}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs">Nhà cung cấp / nguồn hàng</dt>
-                <dd className="font-medium">
-                  {[task.supplierCode, task.supplierName || task.sourceName]
-                    .filter(Boolean)
-                    .join(' — ') || '—'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs">Kho nhận</dt>
-                <dd className="font-medium">
-                  {[task.warehouseCode, task.warehouseName].filter(Boolean).join(' — ')}
-                </dd>
-              </div>
-            </dl>
+            <div className="bg-muted grid gap-3 border p-3 text-sm sm:grid-cols-2">
+              <Field data-invalid={Boolean(errors.receiptCode)}>
+                <FieldLabel htmlFor="receipt-code">Mã phiếu nhận *</FieldLabel>
+                <Input
+                  {...register('receiptCode', { onChange: onReceiptCodeChange })}
+                  id="receipt-code"
+                  required
+                  maxLength={100}
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder={isLoadingCode ? 'Đang gợi ý mã…' : 'VD: PN000001…'}
+                  readOnly={!canEditReceivedQuantity}
+                  disabled={isPending}
+                  aria-invalid={Boolean(errors.receiptCode)}
+                  aria-describedby={
+                    [
+                      canEditReceivedQuantity && 'receipt-code-help',
+                      errors.receiptCode && 'receipt-code-error',
+                      isCodeSuggestionError && 'receipt-code-suggestion-error',
+                    ]
+                      .filter(Boolean)
+                      .join(' ') || undefined
+                  }
+                />
+                {canEditReceivedQuantity ? (
+                  <p id="receipt-code-help" className="text-muted-foreground text-xs">
+                    Mã được gợi ý, có thể chỉnh sửa.
+                  </p>
+                ) : null}
+                <FieldError id="receipt-code-error" errors={[errors.receiptCode]} />
+                {isCodeSuggestionError ? (
+                  <p
+                    id="receipt-code-suggestion-error"
+                    role="alert"
+                    className="text-destructive text-xs"
+                  >
+                    Không thể gợi ý mã. Bạn có thể nhập mã thủ công.
+                  </p>
+                ) : null}
+              </Field>
+              <dl className="contents">
+                <div>
+                  <dt className="text-muted-foreground text-xs">Mã yêu cầu</dt>
+                  <dd className="font-medium break-all">{task.inboundRequestCode}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Nhà cung cấp / nguồn hàng</dt>
+                  <dd className="font-medium">
+                    {[task.supplierCode, task.supplierName || task.sourceName]
+                      .filter(Boolean)
+                      .join(' — ') || '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Kho nhận</dt>
+                  <dd className="font-medium">
+                    {[task.warehouseCode, task.warehouseName].filter(Boolean).join(' — ')}
+                  </dd>
+                </div>
+              </dl>
+            </div>
             {task.lines
               .filter((line) =>
                 form
