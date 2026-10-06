@@ -37,6 +37,7 @@ import {
   formatEligibilityStatus,
   formatInventoryDate,
   formatInventoryQuantity,
+  formatInventoryLocation,
   formatQualityStatus,
 } from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
@@ -366,7 +367,7 @@ function InventoryMobileList({
               <span className="font-mono" translate="no">
                 {item.sku}
               </span>{' '}
-              · {item.warehouseName} / {item.slotCode}
+              · {item.warehouseName || 'Kho chưa xác định'} / {formatInventoryLocation(item)}
             </ItemDescription>
             {!item.canManageWarehouse ? (
               <Badge variant="outline" className="mt-1 w-fit">
@@ -416,7 +417,7 @@ function InventoryDesktopTable({
         <TableHeader>
           <TableRow>
             <TableHead className="sticky top-0 z-10 w-56">Sản phẩm</TableHead>
-            <TableHead className="sticky top-0 z-10 w-40">Kho / Slot</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Kho / Vị trí</TableHead>
             <TableHead className="sticky top-0 z-10 w-40">Lô / Trạng thái</TableHead>
             <TableHead className="sticky top-0 z-10 w-24">ĐVT chính</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
@@ -439,9 +440,14 @@ function InventoryDesktopTable({
                 </p>
               </TableCell>
               <TableCell className="min-w-0">
-                <p className="truncate">{item.warehouseName}</p>
-                <p className="text-muted-foreground truncate font-mono text-xs" translate="no">
-                  {item.slotCode}
+                <p className="truncate" title={item.warehouseName || 'Kho chưa xác định'}>
+                  {item.warehouseName || 'Kho chưa xác định'}
+                </p>
+                <p
+                  className="text-muted-foreground truncate text-xs"
+                  title={formatInventoryLocation(item)}
+                >
+                  {formatInventoryLocation(item)}
                 </p>
                 {!item.canManageWarehouse ? (
                   <Badge variant="outline" className="mt-1">

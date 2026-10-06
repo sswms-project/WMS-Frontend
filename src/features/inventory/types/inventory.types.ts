@@ -40,6 +40,9 @@ export interface InventoryStock {
   version: string | null
   updatedAt: string | null
   canManageWarehouse: boolean
+  zoneCode?: string | null
+  rackCode?: string | null
+  isSystemDefaultSlot?: boolean
 }
 
 export interface InventoryStockListResponse {
@@ -65,6 +68,9 @@ export interface InventoryWarehouseOption {
 export interface InventorySlotOption {
   id: string
   slotCode: string
+  zoneCode?: string | null
+  rackCode?: string | null
+  isSystemDefaultSlot?: boolean
 }
 
 export const STOCK_MOVEMENT_TYPES = {
@@ -118,6 +124,12 @@ export interface StockMovement {
   performedByName: string
   occurredAt: string
   createdAt: string
+  warehouseName?: string | null
+  zoneCode?: string | null
+  rackCode?: string | null
+  isSystemDefaultSlot?: boolean
+  unitName?: string | null
+  referenceCode?: string | null
 }
 
 export interface StockMovementListResponse {
