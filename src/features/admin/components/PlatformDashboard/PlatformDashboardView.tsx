@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Users,
 } from 'lucide-react'
+import { useSyncExternalStore } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -49,6 +50,22 @@ function formatCompactVnd(value: number) {
   return String(value)
 }
 
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
+
+function subscribeReducedMotion(onChange: () => void) {
+  const media = window.matchMedia(REDUCED_MOTION_QUERY)
+  media.addEventListener('change', onChange)
+  return () => media.removeEventListener('change', onChange)
+}
+
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    subscribeReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    () => false
+  )
+}
+
 function HealthIcon({ status }: { readonly status: string }) {
   if (status === 'Healthy')
     return <CircleCheck className="text-primary size-4" aria-hidden="true" />
@@ -64,6 +81,8 @@ export function PlatformDashboardView({
   isFetching,
   onRetry,
 }: PlatformDashboardViewProps) {
+  const prefersReducedMotion = usePrefersReducedMotion()
+
   if (isLoading) {
     return (
       <div className="space-y-4" aria-label="Đang tải dashboard nền tảng">
@@ -321,10 +340,36 @@ export function PlatformDashboardView({
                     />
                   }
                 />
-                <Bar dataKey="revenue" fill="var(--color-revenue)" maxBarSize={36} />
+                <Bar
+                  dataKey="revenue"
+                  fill="var(--color-revenue)"
+                  maxBarSize={36}
+                  isAnimationActive={!prefersReducedMotion}
+                />
               </BarChart>
             </ChartContainer>
           )}
+          {revenueChartData.length > 0 ? (
+            <table className="sr-only">
+              <caption>Doanh thu theo tháng</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Tháng</th>
+                  <th scope="col">Doanh thu</th>
+                  <th scope="col">Số giao dịch</th>
+                </tr>
+              </thead>
+              <tbody>
+                {revenueChartData.map((point) => (
+                  <tr key={point.label}>
+                    <th scope="row">{point.label}</th>
+                    <td>{formatAdminCurrency(point.revenue)}</td>
+                    <td>{point.paymentCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : null}
         </section>
       ) : null}
 
