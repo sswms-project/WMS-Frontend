@@ -385,3 +385,11 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Production build is **not verified**: `pnpm build` with a command-only Node heap cap of 1536 MB compiled successfully in 18.2 seconds, then Next.js's TypeScript worker exited with Windows code `3221226505`. The same-source standalone typecheck had passed. Disk C free space fell from approximately 1.8 GB before verification to approximately 230 MB afterwards; no cache deletion or Windows/page-file modification was attempted. This records a host/build-worker failure, not a proven source-code root cause.
 - FE PR creation is deferred until a complete production build can be verified. Backend PR #200 passed its corresponding checks; deploy the paired Backend before the Frontend. Live browser/API acceptance remains pending.
 - No database operation, migration, seed, application startup, dependency/configuration change or filesystem cleanup was performed. The existing working branches are retained.
+
+## 2026-10-06 — Warehouse task scheduling workspace
+
+- Role: Codex implementation and self-verification, not independent approval. State: `READY_FOR_CODEX_REVIEW`.
+- Added a role-aware warehouse-task workspace with priority/deadline badges, filtering, assignment and schedule actions, plus route/navigation access for Tenant Owner and Warehouse Manager. Staff retains an assigned-work view without management actions.
+- Queue statistics distinguish work waiting to start from work not yet assigned. Receiving, put-away and cycle-count assignment forms carry task schedule metadata through the existing contracts.
+- Verification: focused route/navigation tests **37 passed**, typecheck, focused ESLint and production build passed; live Owner, Manager and Staff acceptance passed with no browser console errors. Earlier synchronized module verification passed the relevant inbound tests; the newest full Frontend suite was not completed and is not claimed. GitNexus reports high impact across 28 files and 11 indexed flows.
+- No dependency or configuration change was introduced. Branch delivery is authorized; PR creation remains outside this task.

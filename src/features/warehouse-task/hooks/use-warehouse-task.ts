@@ -4,6 +4,7 @@ import type { ApiErrorResponse } from '@/types/api'
 import { warehouseTaskService } from '../services/warehouse-task.service'
 import type {
   MyWarehouseTaskListResponse,
+  MyWarehouseTask,
   MyWarehouseTaskQuery,
   WarehouseTaskScope,
   AssignWarehouseTaskRequest,
@@ -11,6 +12,7 @@ import type {
   ExecuteWarehouseRelocationRequest,
   WarehousePlacementRecommendation,
   WarehouseTaskDetail,
+  UpdateWarehouseTaskScheduleRequest,
 } from '../types/warehouse-task.types'
 import type { WarehouseTaskAction } from '../types/warehouse-task.types'
 
@@ -88,6 +90,16 @@ export function useAssignWarehouseTaskMutation(taskId: string | null) {
       queryClient.invalidateQueries({ queryKey: ['warehouse-tasks'] })
       queryClient.invalidateQueries({ queryKey: ['warehouse-tasks', 'managed', 'detail', taskId] })
     },
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useUpdateWarehouseTaskScheduleMutation(task: MyWarehouseTask | null) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: UpdateWarehouseTaskScheduleRequest) =>
+      warehouseTaskService.updateSchedule(task?.taskType ?? '', task?.id ?? '', request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['warehouse-tasks'] }),
     onError: (error) => logger.error(error),
   })
 }

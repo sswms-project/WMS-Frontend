@@ -107,9 +107,28 @@ export type CancelPutawayTaskFormValues = z.infer<typeof cancelPutawayTaskSchema
 // được kiểm tra trong hook điều phối (useAssignWarehouseTask), không đưa vào đây — schema phải
 // tĩnh vì form sống ở page và không được tạo lại theo từng target (xem .rules: "Components
 // receive form as a prop — they do NOT call useForm themselves").
-export const assignWarehouseTaskSchema = z.object({
-  staffId: z.string().min(1, 'Vui lòng chọn nhân viên nhận việc.'),
-  reason: z.string().trim().max(500, 'Lý do không được vượt quá 500 ký tự.'),
-})
+export const assignWarehouseTaskSchema = z
+  .object({
+    staffId: z.string().min(1, 'Vui lòng chọn nhân viên nhận việc.'),
+    priority: z.enum(['Normal', 'Urgent']),
+    dueAt: z.string(),
+    reason: z.string().trim().max(500, 'Lý do không được vượt quá 500 ký tự.'),
+  })
+  .superRefine((values, context) => {
+    if (values.priority === 'Urgent' && !values.dueAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['dueAt'],
+        message: 'Công việc khẩn phải có hạn hoàn thành.',
+      })
+    }
+    if (values.dueAt && new Date(values.dueAt).getTime() <= Date.now()) {
+      context.addIssue({
+        code: 'custom',
+        path: ['dueAt'],
+        message: 'Hạn hoàn thành phải ở tương lai.',
+      })
+    }
+  })
 
 export type AssignWarehouseTaskFormValues = z.infer<typeof assignWarehouseTaskSchema>

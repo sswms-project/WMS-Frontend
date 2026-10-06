@@ -31,6 +31,8 @@ export default function CreateCycleCountPage() {
       warehouseId: '',
       zoneId: '',
       scheduledDate: '',
+      priority: 'Normal',
+      dueAt: '',
       assignedTo: '',
       items: [],
       isBlindCount: true,
@@ -82,6 +84,7 @@ export default function CreateCycleCountPage() {
         ...values,
         zoneId: values.zoneId || null,
         scheduledDate: new Date(values.scheduledDate).toISOString(),
+        dueAt: values.dueAt ? new Date(values.dueAt).toISOString() : null,
       })
       toast.success('Đã tạo phiếu kiểm kê.')
       router.push(APP_ROUTES.cycleCountDetail(response.data))

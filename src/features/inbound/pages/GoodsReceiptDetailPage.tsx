@@ -126,6 +126,8 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       warehouseName: receipt.warehouseName,
       currentAssigneeId: receipt.putAwayAssignedTo,
       currentAssigneeName: receipt.putAwayAssignedToName,
+      currentPriority: receipt.putAwayTaskPriority,
+      currentDueAt: receipt.putAwayTaskDueAt,
     })
   }
 
@@ -193,6 +195,8 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     assignedToName: receipt.receivingAssignedToName,
     assignedAt: null,
     executionStatus: 'Queued',
+    priority: 'Normal',
+    dueAt: null,
     lines: receipt.items.flatMap((item) =>
       item.inboundRequestItemId
         ? [
