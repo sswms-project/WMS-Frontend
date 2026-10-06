@@ -16,6 +16,7 @@ export const INBOUND_REQUEST_STATUSES = Object.values(INBOUND_REQUEST_STATUS)
 export type InboundRequestStatus = (typeof INBOUND_REQUEST_STATUSES)[number]
 export const INBOUND_REQUEST_ACTION = {
   Update: 'Update',
+  UpdateCode: 'UpdateCode',
   Submit: 'Submit',
   Approve: 'Approve',
   ApproveAndSend: 'ApproveAndSend',
@@ -152,6 +153,8 @@ export interface InboundRequestStatusCount {
 }
 
 export interface InboundRequestListResponse extends PagedResponse<InboundRequestSummary> {
+  canEditRequests?: boolean
+  canEditApprovedRequests?: boolean
   canDeleteApprovedRequests?: boolean
   statusCounts: InboundRequestStatusCount[]
 }
@@ -181,6 +184,8 @@ export interface InboundRequestLineRequest {
 }
 
 export interface SaveInboundRequestRequest {
+  inboundRequestCode: string
+  expectedVersion?: string
   warehouseId: string
   supplierId: string | null
   sourceType: InboundSourceType

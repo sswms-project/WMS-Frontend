@@ -4,6 +4,7 @@ import { dotNetGuidSchema } from '@/lib/dotnet-guid.schema'
 export const receiptLineSchema = z
   .object({
     inboundRequestItemId: dotNetGuidSchema('Dòng yêu cầu nhập kho không hợp lệ.'),
+    enteredUnitId: dotNetGuidSchema('Đơn vị nhận hàng không hợp lệ.').optional(),
     receivedQty: z.number().positive('Số lượng nhận phải lớn hơn 0.'),
     damagedQty: z.number().min(0, 'Số lượng hỏng không được âm.'),
     exceptionReason: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự.'),

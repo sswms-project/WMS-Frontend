@@ -339,6 +339,53 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Frontend suite `336` passed; typecheck, ESLint and production build clean. No Backend change, migration or database write in this change.
 - Live browser QA of the new pages is still pending; tests use mocks.
 
+### 2026-10-05 — Operational inbound forms, navigation and inventory units
+
+- Implementer: Codex; self-verification, not independent review. State: `READY_FOR_CODEX_REVIEW`.
+- Exact My Tasks navigation matching prevents simultaneous History activation. Inventory desktop/mobile quantities identify their base UOM.
+- Inbound request code is required, normalized and suggested without overwriting user input. Edit actions are available in list/detail; Backend allowed actions distinguish content editing from Owner-only code editing with reason/version. Unsaved-change protection is retained; background refetch does not silently update the draft's expected version.
+- Manual receiving shows receipt/request/source/warehouse context, requested/received/remaining quantities, selected UOM, good/damaged quantities and base conversion. Defaults to the request unit when exact; receiving all remaining falls back to base UOM when needed. Switching UOM resets quantities to avoid reinterpretation. Lot/manufacture/expiry controls remain.
+- Verification: **72 test files / 344 tests passed**; typecheck, ESLint and production build passed. Added task navigation, inventory UOM, receipt unit fallback and manual dialog interactions. Git diff whitespace check passed.
+- GitNexus pre-edit impact/context and final change detection reviewed; whole-change risk High (65 indexed symbols / 11 flows). No dependencies, migration, database write, restart, commit or push. Live browser acceptance remains pending; paired Backend restart/deployment is required for the new contracts.
+
+### 2026-10-06 — Review round 1: operational inbound UI
+
+- Reviewer: Codex, self-review of implementer commit `537cc1a`, not independent review. State: `APPROVED_FINAL` for the no-Blocker/High Frontend review criterion only; Medium findings remain and paired Backend review is `NEEDS_CLAUDE_FIX`. Source unchanged in this review.
+- **Medium / FE-IN-01 — Exact-unit tolerance still sends a raw floating-point quotient.** `src/features/inbound/pages/InboundReceivingPage.tsx:162` and `src/features/inbound/components/ReceivingPage/ReceiveGoodsDialog.tsx:210` submit remaining / factor without normalizing representational noise, even though the helper accepts quantities within a precision tolerance. Read-only Node reproduction: 0.3 / 0.1 = 2.9999999999999996; request UOM precision 0 accepts this as representable, but Backend exact decimal validation rejects the payload. Normalize to the allowed UOM precision only after proving exact representability; retain the base-unit fallback for truly fractional packaging. Test both default and Receive All paths.
+- **Medium / FE-IN-02 — UOM switching conflicts with inspection correction.** `src/features/inbound/components/ReceivingPage/ReceiveGoodsDialog.tsx:136` resets actual/damaged quantities to zero for all modes. The shared editor has no correction capability flag, while Backend CorrectInspectionAsync forbids changing actual received quantity. On a correction-required receipt, choosing another UOM clears the fixed actual quantity, blocks saving, and forces error-prone re-entry. Preserve the fixed received quantity across exact unit switches or disable the UOM/actual-quantity controls for this state; leave damaged classification editable. Add a correction-state regression.
+- Cross-repo High BE-IN-01 also affects the full edit screen: when both Update and UpdateCode are allowed, only the full form is rendered, so changing only code can resave operational lines using live conversion metadata.
+- Re-ran **344 tests across 72 files**, all passed; typecheck passed. Prior ESLint/production build passed. No live browser acceptance was performed. No database write, migration, seed, restart, remote push or source fix.
+
+### 2026-10-06 — Operational inbound findings: authorized fixes and final self-review
+
+- Implementer/reviewer: Codex; self-verification, not independent approval. State: `READY_FOR_FINAL_REVIEW` → `APPROVED_FINAL` after checking the paired High finding and direct regressions.
+- **FE-IN-01 / fixed:** Defaults and Receive All share remaining-quantity resolution. Normalize only binary floating-point noise within machine-precision tolerance to the UOM precision; genuinely fractional packages retain base-UOM fallback. Native maximum uses the same normalized value. Regression: 0.3 / 0.1 sends 3 rather than 2.9999999999999996; a genuine near-integer remainder is not rounded away.
+- **FE-IN-02 / fixed:** The receipt page supplies a correction capability. Correction-required receipts keep the UOM disabled and received quantity read-only (retaining the form payload), while damaged classification stays editable. Draft editing retains its existing unit-switch behavior. Context text explains the restriction.
+- **BE-IN-01 / paired fix:** Unchanged edit lines preview the saved factor, not a changed catalog factor. When UpdateCode is authorized, “Chỉ đổi mã” enters the existing dedicated code/reason/version form; unsaved content prevents switching. No permission/role comparison was added to presentational components. Import review metadata adds an optional source-version field for compatibility.
+- Regression tests cover normalized helper/default/Receive All, near-integer fallback, correction controls, code-only capability visibility and unsaved-content protection. Ponytail/shadcn/React guidance kept the change in existing primitives/helpers; Web Interface Guidelines checked labels, focus, read-only/disabled behavior, wrapping and unchanged dialog motion.
+- Verification: **73 files / 350 tests passed**, typecheck, ESLint and production build passed; Git diff whitespace check passed. GitNexus impact/detect-changes reviewed; the shared import-type HIGH import radius was reported before its additive, optional field change. Aggregate changed scope Medium; new tests checked directly.
+- No remaining Blocker/High identified in the limited final self-review. No live browser acceptance this turn. No dependency, migration, seed, deployed DB operation, startup, deletion, commit or push.
+
+### 2026-10-06 — Inventory location and movement readability fixes
+
+- Role: Codex implementation/self-verification. State: `READY_FOR_CODEX_REVIEW`.
+- Inventory desktop/mobile and location filters show warehouse, zone, rack and manual location codes. Rack-managed storage displays the rack rather than `__SYSTEM_DEFAULT__`; old API responses retain a readable fallback. Separate stock IDs are preserved, including the same SKU in different racks, lots or stock states.
+- Movement history uses the existing Vietnamese quality/type labels, translates source-document types, shows receipt code when resolved by BE and adds base-UOM names beside quantity change and balance. Person names are preserved, not translated as enums. Truncated desktop locations/reference codes expose their complete labels through titles. No filter/mutation payload or permission changes.
+- Preserved the prior authorized shared TableBody last-row-border fix. Ponytail, shadcn, React and Web Interface Guidelines kept changes in existing primitives/helpers and responsive views without dependencies or a new abstraction layer.
+- Verification: **20 focused tests across 3 files passed**, standalone `pnpm typecheck` and full `pnpm lint` passed. Regressions cover same-SKU/different-rack rows, manual/default location labels, Vietnamese source/quality labels, quantity units, positive/negative movements and desktop/mobile rendering. GitNexus impact/detect-changes and direct diff review completed; new test files were checked outside the index.
+- A single-worker full FE suite produced no results and was interrupted; it is not claimed as passed. Production build and live browser/API acceptance remain pending after the user's machine restart. Existing Turbopack failure logs show paging-file/memory allocation errors; no cache deletion, paging-file modification, bundler switch or hardware workaround was performed.
+- No database operation, migration, seed, dependency/configuration change, startup, deletion, commit or push. The paired local API was stopped for Backend compilation; local FE had already exited due to the memory error.
+
+## 2026-10-06 — huytv dev sync and pre-PR verification
+
+- Role: Codex, user-authorized branch synchronization and delivery verification; not independent review or live browser acceptance.
+- Merged `origin/dev` at `4df6373` into the existing `screen/huytv` branch without conflicts. Application source matches Git's automatic merge result; no feature implementation was edited in this pass.
+- Remaining diff covers inbound request code/content editing, code-only Owner workflow, richer manual receiving with unit conversion and correction guards, exact task-navigation matching, the shared table last-row border, and inventory/movement location, unit and Vietnamese labels.
+- Full FE suite passed **75 files / 366 tests** using `pnpm test --pool=threads --maxWorkers=1`; `pnpm typecheck`, `pnpm lint` and whitespace checks passed. The first forks-pool run returned no result and was explicitly stopped; it is not claimed as passed. GitNexus sync detection is Low (3 files, no affected indexed flows).
+- Production build is **not verified**: `pnpm build` with a command-only Node heap cap of 1536 MB compiled successfully in 18.2 seconds, then Next.js's TypeScript worker exited with Windows code `3221226505`. The same-source standalone typecheck had passed. Disk C free space fell from approximately 1.8 GB before verification to approximately 230 MB afterwards; no cache deletion or Windows/page-file modification was attempted. This records a host/build-worker failure, not a proven source-code root cause.
+- FE PR creation is deferred until a complete production build can be verified. Backend PR #200 passed its corresponding checks; deploy the paired Backend before the Frontend. Live browser/API acceptance remains pending.
+- No database operation, migration, seed, application startup, dependency/configuration change or filesystem cleanup was performed. The existing working branches are retained.
+
 ## Put-Away Location Plan — 2026-10-05
 
 **Implementer:** Claude

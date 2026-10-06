@@ -1,6 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { productService } from '@/features/product/services/product.service'
 import { logger } from '@/lib/logger'
+import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inboundRequestService } from '../services/inbound-request.service'
@@ -48,6 +49,34 @@ export function useInboundRequestsQuery(params: InboundRequestListQuery) {
     queryFn: () =>
       inboundRequestService.getInboundRequests(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useNextInboundRequestCodeQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.inboundRequests.nextCode,
+    queryFn: () => inboundRequestService.getNextCode().then((response) => response.data),
+    enabled,
+    staleTime: 0,
+  })
+}
+
+export function useUpdateInboundRequestCodeMutation() {
+  const invalidate = useInvalidateInboundRequests()
+  return useMutation({
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: string
+      request: { inboundRequestCode: string; reason: string; expectedVersion: string }
+    }) => inboundRequestService.updateCode(id, request),
+    onSuccess: (_, variables) => invalidate(variables.id),
+    onError: (error) => {
+      if (isApiErrorResponse(error) && error.statusCode >= 400 && error.statusCode < 500)
+        logger.warn(formatApiError(error))
+      else logger.error(formatApiError(error))
+    },
   })
 }
 

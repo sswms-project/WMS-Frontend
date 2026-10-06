@@ -37,6 +37,7 @@ import {
   formatEligibilityStatus,
   formatInventoryDate,
   formatInventoryQuantity,
+  formatInventoryLocation,
   formatQualityStatus,
 } from '../../utils/inventory-format'
 import { InventoryWorkspaceNavigation } from '../InventoryWorkspaceNavigation'
@@ -359,14 +360,14 @@ function InventoryMobileList({
             <ItemTitle className="flex items-center justify-between gap-3">
               <span className="truncate">{item.productName}</span>
               <span className="text-primary shrink-0 font-mono tabular-nums">
-                {formatInventoryQuantity(item.availableQuantity)}
+                {formatInventoryQuantity(item.availableQuantity)} {item.unitName ?? '—'}
               </span>
             </ItemTitle>
             <ItemDescription>
               <span className="font-mono" translate="no">
                 {item.sku}
               </span>{' '}
-              · {item.warehouseName} / {item.slotCode}
+              · {item.warehouseName || 'Kho chưa xác định'} / {formatInventoryLocation(item)}
             </ItemDescription>
             {!item.canManageWarehouse ? (
               <Badge variant="outline" className="mt-1 w-fit">
@@ -390,9 +391,9 @@ function InventoryMobileList({
               </Button>
             ) : null}
             <ItemDescription>
-              Thực tế {formatInventoryQuantity(item.quantityOnHand)} · Đã đặt trước{' '}
-              {formatInventoryQuantity(item.reservedQuantity)} · Đang giữ{' '}
-              {formatInventoryQuantity(item.holdQuantity)}
+              Thực tế {formatInventoryQuantity(item.quantityOnHand)} {item.unitName ?? '—'} · Đã đặt
+              trước {formatInventoryQuantity(item.reservedQuantity)} {item.unitName ?? '—'} · Đang
+              giữ {formatInventoryQuantity(item.holdQuantity)} {item.unitName ?? '—'}
             </ItemDescription>
           </ItemContent>
         </Item>
@@ -416,8 +417,9 @@ function InventoryDesktopTable({
         <TableHeader>
           <TableRow>
             <TableHead className="sticky top-0 z-10 w-56">Sản phẩm</TableHead>
-            <TableHead className="sticky top-0 z-10 w-40">Kho / Slot</TableHead>
+            <TableHead className="sticky top-0 z-10 w-40">Kho / Vị trí</TableHead>
             <TableHead className="sticky top-0 z-10 w-40">Lô / Trạng thái</TableHead>
+            <TableHead className="sticky top-0 z-10 w-24">ĐVT chính</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Tồn thực tế</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Đặt trước</TableHead>
             <TableHead className="sticky top-0 z-10 w-24 text-right">Đang giữ</TableHead>
@@ -438,9 +440,14 @@ function InventoryDesktopTable({
                 </p>
               </TableCell>
               <TableCell className="min-w-0">
-                <p className="truncate">{item.warehouseName}</p>
-                <p className="text-muted-foreground truncate font-mono text-xs" translate="no">
-                  {item.slotCode}
+                <p className="truncate" title={item.warehouseName || 'Kho chưa xác định'}>
+                  {item.warehouseName || 'Kho chưa xác định'}
+                </p>
+                <p
+                  className="text-muted-foreground truncate text-xs"
+                  title={formatInventoryLocation(item)}
+                >
+                  {formatInventoryLocation(item)}
                 </p>
                 {!item.canManageWarehouse ? (
                   <Badge variant="outline" className="mt-1">
@@ -455,6 +462,7 @@ function InventoryDesktopTable({
                   {formatEligibilityStatus(item.eligibilityStatus)}
                 </p>
               </TableCell>
+              <TableCell>{item.unitName ?? '—'}</TableCell>
               <TableCell className="text-right font-mono tabular-nums">
                 {formatInventoryQuantity(item.quantityOnHand)}
               </TableCell>

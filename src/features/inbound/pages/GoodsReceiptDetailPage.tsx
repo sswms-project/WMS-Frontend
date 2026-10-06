@@ -63,6 +63,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
               {
                 inboundRequestItemId: item.inboundRequestItemId,
                 receivedQty: item.receivedQuantity,
+                enteredUnitId: item.baseUnitId,
                 damagedQty: item.damagedQuantity,
                 exceptionReason: item.exceptionReason ?? '',
                 isLotTracked: Boolean(item.lotId),
@@ -85,6 +86,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
           lines: values.lines.map((line) => ({
             inboundRequestItemId: line.inboundRequestItemId,
             receivedQty: line.receivedQty,
+            enteredUnitId: line.enteredUnitId,
             damagedQty: line.damagedQty,
             exceptionReason: line.exceptionReason.trim() || null,
             lotNumber: line.isLotTracked ? line.lotNumber.trim() || null : null,
@@ -187,7 +189,10 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     warehouseId: receipt.warehouseId,
     warehouseName: receipt.warehouseName,
     supplierId: '',
-    supplierName: '',
+    supplierName: receipt.supplierName ?? '',
+    supplierCode: receipt.supplierCode,
+    sourceName: receipt.sourceName,
+    warehouseCode: receipt.warehouseCode,
     expectedDate: null,
     createdAt: receipt.createdAt,
     orderedQuantity: receipt.items.reduce((sum, item) => sum + item.orderedQuantity, 0),
@@ -213,6 +218,17 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
               orderedQuantity: item.orderedQuantity,
               receivedQuantity: 0,
               remainingQuantity: item.orderedQuantity,
+              baseUnitId: item.baseUnitId,
+              baseUnitName: item.baseUnitName,
+              enteredUnitId: item.enteredUnitId ?? item.baseUnitId,
+              enteredUnitName: item.enteredUnitName ?? item.baseUnitName,
+              conversionFactorSnapshot: item.conversionFactorSnapshot,
+              baseUnitQuantityPrecision:
+                item.allowedUnits.find((unit) => unit.unitId === item.baseUnitId)
+                  ?.quantityPrecision ?? 2,
+              enteredUnitQuantityPrecision:
+                item.allowedUnits.find((unit) => unit.unitId === item.enteredUnitId)
+                  ?.quantityPrecision ?? 2,
             },
           ]
         : []
@@ -276,11 +292,17 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
+        receiptCode={receipt.receiptCode}
         task={isEditing ? editTask : null}
         form={form}
         isPending={isPending}
         title={`Chỉnh sửa ${receipt.receiptCode}`}
-        description="Điều chỉnh số lượng thực nhận và tình trạng hàng trước khi gửi duyệt lại."
+        description={
+          receipt.status === 'InspectionCorrectionRequired'
+            ? 'Chỉ điều chỉnh tình trạng kiểm hàng; số lượng thực nhận và đơn vị được giữ nguyên.'
+            : 'Điều chỉnh số lượng thực nhận và tình trạng hàng trước khi gửi duyệt lại.'
+        }
+        canEditReceivedQuantity={receipt.status !== 'InspectionCorrectionRequired'}
         saveDraftLabel="Lưu thay đổi"
         mode="edit"
         onOpenChange={(open) => {

@@ -23,6 +23,7 @@ import {
 } from '../schemas/report-damaged-stock.schema'
 import type { InventoryStock } from '../types/inventory.types'
 import { buildInventoryQuery } from '../utils/inventory-query'
+import { formatInventoryLocation } from '../utils/inventory-format'
 
 export default function InventoryPage() {
   const [searchText, setSearchText] = useState('')
@@ -76,7 +77,11 @@ export default function InventoryPage() {
     [productsQuery.data?.items]
   )
   const slotOptions = useMemo(
-    () => (slotsQuery.data ?? []).map((slot) => ({ value: slot.id, label: slot.slotCode })),
+    () =>
+      (slotsQuery.data ?? []).map((slot) => ({
+        value: slot.id,
+        label: formatInventoryLocation(slot),
+      })),
     [slotsQuery.data]
   )
 
