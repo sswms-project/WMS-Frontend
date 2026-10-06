@@ -101,6 +101,12 @@ export const inboundService = {
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.goodsReceipts.putawayPlan(receiptId), request)
       .then((response) => response.data),
+  suggestPutawaySlotsForPutaway: (receiptId: string) =>
+    axiosClient
+      .post<
+        ApiResponse<PutAwaySuggestionsResponse>
+      >(API_ENDPOINTS.goodsReceipts.putawaySuggestions(receiptId), undefined, { timeout: 60_000 })
+      .then((response) => response.data),
   suggestPutawaySlots: (receiptId: string) =>
     axiosClient
       .post<

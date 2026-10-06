@@ -23,9 +23,13 @@ import {
   type PutawayEvidenceState,
   type SlotOption,
 } from '../components/PutawayDetailPage'
+import { PutawayPlanSheet } from '../components/ReceiptDetailPage'
+import { usePutawayFormSuggestions } from '../hooks/use-putaway-form-suggestions'
+import { usePutawayPlanEditor } from '../hooks/use-putaway-plan-editor'
 import {
   useCancelPutawayTaskMutation,
   useGoodsReceiptQuery,
+  useInboundAllowedActionsQuery,
   usePutawayMutation,
   useReconcilePutawayCancellationMutation,
 } from '../hooks/use-inbound'
@@ -78,6 +82,8 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
   const submitting = useRef(false)
   const meQuery = useMeQuery()
   const receiptQuery = useGoodsReceiptQuery(receiptId)
+  const allowedActionsQuery = useInboundAllowedActionsQuery(receiptId)
+  const planEditor = usePutawayPlanEditor(receiptQuery.data)
   const layoutQuery = useWarehouseLayoutQuery(
     receiptQuery.data?.warehouseId ?? '',
     Boolean(receiptQuery.data?.warehouseId)
@@ -102,6 +108,12 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     defaultValues: { reason: '', hasUnrecordedPhysicalMovement: false },
   })
   const slots: SlotOption[] = getPutawaySlotOptions(layoutQuery.data ?? [])
+  const suggestion = usePutawayFormSuggestions({
+    receipt: receiptQuery.data,
+    form,
+    append: fieldArray.append,
+    slots,
+  })
   const watchedLines = useWatch({ control: form.control, name: 'lines' })
   const planDeviation = receiptQuery.data
     ? getPutawayPlanDeviation(
@@ -298,6 +310,9 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
         hasUncertainSubmission={hasUncertainSubmission}
         planDeviation={planDeviation}
         evidence={evidence}
+        suggestion={suggestion}
+        canPlan={allowedActionsQuery.data?.allowedActions.includes('PlanPutAway') ?? false}
+        onPlan={planEditor.open}
         canCancel={canCancel}
         cancelLabel={
           receipt.putAwayTaskRequiresReconciliation ? 'Hoàn tất đối soát hủy' : 'Hủy phần còn lại'
@@ -309,6 +324,29 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
         onSubmit={() =>
           hasUncertainSubmission ? void submit(form.getValues()) : void form.handleSubmit(submit)()
         }
+      />
+      <PutawayPlanSheet
+        open={planEditor.isOpen}
+        receiptCode={receipt.receiptCode}
+        items={planEditor.plannableItems}
+        slots={planEditor.slots}
+        drafts={planEditor.drafts}
+        validation={planEditor.validation}
+        suggestions={planEditor.suggestions}
+        isLoadingSlots={planEditor.isLoadingSlots}
+        isSlotsError={planEditor.isSlotsError}
+        isSuggesting={planEditor.isSuggesting}
+        isSaving={planEditor.isSaving}
+        onOpenChange={(open) => !open && planEditor.close()}
+        onRetrySlots={planEditor.retrySlots}
+        onAddLine={planEditor.addLine}
+        onChangeLine={planEditor.updateLine}
+        onRemoveLine={planEditor.removeLine}
+        onFillRemaining={planEditor.fillRemaining}
+        onSuggest={() => void planEditor.suggest()}
+        onApplySuggestion={planEditor.applySuggestion}
+        onApplyBestSuggestions={planEditor.applyBestSuggestions}
+        onSave={() => void planEditor.save()}
       />
       <CancelPutawayDialog
         open={cancelOpen}

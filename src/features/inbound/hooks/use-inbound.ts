@@ -264,6 +264,13 @@ export function usePutawaySuggestionsMutation() {
   })
 }
 
+export function usePutawayFormSuggestionsMutation() {
+  return useMutation<ApiResponse<PutAwaySuggestionsResponse>, ApiErrorResponse, string>({
+    mutationFn: inboundService.suggestPutawaySlotsForPutaway,
+    onError: (error) => logger.warn(formatApiError(error)),
+  })
+}
+
 export function usePutawayMutation() {
   const invalidate = useInvalidateInbound()
   const queryClient = useQueryClient()

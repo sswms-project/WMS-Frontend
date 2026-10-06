@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Ban, PackageCheck, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Ban, MapPinned, PackageCheck, Plus, Sparkles, Trash2 } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useWatch, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form'
@@ -28,6 +28,7 @@ import type { GoodsReceiptDetail } from '../../types/inbound.types'
 import { PutawayDeviationPanel, type PutawayEvidenceState } from './PutawayDeviationPanel'
 import { PutawayLocationSelect } from './PutawayLocationSelect'
 import { PutawayPlanNotice } from './PutawayPlanNotice'
+import { PutawaySuggestionPanel, type PutawaySuggestionState } from './PutawaySuggestionPanel'
 
 export interface SlotOption {
   id: string
@@ -50,8 +51,11 @@ interface PutawayFormProps {
   readonly hasUncertainSubmission?: boolean
   readonly planDeviation: PutawayPlanDeviation
   readonly evidence: PutawayEvidenceState
+  readonly canPlan?: boolean
+  readonly suggestion?: PutawaySuggestionState
   readonly canCancel: boolean
   readonly cancelLabel?: string
+  readonly onPlan?: () => void
   readonly onCancel: () => void
   readonly onApplyPlan: () => void
   readonly onAdd: () => void
@@ -68,8 +72,11 @@ export function PutawayForm({
   hasUncertainSubmission = false,
   planDeviation,
   evidence,
+  canPlan = false,
+  suggestion,
   canCancel,
   cancelLabel = 'Hủy phần còn lại',
+  onPlan,
   onCancel,
   onApplyPlan,
   onAdd,
@@ -122,6 +129,12 @@ export function PutawayForm({
           </div>
         </div>
         <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
+          {canPlan && onPlan ? (
+            <Button type="button" variant="outline" disabled={allocationLocked} onClick={onPlan}>
+              <MapPinned aria-hidden="true" />
+              Cấu hình vị trí cất
+            </Button>
+          ) : null}
           {canCancel ? (
             <Button
               type="button"
@@ -216,17 +229,43 @@ export function PutawayForm({
               hạn tính riêng theo từng dòng hàng.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={allocationLocked}
-            onClick={onAdd}
-          >
-            <Plus aria-hidden="true" />
-            Chia sang vị trí khác
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {suggestion ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-tertiary/40 text-tertiary hover:text-tertiary"
+                disabled={allocationLocked || suggestion.isSuggesting}
+                onClick={suggestion.onSuggest}
+              >
+                {suggestion.isSuggesting ? (
+                  <Spinner aria-hidden="true" data-icon="inline-start" />
+                ) : (
+                  <Sparkles aria-hidden="true" />
+                )}
+                {suggestion.isSuggesting ? 'Đang phân tích…' : 'Gợi ý vị trí bằng AI'}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={allocationLocked}
+              onClick={onAdd}
+            >
+              <Plus aria-hidden="true" />
+              Chia sang vị trí khác
+            </Button>
+          </div>
         </div>
+        {suggestion ? (
+          <PutawaySuggestionPanel
+            items={receipt.items}
+            state={suggestion}
+            disabled={allocationLocked}
+          />
+        ) : null}
         <div className="divide-y">
           {fields.map((field, index) => {
             const line = lines[index]

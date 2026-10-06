@@ -238,6 +238,7 @@ export const API_ENDPOINTS = {
     allowedActions: (receiptId: string) => `/goods-receipts/${receiptId}/allowed-actions`,
     putaway: (receiptId: string) => `/goods-receipts/${receiptId}/putaway`,
     putawayPlan: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-plan`,
+    putawaySuggestions: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-suggestions`,
     putawayPlanSuggestions: (receiptId: string) =>
       `/goods-receipts/${receiptId}/putaway-plan/suggestions`,
     cancelPutawayTask: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-task/cancel`,

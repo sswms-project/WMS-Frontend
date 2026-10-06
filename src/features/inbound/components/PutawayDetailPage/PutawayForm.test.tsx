@@ -109,11 +109,21 @@ function TestForm({
   unitsAvailable = true,
   plan = [],
   offPlan = false,
+  canPlan = false,
+  withSuggestion = false,
+  onSuggest = vi.fn(),
+  onApplySuggestion = vi.fn(),
+  onPlan = vi.fn(),
   onApplyPlan = vi.fn(),
   onSubmit = vi.fn(),
 }: {
   readonly plan?: GoodsReceiptItem['putAwayPlan']
   readonly offPlan?: boolean
+  readonly canPlan?: boolean
+  readonly withSuggestion?: boolean
+  readonly onSuggest?: () => void
+  readonly onApplySuggestion?: (itemId: string, slotId: string) => void
+  readonly onPlan?: () => void
   readonly onApplyPlan?: () => void
   readonly pending?: boolean
   readonly uncertain?: boolean
@@ -154,6 +164,41 @@ function TestForm({
         onRemove: vi.fn(),
       }}
       onApplyPlan={onApplyPlan}
+      canPlan={canPlan}
+      suggestion={
+        withSuggestion
+          ? {
+              suggestions: {
+                isAiAssisted: true,
+                aiNotice: null,
+                items: [
+                  {
+                    goodsReceiptItemId: itemId,
+                    remainingQuantity: 240,
+                    suggestions: [
+                      {
+                        slotId,
+                        slotCode: 'A-01',
+                        rackCode: 'KE',
+                        zoneName: 'Khu A',
+                        score: 80,
+                        reason: 'Đang chứa cùng sản phẩm',
+                        source: 'Ai',
+                        warnings: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              isSuggesting: false,
+              onSuggest: onSuggest,
+              onApply: onApplySuggestion,
+              onApplyBest: vi.fn(),
+              onClear: vi.fn(),
+            }
+          : undefined
+      }
+      onPlan={onPlan}
       canCancel={false}
       onAdd={() =>
         fieldArray.append({
@@ -170,7 +215,44 @@ function TestForm({
   )
 }
 
+describe('AI slot suggestion on the put-away form', () => {
+  it('puts the AI button next to "Chia sang vị trí khác" and lists suggestions', async () => {
+    const onSuggest = vi.fn()
+    const onApply = vi.fn()
+    const user = userEvent.setup()
+    render(<TestForm withSuggestion onSuggest={onSuggest} onApplySuggestion={onApply} />)
+
+    const aiButton = screen.getByRole('button', { name: 'Gợi ý vị trí bằng AI' })
+    const splitButton = screen.getByRole('button', { name: 'Chia sang vị trí khác' })
+    expect(aiButton.parentElement).toBe(splitButton.parentElement)
+    await user.click(aiButton)
+    expect(onSuggest).toHaveBeenCalledOnce()
+
+    expect(screen.getByText('Đang chứa cùng sản phẩm', { exact: false })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Dùng vị trí này' }))
+    expect(onApply).toHaveBeenCalledWith(itemId, slotId)
+  })
+
+  it('does not render the AI button when suggestions are not available', () => {
+    render(<TestForm />)
+
+    expect(screen.queryByRole('button', { name: 'Gợi ý vị trí bằng AI' })).not.toBeInTheDocument()
+  })
+})
+
 describe('put-away location plan', () => {
+  it('shows the configure button in the header only when the user may plan', async () => {
+    const onPlan = vi.fn()
+    const user = userEvent.setup()
+    const { unmount } = render(<TestForm />)
+    expect(screen.queryByRole('button', { name: 'Cấu hình vị trí cất' })).not.toBeInTheDocument()
+    unmount()
+
+    render(<TestForm canPlan onPlan={onPlan} />)
+    await user.click(screen.getByRole('button', { name: 'Cấu hình vị trí cất' }))
+    expect(onPlan).toHaveBeenCalledOnce()
+  })
+
   const plan = [
     {
       id: 'plan-1',

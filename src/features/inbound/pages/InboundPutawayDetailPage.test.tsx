@@ -58,8 +58,23 @@ vi.mock('@/features/warehouse/hooks/use-warehouse', () => ({
 vi.mock('../utils/putaway-slot-options', () => ({
   getPutawaySlotOptions: () => [{ id: fixtures.slotId, code: 'A01' }],
 }))
+vi.mock('../hooks/use-putaway-form-suggestions', () => ({
+  usePutawayFormSuggestions: () => ({
+    suggestions: null,
+    isSuggesting: false,
+    onSuggest: vi.fn(),
+    onApply: vi.fn(),
+    onApplyBest: vi.fn(),
+    onClear: vi.fn(),
+  }),
+}))
+vi.mock('../hooks/use-putaway-plan-editor', () => ({
+  usePutawayPlanEditor: () => ({ isOpen: false, open: vi.fn() }),
+}))
+vi.mock('../components/ReceiptDetailPage', () => ({ PutawayPlanSheet: () => null }))
 vi.mock('../hooks/use-inbound', () => ({
   useGoodsReceiptQuery: () => ({ data: fixtures.receipt, refetch: fixtures.refetch }),
+  useInboundAllowedActionsQuery: () => ({ data: { allowedActions: [] } }),
   usePutawayMutation: () => ({ mutateAsync: fixtures.mutate, isPending: false }),
   useCancelPutawayTaskMutation: () => ({ isPending: false }),
   useReconcilePutawayCancellationMutation: () => ({ isPending: false }),
