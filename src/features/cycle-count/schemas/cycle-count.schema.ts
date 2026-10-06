@@ -13,11 +13,27 @@ export const createCycleCountSchema = z
     warehouseId: dotNetGuidSchema('Vui lòng chọn kho.'),
     zoneId: z.string(),
     scheduledDate: z.string().min(1, 'Vui lòng chọn thời gian kiểm kê.'),
+    priority: z.enum(['Normal', 'Urgent']),
+    dueAt: z.string(),
     assignedTo: dotNetGuidSchema('Vui lòng chọn nhân viên phụ trách.'),
     items: z.array(cycleCountItemSchema).min(1, 'Vui lòng chọn ít nhất một vị trí tồn kho.'),
     isBlindCount: z.boolean(),
   })
   .superRefine((values, context) => {
+    if (values.priority === 'Urgent' && !values.dueAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['dueAt'],
+        message: 'Công việc khẩn phải có hạn hoàn thành.',
+      })
+    }
+    if (values.dueAt && new Date(values.dueAt).getTime() <= Date.now()) {
+      context.addIssue({
+        code: 'custom',
+        path: ['dueAt'],
+        message: 'Hạn hoàn thành phải ở tương lai.',
+      })
+    }
     const keys = new Set<string>()
     values.items.forEach((item, index) => {
       const key = `${item.productId}:${item.slotId}:${item.lotId ?? ''}:${item.qualityStatus}`

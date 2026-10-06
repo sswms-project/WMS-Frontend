@@ -197,6 +197,21 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.tenant,
         ]),
+        {
+          ...requiredNavItem(
+            APP_ROUTES.myTasks,
+            'Công việc kho',
+            ClipboardList,
+            P.WAREHOUSE_TASKS_VIEW_ALL
+          ),
+          match: 'exact',
+        },
+        requiredNavItem(
+          APP_ROUTES.myTaskHistory,
+          'Lịch sử công việc kho',
+          ScrollText,
+          P.WAREHOUSE_TASKS_VIEW_ALL
+        ),
       ],
     },
     {

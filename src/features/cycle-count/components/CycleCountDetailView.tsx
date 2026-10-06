@@ -115,9 +115,10 @@ export function CycleCountDetailView({
         </div>
         <CycleCountStatusBadge status={detail.status} />
       </header>
-      <section className="bg-border grid shrink-0 gap-px border sm:grid-cols-2 lg:grid-cols-4">
+      <section className="bg-border motion-safe:animate-in motion-safe:fade-in-0 animation-duration-250 grid shrink-0 gap-px border sm:grid-cols-2 lg:grid-cols-5">
         {[
           ['Lịch kiểm kê', formatCycleCountDate(detail.scheduledDate)],
+          ['Hạn hoàn thành', detail.dueAt ? formatCycleCountDate(detail.dueAt) : 'Chưa đặt hạn'],
           ['Phụ trách', detail.assignedToName || 'Chưa phân công'],
           ['Phương thức', detail.isBlindCount ? 'Blind count' : 'Hiện tồn hệ thống'],
           [
