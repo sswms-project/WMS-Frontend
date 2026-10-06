@@ -46,6 +46,10 @@ const TENANT_STATUS_LABELS: Record<TenantStatus, string> = {
   Suspended: 'Tạm ngưng',
 }
 
+export function formatTenantStatusText(status: string): string {
+  return TENANT_STATUS_LABELS[status as TenantStatus] ?? status
+}
+
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
   NewSubscription: 'Đăng ký mới',
   Renewal: 'Gia hạn',
