@@ -1,5 +1,6 @@
 'use client'
 
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import { Eye, ListFilter, MoreHorizontal, Plus, RefreshCw, Search, Send, Undo2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
@@ -267,7 +268,11 @@ export function StockIssueRequestDirectory({
         ) : (
           <>
             <StockIssueRequestMobileList items={items} renderRowActions={renderRowActions} />
-            <StockIssueRequestDesktopTable items={items} renderRowActions={renderRowActions} />
+            <StockIssueRequestDesktopTable
+              items={items}
+              renderRowActions={renderRowActions}
+              onInspect={onInspect}
+            />
             <OperationalPagination
               page={page}
               pageSize={pageSize}
@@ -430,9 +435,11 @@ function StockIssueRequestMobileList({
 function StockIssueRequestDesktopTable({
   items,
   renderRowActions,
+  onInspect,
 }: {
   readonly items: readonly StockIssueRequestSummary[]
   readonly renderRowActions: (order: StockIssueRequestSummary) => ReactNode
+  readonly onInspect: (order: StockIssueRequestSummary) => void
 }) {
   return (
     <div className="hidden min-h-0 flex-1 overflow-auto md:block">
@@ -453,7 +460,7 @@ function StockIssueRequestDesktopTable({
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
+            <ClickableTableRow key={item.id} onActivate={() => onInspect(item)}>
               <TableCell className="min-w-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -486,7 +493,7 @@ function StockIssueRequestDesktopTable({
               </TableCell>
               <TableCell className="truncate">{formatStockIssueDate(item.createdAt)}</TableCell>
               <TableCell className="text-right">{renderRowActions(item)}</TableCell>
-            </TableRow>
+            </ClickableTableRow>
           ))}
         </TableBody>
       </Table>

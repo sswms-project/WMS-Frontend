@@ -9,6 +9,8 @@ import {
   UserRoundCog,
   X,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import type { Route } from 'next'
 import Link from 'next/link'
 import type { DateRange } from 'react-day-picker'
@@ -43,13 +45,11 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptSummary } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
-import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
+import { rowActivationProps } from '../../utils/row-activation-props'
 
 export type PutawayAssignmentFilter = 'all' | 'unassigned'
 
 interface PutawayDirectoryProps {
-  readonly previewId?: string
-  readonly onPreview?: (item: GoodsReceiptSummary) => void
   readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
@@ -78,8 +78,6 @@ function remainingQuantity(item: GoodsReceiptSummary) {
 }
 
 export function PutawayDirectory({
-  previewId,
-  onPreview,
   items,
   totalCount,
   page,
@@ -102,6 +100,7 @@ export function PutawayDirectory({
   onAssignmentFilterChange,
   onAssign,
 }: PutawayDirectoryProps) {
+  const router = useRouter()
   function renderActions(item: GoodsReceiptSummary, compact: boolean) {
     const isMine = Boolean(currentUserId) && item.putAwayAssignedTo === currentUserId
     return (
@@ -277,9 +276,8 @@ export function PutawayDirectory({
             {items.map((item) => (
               <Item
                 key={item.id}
-                {...goodsPreviewInteractions(
-                  onPreview ? () => onPreview(item) : undefined,
-                  previewId === item.id,
+                {...rowActivationProps(
+                  () => router.push(APP_ROUTES.inboundPutawayDetail(item.id) as Route),
                   'border-b last:border-b-0'
                 )}
               >
@@ -333,12 +331,9 @@ export function PutawayDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow
+                  <ClickableTableRow
                     key={item.id}
-                    {...goodsPreviewInteractions(
-                      onPreview ? () => onPreview(item) : undefined,
-                      previewId === item.id
-                    )}
+                    href={APP_ROUTES.inboundPutawayDetail(item.id) as Route}
                   >
                     <TableCell className="font-mono font-semibold">
                       <Link
@@ -368,7 +363,7 @@ export function PutawayDirectory({
                       />
                     </TableCell>
                     <TableCell className="text-right">{renderActions(item, false)}</TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

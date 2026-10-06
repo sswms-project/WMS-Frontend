@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { goodsPreviewInteractions } from '@/features/inbound/utils/goods-preview-interactions'
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import type { Route } from 'next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
@@ -25,8 +25,6 @@ import { InboundRequestStatusBadge } from './InboundRequestStatusBadge'
 import { InboundRequestRowActions } from './InboundRequestRowActions'
 
 interface InboundRequestTableProps {
-  readonly previewId?: string
-  readonly onPreview?: (item: InboundRequestSummary) => void
   readonly items: readonly InboundRequestSummary[]
   readonly canDelete: boolean
   readonly canDeleteApproved?: boolean
@@ -122,8 +120,6 @@ export function InboundRequestTableSkeleton() {
 }
 
 export function InboundRequestTable({
-  previewId,
-  onPreview,
   items,
   canDelete,
   canDeleteApproved = false,
@@ -184,14 +180,11 @@ export function InboundRequestTable({
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow
+            <ClickableTableRow
               key={item.id}
-              {...goodsPreviewInteractions(
-                onPreview ? () => onPreview(item) : undefined,
-                previewId === item.id
-              )}
+              href={APP_ROUTES.inboundRequestDetail(item.id) as Route}
             >
-              <TableCell data-preview-ignore className="w-12 p-0 text-center">
+              <TableCell data-row-ignore className="w-12 p-0 text-center">
                 <Checkbox
                   className="mx-auto"
                   aria-label={`Chọn ${item.inboundRequestCode}`}
@@ -251,7 +244,7 @@ export function InboundRequestTable({
               </TableCell>
               <TableCell>{formatOperationalDateTime(item.createdAt)}</TableCell>
               <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
-              <TableCell data-preview-ignore className="text-right">
+              <TableCell data-row-ignore className="text-right">
                 <InboundRequestRowActions
                   item={item}
                   canCreate={canCreate}
@@ -271,7 +264,7 @@ export function InboundRequestTable({
                   onDuplicate={onDuplicate}
                 />
               </TableCell>
-            </TableRow>
+            </ClickableTableRow>
           ))}
         </TableBody>
       </Table>

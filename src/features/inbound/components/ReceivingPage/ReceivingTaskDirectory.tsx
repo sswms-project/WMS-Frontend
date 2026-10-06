@@ -7,6 +7,8 @@ import {
   UserRoundCog,
   X,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import type { DateRange } from 'react-day-picker'
 import Link from 'next/link'
 import type { Route } from 'next'
@@ -37,7 +39,7 @@ import { dateToIsoDateString, formatDisplayDate, isoDateStringToDate } from '@/l
 import { cn } from '@/lib/utils'
 import type { ReceivingTask } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
-import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
+import { rowActivationProps } from '../../utils/row-activation-props'
 import {
   formatOperationalDate,
   formatOperationalDateTime,
@@ -46,8 +48,6 @@ import {
 
 interface ReceivingTaskDirectoryProps {
   readonly canViewRequest?: boolean
-  readonly previewId?: string
-  readonly onPreview?: (item: ReceivingTask) => void
   readonly items: readonly ReceivingTask[]
   readonly totalCount: number
   readonly page: number
@@ -86,8 +86,6 @@ function buildDateLabel(from: Date | undefined, to: Date | undefined) {
 
 export function ReceivingTaskDirectory({
   canViewRequest,
-  previewId,
-  onPreview,
   items,
   totalCount,
   page,
@@ -112,6 +110,7 @@ export function ReceivingTaskDirectory({
   onAssignmentFilterChange,
   onAssign,
 }: ReceivingTaskDirectoryProps) {
+  const router = useRouter()
   function renderActions(item: ReceivingTask, layout: 'row' | 'stack') {
     const isMine = Boolean(currentUserId) && item.assignedTo === currentUserId
     const receiptPendingApproval = item.activeGoodsReceiptStatus === 'PendingApproval'
@@ -292,9 +291,9 @@ export function ReceivingTaskDirectory({
             {items.map((item) => (
               <Item
                 key={item.inboundRequestId}
-                {...goodsPreviewInteractions(
-                  onPreview ? () => onPreview(item) : undefined,
-                  previewId === item.inboundRequestId,
+                {...rowActivationProps(
+                  () =>
+                    router.push(APP_ROUTES.inboundRequestDetail(item.inboundRequestId) as Route),
                   'border-b last:border-b-0'
                 )}
               >
@@ -359,12 +358,9 @@ export function ReceivingTaskDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow
+                  <ClickableTableRow
                     key={item.inboundRequestId}
-                    {...goodsPreviewInteractions(
-                      onPreview ? () => onPreview(item) : undefined,
-                      previewId === item.inboundRequestId
-                    )}
+                    href={APP_ROUTES.inboundRequestDetail(item.inboundRequestId) as Route}
                   >
                     <TableCell className="font-mono font-semibold" translate="no">
                       {canViewRequest ? (
@@ -411,7 +407,7 @@ export function ReceivingTaskDirectory({
                       />
                     </TableCell>
                     <TableCell className="text-right">{renderActions(item, 'row')}</TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

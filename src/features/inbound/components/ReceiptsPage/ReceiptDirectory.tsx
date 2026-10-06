@@ -1,4 +1,6 @@
 import { CalendarRange, Check, Eye, RefreshCw, Search, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import type { Route } from 'next'
 import Link from 'next/link'
 import type { DateRange } from 'react-day-picker'
@@ -34,12 +36,10 @@ import {
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import { InboundStatusBadge } from '../InboundWorkspace'
-import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
+import { rowActivationProps } from '../../utils/row-activation-props'
 import { TaskAssigneeCell } from '../TaskAssignment'
 
 interface ReceiptDirectoryProps {
-  readonly previewId?: string
-  readonly onPreview?: (item: GoodsReceiptSummary) => void
   readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
@@ -64,8 +64,6 @@ interface ReceiptDirectoryProps {
 }
 
 export function ReceiptDirectory({
-  previewId,
-  onPreview,
   items,
   totalCount,
   page,
@@ -88,6 +86,7 @@ export function ReceiptDirectory({
   onRetry,
   onApprove,
 }: ReceiptDirectoryProps) {
+  const router = useRouter()
   return (
     <OperationalListPanel aria-label="Danh sách phiếu nhận hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
@@ -208,9 +207,8 @@ export function ReceiptDirectory({
             {items.map((item) => (
               <Item
                 key={item.id}
-                {...goodsPreviewInteractions(
-                  onPreview ? () => onPreview(item) : undefined,
-                  previewId === item.id,
+                {...rowActivationProps(
+                  () => router.push(APP_ROUTES.goodsReceiptDetail(item.id) as Route),
                   'border-b last:border-b-0'
                 )}
               >
@@ -280,12 +278,9 @@ export function ReceiptDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow
+                  <ClickableTableRow
                     key={item.id}
-                    {...goodsPreviewInteractions(
-                      onPreview ? () => onPreview(item) : undefined,
-                      previewId === item.id
-                    )}
+                    href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
                   >
                     <TableCell>
                       <Link
@@ -354,7 +349,7 @@ export function ReceiptDirectory({
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

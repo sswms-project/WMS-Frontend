@@ -1,5 +1,6 @@
 'use client'
 
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import {
   ArrowLeftRight,
   Check,
@@ -273,7 +274,11 @@ export function TransferDirectory({
         ) : (
           <>
             <TransferMobileList items={items} renderRowActions={renderRowActions} />
-            <TransferDesktopTable items={items} renderRowActions={renderRowActions} />
+            <TransferDesktopTable
+              items={items}
+              renderRowActions={renderRowActions}
+              onInspect={onInspect}
+            />
             <OperationalPagination
               page={page}
               pageSize={pageSize}
@@ -428,9 +433,11 @@ function TransferMobileList({
 function TransferDesktopTable({
   items,
   renderRowActions,
+  onInspect,
 }: {
   readonly items: readonly TransferSummary[]
   readonly renderRowActions: (transfer: TransferSummary) => ReactNode
+  readonly onInspect: (transfer: TransferSummary) => void
 }) {
   return (
     <div className="hidden min-h-0 flex-1 overflow-auto md:block">
@@ -451,7 +458,7 @@ function TransferDesktopTable({
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
+            <ClickableTableRow key={item.id} onActivate={() => onInspect(item)}>
               <TableCell className="min-w-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -475,7 +482,7 @@ function TransferDesktopTable({
               </TableCell>
               <TableCell className="truncate">{formatTransferDate(item.createdAt)}</TableCell>
               <TableCell className="text-right">{renderRowActions(item)}</TableCell>
-            </TableRow>
+            </ClickableTableRow>
           ))}
         </TableBody>
       </Table>

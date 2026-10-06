@@ -401,3 +401,18 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 
 - Frontend suite `359` passed; typecheck, ESLint and production build clean.
 - Live browser/API acceptance is still pending; automated tests use mocks. GitNexus impact/change detection was not available in this session.
+
+## Clickable List Rows — 2026-10-06
+
+**Implementer:** Claude
+**State:** `READY_FOR_CODEX_REVIEW`
+
+### Implemented
+
+- Shared `ClickableTableRow` (`src/components/operations/`): clicking anywhere on a list row opens its detail page (or runs the row's existing "view" handler for rows that open a sheet). Links, buttons, menus, checkboxes and `[data-row-ignore]` areas keep their own behaviour; text selection and portal events are ignored; Ctrl/Cmd+click opens a new tab. Keyboard users still use the real link/button in each row.
+- Applied to goods receipts, put-away tasks, receiving tasks, inbound requests, suppliers, customers, cycle counts, stock issue requests, goods return requests, transfers, staff and products.
+- **Behaviour change agreed with the user:** clicking a row on the goods receipt, put-away, receiving task and inbound request lists now opens the detail page instead of the quick goods preview panel. The preview wiring (`InboundMasterDetail`, `InboundGoodsPreview`, preview queries) was removed from those four pages; the shared preview components and utils remain unused in `InboundWorkspace` and `inbound-goods-preview.ts` and can be deleted in a follow-up.
+
+### Verification
+
+- Frontend suite `392` passed; typecheck and ESLint clean. Production build and live browser check not run for this change.

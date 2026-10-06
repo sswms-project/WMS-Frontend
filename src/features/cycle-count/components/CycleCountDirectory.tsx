@@ -1,5 +1,6 @@
 'use client'
 
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import Link from 'next/link'
 import { ClipboardCheck, Eye, Plus, RefreshCw } from 'lucide-react'
 import {
@@ -137,7 +138,7 @@ export function CycleCountDirectory(props: Props) {
               </TableHeader>
               <TableBody>
                 {props.items.map((item) => (
-                  <TableRow key={item.id}>
+                  <ClickableTableRow key={item.id} href={APP_ROUTES.cycleCountDetail(item.id)}>
                     <TableCell>
                       <p className="font-medium">{item.warehouseName}</p>
                       <p className="text-muted-foreground text-xs">
@@ -170,7 +171,7 @@ export function CycleCountDirectory(props: Props) {
                         </Link>
                       </Button>
                     </TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>
