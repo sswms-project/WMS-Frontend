@@ -129,6 +129,16 @@ const tenantMemberSystemSection: NavSection = {
   items: [
     requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
     requiredNavItem(APP_ROUTES.auditLogs, 'Nhật ký hoạt động', ScrollText, P.AUDIT_LOGS_VIEW),
+    { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
+  ],
+}
+
+const staffSystemSection: NavSection = {
+  ...tenantMemberSystemSection,
+  items: [
+    requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
+    requiredNavItem(APP_ROUTES.auditLogs, 'Hoạt động của tôi', ScrollText, P.AUDIT_LOGS_VIEW),
+    { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
   ],
 }
 
@@ -382,7 +392,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         },
         requiredNavItem(
           APP_ROUTES.myTaskHistory,
-          'Lịch sử công việc',
+          'Công việc đã xử lý',
           ScrollText,
           P.WAREHOUSE_TASKS_VIEW_OWN
         ),
@@ -393,7 +403,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     tenantSubjectsSection,
     tenantWarehouseSection,
     tenantOperationsSection,
-    tenantMemberSystemSection,
+    staffSystemSection,
   ],
 }
 
