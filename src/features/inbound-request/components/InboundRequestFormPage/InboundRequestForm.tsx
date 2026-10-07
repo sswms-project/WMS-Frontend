@@ -1,6 +1,10 @@
 'use client'
 
 import { ArrowLeft, Plus, RotateCw } from 'lucide-react'
+import {
+  BusinessCodeField,
+  type BusinessCodeFieldProps,
+} from '@/components/forms/BusinessCodeField'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -41,6 +45,7 @@ import { LookupCombobox } from './LookupCombobox'
 interface InboundRequestFormProps {
   readonly title: string
   readonly autoApprove: boolean
+  readonly isApprovedEdit?: boolean
   readonly form: UseFormReturn<InboundRequestFormValues>
   readonly fields: readonly FieldArrayWithId<InboundRequestFormValues, 'lines', 'id'>[]
   readonly warehouseOptions: readonly LookupOption[]
@@ -65,6 +70,10 @@ interface InboundRequestFormProps {
   readonly onAddLine: () => void
   readonly onRemoveLine: (index: number) => void
   readonly onCancel: () => void
+  readonly onEditCode?: () => void
+  readonly codeSuggestionStatus?: BusinessCodeFieldProps['suggestionStatus']
+  readonly onCodeChange?: () => void
+  readonly codeDescription?: string
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit: () => void
   readonly onWarehouseSearchChange: (value: string) => void
@@ -75,6 +84,7 @@ interface InboundRequestFormProps {
 export function InboundRequestForm({
   title,
   autoApprove,
+  isApprovedEdit,
   form,
   fields,
   warehouseOptions,
@@ -99,6 +109,10 @@ export function InboundRequestForm({
   onAddLine,
   onRemoveLine,
   onCancel,
+  onEditCode,
+  codeSuggestionStatus,
+  onCodeChange,
+  codeDescription,
   onSaveDraft,
   onSaveAndSubmit,
   onWarehouseSearchChange,
@@ -116,7 +130,7 @@ export function InboundRequestForm({
 
   return (
     <div className="flex w-full flex-col gap-5">
-      <header className="flex shrink-0 items-center gap-3 border-b pb-3">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b pb-3">
         <Button
           type="button"
           variant="ghost"
@@ -131,6 +145,23 @@ export function InboundRequestForm({
           <span className="text-muted-foreground text-xs">›</span>
           <h1 className="truncate text-sm font-semibold">{title}</h1>
         </div>
+        {onEditCode ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            disabled={isPending || form.formState.isDirty}
+            onClick={onEditCode}
+            title={
+              form.formState.isDirty
+                ? 'Lưu hoặc hủy thay đổi trước khi chuyển sang đổi mã.'
+                : 'Đổi mã mà không lưu lại nội dung yêu cầu.'
+            }
+          >
+            Chỉ đổi mã
+          </Button>
+        ) : null}
       </header>
 
       <form
@@ -147,6 +178,20 @@ export function InboundRequestForm({
           <CardContent>
             <FieldSet>
               <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <BusinessCodeField
+                  label="Mã yêu cầu *"
+                  description={codeDescription}
+                  error={errors.inboundRequestCode}
+                  suggestionStatus={codeSuggestionStatus}
+                  inputProps={{
+                    ...register('inboundRequestCode', { onChange: onCodeChange }),
+                    id: 'inboundRequestCode',
+                    required: true,
+                    maxLength: 100,
+                    placeholder: 'VD: IR000001…',
+                    disabled: isPending,
+                  }}
+                />
                 <Field data-invalid={Boolean(errors.warehouseId)}>
                   <FieldLabel htmlFor="warehouseId">Kho nhận hàng</FieldLabel>
                   <LookupCombobox
@@ -347,6 +392,7 @@ export function InboundRequestForm({
 
         <div className="flex justify-end border-t pt-4">
           <FormActions
+            isApprovedEdit={isApprovedEdit}
             isPending={isPending}
             autoApprove={autoApprove}
             onSaveDraft={onSaveDraft}

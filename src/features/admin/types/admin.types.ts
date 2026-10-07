@@ -223,6 +223,34 @@ export interface PlatformDashboardResponse {
     readonly checkedAt: string
     readonly message: string | null
   }>
+  // Optional so the dashboard keeps rendering against API builds that predate these fields.
+  readonly userSummary?: {
+    readonly total: number
+    readonly active: number
+    readonly newLast30Days: number
+  }
+  readonly revenueTrend?: ReadonlyArray<{
+    readonly year: number
+    readonly month: number
+    readonly revenue: number
+    readonly paymentCount: number
+  }>
+  readonly recentTenants?: ReadonlyArray<{
+    readonly tenantId: string
+    readonly tenantName: string
+    readonly email: string
+    readonly status: string
+    readonly createdAt: string
+  }>
+  readonly recentPayments?: ReadonlyArray<{
+    readonly paymentId: string
+    readonly tenantId: string | null
+    readonly tenantName: string | null
+    readonly invoiceNumber: string
+    readonly amount: number
+    readonly planName: string | null
+    readonly paidAt: string
+  }>
 }
 
 export interface AdminSubscriptionPlanQuery {

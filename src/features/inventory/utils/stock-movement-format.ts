@@ -27,3 +27,24 @@ export function formatStockMovementQuantity(value: number): string {
 export function formatReferenceId(value: string): string {
   return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value
 }
+
+export function formatStockMovementReference(value: string): string {
+  const labels: Record<string, string> = {
+    GoodsReceiptItem: 'Phiếu nhận hàng',
+    GoodsReceipt: 'Phiếu nhận hàng',
+    StockTransfer: 'Phiếu điều chuyển',
+    StockTransferItem: 'Phiếu điều chuyển',
+    StockIssuePickDetail: 'Phiếu xuất kho',
+    StockIssueRequest: 'Yêu cầu xuất kho',
+    StockIssueRequestItem: 'Yêu cầu xuất kho',
+    StockAdjustment: 'Phiếu điều chỉnh tồn',
+    CycleCount: 'Phiếu kiểm kê',
+    OpeningStockRecord: 'Phiếu tồn đầu kỳ',
+    DamageCase: 'Phiếu hàng hỏng',
+    GoodsReturnRequestItem: 'Phiếu trả hàng',
+    GoodsReturnRequest: 'Phiếu trả hàng',
+    PutAwayCorrection: 'Phiếu sửa vị trí cất hàng',
+    WarehouseTaskExecution: 'Công việc kho',
+  }
+  return labels[value] ?? (value ? 'Chứng từ khác' : 'Không có nguồn')
+}

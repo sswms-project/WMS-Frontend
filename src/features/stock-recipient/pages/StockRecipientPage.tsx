@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useId, useState } from 'react'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -34,6 +35,9 @@ export default function StockRecipientPage() {
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<'Active' | 'Inactive' | ''>('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const codeInstanceId = useId()
+  const [codeSession, setCodeSession] = useState(0)
+  const codeSessionKey = `${codeInstanceId}:${codeSession}`
   const [editingRecipient, setEditingRecipient] = useState<StockRecipient | null>(null)
   const [statusTarget, setStatusTarget] = useState<StockRecipient | null>(null)
   const debouncedSearchText = useDebouncedValue(searchText, 350)
@@ -51,17 +55,19 @@ export default function StockRecipientPage() {
     resolver: zodResolver(stockRecipientSchema),
     defaultValues: emptyStockRecipientFormValues,
   })
-  const nextCodeQuery = useNextStockRecipientCodeQuery(isCreateOpen)
+  const nextCodeQuery = useNextStockRecipientCodeQuery(isCreateOpen, codeSessionKey)
   const isFormOpen = isCreateOpen || Boolean(editingRecipient)
 
-  useEffect(() => {
-    if (!isCreateOpen || !nextCodeQuery.data?.data || form.getFieldState('recipientCode').isDirty) {
-      return
-    }
-    if (!form.getValues('recipientCode')) {
-      form.setValue('recipientCode', nextCodeQuery.data.data, { shouldDirty: false })
-    }
-  }, [form, isCreateOpen, nextCodeQuery.data?.data])
+  const codeSuggestion = useCodeSuggestion({
+    active: isCreateOpen,
+    sessionKey: codeSessionKey,
+    suggestedCode: nextCodeQuery.data?.data,
+    isFetching: nextCodeQuery.isFetching,
+    isError: nextCodeQuery.isError,
+    getCurrentCode: () => form.getValues('recipientCode'),
+    applyCode: (code) =>
+      form.setValue('recipientCode', code, { shouldValidate: form.formState.isSubmitted }),
+  })
 
   async function handleSave(values: StockRecipientFormValues, keepOpen = false) {
     const request = toStockRecipientRequest(values)
@@ -74,8 +80,9 @@ export default function StockRecipientPage() {
         toast.success('Đã thêm khách hàng.')
       }
       if (keepOpen && !editingRecipient) {
-        const nextCode = await nextCodeQuery.refetch()
-        form.reset({ ...emptyStockRecipientFormValues, recipientCode: nextCode.data?.data ?? '' })
+        form.reset(emptyStockRecipientFormValues)
+        codeSuggestion.resetSession()
+        setCodeSession((value) => value + 1)
         return
       }
       setIsCreateOpen(false)
@@ -140,6 +147,8 @@ export default function StockRecipientPage() {
         onCreate={() => {
           setEditingRecipient(null)
           form.reset(emptyStockRecipientFormValues)
+          codeSuggestion.resetSession()
+          setCodeSession((value) => value + 1)
           setIsCreateOpen(true)
         }}
         onEdit={(stockRecipient) => {
@@ -175,6 +184,10 @@ export default function StockRecipientPage() {
         form={form}
         isPending={createMutation.isPending || updateMutation.isPending}
         isCreate={isCreateOpen}
+        codeSuggestionStatus={
+          nextCodeQuery.isFetching ? 'loading' : nextCodeQuery.isError ? 'error' : 'ready'
+        }
+        onCodeChange={codeSuggestion.markEdited}
         onOpenChange={(open) => {
           if (!open) {
             setIsCreateOpen(false)

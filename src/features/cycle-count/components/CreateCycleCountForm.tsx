@@ -99,7 +99,7 @@ export function CreateCycleCountForm({
           </p>
         </div>
       </header>
-      <section className="bg-card grid shrink-0 gap-4 border p-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="bg-card motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 animation-duration-250 grid shrink-0 gap-4 border p-4 md:grid-cols-2 lg:grid-cols-6">
         <Field data-invalid={Boolean(form.formState.errors.warehouseId)}>
           <FieldLabel htmlFor="warehouseId">Kho</FieldLabel>
           <NativeSelect
@@ -173,7 +173,24 @@ export function CreateCycleCountForm({
             }
           />
         </Field>
-        <div className="flex items-center justify-between gap-3 border p-3 md:col-span-2 lg:col-span-4">
+        <Field data-invalid={Boolean(form.formState.errors.priority)}>
+          <FieldLabel htmlFor="priority">Mức ưu tiên</FieldLabel>
+          <NativeSelect id="priority" {...form.register('priority')}>
+            <NativeSelectOption value="Normal">Bình thường</NativeSelectOption>
+            <NativeSelectOption value="Urgent">Khẩn</NativeSelectOption>
+          </NativeSelect>
+          <FieldError
+            errors={form.formState.errors.priority ? [form.formState.errors.priority] : undefined}
+          />
+        </Field>
+        <Field data-invalid={Boolean(form.formState.errors.dueAt)}>
+          <FieldLabel htmlFor="dueAt">Hạn hoàn thành</FieldLabel>
+          <Input id="dueAt" type="datetime-local" {...form.register('dueAt')} />
+          <FieldError
+            errors={form.formState.errors.dueAt ? [form.formState.errors.dueAt] : undefined}
+          />
+        </Field>
+        <div className="flex items-center justify-between gap-3 border p-3 md:col-span-2 lg:col-span-6">
           <div className="flex items-start gap-2">
             <LockKeyhole className="text-primary mt-0.5 size-4" />
             <div>

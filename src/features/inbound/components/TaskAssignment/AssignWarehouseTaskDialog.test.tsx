@@ -31,6 +31,8 @@ function target(overrides: Partial<AssignWarehouseTaskTarget> = {}): AssignWareh
     warehouseName: 'Kho A',
     currentAssigneeId: CURRENT_ID,
     currentAssigneeName: 'Warehouse Staff',
+    currentPriority: 'Normal',
+    currentDueAt: null,
     ...overrides,
   }
 }
@@ -45,7 +47,7 @@ function Harness({
   readonly onUnassign?: () => void
 }) {
   const form = useForm<AssignWarehouseTaskFormValues>({
-    defaultValues: { staffId: '', reason: '' },
+    defaultValues: { staffId: '', priority: 'Normal', dueAt: '', reason: '' },
   })
   return (
     <AssignWarehouseTaskDialog
@@ -105,6 +107,8 @@ describe('AssignWarehouseTaskDialog unassign', () => {
 
     expect(screen.getByText('Nhân viên B')).toBeInTheDocument()
     expect(screen.queryByText(/chưa có Nhân viên kho nào khác/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Mức ưu tiên')).toBeInTheDocument()
+    expect(screen.getByLabelText('Hạn hoàn thành')).toBeInTheDocument()
   })
 
   it('does not offer unassign for a task that is not assigned yet or for put-away', () => {

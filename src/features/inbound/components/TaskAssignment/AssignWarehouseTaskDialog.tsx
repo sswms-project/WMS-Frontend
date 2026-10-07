@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,6 +31,8 @@ export interface AssignWarehouseTaskTarget {
   readonly warehouseName: string
   readonly currentAssigneeId: string | null
   readonly currentAssigneeName: string | null
+  readonly currentPriority: 'Normal' | 'Urgent'
+  readonly currentDueAt: string | null
 }
 
 interface AssignWarehouseTaskDialogProps {
@@ -165,6 +169,22 @@ export function AssignWarehouseTaskDialog({
               )}
               <FieldError>{errors.staffId?.message}</FieldError>
             </Field>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field data-invalid={Boolean(errors.priority)}>
+                <FieldLabel htmlFor="assign-task-priority">Mức ưu tiên</FieldLabel>
+                <NativeSelect id="assign-task-priority" {...register('priority')}>
+                  <NativeSelectOption value="Normal">Bình thường</NativeSelectOption>
+                  <NativeSelectOption value="Urgent">Khẩn</NativeSelectOption>
+                </NativeSelect>
+                <FieldError>{errors.priority?.message}</FieldError>
+              </Field>
+              <Field data-invalid={Boolean(errors.dueAt)}>
+                <FieldLabel htmlFor="assign-task-due-at">Hạn hoàn thành</FieldLabel>
+                <Input id="assign-task-due-at" type="datetime-local" {...register('dueAt')} />
+                <FieldError>{errors.dueAt?.message}</FieldError>
+              </Field>
+            </div>
 
             {isReassignment && (
               <Field data-invalid={Boolean(errors.reason)}>

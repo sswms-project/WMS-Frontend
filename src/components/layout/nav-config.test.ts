@@ -19,6 +19,18 @@ function getVisibleNavItems(
 
 describe('application navigation visibility', () => {
   it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'activates only task history for %s',
+    (role) => {
+      const items = getNavItems(role)
+      const tasks = items.find((item) => item.href === APP_ROUTES.myTasks)!
+      const history = items.find((item) => item.href === APP_ROUTES.myTaskHistory)!
+      expect(isNavItemActive(APP_ROUTES.myTaskHistory, tasks)).toBe(false)
+      expect(isNavItemActive(APP_ROUTES.myTaskHistory, history)).toBe(true)
+      expect(isNavItemActive(APP_ROUTES.myTasks, tasks)).toBe(true)
+      expect(isNavItemActive(APP_ROUTES.myTasks, history)).toBe(false)
+    }
+  )
+  it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
     'opens an authorized inbound entry point for %s without hiding delegated requests',
     (role) => {
       const requestOnlyItems = getVisibleNavItems(role, [P.INBOUND_REQUESTS_VIEW])
@@ -149,6 +161,18 @@ describe('application navigation visibility', () => {
     ).toBe(false)
   })
 
+  it('shows Owner task navigation only with the all-task permission', () => {
+    const ownerItems = getVisibleNavItems(USER_ROLES.TenantOwner, [P.WAREHOUSE_TASKS_VIEW_ALL])
+
+    expect(ownerItems.some((item) => item.href === APP_ROUTES.myTasks)).toBe(true)
+    expect(ownerItems.some((item) => item.href === APP_ROUTES.myTaskHistory)).toBe(true)
+    expect(
+      getVisibleNavItems(USER_ROLES.TenantOwner, [P.WAREHOUSE_TASKS_VIEW_OWN]).some(
+        (item) => item.href === APP_ROUTES.myTasks
+      )
+    ).toBe(false)
+  })
+
   it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
     'shows warehouse layout navigation for %s only with warehouse view permission',
     (role) => {
@@ -208,7 +232,7 @@ describe('application navigation visibility', () => {
         items: section.items.map((item) => item.label),
       }))
     ).toEqual([
-      { label: null, items: ['Dashboard'] },
+      { label: null, items: ['Dashboard', 'Công việc kho', 'Lịch sử công việc kho'] },
       { label: 'Quản trị doanh nghiệp', items: ['Doanh nghiệp', 'Phân quyền', 'Nhân viên'] },
       { label: 'Quản Lý Kho', items: ['Kho hàng', 'Sơ đồ kho'] },
       { label: 'Đối tượng', items: ['Nhà cung cấp', 'Khách hàng'] },

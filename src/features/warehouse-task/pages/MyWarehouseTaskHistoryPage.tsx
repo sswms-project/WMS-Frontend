@@ -36,6 +36,18 @@ export default function MyWarehouseTaskHistoryPage() {
         description="Các nhiệm vụ đã hoàn tất hoặc đã được xử lý."
         items={query.data?.items ?? []}
         totalCount={query.data?.totalCount ?? 0}
+        stats={
+          query.data?.stats ?? {
+            unassignedCount: 0,
+            queuedCount: 0,
+            inProgressCount: 0,
+            pausedCount: 0,
+            dueSoonCount: 0,
+            overdueCount: 0,
+          }
+        }
+        statsMode={managesWarehouseTasks ? 'managed' : 'mine'}
+        showStats={false}
         page={page}
         pageSize={PAGE_SIZE}
         isLoading={query.isLoading}

@@ -23,6 +23,10 @@ import type {
 } from '../types/inbound.types'
 
 export const inboundService = {
+  getNextReceiptCode: () =>
+    axiosClient
+      .get<ApiResponse<string>>(API_ENDPOINTS.goodsReceipts.nextCode)
+      .then((response) => response.data),
   getReceivingTasks: (params: ReceivingTaskQuery) =>
     axiosClient
       .get<

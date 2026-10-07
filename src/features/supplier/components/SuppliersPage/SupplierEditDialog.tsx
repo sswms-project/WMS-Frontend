@@ -77,7 +77,7 @@ export function SupplierEditDialog({
             Chỉnh sửa thông tin liên hệ của {supplier?.supplierName ?? 'nhà cung cấp'}.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form noValidate onSubmit={form.handleSubmit(handleSubmit)}>
           <SupplierFormFields idPrefix="edit" form={form} />
           <DialogFooter className="mt-5">
             <Button

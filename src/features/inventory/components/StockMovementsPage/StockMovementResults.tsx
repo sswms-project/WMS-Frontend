@@ -10,14 +10,25 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { StockMovement } from '../../types/inventory.types'
-import { formatInventoryDate } from '../../utils/inventory-format'
+import {
+  formatInventoryDate,
+  formatInventoryLocation,
+  formatQualityStatus,
+} from '../../utils/inventory-format'
 import {
   formatReferenceId,
   formatStockMovementQuantity,
   formatStockMovementType,
+  formatStockMovementReference,
 } from '../../utils/stock-movement-format'
 
-function QuantityChange({ value }: { readonly value: number }) {
+function QuantityChange({
+  value,
+  unitName,
+}: {
+  readonly value: number
+  readonly unitName?: string | null
+}) {
   const Icon = value > 0 ? ArrowUp : value < 0 ? ArrowDown : Minus
   return (
     <span
@@ -31,7 +42,7 @@ function QuantityChange({ value }: { readonly value: number }) {
     >
       <span className="inline-flex items-center gap-1 font-mono font-semibold tabular-nums">
         <Icon className="size-3.5" aria-hidden="true" />
-        {formatStockMovementQuantity(value)}
+        {formatStockMovementQuantity(value)} {unitName ?? '—'}
       </span>
     </span>
   )
@@ -49,14 +60,15 @@ export function StockMovementMobileList({ items }: { readonly items: readonly St
           <ItemContent className="min-w-0">
             <ItemTitle className="flex items-center justify-between gap-3">
               <span className="truncate">{item.productName || 'Sản phẩm chưa xác định'}</span>
-              <QuantityChange value={item.quantityChange} />
+              <QuantityChange value={item.quantityChange} unitName={item.unitName} />
             </ItemTitle>
             <ItemDescription>
               <span className="font-mono" translate="no">
                 {item.sku || item.productId}
               </span>{' '}
-              · Slot {item.slotCode || item.slotId} ·{' '}
-              {item.lotNumber ? `Lô ${item.lotNumber}` : 'Không theo lô'} · {item.qualityStatus}
+              · {item.warehouseName || 'Kho chưa xác định'} / {formatInventoryLocation(item)} ·{' '}
+              {item.lotNumber ? `Lô ${item.lotNumber}` : 'Không theo lô'} ·{' '}
+              {formatQualityStatus(item.qualityStatus)}
             </ItemDescription>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <MovementBadge value={item.movementType} />
@@ -64,7 +76,12 @@ export function StockMovementMobileList({ items }: { readonly items: readonly St
             </div>
             <ItemDescription>
               {item.performedByName || 'Người dùng chưa xác định'} ·{' '}
-              {item.referenceType || 'Không có nguồn'}
+              {formatStockMovementReference(item.referenceType)} ·{' '}
+              {item.referenceCode || formatReferenceId(item.referenceId)}
+            </ItemDescription>
+            <ItemDescription>
+              Sau biến động: {formatStockMovementQuantity(item.balanceAfter).replace('+', '')}{' '}
+              {item.unitName ?? '—'}
             </ItemDescription>
           </ItemContent>
         </Item>
@@ -82,10 +99,10 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
             <TableHead className="sticky top-0 z-10 w-40">Thời gian</TableHead>
             <TableHead className="sticky top-0 z-10 w-36">Loại</TableHead>
             <TableHead className="sticky top-0 z-10 w-64">Sản phẩm</TableHead>
-            <TableHead className="sticky top-0 z-10 w-32">Slot</TableHead>
+            <TableHead className="sticky top-0 z-10 w-52">Kho / Vị trí</TableHead>
             <TableHead className="sticky top-0 z-10 w-36">Lô / Chất lượng</TableHead>
-            <TableHead className="sticky top-0 z-10 w-28 text-right">Biến động</TableHead>
-            <TableHead className="sticky top-0 z-10 w-28 text-right">Sau biến động</TableHead>
+            <TableHead className="sticky top-0 z-10 w-36 text-right">Biến động</TableHead>
+            <TableHead className="sticky top-0 z-10 w-36 text-right">Sau biến động</TableHead>
             <TableHead className="sticky top-0 z-10 w-48">Chứng từ</TableHead>
             <TableHead className="sticky top-0 z-10 w-48">Người thực hiện</TableHead>
           </TableRow>
@@ -107,26 +124,34 @@ export function StockMovementDesktopTable({ items }: { readonly items: readonly 
                   {item.sku || item.productId}
                 </p>
               </TableCell>
-              <TableCell className="truncate font-mono text-xs" title={item.slotId}>
-                {item.slotCode || item.slotId}
+              <TableCell className="min-w-0 text-xs">
+                <p className="truncate" title={item.warehouseName || 'Kho chưa xác định'}>
+                  {item.warehouseName || 'Kho chưa xác định'}
+                </p>
+                <p className="text-muted-foreground truncate" title={formatInventoryLocation(item)}>
+                  {formatInventoryLocation(item)}
+                </p>
               </TableCell>
               <TableCell>
                 <p className="truncate font-mono text-xs">{item.lotNumber ?? 'Không theo lô'}</p>
-                <p className="text-muted-foreground text-xs">{item.qualityStatus}</p>
+                <p className="text-muted-foreground text-xs">
+                  {formatQualityStatus(item.qualityStatus)}
+                </p>
               </TableCell>
               <TableCell className="text-right">
-                <QuantityChange value={item.quantityChange} />
+                <QuantityChange value={item.quantityChange} unitName={item.unitName} />
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
-                {formatStockMovementQuantity(item.balanceAfter).replace('+', '')}
+                {formatStockMovementQuantity(item.balanceAfter).replace('+', '')}{' '}
+                {item.unitName ?? '—'}
               </TableCell>
               <TableCell className="min-w-0">
-                <p className="truncate">{item.referenceType || 'Không có nguồn'}</p>
+                <p className="truncate">{formatStockMovementReference(item.referenceType)}</p>
                 <p
                   className="text-muted-foreground truncate font-mono text-xs"
-                  title={item.referenceId}
+                  title={item.referenceCode || item.referenceId}
                 >
-                  {formatReferenceId(item.referenceId)}
+                  {item.referenceCode || formatReferenceId(item.referenceId)}
                 </p>
               </TableCell>
               <TableCell

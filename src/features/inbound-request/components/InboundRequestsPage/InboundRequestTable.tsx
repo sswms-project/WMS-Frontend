@@ -30,6 +30,8 @@ interface InboundRequestTableProps {
   readonly items: readonly InboundRequestSummary[]
   readonly canDelete: boolean
   readonly canDeleteApproved?: boolean
+  readonly canEdit?: boolean
+  readonly canEditApproved?: boolean
   readonly canCreate: boolean
   readonly canSubmit: boolean
   readonly canApprove: boolean
@@ -125,6 +127,8 @@ export function InboundRequestTable({
   items,
   canDelete,
   canDeleteApproved = false,
+  canEdit = false,
+  canEditApproved = false,
   canCreate,
   canSubmit,
   canApprove,
@@ -255,6 +259,8 @@ export function InboundRequestTable({
                   canApprove={canApprove}
                   canDelete={canDelete}
                   canDeleteApproved={canDeleteApproved}
+                  canEdit={canEdit}
+                  canEditApproved={canEditApproved}
                   isSubmitting={isSubmitting}
                   isApproving={isApproving}
                   isDeleting={isDeleting}

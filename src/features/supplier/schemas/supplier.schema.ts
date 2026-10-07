@@ -36,3 +36,18 @@ export const saveSupplierSchema = z.object({
 })
 
 export type SaveSupplierFormValues = z.infer<typeof saveSupplierSchema>
+
+export const emptySupplierFormValues: SaveSupplierFormValues = {
+  supplierCode: '',
+  supplierName: '',
+  taxCode: '',
+  phone: '',
+  email: '',
+  address: '',
+  contactSalutation: '',
+  contactName: '',
+  contactEmail: '',
+  contactMobile: '',
+  contactChannel: '',
+  contactChannelName: '',
+}
