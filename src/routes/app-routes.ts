@@ -89,6 +89,7 @@ export const APP_ROUTES = {
     payments: '/admin/payments',
   },
   products: '/products',
+  productImport: '/products/import' satisfies Route,
   productDetail: (id: string) => `/products/${id}`,
   productCreate: '/products/create',
   profile: '/profile',

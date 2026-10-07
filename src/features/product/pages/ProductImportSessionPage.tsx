@@ -1,0 +1,226 @@
+'use client'
+
+import { useEffect, useId, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
+import { downloadBulkImportFile } from '@/components/operations/bulk-import'
+import { getApiErrorMessage, isApiErrorResponse, formatApiError } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
+import { ProductImportView } from '../components/ProductImportPage'
+import type { ProductImportReviewFilters } from '../components/ProductImportPage'
+import {
+  useProductImportInspect,
+  useProductImportPreview,
+  useProductImportTemplate,
+} from '../hooks/use-product-import'
+import { useImportProductsMutation } from '../hooks/use-products'
+import { useProductImportNavigation } from '../hooks/use-product-import-navigation'
+import {
+  productImportFileSchema,
+  productImportOptionsSchema,
+  type ProductImportFormValues,
+} from '../schemas/product-import.schema'
+import type { ProductImportOptions } from '../types/product-import.types'
+import {
+  defaultProductImportOptions,
+  isValidProductImportRow,
+  productImportPayload,
+  productImportReportCsv,
+  selectedProductImportRows,
+} from '../utils/product-import'
+
+export default function ProductImportSessionPage() {
+  const instanceId = useId()
+  const [generation, setGeneration] = useState(0)
+  const [revision, setRevision] = useState(0)
+  const [file, setFile] = useState<File | null>(null)
+  const [delimiter, setDelimiter] = useState<ProductImportOptions['csvDelimiter']>('auto')
+  const [options, setOptions] = useState<ProductImportOptions | null>(null)
+  const [step, setStep] = useState<'file' | 'mapping' | 'review' | 'result'>('file')
+  const [selection, setSelection] = useState<number[] | null>(null)
+  const [view, setView] = useState<ProductImportReviewFilters>({
+    search: '',
+    status: 'all',
+    page: 1,
+    pageSize: 20,
+  })
+  const [importedRows, setImportedRows] = useState<number[]>([])
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [commitError, setCommitError] = useState<string | null>(null)
+  const [confirmationOpen, setConfirmationOpen] = useState(false)
+  const [forbidden, setForbidden] = useState(false)
+  const commitLock = useRef(false)
+  const sessionId = `${instanceId}:${generation}`
+  const inspect = useProductImportInspect(sessionId, file, delimiter)
+  const preview = useProductImportPreview(sessionId, revision, file, options)
+  const template = useProductImportTemplate()
+  const commit = useImportProductsMutation()
+  const form = useForm<ProductImportFormValues>({
+    resolver: zodResolver(productImportOptionsSchema(inspect.data)),
+    defaultValues: {
+      main: { sheetId: '', headerRowNumber: 1, columnMapping: [] },
+      conversions: null,
+      csvDelimiter: 'auto',
+      schemaVersion: 1,
+    },
+  })
+  useEffect(() => {
+    if (inspect.data) form.reset({ ...defaultProductImportOptions(inspect.data), schemaVersion: 1 })
+  }, [inspect.data, form])
+  const busy = inspect.isFetching || preview.isFetching || commit.isPending || template.isPending
+  const data = preview.data
+  const selected =
+    selection ??
+    (data && !data.fileErrors.length
+      ? data.rows.filter(isValidProductImportRow).map((row) => row.rowNumber)
+      : [])
+  const rowsToImport = data ? selectedProductImportRows(data, selected) : []
+  const conversionCount = rowsToImport.reduce((count, row) => count + row.unitConversions.length, 0)
+  const denied =
+    forbidden ||
+    [inspect.error, preview.error].some(
+      (error) => isApiErrorResponse(error) && error.statusCode === 403
+    )
+  useProductImportNavigation(Boolean(file) && step !== 'result', busy)
+
+  function invalidatePreview() {
+    setView({ search: '', status: 'all', page: 1, pageSize: 20 })
+    setRevision((value) => value + 1)
+    setOptions(null)
+    setSelection(null)
+    setImportedRows([])
+    setCommitError(null)
+    setConfirmationOpen(false)
+  }
+  function reset() {
+    if (busy || commitLock.current) return
+    if (
+      file &&
+      step !== 'result' &&
+      !window.confirm('Hủy phiên nhập tệp hiện tại? Dữ liệu chưa nhập sẽ không được lưu.')
+    )
+      return
+    invalidatePreview()
+    setGeneration((value) => value + 1)
+    setFile(null)
+    setDelimiter('auto')
+    setFileError(null)
+    setStep('file')
+  }
+  function chooseFile(nextFile: File) {
+    if (busy) return
+    const checked = productImportFileSchema.safeParse(nextFile)
+    if (!checked.success) {
+      setFileError(checked.error.issues[0]?.message ?? 'Tệp không hợp lệ.')
+      return
+    }
+    invalidatePreview()
+    setGeneration((value) => value + 1)
+    setFile(nextFile)
+    setFileError(null)
+    setStep('mapping')
+  }
+  async function checkData() {
+    if (busy || !inspect.data) return
+    await form.handleSubmit(
+      (values) => {
+        invalidatePreview()
+        setOptions(values)
+        setStep('review')
+      },
+      (errors) => {
+        const kind = errors.main ? 'main' : 'conversions'
+        const id = errors[kind]?.sheetId ? `import-${kind}-sheet` : `import-${kind}-header`
+        document.getElementById(id)?.focus()
+      }
+    )()
+  }
+  async function downloadTemplate(variant: 'basic' | 'full') {
+    if (busy || denied) return
+    try {
+      const blob = await template.mutateAsync(variant)
+      downloadBulkImportFile(blob, `kovia-mau-nhap-hang-hoa-${variant}.xlsx`)
+    } catch (error) {
+      if (isApiErrorResponse(error) && error.statusCode === 403) setForbidden(true)
+      toast.error(getApiErrorMessage(error, 'Không thể tải mẫu.'))
+    }
+  }
+  async function confirmImport() {
+    if (busy || denied || commitLock.current || commitError || !data || !rowsToImport.length) return
+    commitLock.current = true
+    const confirmed = rowsToImport.map((row) => row.rowNumber)
+    try {
+      await commit.mutateAsync(productImportPayload(data, confirmed))
+      setImportedRows(confirmed)
+      setStep('result')
+      setConfirmationOpen(false)
+      toast.success(`Đã nhập ${confirmed.length} sản phẩm và ${conversionCount} đơn vị quy đổi.`)
+    } catch (error) {
+      setConfirmationOpen(false)
+      if (isApiErrorResponse(error) && error.statusCode === 403) setForbidden(true)
+      const knownFailure = isApiErrorResponse(error) && [400, 409, 422].includes(error.statusCode)
+      setCommitError(
+        knownFailure
+          ? getApiErrorMessage(error)
+          : 'Chưa xác định kết quả lưu do kết nối hoặc lỗi máy chủ. Kiểm tra danh sách hàng hóa, sau đó kiểm tra lại tệp trước khi gửi tiếp; không tự gửi lại.'
+      )
+      toast.error(
+        knownFailure ? getApiErrorMessage(error) : 'Chưa xác định kết quả nhập. Không gửi lại ngay.'
+      )
+    } finally {
+      commitLock.current = false
+    }
+  }
+  function exportReport() {
+    if (!data) return
+    downloadBulkImportFile(
+      new Blob([productImportReportCsv(data, step === 'result' ? importedRows : undefined)], {
+        type: 'text/csv;charset=utf-8',
+      }),
+      'kovia-bao-cao-nhap-hang-hoa.csv'
+    )
+  }
+  if (denied)
+    return <p role="alert">Quyền nhập tệp đã bị thu hồi. Không thể tiếp tục phiên nhập.</p>
+
+  return (
+    <ProductImportView
+      view={view}
+      onViewChange={setView}
+      step={step}
+      file={file}
+      busy={busy}
+      commit={commit}
+      inspect={inspect}
+      preview={preview}
+      data={data}
+      form={form}
+      fileError={fileError}
+      commitError={commitError}
+      delimiter={delimiter}
+      selected={selected}
+      importedRows={importedRows}
+      rowsToImport={rowsToImport}
+      conversionCount={conversionCount}
+      confirmationOpen={confirmationOpen}
+      revision={revision}
+      downloadTemplate={downloadTemplate}
+      chooseFile={chooseFile}
+      reset={reset}
+      checkData={checkData}
+      confirmImport={confirmImport}
+      exportReport={exportReport}
+      invalidatePreview={invalidatePreview}
+      setDelimiter={setDelimiter}
+      setStep={setStep}
+      setSelection={setSelection}
+      setConfirmationOpen={setConfirmationOpen}
+      onRetryInspection={() => {
+        logger.warn(formatApiError(inspect.error ?? preview.error))
+        if (inspect.isError) void inspect.refetch()
+        else void checkData()
+      }}
+    />
+  )
+}

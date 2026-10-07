@@ -1,7 +1,6 @@
 'use client'
 
-import { ArrowLeft, Download, FileSpreadsheet, LoaderCircle, Upload } from 'lucide-react'
-import Link from 'next/link'
+import { Download, LoaderCircle } from 'lucide-react'
 import type { Route } from 'next'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -38,6 +37,8 @@ import {
   hasBulkImportExtension,
 } from './bulk-import'
 import { BulkImportResult, type BulkImportResultItem } from './BulkImportResult'
+import { BulkImportHeader } from './BulkImportHeader'
+import { BulkImportFilePicker } from './BulkImportFilePicker'
 
 export interface BulkImportRow {
   readonly rowNumber: number
@@ -228,19 +229,13 @@ export function BulkImportPage<TRow extends BulkImportRow>({
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <Button asChild variant="outline" size="icon">
-            <Link href={backHref} aria-label={backLabel}>
-              <ArrowLeft aria-hidden="true" />
-            </Link>
-          </Button>
-          <div>
-            <p className="text-primary text-xs font-medium">{eyebrow}</p>
-            <h1 className="text-xl font-semibold">{title}</h1>
-            <p className="text-muted-foreground mt-1 text-sm">{description}</p>
-          </div>
-        </div>
+      <BulkImportHeader
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
+        backHref={backHref}
+        backLabel={backLabel}
+      >
         <Button variant="outline" disabled={isDownloadingTemplate} onClick={onDownloadTemplate}>
           {isDownloadingTemplate ? (
             <LoaderCircle className="animate-spin" aria-hidden="true" />
@@ -249,7 +244,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
           )}
           Mẫu XLSX
         </Button>
-      </header>
+      </BulkImportHeader>
 
       {resultItems ? (
         <BulkImportResult
@@ -261,47 +256,13 @@ export function BulkImportPage<TRow extends BulkImportRow>({
           onRestart={resetSession}
         />
       ) : !rows ? (
-        <Card>
-          <CardContent className="flex min-h-72 flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-full">
-              <FileSpreadsheet aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="font-semibold">Chọn tệp {entityLabel}</h2>
-              <p className="text-muted-foreground mt-1 text-sm">
-                XLSX theo mẫu (cũng nhận CSV cùng các cột), tối đa {maxRows} dòng và{' '}
-                {BULK_IMPORT_MAX_FILE_MB} MB.
-              </p>
-            </div>
-            <Button asChild disabled={isPreviewing}>
-              <label htmlFor="bulk-import-file" className="cursor-pointer">
-                {isPreviewing ? (
-                  <LoaderCircle className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <Upload aria-hidden="true" />
-                )}
-                {isPreviewing ? 'Đang kiểm tra tệp…' : 'Tải tệp lên'}
-              </label>
-            </Button>
-            <Input
-              id="bulk-import-file"
-              type="file"
-              className="sr-only"
-              aria-label={`Tệp ${entityLabel}`}
-              accept={BULK_IMPORT_FILE_EXTENSIONS.join(',')}
-              disabled={isPreviewing}
-              onChange={(event) => {
-                void handleFileChange(event.target.files?.[0])
-                event.target.value = ''
-              }}
-            />
-            {fileError ? (
-              <p role="alert" className="text-destructive text-sm">
-                {fileError}
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
+        <BulkImportFilePicker
+          entityLabel={entityLabel}
+          maxRows={maxRows}
+          pending={isPreviewing}
+          error={fileError}
+          onFileChange={(file) => void handleFileChange(file)}
+        />
       ) : (
         <>
           <section aria-label="Tổng quan bản xem trước" className="grid gap-3 sm:grid-cols-3">

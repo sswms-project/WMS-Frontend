@@ -1,7 +1,8 @@
 # Kovia — Import Excel/CSV dùng chung, triển khai VTHH trước
 
 Ngày: **2026-10-07**  
-Trạng thái: **Đã cập nhật theo khuyến nghị review được duyệt; chưa triển khai chức năng.**  
+Trạng thái: **Gate A đã commit. Gate B đã triển khai logic và đạt test/typecheck/lint; chưa chốt nghiệm thu vì production build thiếu bộ nhớ. Gate C chưa bắt đầu.**
+
 Phạm vi: **Backend → Frontend logic → UI/UX**, sau đó mới mở rộng sang NCC/đơn vị nhận hàng.  
 Nhánh làm việc: BE `feat/huytv`, FE `screen/huytv`. Không tự tạo nhánh khác.
 
@@ -9,7 +10,7 @@ Nhánh làm việc: BE `feat/huytv`, FE `screen/huytv`. Không tự tạo nhánh
 
 Người dùng có thể nhập nhiều vật tư hàng hóa từ một file, tự ghép cột, xem lỗi rõ ràng và xác nhận các hàng hợp lệ. Không bắt họ nhập từng sản phẩm hoặc tự chuyển đổi file thành payload API.
 
-Các quyết định dưới đây là phương án cụ thể của spec, đã được người dùng đồng ý cập nhật sau review ngày 2026-10-07. Việc cập nhật tài liệu không khởi động các gate triển khai:
+Các quyết định dưới đây đã được người dùng duyệt sau review ngày 2026-10-07. Người dùng đã cho triển khai Gate A và Gate B; tiến độ và giới hạn kiểm chứng nằm ở mục 13:
 
 | Nội dung      | Quyết định cho phiên bản đầu                                                             |
 | ------------- | ---------------------------------------------------------------------------------------- |
@@ -244,6 +245,7 @@ Preview response cần chứa:
 - `schemaVersion`, sheet/header đã dùng và danh sách mapping/cột bị bỏ qua.
 - `summary`: số sản phẩm, hợp lệ, không hợp lệ, số dòng quy đổi và lỗi toàn file.
 - `rows`: `rowNumber`, `sheetName`, giá trị đã chuẩn hóa, unit/category display và IDs đã resolve; `unitConversions`; `errors`; `warnings`.
+- Mỗi dòng quy đổi giữ `conversionFactor` numeric cho tương thích và thêm `conversionFactorText` dạng decimal invariant do BE tạo. FE dùng chuỗi chuẩn này khi hiển thị, xuất báo cáo và gửi commit để không mất precision khi JSON đi qua JavaScript Number; không tự làm tròn hệ số.
 - Error có `code`, `field`, `message` tiếng Việt và `source` gồm sheet/row/column. Đây là metadata chẩn đoán, không phải quyền thao tác hoặc authorization token.
 - `fileErrors`: lỗi cấu trúc/quan hệ không gắn được vào sản phẩm cụ thể. Khi có lỗi blocking toàn file, không cho commit.
 - Không trả exception stack, SQL hoặc định danh/tên danh mục của tenant khác.
@@ -276,6 +278,7 @@ Mở rộng `ImportProductItemRequest` bằng `rowNumber` tùy chọn và `unitC
 Các UUID trên chỉ minh họa, không phải dữ liệu QA. Giữ response `ApiResponse<Unit>` hiện tại cho commit; sau HTTP thành công FE xây kết quả từ batch được xác nhận, không bịa thành công khi request lỗi.
 
 - Payload cũ không có rowNumber/unitConversions vẫn hoạt động, theo giới hạn và validator được chốt.
+- `conversionFactor` nhận số JSON như cũ hoặc chuỗi decimal chuẩn từ preview. Chỉ property này cho phép đọc số từ chuỗi; BE vẫn deserialize thành decimal và kiểm tra precision/range như trước. FE mới ưu tiên `conversionFactorText`, chỉ fallback numeric khi nối BE cũ không trả chuỗi. Ví dụ `999999999999.123456` không bị biến thành giá trị khác trên đường FE → BE.
 - Không tin `errors: []`, ID từ preview hoặc bảng chọn FE: handler lưu kiểm tra lại tất cả field, quyền hiệu lực, tenant, đơn vị/nhóm active, SKU trùng và quy đổi.
 - Giới hạn cả endpoint JSON trực tiếp: tối đa 500 items và 2.000 conversion, chống đi vòng giới hạn upload.
 - Có quyền import được tạo quy đổi của **sản phẩm mới trong cùng batch**, không được cập nhật quy đổi của hàng đã có.
@@ -383,19 +386,21 @@ Trạng thái hữu hạn: `SelectFile → Inspecting → Mapping → Previewing
 
 ### 6.5. Kiểm thử và điểm dừng Gate B
 
-- [ ] File/type/size/schema/version/options validation; template download error.
-- [ ] `/products/import` đi vào route literal, không bị coi là productId; quyền import có/không/loading/thu hồi được kiểm tra độc lập guard vai trò theo tiền tố, không gọi API trái capability.
-- [ ] Header suggestions và mapping ambiguous/required/duplicate/ignored columns.
-- [ ] File A → B và response A đến trễ; back/đổi cấu hình không dùng preview cũ.
-- [ ] Group parent/conversion; counts chính xác; lỗi child, orphan và warning sheet bỏ qua.
-- [ ] Checkbox ba trạng thái, visible-page select, explicit select-all, selection qua filter/page và invalid disabled.
-- [ ] Không cho commit 0 items/fileErrors; xác nhận chỉ gửi đúng các DTO của hàng được chọn.
-- [ ] Pending chống double-click; success, 400/409/403, network unknown; không auto retry.
-- [ ] Export injection/quote/newline, tải đúng toàn báo cáo; invalidate thay vì reload toàn trang.
-- [ ] Bảo vệ rời trang; dữ liệu tenant/file không persist trên máy dùng chung.
+- [x] File/type/size/schema/version/options validation; template download error.
+- [x] Route literal đã đối chiếu source/typegen; kiểm thử quyền import có/không/loading/thu hồi độc lập guard vai trò, không gọi import API trái capability. HTTP/browser route acceptance còn ở Gate C.
+- [x] Header suggestions và mapping ambiguous/required/duplicate/ignored columns.
+- [x] File A → B và response A đến trễ; back/đổi cấu hình không dùng preview cũ.
+- [x] Group parent/conversion; counts chính xác; lỗi child, orphan và warning sheet bỏ qua.
+- [x] Checkbox ba trạng thái, visible-page select, explicit select-all, selection qua filter/page và invalid disabled.
+- [x] Không cho commit 0 items/fileErrors; xác nhận chỉ gửi đúng các DTO của hàng được chọn.
+- [x] Pending chống double-click; success, 400/409/403, network unknown; không auto retry.
+- [x] Export injection/quote/newline, tải đúng toàn báo cáo; invalidate thay vì reload toàn trang; giữ chính xác decimal từ preview tới payload/report.
+- [x] Guard rời trang đã triển khai; unit test kiểm tra link/reload và không persist dữ liệu file. Browser Back/Forward thực tế còn phải QA ở Gate C.
 - [ ] NCC/đơn vị nhận hàng vẫn preview/import được qua public contract cũ; nhân sự giữ job riêng.
 - [ ] Chạy `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`; ghi rõ mọi lỗi/tài nguyên thiếu, không gọi compile một phần là build đạt.
-- [ ] GitNexus impact/detect changes theo AGENTS, báo đúng callers ảnh hưởng.
+- [x] GitNexus impact/detect changes theo AGENTS, đối chiếu callers NCC/đơn vị nhận hàng và source mới ngoài index.
+
+Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typecheck và lint đạt. `pnpm build` (Turbopack mặc định) thất bại do thiếu bộ nhớ, chưa có build đạt. Regression tự động shared import đã chạy trong toàn bộ suite; chưa thực hiện live import NCC/đơn vị nhận hàng. Không đánh dấu hoàn tất Gate B khi build vẫn bị chặn.
 
 **Dừng sau Gate B:** báo logic/contract/test đã đạt, phần UI/QA chưa xong và chờ lệnh sang Gate C.
 
@@ -544,20 +549,20 @@ Trạng thái hữu hạn: `SelectFile → Inspecting → Mapping → Previewing
 - [x] Người dùng đồng ý cập nhật theo khuyến nghị review: quy tắc Number/Text, ưu tiên mã và không Symbol, bỏ decimalSeparator, guard quyền import và collation, lỗi đầu tiên/re-preview, ví dụ mẫu dòng 1; gộp schema vào inspect để giảm endpoint.
 - [x] Giữ chặn dòng quy đổi mồ côi trong v1; chưa thêm cơ chế bỏ riêng từng dòng. Giữ báo cáo theo phạm vi ban đầu.
 - [x] Gate A Backend: source, contract, build và kiểm thử cô lập đã hoàn tất; hạn chế live QA ghi ở dưới.
-- [ ] Gate B Frontend logic.
+- [ ] Gate B Frontend logic: đã triển khai và đạt kiểm thử tự động/typecheck/lint; còn production build do thiếu bộ nhớ.
 - [ ] Gate C UI/UX và QA.
 - [ ] Gate D NCC/đơn vị nhận hàng nếu được yêu cầu riêng.
 
 ### 13.1. Gate A đã thực hiện
 
-- Nhánh giữ nguyên: BE `feat/huytv`, FE `screen/huytv`. Chỉ sửa source BE và tài liệu spec này; chưa sửa source FE.
+- Tại mốc Gate A, nhánh giữ nguyên: BE `feat/huytv`, FE `screen/huytv`. Chỉ sửa source BE và tài liệu spec này; source FE triển khai ở Gate B bên dưới.
 - Reader metadata dùng chung giữ nguyên entry point string-only cũ; XLSX theo relationships, CSV hỗ trợ multiline/escaped quote và số dòng vật lý. Áp dụng giới hạn byte/archive/sheet/row/column/cell; cấm DTD/external worksheet/công thức trong vùng được chọn.
 - Mẫu basic/full header-only, cột SKU định dạng Text, sheet hướng dẫn riêng; overload template NCC/đơn vị nhận hàng/nhân sự vẫn tương thích.
 - Inspect/schema/preview có source errors, mapping index, tra cứu mã trước tên, tenant/active guards, SKU Text, Number/Text factor, quy đổi gắn parent, orphan blocking và warnings khi bỏ cột/sheet.
 - JSON commit cũ nhận thêm metadata nguồn và quy đổi tùy chọn; giới hạn 500/2.000, revalidation, audit và một lần SaveChanges; giữ response cũ và xử lý conflict.
 - Đã xử lý phát hiện collation bằng truy vấn SKU batch SELECT trong Infrastructure, không migration. Probe chỉ đọc gọi chính reader production với tenant rỗng và các SKU kiểm thử để xác minh duplicate khác dấu và parameter hóa; không tạo hàng QA.
 
-### 13.2. Kết quả kiểm tra thực tế
+### 13.2. Kết quả kiểm tra thực tế tại mốc Gate A
 
 - Build solution .NET 10 đạt; bản cuối không có warning/error. Toàn bộ Application tests: **911 passed, 1 skipped, 0 failed**; có **70 case mới** thuộc hai file `ProductImportFileTests` và `ProductImportWorkflowTests`.
 - Test SQL Server capacity-lock opt-in bỏ qua vì không cấp connection tới DB SQL fixture riêng. Không dùng `db71143` để chạy test ghi SQL/concurrency.
@@ -569,6 +574,20 @@ Trạng thái hữu hạn: `SelectFile → Inspecting → Mapping → Previewing
 
 ### 13.3. Điểm tiếp tục và giới hạn usage
 
-- Dừng sau Gate A theo spec. Chờ lệnh để sang **Gate B**: types/API hooks, session/mapping/selection, route guard `P.PRODUCTS_IMPORT`, wizard dùng chung và regression FE. Sau đó Gate C UI/UX/browser QA; Gate D chưa được triển khai.
-- Chưa commit/push/PR; giữ các thay đổi uncommitted để người dùng review/chỉ định commit. Không động vào `.playwright-cli/` hoặc `skills-lock.json` có sẵn ở FE.
-- Theo yêu cầu người dùng, kiểm tra usage định kỳ: nếu cửa sổ quota khả dụng nào còn **≤5%**, cập nhật mục này với việc đã làm/chưa làm và kết quả test gần nhất rồi dừng. Lần kiểm tra gần nhất hiện còn **39% cửa sổ 5 giờ**, **77% tuần**; không dừng vì chạm ngưỡng quota, mà vì đã tới điểm dừng Gate A.
+- Người dùng đã cho sang Gate B. Logic đã triển khai, nhưng chưa chốt nghiệm thu do production build thiếu bộ nhớ; cần chạy lại build khi đủ tài nguyên. Chưa sang Gate C UI/UX/browser QA hoặc Gate D.
+- Đã commit phần trước theo yêu cầu: BE `e15c3f2` (Gate A), FE `7b15491` (spec và kết quả Gate A). Người dùng tiếp tục yêu cầu commit riêng source Gate B và bổ sung decimal contract BE; mã commit của lượt này xem Git log từng repo. Chưa push/PR. Không động vào `.playwright-cli/` hoặc `skills-lock.json` có sẵn ở FE.
+- Theo yêu cầu người dùng, kiểm tra usage định kỳ: nếu cửa sổ quota khả dụng nào còn **≤5%**, cập nhật mục này với việc đã làm/chưa làm và kết quả test gần nhất rồi dừng. Lần kiểm tra gần nhất còn **10% cửa sổ 5 giờ**, **73% tuần**; chưa chạm ngưỡng. Điểm bàn giao hiện tại là Gate B bị chặn ở kiểm chứng build, không phải dừng do quota.
+
+### 13.4. Gate B đã thực hiện và kiểm chứng
+
+- Thêm workspace `/products/import` và nút “Nhập từ tệp” theo quyền hiệu lực `P.PRODUCTS_IMPORT`; loading/denied không mount workflow gọi API. Phiên được tách theo tenant/user; 403 khóa thao tác.
+- Service multipart inspect/preview, mẫu basic/full, RHF/Zod mapping theo schema BE; CSV delimiter auto/comma/semicolon/tab, không decimalSeparator. File và metadata không lưu localStorage/Zustand; query cache phiên có `gcTime: 0`, cancel request và generation/revision ngăn response cũ.
+- Preview chọn sản phẩm cha hợp lệ cùng toàn bộ quy đổi; checkbox ba trạng thái theo trang và nút chọn toàn bộ tệp riêng. Search/filter/pagination chỉ thay view, không mất selection. Lỗi child/file blocking chặn commit, warnings bỏ sheet/cột phải hiện trong xác nhận.
+- Commit có ref lock chống gửi hai lần, không retry; 400/409/422 yêu cầu kiểm tra lại, network/HTTP không chắc kết quả không báo thành công giả. Thành công invalidate product/query keys, không reload trang. Xuất CSV toàn tệp có source/errors/conversions, BOM, quote/newline và bảo vệ formula injection.
+- Tách `BulkImportHeader`/`BulkImportFilePicker` dùng chung; giữ props và API flow NCC/đơn vị nhận hàng. `BulkImportResult` chỉ thêm callback export tùy chọn. Không dependency mới hoặc generic import engine; common UI không chứa API theo entity string.
+- Bổ sung nhỏ BE cho Gate B: preview thêm chuỗi decimal invariant `conversionFactorText`, commit nhận chuỗi hoặc numeric tại đúng property factor. Thêm **4 test tương thích/precision**; build solution **0 warnings / 0 errors**, toàn bộ Application **915 passed / 1 opt-in SQL Server test skipped / 0 failed**. Không entity/model/migration thay đổi.
+- FE thêm **38 test** (34 page/logic, 4 service). Lượt toàn bộ cuối chạy một worker, không chạy song song tác vụ nặng: **84 files / 441 tests passed**. `pnpm typecheck` và `pnpm lint` đạt trên source cuối.
+- `pnpm build` mặc định thất bại với `Fatal process out of memory: Zone` / `Committing semi space failed`. Một lượt Vitest hai worker chạy đồng thời build cũng lỗi worker do tài nguyên; không coi lượt đó đạt, đã chạy lại toàn bộ một worker và đạt. Không đổi bundler/project/dependency để né kiểm chứng, không xóa cache/ổ C hoặc dừng process ngoài task.
+- GitNexus pre-impact shared import Low: hai caller NCC/đơn vị nhận hàng, giữ public contracts. Detect FE Medium trên các symbol tracked và hai flow dự kiến; BE decimal follow-up Low. Symbol/file mới ngoài index được kiểm tra trực tiếp; thiếu FTS không được coi là bằng chứng không có caller.
+- Đã rà source accessibility theo Web Interface Guidelines: nút chọn tệp thật dùng bàn phím, label/control, focus, giữ selection khi pending và sticky table header. Đây là self-verification, không independent approval; chưa browser QA desktop/tablet/mobile/zoom/reduced motion, Back/Forward hoặc live permission/race/write acceptance.
+- Toàn bộ artifacts/temp/test results ở `D:/Kovia-QA/product-import-20261007`. Không khởi động BE/FE, không kết nối/ghi DB deploy ở Gate B, không migration/seed/cleanup. Giữ nguyên các nhánh làm việc.

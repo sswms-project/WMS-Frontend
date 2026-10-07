@@ -233,6 +233,7 @@ export interface ProductLotImpact {
 }
 
 export interface ImportProductItemRequest {
+  rowNumber?: number
   sku: string
   productName: string
   description?: string | null
@@ -240,6 +241,12 @@ export interface ImportProductItemRequest {
   categoryId: string
   isLotTracked?: boolean
   shelfLifeDays?: number | null
+  unitConversions?: {
+    unitId: string
+    conversionFactor: number | string
+    sourceRowNumber: number
+    sourceSheetName: string
+  }[]
 }
 
 export interface ImportProductsRequest {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Package, PackagePlus } from 'lucide-react'
@@ -247,8 +248,13 @@ export default function ProductListPage() {
             <h1 className="mt-0.5 text-xl font-semibold">Danh mục vật tư hàng hóa</h1>
           </div>
         </div>
-        {canCreate && (
+        {(canCreate || permissions.has(P.PRODUCTS_IMPORT)) && (
           <div className="flex items-center gap-2">
+            {permissions.has(P.PRODUCTS_IMPORT) ? (
+              <Button asChild variant="outline">
+                <Link href={APP_ROUTES.productImport}>Nhập từ Excel/CSV</Link>
+              </Button>
+            ) : null}
             {canCreate && (
               <Button
                 type="button"

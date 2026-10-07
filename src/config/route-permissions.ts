@@ -1,5 +1,10 @@
 import { APP_ROUTES } from '@/routes/app-routes'
 import { USER_ROLES, type UserRole } from './roles'
+import { P } from './permissionCodes'
+
+export const ROUTE_CAPABILITIES = {
+  [APP_ROUTES.productImport]: P.PRODUCTS_IMPORT,
+} as const
 
 interface RoutePermission {
   pathPrefix: string

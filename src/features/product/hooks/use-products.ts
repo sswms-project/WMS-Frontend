@@ -309,11 +309,13 @@ export function useGenerateBarcodeMutation(id: string) {
 export function useImportProductsMutation() {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiErrorResponse, ImportProductsRequest>({
+    retry: false,
+    gcTime: 0,
     mutationFn: (request) => productService.importProducts(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all })
     },
-    onError: (error) => logger.error(formatApiError(error)),
+    onError: (error) => logger.warn(formatApiError(error)),
   })
 }
 

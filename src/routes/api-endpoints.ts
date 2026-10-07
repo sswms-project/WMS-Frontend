@@ -324,6 +324,9 @@ export const API_ENDPOINTS = {
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
     import: '/products/import',
+    importTemplate: '/products/import/template',
+    importInspect: '/products/import/inspect',
+    importPreview: '/products/import/preview',
   },
   payments: {
     history: '/payments',

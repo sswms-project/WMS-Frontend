@@ -27,6 +27,7 @@ interface BulkImportResultProps {
   readonly resultFileName: string
   readonly items: readonly BulkImportResultItem[]
   readonly onRestart: () => void
+  readonly onExport?: () => void
 }
 
 export function BulkImportResult({
@@ -36,11 +37,16 @@ export function BulkImportResult({
   resultFileName,
   items,
   onRestart,
+  onExport,
 }: BulkImportResultProps) {
   const importedCount = items.filter((item) => item.isImported).length
   const skippedCount = items.length - importedCount
 
   function exportResults() {
+    if (onExport) {
+      onExport()
+      return
+    }
     const csv = bulkImportResultsCsv(items)
     const blob = new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), csv], {
       type: 'text/csv;charset=utf-8',
