@@ -3,7 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
@@ -64,6 +65,7 @@ export default function InboundRequestFormPage({
   readonly inboundRequestId?: string
 }) {
   const router = useRouter()
+  const codeSessionKey = useId()
   const isOwner = useAuthStore((state) => state.user?.role === USER_ROLES.TenantOwner)
   const meQuery = useMeQuery()
   const canAssign =
@@ -117,21 +119,22 @@ export default function InboundRequestFormPage({
   const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
   const detailQuery = useInboundRequestQuery(inboundRequestId ?? '')
   const actionsQuery = useInboundRequestAllowedActionsQuery(inboundRequestId ?? '')
-  const nextCodeQuery = useNextInboundRequestCodeQuery(!isEditing)
+  const nextCodeQuery = useNextInboundRequestCodeQuery(!isEditing, codeSessionKey)
   const codeMutation = useUpdateInboundRequestCodeMutation()
   const codeForm = useForm<InboundRequestCodeFormValues>({
     resolver: zodResolver(inboundRequestCodeSchema),
     defaultValues: { inboundRequestCode: '', reason: '' },
   })
-  useEffect(() => {
-    if (
-      !isEditing &&
-      nextCodeQuery.data &&
-      !form.getFieldState('inboundRequestCode').isDirty &&
-      !form.getValues('inboundRequestCode')
-    )
-      form.setValue('inboundRequestCode', nextCodeQuery.data)
-  }, [form, isEditing, nextCodeQuery.data])
+  const codeSuggestion = useCodeSuggestion({
+    active: !isEditing,
+    sessionKey: codeSessionKey,
+    suggestedCode: nextCodeQuery.data,
+    isFetching: nextCodeQuery.isFetching,
+    isError: nextCodeQuery.isError,
+    getCurrentCode: () => form.getValues('inboundRequestCode'),
+    applyCode: (code) =>
+      form.setValue('inboundRequestCode', code, { shouldValidate: form.formState.isSubmitted }),
+  })
   const warehousesQuery = useWarehousesQuery({
     top: LOOKUP_PAGE_SIZE,
     skip: 0,
@@ -441,6 +444,17 @@ export default function InboundRequestFormPage({
   return (
     <>
       <InboundRequestForm
+        codeDescription={!isEditing ? 'Mã được gợi ý, có thể chỉnh sửa.' : undefined}
+        codeSuggestionStatus={
+          !isEditing
+            ? nextCodeQuery.isFetching
+              ? 'loading'
+              : nextCodeQuery.isError
+                ? 'error'
+                : 'ready'
+            : undefined
+        }
+        onCodeChange={codeSuggestion.markEdited}
         onEditCode={
           isEditing && actionsQuery.data?.allowedActions.includes('UpdateCode')
             ? () => setEditCodeOnly(true)

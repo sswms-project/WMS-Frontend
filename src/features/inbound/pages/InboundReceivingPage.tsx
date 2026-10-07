@@ -4,7 +4,8 @@ import { getRemainingReceiptQuantity } from '../utils/receipt-units'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
@@ -87,7 +88,9 @@ export default function InboundReceivingPage() {
   const [draftReceiptId, setDraftReceiptId] = useState<string | null>(null)
   const [isDiscardImportOpen, setIsDiscardImportOpen] = useState(false)
   const initializedImportIdRef = useRef('')
-  const receiptCodeEditedRef = useRef(false)
+  const codeInstanceId = useId()
+  const [codeSession, setCodeSession] = useState(0)
+  const codeSessionKey = `${codeInstanceId}:${codeSession}`
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useReceivingTasksQuery({
     pageNumber: page,
@@ -125,22 +128,17 @@ export default function InboundReceivingPage() {
     resolver: zodResolver(goodsReceiptSchema),
     defaultValues: { inboundRequestId: '', receiptCode: '', lines: [] },
   })
-  const nextCodeQuery = useNextGoodsReceiptCodeQuery(Boolean(selectedTask))
-
-  useEffect(() => {
-    if (
-      selectedTask &&
-      nextCodeQuery.data &&
-      !nextCodeQuery.isFetching &&
-      !nextCodeQuery.isError &&
-      !receiptCodeEditedRef.current &&
-      !form.getValues('receiptCode')
-    ) {
-      form.setValue('receiptCode', nextCodeQuery.data, {
-        shouldValidate: form.formState.isSubmitted,
-      })
-    }
-  }, [selectedTask, nextCodeQuery.data, nextCodeQuery.isFetching, nextCodeQuery.isError, form])
+  const nextCodeQuery = useNextGoodsReceiptCodeQuery(Boolean(selectedTask), codeSessionKey)
+  const codeSuggestion = useCodeSuggestion({
+    active: Boolean(selectedTask),
+    sessionKey: codeSessionKey,
+    suggestedCode: nextCodeQuery.data,
+    isFetching: nextCodeQuery.isFetching,
+    isError: nextCodeQuery.isError,
+    getCurrentCode: () => form.getValues('receiptCode'),
+    applyCode: (code) =>
+      form.setValue('receiptCode', code, { shouldValidate: form.formState.isSubmitted }),
+  })
   const importForm = useForm<InboundDocumentReviewFormValues>({
     resolver: zodResolver(inboundDocumentReviewSchema),
     defaultValues: { inboundRequestId: '', acknowledgeWarehouseMismatch: false, lines: [] },
@@ -175,7 +173,8 @@ export default function InboundReceivingPage() {
       return
     }
     setSelectedTask(task)
-    receiptCodeEditedRef.current = false
+    codeSuggestion.resetSession()
+    setCodeSession((value) => value + 1)
     form.reset({
       inboundRequestId: task.inboundRequestId,
       receiptCode: '',
@@ -469,9 +468,7 @@ export default function InboundReceivingPage() {
       <ReceiveGoodsDialog
         isLoadingCode={nextCodeQuery.isFetching}
         isCodeSuggestionError={nextCodeQuery.isError}
-        onReceiptCodeChange={() => {
-          receiptCodeEditedRef.current = true
-        }}
+        onReceiptCodeChange={codeSuggestion.markEdited}
         task={selectedTask}
         form={form}
         isPending={isPending}

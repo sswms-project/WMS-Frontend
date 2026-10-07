@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { ArrowLeft, Plus, Trash2, UserPlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useId, useState } from 'react'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -43,6 +44,9 @@ const EMPTY_LINE = { productId: '', quantity: 1 }
 export default function StockIssueRequestCreatePage() {
   const router = useRouter()
   const [quickStockRecipientOpen, setQuickStockRecipientOpen] = useState(false)
+  const codeInstanceId = useId()
+  const [codeSession, setCodeSession] = useState(0)
+  const codeSessionKey = `${codeInstanceId}:${codeSession}`
   const [stockRecipientSearch, setStockRecipientSearch] = useState('')
   const [productSearch, setProductSearch] = useState('')
   const [createdStockRecipient, setCreatedStockRecipient] = useState<{
@@ -66,7 +70,7 @@ export default function StockIssueRequestCreatePage() {
     resolver: zodResolver(stockRecipientSchema),
     defaultValues: emptyStockRecipientFormValues,
   })
-  const nextRecipientCode = useNextStockRecipientCodeQuery(quickStockRecipientOpen)
+  const nextRecipientCode = useNextStockRecipientCodeQuery(quickStockRecipientOpen, codeSessionKey)
   const selectedStockRecipientId = useWatch({ control: form.control, name: 'stockRecipientId' })
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'lines' })
   const warehouses = useWarehousesQuery({ top: 100, skip: 0, needTotalCount: true, isActive: true })
@@ -90,20 +94,18 @@ export default function StockIssueRequestCreatePage() {
   const createOrder = useCreateStockIssueRequestMutation()
   const createStockRecipient = useCreateStockRecipientMutation()
 
-  useEffect(() => {
-    if (
-      !quickStockRecipientOpen ||
-      !nextRecipientCode.data?.data ||
-      stockRecipientForm.getFieldState('recipientCode').isDirty
-    ) {
-      return
-    }
-    if (!stockRecipientForm.getValues('recipientCode')) {
-      stockRecipientForm.setValue('recipientCode', nextRecipientCode.data.data, {
-        shouldDirty: false,
-      })
-    }
-  }, [quickStockRecipientOpen, nextRecipientCode.data?.data, stockRecipientForm])
+  const codeSuggestion = useCodeSuggestion({
+    active: quickStockRecipientOpen,
+    sessionKey: codeSessionKey,
+    suggestedCode: nextRecipientCode.data?.data,
+    isFetching: nextRecipientCode.isFetching,
+    isError: nextRecipientCode.isError,
+    getCurrentCode: () => stockRecipientForm.getValues('recipientCode'),
+    applyCode: (code) =>
+      stockRecipientForm.setValue('recipientCode', code, {
+        shouldValidate: stockRecipientForm.formState.isSubmitted,
+      }),
+  })
 
   async function submit(values: CreateStockIssueRequestFormValues) {
     try {
@@ -185,6 +187,8 @@ export default function StockIssueRequestCreatePage() {
                 size="sm"
                 onClick={() => {
                   stockRecipientForm.reset(emptyStockRecipientFormValues)
+                  codeSuggestion.resetSession()
+                  setCodeSession((value) => value + 1)
                   setQuickStockRecipientOpen(true)
                 }}
               >
@@ -323,6 +327,10 @@ export default function StockIssueRequestCreatePage() {
         form={stockRecipientForm}
         isPending={createStockRecipient.isPending}
         isCreate
+        codeSuggestionStatus={
+          nextRecipientCode.isFetching ? 'loading' : nextRecipientCode.isError ? 'error' : 'ready'
+        }
+        onCodeChange={codeSuggestion.markEdited}
         onOpenChange={setQuickStockRecipientOpen}
         onSubmit={(values) => void quickCreate(values)}
       />

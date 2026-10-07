@@ -23,11 +23,12 @@ export function useSuppliersQuery(params: SupplierListQuery) {
   })
 }
 
-export function useNextSupplierCodeQuery(enabled: boolean) {
+export function useNextSupplierCodeQuery(enabled: boolean, sessionKey?: string) {
   return useQuery<ApiResponse<string>, ApiErrorResponse>({
-    queryKey: queryKeys.suppliers.nextCode,
+    queryKey: [...queryKeys.suppliers.nextCode, sessionKey ?? null],
     queryFn: supplierService.getNextSupplierCode,
     enabled,
+    staleTime: 0,
   })
 }
 

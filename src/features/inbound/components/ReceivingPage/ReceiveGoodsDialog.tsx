@@ -1,6 +1,7 @@
 'use client'
 
 import { Save, Send } from 'lucide-react'
+import { BusinessCodeField } from '@/components/forms/BusinessCodeField'
 import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -71,45 +72,31 @@ export function ReceiveGoodsDialog({
         {task ? (
           <div className="flex flex-col gap-3">
             <div className="bg-muted grid gap-3 border p-3 text-sm sm:grid-cols-2">
-              <Field data-invalid={Boolean(errors.receiptCode)}>
-                <FieldLabel htmlFor="receipt-code">Mã phiếu nhận *</FieldLabel>
-                <Input
-                  {...register('receiptCode', { onChange: onReceiptCodeChange })}
-                  id="receipt-code"
-                  required
-                  maxLength={100}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={isLoadingCode ? 'Đang gợi ý mã…' : 'VD: PN000001…'}
-                  readOnly={!canEditReceivedQuantity}
-                  disabled={isPending}
-                  aria-invalid={Boolean(errors.receiptCode)}
-                  aria-describedby={
-                    [
-                      canEditReceivedQuantity && 'receipt-code-help',
-                      errors.receiptCode && 'receipt-code-error',
-                      isCodeSuggestionError && 'receipt-code-suggestion-error',
-                    ]
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                />
-                {canEditReceivedQuantity ? (
-                  <p id="receipt-code-help" className="text-muted-foreground text-xs">
-                    Mã được gợi ý, có thể chỉnh sửa.
-                  </p>
-                ) : null}
-                <FieldError id="receipt-code-error" errors={[errors.receiptCode]} />
-                {isCodeSuggestionError ? (
-                  <p
-                    id="receipt-code-suggestion-error"
-                    role="alert"
-                    className="text-destructive text-xs"
-                  >
-                    Không thể gợi ý mã. Bạn có thể nhập mã thủ công.
-                  </p>
-                ) : null}
-              </Field>
+              <BusinessCodeField
+                label="Mã phiếu nhận *"
+                error={errors.receiptCode}
+                description={
+                  canEditReceivedQuantity ? 'Mã được gợi ý, có thể chỉnh sửa.' : undefined
+                }
+                suggestionStatus={
+                  mode === 'create'
+                    ? isLoadingCode
+                      ? 'loading'
+                      : isCodeSuggestionError
+                        ? 'error'
+                        : 'ready'
+                    : undefined
+                }
+                inputProps={{
+                  ...register('receiptCode', { onChange: onReceiptCodeChange }),
+                  id: 'receipt-code',
+                  required: true,
+                  maxLength: 100,
+                  placeholder: 'VD: PN000001…',
+                  readOnly: !canEditReceivedQuantity,
+                  disabled: isPending,
+                }}
+              />
               <dl className="contents">
                 <div>
                   <dt className="text-muted-foreground text-xs">Mã yêu cầu</dt>

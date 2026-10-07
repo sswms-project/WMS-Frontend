@@ -161,9 +161,9 @@ function useInvalidateInbound() {
   }
 }
 
-export function useNextGoodsReceiptCodeQuery(enabled: boolean) {
+export function useNextGoodsReceiptCodeQuery(enabled: boolean, sessionKey?: string) {
   return useQuery({
-    queryKey: queryKeys.goodsReceipts.nextCode,
+    queryKey: [...queryKeys.goodsReceipts.nextCode, sessionKey ?? null],
     queryFn: () => inboundService.getNextReceiptCode().then((response) => response.data),
     enabled,
     staleTime: 0,
