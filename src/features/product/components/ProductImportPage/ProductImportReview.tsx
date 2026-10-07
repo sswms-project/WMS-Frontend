@@ -36,6 +36,7 @@ export function ProductImportReview({
   onSelectionChange,
   view,
   onViewChange,
+  onExport,
 }: {
   readonly preview: ProductImportPreview
   readonly selected: readonly number[]
@@ -43,6 +44,7 @@ export function ProductImportReview({
   readonly onSelectionChange: (selected: number[]) => void
   readonly view: ProductImportReviewFilters
   readonly onViewChange: (view: ProductImportReviewFilters) => void
+  readonly onExport: () => void
 }) {
   const { search, status, page, pageSize } = view
   const valid = preview.rows.filter(isValidProductImportRow).map((row) => row.rowNumber)
@@ -57,20 +59,36 @@ export function ProductImportReview({
   const blocked = pending || preview.fileErrors.length > 0 || preview.schemaVersion !== 1
   return (
     <>
-      {[...preview.fileErrors, ...preview.warnings].map((issue, index) => (
+      {preview.fileErrors.length || preview.warnings.length ? (
         <Alert
-          key={`${issue.code}:${index}`}
-          variant={preview.fileErrors.includes(issue) ? 'destructive' : 'default'}
+          id="product-import-file-issues"
+          className="shrink-0"
+          variant={preview.fileErrors.length ? 'destructive' : 'default'}
         >
           <AlertTitle>
-            {preview.fileErrors.includes(issue) ? 'Không thể nhập tệp' : 'Lưu ý trước khi nhập'}
+            {preview.fileErrors.length ? 'Không thể nhập tệp' : 'Lưu ý trước khi nhập'}
           </AlertTitle>
-          <AlertDescription>{issue.message}</AlertDescription>
+          <AlertDescription className="min-w-0">
+            <details>
+              <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
+                {preview.fileErrors.length} lỗi tệp · {preview.warnings.length} cảnh báo — xem chi
+                tiết
+              </summary>
+              <ul className="mt-2 flex max-h-32 flex-col gap-2 overflow-auto wrap-anywhere whitespace-normal">
+                {[...preview.fileErrors, ...preview.warnings].map((issue, index) => (
+                  <li key={index}>
+                    {issue.source ? `${issue.source.sheetName}:${issue.source.rowNumber} — ` : ''}
+                    {issue.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </AlertDescription>
         </Alert>
-      ))}
+      ) : null}
       <OperationalListPanel aria-label="Bản xem trước vật tư hàng hóa">
-        <div className="flex shrink-0 flex-wrap items-center gap-3 border-b p-3">
-          <p className="text-sm" aria-live="polite">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b p-3">
+          <p className="basis-full text-sm tabular-nums xl:basis-auto" aria-live="polite">
             Đã chọn {selectedProductImportRows(preview, selected).length} sản phẩm hợp lệ ·{' '}
             {valid.length} hợp lệ · {preview.rows.length - valid.length} lỗi
           </p>
@@ -78,7 +96,7 @@ export function ProductImportReview({
             aria-label="Tìm trong bản xem trước"
             placeholder="Tìm mã, tên hàng…"
             value={search}
-            className="sm:w-64"
+            className="min-w-0 flex-1 basis-40 sm:w-64 sm:flex-none sm:basis-auto"
             onChange={(event) => {
               onViewChange({ ...view, search: event.target.value, page: 1 })
             }}
@@ -101,10 +119,16 @@ export function ProductImportReview({
           <Button
             variant="outline"
             size="sm"
+            aria-label="Chọn toàn bộ sản phẩm hợp lệ của tệp"
             disabled={blocked || !valid.length}
             onClick={() => onSelectionChange(valid)}
           >
-            Chọn toàn bộ sản phẩm hợp lệ của tệp
+            <span className="sm:hidden">Chọn tất cả hợp lệ</span>
+            <span className="hidden sm:inline">Chọn toàn bộ sản phẩm hợp lệ của tệp</span>
+          </Button>
+          <Button variant="outline" size="sm" aria-label="Xuất báo cáo toàn tệp" onClick={onExport}>
+            <span className="sm:hidden">Xuất báo cáo</span>
+            <span className="hidden sm:inline">Xuất báo cáo toàn tệp</span>
           </Button>
         </div>
         <Table>
@@ -123,12 +147,12 @@ export function ProductImportReview({
                 />
               </TableHead>
               <TableHead>Dòng nguồn</TableHead>
+              <TableHead>Kiểm tra / Chi tiết lỗi</TableHead>
               <TableHead>Mã hàng</TableHead>
               <TableHead>Tên hàng</TableHead>
               <TableHead>ĐVT chính</TableHead>
               <TableHead>Nhóm hàng</TableHead>
               <TableHead>Quy đổi</TableHead>
-              <TableHead>Kiểm tra</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,6 +168,13 @@ export function ProductImportReview({
                   <TableCell>
                     <Checkbox
                       aria-label={`Chọn dòng ${row.rowNumber}`}
+                      aria-describedby={
+                        preview.fileErrors.length
+                          ? 'product-import-file-issues'
+                          : !isValidProductImportRow(row)
+                            ? `import-row-${row.rowNumber}-errors`
+                            : undefined
+                      }
                       checked={selected.includes(row.rowNumber)}
                       disabled={blocked || !isValidProductImportRow(row)}
                       onCheckedChange={(checked) =>
@@ -153,58 +184,97 @@ export function ProductImportReview({
                       }
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-48 wrap-anywhere whitespace-normal">
                     {row.sheetName}:{row.rowNumber}
                   </TableCell>
-                  <TableCell className="font-mono">{row.sku}</TableCell>
-                  <TableCell className="min-w-48 break-words whitespace-normal">
-                    {row.productName}
+                  <TableCell className="max-w-96 min-w-48 wrap-anywhere whitespace-normal">
+                    <Badge variant={isValidProductImportRow(row) ? 'default' : 'destructive'}>
+                      {isValidProductImportRow(row) ? 'Hợp lệ' : 'Không hợp lệ'}
+                    </Badge>
+                    {!isValidProductImportRow(row) || row.warnings.length ? (
+                      <details id={`import-row-${row.rowNumber}-errors`} className="mt-1 text-xs">
+                        <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
+                          {row.errors.length +
+                            row.unitConversions.reduce(
+                              (count, child) => count + child.errors.length,
+                              0
+                            )}{' '}
+                          lỗi · {row.warnings.length} cảnh báo. Không thể chọn dòng có lỗi.
+                        </summary>
+                        <div className="max-h-48 overflow-auto">
+                          {[
+                            ...row.errors,
+                            ...row.unitConversions.flatMap((child) => child.errors),
+                            ...row.warnings,
+                          ].map((issue, index) => (
+                            <p key={index} className="mt-1">
+                              {issue.source
+                                ? `${issue.source.sheetName}:${issue.source.rowNumber} — `
+                                : ''}
+                              {issue.message}
+                            </p>
+                          ))}
+                        </div>
+                      </details>
+                    ) : null}
                   </TableCell>
-                  <TableCell>{row.unit?.name ?? row.unitValue}</TableCell>
-                  <TableCell>{row.category?.name ?? row.categoryValue}</TableCell>
-                  <TableCell className="min-w-56">
+                  <TableCell className="max-w-48 font-mono wrap-anywhere whitespace-normal">
+                    {row.sku}
+                  </TableCell>
+                  <TableCell className="max-w-80 min-w-48 wrap-anywhere whitespace-normal">
+                    <p className="line-clamp-2" title={row.productName}>
+                      {row.productName}
+                    </p>
+                    <details className="text-muted-foreground mt-1 text-xs">
+                      <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
+                        Thông tin bổ sung
+                      </summary>
+                      <p>Tên hàng: {row.productName}</p>
+                      <p>
+                        Theo dõi lô: {row.isLotTracked ? 'Có' : 'Không'} · Hạn sử dụng:{' '}
+                        {row.shelfLifeDays === null ? 'Không đặt' : `${row.shelfLifeDays} ngày`}
+                      </p>
+                      {row.description ? <p>{row.description}</p> : null}
+                    </details>
+                  </TableCell>
+                  <TableCell className="max-w-48 wrap-anywhere whitespace-normal">
+                    {row.unit?.name ?? row.unitValue}
+                  </TableCell>
+                  <TableCell className="max-w-48 wrap-anywhere whitespace-normal">
+                    {row.category?.name ?? row.categoryValue}
+                  </TableCell>
+                  <TableCell className="max-w-80 min-w-56 wrap-anywhere whitespace-normal">
                     {row.unitConversions.length ? (
                       <details>
                         <summary className="cursor-pointer focus-visible:outline-2">
                           {row.unitConversions.length} đơn vị quy đổi
                         </summary>
-                        {row.unitConversions.map((child) => (
-                          <div
-                            key={`${child.sheetName}:${child.rowNumber}`}
-                            className="py-1 text-xs"
-                          >
-                            <p>
-                              1 {child.unit?.name ?? child.unitValue} ={' '}
-                              {child.conversionFactorText ?? child.conversionFactor ?? '?'}{' '}
-                              {row.unit?.name ?? row.unitValue}
-                            </p>
-                            <p className="text-muted-foreground">
-                              {child.sheetName}:{child.rowNumber}
-                            </p>
-                            {child.errors.map((issue, index) => (
-                              <p key={index} className="text-destructive">
-                                {issue.message}
+                        <div className="max-h-48 overflow-auto">
+                          {row.unitConversions.map((child) => (
+                            <div
+                              key={`${child.sheetName}:${child.rowNumber}`}
+                              className="py-1 text-xs"
+                            >
+                              <p>
+                                1 {child.unit?.name ?? child.unitValue} ={' '}
+                                {child.conversionFactorText ?? child.conversionFactor ?? '?'}{' '}
+                                {row.unit?.name ?? row.unitValue}
                               </p>
-                            ))}
-                          </div>
-                        ))}
+                              <p className="text-muted-foreground">
+                                {child.sheetName}:{child.rowNumber}
+                              </p>
+                              {child.errors.map((issue, index) => (
+                                <p key={index} className="text-destructive">
+                                  {issue.message}
+                                </p>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
                       </details>
                     ) : (
                       '—'
                     )}
-                  </TableCell>
-                  <TableCell className="min-w-64 whitespace-normal">
-                    <Badge variant={isValidProductImportRow(row) ? 'default' : 'destructive'}>
-                      {isValidProductImportRow(row) ? 'Hợp lệ' : 'Không hợp lệ'}
-                    </Badge>
-                    {[...row.errors, ...row.warnings].map((issue, index) => (
-                      <p key={index} className="mt-1 text-xs">
-                        {issue.source
-                          ? `${issue.source.sheetName}:${issue.source.rowNumber} — `
-                          : ''}
-                        {issue.message}
-                      </p>
-                    ))}
                   </TableCell>
                 </TableRow>
               ))

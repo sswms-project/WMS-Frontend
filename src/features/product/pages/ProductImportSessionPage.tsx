@@ -131,8 +131,26 @@ export default function ProductImportSessionPage() {
       },
       (errors) => {
         const kind = errors.main ? 'main' : 'conversions'
-        const id = errors[kind]?.sheetId ? `import-${kind}-sheet` : `import-${kind}-header`
-        document.getElementById(id)?.focus()
+        const values = form.getValues(kind)
+        const fields =
+          kind === 'main' ? inspect.data!.schema.mainFields : inspect.data!.schema.conversionFields
+        const field = fields.find((field) => {
+          const column = values?.columnMapping.find((item) => item.field === field.field)
+          return (
+            (field.isRequired && !column) ||
+            (column &&
+              values!.columnMapping.filter((item) => item.columnIndex === column.columnIndex)
+                .length > 1)
+          )
+        })
+        const id = errors[kind]?.sheetId
+          ? `import-${kind}-sheet`
+          : errors[kind]?.headerRowNumber
+            ? `import-${kind}-header`
+            : field
+              ? `import-${kind}-${field.field}`
+              : `import-${kind}-header`
+        requestAnimationFrame(() => document.getElementById(id)?.focus())
       }
     )()
   }
@@ -152,6 +170,7 @@ export default function ProductImportSessionPage() {
     const confirmed = rowsToImport.map((row) => row.rowNumber)
     try {
       await commit.mutateAsync(productImportPayload(data, confirmed))
+      setView({ search: '', status: 'all', page: 1, pageSize: 20 })
       setImportedRows(confirmed)
       setStep('result')
       setConfirmationOpen(false)

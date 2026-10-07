@@ -11,6 +11,21 @@ export function useProductImportNavigation(dirty: boolean, busy: boolean) {
     if (!dirty) return
     const originalUrl = window.location.href
     const originalState: unknown = window.history.state
+    const navigation = window.navigation
+    let nativeTraversal = false
+    const traverse = (event: NavigateEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.navigationType !== 'traverse' ||
+        !event.cancelable ||
+        !event.destination.sameDocument ||
+        event.destination.url === originalUrl
+      )
+        return
+      // Ask before the URL changes so cancellation preserves the Forward stack.
+      nativeTraversal = canLeave()
+      if (!nativeTraversal) event.preventDefault()
+    }
     const unload = (event: BeforeUnloadEvent) => {
       event.preventDefault()
       event.returnValue = ''
@@ -40,21 +55,28 @@ export function useProductImportNavigation(dirty: boolean, busy: boolean) {
       }
     }
     const back = (event: PopStateEvent) => {
+      if (nativeTraversal) {
+        nativeTraversal = false
+        return
+      }
       const destination = window.location.href
       if (destination === originalUrl) return
       event.stopImmediatePropagation()
+      const allowed = canLeave()
       // Restore this workspace before Next handles popstate. Leave only after consent.
       window.history.pushState(originalState, '', originalUrl)
-      if (canLeave()) {
+      if (allowed) {
         const url = new URL(destination)
         router.push(`${url.pathname}${url.search}${url.hash}` as Route)
       }
     }
     window.addEventListener('beforeunload', unload)
+    navigation?.addEventListener('navigate', traverse)
     window.addEventListener('popstate', back, true)
     document.addEventListener('click', click, true)
     return () => {
       window.removeEventListener('beforeunload', unload)
+      navigation?.removeEventListener('navigate', traverse)
       window.removeEventListener('popstate', back, true)
       document.removeEventListener('click', click, true)
     }

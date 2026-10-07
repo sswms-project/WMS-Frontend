@@ -1,7 +1,7 @@
 # Kovia — Import Excel/CSV dùng chung, triển khai VTHH trước
 
 Ngày: **2026-10-07**  
-Trạng thái: **Gate A đã commit. Gate B đã triển khai logic và đạt test/typecheck/lint; chưa chốt nghiệm thu vì production build thiếu bộ nhớ. Gate C chưa bắt đầu.**
+Trạng thái: **Gate A/B đã commit; build production FE đã chạy lại thành công. Gate C đã khởi động rà soát nhưng chưa sửa UI/QA; dừng theo yêu cầu khi quota còn 4%.**
 
 Phạm vi: **Backend → Frontend logic → UI/UX**, sau đó mới mở rộng sang NCC/đơn vị nhận hàng.  
 Nhánh làm việc: BE `feat/huytv`, FE `screen/huytv`. Không tự tạo nhánh khác.
@@ -397,10 +397,10 @@ Trạng thái hữu hạn: `SelectFile → Inspecting → Mapping → Previewing
 - [x] Export injection/quote/newline, tải đúng toàn báo cáo; invalidate thay vì reload toàn trang; giữ chính xác decimal từ preview tới payload/report.
 - [x] Guard rời trang đã triển khai; unit test kiểm tra link/reload và không persist dữ liệu file. Browser Back/Forward thực tế còn phải QA ở Gate C.
 - [ ] NCC/đơn vị nhận hàng vẫn preview/import được qua public contract cũ; nhân sự giữ job riêng.
-- [ ] Chạy `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`; ghi rõ mọi lỗi/tài nguyên thiếu, không gọi compile một phần là build đạt.
+- [x] Chạy `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`; ghi rõ mọi lỗi/tài nguyên thiếu, không gọi compile một phần là build đạt. Build mặc định đã chạy lại đạt khi bắt đầu Gate C, xem mục 13.5.
 - [x] GitNexus impact/detect changes theo AGENTS, đối chiếu callers NCC/đơn vị nhận hàng và source mới ngoài index.
 
-Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typecheck và lint đạt. `pnpm build` (Turbopack mặc định) thất bại do thiếu bộ nhớ, chưa có build đạt. Regression tự động shared import đã chạy trong toàn bộ suite; chưa thực hiện live import NCC/đơn vị nhận hàng. Không đánh dấu hoàn tất Gate B khi build vẫn bị chặn.
+Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typecheck và lint đạt. `pnpm build` (Turbopack mặc định) từng thất bại do thiếu bộ nhớ; chạy lại khi bắt đầu Gate C đã đạt đầy đủ, không đổi bundler. Regression tự động shared import đã chạy trong toàn bộ suite; chưa thực hiện live import NCC/đơn vị nhận hàng hoặc browser QA Gate C.
 
 **Dừng sau Gate B:** báo logic/contract/test đã đạt, phần UI/QA chưa xong và chờ lệnh sang Gate C.
 
@@ -468,13 +468,13 @@ Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typech
 
 ### 7.7. Kiểm thử và điểm dừng Gate C
 
-- [ ] Browser QA đủ 4 bước với file cơ bản, đầy đủ quy đổi, CSV, file lỗi và batch cạnh tranh.
-- [ ] Người có/không có products:import, quyền bị thu hồi giữa phiên; cross-tenant ở test an toàn.
-- [ ] Desktop/tablet/mobile/zoom, tên Unicode dài, error dài, số lượng ít/nhiều, footer/sticky/scroll ngang.
-- [ ] Keyboard, screen reader status, focus khi đổi bước/dialog, contrast, reduced motion.
-- [ ] Tải template/báo cáo, quay lại/hủy/rời trang, mất kết nối và kiểm tra lại không tạo bản sao.
-- [ ] Regression UI import NCC/đơn vị nhận hàng; bảo đảm các màn khác không đổi màu, border hoặc pagination ngoài ý muốn.
-- [ ] Re-run test/typecheck/lint/build nếu Gate C đổi source; ghi screenshot/test evidence không chứa secret.
+- [x] Browser QA đủ 4 bước với file cơ bản, đầy đủ quy đổi, CSV, file lỗi và 409 cạnh tranh **bằng API mô phỏng**, không phải live SQL/concurrency acceptance.
+- [x] Người có/không có products:import, quyền bị thu hồi giữa phiên bằng mock; đổi tenant hủy workspace cũ có automated test, không phải kiểm thử bảo mật cross-tenant trên DB thật.
+- [x] Desktop/tablet/mobile/zoom, tên Unicode dài, error dài, số lượng ít/nhiều, footer/sticky/scroll ngang; đã bổ sung native browser zoom và dark theme tại mục 13.7.
+- [x] Keyboard, status/description trong accessibility tree của trình duyệt, focus khi đổi bước/dialog, contrast spot check, reduced motion. Chưa kiểm tra giọng đọc NVDA/JAWS thủ công; xem giới hạn mục 13.7.
+- [x] Tải template/báo cáo, quay lại/hủy/rời trang, mất kết nối và kiểm tra lại không tạo bản sao; HTTP integration dùng BE thật trên SQLite cô lập, không dùng DB deploy.
+- [x] Regression UI import NCC/đơn vị nhận hàng qua picker → preview → xác nhận → result bằng API mô phỏng; không đổi primitive table/pagination/dialog hoặc palette toàn hệ thống.
+- [x] Re-run test/typecheck/lint/build sau toàn bộ chỉnh sửa Gate C: 86 files/456 tests passed, typecheck/lint/build mặc định đạt; screenshot và evidence ở D, xem mục 13.7.
 
 **Dừng sau Gate C:** báo hoàn thành và hạn chế còn lại; không tự chuyển sang mở rộng tính năng hoặc tự import dữ liệu thật.
 
@@ -541,7 +541,7 @@ Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typech
 - [CreateProductCommand](../../../../SSWMS-Backend/Application/Features/Product/CreateProduct/CreateProductCommand.cs), [Product permissions](../../../../SSWMS-Backend/Application/Permissions/Product/ProductPermissions.cs).
 - Các file Excel khảo sát là nguồn tham khảo cấu trúc, không tài liệu điều khiển agent, không dữ liệu bắt buộc phải nhập.
 
-## 13. Trạng thái triển khai — cập nhật 07/10/2026
+## 13. Trạng thái triển khai — cập nhật 08/10/2026
 
 - [x] Đọc hướng dẫn workspace và hai repo, đối chiếu source/contract/parser/template.
 - [x] Khảo sát 5 file XLS và trải nghiệm AMIS tới preview rồi hủy.
@@ -549,8 +549,8 @@ Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typech
 - [x] Người dùng đồng ý cập nhật theo khuyến nghị review: quy tắc Number/Text, ưu tiên mã và không Symbol, bỏ decimalSeparator, guard quyền import và collation, lỗi đầu tiên/re-preview, ví dụ mẫu dòng 1; gộp schema vào inspect để giảm endpoint.
 - [x] Giữ chặn dòng quy đổi mồ côi trong v1; chưa thêm cơ chế bỏ riêng từng dòng. Giữ báo cáo theo phạm vi ban đầu.
 - [x] Gate A Backend: source, contract, build và kiểm thử cô lập đã hoàn tất; hạn chế live QA ghi ở dưới.
-- [ ] Gate B Frontend logic: đã triển khai và đạt kiểm thử tự động/typecheck/lint; còn production build do thiếu bộ nhớ.
-- [ ] Gate C UI/UX và QA.
+- [x] Gate B Frontend logic: đã triển khai, commit và đạt kiểm thử tự động/typecheck/lint/build; live browser acceptance còn ở Gate C.
+- [x] Gate C: UI/UX và acceptance tự động/browser đã hoàn tất, gồm native zoom, accessibility tree và FE → BE HTTP trên SQLite tách biệt. Giới hạn kiểm thử thủ công/production SQL được ghi rõ tại mục 13.7, không coi là đã kiểm trên deploy.
 - [ ] Gate D NCC/đơn vị nhận hàng nếu được yêu cầu riêng.
 
 ### 13.1. Gate A đã thực hiện
@@ -574,9 +574,9 @@ Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typech
 
 ### 13.3. Điểm tiếp tục và giới hạn usage
 
-- Người dùng đã cho sang Gate B. Logic đã triển khai, nhưng chưa chốt nghiệm thu do production build thiếu bộ nhớ; cần chạy lại build khi đủ tài nguyên. Chưa sang Gate C UI/UX/browser QA hoặc Gate D.
-- Đã commit phần trước theo yêu cầu: BE `e15c3f2` (Gate A), FE `7b15491` (spec và kết quả Gate A). Người dùng tiếp tục yêu cầu commit riêng source Gate B và bổ sung decimal contract BE; mã commit của lượt này xem Git log từng repo. Chưa push/PR. Không động vào `.playwright-cli/` hoặc `skills-lock.json` có sẵn ở FE.
-- Theo yêu cầu người dùng, kiểm tra usage định kỳ: nếu cửa sổ quota khả dụng nào còn **≤5%**, cập nhật mục này với việc đã làm/chưa làm và kết quả test gần nhất rồi dừng. Lần kiểm tra gần nhất còn **10% cửa sổ 5 giờ**, **73% tuần**; chưa chạm ngưỡng. Điểm bàn giao hiện tại là Gate B bị chặn ở kiểm chứng build, không phải dừng do quota.
+- Người dùng đã cho kiểm tra để hoàn thành Gate C. Kết quả và giới hạn mới nhất tại mục 13.7. Gate D chưa triển khai; không tự mở rộng phạm vi.
+- Đã commit theo yêu cầu: BE `e15c3f2` (Gate A), `1f20a1f` (decimal contract); FE `7b15491` (spec/Gate A), `b7b8fad` (Gate B). Chưa push/PR. Tài liệu cập nhật trong lượt khởi động Gate C chưa commit. Không động vào `.playwright-cli/` hoặc `skills-lock.json` có sẵn ở FE.
+- Theo yêu cầu người dùng, kiểm tra usage định kỳ: nếu cửa sổ quota khả dụng nào còn **≤5%**, cập nhật mục này với việc đã làm/chưa làm và kết quả test gần nhất rồi dừng. Lần kiểm tra hoàn tất acceptance: **89% used = 11% còn lại cửa sổ 5 giờ**, **14% used = 86% còn lại tuần**; chưa chạm ngưỡng. Mốc dừng 4% cũ giữ tại mục 13.5 để bảo toàn lịch sử.
 
 ### 13.4. Gate B đã thực hiện và kiểm chứng
 
@@ -591,3 +591,36 @@ Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typech
 - GitNexus pre-impact shared import Low: hai caller NCC/đơn vị nhận hàng, giữ public contracts. Detect FE Medium trên các symbol tracked và hai flow dự kiến; BE decimal follow-up Low. Symbol/file mới ngoài index được kiểm tra trực tiếp; thiếu FTS không được coi là bằng chứng không có caller.
 - Đã rà source accessibility theo Web Interface Guidelines: nút chọn tệp thật dùng bàn phím, label/control, focus, giữ selection khi pending và sticky table header. Đây là self-verification, không independent approval; chưa browser QA desktop/tablet/mobile/zoom/reduced motion, Back/Forward hoặc live permission/race/write acceptance.
 - Toàn bộ artifacts/temp/test results ở `D:/Kovia-QA/product-import-20261007`. Không khởi động BE/FE, không kết nối/ghi DB deploy ở Gate B, không migration/seed/cleanup. Giữ nguyên các nhánh làm việc.
+
+### 13.5. Khởi động Gate C — điểm dừng quota
+
+- Đọc lại hướng dẫn workspace/FE, tiêu chí Gate C, design system/list-table và các skill UI liên quan; đối chiếu picker/view hiện tại. Chưa thay đổi source UI, chưa mở browser hoặc chạy luồng import. GitNexus chưa index `BulkImportFilePicker` mới (Target not found); không coi kết quả đó là không có caller. Trước sửa cần refresh index/kiểm tra callers thực tế gồm BulkImportPage và ProductImportView, rồi chạy impact lại.
+- Tài nguyên tại lúc chạy lại: ổ C khoảng 1,43 GB, D khoảng 62,39 GB; RAM vật lý trống khoảng 3,8 GiB, virtual trống khoảng 11,8 GiB. Chỉ chạy một tác vụ build, TEMP/TMP ở D.
+- **`pnpm build` mặc định Next.js 16.2.7/Turbopack đã đạt, exit 0**: compile, TypeScript, page data, static generation 66/66 và final optimization. Route literal `/products/import` xuất hiện riêng trong build, không bị `[productId]` bắt nhầm. Không sửa dependency/bundler/config hoặc xóa cache để đạt build. Lượt này không chạy lại suite/lint vì không đổi source; kết quả gần nhất vẫn FE 441 passed, typecheck/lint đạt và BE 915 passed/1 skipped.
+- Thứ tự tiếp tục Gate C: vùng kéo-thả và helper định dạng tệp; stepper/focus sau chuyển bước; mapping search/status/sample; preview/result trong shared panel và footer responsive; confirmation warning dài/reduced motion; QA 360×800, 768×1024, 1280×720, 1920×1080 và zoom 125/150/200%. Kiểm tra keyboard/history/permission/network và regression NCC/đơn vị nhận hàng bằng mock an toàn; không tự import dữ liệu thật.
+- Dừng ngay sau cập nhật handoff vì quota còn 4%, theo yêu cầu người dùng. **Gate C chưa hoàn thành.** Không DB access/write, migration, seed, cleanup, server startup, commit, push hoặc PR trong lượt này.
+
+### 13.6. Gate C — UI đã triển khai, kiểm chứng frontend và giới hạn acceptance
+
+- Giữ BE `feat/huytv` sạch, FE `screen/huytv`; chưa commit/push/PR Gate C. Không động vào `.playwright-cli/` và `skills-lock.json` có sẵn trong FE. Không dependency/config/bundler/API/payload/migration mới.
+- Picker chung có kéo-thả một tệp, báo lỗi nhiều tệp, helper XLSX/CSV/5 MB/XLS không hỗ trợ và khóa khi pending; giữ native button/input và public props cho NCC/khách hàng. Stepper 4 bước chỉ đọc, aria-current, live status, focus heading khi đổi bước và focus trở lại nút nhập/recheck sau đóng dialog.
+- Mapping theo schema BE: bảng field/source/sample/status icon + text; search/filter, mẫu tối đa 5 dòng, liệt kê cột bỏ qua. CSV không hiện chọn sheet/quy đổi; cho ghép thủ công CSV chưa dò được header. Nút kiểm tra chỉ bật khi mapping hợp lệ; khi lỗi làm hiện tất cả field để sửa, filter tạm khóa có giải thích. Thay FieldGroup container tại đúng bố cục sheet selector bằng grid thường sau khi browser phát hiện container inline-size trong fieldset có thể co về 0 ở lần mount đầu.
+- Preview dùng shared panel/table/pagination, trạng thái/lỗi đặt gần đầu bảng; chọn cha/child, payload và lock/retry giữ nguyên Gate B. Lỗi dài/quy đổi/cảnh báo trong details có vùng cuộn; tên dài hai dòng và mở xem đủ. Toolbar mobile gọn; result có pagination chung và reset về trang 1 sau commit. BulkImportResult chỉ thêm children cho phần bảng, legacy rendering không đổi.
+- Vùng bảng ở 360×800 ban đầu chỉ còn 36 px do toolbar; đã sửa còn 128 px với fixture dài. Viewport thấp (576/480/360 px) chuyển sang workspace cuộn với chiều cao tối thiểu, thay vì co bảng về 0; không thêm calc viewport vào từng feature hoặc sửa shared panel. Bốn bước và confirmation đã chụp ở **360×800, 768×1024, 1280×720, 1920×1080**, không horizontal overflow toàn trang; bảng/result cuộn trong panel. Viewport tương đương layout zoom 125/150/200% (1024×576, 853×480, 640×360 từ mốc 1280×720) đã kiểm tra.
+- **23 kiểm tra browser flow mô phỏng đạt**: basic/full/CSV tới kết quả, selection khi search, lỗi orphan, lý do checkbox disabled, 409 không retry và bắt re-preview/focus recheck, network không success giả/không retry, 403 khi commit khóa workspace, cảnh báo bỏ sheet, details quy đổi, download báo cáo/template transport, và legacy NCC/khách hàng. Profile không quyền cho inspect/preview/commit count = 0. Suite có test đổi tenant hủy file workspace và các giai đoạn 403 khác. Không coi các mock này là xác nhận authorization/atomicity/race thật.
+- Tab/Shift+Tab từ heading tới control mapping, Enter mở xác nhận, cancel trả focus và linked descriptions đã kiểm tra. Reduced motion trên confirmation content đạt; scoped CSS không thay shared dialog primitive (impact Critical, 30 callers). Đo các button/badge/status đang enabled tại result light theme: contrast thấp nhất **7,72:1**; đây là spot check, không audit mọi màu/theme. Hủy cảnh báo rời trang giữ file và URL; beforeunload được kiểm tra. Lệnh CLI go-back sau khi hủy native beforeunload timeout do navigation bị hủy; không coi Back/Forward đầy đủ là đạt.
+- **Giới hạn còn lại:** chưa chạy NVDA/JAWS hoặc native browser zoom. Headless Edge không đổi zoom khi gửi Ctrl+Equal; CSS zoom chỉ là probe khác native zoom: 125/150% còn bảng, **CSS zoom 200% làm bảng co về 0** vì không đổi media-query viewport. Không dùng probe này để khẳng định native 200% đạt; cần người kiểm thử xác nhận native zoom/reflow. Chưa kiểm đủ Forward/re-entry, dark theme, template file thật hoặc HTTP/parser/live SQL end-to-end. Không tự import QA vào deploy để đóng checklist.
+- Browser API đều bị intercept, non-local external traffic bị chặn, cookie chỉ là token giả local; không dùng credentials thật, không có BE chạy hoặc DB access/write. Download template dùng placeholder để kiểm transport/filename, **không phải XLSX hợp lệ**. CSV report tải được có đủ source rows/Unicode/errors; parser/template content đã được kiểm ở Gate A, không thay bằng mock QA này.
+- Artifacts/scripts/screenshots/report nằm ngoài repo tại `D:/Kovia-QA/product-import-20261007/output/playwright`; đã đóng đúng browser QA và FE server của task. Không xóa cache/temp/dữ liệu ổ C. Console có baseline local Vercel speed-insights script 404 và các lỗi API cố ý 409/network/403, không tuyên bố console hoàn toàn sạch.
+- GitNexus refresh index và pre-impact các component/logic tracked; picker/result shared High (2 direct callers) được cảnh báo và regression hai callers. Detect tracked Medium, hai flow import dự kiến; resource alias WMS-Frontend trỏ worktree cũ nên đối chiếu CLI index SSWMS-Frontend và source thực tế. Các component/file mới chưa indexed được kiểm trực tiếp callers, không coi Target not found là zero impact. Đây là self-verification, không independent approval.
+- **Kiểm chứng source cuối sau mọi browser-driven fixes:** `pnpm test --pool=threads --maxWorkers=1` đạt **85 files / 452 tests**; `pnpm typecheck`, `pnpm lint`, `pnpm build` mặc định đều đạt, exit 0. Build Next.js 16.2.7/Turbopack hoàn thành compile, TypeScript, static generation 66/66 và final optimization; route `/products/import` xuất hiện riêng. Lượt forks-pool trước đó bị dừng khi chưa có kết quả, không tính là đạt. BE không đổi và không chạy lại suite ở lượt FE-only này. Không chuyển Gate D hoặc tự tạo commit; Gate C acceptance vẫn còn các giới hạn thủ công nêu trên.
+
+### 13.7. Gate C — hoàn tất acceptance tự động/browser ngày 08/10/2026
+
+- Bổ sung **native Edge zoom**, không phải CSS zoom: 4 bước × light/dark × 125/150/200% đều đạt; xác minh zoom factor, viewport và devicePixelRatio bằng extension trong profile QA riêng. Không overflow ngang toàn trang hoặc control thiếu tên. Ở 200%, review/result giữ vùng bảng lần lượt 276/329 px; confirmation nằm trong viewport 640×360. Viewport thấp cho phép cuộn workspace để tiếp cận bảng/footer. Kết quả này thay thế phần native-zoom chưa kiểm tại mục 13.6; không biến CSS-zoom probe cũ thành kết quả đạt.
+- Trình duyệt Chromium accessibility tree có status `live=polite` và description của checkbox lỗi/disabled. Keyboard/focus/reduced motion đã kiểm ở lượt trước; contrast spot check result light ≥7,72:1, dark ≥9,12:1. **Chưa chạy giọng đọc NVDA/JAWS thủ công**, không khẳng định đã audit mọi màu hoặc mọi tổ hợp assistive technology.
+- QA phát hiện Back có thể rời workspace chưa xác nhận. Hook import nay dùng Navigation API cho same-document traversal có thể hủy, hỏi trước khi URL thay đổi và giữ history Forward; giữ popstate fallback cho browser không hỗ trợ. Bổ sung 4 test hook: hủy, đồng ý/không hỏi hai lần, busy state mới nhất, clean/non-cancelable và cleanup. Edge xác nhận **hủy Back giữ URL/tệp → đồng ý Back về danh sách → Forward vào phiên sạch**. Các browser cũ dùng fallback chưa có matrix kiểm thử native; không tuyên bố hỗ trợ đã kiểm trên mọi phiên bản browser.
+- Chạy FE production build với **API controller/MediatR/parser/template/handler/UnitOfWork/audit thật** qua HTTP tại `127.0.0.1:7070`, chỉ dùng fixture **Microsoft.EntityFrameworkCore.Sqlite / in-process / :memory:**. Trước ghi, fixture in và assert effective target; không tải production configuration, không đăng ký SQL Server, migration false. XLSX basic/full và CSV nhập đúng **6 sản phẩm, 2 quy đổi, 5 audit**; giữ SKU có số 0 đầu, Unicode/quoted CSV và hệ số Number `1.1000000000000001` thành `1.1`. Template XLSX thật tải được, inspect đúng; mẫu chỉ tiêu đề bị preview từ chối, không cho commit. Có 12 assertion E2E.
+- Fixture HTTP còn kiểm permission handler trả 401/403; mã trùng trả 409, tham chiếu khác tenant và factor quá 6 số lẻ trả 400, số bản ghi không tăng. **Authentication/permission source và SKU comparer của host QA được thay bằng fixture**; không coi đây là kiểm chứng production JWT/ceiling/subscription middleware, SQL Server collation/locking hoặc race thực sự. Các lớp đó giữ kết quả unit/integration và read-only probe Gate A/B, không có live write vào deploy để đóng checklist.
+- Kiểm chứng source cuối: **`pnpm test`: 86 files / 456 tests passed**, `pnpm typecheck`, `pnpm lint`, `pnpm build` mặc định đều exit 0; Next.js 16.2.7/Turbopack static pages 66/66, route `/products/import` riêng. Nhóm import BE chạy lại **74 passed / 0 failed / 0 skipped**; không chạy lại toàn bộ Application suite ở lượt này. GitNexus pre-impact hook Low (một caller), refresh index và detect tracked Medium trên các flow import dự kiến; file mới kiểm trực tiếp. Đây là self-verification, không independent approval.
+- Gate C đóng theo phạm vi automated/browser acceptance trên. Gate D chưa bắt đầu. Không commit/push/PR, không migration/seed/repair/deletion hoặc kết nối `db71143` trong lượt này. Chỉ fixture SQLite có ghi QA; không nói “không có bất kỳ DB write”. Artifacts/host/scripts/profile/download/screenshots ở `D:/Kovia-QA/product-import-20261007`; đóng đúng host/browser QA sau kiểm tra, không dọn dữ liệu ổ C.

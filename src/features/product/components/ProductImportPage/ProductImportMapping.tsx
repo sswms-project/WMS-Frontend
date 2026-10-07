@@ -1,8 +1,9 @@
 import type { UseFormReturn } from 'react-hook-form'
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import { Button } from '@/components/ui/button'
+import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { ProductImportColumnTable } from './ProductImportColumnTable'
 import {
   Table,
   TableBody,
@@ -44,7 +45,7 @@ export function ProductImportMapping({
         : kind === 'conversions'
           ? null
           : { sheetId: '', headerRowNumber: 1, columnMapping: [] },
-      { shouldDirty: true }
+      { shouldDirty: true, shouldValidate: true }
     )
   }
   function changeHeader(kind: 'main' | 'conversions', value: number) {
@@ -61,7 +62,7 @@ export function ProductImportMapping({
         headerRowNumber: value,
         columnMapping: candidates?.find((item) => item.rowNumber === value)?.suggestedMapping ?? [],
       },
-      { shouldDirty: true }
+      { shouldDirty: true, shouldValidate: true }
     )
   }
   function changeColumn(kind: 'main' | 'conversions', field: string, column: string) {
@@ -74,92 +75,119 @@ export function ProductImportMapping({
         ...options.columnMapping.filter((item) => item.field !== field),
         ...(column === '' ? [] : [{ field, columnIndex: Number(column) }]),
       ],
-      { shouldDirty: true }
+      { shouldDirty: true, shouldValidate: true }
     )
   }
   return (
-    <form
-      className="flex min-h-0 flex-col gap-4 overflow-auto"
-      onSubmit={(event) => {
-        event.preventDefault()
-        onPreview()
-      }}
-    >
-      <fieldset disabled={pending} className="flex flex-col gap-4">
-        <legend className="mb-3 font-semibold">Ghép cột dữ liệu</legend>
-        <FieldGroup className="grid gap-4 md:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="import-main-sheet">Trang tính hàng hóa</FieldLabel>
-            <NativeSelect
-              id="import-main-sheet"
-              aria-invalid={Boolean(form.formState.errors.main?.sheetId)}
-              value={values.main.sheetId}
-              onChange={(event) => changeSheet('main', event.target.value)}
-            >
-              <NativeSelectOption value="">Chọn trang tính</NativeSelectOption>
-              {inspect.sheets.map((sheet) => (
-                <NativeSelectOption key={sheet.sheetId} value={sheet.sheetId}>
-                  {sheet.sheetName}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            {form.formState.errors.main?.sheetId ? (
-              <p role="alert" className="text-destructive text-sm">
-                {form.formState.errors.main.sheetId.message}
-              </p>
-            ) : null}
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="import-conversion-sheet">Trang tính quy đổi (tùy chọn)</FieldLabel>
-            <NativeSelect
-              id="import-conversion-sheet"
-              value={values.conversions?.sheetId ?? ''}
-              disabled={inspect.isCsv || pending}
-              onChange={(event) => changeSheet('conversions', event.target.value)}
-            >
-              <NativeSelectOption value="">Không nhập quy đổi</NativeSelectOption>
-              {inspect.sheets
-                .filter((sheet) => sheet.sheetId !== values.main.sheetId)
-                .map((sheet) => (
-                  <NativeSelectOption key={sheet.sheetId} value={sheet.sheetId}>
-                    {sheet.sheetName}
-                  </NativeSelectOption>
-                ))}
-            </NativeSelect>
-            <FieldDescription>
-              Chọn rõ trang quy đổi cần nhập; những trang khác sẽ được bỏ qua có xác nhận.
-            </FieldDescription>
-          </Field>
-        </FieldGroup>
-        {(['main', 'conversions'] as const).map((kind) => {
-          const options = values[kind]
-          if (!options?.sheetId) return null
-          return (
-            <MappingSection
-              key={kind}
-              kind={kind}
-              options={options}
-              inspect={inspect}
-              error={
-                form.formState.errors[kind]?.columnMapping?.message ??
-                form.formState.errors[kind]?.sheetId?.message ??
-                form.formState.errors[kind]?.headerRowNumber?.message
-              }
-              onHeaderChange={(value) => changeHeader(kind, value)}
-              onColumnChange={(field, column) => changeColumn(kind, field, column)}
-            />
-          )
-        })}
-        {form.formState.errors.schemaVersion ? (
-          <p role="alert" className="text-destructive text-sm">
-            {form.formState.errors.schemaVersion.message}
-          </p>
-        ) : null}
-      </fieldset>
-      <Button type="submit" disabled={pending || inspect.schema.version !== 1}>
-        {pending ? 'Đang kiểm tra…' : 'Kiểm tra dữ liệu'}
-      </Button>
-    </form>
+    <OperationalListPanel aria-label="Cấu hình ghép cột">
+      <form
+        id="product-import-mapping"
+        noValidate
+        data-slot="operational-list-body"
+        className="flex min-h-0 flex-1 flex-col gap-4 p-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onPreview()
+        }}
+      >
+        <fieldset disabled={pending} className="flex shrink-0 flex-col gap-4">
+          <legend className="sr-only">Ghép cột dữ liệu</legend>
+          {!inspect.isCsv ? (
+            <div className="grid shrink-0 gap-4 md:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="import-main-sheet">Trang tính hàng hóa</FieldLabel>
+                <NativeSelect
+                  id="import-main-sheet"
+                  className="w-full"
+                  aria-invalid={Boolean(form.formState.errors.main?.sheetId)}
+                  aria-describedby={
+                    form.formState.errors.main?.sheetId ? 'import-main-sheet-error' : undefined
+                  }
+                  value={values.main.sheetId}
+                  onChange={(event) => changeSheet('main', event.target.value)}
+                >
+                  <NativeSelectOption value="">Chọn trang tính</NativeSelectOption>
+                  {inspect.sheets.map((sheet) => (
+                    <NativeSelectOption key={sheet.sheetId} value={sheet.sheetId}>
+                      {sheet.sheetName}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                {form.formState.errors.main?.sheetId ? (
+                  <p id="import-main-sheet-error" role="alert" className="text-destructive text-sm">
+                    {form.formState.errors.main.sheetId.message}
+                  </p>
+                ) : null}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="import-conversion-sheet">
+                  Trang tính quy đổi (tùy chọn)
+                </FieldLabel>
+                <NativeSelect
+                  id="import-conversion-sheet"
+                  className="w-full"
+                  value={values.conversions?.sheetId ?? ''}
+                  disabled={inspect.isCsv || pending}
+                  onChange={(event) => changeSheet('conversions', event.target.value)}
+                >
+                  <NativeSelectOption value="">Không nhập quy đổi</NativeSelectOption>
+                  {inspect.sheets
+                    .filter((sheet) => sheet.sheetId !== values.main.sheetId)
+                    .map((sheet) => (
+                      <NativeSelectOption key={sheet.sheetId} value={sheet.sheetId}>
+                        {sheet.sheetName}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelect>
+                <FieldDescription>
+                  Chọn rõ trang quy đổi cần nhập; những trang khác sẽ được bỏ qua có xác nhận.
+                </FieldDescription>
+              </Field>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-xs">
+              CSV chỉ có bảng hàng hóa, không chứa đơn vị quy đổi.
+            </p>
+          )}
+          {!inspect.isCsv &&
+          !values.conversions &&
+          inspect.sheets.some(
+            (sheet) =>
+              sheet.sheetId !== values.main.sheetId &&
+              sheet.conversionHeaderCandidates.some((candidate) => candidate.hasAllRequiredFields)
+          ) ? (
+            <p className="text-warning text-sm" role="status">
+              Tệp có trang quy đổi nhưng chưa được chọn. Các đơn vị quy đổi trong trang đó sẽ không
+              được nhập.
+            </p>
+          ) : null}
+          {(['main', 'conversions'] as const).map((kind) => {
+            const options = values[kind]
+            if (!options?.sheetId) return null
+            return (
+              <MappingSection
+                key={kind}
+                kind={kind}
+                options={options}
+                inspect={inspect}
+                error={
+                  form.formState.errors[kind]?.columnMapping?.message ??
+                  form.formState.errors[kind]?.sheetId?.message ??
+                  form.formState.errors[kind]?.headerRowNumber?.message
+                }
+                onHeaderChange={(value) => changeHeader(kind, value)}
+                onColumnChange={(field, column) => changeColumn(kind, field, column)}
+              />
+            )
+          })}
+          {form.formState.errors.schemaVersion ? (
+            <p role="alert" className="text-destructive text-sm">
+              {form.formState.errors.schemaVersion.message}
+            </p>
+          ) : null}
+        </fieldset>
+      </form>
+    </OperationalListPanel>
   )
 }
 
@@ -191,8 +219,9 @@ function MappingSection({
   return (
     <section
       aria-label={kind === 'main' ? 'Cột hàng hóa' : 'Cột quy đổi'}
-      className="flex flex-col gap-3 border p-3"
+      className="flex min-w-0 flex-col gap-3"
     >
+      <h3 className="font-semibold">{kind === 'main' ? 'Hàng hóa' : 'Đơn vị quy đổi'}</h3>
       <Field>
         <FieldLabel htmlFor={`import-${kind}-header`}>Dòng tiêu đề — {sheet.sheetName}</FieldLabel>
         <Input
@@ -200,11 +229,13 @@ function MappingSection({
           type="number"
           min={1}
           max={50}
+          className="max-w-40"
           value={Number.isFinite(options.headerRowNumber) ? options.headerRowNumber : ''}
           aria-invalid={Boolean(error)}
+          aria-describedby={`import-${kind}-header-help${error ? ` import-${kind}-error` : ''}`}
           onChange={(event) => onHeaderChange(event.target.valueAsNumber)}
         />
-        <FieldDescription>
+        <FieldDescription id={`import-${kind}-header-help`}>
           {candidates.length
             ? `Các dòng gợi ý: ${candidates.map((item) => item.rowNumber).join(', ')}. `
             : ''}
@@ -212,67 +243,51 @@ function MappingSection({
         </FieldDescription>
       </Field>
       {error ? (
-        <p role="alert" className="text-destructive text-sm">
+        <p id={`import-${kind}-error`} role="alert" className="text-destructive text-sm">
           {error}
         </p>
       ) : null}
-      <FieldGroup className="grid gap-3 md:grid-cols-2">
-        {fields.map((field) => (
-          <Field key={field.field}>
-            <FieldLabel htmlFor={`import-${kind}-${field.field}`}>
-              {field.displayName}
-              {field.isRequired ? ' *' : ''}
-            </FieldLabel>
-            <NativeSelect
-              id={`import-${kind}-${field.field}`}
-              value={
-                options.columnMapping.find((item) => item.field === field.field)?.columnIndex ?? ''
-              }
-              onChange={(event) => onColumnChange(field.field, event.target.value)}
-            >
-              <NativeSelectOption value="">
-                {field.isRequired ? 'Chọn cột bắt buộc' : 'Không ghép'}
-              </NativeSelectOption>
+      <ProductImportColumnTable
+        kind={kind}
+        fields={fields}
+        columns={columns}
+        options={options}
+        samples={sheet.sampleRows}
+        error={error}
+        onColumnChange={onColumnChange}
+      />
+      <details>
+        <summary className="text-muted-foreground cursor-pointer text-xs focus-visible:outline-2 focus-visible:outline-offset-2">
+          Xem tối đa 5 dòng mẫu — {sheet.sheetName}
+        </summary>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Dòng nguồn</TableHead>
               {columns.map((column) => (
-                <NativeSelectOption key={column.columnIndex} value={column.columnIndex}>
-                  {column.letter}: {column.header || 'Không có tên'}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <FieldDescription>
-              {field.description}
-              {field.defaultValue ? ` Mặc định: ${field.defaultValue}.` : ''}
-            </FieldDescription>
-          </Field>
-        ))}
-      </FieldGroup>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Dòng nguồn</TableHead>
-            {columns.map((column) => (
-              <TableHead key={column.columnIndex}>
-                {column.letter}: {column.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sheet.sampleRows.map((row) => (
-            <TableRow key={row.rowNumber}>
-              <TableCell>{row.rowNumber}</TableCell>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.columnIndex}
-                  className="max-w-64 break-words whitespace-normal"
-                >
-                  {row.values[column.columnIndex] ?? '—'}
-                </TableCell>
+                <TableHead key={column.columnIndex}>
+                  {column.letter}: {column.header}
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {sheet.sampleRows.slice(0, 5).map((row) => (
+              <TableRow key={row.rowNumber}>
+                <TableCell>{row.rowNumber}</TableCell>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.columnIndex}
+                    className="max-w-64 break-words whitespace-normal"
+                  >
+                    {row.values[column.columnIndex] ?? '—'}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </details>
     </section>
   )
 }

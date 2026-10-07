@@ -38,7 +38,11 @@ export function defaultProductImportOptions(inspect: ProductImportInspect): Prod
         headerRowNumber: uniqueChoice.candidate.rowNumber,
         columnMapping: uniqueChoice.candidate.suggestedMapping,
       }
-    : { sheetId: '', headerRowNumber: 1, columnMapping: [] }
+    : {
+        sheetId: inspect.isCsv && inspect.sheets.length === 1 ? inspect.sheets[0]!.sheetId : '',
+        headerRowNumber: 1,
+        columnMapping: [],
+      }
   return {
     main,
     conversions: null,

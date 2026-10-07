@@ -7,6 +7,7 @@ import {
   renderHook,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -192,6 +193,8 @@ beforeEach(() => {
   auth.isPending = false
   auth.isError = false
   auth.data.permissions = [P.PRODUCTS_IMPORT]
+  auth.data.tenantId = 'tenant'
+  auth.data.id = 'user'
   vi.spyOn(productImportService, 'inspect').mockResolvedValue(structuredClone(inspectData))
   vi.spyOn(productImportService, 'preview').mockResolvedValue(structuredClone(previewData))
   vi.spyOn(productImportService, 'template').mockResolvedValue(new Blob(['xlsx']))
@@ -356,6 +359,99 @@ describe('product import contract and selection', () => {
 })
 
 describe('product import workflow', () => {
+  it('announces the current step and focuses its heading after navigation', async () => {
+    renderPage()
+    await openReview()
+    const heading = screen.getByRole('heading', { name: 'Bước 3: Kiểm tra' })
+    await waitFor(() => expect(heading).toHaveFocus())
+    expect(
+      screen
+        .getByRole('navigation', { name: 'Tiến trình nhập hàng hóa' })
+        .querySelector('[aria-current=step]')
+    ).toHaveTextContent('Kiểm tra')
+    await userEvent.click(screen.getByRole('button', { name: 'Nhập 1 sản phẩm' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Quay lại kiểm tra' }))
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Nhập 1 sản phẩm' })).toHaveFocus()
+    )
+  })
+  it('filters mapping without changing selected columns and blocks ambiguous mapping', async () => {
+    renderPage()
+    await userEvent.upload(
+      screen.getByLabelText('Tệp vật tư hàng hóa'),
+      new File(['x'], 'hang.xlsx')
+    )
+    await screen.findByLabelText('sku *')
+    await userEvent.selectOptions(screen.getByLabelText('Lọc cột hàng hóa'), 'mapped')
+    await userEvent.type(screen.getByLabelText('Tìm trường hàng hóa'), 'productName')
+    expect(screen.getByLabelText('productName *')).toHaveValue('1')
+    expect(screen.queryByLabelText('sku *')).not.toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Tìm trường hàng hóa'))
+    await userEvent.selectOptions(screen.getByLabelText('unit *'), '0')
+    expect(await screen.findAllByText('Mơ hồ: trùng cột')).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' })).toBeDisabled()
+    expect(productImportService.preview).not.toHaveBeenCalled()
+  })
+  it('focuses and describes the first invalid field on form submission', async () => {
+    renderPage()
+    await userEvent.upload(
+      screen.getByLabelText('Tệp vật tư hàng hóa'),
+      new File(['x'], 'hang.xlsx')
+    )
+    await userEvent.selectOptions(await screen.findByLabelText('sku *'), '')
+    fireEvent.submit(document.getElementById('product-import-mapping')!)
+    await waitFor(() => expect(screen.getByLabelText('sku *')).toHaveFocus())
+    expect(screen.getByLabelText('sku *')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('sku *')).toHaveAccessibleDescription(/Ghép đủ các cột bắt buộc/)
+  })
+  it('uses a single CSV table even when its header cannot be suggested', async () => {
+    const csv = structuredClone(inspectData)
+    csv.isCsv = true
+    csv.sheets[0]!.mainHeaderCandidates = []
+    vi.mocked(productImportService.inspect).mockResolvedValueOnce(csv)
+    renderPage()
+    await userEvent.upload(
+      screen.getByLabelText('Tệp vật tư hàng hóa'),
+      new File(['x'], 'hang.csv')
+    )
+    await screen.findByLabelText('sku *')
+    expect(screen.queryByLabelText('Trang tính hàng hóa')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Trang tính quy đổi (tùy chọn)')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Dòng tiêu đề — Hàng hóa')).toHaveValue(1)
+    expect(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' })).toBeDisabled()
+  })
+  it('links invalid checkbox to its reason and exposes conversion details', async () => {
+    renderPage()
+    await openReview()
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 3' })).toHaveAccessibleDescription(
+      /Không thể chọn dòng có lỗi/
+    )
+    await userEvent.click(screen.getAllByText('1 đơn vị quy đổi')[0]!)
+    expect(screen.getAllByText('1 Thùng = 24 Lon')[0]).toBeVisible()
+  })
+  it('resets result pagination and retains the shared table footer', async () => {
+    vi.mocked(productImportService.preview).mockResolvedValueOnce({
+      ...previewData,
+      rows: Array.from({ length: 22 }, (_, index) => ({
+        ...row,
+        rowNumber: index + 2,
+        sku: `BIA-${index}`,
+      })),
+    })
+    renderPage()
+    await openReview()
+    await userEvent.click(screen.getByRole('button', { name: 'Trang sau' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Nhập 22 sản phẩm' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Xác nhận nhập' }))
+    const result = await screen.findByRole('region', { name: 'Kết quả từng sản phẩm' })
+    expect(within(result).getByText('BIA-0')).toBeInTheDocument()
+    expect(within(result).queryByText('BIA-20')).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Bước 4: Kết quả' })).toHaveFocus()
+    )
+    await userEvent.click(within(result).getByRole('button', { name: 'Trang sau' }))
+    expect(within(result).getByText('BIA-20')).toBeInTheDocument()
+  })
   it.each(['pending', 'denied', 'error'])(
     'does not call import APIs when permission is %s',
     (state) => {
@@ -406,7 +502,7 @@ describe('product import workflow', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Quay lại ghép cột' }))
     await userEvent.selectOptions(screen.getByLabelText('sku *'), '')
     expect(screen.queryByRole('button', { name: 'Nhập 1 sản phẩm' })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' }))
+    expect(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' })).toBeDisabled()
     expect(await screen.findByText('Ghép đủ các cột bắt buộc.')).toBeInTheDocument()
     expect(productImportService.preview).toHaveBeenCalledTimes(1)
   })
@@ -443,6 +539,9 @@ describe('product import workflow', () => {
       await openReview()
       await save()
       expect(await screen.findByRole('button', { name: 'Kiểm tra lại' })).toBeInTheDocument()
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Kiểm tra lại' })).toHaveFocus()
+      )
       expect(screen.getByRole('button', { name: 'Nhập 1 sản phẩm' })).toBeDisabled()
       expect(productService.importProducts).toHaveBeenCalledTimes(1)
       expect(screen.queryByText('Đã hoàn tất nhập sản phẩm')).not.toBeInTheDocument()
@@ -493,7 +592,7 @@ describe('product import workflow', () => {
     renderPage()
     await openReview()
     await save()
-    const confirm = screen.getByRole('button', { name: 'Xác nhận nhập' })
+    const confirm = screen.getByRole('button', { name: 'Đang nhập…' })
     expect(confirm).toBeDisabled()
     fireEvent.click(confirm)
     expect(screen.getByRole('button', { name: 'Chọn tệp khác', hidden: true })).toBeDisabled()
@@ -536,20 +635,26 @@ describe('product import workflow', () => {
     expect(productService.importProducts).not.toHaveBeenCalled()
   })
   it('CSV tab selector passes an actual tab and changing delimiter invalidates inspection', async () => {
+    vi.mocked(productImportService.inspect).mockResolvedValue({
+      ...inspectData,
+      isCsv: true,
+      csvDelimiter: ',',
+    })
     renderPage()
-    await userEvent.selectOptions(screen.getByLabelText('Dấu phân cách CSV'), '\t')
     await userEvent.upload(
       screen.getByLabelText('Tệp vật tư hàng hóa'),
       new File(['x'], 'hang.csv')
     )
     await screen.findByRole('button', { name: 'Kiểm tra dữ liệu' })
+    await userEvent.selectOptions(screen.getByLabelText('Dấu phân cách CSV'), '\t')
+    await waitFor(() => expect(productImportService.inspect).toHaveBeenCalledTimes(2))
     expect(productImportService.inspect).toHaveBeenCalledWith(
       expect.any(File),
       '\t',
       expect.any(AbortSignal)
     )
     await userEvent.selectOptions(screen.getByLabelText('Dấu phân cách CSV'), ';')
-    await waitFor(() => expect(productImportService.inspect).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(productImportService.inspect).toHaveBeenCalledTimes(3))
   })
   it('ignores late preview of an old mapping revision', async () => {
     let resolveOld!: (value: ProductImportPreview) => void
@@ -581,6 +686,15 @@ describe('product import workflow', () => {
     page.rerender(<ProductImportPage />)
     expect(screen.getByText(/Bạn không có quyền nhập vật tư/)).toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+  })
+  it('discards the file workspace when the tenant changes', async () => {
+    const page = renderPage()
+    await openReview()
+    auth.data.tenantId = 'another-tenant'
+    page.rerender(<ProductImportPage />)
+    expect(screen.getByLabelText('Tệp vật tư hàng hóa')).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    expect(productService.importProducts).not.toHaveBeenCalled()
   })
   it('isolates late file A response and aborts it when switching to B', async () => {
     let resolveA!: (value: ProductImportInspect) => void
