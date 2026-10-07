@@ -1,7 +1,10 @@
 import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
+import type { AuditLogListResponse } from '@/features/platform-services/types/platform-services.types'
 import type {
+  CancelStockIssueRequestRequest,
+  StockIssueAuditLogQuery,
   CreateStockIssueRequestRequest,
   RecordStockPickingRequest,
   StockIssueRequestListQuery,
@@ -41,6 +44,20 @@ export const stockIssueService = {
       .post<
         ApiResponse<unknown>
       >(API_ENDPOINTS.stockIssueRequests.releaseForPicking(request.stockIssueRequestId), request)
+      .then((response) => response.data),
+
+  cancelStockIssueRequest: (request: CancelStockIssueRequestRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.stockIssueRequests.cancel(request.stockIssueRequestId), request)
+      .then((response) => response.data),
+
+  getStockIssueRequestAuditLogs: (stockIssueRequestId: string, params: StockIssueAuditLogQuery) =>
+    axiosClient
+      .get<
+        ApiResponse<AuditLogListResponse>
+      >(API_ENDPOINTS.stockIssueRequests.auditLogs(stockIssueRequestId), { params })
       .then((response) => response.data),
 
   recordStockPicking: (stockIssueRequestId: string, request: RecordStockPickingRequest) =>

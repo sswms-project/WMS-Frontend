@@ -93,6 +93,18 @@ export interface ReleaseStockIssueRequestRequest {
   expectedVersion: string
 }
 
+export interface CancelStockIssueRequestRequest {
+  stockIssueRequestId: string
+  commandId: string
+  expectedVersion: string
+  reason: string
+}
+
+export interface StockIssueAuditLogQuery {
+  pageNumber: number
+  pageSize: number
+}
+
 export interface StockIssueRequestListResponse {
   items: StockIssueRequestSummary[]
   totalCount: number

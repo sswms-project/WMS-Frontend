@@ -347,6 +347,9 @@ export const API_ENDPOINTS = {
     detail: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}`,
     releaseForPicking: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/release-for-picking`,
+    cancel: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/cancel`,
+    auditLogs: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/audit-logs`,
     picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
     dispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
