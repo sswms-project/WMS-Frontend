@@ -11,6 +11,9 @@ import type {
   GoodsReceiptDetail,
   GoodsReceiptListResponse,
   PutawayRequest,
+  PutAwayDeviationReport,
+  PutAwayDeviationReportQuery,
+  PutAwayHeldSlot,
   PutAwaySuggestionsResponse,
   PutawayTaskQuery,
   SavePutAwayPlanRequest,
@@ -112,6 +115,16 @@ export const inboundService = {
       .post<
         ApiResponse<PutAwaySuggestionsResponse>
       >(API_ENDPOINTS.goodsReceipts.putawayPlanSuggestions(receiptId), undefined, { timeout: 60_000 })
+      .then((response) => response.data),
+  getPutawayHeldSlots: (receiptId: string) =>
+    axiosClient
+      .get<ApiResponse<PutAwayHeldSlot[]>>(API_ENDPOINTS.goodsReceipts.putawayHeldSlots(receiptId))
+      .then((response) => response.data),
+  getPutawayDeviationReport: (params: PutAwayDeviationReportQuery) =>
+    axiosClient
+      .get<
+        ApiResponse<PutAwayDeviationReport>
+      >(API_ENDPOINTS.goodsReceipts.putawayDeviationReport, { params })
       .then((response) => response.data),
   cancelPutawayTask: (receiptId: string, request: CancelPutawayTaskRequest) =>
     axiosClient

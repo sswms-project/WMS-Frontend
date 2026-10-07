@@ -2,7 +2,6 @@
 
 import { Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -16,10 +15,19 @@ import {
 } from '@/components/ui/sheet'
 import { Spinner } from '@/components/ui/spinner'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
-import type { GoodsReceiptItem, PutAwaySuggestionsResponse } from '../../types/inbound.types'
-import { PutawayLocationSelect, type SlotOption } from '../PutawayDetailPage'
+import type {
+  GoodsReceiptItem,
+  PutAwayHeldSlot,
+  PutAwaySuggestionsResponse,
+} from '../../types/inbound.types'
+import {
+  PutawayLocationSelect,
+  PutawaySuggestionList,
+  PutawaySuggestionSummary,
+  type SlotOption,
+} from '../PutawayDetailPage'
 import type { PlanDraftValidation, PlanDrafts } from '../../utils/putaway-plan-draft'
-import { getUnplannedQuantity } from '../../utils/putaway-plan-draft'
+import { getHeldSlotWarning, getUnplannedQuantity } from '../../utils/putaway-plan-draft'
 
 interface PutawayPlanSheetProps {
   readonly open: boolean
@@ -29,6 +37,8 @@ interface PutawayPlanSheetProps {
   readonly drafts: PlanDrafts
   readonly validation: PlanDraftValidation
   readonly suggestions: PutAwaySuggestionsResponse | null
+  /** Vị trí đang chừa cho hàng sắp về; có ngay khi mở, không cần bấm gợi ý. */
+  readonly heldSlots?: readonly PutAwayHeldSlot[]
   readonly isLoadingSlots: boolean
   readonly isSlotsError: boolean
   readonly isSuggesting: boolean
@@ -57,6 +67,7 @@ export function PutawayPlanSheet({
   drafts,
   validation,
   suggestions,
+  heldSlots,
   isLoadingSlots,
   isSlotsError,
   isSuggesting,
@@ -102,17 +113,16 @@ export function PutawayPlanSheet({
             </Button>
             {suggestions ? (
               <Button type="button" variant="ghost" size="sm" onClick={onApplyBestSuggestions}>
-                Áp dụng gợi ý tốt nhất cho dòng chưa cấu hình
+                Áp dụng phân bổ gợi ý cho dòng chưa cấu hình
               </Button>
             ) : null}
-            <p className="text-muted-foreground text-xs" role="status">
-              {suggestions
-                ? suggestions.isAiAssisted
-                  ? 'Gợi ý đã được AI sắp xếp; bạn vẫn quyết định cuối cùng.'
-                  : (suggestions.aiNotice ?? 'Gợi ý theo quy tắc kho.')
-                : 'Số lượng cấu hình tính theo đơn vị gốc của sản phẩm.'}
-            </p>
+            {suggestions ? null : (
+              <p className="text-muted-foreground text-xs" role="status">
+                Số lượng cấu hình tính theo đơn vị gốc của sản phẩm.
+              </p>
+            )}
           </div>
+          {suggestions ? <PutawaySuggestionSummary suggestions={suggestions} /> : null}
 
           {isSlotsError ? (
             <Alert variant="destructive">
@@ -135,9 +145,9 @@ export function PutawayPlanSheet({
               const lines = drafts[item.id] ?? []
               const itemError = validation.itemErrors.get(item.id)
               const unplanned = getUnplannedQuantity(item, lines)
-              const itemSuggestions =
-                suggestions?.items.find((entry) => entry.goodsReceiptItemId === item.id)
-                  ?.suggestions ?? []
+              const itemSuggestion = suggestions?.items.find(
+                (entry) => entry.goodsReceiptItemId === item.id
+              )
               return (
                 <section key={item.id} className="border" aria-label={item.productName}>
                   <div className="flex flex-wrap items-start justify-between gap-2 border-b p-3">
@@ -183,6 +193,11 @@ export function PutawayPlanSheet({
                         const key = `${item.id}:${line.key}`
                         const error = validation.lineErrors.get(key)
                         const warning = validation.lineWarnings.get(key)
+                        const heldWarning = getHeldSlotWarning(
+                          heldSlots ?? suggestions?.heldSlots,
+                          line.slotId,
+                          item.productId
+                        )
                         const slotFieldId = `plan-slot-${item.id}-${line.key}`
                         const quantityFieldId = `plan-quantity-${item.id}-${line.key}`
                         return (
@@ -204,6 +219,11 @@ export function PutawayPlanSheet({
                               {warning ? (
                                 <p className="text-warning text-xs" role="status">
                                   {warning}. Lúc cất hệ thống vẫn kiểm tra lại sức chứa.
+                                </p>
+                              ) : null}
+                              {heldWarning ? (
+                                <p className="text-warning text-xs" role="status">
+                                  {heldWarning}
                                 </p>
                               ) : null}
                             </Field>
@@ -253,48 +273,21 @@ export function PutawayPlanSheet({
                     </div>
                   )}
 
-                  {itemSuggestions.length > 0 ? (
+                  {itemSuggestion &&
+                  (itemSuggestion.suggestions.length > 0 ||
+                    itemSuggestion.unallocatedQuantity > 0) ? (
                     <div className="bg-muted/40 animate-in fade-in-0 slide-in-from-top-2 animation-duration-250 border-t p-3 motion-reduce:animate-none">
                       <p className="mb-2 flex items-center gap-1.5 text-xs font-medium">
                         <Sparkles aria-hidden="true" className="text-tertiary size-3" />
                         Gợi ý vị trí
                       </p>
-                      <ul className="flex flex-col gap-1.5">
-                        {itemSuggestions.map((suggestion, suggestionIndex) => (
-                          <li
-                            key={suggestion.slotId}
-                            style={{ animationDelay: `${suggestionIndex * 50}ms` }}
-                            className="animate-in fade-in-0 slide-in-from-left-2 fill-mode-backwards animation-duration-200 flex flex-wrap items-center justify-between gap-2 text-xs motion-reduce:animate-none"
-                          >
-                            <span className="min-w-0 flex-1 break-words">
-                              <strong className="font-mono">{suggestion.slotCode}</strong>
-                              <span className="text-muted-foreground">
-                                {' '}
-                                · {suggestion.zoneName} · {suggestion.reason}
-                              </span>
-                              {suggestion.source === 'Ai' ? (
-                                <Badge className="bg-tertiary-container text-on-tertiary-container ml-1.5">
-                                  AI
-                                </Badge>
-                              ) : null}
-                              {suggestion.warnings.map((warning) => (
-                                <span key={warning} className="text-warning block">
-                                  {warning}
-                                </span>
-                              ))}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={isSaving}
-                              onClick={() => onApplySuggestion(item.id, suggestion.slotId)}
-                            >
-                              Dùng vị trí này
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
+                      <PutawaySuggestionList
+                        entry={itemSuggestion}
+                        unitName={item.baseUnitName}
+                        disabled={isSaving}
+                        usedSlotIds={new Set(lines.map((line) => line.slotId).filter(Boolean))}
+                        onApply={(slotId) => onApplySuggestion(item.id, slotId)}
+                      />
                     </div>
                   ) : null}
                 </section>

@@ -6,6 +6,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import type { PutawayFormValues } from '../../schemas/inbound.schema'
@@ -14,6 +15,7 @@ import {
   PUTAWAY_EVIDENCE_MAX_COUNT,
   PUTAWAY_REASON_MAX_LENGTH,
   PUTAWAY_REASON_MIN_LENGTH,
+  PUTAWAY_REASON_OPTIONS,
 } from '../../utils/putaway-plan'
 
 export interface PutawayEvidenceItem {
@@ -34,6 +36,9 @@ interface PutawayDeviationPanelProps {
   readonly reasonError: string | null
   readonly disabled: boolean
   readonly evidence: PutawayEvidenceState
+  /** Vì sao cần lý do: khác kế hoạch, dùng vị trí đang chừa, hoặc thông báo từ máy chủ. */
+  readonly title?: string
+  readonly noteRequired: boolean
 }
 
 export function PutawayDeviationPanel({
@@ -41,9 +46,12 @@ export function PutawayDeviationPanel({
   reasonError,
   disabled,
   evidence,
+  title = 'Bạn đang cất khác kế hoạch của quản lý',
+  noteRequired,
 }: PutawayDeviationPanelProps) {
   const fileInputId = useId()
   const reasonId = useId()
+  const reasonCodeId = useId()
   const canAddMore = evidence.items.length < PUTAWAY_EVIDENCE_MAX_COUNT
 
   return (
@@ -55,17 +63,35 @@ export function PutawayDeviationPanel({
         <TriangleAlert aria-hidden="true" className="text-warning mt-0.5 size-4 shrink-0" />
         <div className="min-w-0">
           <h2 id={`${reasonId}-title`} className="text-sm font-semibold">
-            Bạn đang cất khác kế hoạch của quản lý
+            {title}
           </h2>
           <p className="text-muted-foreground text-xs">
-            Nhập lý do để quản lý nắm được. Ảnh minh họa là tùy chọn (JPG/PNG, tối đa{' '}
+            Chọn nhóm lý do để quản lý nắm được. Ảnh minh họa là tùy chọn (JPG/PNG, tối đa{' '}
             {PUTAWAY_EVIDENCE_MAX_COUNT} ảnh, mỗi ảnh 5 MB).
           </p>
         </div>
       </div>
-      <div className="grid gap-4 p-4 lg:grid-cols-2">
+      <div className="grid gap-4 p-4 lg:grid-cols-3">
+        <Field data-disabled={disabled}>
+          <FieldLabel htmlFor={reasonCodeId}>Nhóm lý do</FieldLabel>
+          <NativeSelect
+            id={reasonCodeId}
+            className="w-full"
+            disabled={disabled}
+            {...form.register('overrideReasonCode')}
+          >
+            <NativeSelectOption value="">Chọn nhóm lý do</NativeSelectOption>
+            {PUTAWAY_REASON_OPTIONS.map((option) => (
+              <NativeSelectOption key={option.code} value={option.code}>
+                {option.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </Field>
         <Field data-invalid={Boolean(reasonError)} data-disabled={disabled}>
-          <FieldLabel htmlFor={reasonId}>Lý do cất khác kế hoạch</FieldLabel>
+          <FieldLabel htmlFor={reasonId}>
+            {noteRequired ? 'Mô tả lý do' : 'Ghi chú thêm (tùy chọn)'}
+          </FieldLabel>
           <Textarea
             id={reasonId}
             rows={3}
@@ -77,7 +103,9 @@ export function PutawayDeviationPanel({
             {...form.register('overrideReason')}
           />
           <FieldDescription id={`${reasonId}-hint`}>
-            Tối thiểu {PUTAWAY_REASON_MIN_LENGTH} ký tự.
+            {noteRequired
+              ? `Tối thiểu ${PUTAWAY_REASON_MIN_LENGTH} ký tự.`
+              : 'Nhóm lý do đã chọn là đủ; ghi thêm nếu cần.'}
           </FieldDescription>
           <FieldError id={`${reasonId}-error`}>{reasonError}</FieldError>
         </Field>

@@ -14,6 +14,9 @@ import type {
   GoodsReceiptDetail,
   GoodsReceiptListResponse,
   PutawayRequest,
+  PutAwayDeviationReport,
+  PutAwayDeviationReportQuery,
+  PutAwayHeldSlot,
   PutAwaySuggestionsResponse,
   PutawayTaskQuery,
   SavePutAwayPlanRequest,
@@ -117,6 +120,27 @@ export function useGoodsReceiptQuery(receiptId: string) {
     queryKey: queryKeys.goodsReceipts.detail(receiptId),
     queryFn: () => inboundService.getReceipt(receiptId).then((response) => response.data),
     enabled: Boolean(receiptId) && receiptId !== NULL_GUID,
+  })
+}
+
+/** Vị trí đang chừa cho hàng sắp về trong kho của phiếu; chỉ để cảnh báo, không chặn. */
+export function usePutawayHeldSlotsQuery(receiptId: string, enabled = true) {
+  return useQuery<PutAwayHeldSlot[], ApiErrorResponse>({
+    queryKey: queryKeys.goodsReceipts.putawayHeldSlots(receiptId),
+    queryFn: () => inboundService.getPutawayHeldSlots(receiptId).then((response) => response.data),
+    enabled: enabled && Boolean(receiptId) && receiptId !== NULL_GUID,
+  })
+}
+
+export function usePutawayDeviationReportQuery(
+  params: PutAwayDeviationReportQuery,
+  enabled: boolean
+) {
+  return useQuery<PutAwayDeviationReport, ApiErrorResponse>({
+    queryKey: queryKeys.goodsReceipts.putawayDeviationReport(params),
+    queryFn: () =>
+      inboundService.getPutawayDeviationReport(params).then((response) => response.data),
+    enabled,
   })
 }
 

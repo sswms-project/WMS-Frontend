@@ -8,6 +8,7 @@ import { getPutawaySlotOptions } from '../utils/putaway-slot-options'
 import {
   buildPlanDrafts,
   getPlannableItems,
+  getSuggestedQuantities,
   getUnplannedQuantity,
   toSavePlanRequest,
   validatePlanDrafts,
@@ -15,7 +16,11 @@ import {
   type PlanDrafts,
 } from '../utils/putaway-plan-draft'
 import type { GoodsReceiptDetail, PutAwaySuggestionsResponse } from '../types/inbound.types'
-import { usePutawaySuggestionsMutation, useSavePutawayPlanMutation } from './use-inbound'
+import {
+  usePutawayHeldSlotsQuery,
+  usePutawaySuggestionsMutation,
+  useSavePutawayPlanMutation,
+} from './use-inbound'
 
 type LinePatch = Partial<Pick<PlanDraftLine, 'slotId' | 'quantity'>>
 
@@ -25,6 +30,7 @@ export function usePutawayPlanEditor(receipt: GoodsReceiptDetail | undefined) {
   const [drafts, setDrafts] = useState<PlanDrafts>({})
   const [suggestions, setSuggestions] = useState<PutAwaySuggestionsResponse | null>(null)
   const layoutQuery = useWarehouseLayoutQuery(receipt?.warehouseId ?? '', isOpen)
+  const heldSlotsQuery = usePutawayHeldSlotsQuery(receipt?.id ?? '', isOpen)
   const saveMutation = useSavePutawayPlanMutation()
   const suggestMutation = usePutawaySuggestionsMutation()
   const slots = useMemo(() => getPutawaySlotOptions(layoutQuery.data ?? []), [layoutQuery.data])
@@ -91,12 +97,17 @@ export function usePutawayPlanEditor(receipt: GoodsReceiptDetail | undefined) {
 
   function applySuggestion(itemId: string, slotId: string) {
     const lines = drafts[itemId] ?? []
-    const extra = unplannedOf(itemId, lines)
+    const unplanned = unplannedOf(itemId, lines)
     const existing = lines.find((line) => line.slotId === slotId)
-    if (extra <= 0 && !existing) {
+    if (unplanned <= 0 && !existing) {
       toast.info('Dòng hàng này đã được cấu hình đủ số lượng.')
       return
     }
+    const suggested = suggestions?.items
+      .find((entry) => entry.goodsReceiptItemId === itemId)
+      ?.suggestions.find((suggestion) => suggestion.slotId === slotId)?.suggestedQuantity
+    // Vị trí có số lượng đề xuất thì chỉ điền phần đó để phần còn lại sang vị trí khác.
+    const extra = suggested && !existing ? Math.min(suggested, unplanned) : unplanned
     setItemLines(itemId, (current) =>
       existing
         ? current.map((line) =>
@@ -112,11 +123,18 @@ export function usePutawayPlanEditor(receipt: GoodsReceiptDetail | undefined) {
   }
 
   function applyBestSuggestions() {
-    for (const entry of suggestions?.items ?? []) {
-      const best = entry.suggestions[0]
-      if (best && (drafts[entry.goodsReceiptItemId] ?? []).length === 0)
-        applySuggestion(entry.goodsReceiptItemId, best.slotId)
-    }
+    setDrafts((current) => {
+      const next = { ...current }
+      for (const entry of suggestions?.items ?? []) {
+        const item = items.find((candidate) => candidate.id === entry.goodsReceiptItemId)
+        if (!item || (current[item.id] ?? []).length > 0) continue
+        next[item.id] = getSuggestedQuantities(item, entry.suggestions).map((line) => ({
+          key: crypto.randomUUID(),
+          ...line,
+        }))
+      }
+      return next
+    })
   }
 
   async function save() {
@@ -145,6 +163,7 @@ export function usePutawayPlanEditor(receipt: GoodsReceiptDetail | undefined) {
     slots,
     validation,
     suggestions,
+    heldSlots: heldSlotsQuery.data,
     isLoadingSlots: layoutQuery.isLoading,
     isSlotsError: layoutQuery.isError,
     isSuggesting: suggestMutation.isPending,

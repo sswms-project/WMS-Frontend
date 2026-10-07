@@ -1,33 +1,44 @@
 'use client'
 
-import { ArrowLeft, Ban, MapPinned, PackageCheck, Plus, Sparkles, Trash2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  Ban,
+  Check,
+  ChevronDown,
+  MapPinned,
+  PackageCheck,
+  Plus,
+  Send,
+  Sparkles,
+  UserPlus,
+} from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useWatch, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { FieldError } from '@/components/ui/field'
+import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
 import { APP_ROUTES } from '@/routes/app-routes'
-import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { PutawayFormValues } from '../../schemas/inbound.schema'
 import {
   getPutawayAllocationState,
   getPutawayFillRemaining,
 } from '../../schemas/putaway-allocation.schema'
-import { formatPutawayQuantity, getPutawayRemainingInput } from '../../utils/putaway-units'
+import { formatPutawayQuantity } from '../../utils/putaway-units'
 import {
   hasPutawayPlan,
-  isPutawayReasonValid,
+  isPutawayDeviationReasonValid,
   type PutawayPlanDeviation,
 } from '../../utils/putaway-plan'
-import { cn } from '@/lib/utils'
-import type { GoodsReceiptDetail } from '../../types/inbound.types'
+import type { GoodsReceiptDetail, GoodsReceiptItem } from '../../types/inbound.types'
+import { PUTAWAY_ROW_GRID, PutawayAllocationRow } from './PutawayAllocationRow'
 import { PutawayDeviationPanel, type PutawayEvidenceState } from './PutawayDeviationPanel'
-import { PutawayLocationSelect } from './PutawayLocationSelect'
 import { PutawayPlanNotice } from './PutawayPlanNotice'
+import { PutawayScanBar, type PutawayScanState } from './PutawayScanBar'
 import { PutawaySuggestionPanel, type PutawaySuggestionState } from './PutawaySuggestionPanel'
 
 export interface SlotOption {
@@ -42,6 +53,16 @@ export interface SlotOption {
   unavailableReason?: string
 }
 
+export interface PutawayPlanningState {
+  readonly assigneeName: string | null
+  readonly isSaving: boolean
+  /** Có quyền cấu hình vị trí cất; thiếu thì chỉ giao việc được. */
+  readonly canSavePlan: boolean
+  readonly canAssign: boolean
+  readonly onSavePlan: () => void
+  readonly onAssign: () => void
+}
+
 interface PutawayFormProps {
   readonly receipt: GoodsReceiptDetail
   readonly form: UseFormReturn<PutawayFormValues>
@@ -50,15 +71,26 @@ interface PutawayFormProps {
   readonly isPending: boolean
   readonly hasUncertainSubmission?: boolean
   readonly planDeviation: PutawayPlanDeviation
+  /** Cảnh báo theo chỉ số dòng đang chọn vị trí chừa cho sản phẩm khác sắp về. */
+  readonly heldWarnings?: ReadonlyMap<number, string>
+  readonly deviationTitle?: string
   readonly evidence: PutawayEvidenceState
   readonly canPlan?: boolean
   readonly suggestion?: PutawaySuggestionState
   readonly canCancel: boolean
   readonly cancelLabel?: string
+  /**
+   * Người xem là quản lý chứ không phải người được giao cất: màn này dùng để chốt vị trí rồi báo
+   * cho nhân viên, không ghi nhận cất hàng.
+   */
+  readonly planning?: PutawayPlanningState
+  /** Trạng thái quét mã vị trí của người đi cất; không có khi phiếu chưa được giao vị trí. */
+  readonly scan?: PutawayScanState
   readonly onPlan?: () => void
   readonly onCancel: () => void
   readonly onApplyPlan: () => void
-  readonly onAdd: () => void
+  /** Thêm một dòng phân bổ; có `itemId` thì dòng mới thuộc sẵn sản phẩm đó. */
+  readonly onAdd: (itemId?: string) => void
   readonly onRemove: (index: number) => void
   readonly onSubmit: () => void
 }
@@ -71,11 +103,15 @@ export function PutawayForm({
   isPending,
   hasUncertainSubmission = false,
   planDeviation,
+  heldWarnings,
+  deviationTitle,
   evidence,
   canPlan = false,
   suggestion,
   canCancel,
   cancelLabel = 'Hủy phần còn lại',
+  planning,
+  scan,
   onPlan,
   onCancel,
   onApplyPlan,
@@ -84,25 +120,92 @@ export function PutawayForm({
   onSubmit,
 }: PutawayFormProps) {
   const {
-    register,
-    setValue,
     formState: { errors, isSubmitted, touchedFields },
   } = form
   const lines = useWatch({ control: form.control, name: 'lines' })
   const overrideReason = useWatch({ control: form.control, name: 'overrideReason' })
-  const reasonMissing = planDeviation.requiresReason && !isPutawayReasonValid(overrideReason)
+  const overrideReasonCode = useWatch({ control: form.control, name: 'overrideReasonCode' })
+  const noteRequired = !overrideReasonCode || overrideReasonCode === 'Other'
+  const reasonMissing =
+    planDeviation.requiresReason &&
+    !isPutawayDeviationReasonValid(overrideReasonCode, overrideReason)
   const reasonError =
     reasonMissing && (isSubmitted || (overrideReason ?? '').length > 0)
-      ? 'Vui lòng nhập lý do (tối thiểu 5 ký tự) khi cất khác kế hoạch.'
+      ? 'Vui lòng chọn nhóm lý do hoặc mô tả lý do (tối thiểu 5 ký tự).'
       : null
-  const allocationLocked = isPending || hasUncertainSubmission
+  const allocationLocked = isPending || hasUncertainSubmission || Boolean(planning?.isSaving)
+  // Chưa quét đủ mã thì chưa xác nhận được, trừ khi người cất đã báo không quét được và nêu lý do.
+  const scanMissing =
+    scan && !planning && !scan.skipRequested ? scan.requiredCount - scan.confirmedCount : 0
+  // Nhóm sản phẩm người dùng đã thu gọn; mặc định mở hết để không giấu lỗi.
+  const [collapsedItemIds, setCollapsedItemIds] = useState<ReadonlySet<string>>(new Set())
+  const toggleItem = (itemId: string) =>
+    setCollapsedItemIds((current) => {
+      const next = new Set(current)
+      if (!next.delete(itemId)) next.add(itemId)
+      return next
+    })
   const allocation = getPutawayAllocationState(lines, receipt.items, slots)
   const pendingItems = receipt.items.filter((item) => item.remainingPutAwayQuantity > 0)
-  const fullyAllocated = pendingItems.filter(
+  const isFullyAllocated = (item: GoodsReceiptItem) =>
+    (allocation.assignedByItem.get(item.id) ?? 0) ===
+    Math.round(item.remainingPutAwayQuantity * 100)
+  const fullyAllocated = pendingItems.filter(isFullyAllocated).length
+
+  const entries = fields.flatMap((field, index) => {
+    const line = lines[index]
+    return line ? [{ field, index, line }] : []
+  })
+  // Sản phẩm vừa được cất hết ở nơi khác vẫn giữ nhóm của nó chừng nào còn dòng đang nhập.
+  const groupedItems = receipt.items.filter(
     (item) =>
-      (allocation.assignedByItem.get(item.id) ?? 0) ===
-      Math.round(item.remainingPutAwayQuantity * 100)
-  ).length
+      item.remainingPutAwayQuantity > 0 ||
+      entries.some((entry) => entry.line.goodsReceiptItemId === item.id)
+  )
+  const groupedItemIds = new Set(groupedItems.map((item) => item.id))
+  const looseEntries = entries.filter((entry) => !groupedItemIds.has(entry.line.goodsReceiptItemId))
+  const slotCodeById = new Map(slots.map((slot) => [slot.id, slot.code]))
+  const usedSlotIdsByItem = new Map<string, Set<string>>()
+  for (const { line } of entries) {
+    if (!line.goodsReceiptItemId || !line.slotId) continue
+    const used = usedSlotIdsByItem.get(line.goodsReceiptItemId) ?? new Set<string>()
+    used.add(line.slotId)
+    usedSlotIdsByItem.set(line.goodsReceiptItemId, used)
+  }
+
+  const renderRow = (
+    { field, index, line }: (typeof entries)[number],
+    showProductSelect: boolean
+  ) => {
+    const item = receipt.items.find((candidate) => candidate.id === line.goodsReceiptItemId)
+    return (
+      <PutawayAllocationRow
+        key={field.id}
+        index={index}
+        receipt={receipt}
+        form={form}
+        line={line}
+        row={allocation.rows[index]!}
+        assignedByItem={allocation.assignedByItem}
+        slots={slots}
+        locked={allocationLocked}
+        showRequiredErrors={isSubmitted || Boolean(touchedFields.lines?.[index])}
+        fillRemaining={getPutawayFillRemaining(lines, index, receipt.items, slots)}
+        planStatus={
+          // Nhãn theo/khác kế hoạch dành cho người đi cất; người đang soạn kế hoạch không cần.
+          !planning && item && hasPutawayPlan(item)
+            ? planDeviation.offPlanRows.has(index)
+              ? 'offPlan'
+              : 'onPlan'
+            : null
+        }
+        heldWarning={heldWarnings?.get(index)}
+        scan={planning ? 'none' : item && hasPutawayPlan(item) ? 'required' : 'optional'}
+        showProductSelect={showProductSelect}
+        onRemove={onRemove}
+      />
+    )
+  }
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
@@ -129,10 +232,21 @@ export function PutawayForm({
           </div>
         </div>
         <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
-          {canPlan && onPlan ? (
+          {canPlan && onPlan && !planning ? (
             <Button type="button" variant="outline" disabled={allocationLocked} onClick={onPlan}>
               <MapPinned aria-hidden="true" />
               Cấu hình vị trí cất
+            </Button>
+          ) : null}
+          {planning?.canAssign ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={allocationLocked}
+              onClick={planning.onAssign}
+            >
+              <UserPlus aria-hidden="true" />
+              {planning.assigneeName ? 'Giao lại nhân viên' : 'Giao nhân viên'}
             </Button>
           ) : null}
           {canCancel ? (
@@ -146,10 +260,28 @@ export function PutawayForm({
               {cancelLabel}
             </Button>
           ) : null}
+          {planning?.canSavePlan ? (
+            <Button
+              type="button"
+              disabled={allocationLocked}
+              aria-busy={planning.isSaving}
+              onClick={planning.onSavePlan}
+            >
+              {planning.isSaving ? (
+                <Spinner aria-hidden="true" data-icon="inline-start" />
+              ) : (
+                <Send aria-hidden="true" data-icon="inline-start" />
+              )}
+              {planning.assigneeName ? 'Lưu vị trí & báo nhân viên' : 'Lưu vị trí & giao nhân viên'}
+            </Button>
+          ) : null}
           <Button
             type="button"
+            className={cn(planning && 'hidden')}
             disabled={
-              isPending || (!hasUncertainSubmission && (!allocation.canSubmit || reasonMissing))
+              isPending ||
+              (!hasUncertainSubmission &&
+                (!allocation.canSubmit || reasonMissing || scanMissing > 0))
             }
             aria-busy={isPending}
             onClick={onSubmit}
@@ -171,331 +303,239 @@ export function PutawayForm({
           </Button>
         </div>
       </header>
-      <section className="bg-card border">
-        <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3">
-          <Metric label="Dòng hàng cần cất" value={String(pendingItems.length)} />
-          <Metric label="Dòng đã phân bổ đủ" value={String(fullyAllocated)} />
-          <Metric
-            label="Dòng còn phải phân bổ"
-            value={String(pendingItems.length - fullyAllocated)}
-          />
-        </div>
-        <div className="divide-y border-t">
-          {receipt.items
-            .filter((item) => item.remainingPutAwayQuantity > 0)
-            .map((item) => {
-              const requested = (allocation.requestedByItem.get(item.id) ?? 0) / 100
-              const excess = Math.round((requested - item.remainingPutAwayQuantity) * 100) / 100
-              return (
-                <div
-                  key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs"
-                >
-                  <span className="min-w-0 font-medium break-words">
-                    {item.productSKU} - {item.productName}
-                    {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
-                  </span>
-                  <span
-                    className={cn(
-                      'tabular-nums',
-                      excess > 0 ? 'text-destructive font-medium' : 'text-muted-foreground'
-                    )}
-                  >
-                    Còn phải cất: {formatPutawayQuantity(item, item.remainingPutAwayQuantity)} ·
-                    Đang nhập: {formatPutawayQuantity(item, requested)} · Sau phân bổ còn:{' '}
-                    {formatPutawayQuantity(
-                      item,
-                      Math.max(
-                        0,
-                        item.remainingPutAwayQuantity -
-                          (allocation.assignedByItem.get(item.id) ?? 0) / 100
-                      )
-                    )}
-                    {excess > 0 ? ` · Vượt ${formatPutawayQuantity(item, excess)}` : ''}
-                  </span>
-                </div>
-              )
-            })}
-        </div>
-      </section>
+
+      {planning ? (
+        <p
+          className="bg-muted/40 border-l-primary border border-l-4 px-4 py-3 text-sm"
+          role="status"
+        >
+          {!planning.canSavePlan ? (
+            <>
+              Nhiệm vụ cất hàng{' '}
+              {planning.assigneeName ? (
+                <>
+                  đang giao cho <strong>{planning.assigneeName}</strong>
+                </>
+              ) : (
+                <strong>chưa giao cho ai</strong>
+              )}
+              . Chỉ nhân viên được giao mới ghi nhận cất hàng; bạn có thể giao hoặc giao lại nhiệm
+              vụ. Tài khoản của bạn chưa có quyền “Cấu hình vị trí cất hàng” nên chưa lưu được vị
+              trí cho nhân viên.
+            </>
+          ) : planning.assigneeName ? (
+            <>
+              Nhiệm vụ cất hàng đang giao cho <strong>{planning.assigneeName}</strong>. Chốt vị trí
+              bên dưới rồi bấm “Lưu vị trí & báo nhân viên”; nhân viên sẽ nhận thông báo và làm
+              theo.
+            </>
+          ) : (
+            <>
+              Nhiệm vụ cất hàng <strong>chưa giao cho ai</strong>. Chốt vị trí bên dưới rồi bấm “Lưu
+              vị trí & giao nhân viên” để chọn người thực hiện.
+            </>
+          )}
+        </p>
+      ) : null}
       <PutawayPlanNotice receipt={receipt} disabled={allocationLocked} onApplyPlan={onApplyPlan} />
       {errors.root?.server?.message ? <FieldError>{errors.root.server.message}</FieldError> : null}
-      <section className="bg-card border">
+
+      <section className="bg-card border" aria-labelledby="putaway-allocation-title">
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold">Chọn vị trí cất cho từng sản phẩm</h2>
-            <p className="text-muted-foreground text-xs">
-              Chọn vị trí đích để cất từng sản phẩm. Có thể chia một sản phẩm vào nhiều vị trí, giới
-              hạn tính riêng theo từng dòng hàng.
-            </p>
+          <div className="min-w-0 flex-1">
+            <h2 id="putaway-allocation-title" className="text-sm font-semibold">
+              Chọn vị trí cất cho từng sản phẩm
+            </h2>
+            <div className="mt-2 flex items-center gap-3">
+              <Progress
+                className="max-w-56"
+                value={pendingItems.length === 0 ? 0 : (fullyAllocated / pendingItems.length) * 100}
+                aria-label="Tiến độ phân bổ"
+              />
+              <p className="text-muted-foreground text-xs tabular-nums" role="status">
+                Đã phân bổ đủ {fullyAllocated}/{pendingItems.length} sản phẩm
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {suggestion ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="border-tertiary/40 text-tertiary hover:text-tertiary"
-                disabled={allocationLocked || suggestion.isSuggesting}
-                onClick={suggestion.onSuggest}
-              >
-                {suggestion.isSuggesting ? (
-                  <Spinner aria-hidden="true" data-icon="inline-start" />
-                ) : (
-                  <Sparkles aria-hidden="true" />
-                )}
-                {suggestion.isSuggesting ? 'Đang phân tích…' : 'Gợi ý vị trí bằng AI'}
-              </Button>
-            ) : null}
+          {groupedItems.length > 1 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setCollapsedItemIds(
+                  collapsedItemIds.size === groupedItems.length
+                    ? new Set()
+                    : new Set(groupedItems.map((item) => item.id))
+                )
+              }
+            >
+              {collapsedItemIds.size === groupedItems.length ? 'Mở tất cả' : 'Thu gọn tất cả'}
+            </Button>
+          ) : null}
+          {suggestion ? (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              disabled={allocationLocked}
-              onClick={onAdd}
+              className="border-tertiary/40 text-tertiary hover:text-tertiary"
+              disabled={allocationLocked || suggestion.isSuggesting}
+              onClick={suggestion.onSuggest}
             >
-              <Plus aria-hidden="true" />
-              Chia sang vị trí khác
+              {suggestion.isSuggesting ? (
+                <Spinner aria-hidden="true" data-icon="inline-start" />
+              ) : (
+                <Sparkles aria-hidden="true" />
+              )}
+              {suggestion.isSuggesting ? 'Đang phân tích…' : 'Gợi ý vị trí bằng AI'}
             </Button>
-          </div>
+          ) : null}
         </div>
         {suggestion ? (
           <PutawaySuggestionPanel
             items={receipt.items}
             state={suggestion}
             disabled={allocationLocked}
+            usedSlotIdsByItem={usedSlotIdsByItem}
+          />
+        ) : null}
+
+        {scan && !planning && scan.requiredCount > 0 ? (
+          <PutawayScanBar
+            state={scan}
+            slots={slots}
+            lines={entries.map(({ index, line }) => ({
+              index,
+              slotId: line.slotId,
+              confirmedSlotCode: line.confirmedSlotCode,
+            }))}
+            disabled={allocationLocked}
+            onConfirm={(index, code) =>
+              form.setValue(`lines.${index}.confirmedSlotCode`, code, { shouldDirty: true })
+            }
           />
         ) : null}
         <div className="divide-y">
-          {fields.map((field, index) => {
-            const line = lines[index]
-            if (!line) return null
-            const row = allocation.rows[index]!
-            const showErrors =
-              isSubmitted ||
-              Boolean(touchedFields.lines?.[index]) ||
-              Boolean(line.goodsReceiptItemId || line.slotId) ||
-              line.enteredQuantity !== 1
-            const lineErrors = showErrors ? row.errors : {}
-            const selectedItemId = line.goodsReceiptItemId
-            const selectedItem = receipt.items.find((item) => item.id === selectedItemId)
-            const fillRemaining = getPutawayFillRemaining(lines, index, receipt.items, slots)
+          {groupedItems.map((item) => {
+            const itemEntries = entries.filter((entry) => entry.line.goodsReceiptItemId === item.id)
+            const requested = (allocation.requestedByItem.get(item.id) ?? 0) / 100
+            const assigned = (allocation.assignedByItem.get(item.id) ?? 0) / 100
+            const excess = Math.round((requested - item.remainingPutAwayQuantity) * 100) / 100
+            const missing =
+              Math.round((item.remainingPutAwayQuantity - Math.max(assigned, requested)) * 100) /
+              100
+            const collapsed = collapsedItemIds.has(item.id)
             return (
-              <FieldGroup
-                key={field.id}
-                className="animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 grid gap-3 p-4 *:min-w-0 motion-reduce:animate-none md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,.8fr)_auto]"
-              >
-                <Field data-invalid={Boolean(lineErrors.goodsReceiptItemId)}>
-                  <FieldLabel htmlFor={`putaway-item-${index}`}>Sản phẩm</FieldLabel>
-                  <NativeSelect
-                    id={`putaway-item-${index}`}
-                    className="w-full"
-                    disabled={allocationLocked}
-                    aria-invalid={Boolean(lineErrors.goodsReceiptItemId)}
-                    aria-describedby={`putaway-item-${index}-error`}
-                    value={selectedItemId}
-                    onChange={(event) => {
-                      setValue(`lines.${index}.goodsReceiptItemId`, event.target.value, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                      const item = receipt.items.find(
-                        (candidate) => candidate.id === event.target.value
-                      )
-                      const input = item
-                        ? getPutawayRemainingInput(item, item.remainingPutAwayQuantity)
-                        : null
-                      setValue(`lines.${index}.enteredUnitId`, input?.enteredUnitId ?? '', {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                      setValue(`lines.${index}.enteredQuantity`, 1, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }}
-                  >
-                    <NativeSelectOption value="">Chọn sản phẩm</NativeSelectOption>
-                    {receipt.items
-                      .filter(
-                        (item) =>
-                          item.id === selectedItemId ||
-                          (item.inboundRequestItemId &&
-                            Math.round(item.remainingPutAwayQuantity * 100) >
-                              (allocation.assignedByItem.get(item.id) ?? 0))
-                      )
-                      .map((item) => (
-                        <NativeSelectOption key={item.id} value={item.id}>
-                          {item.productSKU} - {item.productName}
-                          {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
-                        </NativeSelectOption>
-                      ))}
-                  </NativeSelect>
-                  <FieldError id={`putaway-item-${index}-error`}>
-                    {lineErrors.goodsReceiptItemId}
-                  </FieldError>
-                  {selectedItem ? (
-                    <p className="text-muted-foreground text-xs">
-                      Còn phải cất:{' '}
-                      {formatPutawayQuantity(selectedItem, selectedItem.remainingPutAwayQuantity)}
-                    </p>
-                  ) : null}
-                </Field>
-                <Field data-invalid={Boolean(lineErrors.slotId)}>
-                  <FieldLabel htmlFor={`putaway-slot-${index}`}>Cất vào vị trí</FieldLabel>
-                  <PutawayLocationSelect
-                    id={`putaway-slot-${index}`}
-                    invalid={Boolean(lineErrors.slotId)}
-                    disabled={allocationLocked}
-                    slots={slots}
-                    value={line.slotId}
-                    onChange={(slotId) =>
-                      setValue(`lines.${index}.slotId`, slotId, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }
-                  />
-                  <FieldError id={`putaway-slot-${index}-error`}>{lineErrors.slotId}</FieldError>
-                  {selectedItem && hasPutawayPlan(selectedItem) ? (
-                    <p className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
-                      {planDeviation.offPlanRows.has(index) ? (
-                        <Badge
-                          key="off-plan"
-                          variant="outline"
-                          className="border-warning text-warning animate-in fade-in-0 zoom-in-95 animation-duration-150 motion-reduce:animate-none"
-                        >
-                          Khác kế hoạch
-                        </Badge>
-                      ) : (
-                        <Badge
-                          key="on-plan"
-                          variant="secondary"
-                          className="animate-in fade-in-0 zoom-in-95 animation-duration-150 motion-reduce:animate-none"
-                        >
-                          Theo kế hoạch
-                        </Badge>
-                      )}
-                    </p>
-                  ) : null}
-                </Field>
-                <Field
-                  data-invalid={Boolean(lineErrors.enteredQuantity)}
-                  data-disabled={allocationLocked}
-                >
-                  <FieldLabel htmlFor={`putaway-quantity-${index}`}>Số lượng cất</FieldLabel>
-                  <Input
-                    id={`putaway-quantity-${index}`}
-                    type="number"
-                    min={10 ** -(row.unit?.quantityPrecision ?? 0)}
-                    step={10 ** -(row.unit?.quantityPrecision ?? 0)}
-                    max={row.maxQuantity}
-                    disabled={allocationLocked}
-                    aria-invalid={Boolean(lineErrors.enteredQuantity)}
-                    aria-describedby={`putaway-quantity-${index}-error putaway-conversion-${index}`}
-                    {...register(`lines.${index}.enteredQuantity`, { valueAsNumber: true })}
-                  />
-                  <p
-                    id={`putaway-conversion-${index}`}
-                    className="text-muted-foreground text-xs"
-                    aria-live="polite"
-                  >
-                    {selectedItem && row.baseQuantity !== null
-                      ? `= ${formatQuantity(row.baseQuantity)} ${selectedItem.baseUnitName}`
-                      : 'Chọn đơn vị và nhập số lượng để xem quy đổi.'}
-                  </p>
-                  <FieldError id={`putaway-quantity-${index}-error`}>
-                    {lineErrors.enteredQuantity}
-                  </FieldError>
-                </Field>
-                <Field
-                  data-invalid={Boolean(lineErrors.enteredUnitId)}
-                  data-disabled={allocationLocked}
-                >
-                  <FieldLabel htmlFor={`putaway-unit-${index}`}>Đơn vị cất</FieldLabel>
-                  <NativeSelect
-                    id={`putaway-unit-${index}`}
-                    className="w-full"
-                    disabled={allocationLocked || !selectedItem}
-                    value={line.enteredUnitId}
-                    aria-invalid={Boolean(lineErrors.enteredUnitId)}
-                    aria-describedby={`putaway-unit-${index}-error putaway-unit-${index}-description`}
-                    onChange={(event) => {
-                      const unitId = event.target.value
-                      const input =
-                        selectedItem && row.baseQuantity !== null
-                          ? getPutawayRemainingInput(selectedItem, row.baseQuantity, unitId)
-                          : null
-                      setValue(`lines.${index}.enteredUnitId`, unitId, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                      setValue(
-                        `lines.${index}.enteredQuantity`,
-                        input?.enteredUnitId === unitId ? input.enteredQuantity : Number.NaN,
-                        { shouldDirty: true, shouldValidate: true }
-                      )
-                    }}
-                  >
-                    <NativeSelectOption value="">Chọn đơn vị</NativeSelectOption>
-                    {(selectedItem?.allowedUnits ?? []).map((unit) => (
-                      <NativeSelectOption key={unit.unitId} value={unit.unitId}>
-                        {unit.unitName}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                  {selectedItem && row.unit ? (
-                    <FieldDescription
-                      id={`putaway-unit-${index}-description`}
-                      className="break-words"
+              <article key={item.id} aria-label={`${item.productSKU} - ${item.productName}`}>
+                <div className="bg-muted/30 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-expanded={!collapsed}
+                      aria-label={`${collapsed ? 'Mở' : 'Thu gọn'} ${item.productSKU}`}
+                      onClick={() => toggleItem(item.id)}
                     >
-                      1 {row.unit.unitName} = {formatQuantity(row.unit.conversionFactor)}{' '}
-                      {selectedItem.baseUnitName}
-                    </FieldDescription>
-                  ) : null}
-                  <FieldError id={`putaway-unit-${index}-error`}>
-                    {lineErrors.enteredUnitId}
-                  </FieldError>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={allocationLocked || !fillRemaining}
-                    onClick={() => {
-                      if (!fillRemaining) return
-                      setValue(`lines.${index}.enteredUnitId`, fillRemaining.enteredUnitId, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                      setValue(`lines.${index}.enteredQuantity`, fillRemaining.enteredQuantity, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }}
-                  >
-                    Cất toàn bộ còn lại
-                  </Button>
-                </Field>
-                <div className="flex items-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={allocationLocked}
-                    aria-label={`Xóa phân bổ ${index + 1}`}
-                    onClick={() => onRemove(index)}
-                  >
-                    <Trash2 aria-hidden="true" />
-                  </Button>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className={cn('transition-transform', collapsed && '-rotate-90')}
+                      />
+                    </Button>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold break-words">
+                        {item.productSKU} - {item.productName}
+                        {item.lotNumber ? ` · Lô ${item.lotNumber}` : ''}
+                      </h3>
+                      <p className="text-muted-foreground text-xs tabular-nums">
+                        Còn phải cất {formatPutawayQuantity(item, item.remainingPutAwayQuantity)} ·
+                        đang phân bổ {formatPutawayQuantity(item, requested)} vào{' '}
+                        {itemEntries.length} vị trí
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {excess > 0 ? (
+                      <Badge variant="destructive">
+                        Vượt {formatPutawayQuantity(item, excess)}
+                      </Badge>
+                    ) : isFullyAllocated(item) ? (
+                      <Badge variant="secondary">
+                        <Check aria-hidden="true" />
+                        Đã đủ
+                      </Badge>
+                    ) : missing > 0 ? (
+                      <Badge variant="outline" className="border-warning text-warning">
+                        Còn thiếu {formatPutawayQuantity(item, missing)}
+                      </Badge>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={allocationLocked}
+                      onClick={() => onAdd(item.id)}
+                    >
+                      <Plus aria-hidden="true" />
+                      Chia sang vị trí khác
+                    </Button>
+                  </div>
                 </div>
-              </FieldGroup>
+                {collapsed ? (
+                  <p className="text-muted-foreground px-4 py-2 font-mono text-xs break-words">
+                    {itemEntries
+                      .filter((entry) => entry.line.slotId)
+                      .map(
+                        (entry) =>
+                          `${slotCodeById.get(entry.line.slotId) ?? '?'} × ${
+                            Number.isFinite(entry.line.enteredQuantity)
+                              ? entry.line.enteredQuantity
+                              : '?'
+                          }`
+                      )
+                      .join(' · ') || 'Chưa chọn vị trí'}
+                  </p>
+                ) : itemEntries.length === 0 ? (
+                  <p className="text-muted-foreground px-4 py-3 text-xs">
+                    Chưa có vị trí nào cho sản phẩm này. Bấm “Chia sang vị trí khác” để thêm.
+                  </p>
+                ) : (
+                  <>
+                    <div
+                      aria-hidden="true"
+                      className={cn(
+                        'text-muted-foreground hidden border-b px-4 py-1.5 text-xs font-medium',
+                        PUTAWAY_ROW_GRID
+                      )}
+                    >
+                      <span>Vị trí</span>
+                      <span>Số lượng</span>
+                      <span>Đơn vị</span>
+                      <span>Quy đổi</span>
+                      <span className="w-[6.5rem]" />
+                    </div>
+                    <div className="divide-y">
+                      {itemEntries.map((entry) => renderRow(entry, false))}
+                    </div>
+                  </>
+                )}
+              </article>
             )
           })}
+          {looseEntries.length > 0 ? (
+            <div aria-label="Dòng chưa chọn sản phẩm">
+              {looseEntries.map((entry) => renderRow(entry, true))}
+            </div>
+          ) : null}
         </div>
+        {allocation.canSubmit && scanMissing > 0 ? (
+          <p className="text-warning border-t px-4 py-3 text-xs" role="status">
+            Còn {scanMissing} vị trí được giao chưa quét mã. Quét đủ mã để xác nhận cất hàng.
+          </p>
+        ) : null}
         {!allocation.canSubmit ? (
           <p className="text-muted-foreground border-t px-4 py-3 text-xs" role="status">
-            Chọn đủ sản phẩm, vị trí và nhập số lượng trong giới hạn để xác nhận. Chỉ các dòng hợp
-            lệ được tính vào tổng phân bổ.
+            Chọn vị trí và nhập số lượng trong giới hạn cho từng sản phẩm để xác nhận.
           </p>
         ) : null}
         {errors.lines?.root?.message ? (
@@ -504,23 +544,16 @@ export function PutawayForm({
           </div>
         ) : null}
       </section>
-      {planDeviation.requiresReason ? (
+      {planDeviation.requiresReason && !planning ? (
         <PutawayDeviationPanel
           form={form}
           reasonError={reasonError}
           disabled={allocationLocked}
           evidence={evidence}
+          title={deviationTitle}
+          noteRequired={noteRequired}
         />
       ) : null}
-    </div>
-  )
-}
-
-function Metric({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <div>
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
     </div>
   )
 }

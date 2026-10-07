@@ -32,16 +32,21 @@ const receipt = {
 const slots: SlotOption[] = [
   { id: '10000000-0000-4000-8000-0000000000a1', code: 'A-01' },
   { id: '10000000-0000-4000-8000-0000000000b1', code: 'B-01' },
+  { id: '10000000-0000-4000-8000-0000000000d1', code: 'D-01' },
   { id: '10000000-0000-4000-8000-0000000000f1', code: 'C-01', unavailableReason: 'Vị trí đã đầy' },
 ] as SlotOption[]
 
 const response: PutAwaySuggestionsResponse = {
   isAiAssisted: true,
   aiNotice: null,
+  summary: 'Chia vào vị trí đang chứa cùng sản phẩm.',
+  risks: ['A-01 sẽ gần đầy sau khi cất.'],
+  heldSlots: [],
   items: [
     {
       goodsReceiptItemId: itemId,
       remainingQuantity: 100,
+      unallocatedQuantity: 0,
       suggestions: [
         '10000000-0000-4000-8000-0000000000f1',
         '10000000-0000-4000-8000-0000000000a1',
@@ -55,6 +60,8 @@ const response: PutAwaySuggestionsResponse = {
         reason: 'ok',
         source: 'Ai' as const,
         warnings: [],
+        suggestedQuantity: 0,
+        availableQuantity: null,
       })),
     },
   ],
@@ -120,6 +127,31 @@ describe('usePutawayFormSuggestions', () => {
       slotId: '10000000-0000-4000-8000-0000000000a1',
       enteredQuantity: 40,
     })
+  })
+
+  it('applies the suggested split across slots with their quantities', async () => {
+    const split = ['a1', 'b1', 'd1'].map((suffix, index) => ({
+      ...response.items[0]!.suggestions[0]!,
+      slotId: `10000000-0000-4000-8000-0000000000${suffix}`,
+      suggestedQuantity: [50, 30, 20][index]!,
+    }))
+    mutateAsync.mockResolvedValue({
+      data: { ...response, items: [{ ...response.items[0]!, suggestions: split }] },
+    })
+    const { result } = setup([line('')])
+    await act(async () => result.current.suggestion.onSuggest())
+
+    act(() => result.current.suggestion.onApplyBest())
+
+    expect(
+      result.current.form
+        .getValues('lines')
+        .map((value) => [value.slotId.slice(-2), value.enteredQuantity])
+    ).toEqual([
+      ['a1', 50],
+      ['b1', 30],
+      ['d1', 20],
+    ])
   })
 
   it('does not duplicate a slot that is already allocated', () => {

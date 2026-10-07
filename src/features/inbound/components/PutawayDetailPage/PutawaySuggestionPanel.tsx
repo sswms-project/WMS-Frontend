@@ -1,9 +1,11 @@
 'use client'
 
-import { Sparkles, X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Check, Sparkles, X } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { GoodsReceiptItem, PutAwaySuggestionsResponse } from '../../types/inbound.types'
+import { PutawaySuggestionList } from './PutawaySuggestionList'
+import { PutawaySuggestionSummary } from './PutawaySuggestionSummary'
 
 export interface PutawaySuggestionState {
   readonly suggestions: PutAwaySuggestionsResponse | null
@@ -18,14 +20,60 @@ interface PutawaySuggestionPanelProps {
   readonly items: readonly GoodsReceiptItem[]
   readonly state: PutawaySuggestionState
   readonly disabled: boolean
+  /** Vị trí đang có trong phân bổ, theo dòng hàng. */
+  readonly usedSlotIdsByItem?: ReadonlyMap<string, ReadonlySet<string>>
 }
 
-/** Gợi ý vị trí cất do AI sắp xếp; chỉ điền vào form, người dùng vẫn phải xác nhận cất hàng. */
-export function PutawaySuggestionPanel({ items, state, disabled }: PutawaySuggestionPanelProps) {
+/** Gợi ý vị trí cất; chỉ điền vào form, người dùng vẫn phải xác nhận cất hàng. */
+export function PutawaySuggestionPanel({
+  items,
+  state,
+  disabled,
+  usedSlotIdsByItem,
+}: PutawaySuggestionPanelProps) {
   const { suggestions } = state
+  const [reviewing, setReviewing] = useState(false)
   if (!suggestions) return null
   const itemById = new Map(items.map((item) => [item.id, item]))
-  const entries = suggestions.items.filter((entry) => entry.suggestions.length > 0)
+  const entries = suggestions.items.filter(
+    (entry) => entry.suggestions.length > 0 || entry.unallocatedQuantity > 0
+  )
+  const proposed = entries.flatMap((entry) =>
+    entry.suggestions
+      .filter((suggestion) => suggestion.suggestedQuantity > 0)
+      .map((suggestion) => ({ itemId: entry.goodsReceiptItemId, slotId: suggestion.slotId }))
+  )
+  const allApplied =
+    proposed.length > 0 &&
+    proposed.every(({ itemId, slotId }) => usedSlotIdsByItem?.get(itemId)?.has(slotId))
+
+  // Đã dùng hết gợi ý thì thu gọn để nhường chỗ cho phần phân bổ; vẫn mở lại xem được.
+  if (allApplied && !reviewing)
+    return (
+      <section
+        className="bg-muted/40 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 text-xs"
+        aria-label="Gợi ý vị trí cất hàng"
+      >
+        <p className="text-primary flex items-center gap-1.5 font-medium" role="status">
+          <Check aria-hidden="true" className="size-4" />
+          Đã điền {proposed.length} vị trí theo gợi ý. Kiểm tra lại bên dưới rồi xác nhận cất hàng.
+        </p>
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="sm" onClick={() => setReviewing(true)}>
+            Xem lại gợi ý
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Ẩn gợi ý"
+            onClick={state.onClear}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+      </section>
+    )
 
   return (
     <section
@@ -38,15 +86,14 @@ export function PutawaySuggestionPanel({ items, state, disabled }: PutawaySugges
           Gợi ý vị trí cất
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          {entries.length > 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={disabled}
-              onClick={state.onApplyBest}
-            >
-              Áp dụng gợi ý tốt nhất
+          {proposed.length > 0 && !allApplied ? (
+            <Button type="button" size="sm" disabled={disabled} onClick={state.onApplyBest}>
+              Áp dụng phân bổ gợi ý
+            </Button>
+          ) : null}
+          {allApplied ? (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setReviewing(false)}>
+              Thu gọn
             </Button>
           ) : null}
           <Button
@@ -60,60 +107,29 @@ export function PutawaySuggestionPanel({ items, state, disabled }: PutawaySugges
           </Button>
         </div>
       </div>
-      <p className="text-muted-foreground mb-3 text-xs" role="status">
-        {suggestions.isAiAssisted
-          ? 'Gợi ý đã được AI sắp xếp theo vị trí cùng sản phẩm, còn đủ sức chứa. Bạn vẫn quyết định cuối cùng.'
-          : (suggestions.aiNotice ?? 'Gợi ý theo quy tắc kho.')}
-      </p>
+      <div className="mb-3">
+        <PutawaySuggestionSummary suggestions={suggestions} />
+      </div>
       {entries.length === 0 ? (
         <p className="text-muted-foreground text-xs">
-          Không có vị trí nào đủ chứa toàn bộ số lượng còn lại. Hãy chia sang nhiều vị trí.
+          Chưa tìm được vị trí còn sức chứa cho các dòng hàng này.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-4 lg:grid-cols-2">
           {entries.map((entry) => {
             const item = itemById.get(entry.goodsReceiptItemId)
             return (
-              <li key={entry.goodsReceiptItemId}>
-                <p className="mb-1 text-xs font-medium">
+              <li key={entry.goodsReceiptItemId} className="min-w-0">
+                <p className="mb-1.5 text-xs font-semibold break-words">
                   {item ? `${item.productSKU} - ${item.productName}` : 'Sản phẩm'}
                 </p>
-                <ul className="flex flex-col gap-1.5">
-                  {entry.suggestions.map((suggestion, index) => (
-                    <li
-                      key={suggestion.slotId}
-                      style={{ animationDelay: `${index * 50}ms` }}
-                      className="animate-in fade-in-0 slide-in-from-left-2 fill-mode-backwards animation-duration-200 flex flex-wrap items-center justify-between gap-2 text-xs motion-reduce:animate-none"
-                    >
-                      <span className="min-w-0 flex-1 break-words">
-                        <strong className="font-mono">{suggestion.slotCode}</strong>
-                        <span className="text-muted-foreground">
-                          {' '}
-                          · {suggestion.zoneName} · {suggestion.reason}
-                        </span>
-                        {suggestion.source === 'Ai' ? (
-                          <Badge className="bg-tertiary-container text-on-tertiary-container ml-1.5">
-                            AI
-                          </Badge>
-                        ) : null}
-                        {suggestion.warnings.map((warning) => (
-                          <span key={warning} className="text-warning block">
-                            {warning}
-                          </span>
-                        ))}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={disabled}
-                        onClick={() => state.onApply(entry.goodsReceiptItemId, suggestion.slotId)}
-                      >
-                        Dùng vị trí này
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
+                <PutawaySuggestionList
+                  entry={entry}
+                  unitName={item?.baseUnitName ?? ''}
+                  disabled={disabled}
+                  usedSlotIds={usedSlotIdsByItem?.get(entry.goodsReceiptItemId)}
+                  onApply={(slotId) => state.onApply(entry.goodsReceiptItemId, slotId)}
+                />
               </li>
             )
           })}

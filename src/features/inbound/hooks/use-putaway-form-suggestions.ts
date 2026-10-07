@@ -8,6 +8,7 @@ import type { SlotOption } from '../components/PutawayDetailPage'
 import type { PutawayFormValues } from '../schemas/inbound.schema'
 import { getPutawayAllocationState } from '../schemas/putaway-allocation.schema'
 import type { GoodsReceiptDetail, PutAwaySuggestionsResponse } from '../types/inbound.types'
+import { getSuggestedQuantities } from '../utils/putaway-plan-draft'
 import { getPutawayRemainingInput } from '../utils/putaway-units'
 import { usePutawayFormSuggestionsMutation } from './use-inbound'
 
@@ -59,26 +60,35 @@ export function usePutawayFormSuggestions({
       toast.info('Vị trí này đã có trong phân bổ của sản phẩm.')
       return
     }
+    // Vị trí có số lượng đề xuất thì chỉ điền phần đó để phần còn lại sang vị trí khác.
+    const suggested =
+      suggestions?.items
+        .find((entry) => entry.goodsReceiptItemId === itemId)
+        ?.suggestions.find((suggestion) => suggestion.slotId === slotId)?.suggestedQuantity ?? 0
+    const options = { shouldDirty: true, shouldValidate: true }
     const emptyIndex = lines.findIndex((line) => line.goodsReceiptItemId === itemId && !line.slotId)
     if (emptyIndex >= 0) {
-      form.setValue(`lines.${emptyIndex}.slotId`, slotId, {
-        shouldDirty: true,
-        shouldValidate: true,
-      })
+      const input = suggested > 0 ? getPutawayRemainingInput(item, suggested) : null
+      if (input) {
+        form.setValue(`lines.${emptyIndex}.enteredUnitId`, input.enteredUnitId, options)
+        form.setValue(`lines.${emptyIndex}.enteredQuantity`, input.enteredQuantity, options)
+      }
+      form.setValue(`lines.${emptyIndex}.slotId`, slotId, options)
       return
     }
     const assigned =
       getPutawayAllocationState(lines, receipt.items, slots).assignedByItem.get(itemId) ?? 0
-    const remaining = Math.max(0, Math.round(item.remainingPutAwayQuantity * 100) - assigned) / 100
-    if (remaining <= 0) {
+    const unassigned = Math.max(0, Math.round(item.remainingPutAwayQuantity * 100) - assigned) / 100
+    if (unassigned <= 0) {
       toast.info('Dòng hàng này đã được phân bổ đủ số lượng.')
       return
     }
+    const quantity = suggested > 0 ? Math.min(suggested, unassigned) : unassigned
     append({
       goodsReceiptItemId: itemId,
       slotId,
-      ...(getPutawayRemainingInput(item, remaining) ?? {
-        enteredQuantity: remaining,
+      ...(getPutawayRemainingInput(item, quantity) ?? {
+        enteredQuantity: quantity,
         enteredUnitId: item.baseUnitId,
       }),
     })
@@ -86,11 +96,13 @@ export function usePutawayFormSuggestions({
 
   function applyBest() {
     for (const entry of suggestions?.items ?? []) {
-      const best = entry.suggestions[0]
+      const item = receipt?.items.find((candidate) => candidate.id === entry.goodsReceiptItemId)
       const hasEmptyLine = form
         .getValues('lines')
         .some((line) => line.goodsReceiptItemId === entry.goodsReceiptItemId && !line.slotId)
-      if (best && hasEmptyLine) apply(entry.goodsReceiptItemId, best.slotId)
+      if (!item || !hasEmptyLine) continue
+      for (const { slotId } of getSuggestedQuantities(item, entry.suggestions))
+        apply(entry.goodsReceiptItemId, slotId)
     }
   }
 

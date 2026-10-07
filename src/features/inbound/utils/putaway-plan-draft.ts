@@ -1,4 +1,9 @@
-import type { GoodsReceiptItem, SavePutAwayPlanRequest } from '../types/inbound.types'
+import type {
+  GoodsReceiptItem,
+  PutAwayHeldSlot,
+  PutAwaySlotSuggestion,
+  SavePutAwayPlanRequest,
+} from '../types/inbound.types'
 
 export interface PlanDraftLine {
   /** Khóa ổn định cho React; không gửi lên Backend. */
@@ -105,6 +110,47 @@ export function toSavePlanRequest(
       })),
     })),
   }
+}
+
+/**
+ * Phân bổ theo gợi ý: mỗi vị trí kèm số lượng đề xuất, cắt bớt để không vượt `limit`.
+ * Phản hồi không có số lượng nào thì dồn toàn bộ vào vị trí đầu tiên.
+ */
+export function getSuggestedQuantities(
+  item: GoodsReceiptItem,
+  suggestions: readonly PutAwaySlotSuggestion[],
+  limit = item.remainingPutAwayQuantity
+) {
+  const allocated = suggestions.filter((suggestion) => suggestion.suggestedQuantity > 0)
+  const source = allocated.length > 0 ? allocated : suggestions.slice(0, 1)
+  let left = toCents(limit)
+  const quantities: { slotId: string; quantity: number }[] = []
+  for (const suggestion of source) {
+    const cents = Math.min(
+      left,
+      allocated.length > 0 ? toCents(suggestion.suggestedQuantity) : left
+    )
+    if (cents <= 0) break
+    quantities.push({ slotId: suggestion.slotId, quantity: cents / 100 })
+    left -= cents
+  }
+  return quantities
+}
+
+/** Cảnh báo khi vị trí đang được chừa cho sản phẩm khác sắp về; không chặn người dùng. */
+export function getHeldSlotWarning(
+  heldSlots: readonly PutAwayHeldSlot[] | undefined,
+  slotId: string,
+  productId: string
+) {
+  const held = heldSlots?.find(
+    (candidate) => candidate.slotId === slotId && candidate.productId !== productId
+  )
+  if (!held) return undefined
+  const expected = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(
+    new Date(held.expectedDate)
+  )
+  return `Vị trí đang chừa cho ${held.sku} dự kiến về ${expected} (yêu cầu ${held.inboundRequestCode}). Nếu vẫn chọn, hàng sắp về có thể thiếu chỗ.`
 }
 
 /** Phần còn phải cất của dòng hàng chưa được cấu hình vị trí nào (đơn vị gốc). */

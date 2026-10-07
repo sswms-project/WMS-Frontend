@@ -1,4 +1,4 @@
-export { PutawayForm, type SlotOption } from './PutawayForm'
+export { PutawayForm, type PutawayPlanningState, type SlotOption } from './PutawayForm'
 export { CancelPutawayDialog } from './CancelPutawayDialog'
 export { PutawayLocationSelect } from './PutawayLocationSelect'
 export { PutawayDeviationPanel } from './PutawayDeviationPanel'
@@ -6,3 +6,7 @@ export type { PutawayEvidenceItem, PutawayEvidenceState } from './PutawayDeviati
 export { PutawayPlanNotice } from './PutawayPlanNotice'
 export { PutawaySuggestionPanel } from './PutawaySuggestionPanel'
 export type { PutawaySuggestionState } from './PutawaySuggestionPanel'
+export { PutawaySuggestionList } from './PutawaySuggestionList'
+export { PutawaySuggestionSummary } from './PutawaySuggestionSummary'
+export { PutawaySlotCodeConfirm } from './PutawaySlotCodeConfirm'
+export { PutawayScanBar, type PutawayScanState } from './PutawayScanBar'

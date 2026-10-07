@@ -17,10 +17,25 @@ const item = {
 const suggestions: PutAwaySuggestionsResponse = {
   isAiAssisted: true,
   aiNotice: null,
+  summary: 'Chia vào vị trí đang chứa cùng sản phẩm.',
+  risks: ['A-01 sẽ gần đầy sau khi cất.'],
+  heldSlots: [
+    {
+      slotId: 'slot-held',
+      slotCode: 'B-02',
+      productId: 'other-product',
+      sku: 'WINE',
+      productName: 'Rượu',
+      heldQuantity: 40,
+      expectedDate: '2026-10-10T03:00:00+00:00',
+      inboundRequestCode: 'YC-1',
+    },
+  ],
   items: [
     {
       goodsReceiptItemId: 'item-1',
       remainingQuantity: 240,
+      unallocatedQuantity: 40,
       suggestions: [
         {
           slotId: 'slot-a',
@@ -31,6 +46,8 @@ const suggestions: PutAwaySuggestionsResponse = {
           reason: 'Đang chứa cùng sản phẩm',
           source: 'Ai',
           warnings: [],
+          suggestedQuantity: 200,
+          availableQuantity: 200,
         },
       ],
     },
@@ -107,6 +124,19 @@ describe('PutawayPlanSheet', () => {
 
     await user.click(screen.getByRole('button', { name: 'Lưu vị trí cất hàng' }))
     expect(handlers.onSave).toHaveBeenCalledOnce()
+  })
+
+  it('shows the suggested quantity, what is left without a slot and slots kept for incoming stock', () => {
+    renderSheet({
+      suggestions,
+      drafts: { 'item-1': [{ key: '1', slotId: 'slot-held', quantity: 10 }] },
+    })
+
+    expect(screen.getByText('200 Lon')).toBeInTheDocument()
+    expect(screen.getByText(/Còn 40 Lon chưa có vị trí đủ sức chứa/)).toBeInTheDocument()
+    expect(screen.getByText(/đang chừa cho WINE/)).toBeInTheDocument()
+    expect(screen.getByText(/Chia vào vị trí đang chứa cùng sản phẩm/)).toBeInTheDocument()
+    expect(screen.getByText('A-01 sẽ gần đầy sau khi cất.')).toBeInTheDocument()
   })
 
   it('blocks saving and shows the over-planning message', () => {

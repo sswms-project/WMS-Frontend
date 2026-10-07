@@ -263,6 +263,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         drafts={planEditor.drafts}
         validation={planEditor.validation}
         suggestions={planEditor.suggestions}
+        heldSlots={planEditor.heldSlots}
         isLoadingSlots={planEditor.isLoadingSlots}
         isSlotsError={planEditor.isSlotsError}
         isSuggesting={planEditor.isSuggesting}

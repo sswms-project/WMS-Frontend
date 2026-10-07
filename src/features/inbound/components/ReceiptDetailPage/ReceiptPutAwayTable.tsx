@@ -14,6 +14,7 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { InventoryEvidence } from '@/features/inventory/types/inventory.types'
 import type { GoodsReceiptItem, PutAwayDetail } from '../../types/inbound.types'
+import { getPutawayReasonLabel } from '../../utils/putaway-plan'
 import { InboundColumnLabel } from '../InboundWorkspace'
 
 interface ReceiptPutAwayTableProps {
@@ -56,13 +57,26 @@ export function ReceiptPutAwayTable({ items, onDownloadEvidence }: ReceiptPutAwa
                 </TableCell>
                 <TableCell>
                   <p className="font-mono">{formatPutAwayLocation(detail)}</p>
+                  {detail.isSlotCodeConfirmed ? (
+                    <Badge variant="secondary" className="mt-1 w-fit">
+                      Đã xác nhận mã vị trí
+                    </Badge>
+                  ) : null}
+                  {detail.isOffPlan && !detail.isSlotCodeConfirmed ? (
+                    <Badge variant="outline" className="border-warning text-warning mt-1 w-fit">
+                      Chưa quét mã vị trí
+                    </Badge>
+                  ) : null}
                   {detail.isOffPlan ? (
                     <div className="animate-in fade-in-0 animation-duration-200 mt-1 flex max-w-64 flex-col gap-1 motion-reduce:animate-none">
                       <Badge variant="outline" className="border-warning text-warning w-fit">
-                        Khác kế hoạch
+                        {detail.usedHeldSlot ? 'Dùng vị trí đang chừa' : 'Khác kế hoạch'}
                       </Badge>
                       <p className="text-muted-foreground text-xs break-words">
-                        Lý do: {detail.deviationReason}
+                        Lý do:{' '}
+                        {[getPutawayReasonLabel(detail.deviationReasonCode), detail.deviationReason]
+                          .filter(Boolean)
+                          .join(' — ')}
                       </p>
                       {detail.deviationEvidence.map((evidence) => (
                         <Button
