@@ -93,8 +93,8 @@ export function ReceiveGoodsDialog({
                   required: true,
                   maxLength: 100,
                   placeholder: 'VD: PN000001…',
-                  readOnly: !canEditReceivedQuantity,
-                  disabled: isPending,
+                  // Keep the field focusable when a save response reports a code conflict.
+                  readOnly: !canEditReceivedQuantity || isPending,
                 }}
               />
               <dl className="contents">

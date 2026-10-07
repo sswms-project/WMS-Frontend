@@ -114,9 +114,24 @@ describe('ReceiveGoodsDialog operational context', () => {
     await user.type(input, 'CUSTOM01')
     expect(input).toHaveValue('CUSTOM01')
   })
-  it('prevents code edits while the receipt is being saved', () => {
-    render(<ReceiptForm pending />)
-    expect(screen.getByLabelText('Mã phiếu nhận *')).toBeDisabled()
+  it('locks the code while saving without blocking focus, then allows correction', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<ReceiptForm pending />)
+    const input = screen.getByLabelText('Mã phiếu nhận *')
+    expect(input).not.toBeDisabled()
+    expect(input).toHaveAttribute('readonly')
+    input.focus()
+    expect(input).toHaveFocus()
+    await user.type(input, '9')
+    expect(input).toHaveValue('PN000001')
+    expect(screen.getByRole('button', { name: 'Lưu nháp' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu và gửi duyệt' })).toBeDisabled()
+
+    rerender(<ReceiptForm />)
+    expect(input).not.toHaveAttribute('readonly')
+    await user.clear(input)
+    await user.type(input, 'PN000002')
+    expect(input).toHaveValue('PN000002')
   })
   it('keeps correction received quantity and unit fixed while allowing damage edits', async () => {
     const user = userEvent.setup()
