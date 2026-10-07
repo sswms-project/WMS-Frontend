@@ -447,3 +447,12 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Standalone typecheck found a receiving-page test fixture missing the new dev priority/dueAt fields. Added Normal/null metadata to that fixture without changing application logic; standalone typecheck passed. GitNexus does not index that test file, so it was inspected directly.
 - No dependency, migration or deployment configuration change in this PR. Existing untracked skills-lock.json is deliberately excluded. Local servers were paused for validation; temporary test files stayed on D:.
 - Backend migration status was checked read-only: no pending migrations. No deployed data write, migration or seed was performed. This is implementation self-verification, not independent approval.
+
+## 2026-10-07 — Staff task, activity and settings experience
+
+- Role: Codex implementation and self-verification, not independent approval. State: `READY_FOR_CODEX_REVIEW`.
+- Staff navigation now distinguishes “Công việc đã xử lý” from “Hoạt động của tôi” and exposes the existing security settings page. The task history is explicitly terminal task state; personal activity is the Staff user's own warehouse-scoped audit trail.
+- Active and terminal task views include task type, execution status and deadline filters. Full desktop rows and mobile cards open the task destination by click or Enter; task/schedule buttons stay independent. The large summary cards were reduced to a compact metric bar.
+- Staff relocation UI displays only the Manager-proposed destination or system rank-1 suggestion. Destination selection and override-reason controls remain available to actors with relocation assignment authority.
+- Verification: focused Vitest **37 passed across 3 files**; standalone Next type generation and TypeScript check passed; focused ESLint passed. GitNexus final detection is Medium across two indexed page flows; new component tests and some component changes outside indexed symbols were reviewed directly.
+- The paired Backend permission migration was applied to the configured shared database and verified as applied. No dependency/configuration change or application startup. Changes were delivered on `fix/staff-task-experience`.
