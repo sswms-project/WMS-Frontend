@@ -1,6 +1,16 @@
 'use client'
 
-import { Eye, ListFilter, MoreHorizontal, Plus, RefreshCw, Search, Send, Undo2 } from 'lucide-react'
+import {
+  Ban,
+  Eye,
+  ListFilter,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  Search,
+  Send,
+  Undo2,
+} from 'lucide-react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
@@ -49,6 +59,7 @@ import type {
   StockIssueRequestSummary,
 } from '../../types/stock-issue.types'
 import {
+  canCancelStockIssueRequest,
   canRecordStockPicking,
   formatStockIssueDate,
   formatStockIssueQuantity,
@@ -89,6 +100,7 @@ interface StockIssueRequestDirectoryProps {
   readonly onRetry: () => void
   readonly onInspect: (order: StockIssueRequestSummary) => void
   readonly onReleaseForPicking: (order: StockIssueRequestSummary) => void
+  readonly onCancel: (order: StockIssueRequestSummary) => void
   readonly onRecordStockPicking: (order: StockIssueRequestSummary) => void
   readonly onAuthorizeDispatch: (order: StockIssueRequestSummary) => void
   readonly onConfirmDispatch: (order: StockIssueRequestSummary) => void
@@ -123,6 +135,7 @@ export function StockIssueRequestDirectory({
   onRetry,
   onInspect,
   onReleaseForPicking,
+  onCancel,
   onRecordStockPicking,
   onAuthorizeDispatch,
   onConfirmDispatch,
@@ -139,6 +152,7 @@ export function StockIssueRequestDirectory({
   const canPick = permissions.includes(P.STOCK_ISSUE_REQUESTS_PICK)
   const canDispatch = permissions.includes(P.STOCK_ISSUE_REQUESTS_DISPATCH)
   const canAuthorizeDispatch = permissions.includes(P.STOCK_ISSUE_REQUESTS_AUTHORIZE_DISPATCH)
+  const canCancel = permissions.includes(P.STOCK_ISSUE_REQUESTS_CANCEL)
   const canGoodsReturnRequest = permissions.includes(P.STOCK_ISSUE_REQUESTS_RETURN)
 
   const renderRowActions = (order: StockIssueRequestSummary) => (
@@ -186,6 +200,12 @@ export function StockIssueRequestDirectory({
           <DropdownMenuItem onSelect={() => onCreateGoodsReturnRequest(order)}>
             <Undo2 className="size-4" aria-hidden="true" />
             Tạo yêu cầu trả hàng
+          </DropdownMenuItem>
+        ) : null}
+        {canCancel && canCancelStockIssueRequest(order.status) ? (
+          <DropdownMenuItem variant="destructive" onSelect={() => onCancel(order)}>
+            <Ban className="size-4" aria-hidden="true" />
+            Huỷ phiếu
           </DropdownMenuItem>
         ) : null}
       </DropdownMenuContent>

@@ -46,6 +46,10 @@ export function canRecordStockPicking(status: StockIssueRequestStatus): boolean 
   return status === 'ReleasedForPicking' || status === 'Picking'
 }
 
+export function canCancelStockIssueRequest(status: StockIssueRequestStatus): boolean {
+  return status === 'Pending' || status === 'ReleasedForPicking'
+}
+
 export function canCreateGoodsReturnRequest(status: StockIssueRequestStatus): boolean {
   return status === 'Dispatched'
 }

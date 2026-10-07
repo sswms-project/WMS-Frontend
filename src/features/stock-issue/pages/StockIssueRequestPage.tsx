@@ -28,6 +28,7 @@ import {
   StockIssueRequestDetailSheet,
   StockIssueRequestDirectory,
   CreateGoodsReturnRequestDialog,
+  CancelStockIssueRequestDialog,
 } from '../components/StockIssueRequestsPage'
 import {
   useStockRecipientOptionsQuery,
@@ -39,6 +40,7 @@ import {
   useConfirmStockDispatchMutation,
   useRemovePickDetailMutation,
   useReleaseStockIssueRequestMutation,
+  useCancelStockIssueRequestMutation,
 } from '../hooks/use-stock-issue-requests'
 import {
   recordStockPickingSchema,
@@ -80,6 +82,7 @@ export default function StockIssueRequestPage() {
   const [dispatchingOrder, setDispatchingOrder] = useState<StockIssueRequestSummary | null>(null)
   const [authorizingOrder, setAuthorizingOrder] = useState<StockIssueRequestSummary | null>(null)
   const [releasingOrder, setReleasingOrder] = useState<StockIssueRequestSummary | null>(null)
+  const [cancellingOrder, setCancellingOrder] = useState<StockIssueRequestSummary | null>(null)
   const [issueInventorySearch, setIssueInventorySearch] = useState('')
   const [returnSlotSearch, setGoodsReturnRequestSlotSearch] = useState('')
 
@@ -131,6 +134,7 @@ export default function StockIssueRequestPage() {
   const authorizeDispatchMutation = useAuthorizeStockDispatchMutation()
   const removePickDetailMutation = useRemovePickDetailMutation()
   const releaseForPickingMutation = useReleaseStockIssueRequestMutation()
+  const cancelMutation = useCancelStockIssueRequestMutation()
 
   const recordStockPickingForm = useForm<RecordStockPickingFormValues>({
     resolver: zodResolver(recordStockPickingSchema),
@@ -279,6 +283,27 @@ export default function StockIssueRequestPage() {
     }
   }
 
+  async function handleCancel(reason: string) {
+    if (!cancellingOrder) return
+    try {
+      if (!cancellingOrder.version) {
+        toast.error('Phiếu xuất chưa có phiên bản. Vui lòng tải lại.')
+        return
+      }
+      await cancelMutation.mutateAsync({
+        stockIssueRequestId: cancellingOrder.id,
+        commandId: crypto.randomUUID(),
+        expectedVersion: cancellingOrder.version,
+        reason,
+      })
+      toast.success('Đã huỷ phiếu xuất và giải phóng tồn kho giữ chỗ.')
+      setCancellingOrder(null)
+    } catch (error) {
+      logger.error(formatApiError(error))
+      toast.error(getApiErrorMessage(error, 'Không thể huỷ phiếu xuất.'))
+    }
+  }
+
   async function handleReleaseForPicking() {
     if (!releasingOrder) return
     try {
@@ -337,6 +362,7 @@ export default function StockIssueRequestPage() {
         onRetry={() => void ordersQuery.refetch()}
         onInspect={setInspectedOrder}
         onReleaseForPicking={setReleasingOrder}
+        onCancel={setCancellingOrder}
         onRecordStockPicking={handleOpenRecordStockPicking}
         onAuthorizeDispatch={setAuthorizingOrder}
         onConfirmDispatch={setDispatchingOrder}
@@ -362,6 +388,13 @@ export default function StockIssueRequestPage() {
         onOpenChange={(open) => {
           if (!open) setInspectedOrder(null)
         }}
+      />
+      <CancelStockIssueRequestDialog
+        key={cancellingOrder?.id ?? 'none'}
+        order={cancellingOrder}
+        isPending={cancelMutation.isPending}
+        onClose={() => setCancellingOrder(null)}
+        onConfirm={(reason) => void handleCancel(reason)}
       />
       <RecordStockPickingDialog
         order={issuingOrder}

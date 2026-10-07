@@ -3,7 +3,10 @@ import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { stockIssueService } from '../services/stock-issue.service'
+import type { AuditLogListResponse } from '@/features/platform-services/types/platform-services.types'
 import type {
+  CancelStockIssueRequestRequest,
+  StockIssueAuditLogQuery,
   CreateStockIssueRequestRequest,
   RecordStockPickingRequest,
   StockIssueRequestListQuery,
@@ -105,6 +108,30 @@ export function useReleaseStockIssueRequestMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
       ]),
     onError: (error) => logger.error(error),
+  })
+}
+
+export function useCancelStockIssueRequestMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, CancelStockIssueRequestRequest>({
+    mutationFn: stockIssueService.cancelStockIssueRequest,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
+      ]),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useStockIssueRequestAuditLogsQuery(
+  stockIssueRequestId: string | null,
+  params: StockIssueAuditLogQuery
+) {
+  return useQuery<ApiResponse<AuditLogListResponse>, ApiErrorResponse>({
+    queryKey: queryKeys.stockIssueRequests.auditLogs(stockIssueRequestId ?? '', params),
+    queryFn: () => stockIssueService.getStockIssueRequestAuditLogs(stockIssueRequestId!, params),
+    enabled: Boolean(stockIssueRequestId),
   })
 }
 

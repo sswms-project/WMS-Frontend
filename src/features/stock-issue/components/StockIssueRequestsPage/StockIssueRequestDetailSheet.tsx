@@ -9,7 +9,9 @@ import {
 } from '@/components/operations/OperationalState'
 import type { StockIssueRequestSummary } from '../../types/stock-issue.types'
 import { formatStockIssueDate, formatStockIssueQuantity } from '../../utils/stock-issue-format'
+import { StockIssueAuditTimeline } from './StockIssueAuditTimeline'
 import { StockIssueRequestStatusBadge } from './StockIssueRequestStatusBadge'
+import { StockIssueStatusStepper } from './StockIssueStatusStepper'
 
 interface StockIssueRequestDetailSheetProps {
   readonly order: StockIssueRequestSummary | null
@@ -54,6 +56,10 @@ export function StockIssueRequestDetailSheet({
                   Tạo lúc {formatStockIssueDate(order.createdAt)}
                 </span>
               </div>
+              <section className="space-y-2">
+                <h3 className="text-sm font-medium">Tiến trình xuất kho</h3>
+                <StockIssueStatusStepper status={order.status} />
+              </section>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <dt className="text-muted-foreground text-xs">Đơn vị nhận hàng</dt>
@@ -148,6 +154,10 @@ export function StockIssueRequestDetailSheet({
                     </Item>
                   ))}
                 </ItemGroup>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-sm font-medium">Nhật ký thao tác</h3>
+                <StockIssueAuditTimeline stockIssueRequestId={order.id} />
               </section>
             </div>
           </>
