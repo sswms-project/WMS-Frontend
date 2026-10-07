@@ -26,6 +26,8 @@ const task: ReceivingTask = {
   assignedToName: null,
   assignedAt: null,
   executionStatus: 'Queued',
+  priority: 'Normal',
+  dueAt: null,
   lines: [
     {
       inboundRequestItemId: 'line',

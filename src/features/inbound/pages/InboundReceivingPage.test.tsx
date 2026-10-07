@@ -35,6 +35,8 @@ const fixtures = vi.hoisted(() => {
       assignedToName: null,
       assignedAt: null,
       executionStatus: 'Queued' as const,
+      priority: 'Normal' as const,
+      dueAt: null,
       lines: [
         {
           inboundRequestItemId: '10000000-0000-4000-8000-000000000002',

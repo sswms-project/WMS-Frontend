@@ -367,6 +367,8 @@ export default function InboundReceivingPage() {
       warehouseName: task.warehouseName,
       currentAssigneeId: task.assignedTo,
       currentAssigneeName: task.assignedToName,
+      currentPriority: task.priority,
+      currentDueAt: task.dueAt,
     })
   }
 

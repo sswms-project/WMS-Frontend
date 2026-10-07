@@ -11,6 +11,7 @@ import type {
   ExecuteWarehouseRelocationRequest,
   WarehousePlacementRecommendation,
   WarehouseTaskDetail,
+  UpdateWarehouseTaskScheduleRequest,
 } from '../types/warehouse-task.types'
 
 export const warehouseTaskService = {
@@ -46,6 +47,10 @@ export const warehouseTaskService = {
   assign: (taskId: string, request: AssignWarehouseTaskRequest) =>
     axiosClient
       .put<ApiResponse<unknown>>(API_ENDPOINTS.warehouseTasks.assignment(taskId), request)
+      .then((response) => response.data),
+  updateSchedule: (taskType: string, taskId: string, request: UpdateWarehouseTaskScheduleRequest) =>
+    axiosClient
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.warehouseTasks.schedule(taskType, taskId), request)
       .then((response) => response.data),
   getRecommendations: (
     taskId: string,

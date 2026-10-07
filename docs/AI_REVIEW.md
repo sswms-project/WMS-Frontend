@@ -431,3 +431,19 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Browser QA reproduced a focus failure: the receipt-code input was disabled while the mutation error handler called RHF `setError(..., { shouldFocus: true })`. ReceiveGoodsDialog now locks that input with `readOnly` during saving instead of disabling it, retaining focusability without allowing edits. Both save actions remain disabled while pending; inspection correction remains read-only. The shared dialog covers creating and editing receipts without timers/effects or payload changes.
 - Verification: 12 tests in ReceiveGoodsDialog/BusinessCodeField passed; pending input rejects typing, accepts focus, and becomes editable after pending ends. Typecheck, targeted ESLint and whitespace checks passed. Full suite/build not rerun for this local control-state change. GitNexus impact Low (two direct page callers); detection Low (one changed component).
 - Real Edge browser QA at 1440x900 and 390x844 confirmed that simulated `409 GOODS_RECEIPT_CODE_CONFLICT` displays the linked Vietnamese error, focuses the code, preserves entered code/quantity, and unlocks correction; no mobile horizontal overflow. Receipt POSTs were intercepted before reaching the API, then interception removed and QA browser closed. Reads used the already verified SQL Server/db71143 QA host with automatic migrations and background jobs disabled. No receipt write, migration, seed, destructive operation, dependency change, commit or push in this fix. Existing untracked `skills-lock.json` is untouched.
+
+## 2026-10-06 — Warehouse task scheduling workspace
+
+- Role: Codex implementation and self-verification, not independent approval. State: `READY_FOR_CODEX_REVIEW`.
+- Added a role-aware warehouse-task workspace with priority/deadline badges, filtering, assignment and schedule actions, plus route/navigation access for Tenant Owner and Warehouse Manager. Staff retains an assigned-work view without management actions.
+- Queue statistics distinguish work waiting to start from work not yet assigned. Receiving, put-away and cycle-count assignment forms carry task schedule metadata through the existing contracts.
+- Verification: focused route/navigation tests **37 passed**, typecheck, focused ESLint and production build passed; live Owner, Manager and Staff acceptance passed with no browser console errors. Earlier synchronized module verification passed the relevant inbound tests; the newest full Frontend suite was not completed and is not claimed. GitNexus reports high impact across 28 files and 11 indexed flows.
+- No dependency or configuration change was introduced. Branch delivery is authorized; PR creation remains outside this task.
+
+## 2026-10-07 — Working branch synchronization and PR verification
+
+- Merged origin/dev at 5f4da42 into screen/huytv. The only conflict was this review ledger; retained both histories. Source changes merged without manual conflict edits.
+- All 82 test files passed in three exhaustive single-worker batches. Full lint and production build (including TypeScript) passed. Paired BE verification: 841 Application tests passed, excluding the external opt-in SQL Server capacity-lock fixture.
+- Standalone typecheck found a receiving-page test fixture missing the new dev priority/dueAt fields. Added Normal/null metadata to that fixture without changing application logic; standalone typecheck passed. GitNexus does not index that test file, so it was inspected directly.
+- No dependency, migration or deployment configuration change in this PR. Existing untracked skills-lock.json is deliberately excluded. Local servers were paused for validation; temporary test files stayed on D:.
+- Backend migration status was checked read-only: no pending migrations. No deployed data write, migration or seed was performed. This is implementation self-verification, not independent approval.
