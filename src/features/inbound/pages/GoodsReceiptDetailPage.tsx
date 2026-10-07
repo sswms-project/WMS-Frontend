@@ -8,7 +8,12 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
-import { formatApiError, getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
+import {
+  formatApiError,
+  getApiErrorCode,
+  getApiErrorMessage,
+  isApiErrorResponse,
+} from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { ReceiptDetail } from '../components/ReceiptDetailPage'
 import { ReceiveGoodsDialog } from '../components/ReceivingPage'
@@ -36,7 +41,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
   const assignment = useAssignWarehouseTask()
   const form = useForm<GoodsReceiptFormValues>({
     resolver: zodResolver(goodsReceiptSchema),
-    defaultValues: { inboundRequestId: '', lines: [] },
+    defaultValues: { inboundRequestId: '', receiptCode: '', lines: [] },
   })
 
   function showMutationError(error: unknown, fallback: string) {
@@ -54,6 +59,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     if (!receipt) return
     form.reset({
       inboundRequestId: receipt.inboundRequestId,
+      receiptCode: receipt.receiptCode,
       lines: receipt.items.flatMap((item) =>
         item.inboundRequestItemId
           ? [
@@ -80,6 +86,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       await updateMutation.mutateAsync({
         receiptId,
         request: {
+          receiptCode: values.receiptCode,
           lines: values.lines.map((line) => ({
             inboundRequestItemId: line.inboundRequestItemId,
             receivedQty: line.receivedQty,
@@ -108,6 +115,13 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       setIsEditing(false)
     } catch (error) {
       logMutationFailure(error)
+      if (getApiErrorCode(error) === 'GOODS_RECEIPT_CODE_CONFLICT') {
+        form.setError(
+          'receiptCode',
+          { type: 'server', message: getApiErrorMessage(error) },
+          { shouldFocus: true }
+        )
+      }
       showMutationError(
         error,
         'Không thể cập nhật phiếu nhận hàng. Vui lòng kiểm tra dữ liệu và thử lại.'
@@ -259,7 +273,6 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
-        receiptCode={receipt.receiptCode}
         task={isEditing ? editTask : null}
         form={form}
         isPending={isPending}

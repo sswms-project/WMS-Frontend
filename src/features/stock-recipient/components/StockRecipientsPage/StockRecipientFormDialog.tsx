@@ -1,6 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import {
+  BusinessCodeField,
+  type BusinessCodeFieldProps,
+} from '@/components/forms/BusinessCodeField'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import { X } from 'lucide-react'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
@@ -28,6 +32,8 @@ interface StockRecipientFormDialogProps {
   readonly form: UseFormReturn<StockRecipientFormValues>
   readonly isPending: boolean
   readonly isCreate?: boolean
+  readonly codeSuggestionStatus?: BusinessCodeFieldProps['suggestionStatus']
+  readonly onCodeChange?: () => void
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: (values: StockRecipientFormValues) => void
   readonly onSubmitAndAdd?: (values: StockRecipientFormValues) => void
@@ -40,6 +46,8 @@ export function StockRecipientFormDialog({
   form,
   isPending,
   isCreate = false,
+  codeSuggestionStatus,
+  onCodeChange,
   onOpenChange,
   onSubmit,
   onSubmitAndAdd,
@@ -136,18 +144,20 @@ export function StockRecipientFormDialog({
                     />
                     <FieldError errors={[errors.taxCode]} />
                   </Field>
-                  <Field data-invalid={Boolean(errors.recipientCode)}>
-                    <FieldLabel htmlFor="stockRecipient-code">Mã khách hàng *</FieldLabel>
-                    <Input
-                      id="stockRecipient-code"
-                      autoComplete="off"
-                      spellCheck={false}
-                      placeholder="Ví dụ: KH000001…"
-                      aria-invalid={Boolean(errors.recipientCode)}
-                      {...form.register('recipientCode')}
-                    />
-                    <FieldError errors={[errors.recipientCode]} />
-                  </Field>
+                  <BusinessCodeField
+                    label="Mã khách hàng *"
+                    error={errors.recipientCode}
+                    description={isCreate ? 'Mã được gợi ý, có thể chỉnh sửa.' : undefined}
+                    suggestionStatus={isCreate ? codeSuggestionStatus : undefined}
+                    inputProps={{
+                      ...form.register('recipientCode', { onChange: onCodeChange }),
+                      id: 'stockRecipient-code',
+                      required: true,
+                      maxLength: 50,
+                      placeholder: 'Ví dụ: KH000001…',
+                      disabled: isPending,
+                    }}
+                  />
                   {recipientType === 'Individual' ? (
                     <Field data-invalid={Boolean(errors.contactSalutation)}>
                       <FieldLabel htmlFor="stockRecipient-salutation">Xưng hô</FieldLabel>

@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
@@ -21,7 +24,11 @@ import {
   useSuppliersQuery,
   useUpdateSupplierMutation,
 } from '../hooks/use-suppliers'
-import type { SaveSupplierFormValues } from '../schemas/supplier.schema'
+import {
+  emptySupplierFormValues,
+  saveSupplierSchema,
+  type SaveSupplierFormValues,
+} from '../schemas/supplier.schema'
 import type { SaveSupplierRequest, Supplier, SupplierStatus } from '../types/supplier.types'
 import { getApiErrorMessage } from '../utils/supplier-error'
 
@@ -48,6 +55,13 @@ export default function SuppliersPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const codeInstanceId = useId()
+  const [codeSession, setCodeSession] = useState(0)
+  const codeSessionKey = `${codeInstanceId}:${codeSession}`
+  const createForm = useForm<SaveSupplierFormValues>({
+    resolver: zodResolver(saveSupplierSchema),
+    defaultValues: emptySupplierFormValues,
+  })
   const [supplierToEdit, setSupplierToEdit] = useState<Supplier | null>(null)
   const [supplierToDeactivate, setSupplierToDeactivate] = useState<Supplier | null>(null)
   const [deactivateError, setDeactivateError] = useState<string | null>(null)
@@ -64,7 +78,19 @@ export default function SuppliersPage() {
     ...(debouncedSearchText ? { searchTerm: debouncedSearchText } : {}),
     ...(status ? { status } : {}),
   })
-  const nextCodeQuery = useNextSupplierCodeQuery(isCreateOpen)
+  const nextCodeQuery = useNextSupplierCodeQuery(isCreateOpen, codeSessionKey)
+  const codeSuggestion = useCodeSuggestion({
+    active: isCreateOpen,
+    sessionKey: codeSessionKey,
+    suggestedCode: nextCodeQuery.data?.data,
+    isFetching: nextCodeQuery.isFetching,
+    isError: nextCodeQuery.isError,
+    getCurrentCode: () => createForm.getValues('supplierCode'),
+    applyCode: (code) =>
+      createForm.setValue('supplierCode', code, {
+        shouldValidate: createForm.formState.isSubmitted,
+      }),
+  })
 
   const createMutation = useCreateSupplierMutation()
   const updateMutation = useUpdateSupplierMutation()
@@ -76,6 +102,7 @@ export default function SuppliersPage() {
       await createMutation.mutateAsync(toSaveRequest(values))
       toast.success('Đã thêm nhà cung cấp mới.')
       setIsCreateOpen(false)
+      createForm.reset(emptySupplierFormValues)
       return true
     } catch (error) {
       logger.error(error)
@@ -161,7 +188,12 @@ export default function SuppliersPage() {
           setPageSize(value)
           setPage(1)
         }}
-        onCreate={() => setIsCreateOpen(true)}
+        onCreate={() => {
+          createForm.reset(emptySupplierFormValues)
+          codeSuggestion.resetSession()
+          setCodeSession((value) => value + 1)
+          setIsCreateOpen(true)
+        }}
         onEdit={setSupplierToEdit}
         onDeactivate={(supplier) => {
           setDeactivateError(null)
@@ -177,8 +209,16 @@ export default function SuppliersPage() {
       <SupplierCreateDialog
         open={isCreateOpen}
         isPending={createMutation.isPending}
-        suggestedCode={nextCodeQuery.data?.data}
-        onOpenChange={setIsCreateOpen}
+        form={createForm}
+        codeSuggestionStatus={
+          nextCodeQuery.isFetching ? 'loading' : nextCodeQuery.isError ? 'error' : 'ready'
+        }
+        onCodeChange={codeSuggestion.markEdited}
+        onOpenChange={(open) => {
+          if (createMutation.isPending) return
+          setIsCreateOpen(open)
+          if (!open) createForm.reset(emptySupplierFormValues)
+        }}
         onSubmit={handleCreate}
       />
 

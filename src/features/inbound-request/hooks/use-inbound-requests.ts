@@ -52,9 +52,9 @@ export function useInboundRequestsQuery(params: InboundRequestListQuery) {
   })
 }
 
-export function useNextInboundRequestCodeQuery(enabled: boolean) {
+export function useNextInboundRequestCodeQuery(enabled: boolean, sessionKey?: string) {
   return useQuery({
-    queryKey: queryKeys.inboundRequests.nextCode,
+    queryKey: [...queryKeys.inboundRequests.nextCode, sessionKey ?? null],
     queryFn: () => inboundRequestService.getNextCode().then((response) => response.data),
     enabled,
     staleTime: 0,

@@ -4,14 +4,20 @@ import { getRemainingReceiptQuantity } from '../utils/receipt-units'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Route } from 'next'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useLocalStorage } from '@/hooks/use-local-storage'
-import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
+import {
+  formatApiError,
+  getApiErrorCode,
+  getApiErrorMessage,
+  isApiErrorResponse,
+} from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
@@ -40,6 +46,7 @@ import { useWarehouseTaskAssignmentAccess } from '../hooks/use-warehouse-task-as
 import {
   useCreateDraftFromDocumentMutation,
   useCreateGoodsReceiptMutation,
+  useNextGoodsReceiptCodeQuery,
   useInboundDocumentImportQuery,
   useReceivingTasksQuery,
   useGoodsReceiptQuery,
@@ -81,6 +88,9 @@ export default function InboundReceivingPage() {
   const [draftReceiptId, setDraftReceiptId] = useState<string | null>(null)
   const [isDiscardImportOpen, setIsDiscardImportOpen] = useState(false)
   const initializedImportIdRef = useRef('')
+  const codeInstanceId = useId()
+  const [codeSession, setCodeSession] = useState(0)
+  const codeSessionKey = `${codeInstanceId}:${codeSession}`
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const query = useReceivingTasksQuery({
     pageNumber: page,
@@ -116,7 +126,18 @@ export default function InboundReceivingPage() {
   const createDraftMutation = useCreateDraftFromDocumentMutation()
   const form = useForm<GoodsReceiptFormValues>({
     resolver: zodResolver(goodsReceiptSchema),
-    defaultValues: { inboundRequestId: '', lines: [] },
+    defaultValues: { inboundRequestId: '', receiptCode: '', lines: [] },
+  })
+  const nextCodeQuery = useNextGoodsReceiptCodeQuery(Boolean(selectedTask), codeSessionKey)
+  const codeSuggestion = useCodeSuggestion({
+    active: Boolean(selectedTask),
+    sessionKey: codeSessionKey,
+    suggestedCode: nextCodeQuery.data,
+    isFetching: nextCodeQuery.isFetching,
+    isError: nextCodeQuery.isError,
+    getCurrentCode: () => form.getValues('receiptCode'),
+    applyCode: (code) =>
+      form.setValue('receiptCode', code, { shouldValidate: form.formState.isSubmitted }),
   })
   const importForm = useForm<InboundDocumentReviewFormValues>({
     resolver: zodResolver(inboundDocumentReviewSchema),
@@ -152,8 +173,11 @@ export default function InboundReceivingPage() {
       return
     }
     setSelectedTask(task)
+    codeSuggestion.resetSession()
+    setCodeSession((value) => value + 1)
     form.reset({
       inboundRequestId: task.inboundRequestId,
+      receiptCode: '',
       lines: task.lines
         .filter((line) => line.remainingQuantity > 0)
         .map((line) => ({
@@ -281,6 +305,7 @@ export default function InboundReceivingPage() {
     try {
       const request: SaveGoodsReceiptRequest = {
         inboundRequestId: values.inboundRequestId,
+        receiptCode: values.receiptCode,
         lines: values.lines.map((line) => ({
           inboundRequestItemId: line.inboundRequestItemId,
           receivedQty: line.receivedQty,
@@ -320,8 +345,16 @@ export default function InboundReceivingPage() {
       setSelectedTask(null)
       form.reset()
     } catch (error) {
-      logger.error(error)
-      toast.error('Không thể lưu phiếu nhận hàng. Kiểm tra số lượng và thử lại.')
+      if (isApiErrorResponse(error)) logger.warn(formatApiError(error))
+      else logger.error(error)
+      const message = getApiErrorMessage(
+        error,
+        'Không thể lưu phiếu nhận hàng. Kiểm tra số lượng và thử lại.'
+      )
+      if (getApiErrorCode(error) === 'GOODS_RECEIPT_CODE_CONFLICT') {
+        form.setError('receiptCode', { type: 'server', message }, { shouldFocus: true })
+      }
+      toast.error(message)
     }
   }
 
@@ -435,6 +468,9 @@ export default function InboundReceivingPage() {
         onUnassign={assignment.onUnassign}
       />
       <ReceiveGoodsDialog
+        isLoadingCode={nextCodeQuery.isFetching}
+        isCodeSuggestionError={nextCodeQuery.isError}
+        onReceiptCodeChange={codeSuggestion.markEdited}
         task={selectedTask}
         form={form}
         isPending={isPending}

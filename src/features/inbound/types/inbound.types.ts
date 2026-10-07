@@ -232,6 +232,7 @@ export interface ReceiptLineRequest {
 
 export interface SaveGoodsReceiptRequest {
   inboundRequestId: string
+  receiptCode?: string
   lines: ReceiptLineRequest[]
 }
 

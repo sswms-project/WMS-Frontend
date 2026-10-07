@@ -1,6 +1,7 @@
 'use client'
 
 import { Save, Send } from 'lucide-react'
+import { BusinessCodeField } from '@/components/forms/BusinessCodeField'
 import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,7 +29,9 @@ interface ReceiveGoodsDialogProps {
   readonly saveDraftLabel?: string
   readonly mode?: 'create' | 'edit'
   readonly canEditReceivedQuantity?: boolean
-  readonly receiptCode?: string
+  readonly isLoadingCode?: boolean
+  readonly isCodeSuggestionError?: boolean
+  readonly onReceiptCodeChange?: () => void
   readonly onOpenChange: (open: boolean) => void
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit: () => void
@@ -43,7 +46,9 @@ export function ReceiveGoodsDialog({
   saveDraftLabel = 'Lưu nháp',
   mode = 'create',
   canEditReceivedQuantity = true,
-  receiptCode,
+  isLoadingCode = false,
+  isCodeSuggestionError = false,
+  onReceiptCodeChange,
   onOpenChange,
   onSaveDraft,
   onSaveAndSubmit,
@@ -66,30 +71,53 @@ export function ReceiveGoodsDialog({
         </DialogHeader>
         {task ? (
           <div className="flex flex-col gap-3">
-            <dl className="bg-muted grid gap-3 border p-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-muted-foreground text-xs">Mã phiếu nhận</dt>
-                <dd className="font-medium">{receiptCode ?? 'Tự sinh khi lưu'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs">Mã yêu cầu</dt>
-                <dd className="font-medium break-all">{task.inboundRequestCode}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs">Nhà cung cấp / nguồn hàng</dt>
-                <dd className="font-medium">
-                  {[task.supplierCode, task.supplierName || task.sourceName]
-                    .filter(Boolean)
-                    .join(' — ') || '—'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs">Kho nhận</dt>
-                <dd className="font-medium">
-                  {[task.warehouseCode, task.warehouseName].filter(Boolean).join(' — ')}
-                </dd>
-              </div>
-            </dl>
+            <div className="bg-muted grid gap-3 border p-3 text-sm sm:grid-cols-2">
+              <BusinessCodeField
+                label="Mã phiếu nhận *"
+                error={errors.receiptCode}
+                description={
+                  canEditReceivedQuantity ? 'Mã được gợi ý, có thể chỉnh sửa.' : undefined
+                }
+                suggestionStatus={
+                  mode === 'create'
+                    ? isLoadingCode
+                      ? 'loading'
+                      : isCodeSuggestionError
+                        ? 'error'
+                        : 'ready'
+                    : undefined
+                }
+                inputProps={{
+                  ...register('receiptCode', { onChange: onReceiptCodeChange }),
+                  id: 'receipt-code',
+                  required: true,
+                  maxLength: 100,
+                  placeholder: 'VD: PN000001…',
+                  // Keep the field focusable when a save response reports a code conflict.
+                  readOnly: !canEditReceivedQuantity || isPending,
+                }}
+              />
+              <dl className="contents">
+                <div>
+                  <dt className="text-muted-foreground text-xs">Mã yêu cầu</dt>
+                  <dd className="font-medium break-all">{task.inboundRequestCode}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Nhà cung cấp / nguồn hàng</dt>
+                  <dd className="font-medium">
+                    {[task.supplierCode, task.supplierName || task.sourceName]
+                      .filter(Boolean)
+                      .join(' — ') || '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground text-xs">Kho nhận</dt>
+                  <dd className="font-medium">
+                    {[task.warehouseCode, task.warehouseName].filter(Boolean).join(' — ')}
+                  </dd>
+                </div>
+              </dl>
+            </div>
             {task.lines
               .filter((line) =>
                 form
