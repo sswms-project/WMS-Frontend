@@ -1,5 +1,13 @@
 # AI Review Handoff
 
+## 2026-10-09 — Long labels in import results
+
+- State: `READY_FOR_CODEX_REVIEW`; self-verification only. No commit/push.
+- Shared BulkImportResult used automatic table sizing and inherited nowrap cells, allowing long labels to push the result column offscreen. Applied fixed table layout, a reserved result-column width, min-width constraints and anywhere wrapping to full labels/results. No truncation, data/payload change, dependency or global Table/Badge primitive change. Custom product-result content remains unchanged.
+- GitNexus pre-impact HIGH: shared catalog, supplier/customer and product callers. Ponytail, React, shadcn and Web Interface Guidelines informed the minimal shared CSS fix and complete-text preservation.
+- Targeted Vitest **31 tests / 3 files passed**, including the reported long category name, long error badge, export callback, custom result content and shared catalog import flows. Targeted ESLint and scoped whitespace check passed.
+- TypeScript did not complete: Node exhausted its 512 MB heap; earlier normal-runtime checks also encountered memory exhaustion. No TypeScript-pass claim. Browser layout QA and production build were not rerun under current memory pressure. No Backend startup, database write, seed or migration. Preserved unrelated concurrent transfer edits.
+
 ## 2026-10-08 — Read-only unit/category import preview
 
 - State: `READY_FOR_CODEX_REVIEW`; implementation/self-verification, not independent approval. No commit/push.
