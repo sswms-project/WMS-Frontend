@@ -688,7 +688,7 @@ Lỗi tìm thấy và đã sửa:
 
 ### 21.5. Hạn chế còn lại
 
-- Lỗi truy cập ở component dùng chung, chưa sửa vì GitNexus báo rủi ro cao: nút trigger của `ComboboxInput` không có tên (`button-name`, ảnh hưởng 9 nơi) và `aria-controls` của tab trỏ tới panel chưa mount (`aria-valid-attr-value`).
+- Hai lỗi truy cập axe (`button-name` của nút trigger combobox, `aria-valid-attr-value` của tab) đã sửa: nút mở danh sách có nhãn mặc định "Mở danh sách"; hai thanh tab của chuyển kho nối với `role=tabpanel` theo mẫu WAI-ARIA. Axe không còn lỗi trên danh sách, form và chi tiết. Các nơi khác dùng `Tabs` của Radix vẫn giữ hành vi cũ.
 - `prefers-reduced-motion` chưa kiểm bằng công cụ.
 - Nhận hàng bằng mã kệ chưa hỗ trợ (kho nhận dùng tra cứu vị trí thật của kho đích).
 - Log BE có lỗi có sẵn `CycleCountStatus 'Cancelled'` không thuộc điều chuyển.
