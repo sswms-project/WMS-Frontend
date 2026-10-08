@@ -7,32 +7,31 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
-import { StockAdjustmentDetailView } from '../components/StockAdjustmentViews'
+import { StockAdjustmentVoucherDetailView } from '../components/StockAdjustmentVoucherDetailPage'
 import {
-  useApproveStockAdjustmentMutation,
-  useRejectStockAdjustmentMutation,
-  useStockAdjustmentAllowedActionsQuery,
-  useStockAdjustmentQuery,
+  useApproveStockAdjustmentVoucherMutation,
+  useRejectStockAdjustmentVoucherMutation,
+  useStockAdjustmentVoucherAllowedActionsQuery,
+  useStockAdjustmentVoucherQuery,
 } from '../hooks/use-cycle-count'
 import {
   rejectStockAdjustmentSchema,
   type RejectStockAdjustmentFormValues,
 } from '../schemas/cycle-count.schema'
 
-export default function StockAdjustmentDetailPage({
-  adjustmentId,
+export default function StockAdjustmentVoucherDetailPage({
+  voucherId,
 }: {
-  readonly adjustmentId: string
+  readonly voucherId: string
 }) {
-  const detail = useStockAdjustmentQuery(adjustmentId)
-  const actions = useStockAdjustmentAllowedActionsQuery(adjustmentId)
-  const approve = useApproveStockAdjustmentMutation()
-  const reject = useRejectStockAdjustmentMutation()
+  const detail = useStockAdjustmentVoucherQuery(voucherId)
+  const actions = useStockAdjustmentVoucherAllowedActionsQuery(voucherId)
+  const approve = useApproveStockAdjustmentVoucherMutation()
+  const reject = useRejectStockAdjustmentVoucherMutation()
   const rejectForm = useForm<RejectStockAdjustmentFormValues>({
     resolver: zodResolver(rejectStockAdjustmentSchema),
     defaultValues: { reason: '' },
   })
-  const pending = approve.isPending || reject.isPending
   async function perform(action: () => Promise<unknown>, message: string): Promise<boolean> {
     try {
       await action()
@@ -43,31 +42,35 @@ export default function StockAdjustmentDetailPage({
       return false
     }
   }
-  if (detail.isLoading || actions.isLoading) return <OperationalLoadingState rows={7} />
+  if (detail.isLoading || actions.isLoading) return <OperationalLoadingState rows={8} />
   if (detail.isError || actions.isError || !detail.data)
     return (
       <OperationalErrorState
-        title="Không thể tải đề nghị điều chỉnh"
+        title="Không thể tải phiếu điều chỉnh"
         onRetry={() => void Promise.all([detail.refetch(), actions.refetch()])}
       />
     )
   return (
-    <StockAdjustmentDetailView
-      detail={detail.data}
+    <StockAdjustmentVoucherDetailView
+      voucher={detail.data}
       allowedActions={actions.data?.allowedActions ?? []}
       selfApprovalRequired={actions.data?.selfApprovalRequired ?? false}
-      isPending={pending}
+      isPending={approve.isPending || reject.isPending}
       rejectForm={rejectForm}
-      onApprove={(selfApprovalAcknowledged) =>
+      onApprove={(excludedLineIds, selfApprovalAcknowledged) =>
         perform(
-          () => approve.mutateAsync({ adjustmentId, request: { selfApprovalAcknowledged } }),
-          'Đã duyệt và cập nhật tồn kho.'
+          () =>
+            approve.mutateAsync({
+              voucherId,
+              request: { selfApprovalAcknowledged, excludedLineIds },
+            }),
+          'Đã duyệt phiếu và cập nhật tồn kho.'
         )
       }
       onReject={(reason) =>
         perform(
-          () => reject.mutateAsync({ adjustmentId, request: { reason } }),
-          'Đã từ chối đề nghị điều chỉnh.'
+          () => reject.mutateAsync({ voucherId, request: { reason } }),
+          'Đã từ chối phiếu điều chỉnh.'
         )
       }
     />

@@ -4,7 +4,6 @@ import Link from 'next/link'
 import {
   Boxes,
   ChartNoAxesColumnIncreasing,
-  ClipboardCheck,
   History,
   LockKeyhole,
   ShieldAlert,
@@ -71,6 +70,7 @@ export function InventoryWorkspaceNavigation({
           Tồn kho khả dụng
         </Link>
       ) : null}
+      {/* Tạm ẩn tab Kiểm kê (đã chuyển sang sidebar Hoạt Động Kho)
       {permissions.includes(P.CYCLE_COUNTS_VIEW) ? (
         <Link
           href={APP_ROUTES.cycleCounts}
@@ -81,6 +81,7 @@ export function InventoryWorkspaceNavigation({
           Kiểm kê
         </Link>
       ) : null}
+      */}
       {permissions.includes(P.STOCK_ADJUSTMENTS_VIEW) ? (
         <Link
           href={APP_ROUTES.stockAdjustments}
