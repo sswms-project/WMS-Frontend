@@ -23,9 +23,12 @@ export function describeTransferError(error: unknown, fallback: string): Transfe
     const sentence = message.charAt(0).toLocaleUpperCase('vi') + message.slice(1)
     return {
       kind: 'conflict',
-      message: /tải lại/i.test(sentence)
-        ? sentence
-        : `${sentence} Hãy tải lại dữ liệu mới nhất rồi thao tác lại.`,
+      // 409 cũng dùng cho lỗi nghiệp vụ (ví dụ vị trí không cho trộn sản phẩm): chỉ gợi ý tải lại khi lỗi
+      // nói dữ liệu đã thay đổi mà chưa kèm gợi ý.
+      message:
+        /thay đổi/i.test(sentence) && !/tải lại/i.test(sentence)
+          ? `${sentence} Hãy tải lại dữ liệu mới nhất rồi thao tác lại.`
+          : sentence,
     }
   }
   if (NETWORK_FAILURE_PATTERN.test(error.message)) {

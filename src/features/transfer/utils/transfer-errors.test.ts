@@ -12,6 +12,15 @@ describe('describeTransferError', () => {
     expect(result.message).toContain('tải lại')
   })
 
+  it('does not tell the user to reload for a business-rule 409', () => {
+    const result = describeTransferError(
+      { statusCode: 409, message: 'Vị trí này chỉ được chứa một sản phẩm tại một thời điểm.' },
+      'Không thể nhận hàng.'
+    )
+    expect(result.kind).toBe('conflict')
+    expect(result.message).toBe('Vị trí này chỉ được chứa một sản phẩm tại một thời điểm.')
+  })
+
   it('capitalises the message and does not repeat the reload hint', () => {
     const result = describeTransferError(
       {
