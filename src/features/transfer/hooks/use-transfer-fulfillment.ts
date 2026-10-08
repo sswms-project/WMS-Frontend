@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { LocationSearchResponse } from '@/features/warehouse/types/warehouse.types'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
@@ -19,6 +18,7 @@ import type {
   TransferPickSheet,
   TransferReceiveSheet,
 } from '../types/transfer.types'
+import type { ReceivableSlot } from '../utils/transfer-receive'
 import { invalidateTransferQueries } from './use-transfers'
 
 interface ShipmentScope {
@@ -71,7 +71,7 @@ export function useTransferReceiveSheetQuery(transferId: string | null, shipment
 /** Tra vị trí cất hàng theo mã quét; coi như một lệnh gọi theo yêu cầu, không phải dữ liệu cần cache. */
 export function useFindReceivableSlotMutation() {
   return useMutation<
-    LocationSearchResponse | null,
+    ReceivableSlot | null,
     ApiErrorResponse,
     { warehouseId: string; scannedCode: string }
   >({

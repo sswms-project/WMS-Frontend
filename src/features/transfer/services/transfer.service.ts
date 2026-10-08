@@ -30,7 +30,7 @@ import type {
   TransferSourceWarehouseQuery,
   UpdateTransferRequest,
 } from '../types/transfer.types'
-import { findReceivableSlot } from '../utils/transfer-receive'
+import { findRackLevelSlot, findReceivableSlot } from '../utils/transfer-receive'
 
 const unwrap = <TData>(response: { data: ApiResponse<TData> }) => response.data
 
@@ -45,7 +45,11 @@ export const transferService = {
       lifecycleStatus: 'Active',
       searchText: scannedCode.trim(),
     })
-    return findReceivableSlot(scannedCode, response.data.items)
+    const slot = findReceivableSlot(scannedCode, response.data.items)
+    if (slot) return slot
+    // Không phải ô con: thử mã kệ của kệ quản lý ở mức kệ.
+    const layout = await warehouseService.getLayout(warehouseId)
+    return findRackLevelSlot(scannedCode, layout.data)
   },
 
   getTransfers: (params: TransferListQuery) =>

@@ -1,4 +1,5 @@
 import type { LocationSearchResponse } from '@/features/warehouse/types/warehouse.types'
+import type { ZoneResponse } from '@/types/warehouse'
 import {
   receiptEntryKey,
   type TransferReceiptEntryValues,
@@ -41,21 +42,51 @@ export function buildExpectedReceiptQuantities(sheet: TransferReceiveSheet): Map
   return expected
 }
 
+/** Vị trí nhận hàng đã tra ra từ mã quét: chỉ cần ID để gửi và mã để hiển thị. */
+export interface ReceivableSlot {
+  readonly id: string
+  readonly code: string
+}
+
 /** Vị trí cất hàng hợp lệ: hoạt động và không phải vị trí chờ xuất. */
 export function findReceivableSlot(
   scannedCode: string,
   slots: readonly LocationSearchResponse[]
-): LocationSearchResponse | null {
+): ReceivableSlot | null {
   if (!scannedCode.trim()) return null
-  return (
-    slots.find(
-      (slot) =>
-        slot.type === 'Slot' &&
-        !slot.isOutboundStaging &&
-        slot.lifecycleStatus === 'Active' &&
-        codesMatch(scannedCode, slot.code, slot.barcodeValue)
-    ) ?? null
+  const slot = slots.find(
+    (candidate) =>
+      candidate.type === 'Slot' &&
+      !candidate.isOutboundStaging &&
+      candidate.lifecycleStatus === 'Active' &&
+      codesMatch(scannedCode, candidate.code, candidate.barcodeValue)
   )
+  return slot ? { id: slot.id, code: slot.code } : null
+}
+
+/**
+ * Kệ quản lý ở mức kệ (RackLevel) không có ô con: hàng được cất vào ô mặc định của kệ nên quét mã kệ là đủ,
+ * giống màn cất hàng của Nhập kho.
+ */
+export function findRackLevelSlot(
+  scannedCode: string,
+  zones: readonly ZoneResponse[]
+): ReceivableSlot | null {
+  if (!scannedCode.trim()) return null
+  for (const zone of zones) {
+    if (zone.status !== 'Active') continue
+    for (const rack of zone.racks) {
+      if (
+        rack.status === 'Active' &&
+        rack.storageMode === 'RackLevel' &&
+        rack.defaultSlotId &&
+        codesMatch(scannedCode, rack.rackCode)
+      ) {
+        return { id: rack.defaultSlotId, code: rack.rackCode }
+      }
+    }
+  }
+  return null
 }
 
 export function toReceiveRequest(
