@@ -6,6 +6,7 @@ export const WAREHOUSE_TASK_TYPES = [
   'Relocation',
   'TransferPick',
   'TransferReceive',
+  'Picking',
 ] as const
 
 export type WarehouseTaskType = (typeof WAREHOUSE_TASK_TYPES)[number]

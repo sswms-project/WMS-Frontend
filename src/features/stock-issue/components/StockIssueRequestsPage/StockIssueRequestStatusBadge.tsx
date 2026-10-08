@@ -23,12 +23,14 @@ export function StockIssueRequestStatusBadge({
   return (
     <motion.span
       key={status}
-      className="inline-flex"
+      className="inline-flex max-w-full"
       initial={reduceMotion ? false : { opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <Badge variant={variant}>{STOCK_ISSUE_REQUEST_STATUS_LABELS[status]}</Badge>
+      <Badge variant={variant} className="max-w-full">
+        <span className="truncate">{STOCK_ISSUE_REQUEST_STATUS_LABELS[status]}</span>
+      </Badge>
     </motion.span>
   )
 }
