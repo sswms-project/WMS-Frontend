@@ -158,6 +158,7 @@ export function RecordStockPickingDialog({
           shouldDirty: true,
         })
         form.setValue(`lines.${target}.availableQuantity`, shelfOption.availableQuantity)
+        form.setValue(`lines.${target}.scannedSlotCode`, currentShelf ?? '', { shouldDirty: true })
       }
     }
     setScanMessage({

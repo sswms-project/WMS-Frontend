@@ -238,6 +238,7 @@ export default function StockIssueRequestPage() {
               inventoryStockId: line.inventoryStockId,
               pickedQuantity: line.pickedQuantity,
               scannedBarcode: line.scannedBarcode?.trim() || null,
+              scannedSlotCode: line.scannedSlotCode?.trim() || null,
             })),
         },
       })

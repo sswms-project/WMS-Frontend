@@ -45,6 +45,7 @@ export const recordStockPickingLineSchema = z.object({
   availableQuantity: z.number().min(0),
   pickedQuantity: z.number().min(0, 'Số lượng lấy hàng không được âm.'),
   scannedBarcode: z.string().optional(),
+  scannedSlotCode: z.string().optional(),
 })
 
 export const recordStockPickingSchema = z

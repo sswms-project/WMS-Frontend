@@ -178,6 +178,7 @@ export interface RecordStockPickingItemRequest {
   inventoryStockId: string
   pickedQuantity: number
   scannedBarcode?: string | null
+  scannedSlotCode?: string | null
 }
 
 export interface ConfirmStockDispatchRequest {
