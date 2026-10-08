@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { notificationCreatedEventSchema } from '../schemas/platform-services.schema'
 import { createNotificationHubConnection } from '../services/notification-realtime.service'
+import { NotificationHubContext, type NotificationHubSnapshot } from './notification-hub-context'
 
 interface NotificationRealtimeProviderProps {
   readonly children: ReactNode
@@ -23,6 +24,7 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
   const queryClient = useQueryClient()
   const router = useRouter()
   const shownEventsRef = useRef(new Set<string>())
+  const [hub, setHub] = useState<NotificationHubSnapshot>({ connection: null, session: 0 })
 
   useEffect(() => {
     if (!user) return
@@ -62,8 +64,14 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
       void invalidateNotifications()
     })
 
+    const publishConnection = () =>
+      setHub((current) => ({ connection, session: current.session + 1 }))
+    const withdrawConnection = () => setHub((current) => ({ ...current, connection: null }))
+
+    connection.onreconnecting(withdrawConnection)
     connection.onreconnected(() => {
       restartAttempts = 0
+      publishConnection()
       void invalidateNotifications()
     })
 
@@ -77,6 +85,7 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
           return
         }
         restartAttempts = 0
+        publishConnection()
         await invalidateNotifications()
       } catch (error) {
         if (disposed) return
@@ -91,6 +100,7 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
     }
 
     connection.onclose(() => {
+      withdrawConnection()
       if (!disposed && restartAttempts < MAX_MANUAL_RESTARTS) {
         restartAttempts += 1
         restartTimer = setTimeout(() => void start(), restartAttempts * 3_000)
@@ -108,5 +118,5 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
     }
   }, [queryClient, router, user])
 
-  return children
+  return <NotificationHubContext value={hub}>{children}</NotificationHubContext>
 }
