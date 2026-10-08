@@ -209,7 +209,9 @@ export function PutawayForm({
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
+    // `relative`: nhãn/ô ẩn dành cho trình đọc màn hình là phần tử absolute; neo chúng vào đây để
+    // chúng không làm khung <main> (overflow hidden) bên ngoài bị cuộn và che mất đầu trang.
+    <div className="relative flex min-h-full w-full min-w-0 shrink-0 flex-col gap-5">
       <header className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Button asChild variant="outline" size="icon">
@@ -261,47 +263,6 @@ export function PutawayForm({
               {cancelLabel}
             </Button>
           ) : null}
-          {planning?.canSavePlan ? (
-            <Button
-              type="button"
-              disabled={allocationLocked}
-              aria-busy={planning.isSaving}
-              onClick={planning.onSavePlan}
-            >
-              {planning.isSaving ? (
-                <Spinner aria-hidden="true" data-icon="inline-start" />
-              ) : (
-                <Send aria-hidden="true" data-icon="inline-start" />
-              )}
-              {planning.assigneeName ? 'Lưu vị trí & báo nhân viên' : 'Lưu vị trí & giao nhân viên'}
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            className={cn(planning && 'hidden')}
-            disabled={
-              isPending ||
-              (!hasUncertainSubmission &&
-                (!allocation.canSubmit || reasonMissing || scanMissing > 0))
-            }
-            aria-busy={isPending}
-            onClick={onSubmit}
-          >
-            {isPending ? (
-              <Spinner
-                aria-hidden="true"
-                data-icon="inline-start"
-                className="motion-reduce:animate-none"
-              />
-            ) : (
-              <PackageCheck aria-hidden="true" data-icon="inline-start" />
-            )}
-            {isPending
-              ? 'Đang xử lý…'
-              : hasUncertainSubmission
-                ? 'Gửi lại an toàn'
-                : 'Xác nhận cất hàng'}
-          </Button>
         </div>
       </header>
 
@@ -576,6 +537,85 @@ export function PutawayForm({
           noteRequired={noteRequired}
         />
       ) : null}
+      <footer className="bg-background/95 sticky bottom-0 z-10 -mx-3 mt-auto flex flex-wrap items-center justify-between gap-3 border-t px-3 py-3 supports-backdrop-filter:backdrop-blur sm:-mx-4 sm:px-4 lg:-mx-5 lg:px-5">
+        <ul className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs tabular-nums">
+          <FooterStep
+            done={pendingItems.length > 0 && fullyAllocated === pendingItems.length}
+            label={`Phân bổ ${fullyAllocated}/${pendingItems.length} sản phẩm`}
+          />
+          {scan && !planning && scan.requiredCount > 0 ? (
+            <FooterStep
+              done={scan.confirmedCount >= scan.requiredCount}
+              label={`Quét mã ${scan.confirmedCount}/${scan.requiredCount} vị trí`}
+            />
+          ) : null}
+          {planDeviation.requiresReason && !planning ? (
+            <FooterStep
+              done={!reasonMissing}
+              label={reasonMissing ? 'Chưa nêu lý do' : 'Đã nêu lý do'}
+            />
+          ) : null}
+        </ul>
+        <div className="flex flex-wrap items-center gap-2">
+          {planning?.canSavePlan ? (
+            <Button
+              type="button"
+              disabled={allocationLocked}
+              aria-busy={planning.isSaving}
+              onClick={planning.onSavePlan}
+            >
+              {planning.isSaving ? (
+                <Spinner aria-hidden="true" data-icon="inline-start" />
+              ) : (
+                <Send aria-hidden="true" data-icon="inline-start" />
+              )}
+              {planning.assigneeName ? 'Lưu vị trí & báo nhân viên' : 'Lưu vị trí & giao nhân viên'}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            className={cn(planning && 'hidden')}
+            disabled={
+              isPending ||
+              (!hasUncertainSubmission &&
+                (!allocation.canSubmit || reasonMissing || scanMissing > 0))
+            }
+            aria-busy={isPending}
+            onClick={onSubmit}
+          >
+            {isPending ? (
+              <Spinner
+                aria-hidden="true"
+                data-icon="inline-start"
+                className="motion-reduce:animate-none"
+              />
+            ) : (
+              <PackageCheck aria-hidden="true" data-icon="inline-start" />
+            )}
+            {isPending
+              ? 'Đang xử lý…'
+              : hasUncertainSubmission
+                ? 'Gửi lại an toàn'
+                : 'Xác nhận cất hàng'}
+          </Button>
+        </div>
+      </footer>
     </div>
+  )
+}
+
+function FooterStep({ done, label }: { readonly done: boolean; readonly label: string }) {
+  return (
+    <li className={cn('flex items-center gap-1.5', done && 'text-primary font-medium')}>
+      {done ? (
+        <Check
+          aria-hidden="true"
+          className="animate-in zoom-in-50 animation-duration-200 size-3.5 motion-reduce:animate-none"
+        />
+      ) : (
+        <span aria-hidden="true" className="border-muted-foreground size-2.5 rounded-full border" />
+      )}
+      {label}
+    </li>
   )
 }
