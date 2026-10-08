@@ -63,7 +63,7 @@ export function PickLineCard({
         </div>
       </header>
 
-      {line.suggestions.length > 0 && !isPendingManager ? (
+      {line.suggestions.length > 0 && !isPendingManager && canAct ? (
         <div className="border-b p-3">
           <p className="text-muted-foreground mb-1 text-xs font-medium">Lấy tại (theo FEFO)</p>
           <ul className="grid gap-1">
