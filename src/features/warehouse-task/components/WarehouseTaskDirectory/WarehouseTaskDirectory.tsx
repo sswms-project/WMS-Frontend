@@ -1,7 +1,8 @@
+'use client'
+
 import {
   Activity,
   AlarmClock,
-  ArrowRight,
   CalendarClock,
   ClipboardList,
   PauseCircle,
@@ -9,7 +10,7 @@ import {
   UserRoundX,
 } from 'lucide-react'
 import type { Route } from 'next'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import {
   OperationalEmptyState,
@@ -95,6 +96,16 @@ export function WarehouseTaskDirectory({
   onOpenRelocation,
   onEditSchedule,
 }: WarehouseTaskDirectoryProps) {
+  const router = useRouter()
+
+  function openTask(item: MyWarehouseTask) {
+    if (item.taskType === 'Relocation') {
+      onOpenRelocation?.(item)
+      return
+    }
+    router.push(getTaskRoute(item))
+  }
+
   function renderActions(item: MyWarehouseTask) {
     if (
       !canManage ||
@@ -107,17 +118,38 @@ export function WarehouseTaskDirectory({
     return (
       <>
         {!isInProgress && (
-          <Button size="sm" variant="outline" onClick={() => onAction(item, 'Start')}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction(item, 'Start')
+            }}
+          >
             {item.executionStatus === 'Paused' ? 'Tiếp tục' : 'Bắt đầu'}
           </Button>
         )}
         {isInProgress && (
-          <Button size="sm" variant="outline" onClick={() => onAction(item, 'Pause')}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction(item, 'Pause')
+            }}
+          >
             Tạm dừng
           </Button>
         )}
         {!isInProgress && (
-          <Button size="sm" variant="ghost" onClick={() => onAction(item, 'Return')}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction(item, 'Return')
+            }}
+          >
             Trả lại
           </Button>
         )}
@@ -146,7 +178,7 @@ export function WarehouseTaskDirectory({
         </div>
       </div>
       {showStats ? (
-        <div className="grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-5">
+        <div className="bg-card flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border px-3 py-2">
           <TaskMetric
             icon={statsMode === 'managed' ? UserRoundX : ClipboardList}
             label={statsMode === 'managed' ? 'Chưa giao' : 'Chờ bắt đầu'}
@@ -187,14 +219,21 @@ export function WarehouseTaskDirectory({
                     <TableHead className="sticky top-0 z-10">Tiến độ</TableHead>
                     <TableHead className="sticky top-0 z-10">Hạn hoàn thành</TableHead>
                     <TableHead className="sticky top-0 z-10">Cập nhật</TableHead>
-                    <TableHead className="sticky top-0 z-10 text-right">Mở</TableHead>
+                    <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
                     <TableRow
                       key={`${item.taskType}-${item.id}`}
-                      className="transition-colors motion-reduce:transition-none"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Mở công việc ${item.referenceCode}`}
+                      className="hover:bg-muted/60 cursor-pointer transition-colors motion-reduce:transition-none"
+                      onClick={() => openTask(item)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') openTask(item)
+                      }}
                     >
                       <TableCell>
                         <p>{taskTypeLabel[item.taskType]}</p>
@@ -252,27 +291,13 @@ export function WarehouseTaskDirectory({
                             type="button"
                             size="icon-sm"
                             variant="ghost"
-                            onClick={() => onEditSchedule(item)}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              onEditSchedule(item)
+                            }}
                             aria-label={`Điều chỉnh hạn ${item.referenceCode}`}
                           >
                             <CalendarClock aria-hidden="true" />
-                          </Button>
-                        ) : null}
-                        {item.taskType === 'Relocation' && onOpenRelocation ? (
-                          <Button
-                            type="button"
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => onOpenRelocation(item)}
-                            aria-label={`Mở ${item.referenceCode}`}
-                          >
-                            <ArrowRight aria-hidden="true" />
-                          </Button>
-                        ) : item.taskType !== 'Relocation' ? (
-                          <Button asChild size="icon-sm" variant="ghost">
-                            <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
-                              <ArrowRight aria-hidden="true" />
-                            </Link>
                           </Button>
                         ) : null}
                       </TableCell>
@@ -283,7 +308,17 @@ export function WarehouseTaskDirectory({
             </div>
             <div className="divide-y md:hidden">
               {items.map((item) => (
-                <div key={`${item.taskType}-${item.id}`} className="flex items-center gap-3 p-3">
+                <div
+                  key={`${item.taskType}-${item.id}`}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Mở công việc ${item.referenceCode}`}
+                  className="hover:bg-muted/60 flex cursor-pointer items-center gap-3 p-3 transition-colors motion-reduce:transition-none"
+                  onClick={() => openTask(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') openTask(item)
+                  }}
+                >
                   <ClipboardList className="text-primary size-5" aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{taskTypeLabel[item.taskType]}</p>
@@ -307,27 +342,13 @@ export function WarehouseTaskDirectory({
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        onClick={() => onEditSchedule(item)}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onEditSchedule(item)
+                        }}
                         aria-label={`Điều chỉnh hạn ${item.referenceCode}`}
                       >
                         <CalendarClock aria-hidden="true" />
-                      </Button>
-                    ) : null}
-                    {item.taskType === 'Relocation' && onOpenRelocation ? (
-                      <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => onOpenRelocation(item)}
-                        aria-label={`Mở ${item.referenceCode}`}
-                      >
-                        <ArrowRight aria-hidden="true" />
-                      </Button>
-                    ) : item.taskType !== 'Relocation' ? (
-                      <Button asChild size="icon-sm" variant="ghost">
-                        <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
-                          <ArrowRight aria-hidden="true" />
-                        </Link>
                       </Button>
                     ) : null}
                   </div>
@@ -360,7 +381,7 @@ function TaskMetric({
   readonly tone?: 'default' | 'warning' | 'danger'
 }) {
   return (
-    <div className="bg-card motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 animation-duration-250 flex items-center gap-3 border px-3 py-2.5">
+    <div className="motion-safe:animate-in motion-safe:fade-in-0 animation-duration-200 flex items-center gap-2">
       <span
         className={
           tone === 'danger'
@@ -373,10 +394,8 @@ function TaskMetric({
         <Icon className="size-4" aria-hidden="true" />
       </span>
       <span className="min-w-0">
-        <span className="text-muted-foreground block truncate text-xs">{label}</span>
-        <span className="block text-lg font-semibold tabular-nums">
-          {value.toLocaleString('vi-VN')}
-        </span>
+        <span className="text-muted-foreground text-xs">{label}</span>{' '}
+        <span className="text-sm font-semibold tabular-nums">{value.toLocaleString('vi-VN')}</span>
       </span>
     </div>
   )

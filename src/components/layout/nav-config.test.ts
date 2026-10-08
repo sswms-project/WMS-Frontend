@@ -290,6 +290,21 @@ describe('application navigation visibility', () => {
     ).toBe(true)
   })
 
+  it('separates staff task history, personal activity and security settings', () => {
+    const items = getVisibleNavItems(USER_ROLES.WarehouseStaff, [
+      P.WAREHOUSE_TASKS_VIEW_OWN,
+      P.AUDIT_LOGS_VIEW,
+    ])
+
+    expect(items.find((item) => item.href === APP_ROUTES.myTaskHistory)?.label).toBe(
+      'Công việc đã xử lý'
+    )
+    expect(items.find((item) => item.href === APP_ROUTES.auditLogs)?.label).toBe(
+      'Hoạt động của tôi'
+    )
+    expect(items.some((item) => item.href === APP_ROUTES.settings.security)).toBe(true)
+  })
+
   it('lets staff see delegated staff-management navigation without role hard-coding', () => {
     expect(
       getVisibleNavItems(USER_ROLES.WarehouseStaff, ['staff:view']).some(
