@@ -637,3 +637,35 @@ Ba khoảng trống hợp đồng của Gate A, đã bổ sung (chỉ thêm, kh�
 - Chưa chạy trên trình duyệt với backend thật và SignalR thật; migration vẫn chưa áp dụng vào `db71143` nên chưa QA luồng đầy đủ.
 - Đổi vị trí khi lấy hàng chọn phân bổ giữ chỗ đầu tiên của dòng làm nguồn; trường hợp dòng giữ chỗ ở nhiều vị trí cần Gate C làm bộ chọn nguồn.
 - Nhận bổ sung chênh lệch cho hàng theo lô chỉ chọn được lô có trong phiếu nhận của đợt.
+
+## 21. Ghi chú Gate C (2026-10-08)
+
+QA bằng trình duyệt thật với BE local (`Database__ApplyMigrationsOnStartup=false`) trên `db71143`, dữ liệu tạo qua luồng ứng dụng, không xóa/seed ngoài phần quyền.
+
+### 21.1. Đã chạy được
+
+- Phiếu 1 (1 Thùng): tạo → gửi (giữ chỗ) → tạo đợt → giao việc → staff lấy bằng quét mã kệ/mã hàng → xuất đợt → giao việc nhận → nhận → tự hoàn tất.
+- Phiếu 2 (6 Thùng): như trên, nhận 3 tốt / 1 hỏng / 2 thiếu → Chờ xử lý chênh lệch → chuyển xử lý hàng hỏng + ghi nhận thất thoát → tự hoàn tất.
+- Realtime hai trình duyệt (Owner và Staff): số phản hồi của Owner tự tăng khi có thay đổi; không có lỗi hub.
+- Responsive 360×800, 640×360 (tương đương zoom 200%), 768×1024, 1280×720, 1920×1080: không tràn ngang trang; bảng nằm trong vùng cuộn.
+- A11y: mọi nút/ô nhập có tên, một `h1`, `lang="vi"`; còn 1 nút trong combobox dùng chung chưa có nhãn.
+
+### 21.2. Lỗi tìm thấy và đã sửa
+
+| Lỗi                                                                | Nguyên nhân                                                                                               | Sửa                                                                                                              |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Staff mở phiếu lấy hàng bị 403 và hub báo lỗi liên tục             | Danh mục quyền `transfers:pick/resolve/cancel` chưa có trong DB và vai trò chưa được cấp                  | Seed danh mục (`docs/features/2026-10-08-transfer-permissions-seed.sql`) và cấp quyền cơ bản qua API admin/owner |
+| Realtime không tới màn hình Owner                                  | `onclose` của kết nối cũ ghi đè kết nối mới ở `NotificationRealtimeProvider` nên hook không tham gia nhóm | Chỉ gỡ kết nối khi đúng kết nối đang công bố                                                                     |
+| Sau giao việc, chi tiết phiếu vẫn "Chưa giao nhân viên"            | Giao việc đi qua API công việc kho, không làm mới truy vấn điều chuyển                                    | Làm mới truy vấn điều chuyển sau khi giao thành công                                                             |
+| Staff thấy `__SYSTEM_DEFAULT__` làm vị trí và không biết lấy ở đâu | Tồn nằm ở vị trí mặc định theo kệ                                                                         | BE trả `rackCode`, `isSystemDefaultSlot`; hiển thị "Kệ A07"; quét mã kệ được chấp nhận cho vị trí mặc định       |
+| Biểu ngữ "Có người vừa cập nhật" hiện sau thao tác của chính mình  | Sự kiện realtime dội lại                                                                                  | Bỏ qua trong lúc và 5 giây sau thao tác ghi của trình duyệt này                                                  |
+| Trạng thái task hiện "Queued/Completed"                            | Hiển thị mã BE                                                                                            | Dịch sang tiếng Việt                                                                                             |
+| "Đã lấy 0/1" sau khi xuất đợt                                      | BE trừ phần đã xuất khỏi số lượng chờ xuất                                                                | FE cộng phần đã xuất khi hiển thị                                                                                |
+
+### 21.3. Hạn chế còn lại
+
+- Chưa QA: sửa phiếu, hủy/dừng, chia hai đợt, đổi vị trí/lô, báo quản lý, trả hàng về vị trí; chưa kiểm tương phản màu và `prefers-reduced-motion` bằng công cụ.
+- Nhận hàng bằng mã kệ chưa hỗ trợ (kho nhận dùng tra cứu vị trí thật của kho đích).
+- Nút trong combobox dùng chung (`LookupCombobox`) thiếu nhãn truy cập, ảnh hưởng cả trang Nhập kho.
+- Log BE có lỗi có sẵn `CycleCountStatus 'Cancelled'` không thuộc điều chuyển.
+- Tồn Bia Tiger tại Đà Nẵng giảm 7 Thùng và Kho test tăng theo do QA; phiếu QA nằm trong `db71143`.
