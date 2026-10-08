@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { TransferPickAlternative, TransferPickSheetLine } from '../../types/transfer.types'
 import type { PickScanState } from '../../utils/transfer-scan'
-import { ScanInput } from './ScanInput'
+import { ScanInput, type ScanResult } from './ScanInput'
+import { ScanPreferencesBar } from './ScanPreferencesBar'
 import { formatTransferLocation } from '../../utils/transfer-location'
 
 interface PickEntryDialogProps {
@@ -23,8 +24,10 @@ interface PickEntryDialogProps {
   readonly maximumQuantity: number
   readonly quantityError: string | null
   readonly isPending: boolean
-  readonly onScanSlot: (code: string) => void
-  readonly onScanProduct: (code: string) => void
+  /** Quét từng đơn vị: mỗi lần quét mã hàng cộng 1 vào số lượng. */
+  readonly eachUnit?: boolean
+  readonly onScanSlot: (code: string) => ScanResult
+  readonly onScanProduct: (code: string) => ScanResult
   readonly onQuantityChange: (value: number) => void
   readonly onUseAlternative: (alternative: TransferPickAlternative) => void
   readonly onRescan: () => void
@@ -39,6 +42,7 @@ export function PickEntryDialog({
   maximumQuantity,
   quantityError,
   isPending,
+  eachUnit = false,
   onScanSlot,
   onScanProduct,
   onQuantityChange,
@@ -52,10 +56,11 @@ export function PickEntryDialog({
   const quantityRef = useRef<HTMLInputElement>(null)
   // Quét xong mã hàng thì con trỏ nhảy sang số lượng để nhân viên chỉ cần Enter xác nhận.
   useEffect(() => {
-    if (!isReady) return
+    // Quét từng đơn vị: con trỏ ở lại ô mã hàng để quét tiếp.
+    if (!isReady || eachUnit) return
     quantityRef.current?.focus()
     quantityRef.current?.select()
-  }, [isReady])
+  }, [isReady, eachUnit])
   return (
     <Dialog open={Boolean(line)} onOpenChange={(next) => !isPending && onOpenChange(next)}>
       <DialogContent className="sm:max-w-lg">
@@ -72,6 +77,7 @@ export function PickEntryDialog({
               </DialogDescription>
             </DialogHeader>
 
+            <ScanPreferencesBar showEachUnit />
             <ScanInput
               id="pick-scan-slot"
               label="1. Quét mã vị trí"
@@ -103,6 +109,12 @@ export function PickEntryDialog({
               id="pick-scan-product"
               label="2. Quét mã hàng"
               focusWhen={scan.step === 'product'}
+              description={
+                eachUnit
+                  ? `Mỗi lần quét tính 1 đơn vị (đã quét ${formatQuantity(quantity)}/${formatQuantity(maximumQuantity)}). Nhấn Enter khi ô trống để xác nhận lấy.`
+                  : undefined
+              }
+              onEmptyEnter={eachUnit && isReady && !isPending ? onConfirm : undefined}
               confirmedValue={isReady ? scan.productCode : undefined}
               error={scan.step === 'product' ? scan.error : null}
               disabled={scan.step === 'slot' || isPending}

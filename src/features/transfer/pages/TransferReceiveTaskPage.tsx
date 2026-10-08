@@ -13,6 +13,7 @@ import {
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import { ReceiveEntryCard } from '../components/TransferWork/ReceiveEntryCard'
+import { ScanPreferencesBar } from '../components/TransferWork/ScanPreferencesBar'
 import { TransferWorkHeader } from '../components/TransferWork/TransferWorkHeader'
 import { TransferChangedBanner, TransferConfirmDialog } from '../components/TransferShared'
 import { useTransferReceiveSheetQuery } from '../hooks/use-transfer-fulfillment'
@@ -97,6 +98,7 @@ export default function TransferReceiveTaskPage({
                 Đợt này không còn ở trạng thái chờ nhận nên chỉ xem được.
               </p>
             ) : null}
+            {canAct ? <ScanPreferencesBar /> : null}
             {receive.fields.map((field, index) => {
               const entry = values[index]
               const line = entry ? receive.lineById.get(entry.lineId) : undefined
@@ -118,7 +120,7 @@ export default function TransferReceiveTaskPage({
                   canRemove={receive.countEntriesOf(index) > 1}
                   disabled={!canAct || receive.isReceiving}
                   isFindingSlot={receive.isFindingSlot}
-                  onScanSlot={(entryIndex, code) => void receive.scanSlot(entryIndex, code)}
+                  onScanSlot={receive.scanSlot}
                   onScanProduct={receive.scanProduct}
                   onSplit={receive.splitEntry}
                   onRemove={receive.removeEntry}

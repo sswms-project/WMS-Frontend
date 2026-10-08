@@ -1,10 +1,23 @@
 'use client'
 
-import { CircleCheck, ScanLine } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Camera, CircleCheck, ScanLine } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { isCameraScanSupported } from '../../utils/camera-scan'
+import { playScanFeedback } from '../../utils/scan-feedback'
+import { useScanPreferences } from '../../utils/scan-preferences'
+
+// Thư viện giải mã chỉ tải khi người dùng mở camera.
+const CameraScanDialog = dynamic(
+  () => import('./CameraScanDialog').then((module) => module.CameraScanDialog),
+  { ssr: false }
+)
+
+/** Trả true/false để ô quét báo âm thanh/rung đúng sai; không trả gì thì không báo. */
+export type ScanResult = boolean | void | Promise<boolean | void>
 
 interface ScanInputProps {
   readonly id: string
@@ -18,10 +31,14 @@ interface ScanInputProps {
   /** Chuyển con trỏ vào ô khi giá trị này chuyển sang true: máy quét gõ thẳng vào ô đang focus nên bước kế tiếp phải được focus sẵn. */
   readonly focusWhen?: boolean
   readonly pending?: boolean
-  readonly onScan: (code: string) => void
+  /** Bấm Enter khi ô trống (máy quét không gửi gì): dùng để xác nhận khi quét từng đơn vị. */
+  readonly onEmptyEnter?: () => void
+  readonly onScan: (code: string) => ScanResult
 }
 
-/** Ô nhận mã từ máy quét dạng bàn phím (kết thúc bằng Enter) hoặc nhập tay rồi bấm xác nhận. */
+const subscribeNothing = () => () => undefined
+
+/** Ô nhận mã từ máy quét dạng bàn phím (kết thúc bằng Enter/Tab), camera, hoặc nhập tay rồi bấm xác nhận. */
 export function ScanInput({
   id,
   label,
@@ -32,22 +49,36 @@ export function ScanInput({
   autoFocus = false,
   focusWhen = false,
   pending = false,
+  onEmptyEnter,
   onScan,
 }: ScanInputProps) {
   const [value, setValue] = useState('')
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [preferences] = useScanPreferences()
+  const canUseCamera = useSyncExternalStore(subscribeNothing, isCameraScanSupported, () => false)
 
   useEffect(() => {
     if (focusWhen) inputRef.current?.focus()
   }, [focusWhen])
-  const isConfirmed = Boolean(confirmedValue) && !error
+
+  function handle(code: string) {
+    if (!code || disabled || pending) return
+    const result = onScan(code)
+    if (!preferences.feedback || result === undefined) return
+    void Promise.resolve(result).then((ok) => {
+      if (typeof ok === 'boolean') playScanFeedback(ok ? 'success' : 'error')
+    })
+  }
 
   function submit() {
     const code = value.trim()
-    if (!code || disabled || pending) return
-    onScan(code)
+    if (!code) return
+    handle(code)
     setValue('')
   }
+
+  const isConfirmed = Boolean(confirmedValue) && !error
 
   return (
     <Field data-invalid={Boolean(error)}>
@@ -73,6 +104,8 @@ export function ScanInput({
           autoCapitalize="characters"
           spellCheck={false}
           enterKeyHint="done"
+          // Máy quét Bluetooth gõ như bàn phím ngoài: ẩn bàn phím ảo để không che màn hình.
+          inputMode={preferences.scannerMode ? 'none' : undefined}
           disabled={disabled}
           aria-invalid={Boolean(error)}
           className="h-11 font-mono text-base"
@@ -83,11 +116,30 @@ export function ScanInput({
             const isScanTerminator =
               event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)
             if (!isScanTerminator) return
-            if (event.key === 'Tab' && !value.trim()) return
+            if (!value.trim()) {
+              if (event.key === 'Enter' && onEmptyEnter) {
+                event.preventDefault()
+                onEmptyEnter()
+              }
+              return
+            }
             event.preventDefault()
             submit()
           }}
         />
+        {canUseCamera ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-11 shrink-0"
+            aria-label={`Quét bằng camera: ${label}`}
+            disabled={disabled || pending}
+            onClick={() => setIsCameraOpen(true)}
+          >
+            <Camera aria-hidden="true" />
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="outline"
@@ -101,6 +153,16 @@ export function ScanInput({
       </div>
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       {error ? <FieldError>{error}</FieldError> : null}
+      {isCameraOpen ? (
+        <CameraScanDialog
+          open
+          title={label}
+          onOpenChange={(next) => {
+            if (!next) setIsCameraOpen(false)
+          }}
+          onDecoded={handle}
+        />
+      ) : null}
     </Field>
   )
 }

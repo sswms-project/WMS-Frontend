@@ -142,6 +142,7 @@ export default function TransferPickTaskPage({
         maximumQuantity={actions.entry.maximumQuantity}
         quantityError={actions.entry.quantityError}
         isPending={actions.entry.isPending}
+        eachUnit={actions.entry.eachUnit}
         onScanSlot={actions.entry.scanSlot}
         onScanProduct={actions.entry.scanProduct}
         onQuantityChange={actions.entry.changeQuantity}

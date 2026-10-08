@@ -10,7 +10,7 @@ import { formatQuantity } from '@/features/inbound-request/utils/inbound-request
 import type { TransferReceiptFormValues } from '../../schemas/transfer-fulfillment.schema'
 import { TRANSFER_RECEIPT_REASONS } from '../../types/transfer.types'
 import { RECEIPT_REASON_LABELS } from '../../utils/transfer-format'
-import { ScanInput } from './ScanInput'
+import { ScanInput, type ScanResult } from './ScanInput'
 
 interface ReceiveEntryCardProps {
   readonly index: number
@@ -22,8 +22,8 @@ interface ReceiveEntryCardProps {
   readonly canRemove: boolean
   readonly disabled: boolean
   readonly isFindingSlot: boolean
-  readonly onScanSlot: (index: number, code: string) => void
-  readonly onScanProduct: (index: number, code: string) => void
+  readonly onScanSlot: (index: number, code: string) => ScanResult
+  readonly onScanProduct: (index: number, code: string) => ScanResult
   readonly onSplit: (index: number) => void
   readonly onRemove: (index: number) => void
 }
