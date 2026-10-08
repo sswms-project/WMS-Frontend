@@ -674,11 +674,23 @@ Lỗi tìm thấy và đã sửa thêm:
 | Gợi ý lấy hàng không hiển thị phần vừa đổi vị trí      | Gợi ý điền đủ số cần lấy từ giữ chỗ đầu tiên theo FEFO                                                                                         | Vị trí vừa nhận phần đổi được gợi ý trước, giới hạn theo phần đổi chưa lấy         |
 | Đợt đã xuất vẫn hiện "Lấy tại (theo FEFO)"             | Gợi ý tính lại từ giữ chỗ còn lại                                                                                                              | Chỉ hiển thị gợi ý khi đợt còn thao tác được                                       |
 
-### 21.4. Hạn chế còn lại
+### 21.4. QA đợt ba
 
-- Chưa QA: "Nhận bổ sung" hàng thiếu bằng quét mã vị trí (đã tới bước hộp thoại), lệch phiên bản khi hai người sửa cùng lúc, mất kết nối rồi nối lại; chưa kiểm tương phản màu và `prefers-reduced-motion` bằng công cụ.
+Đạt: nhận bổ sung hàng thiếu bằng mã vị trí (phiếu tự hoàn tất), lệch phiên bản khi hai Owner sửa cùng lúc (người sau được giữ nguyên dữ liệu đang nhập và có banner tải lại), mất kết nối rồi nối lại (màn hình tự đồng bộ sau khoảng 3 giây), axe-core WCAG 2.0/2.1 A và AA trên danh sách, form, chi tiết và màn nhận hàng: không có lỗi tương phản màu.
+
+Lỗi tìm thấy và đã sửa:
+
+| Lỗi                                                 | Nguyên nhân                                                                 | Sửa                                                                 |
+| --------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| "Nhận bổ sung" không bao giờ gửi được               | Schema yêu cầu `destinationSlotId` hợp lệ trước khi mã quét được tra ra ID  | Schema chỉ yêu cầu mã quét hoặc nhập; ID được tra khi gửi           |
+| Trang admin vai trò không tải được                  | DB có quyền do bản code khác thêm, bản build này ném lỗi khi dựng danh sách | Danh sách quyền/vai trò bỏ qua quyền chưa định nghĩa (BE `ba5d2e3`) |
+| Thông báo lệch phiên bản lặp ý, viết thường chữ đầu | FE nối thêm gợi ý tải lại lên thông báo của BE                              | Viết hoa và chỉ thêm gợi ý khi chưa có                              |
+
+### 21.5. Hạn chế còn lại
+
+- Lỗi truy cập ở component dùng chung, chưa sửa vì GitNexus báo rủi ro cao: nút trigger của `ComboboxInput` không có tên (`button-name`, ảnh hưởng 9 nơi) và `aria-controls` của tab trỏ tới panel chưa mount (`aria-valid-attr-value`).
+- `prefers-reduced-motion` chưa kiểm bằng công cụ.
 - Nhận hàng bằng mã kệ chưa hỗ trợ (kho nhận dùng tra cứu vị trí thật của kho đích).
-- Nút trong combobox dùng chung (`LookupCombobox`) thiếu nhãn truy cập, ảnh hưởng cả trang Nhập kho.
 - Log BE có lỗi có sẵn `CycleCountStatus 'Cancelled'` không thuộc điều chuyển.
-- **Phân quyền trên `db71143`:** nhiều bản build với danh mục quyền khác nhau dùng chung một DB. Bước đồng bộ quyền khi khởi động của bản không có `transfers:pick/resolve/cancel` xóa chúng cùng các lượt gán; đã xảy ra nhiều lần trong ngày. Cần thống nhất một nhánh hoặc đặt `Database__ApplyMigrationsOnStartup=false`.
-- Dữ liệu QA nằm trong `db71143`: các phiếu `TRF-20261008…` (hoàn tất, đã hủy và một phiếu chờ xử lý chênh lệch); tồn Bia Tiger tại Đà Nẵng giảm và kho test tăng tương ứng.
+- **Phân quyền trên `db71143`:** nhiều bản build với danh mục quyền khác nhau dùng chung một DB. Bước đồng bộ quyền khi khởi động của bản không có `transfers:pick/resolve/cancel` xóa chúng cùng các lượt gán; đã xảy ra nhiều lần trong ngày. Cần thống nhất một nhánh hoặc đặt `Database__ApplyMigrationsOnStartup=false`; script seed nằm ở `SSWMS-Backend/docs/features/2026-10-08-transfer-permissions-seed.sql`.
+- Dữ liệu QA nằm trong `db71143`: các phiếu `TRF-20261008…` (hoàn tất, đã hủy, và một phiếu còn mở để thử lệch phiên bản); tồn Bia Tiger tại Đà Nẵng giảm và kho test tăng tương ứng.
