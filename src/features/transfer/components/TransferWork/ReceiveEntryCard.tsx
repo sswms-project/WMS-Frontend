@@ -1,4 +1,5 @@
 import { Split, Trash2 } from 'lucide-react'
+import { useEffect } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -52,6 +53,13 @@ export function ReceiveEntryCard({
   const entry = form.watch(`entries.${index}`)
   const hasProblem = entry.damagedQuantity > 0 || entry.missingQuantity > 0
   const needsSlot = entry.goodQuantity > 0 || entry.damagedQuantity > 0
+  const isSlotConfirmed = Boolean(entry.destinationSlotId)
+  const isProductConfirmed = Boolean(entry.scannedProductCode)
+
+  // Máy quét gõ vào ô đang focus nên con trỏ phải tự đi theo từng bước: vị trí → mã hàng → số lượng.
+  useEffect(() => {
+    if (isProductConfirmed) document.getElementById(`receive-goodQuantity-${index}`)?.focus()
+  }, [isProductConfirmed, index])
 
   return (
     <article className="bg-card border" aria-label={`Khai báo nhận ${heading} ${lotLabel}`}>
@@ -69,6 +77,7 @@ export function ReceiveEntryCard({
           <>
             <ScanInput
               id={`receive-slot-${index}`}
+              autoFocus={index === 0}
               label="Quét mã vị trí cất hàng"
               confirmedValue={entry.destinationSlotId ? entry.scannedSlotCode : undefined}
               error={errors?.scannedSlotCode?.message ?? null}
@@ -78,6 +87,7 @@ export function ReceiveEntryCard({
             />
             <ScanInput
               id={`receive-product-${index}`}
+              focusWhen={isSlotConfirmed && !isProductConfirmed}
               label="Quét mã hàng (không bắt buộc)"
               confirmedValue={entry.scannedProductCode || undefined}
               error={errors?.scannedProductCode?.message ?? null}

@@ -46,6 +46,8 @@ export type PickScanAction =
       readonly code: string
       readonly suggestions: readonly TransferPickSuggestion[]
       readonly alternatives: readonly TransferPickAlternative[]
+      /** Để nhận ra nhân viên quét nhầm mã hàng vào ô vị trí. */
+      readonly line?: Pick<TransferPickSheetLine, 'sku' | 'productBarcode'>
     }
   | { readonly type: 'scan-product'; readonly code: string; readonly line: TransferPickSheetLine }
   | { readonly type: 'reset' }
@@ -66,12 +68,16 @@ export function pickScanReducer(state: PickScanState, action: PickScanAction): P
       const alternative = action.alternatives.find((candidate) =>
         codesMatch(code, ...transferLocationScanCodes(candidate))
       )
+      const isProductCode =
+        !alternative && action.line && codesMatch(code, action.line.sku, action.line.productBarcode)
       return {
         ...INITIAL_PICK_SCAN_STATE,
         slotCode: code,
         error: alternative
           ? `${formatTransferLocation(alternative)} không phải vị trí được gợi ý cho dòng này.`
-          : `Mã vị trí ${code} không khớp với vị trí cần lấy của dòng này.`,
+          : isProductCode
+            ? 'Đây là mã hàng. Hãy quét mã vị trí trước.'
+            : `Mã vị trí ${code} không khớp với vị trí cần lấy của dòng này.`,
         offeredAlternative: alternative ?? null,
       }
     }
@@ -80,11 +86,15 @@ export function pickScanReducer(state: PickScanState, action: PickScanAction): P
       const code = action.code.trim()
       if (!code) return { ...state, error: 'Hãy quét hoặc nhập mã hàng.' }
       if (!codesMatch(code, action.line.sku, action.line.productBarcode)) {
+        const isSlotCode =
+          state.suggestion && codesMatch(code, ...transferLocationScanCodes(state.suggestion))
         return {
           ...state,
           step: 'product',
           productCode: '',
-          error: `Mã hàng ${code} không khớp với ${action.line.sku}.`,
+          error: isSlotCode
+            ? 'Đây là mã vị trí. Hãy quét mã hàng.'
+            : `Mã hàng ${code} không khớp với ${action.line.sku}.`,
         }
       }
       return { ...state, step: 'ready', productCode: code, error: null }

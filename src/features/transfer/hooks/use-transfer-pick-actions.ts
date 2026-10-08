@@ -141,7 +141,13 @@ export function useTransferPickActions(
         if (!entryLine) return
         setQuantityOverride(null)
         setQuantityError(null)
-        dispatchScan({ type: 'scan-slot', code, suggestions: entryLine.suggestions, alternatives })
+        dispatchScan({
+          type: 'scan-slot',
+          code,
+          suggestions: entryLine.suggestions,
+          alternatives,
+          line: entryLine,
+        })
       },
       scanProduct: (code: string) => {
         if (entryLine) dispatchScan({ type: 'scan-product', code, line: entryLine })

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -48,6 +49,13 @@ export function PickEntryDialog({
 }: PickEntryDialogProps) {
   const isReady = scan.step === 'ready'
   const offered = scan.offeredAlternative
+  const quantityRef = useRef<HTMLInputElement>(null)
+  // Quét xong mã hàng thì con trỏ nhảy sang số lượng để nhân viên chỉ cần Enter xác nhận.
+  useEffect(() => {
+    if (!isReady) return
+    quantityRef.current?.focus()
+    quantityRef.current?.select()
+  }, [isReady])
   return (
     <Dialog open={Boolean(line)} onOpenChange={(next) => !isPending && onOpenChange(next)}>
       <DialogContent className="sm:max-w-lg">
@@ -68,6 +76,7 @@ export function PickEntryDialog({
               id="pick-scan-slot"
               label="1. Quét mã vị trí"
               autoFocus
+              focusWhen={scan.step === 'slot'}
               confirmedValue={scan.suggestion ? formatTransferLocation(scan.suggestion) : undefined}
               error={scan.step === 'slot' ? scan.error : null}
               disabled={isPending}
@@ -93,6 +102,7 @@ export function PickEntryDialog({
             <ScanInput
               id="pick-scan-product"
               label="2. Quét mã hàng"
+              focusWhen={scan.step === 'product'}
               confirmedValue={isReady ? scan.productCode : undefined}
               error={scan.step === 'product' ? scan.error : null}
               disabled={scan.step === 'slot' || isPending}
@@ -103,6 +113,7 @@ export function PickEntryDialog({
               <FieldLabel htmlFor="pick-quantity">3. Số lượng lấy</FieldLabel>
               <Input
                 id="pick-quantity"
+                ref={quantityRef}
                 type="number"
                 min="0"
                 step="0.01"
@@ -112,6 +123,11 @@ export function PickEntryDialog({
                 value={Number.isFinite(quantity) ? quantity : ''}
                 aria-invalid={Boolean(quantityError)}
                 onChange={(event) => onQuantityChange(event.target.valueAsNumber)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter' || !isReady || isPending) return
+                  event.preventDefault()
+                  onConfirm()
+                }}
               />
               <FieldDescription>
                 Tự điền theo số cần lấy tại vị trí này (tối đa {formatQuantity(maximumQuantity)}).

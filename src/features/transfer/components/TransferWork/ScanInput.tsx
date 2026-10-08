@@ -1,7 +1,7 @@
 'use client'
 
 import { CircleCheck, ScanLine } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,8 @@ interface ScanInputProps {
   readonly error?: string | null
   readonly disabled?: boolean
   readonly autoFocus?: boolean
+  /** Chuyển con trỏ vào ô khi giá trị này chuyển sang true: máy quét gõ thẳng vào ô đang focus nên bước kế tiếp phải được focus sẵn. */
+  readonly focusWhen?: boolean
   readonly pending?: boolean
   readonly onScan: (code: string) => void
 }
@@ -28,10 +30,16 @@ export function ScanInput({
   error,
   disabled = false,
   autoFocus = false,
+  focusWhen = false,
   pending = false,
   onScan,
 }: ScanInputProps) {
   const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (focusWhen) inputRef.current?.focus()
+  }, [focusWhen])
   const isConfirmed = Boolean(confirmedValue) && !error
 
   function submit() {
@@ -58,6 +66,7 @@ export function ScanInput({
       <div className="flex gap-2">
         <Input
           id={id}
+          ref={inputRef}
           value={value}
           autoFocus={autoFocus}
           autoComplete="off"
@@ -70,7 +79,11 @@ export function ScanInput({
           placeholder="Quét hoặc nhập mã rồi nhấn Enter"
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key !== 'Enter') return
+            // Máy quét thường kết thúc bằng Enter, một số máy cấu hình Tab: cả hai đều là "quét xong".
+            const isScanTerminator =
+              event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)
+            if (!isScanTerminator) return
+            if (event.key === 'Tab' && !value.trim()) return
             event.preventDefault()
             submit()
           }}
