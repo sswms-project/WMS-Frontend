@@ -74,6 +74,9 @@ export const APP_ROUTES = {
   stockAdjustmentVoucherDetail: (voucherId: string): Route =>
     `/inventory/stock-adjustments/vouchers/${voucherId}` as Route,
   transfers: '/transfers',
+  transfersTab: (stage: string): Route => `/transfers?tab=${stage}` as Route,
+  /** Mở sẵn hộp thoại tạo công việc điều chuyển vị trí (điều chuyển nội bộ trong kho). */
+  createRelocationTask: '/tasks?create=relocation' as Route,
   transferCreate: '/transfers/new',
   transferDetail: (transferId: string): Route => `/transfers/${transferId}` as Route,
   transferEdit: (transferId: string): Route => `/transfers/${transferId}/edit` as Route,

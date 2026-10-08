@@ -1,5 +1,6 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { P } from '@/config/permissionCodes'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
@@ -20,10 +21,14 @@ import { useTransferViewer } from '../hooks/use-transfer-viewer'
 import { useTransferQuery, useTransfersQuery } from '../hooks/use-transfers'
 import type { TransferStatus } from '../types/transfer.types'
 import { transferGoodsRows } from '../utils/transfer-goods-rows'
+import { parseTransferStage } from '../utils/transfer-stage'
 
 export default function TransferPage() {
   const [searchText, setSearchText] = useState('')
-  const [status, setStatus] = useState<TransferStatus | ''>('InProgress')
+  const stage = parseTransferStage(useSearchParams().get('tab'))
+  const [status, setStatus] = useState<TransferStatus | ''>('')
+  // Đổi tab thì về trang đầu và bỏ lọc trạng thái của tab trước (các tab có tập trạng thái khác nhau).
+  const [seenStage, setSeenStage] = useState(stage)
   const [sourceWarehouseId, setSourceWarehouseId] = useState('')
   const [destinationWarehouseId, setDestinationWarehouseId] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -36,11 +41,18 @@ export default function TransferPage() {
     false
   )
 
+  if (stage !== seenStage) {
+    setSeenStage(stage)
+    setStatus('')
+    setPage(1)
+  }
+
   const debouncedSearchText = useDebouncedValue(searchText, 350)
   const { viewer } = useTransferViewer()
   const transfersQuery = useTransfersQuery({
     pageNumber: page,
     pageSize,
+    stage,
     ...(status ? { status } : {}),
     ...(sourceWarehouseId ? { sourceWarehouseId } : {}),
     ...(destinationWarehouseId ? { destinationWarehouseId } : {}),
@@ -99,6 +111,8 @@ export default function TransferPage() {
         }
       >
         <TransferDirectory
+          stage={stage}
+          openDiscrepancyCount={transfersQuery.data?.openDiscrepancyCount ?? 0}
           items={transfersQuery.data?.items ?? []}
           totalCount={transfersQuery.data?.totalCount ?? 0}
           page={page}

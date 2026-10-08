@@ -56,6 +56,7 @@ export function TransferMobileList({
               <TransferFlagBadges
                 hasOpenFeedback={item.hasOpenFeedback}
                 hasPendingPickEscalation={item.hasPendingPickEscalation}
+                hasOpenDiscrepancy={item.hasOpenDiscrepancy}
               />
             </ItemContent>
             {renderRowActions(item)}

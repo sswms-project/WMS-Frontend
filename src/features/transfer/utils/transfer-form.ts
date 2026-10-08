@@ -23,6 +23,9 @@ export const EMPTY_TRANSFER_LINE: TransferLineFormValues = {
 
 export function emptyTransferForm(): TransferRequestFormValues {
   return {
+    transferCode: '',
+    requesterName: '',
+    requestingDepartment: '',
     sourceWarehouseId: '',
     destinationWarehouseId: '',
     reason: '',
@@ -40,6 +43,9 @@ export function visibleTransferItems(items: readonly TransferItem[]): TransferIt
 export function transferToFormValues(detail: TransferDetail): TransferRequestFormValues {
   const items = visibleTransferItems(detail.items)
   return {
+    transferCode: detail.transferCode,
+    requesterName: detail.requesterName ?? '',
+    requestingDepartment: detail.requestingDepartment ?? '',
     sourceWarehouseId: detail.sourceWarehouseId,
     destinationWarehouseId: detail.destinationWarehouseId,
     reason: detail.reason ?? '',
@@ -86,6 +92,9 @@ export function toSaveDraftRequest(
 ): SaveTransferDraftRequest {
   return {
     expectedVersion,
+    transferCode: values.transferCode || null,
+    requesterName: values.requesterName || null,
+    requestingDepartment: values.requestingDepartment || null,
     sourceWarehouseId: values.sourceWarehouseId,
     destinationWarehouseId: values.destinationWarehouseId,
     reason: values.reason || null,
@@ -102,6 +111,8 @@ export function toUpdateTransferRequest(
 ): UpdateTransferRequest {
   return {
     expectedVersion,
+    requesterName: values.requesterName,
+    requestingDepartment: values.requestingDepartment,
     sourceWarehouseId:
       values.sourceWarehouseId !== original.sourceWarehouseId ? values.sourceWarehouseId : null,
     destinationWarehouseId:

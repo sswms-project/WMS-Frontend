@@ -15,6 +15,7 @@ import type {
   TransferDetail,
   TransferListQuery,
   TransferListResponse,
+  TransferRequesterOption,
   TransferSourceWarehouseQuery,
   UpdateTransferRequest,
 } from '../types/transfer.types'
@@ -45,6 +46,26 @@ export function useTransferQuery(transferId: string | null) {
     queryKey: queryKeys.transfers.detail(transferId ?? ''),
     queryFn: () => transferService.getTransfer(transferId ?? '').then((response) => response.data),
     enabled: Boolean(transferId),
+  })
+}
+
+/** Gợi ý mã phiếu kế tiếp; sessionKey đổi thì lấy lại (mỗi lần mở form tạo mới). */
+export function useNextTransferCodeQuery(enabled: boolean, sessionKey: string) {
+  return useQuery<string, ApiErrorResponse>({
+    queryKey: [...queryKeys.transfers.nextCode, sessionKey],
+    queryFn: () => transferService.getNextCode().then((response) => response.data),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+export function useTransferRequesterOptionsQuery(enabled = true) {
+  return useQuery<TransferRequesterOption[], ApiErrorResponse>({
+    queryKey: queryKeys.transfers.requesterOptions,
+    queryFn: () => transferService.getRequesterOptions().then((response) => response.data),
+    enabled,
+    staleTime: 5 * 60 * 1000,
   })
 }
 

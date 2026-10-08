@@ -130,7 +130,50 @@ export function ProductImportView({
   const recheckButton = useRef<HTMLButtonElement>(null)
   const stepIndex = importSteps.findIndex((item) => item.key === step)
   const mappingValid = productImportOptionsSchema(inspect.data).safeParse(form.watch()).success
-  const warnings = [...(data?.warnings ?? []), ...(data?.rows.flatMap((row) => row.warnings) ?? [])]
+  const warnings = new Map<string, { message: string; sources: Set<string> }>()
+  const confirmationWarnings = [
+    ...(data?.warnings ?? []),
+    ...rowsToImport.flatMap((row) =>
+      row.warnings.map((issue) => ({
+        ...issue,
+        source: issue.source ?? {
+          sheetName: row.sheetName,
+          rowNumber: row.rowNumber,
+          columnIndex: null,
+        },
+      }))
+    ),
+  ]
+  for (const issue of confirmationWarnings) {
+    if (issue.code === 'catalogWillCreate') continue
+    const key = JSON.stringify([issue.code, issue.field, issue.message])
+    const group = warnings.get(key) ?? { message: issue.message, sources: new Set<string>() }
+    if (issue.source) group.sources.add(`${issue.source.sheetName}:${issue.source.rowNumber}`)
+    warnings.set(key, group)
+  }
+  const catalogReferences = data?.missingReferences ?? []
+  const unresolvedCatalogs = catalogReferences.filter((reference) => {
+    const relatedRows =
+      data?.rows.filter((row) => reference.productRows.includes(row.rowNumber)) ?? []
+    const normalize = (value: string) => value.trim().normalize('NFC').toLocaleLowerCase('vi')
+    const resolutions = reference.categories
+      ? relatedRows.map((row) => row.category)
+      : relatedRows.flatMap((row) =>
+          [row, ...row.unitConversions]
+            .filter((item) => normalize(item.unitValue) === normalize(reference.value))
+            .map((item) => item.unit)
+        )
+    return !resolutions.length || resolutions.some((item) => item?.id !== reference.id)
+  })
+  const selectedCatalogIds = new Set(
+    rowsToImport.flatMap((row) => [
+      row.category?.id,
+      row.unit?.id,
+      ...row.unitConversions.map((conversion) => conversion.unit?.id),
+    ])
+  )
+  const plannedCatalogs =
+    data?.newCatalogs?.filter((draft) => selectedCatalogIds.has(draft.id)) ?? []
   useEffect(() => {
     if (previousStep.current !== step) stepHeading.current?.focus()
     previousStep.current = step
@@ -254,18 +297,35 @@ export function ProductImportView({
           </Button>
         </Alert>
       ) : null}
-      {step === 'review' && data?.missingReferences?.length ? (
-        <Alert className="shrink-0">
-          <AlertTitle>
-            Danh mục cần xử lý · {data.missingReferences.filter((item) => item.categories).length}{' '}
-            nhóm · {data.missingReferences.filter((item) => !item.categories).length} đơn vị
+      {step === 'review' && catalogReferences.length ? (
+        <Alert className="shrink-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3">
+          <AlertTitle className="col-start-1">
+            {unresolvedCatalogs.length ? (
+              <>
+                Danh mục cần xử lý · {unresolvedCatalogs.filter((item) => item.categories).length}{' '}
+                nhóm · {unresolvedCatalogs.filter((item) => !item.categories).length} đơn vị
+              </>
+            ) : (
+              'Danh mục đã được xử lý'
+            )}
           </AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
-            <span>Kiểm tra danh mục mới hoặc ghép với danh mục có sẵn.</span>
-            <Button variant="outline" disabled={busy} onClick={onManageCatalogs}>
-              Xem và xử lý
-            </Button>
+          <AlertDescription className="col-start-1 min-w-0">
+            <span role="status">
+              {unresolvedCatalogs.length
+                ? 'Kiểm tra danh mục mới hoặc ghép với danh mục có sẵn.'
+                : plannedCatalogs.length
+                  ? `Sẽ tạo ${plannedCatalogs.filter((item) => item.categories).length} nhóm và ${plannedCatalogs.filter((item) => !item.categories).length} đơn vị khi nhập các dòng đã chọn.`
+                  : 'Các dòng đã chọn không cần tạo danh mục mới.'}
+            </span>
           </AlertDescription>
+          <Button
+            variant="outline"
+            className="col-start-2 row-span-2 row-start-1 self-center"
+            disabled={busy}
+            onClick={onManageCatalogs}
+          >
+            {unresolvedCatalogs.length ? 'Xem và xử lý' : 'Chỉnh sửa danh mục'}
+          </Button>
         </Alert>
       ) : null}
       {step === 'review' && data ? (
@@ -395,14 +455,21 @@ export function ProductImportView({
               một lần.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {warnings.length ? (
+          {warnings.size ? (
             <details open className="min-w-0 text-sm">
               <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
-                {warnings.length} cảnh báo cần lưu ý trước khi nhập
+                {warnings.size} cảnh báo cần lưu ý trước khi nhập
               </summary>
               <ul className="mt-2 flex max-h-48 flex-col gap-2 overflow-auto wrap-anywhere whitespace-normal">
-                {warnings.map((issue, index) => (
-                  <li key={index}>{issue.message}</li>
+                {[...warnings].map(([key, issue]) => (
+                  <li key={key}>
+                    {issue.message}
+                    {issue.sources.size ? (
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        Dòng nguồn: {[...issue.sources].join(', ')}
+                      </p>
+                    ) : null}
+                  </li>
                 ))}
               </ul>
             </details>

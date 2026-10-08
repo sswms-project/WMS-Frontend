@@ -223,6 +223,8 @@ export const queryKeys = {
     lists: ['transfers', 'list'] as const,
     list: (params: TransferListQuery) => ['transfers', 'list', params] as const,
     detail: (id: string) => ['transfers', 'detail', id] as const,
+    nextCode: ['transfers', 'next-code'] as const,
+    requesterOptions: ['transfers', 'requester-options'] as const,
     sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
       ['transfers', 'source-warehouses', params] as const,
     availability: (params: TransferAvailabilityQuery) =>

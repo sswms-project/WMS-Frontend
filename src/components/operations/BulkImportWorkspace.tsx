@@ -36,8 +36,9 @@ export function BulkImportWorkspace({
 }: BulkImportWorkspaceProps) {
   return (
     <div
+      data-slot="bulk-import-workspace"
       className={cn(
-        'flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-y-auto [@media(max-height:600px)]:min-h-176',
+        'flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-y-auto pr-3 sm:pr-4 lg:pr-5 [@media(max-height:600px)]:min-h-176',
         className
       )}
       aria-busy={activity !== 'idle'}
@@ -99,7 +100,7 @@ export function BulkImportSummary({ total, valid }: BulkImportSummaryProps) {
         { label: 'Hợp lệ', value: valid, tone: 'text-primary' },
         { label: 'Không hợp lệ', value: total - valid, tone: 'text-destructive' },
       ].map(({ label, value, tone }) => (
-        <Card key={label} className="gap-0 py-0">
+        <Card key={label} className="border-border min-w-0 gap-0 border py-0 ring-0">
           <CardContent className="flex min-h-14 items-center justify-between gap-2 px-3 py-2">
             <p className="text-muted-foreground text-xs">{label}</p>
             <p className={cn('text-lg font-semibold tabular-nums', tone)}>{value}</p>

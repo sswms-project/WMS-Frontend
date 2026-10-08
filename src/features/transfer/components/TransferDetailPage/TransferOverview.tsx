@@ -30,6 +30,8 @@ export function TransferOverview({ transfer }: { readonly transfer: TransferDeta
     { label: 'Kho xuất', value: transfer.sourceWarehouseName },
     { label: 'Kho nhập', value: transfer.destinationWarehouseName },
     { label: 'Người tạo', value: transfer.createdByName ?? '—' },
+    { label: 'Người yêu cầu', value: transfer.requesterName || '—' },
+    { label: 'Bộ phận yêu cầu', value: transfer.requestingDepartment || '—' },
     { label: 'Ngày tạo', value: formatOperationalDateTime(transfer.createdAt) },
     {
       label: 'Hạn cần hàng',

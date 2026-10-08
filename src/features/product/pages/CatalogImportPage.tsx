@@ -1,11 +1,9 @@
 'use client'
 
-import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { BulkImportPage, type BulkImportColumn } from '@/components/operations/BulkImportPage'
 import { BulkImportPendingBody } from '@/components/operations/BulkImportWorkspace'
 import { downloadBulkImportFile } from '@/components/operations/bulk-import'
-import { Input } from '@/components/ui/input'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
@@ -16,30 +14,14 @@ import type { CatalogImportKind, CatalogImportRow } from '../types/catalog-impor
 export default function CatalogImportPage({ kind }: { readonly kind: CatalogImportKind }) {
   const me = useMeQuery()
   const operations = useCatalogImport(kind)
-  const edits = useRef(new Map<number, string>())
-  const [validationRevision, setValidationRevision] = useState(0)
   const categories = kind === 'categories'
   const label = categories ? 'nhóm vật tư hàng hóa' : 'đơn vị tính'
   const columns: BulkImportColumn<CatalogImportRow>[] = [
     {
       key: 'code',
       header: categories ? 'Mã nhóm' : 'Mã ĐVT',
-      cellClassName: 'min-w-48',
-      render: (row) => (
-        <Input
-          key={`${row.rowNumber}:${row.code}`}
-          aria-label={`Mã dòng ${row.rowNumber}`}
-          defaultValue={edits.current.get(row.rowNumber) ?? row.code}
-          maxLength={50}
-          spellCheck={false}
-          autoComplete="off"
-          disabled={operations.commit.isPending || operations.preview.isPending}
-          onChange={(event) => {
-            edits.current.set(row.rowNumber, event.target.value)
-            setValidationRevision((value) => value + 1)
-          }}
-        />
-      ),
+      cellClassName: 'min-w-48 max-w-72 font-mono wrap-anywhere whitespace-normal',
+      render: (row) => row.code || '—',
     },
     {
       key: 'name',
@@ -85,7 +67,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
     return <p role="status">Bạn không có quyền nhập {label}.</p>
   return (
     <BulkImportPage<CatalogImportRow>
-      validationRevision={validationRevision}
       key={`${kind}:${me.data.tenantId}:${me.data.id}`}
       eyebrow="Danh mục"
       title={`Nhập ${label}`}
@@ -102,7 +83,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
       isImporting={operations.commit.isPending}
       isDownloadingTemplate={operations.template.isPending}
       onInspect={async (file, delimiter) => {
-        edits.current.clear()
         try {
           return {
             isSucceeded: true,
@@ -123,7 +103,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
               await operations.preview.mutateAsync({
                 file,
                 options,
-                codeOverrides: [...edits.current].map(([rowNumber, code]) => ({ rowNumber, code })),
               })
             ).rows,
           }
