@@ -238,10 +238,12 @@ export function ProductImportReview({
                     </details>
                   </TableCell>
                   <TableCell className="max-w-48 wrap-anywhere whitespace-normal">
-                    {row.unit?.name ?? row.unitValue}
+                    {row.unit ? `${row.unit.code} — ${row.unit.name}` : row.unitValue}
                   </TableCell>
                   <TableCell className="max-w-48 wrap-anywhere whitespace-normal">
-                    {row.category?.name ?? row.categoryValue}
+                    {row.category
+                      ? `${row.category.code} — ${row.category.name}`
+                      : row.categoryValue}
                   </TableCell>
                   <TableCell className="max-w-80 min-w-56 wrap-anywhere whitespace-normal">
                     {row.unitConversions.length ? (
@@ -256,9 +258,12 @@ export function ProductImportReview({
                               className="py-1 text-xs"
                             >
                               <p>
-                                1 {child.unit?.name ?? child.unitValue} ={' '}
-                                {child.conversionFactorText ?? child.conversionFactor ?? '?'}{' '}
-                                {row.unit?.name ?? row.unitValue}
+                                1{' '}
+                                {child.unit
+                                  ? `${child.unit.code} — ${child.unit.name}`
+                                  : child.unitValue}{' '}
+                                = {child.conversionFactorText ?? child.conversionFactor ?? '?'}{' '}
+                                {row.unit ? `${row.unit.code} — ${row.unit.name}` : row.unitValue}
                               </p>
                               <p className="text-muted-foreground">
                                 {child.sheetName}:{child.rowNumber}

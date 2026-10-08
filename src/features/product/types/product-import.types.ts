@@ -39,6 +39,8 @@ export interface ProductImportSheet {
   mainHeaderCandidates: ProductImportHeaderCandidate[]
   conversionHeaderCandidates: ProductImportHeaderCandidate[]
   sampleRows: { rowNumber: number; values: Record<string, string> }[]
+  columns?: ProductImportColumn[]
+  mappingRows?: { rowNumber: number; values: Record<string, string> }[]
 }
 export interface ProductImportInspect {
   schema: {

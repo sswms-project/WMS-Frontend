@@ -512,6 +512,24 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    disabled={
+                      busy ||
+                      validRowNumbers.length === 0 ||
+                      selectedRows.length === validRowNumbers.length
+                    }
+                    onClick={() => setSelectedRows([...validRowNumbers])}
+                  >
+                    Chọn toàn bộ {validRowNumbers.length} dòng hợp lệ của tệp
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={busy || selectedRows.length === 0}
+                    onClick={() => setSelectedRows([])}
+                  >
+                    Bỏ chọn toàn bộ tệp
+                  </Button>
                   <Input
                     aria-label="Tìm trong bản xem trước"
                     value={searchText}
@@ -542,7 +560,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      aria-label="Chọn tất cả dòng hợp lệ"
+                      aria-label="Chọn tất cả dòng hợp lệ trên trang này"
                       checked={
                         areAllVisibleValidRowsSelected
                           ? true

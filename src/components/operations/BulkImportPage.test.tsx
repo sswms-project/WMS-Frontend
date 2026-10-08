@@ -110,6 +110,50 @@ async function confirmImport(buttonName: RegExp) {
 }
 
 describe('BulkImportPage', () => {
+  it('shows samples below the manually selected late header', async () => {
+    renderPage({
+      inspection: {
+        ...inspection,
+        sheets: [
+          {
+            ...inspection.sheets[0]!,
+            sampleRows: [{ rowNumber: 1, values: { 0: 'Instructions' } }],
+            mappingRows: [{ rowNumber: 9, values: { 0: 'Customer after header' } }],
+            headerCandidates: [{ ...inspection.sheets[0]!.headerCandidates[0]!, rowNumber: 8 }],
+          },
+        ],
+      },
+    })
+    await userEvent.upload(
+      screen.getByLabelText(/Tệp khách hàng/),
+      new File(['x'], 'customers.xlsx')
+    )
+    expect((await screen.findAllByText('Customer after header'))[0]).toBeVisible()
+    expect(screen.getByLabelText('Dòng tiêu đề')).toHaveValue('8')
+    expect(screen.queryByText('Instructions')).not.toBeInTheDocument()
+  })
+  it('distinguishes selecting a visible page from selecting the whole file', async () => {
+    renderPage({
+      rows: Array.from({ length: 100 }, (_, index) => ({
+        rowNumber: index + 2,
+        name: `Customer ${index}`,
+        errors: [],
+      })),
+    })
+    await chooseFile()
+    const checkbox = await screen.findByRole('checkbox', {
+      name: 'Chọn tất cả dòng hợp lệ trên trang này',
+    })
+    await userEvent.click(checkbox)
+    expect(screen.getByText(/đã chọn 50\/100 dòng hợp lệ/)).toBeInTheDocument()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Chọn toàn bộ 100 dòng hợp lệ của tệp' })
+    )
+    expect(screen.getByText(/đã chọn 100\/100 dòng hợp lệ/)).toBeInTheDocument()
+    expect(checkbox).toHaveAttribute('aria-checked', 'true')
+    await userEvent.click(screen.getByRole('button', { name: 'Bỏ chọn toàn bộ tệp' }))
+    expect(screen.getByText(/đã chọn 0\/100 dòng hợp lệ/)).toBeInTheDocument()
+  })
   it('keeps accessible descriptions linked when a field key contains Vietnamese and spaces', async () => {
     const field = 'Tên khách hàng'
     renderPage({
@@ -162,11 +206,12 @@ describe('BulkImportPage', () => {
     renderPage()
     await chooseFile()
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Chọn dòng 4' }))
-    expect(screen.getByRole('checkbox', { name: 'Chọn tất cả dòng hợp lệ' })).toHaveAttribute(
-      'aria-checked',
-      'mixed'
+    expect(
+      screen.getByRole('checkbox', { name: 'Chọn tất cả dòng hợp lệ trên trang này' })
+    ).toHaveAttribute('aria-checked', 'mixed')
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'Chọn tất cả dòng hợp lệ trên trang này' })
     )
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Chọn tất cả dòng hợp lệ' }))
     expect(screen.getByRole('button', { name: /Nhập 2 khách hàng/ })).toBeEnabled()
   })
 

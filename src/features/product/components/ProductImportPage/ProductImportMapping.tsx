@@ -211,11 +211,17 @@ function MappingSection({
   const fields = kind === 'main' ? inspect.schema.mainFields : inspect.schema.conversionFields
   const candidates = kind === 'main' ? sheet.mainHeaderCandidates : sheet.conversionHeaderCandidates
   const candidate = candidates.find((item) => item.rowNumber === options.headerRowNumber)
+  const samples = sheet.mappingRows ?? sheet.sampleRows
+  const header = samples.find((row) => row.rowNumber === options.headerRowNumber)
   const columns =
-    candidate?.columns ??
-    [...new Set(sheet.sampleRows.flatMap((row) => Object.keys(row.values).map(Number)))]
+    (sheet.columns?.length ? sheet.columns : candidate?.columns) ??
+    [...new Set(samples.flatMap((row) => Object.keys(row.values).map(Number)))]
       .sort((left, right) => left - right)
       .map((columnIndex) => ({ columnIndex, letter: String(columnIndex + 1), header: '' }))
+  const labeledColumns = columns.map((column) => ({
+    ...column,
+    header: header?.values[column.columnIndex] ?? column.header,
+  }))
   return (
     <section
       aria-label={kind === 'main' ? 'Cột hàng hóa' : 'Cột quy đổi'}
@@ -250,9 +256,9 @@ function MappingSection({
       <ProductImportColumnTable
         kind={kind}
         fields={fields}
-        columns={columns}
+        columns={labeledColumns}
         options={options}
-        samples={sheet.sampleRows}
+        samples={samples}
         error={error}
         onColumnChange={onColumnChange}
       />
@@ -264,7 +270,7 @@ function MappingSection({
           <TableHeader>
             <TableRow>
               <TableHead>Dòng nguồn</TableHead>
-              {columns.map((column) => (
+              {labeledColumns.map((column) => (
                 <TableHead key={column.columnIndex}>
                   {column.letter}: {column.header}
                 </TableHead>
@@ -272,19 +278,22 @@ function MappingSection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sheet.sampleRows.slice(0, 5).map((row) => (
-              <TableRow key={row.rowNumber}>
-                <TableCell>{row.rowNumber}</TableCell>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.columnIndex}
-                    className="max-w-64 break-words whitespace-normal"
-                  >
-                    {row.values[column.columnIndex] ?? '—'}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {samples
+              .filter((row) => row.rowNumber > options.headerRowNumber)
+              .slice(0, 5)
+              .map((row) => (
+                <TableRow key={row.rowNumber}>
+                  <TableCell>{row.rowNumber}</TableCell>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.columnIndex}
+                      className="max-w-64 break-words whitespace-normal"
+                    >
+                      {row.values[column.columnIndex] ?? '—'}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </details>

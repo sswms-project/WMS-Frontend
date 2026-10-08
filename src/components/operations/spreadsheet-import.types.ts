@@ -37,6 +37,7 @@ export interface SpreadsheetImportSheet {
   readonly sheetName: string
   readonly headerCandidates: readonly SpreadsheetImportHeader[]
   readonly sampleRows: readonly SpreadsheetImportSample[]
+  readonly mappingRows?: readonly SpreadsheetImportSample[]
 }
 export interface SpreadsheetImportInspection {
   readonly schemaVersion: number

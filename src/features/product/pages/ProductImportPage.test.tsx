@@ -420,6 +420,42 @@ describe('product import workflow', () => {
     expect(screen.getByLabelText('Dòng tiêu đề — Hàng hóa')).toHaveValue(1)
     expect(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' })).toBeDisabled()
   })
+  it('maps custom late headers and populated columns with blank headings', async () => {
+    const data = structuredClone(inspectData)
+    data.isCsv = true
+    const sheet = data.sheets[0]!
+    sheet.mainHeaderCandidates = []
+    sheet.sampleRows = [{ rowNumber: 1, values: { '0': 'Instructions' } }]
+    sheet.columns = ['A', 'B', 'C', 'D', 'E'].map((letter, columnIndex) => ({
+      columnIndex,
+      letter,
+      header: '',
+    }))
+    sheet.mappingRows = [
+      {
+        rowNumber: 8,
+        values: { '0': 'Custom SKU', '1': 'Custom Name', '2': 'Custom Unit', '3': 'Custom Group' },
+      },
+      {
+        rowNumber: 9,
+        values: { '0': '001', '1': 'Beer', '2': 'LON', '3': 'BEER', '4': 'Description' },
+      },
+    ]
+    vi.mocked(productImportService.inspect).mockResolvedValueOnce(data)
+    renderPage()
+    await userEvent.upload(
+      screen.getByLabelText('Tệp vật tư hàng hóa'),
+      new File(['x'], 'hang.csv')
+    )
+    fireEvent.change(await screen.findByLabelText('Dòng tiêu đề — Hàng hóa'), {
+      target: { value: '8' },
+    })
+    const select = screen.getByLabelText('productName *')
+    expect(within(select).getByRole('option', { name: 'B — Custom Name' })).toBeInTheDocument()
+    expect(within(select).getByRole('option', { name: 'E — Không có tên' })).toBeInTheDocument()
+    await userEvent.selectOptions(select, '1')
+    expect(screen.getAllByText('Beer')[0]).toBeVisible()
+  })
   it('links invalid checkbox to its reason and exposes conversion details', async () => {
     renderPage()
     await openReview()
@@ -427,7 +463,9 @@ describe('product import workflow', () => {
       /Không thể chọn dòng có lỗi/
     )
     await userEvent.click(screen.getAllByText('1 đơn vị quy đổi')[0]!)
-    expect(screen.getAllByText('1 Thùng = 24 Lon')[0]).toBeVisible()
+    expect(screen.getAllByText('1 THUNG — Thùng = 24 LON — Lon')[0]).toBeVisible()
+    expect(screen.getAllByText('LON — Lon')[0]).toBeVisible()
+    expect(screen.getAllByText('DU — Đồ uống')[0]).toBeVisible()
   })
   it('resets result pagination and retains the shared table footer', async () => {
     vi.mocked(productImportService.preview).mockResolvedValueOnce({

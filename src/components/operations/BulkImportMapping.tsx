@@ -93,7 +93,7 @@ export function BulkImportMapping({
             fields={inspection.fields}
             columns={header.columns}
             options={options}
-            samples={sheet.sampleRows}
+            samples={sheet.mappingRows ?? sheet.sampleRows}
             error={mappingError}
             onColumnChange={(field, column) =>
               onChange({
