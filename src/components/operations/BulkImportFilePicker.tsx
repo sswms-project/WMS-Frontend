@@ -79,7 +79,7 @@ export function BulkImportFilePicker({
           ) : (
             <Upload aria-hidden="true" />
           )}
-          {pending ? 'Đang kiểm tra tệp…' : 'Tải tệp lên'}
+          {pending ? 'Đang tải và đọc tệp…' : 'Tải tệp lên'}
         </Button>
         <Input
           id={inputId}
@@ -93,6 +93,7 @@ export function BulkImportFilePicker({
           accept={BULK_IMPORT_FILE_EXTENSIONS.join(',')}
           disabled={pending}
           onChange={(event) => {
+            if (pending) return
             const file = event.target.files?.[0]
             event.target.value = ''
             setDropError(null)

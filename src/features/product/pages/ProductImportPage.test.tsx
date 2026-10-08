@@ -366,7 +366,7 @@ describe('product import workflow', () => {
     await waitFor(() => expect(heading).toHaveFocus())
     expect(
       screen
-        .getByRole('navigation', { name: 'Tiến trình nhập hàng hóa' })
+        .getByRole('list', { name: 'Các bước nhập dữ liệu' })
         .querySelector('[aria-current=step]')
     ).toHaveTextContent('Kiểm tra')
     await userEvent.click(screen.getByRole('button', { name: 'Nhập 1 sản phẩm' }))
@@ -532,7 +532,7 @@ describe('product import workflow', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Chọn dòng hợp lệ trên trang này' }))
     await userEvent.type(screen.getByLabelText('Tìm trong bản xem trước'), 'BIA-0')
     expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).not.toBeChecked()
-    expect(screen.getByText(/Đã chọn 19 sản phẩm hợp lệ/)).toBeInTheDocument()
+    expect(screen.getByText(/đã chọn 19\/22 dòng hợp lệ/)).toBeInTheDocument()
   })
   it('changing mapping invalidates old preview and selected rows', async () => {
     renderPage()
@@ -637,7 +637,7 @@ describe('product import workflow', () => {
     renderPage()
     await openReview()
     await save()
-    const confirm = screen.getByRole('button', { name: 'Đang nhập…' })
+    const confirm = screen.getByRole('button', { name: 'Đang nhập dữ liệu…' })
     expect(confirm).toBeDisabled()
     fireEvent.click(confirm)
     expect(screen.getByRole('button', { name: 'Chọn tệp khác', hidden: true })).toBeDisabled()
@@ -658,6 +658,61 @@ describe('product import workflow', () => {
     expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeInTheDocument()
     expect(storage).not.toHaveBeenCalled()
   })
+  it('retains preview during a failed recheck and blocks importing stale rows', async () => {
+    vi.mocked(productService.importProducts).mockRejectedValueOnce({
+      statusCode: 400,
+      message: 'Kiểm tra lại dữ liệu.',
+    })
+    renderPage()
+    await openReview()
+    await save()
+    let reject!: (reason: unknown) => void
+    vi.mocked(productImportService.preview).mockReturnValueOnce(
+      new Promise((_, fail) => {
+        reject = fail
+      })
+    )
+    await userEvent.click(await screen.findByRole('button', { name: 'Kiểm tra lại' }))
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeDisabled()
+    expect(screen.getByText('Bia')).toBeInTheDocument()
+    await act(async () => reject({ statusCode: 400, message: 'Không thể kiểm tra lại.' }))
+    expect(await screen.findByText('Không thể kiểm tra lại.')).toBeInTheDocument()
+    expect(screen.getByText('Bia')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Nhập 0 sản phẩm' })).toBeDisabled()
+    expect(productService.importProducts).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves selected rows when supplementary columns are toggled', async () => {
+    renderPage()
+    await openReview()
+    expect(screen.queryByRole('columnheader', { name: 'Mô tả' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Mở rộng thông tin bổ sung' }))
+    expect(screen.getByRole('columnheader', { name: 'Mô tả' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeChecked()
+    await userEvent.click(screen.getByRole('button', { name: 'Thu gọn thông tin bổ sung' }))
+    expect(screen.queryByRole('columnheader', { name: 'Mô tả' })).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeChecked()
+  })
+
+  it('locks both template buttons until the download fails, then allows retry', async () => {
+    let reject!: (reason: unknown) => void
+    vi.mocked(productImportService.template).mockReturnValueOnce(
+      new Promise((_, fail) => {
+        reject = fail
+      })
+    )
+    renderPage()
+    const basic = screen.getByRole('button', { name: 'Mẫu cơ bản' })
+    fireEvent.click(basic)
+    fireEvent.click(basic)
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Mẫu có quy đổi' })).toBeDisabled()
+    )
+    expect(productImportService.template).toHaveBeenCalledTimes(1)
+    await act(async () => reject({ statusCode: 500, message: 'Không thể tải mẫu.' }))
+    await waitFor(() => expect(basic).toBeEnabled())
+  })
+
   it('handles template failure without losing the file selection screen', async () => {
     vi.mocked(productImportService.template).mockRejectedValueOnce({
       statusCode: 500,

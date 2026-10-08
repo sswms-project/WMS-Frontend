@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, Download, LoaderCircle } from 'lucide-react'
+import { Download, LoaderCircle } from 'lucide-react'
 import type { Route } from 'next'
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -54,6 +53,13 @@ import {
 } from './bulk-import'
 import { BulkImportResult, type BulkImportResultItem } from './BulkImportResult'
 import { BulkImportHeader } from './BulkImportHeader'
+import {
+  BulkImportWorkspace,
+  BulkImportSummary,
+  BulkImportReviewHeader,
+  BulkImportSupplementaryToggle,
+  BulkImportDelimiter,
+} from './BulkImportWorkspace'
 import { BulkImportFilePicker } from './BulkImportFilePicker'
 
 export interface BulkImportRow {
@@ -105,7 +111,7 @@ interface BulkImportPageProps<TRow extends BulkImportRow> {
   readonly isPreviewing: boolean
   readonly isImporting: boolean
   readonly isDownloadingTemplate: boolean
-  readonly onDownloadTemplate: () => void
+  readonly onDownloadTemplate: () => Promise<void> | void
   readonly onInspect: (file: File, csvDelimiter: string) => Promise<BulkImportInspectOutcome>
   readonly onPreview: (
     file: File,
@@ -144,7 +150,8 @@ export function BulkImportPage<TRow extends BulkImportRow>({
   const [uncertainCommit, setUncertainCommit] = useState(false)
   const [acceptedIgnored, setAcceptedIgnored] = useState(false)
   const inFlight = useRef(false)
-  const busy = working || isPreviewing || isImporting
+  const busy = working || isPreviewing || isImporting || isDownloadingTemplate
+  const templateLock = useRef(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
@@ -158,6 +165,15 @@ export function BulkImportPage<TRow extends BulkImportRow>({
   const [pageSize, setPageSize] = useState(BULK_IMPORT_ROWS_PER_PAGE)
   const [resultItems, setResultItems] = useState<readonly BulkImportResultItem[] | null>(null)
   const step = resultItems ? 3 : rows ? 2 : inspection ? 1 : 0
+  const activity = isImporting
+    ? 'importing'
+    : isDownloadingTemplate
+      ? 'template'
+      : working || isPreviewing
+        ? inspection
+          ? 'checking'
+          : 'reading'
+        : 'idle'
   const stepHeading = useRef<HTMLHeadingElement>(null)
   const previousStep = useRef(step)
   const ignored = inspection && options ? spreadsheetIgnoredData(inspection, options) : null
@@ -222,8 +238,8 @@ export function BulkImportPage<TRow extends BulkImportRow>({
     setResultItems(null)
   }
 
-  async function handleFileChange(file: File | undefined) {
-    if (!file || busy || inFlight.current) return
+  async function handleFileChange(file: File | undefined, csvDelimiter = delimiter) {
+    if (!file || busy || inFlight.current || templateLock.current) return
     setFileError(null)
     if (!hasBulkImportExtension(file.name)) {
       setFileError(`Chỉ hỗ trợ tệp ${BULK_IMPORT_FILE_EXTENSIONS.join(' hoặc ')}.`)
@@ -240,7 +256,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
     inFlight.current = true
     setWorking(true)
     try {
-      const outcome = await onInspect(file, delimiter)
+      const outcome = await onInspect(file, csvDelimiter)
       if (!outcome.isSucceeded) {
         setFileError(outcome.message)
         return
@@ -260,6 +276,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
       !options ||
       busy ||
       inFlight.current ||
+      templateLock.current ||
       uncertainCommit ||
       spreadsheetMappingError(inspection, options)
     )
@@ -295,6 +312,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
       selectedRows.length === 0 ||
       busy ||
       inFlight.current ||
+      templateLock.current ||
       needsRecheck ||
       uncertainCommit ||
       (hasIgnored && !acceptedIgnored)
@@ -355,46 +373,40 @@ export function BulkImportPage<TRow extends BulkImportRow>({
   }
 
   return (
-    <div
-      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-y-auto"
-      aria-busy={busy}
-    >
-      <BulkImportHeader
-        eyebrow={eyebrow}
-        title={title}
-        description={description}
-        backHref={backHref}
-        backLabel={backLabel}
-      >
-        <Button variant="outline" disabled={isDownloadingTemplate} onClick={onDownloadTemplate}>
-          {isDownloadingTemplate ? (
-            <LoaderCircle className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Download aria-hidden="true" />
-          )}
-          Mẫu XLSX
-        </Button>
-      </BulkImportHeader>
-
-      <ol
-        aria-label="Các bước nhập dữ liệu"
-        className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-4"
-      >
-        {['Chọn tệp', 'Ghép cột', 'Kiểm tra', 'Kết quả'].map((label, index) => (
-          <li
-            key={label}
-            aria-current={step === index ? 'step' : undefined}
-            className={cn(
-              'border px-3 py-2 text-sm',
-              step === index
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card text-muted-foreground'
-            )}
+    <BulkImportWorkspace
+      step={step}
+      activity={activity}
+      header={
+        <BulkImportHeader
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          backHref={backHref}
+          backLabel={backLabel}
+        >
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              if (busy || inFlight.current || templateLock.current) return
+              templateLock.current = true
+              try {
+                await onDownloadTemplate()
+              } finally {
+                templateLock.current = false
+              }
+            }}
           >
-            {index + 1}. {label}
-          </li>
-        ))}
-      </ol>
+            {isDownloadingTemplate ? (
+              <LoaderCircle className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Download aria-hidden="true" />
+            )}
+            {isDownloadingTemplate ? 'Đang tải mẫu…' : 'Mẫu XLSX'}
+          </Button>
+        </BulkImportHeader>
+      }
+    >
       <h2 ref={stepHeading} tabIndex={-1} className="sr-only" aria-live="polite">
         Bước {step + 1}: {['Chọn tệp', 'Ghép cột', 'Kiểm tra', 'Kết quả'][step]}
       </h2>
@@ -411,35 +423,40 @@ export function BulkImportPage<TRow extends BulkImportRow>({
           <ImportResultTable items={resultItems} entityLabel={entityLabel} />
         </BulkImportResult>
       ) : inspection && options && !rows ? (
-        <BulkImportMapping
-          inspection={inspection}
-          options={options}
-          busy={busy}
-          error={fileError}
-          onChange={(options) => {
-            setOptions(options)
-            setAcceptedIgnored(false)
-            setFileError(null)
-          }}
-          onBack={resetSession}
-          onPreview={() => void handlePreview()}
-        />
-      ) : !rows ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
-          <Field className="sm:max-w-80">
-            <FieldLabel htmlFor="bulk-import-delimiter">Dấu phân cách CSV</FieldLabel>
-            <NativeSelect
-              id="bulk-import-delimiter"
+        <>
+          {inspection.isCsv ? (
+            <BulkImportDelimiter
+              id="bulk-import-mapping-delimiter"
               value={delimiter}
               disabled={busy}
-              onChange={(event) => setDelimiter(event.target.value)}
-            >
-              <NativeSelectOption value="auto">Tự nhận diện</NativeSelectOption>
-              <NativeSelectOption value=",">Dấu phẩy (,)</NativeSelectOption>
-              <NativeSelectOption value=";">Dấu chấm phẩy (;)</NativeSelectOption>
-              <NativeSelectOption value={'\t'}>Tab</NativeSelectOption>
-            </NativeSelect>
-          </Field>
+              onChange={(value) => {
+                setDelimiter(value)
+                void handleFileChange(file ?? undefined, value)
+              }}
+            />
+          ) : null}
+          <BulkImportMapping
+            inspection={inspection}
+            options={options}
+            busy={busy}
+            error={fileError}
+            onChange={(options) => {
+              setOptions(options)
+              setAcceptedIgnored(false)
+              setFileError(null)
+            }}
+            onBack={resetSession}
+            onPreview={() => void handlePreview()}
+          />
+        </>
+      ) : !rows ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
+          <BulkImportDelimiter
+            id="bulk-import-delimiter"
+            value={delimiter}
+            disabled={busy}
+            onChange={setDelimiter}
+          />
           <BulkImportFilePicker
             entityLabel={entityLabel}
             maxRows={maxRows}
@@ -455,11 +472,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
         </div>
       ) : (
         <>
-          <section aria-label="Tổng quan bản xem trước" className="grid shrink-0 grid-cols-3 gap-2">
-            <SummaryCard label="Tổng số dòng" value={rows.length} />
-            <SummaryCard label="Hợp lệ" value={validRowNumbers.length} tone="success" />
-            <SummaryCard label="Không hợp lệ" value={invalidCount} tone="danger" />
-          </section>
+          <BulkImportSummary total={rows.length} valid={validRowNumbers.length} />
 
           {importError ? (
             <Alert variant="destructive">
@@ -514,86 +527,66 @@ export function BulkImportPage<TRow extends BulkImportRow>({
           ) : null}
 
           <OperationalListPanel
-            className="min-h-128 shrink-0 lg:min-h-96"
+            className="max-sm:min-h-128 max-sm:shrink-0"
             aria-label="Bản xem trước nhập dữ liệu"
           >
-            <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
-              <div className="min-w-0 flex-1 basis-48">
-                <h2 className="text-base font-semibold">Bản xem trước</h2>
-                <p className="text-muted-foreground mt-1 text-xs break-words" aria-live="polite">
-                  {fileName} · đã chọn {selectedRows.length}/{validRowNumbers.length} dòng hợp lệ
-                </p>
-              </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                {supplementaryColumns.length > 0 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    aria-expanded={supplementaryExpanded}
-                    aria-controls={previewTableId}
-                    onClick={() => setSupplementaryExpanded((expanded) => !expanded)}
-                  >
-                    {supplementaryExpanded ? (
-                      <ChevronLeft aria-hidden="true" data-icon="inline-start" />
-                    ) : (
-                      <ChevronRight aria-hidden="true" data-icon="inline-start" />
-                    )}
-                    {supplementaryExpanded ? 'Thu gọn' : 'Mở rộng'} thông tin bổ sung
-                    {supplementaryErrorCount > 0 ? (
-                      <>
-                        {' '}
-                        <span className="text-destructive font-semibold">
-                          · {supplementaryErrorCount} lỗi
-                        </span>
-                      </>
-                    ) : null}
-                  </Button>
-                ) : null}
-                <Button
-                  variant="outline"
-                  disabled={
-                    busy ||
-                    validRowNumbers.length === 0 ||
-                    selectedRows.length === validRowNumbers.length
-                  }
-                  onClick={() => setSelectedRows([...validRowNumbers])}
-                  aria-label={`Chọn toàn bộ ${validRowNumbers.length} dòng hợp lệ của tệp`}
-                >
-                  Chọn cả tệp ({validRowNumbers.length} hợp lệ)
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={busy || selectedRows.length === 0}
-                  onClick={() => setSelectedRows([])}
-                  aria-label="Bỏ chọn toàn bộ tệp"
-                >
-                  Bỏ chọn cả tệp
-                </Button>
-                <Input
-                  className="min-w-0 flex-1 basis-40 sm:w-48 sm:max-w-64"
-                  aria-label="Tìm trong bản xem trước"
-                  value={searchText}
-                  placeholder="Tìm theo mã, tên, liên hệ"
-                  onChange={(event) => {
-                    setSearchText(event.target.value)
-                    setPage(1)
-                  }}
+            <BulkImportReviewHeader
+              fileName={fileName}
+              selected={selectedRows.length}
+              valid={validRowNumbers.length}
+            >
+              {supplementaryColumns.length > 0 ? (
+                <BulkImportSupplementaryToggle
+                  expanded={supplementaryExpanded}
+                  controls={previewTableId}
+                  errorCount={supplementaryErrorCount}
+                  onToggle={() => setSupplementaryExpanded((expanded) => !expanded)}
                 />
-                <NativeSelect
-                  className="min-w-36 shrink-0"
-                  aria-label="Lọc trạng thái"
-                  value={statusFilter}
-                  onChange={(event) => {
-                    setStatusFilter(event.target.value as StatusFilter)
-                    setPage(1)
-                  }}
-                >
-                  <NativeSelectOption value="All">Tất cả</NativeSelectOption>
-                  <NativeSelectOption value="Valid">Hợp lệ</NativeSelectOption>
-                  <NativeSelectOption value="Invalid">Không hợp lệ</NativeSelectOption>
-                </NativeSelect>
-              </div>
-            </header>
+              ) : null}
+              <Button
+                variant="outline"
+                disabled={
+                  busy ||
+                  validRowNumbers.length === 0 ||
+                  selectedRows.length === validRowNumbers.length
+                }
+                onClick={() => setSelectedRows([...validRowNumbers])}
+                aria-label={`Chọn toàn bộ ${validRowNumbers.length} dòng hợp lệ của tệp`}
+              >
+                Chọn cả tệp ({validRowNumbers.length} hợp lệ)
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={busy || selectedRows.length === 0}
+                onClick={() => setSelectedRows([])}
+                aria-label="Bỏ chọn toàn bộ tệp"
+              >
+                Bỏ chọn cả tệp
+              </Button>
+              <Input
+                className="min-w-0 flex-1 basis-40 sm:w-48 sm:max-w-64"
+                aria-label="Tìm trong bản xem trước"
+                value={searchText}
+                placeholder="Tìm theo mã, tên, liên hệ"
+                onChange={(event) => {
+                  setSearchText(event.target.value)
+                  setPage(1)
+                }}
+              />
+              <NativeSelect
+                className="min-w-36 shrink-0"
+                aria-label="Lọc trạng thái"
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value as StatusFilter)
+                  setPage(1)
+                }}
+              >
+                <NativeSelectOption value="All">Tất cả</NativeSelectOption>
+                <NativeSelectOption value="Valid">Hợp lệ</NativeSelectOption>
+                <NativeSelectOption value="Invalid">Không hợp lệ</NativeSelectOption>
+              </NativeSelect>
+            </BulkImportReviewHeader>
 
             <Table id={previewTableId}>
               <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
@@ -657,6 +650,8 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                               key={column.key}
                               className={cn(
                                 column.cellClassName,
+                                column.isSupplementary &&
+                                  'animate-in fade-in-0 animation-duration-150 motion-reduce:animate-none',
                                 errors.length > 0 && 'bg-destructive/5'
                               )}
                             >
@@ -773,7 +768,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
         }}
         onDiscard={navigation.confirmDiscard}
       />
-    </div>
+    </BulkImportWorkspace>
   )
 }
 
@@ -825,32 +820,5 @@ function ImportResultTable({
         }}
       />
     </OperationalListPanel>
-  )
-}
-
-function SummaryCard({
-  label,
-  value,
-  tone,
-}: {
-  readonly label: string
-  readonly value: number
-  readonly tone?: 'success' | 'danger'
-}) {
-  return (
-    <Card size="sm" className="py-0">
-      <CardContent className="flex min-h-14 items-center justify-between gap-2 p-3">
-        <p className="text-muted-foreground text-xs">{label}</p>
-        <p
-          className={cn(
-            'text-xl font-semibold tabular-nums',
-            tone === 'danger' && 'text-destructive',
-            tone === 'success' && 'text-primary'
-          )}
-        >
-          {value}
-        </p>
-      </CardContent>
-    </Card>
   )
 }

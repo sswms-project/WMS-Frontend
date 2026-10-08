@@ -37,7 +37,7 @@ describe('shared file picker interactions', () => {
       dataTransfer: { files: [new File(['x'], 'a.csv')], types: ['Files'] },
     })
     expect(onFileChange).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Đang kiểm tra tệp…' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Đang tải và đọc tệp…' })).toBeDisabled()
   })
   it('retains the native picker and can choose the same file twice', async () => {
     const onFileChange = vi.fn()

@@ -1,3 +1,9 @@
+import { useId, useState } from 'react'
+import {
+  BulkImportSummary,
+  BulkImportReviewHeader,
+  BulkImportSupplementaryToggle,
+} from '@/components/operations/BulkImportWorkspace'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -31,6 +37,7 @@ export interface ProductImportReviewFilters {
 
 export function ProductImportReview({
   preview,
+  fileName = null,
   selected,
   pending,
   onSelectionChange,
@@ -38,6 +45,7 @@ export function ProductImportReview({
   onViewChange,
   onExport,
 }: {
+  readonly fileName?: string | null
   readonly preview: ProductImportPreview
   readonly selected: readonly number[]
   readonly pending: boolean
@@ -46,6 +54,8 @@ export function ProductImportReview({
   readonly onViewChange: (view: ProductImportReviewFilters) => void
   readonly onExport: () => void
 }) {
+  const [supplementaryExpanded, setSupplementaryExpanded] = useState(false)
+  const tableId = useId()
   const { search, status, page, pageSize } = view
   const valid = preview.rows.filter(isValidProductImportRow).map((row) => row.rowNumber)
   const normalized = search.trim().toLocaleLowerCase('vi')
@@ -86,12 +96,21 @@ export function ProductImportReview({
           </AlertDescription>
         </Alert>
       ) : null}
-      <OperationalListPanel aria-label="Bản xem trước vật tư hàng hóa">
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b p-3">
-          <p className="basis-full text-sm tabular-nums xl:basis-auto" aria-live="polite">
-            Đã chọn {selectedProductImportRows(preview, selected).length} sản phẩm hợp lệ ·{' '}
-            {valid.length} hợp lệ · {preview.rows.length - valid.length} lỗi
-          </p>
+      <BulkImportSummary total={preview.rows.length} valid={valid.length} />
+      <OperationalListPanel
+        aria-label="Bản xem trước vật tư hàng hóa"
+        className="max-sm:min-h-128 max-sm:shrink-0"
+      >
+        <BulkImportReviewHeader
+          fileName={fileName}
+          selected={selectedProductImportRows(preview, selected).length}
+          valid={valid.length}
+        >
+          <BulkImportSupplementaryToggle
+            expanded={supplementaryExpanded}
+            controls={tableId}
+            onToggle={() => setSupplementaryExpanded((expanded) => !expanded)}
+          />
           <Input
             aria-label="Tìm trong bản xem trước"
             placeholder="Tìm mã, tên hàng…"
@@ -126,12 +145,19 @@ export function ProductImportReview({
             <span className="sm:hidden">Chọn tất cả hợp lệ</span>
             <span className="hidden sm:inline">Chọn toàn bộ sản phẩm hợp lệ của tệp</span>
           </Button>
+          <Button
+            variant="ghost"
+            disabled={pending || !selected.length}
+            onClick={() => onSelectionChange([])}
+          >
+            Bỏ chọn cả tệp
+          </Button>
           <Button variant="outline" size="sm" aria-label="Xuất báo cáo toàn tệp" onClick={onExport}>
             <span className="sm:hidden">Xuất báo cáo</span>
             <span className="hidden sm:inline">Xuất báo cáo toàn tệp</span>
           </Button>
-        </div>
-        <Table>
+        </BulkImportReviewHeader>
+        <Table id={tableId}>
           <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
             <TableRow>
               <TableHead className="w-12">
@@ -152,16 +178,24 @@ export function ProductImportReview({
               <TableHead>Tên hàng</TableHead>
               <TableHead>ĐVT chính</TableHead>
               <TableHead>Nhóm hàng</TableHead>
-              <TableHead>Mô tả</TableHead>
+              {supplementaryExpanded ? (
+                <TableHead className="animate-in fade-in-0 animation-duration-150 motion-reduce:animate-none">
+                  Mô tả
+                </TableHead>
+              ) : null}
               <TableHead>Theo dõi lô</TableHead>
-              <TableHead>Số ngày sử dụng</TableHead>
+              {supplementaryExpanded ? (
+                <TableHead className="animate-in fade-in-0 animation-duration-150 motion-reduce:animate-none">
+                  Số ngày sử dụng
+                </TableHead>
+              ) : null}
               <TableHead>Quy đổi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!visible.length ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center">
+                <TableCell colSpan={supplementaryExpanded ? 11 : 9} className="h-24 text-center">
                   Không có hàng phù hợp.
                 </TableCell>
               </TableRow>
@@ -235,11 +269,17 @@ export function ProductImportReview({
                       ? `${row.category.code} — ${row.category.name}`
                       : row.categoryValue}
                   </TableCell>
-                  <TableCell className="max-w-64 min-w-40 wrap-anywhere whitespace-normal">
-                    {row.description || '—'}
-                  </TableCell>
+                  {supplementaryExpanded ? (
+                    <TableCell className="animate-in fade-in-0 animation-duration-150 max-w-64 min-w-40 wrap-anywhere whitespace-normal motion-reduce:animate-none">
+                      {row.description || '—'}
+                    </TableCell>
+                  ) : null}
                   <TableCell>{row.isLotTracked ? 'Có' : 'Không'}</TableCell>
-                  <TableCell>{row.shelfLifeDays ?? '—'}</TableCell>
+                  {supplementaryExpanded ? (
+                    <TableCell className="animate-in fade-in-0 animation-duration-150 motion-reduce:animate-none">
+                      {row.shelfLifeDays ?? '—'}
+                    </TableCell>
+                  ) : null}
                   <TableCell className="max-w-80 min-w-56 wrap-anywhere whitespace-normal">
                     {row.unitConversions.length ? (
                       <details>

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import { Check, Download, LoaderCircle } from 'lucide-react'
+import { Download, LoaderCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { UseFormReturn } from 'react-hook-form'
 import { BulkImportHeader } from '@/components/operations/BulkImportHeader'
@@ -18,8 +18,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { ProductImportMapping } from './ProductImportMapping'
@@ -38,6 +36,12 @@ import type {
 import { productImportResult } from '../../utils/product-import'
 import { ProductImportResultTable } from './ProductImportResultTable'
 import styles from './product-import.module.css'
+import {
+  BulkImportWorkspace,
+  BulkImportDelimiter,
+  BulkImportPendingBody,
+  type BulkImportActivity,
+} from '@/components/operations/BulkImportWorkspace'
 
 const importSteps = [
   { key: 'file', label: 'Chọn tệp' },
@@ -52,6 +56,7 @@ interface ProductImportViewProps {
   readonly step: 'file' | 'mapping' | 'review' | 'result'
   readonly file: File | null
   readonly busy: boolean
+  readonly activity: BulkImportActivity
   readonly commit: { isPending: boolean }
   readonly inspect: { data?: ProductImportInspect; isError: boolean; error: unknown }
   readonly preview: { isError: boolean; error: unknown }
@@ -87,6 +92,7 @@ export function ProductImportView({
   file,
   busy,
   commit,
+  activity,
   inspect,
   preview,
   data,
@@ -125,82 +131,57 @@ export function ProductImportView({
     previousStep.current = step
   }, [step])
   return (
-    <div
-      className={cn('flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3', styles.workspace)}
-    >
-      <BulkImportHeader
-        eyebrow="Danh mục"
-        title="Nhập vật tư hàng hóa"
-        backHref={APP_ROUTES.products}
-        backLabel="Về danh sách vật tư hàng hóa"
-      >
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={busy} onClick={() => void downloadTemplate('basic')}>
-            <Download data-icon="inline-start" aria-hidden="true" />
-            Mẫu cơ bản
-          </Button>
-          <Button variant="outline" disabled={busy} onClick={() => void downloadTemplate('full')}>
-            <Download data-icon="inline-start" aria-hidden="true" />
-            Mẫu có quy đổi
-          </Button>
-        </div>
-      </BulkImportHeader>
-      <nav aria-label="Tiến trình nhập hàng hóa" className="shrink-0">
-        <ol className="bg-card grid grid-cols-4 border">
-          {importSteps.map((item, index) => (
-            <li
-              key={item.key}
-              aria-current={step === item.key ? 'step' : undefined}
-              className={cn(
-                'flex min-w-0 items-center justify-center gap-2 border-b-2 border-b-transparent p-2 text-center text-xs sm:text-sm',
-                step === item.key
-                  ? 'border-b-primary bg-muted text-primary font-semibold'
-                  : 'text-muted-foreground'
-              )}
+    <BulkImportWorkspace
+      step={stepIndex}
+      activity={activity}
+      className={styles.workspace}
+      header={
+        <BulkImportHeader
+          eyebrow="Danh mục"
+          title="Nhập vật tư hàng hóa"
+          backHref={APP_ROUTES.products}
+          backLabel="Về danh sách vật tư hàng hóa"
+        >
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void downloadTemplate('basic')}
             >
-              {index < stepIndex ? (
-                <Check className="size-4 shrink-0" aria-hidden="true" />
-              ) : (
-                <span className="tabular-nums">{index + 1}</span>
-              )}
-              <span>{item.label}</span>
-            </li>
-          ))}
-        </ol>
-      </nav>
+              <Download data-icon="inline-start" aria-hidden="true" />
+              {activity === 'template' ? (
+                <LoaderCircle
+                  className="animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
+              ) : null}
+              Mẫu cơ bản
+            </Button>
+            <Button variant="outline" disabled={busy} onClick={() => void downloadTemplate('full')}>
+              <Download data-icon="inline-start" aria-hidden="true" />
+              Mẫu có quy đổi
+            </Button>
+          </div>
+        </BulkImportHeader>
+      }
+    >
       <h2 ref={stepHeading} tabIndex={-1} className="sr-only">
         Bước {stepIndex + 1}: {importSteps[stepIndex]!.label}
       </h2>
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 text-xs">
-        <p
-          role="status"
-          aria-live="polite"
-          className="text-muted-foreground flex items-center gap-2"
-        >
-          {busy ? (
-            <LoaderCircle
-              className="size-4 animate-spin motion-reduce:animate-none"
-              aria-hidden="true"
-            />
-          ) : null}
-          {busy
-            ? commit.isPending
-              ? 'Đang nhập dữ liệu…'
-              : 'Đang kiểm tra…'
-            : `Bước ${stepIndex + 1}: ${importSteps[stepIndex]!.label}`}
-        </p>
-        {file ? (
-          <p className="max-w-full min-w-0 truncate" title={file.name}>
-            {file.name} ·{' '}
-            {new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(file.size / 1024)}{' '}
-            KB
-          </p>
-        ) : (
-          <p className="text-muted-foreground">CSV không chứa đơn vị quy đổi.</p>
-        )}
-      </div>
       {step === 'file' ? (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
+          <BulkImportDelimiter
+            id="import-csv-change"
+            value={delimiter}
+            disabled={busy}
+            onChange={(value) => {
+              invalidatePreview()
+              setDelimiter(value as ProductImportOptions['csvDelimiter'])
+            }}
+          />
+          {file?.name.toLowerCase().endsWith('.csv') ? (
+            <p className="text-muted-foreground text-xs">CSV không chứa đơn vị quy đổi.</p>
+          ) : null}
           <BulkImportFilePicker
             entityLabel="vật tư hàng hóa"
             maxRows={500}
@@ -222,24 +203,18 @@ export function ProductImportView({
         </Alert>
       ) : null}
       {step === 'mapping' && file?.name.toLowerCase().endsWith('.csv') ? (
-        <Field className="shrink-0 sm:max-w-64">
-          <FieldLabel htmlFor="import-csv-change">Dấu phân cách CSV</FieldLabel>
-          <NativeSelect
-            className="w-full"
+        <>
+          <BulkImportDelimiter
             id="import-csv-change"
-            disabled={busy}
             value={delimiter}
-            onChange={(event) => {
+            disabled={busy}
+            onChange={(value) => {
               invalidatePreview()
-              setDelimiter(event.target.value as ProductImportOptions['csvDelimiter'])
+              setDelimiter(value as ProductImportOptions['csvDelimiter'])
             }}
-          >
-            <NativeSelectOption value="auto">Tự nhận diện</NativeSelectOption>
-            <NativeSelectOption value=",">Dấu phẩy (,)</NativeSelectOption>
-            <NativeSelectOption value=";">Dấu chấm phẩy (;)</NativeSelectOption>
-            <NativeSelectOption value={'\t'}>Tab</NativeSelectOption>
-          </NativeSelect>
-        </Field>
+          />
+          <p className="text-muted-foreground text-xs">CSV không chứa đơn vị quy đổi.</p>
+        </>
       ) : null}
       {step === 'mapping' && inspect.data ? (
         <ProductImportMapping
@@ -251,12 +226,11 @@ export function ProductImportView({
         />
       ) : null}
       {(step === 'mapping' && !inspect.data) || (step === 'review' && !data) ? (
-        <div
-          className="bg-card flex min-h-24 flex-1 items-center justify-center border text-sm"
-          role="status"
-        >
-          {busy ? 'Đang chuẩn bị dữ liệu…' : 'Chưa có dữ liệu. Hãy kiểm tra lại tệp.'}
-        </div>
+        busy ? (
+          <BulkImportPendingBody />
+        ) : (
+          <p role="status">Chưa có dữ liệu. Hãy kiểm tra lại tệp.</p>
+        )
       ) : null}
       {commitError ? (
         <Alert variant="destructive" className="shrink-0">
@@ -276,6 +250,7 @@ export function ProductImportView({
       ) : null}
       {step === 'review' && data ? (
         <ProductImportReview
+          fileName={file?.name ?? null}
           view={view}
           onViewChange={onViewChange}
           key={revision}
@@ -393,11 +368,21 @@ export function ProductImportView({
                 void confirmImport()
               }}
             >
-              {commit.isPending ? 'Đang nhập…' : 'Xác nhận nhập'}
+              {commit.isPending ? (
+                <>
+                  <LoaderCircle
+                    className="animate-spin motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                  Đang nhập dữ liệu…
+                </>
+              ) : (
+                'Xác nhận nhập'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </BulkImportWorkspace>
   )
 }

@@ -2,6 +2,7 @@
 
 import type { Route } from 'next'
 import { toast } from 'sonner'
+import { BulkImportPendingBody } from '@/components/operations/BulkImportWorkspace'
 import {
   BulkImportPage,
   type BulkImportColumn,
@@ -164,6 +165,8 @@ export default function StockRecipientImportPage() {
     }
   }
 
+  if (me.isPending) return <BulkImportPendingBody />
+
   if (!permissions.includes(P.STOCK_RECIPIENTS_CREATE)) {
     return (
       <p className="text-muted-foreground text-sm" role="status">
@@ -189,7 +192,7 @@ export default function StockRecipientImportPage() {
       isPreviewing={previewMutation.isPending || inspectMutation.isPending}
       isImporting={importMutation.isPending}
       isDownloadingTemplate={templateMutation.isPending}
-      onDownloadTemplate={() => void handleDownloadTemplate()}
+      onDownloadTemplate={handleDownloadTemplate}
       onPreview={handlePreview}
       onInspect={handleInspect}
       onImport={handleImport}

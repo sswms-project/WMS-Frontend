@@ -2,9 +2,13 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { toast } from 'sonner'
+import { useTopLoader } from 'nextjs-toploader'
 
 export function useImportNavigation(dirty: boolean, busy: boolean) {
   const router = useRouter()
+  const progress = useTopLoader()
+  const startProgress = useEffectEvent(() => progress.start())
+  const finishProgress = useEffectEvent(() => progress.done())
   const [discardOpen, setDiscardOpen] = useState(false)
   const pendingAction = useRef<(() => void) | null>(null)
   function requestDiscard(action: () => void) {
@@ -42,6 +46,7 @@ export function useImportNavigation(dirty: boolean, busy: boolean) {
     const leave = (destination: string) => {
       const url = new URL(destination)
       if (url.origin === window.location.origin) {
+        startProgress()
         router.push(`${url.pathname}${url.search}${url.hash}` as Route)
       } else {
         approvedUnload = true
@@ -68,7 +73,9 @@ export function useImportNavigation(dirty: boolean, busy: boolean) {
       const key = event.destination.key
       requestNavigation(() => {
         approvedKey = key
+        startProgress()
         void navigation.traverseTo(key).finished?.catch(() => {
+          finishProgress()
           approvedKey = null
           nativeTraversal = false
           toast.error('Không thể rời trang. Vui lòng thử lại.')

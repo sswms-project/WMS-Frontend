@@ -1,6 +1,7 @@
 'use client'
 
 import { toast } from 'sonner'
+import { BulkImportPendingBody } from '@/components/operations/BulkImportWorkspace'
 import {
   BulkImportPage,
   type BulkImportColumn,
@@ -157,6 +158,8 @@ export default function SupplierImportPage() {
     }
   }
 
+  if (me.isPending) return <BulkImportPendingBody />
+
   if (!permissions.includes(P.SUPPLIERS_CREATE)) {
     return (
       <p className="text-muted-foreground text-sm" role="status">
@@ -170,7 +173,6 @@ export default function SupplierImportPage() {
       key={`${me.data?.tenantId}:${me.data?.id}`}
       eyebrow="Nguồn nhập kho"
       title="Nhập danh sách nhà cung cấp"
-      description={`Kiểm tra dữ liệu trước khi nhập tối đa ${SUPPLIER_IMPORT_MAX_ROWS} nhà cung cấp. Để trống Mã NCC để hệ thống tự cấp mã.`}
       entityLabel="nhà cung cấp"
       maxRows={SUPPLIER_IMPORT_MAX_ROWS}
       backHref={APP_ROUTES.suppliers}
@@ -183,7 +185,7 @@ export default function SupplierImportPage() {
       isPreviewing={previewMutation.isPending || inspectMutation.isPending}
       isImporting={importMutation.isPending}
       isDownloadingTemplate={templateMutation.isPending}
-      onDownloadTemplate={() => void handleDownloadTemplate()}
+      onDownloadTemplate={handleDownloadTemplate}
       onPreview={handlePreview}
       onInspect={handleInspect}
       onImport={handleImport}

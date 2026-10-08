@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useProductImportNavigation } from './use-product-import-navigation'
 
 const router = vi.hoisted(() => ({ push: vi.fn() }))
+const progress = vi.hoisted(() => ({ start: vi.fn(), done: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => router }))
+vi.mock('nextjs-toploader', () => ({ useTopLoader: () => progress }))
 
 afterEach(() => {
   cleanup()
@@ -48,6 +50,19 @@ function clickLink(href = '/products', options: MouseEventInit = {}) {
 }
 
 describe('import navigation confirmation', () => {
+  it('finishes progress when an approved native traversal fails', async () => {
+    const navigation = nativeNavigation()
+    navigation.traverseTo.mockImplementationOnce(() => ({
+      finished: Promise.reject(new Error('Navigation failed')),
+    }))
+    const hook = renderHook(() => useProductImportNavigation(true, false))
+    traversal(navigation)
+    expect(progress.start).not.toHaveBeenCalled()
+    await act(async () => hook.result.current.confirmDiscard())
+    expect(progress.start).toHaveBeenCalledTimes(1)
+    expect(progress.done).toHaveBeenCalledTimes(1)
+  })
+
   it('opens the app dialog before history changes; cancellation preserves the entry', () => {
     const navigation = nativeNavigation()
     const confirm = vi.spyOn(window, 'confirm')
@@ -60,6 +75,7 @@ describe('import navigation confirmation', () => {
     expect(navigation.traverseTo).not.toHaveBeenCalled()
     expect(history).not.toHaveBeenCalled()
     expect(confirm).not.toHaveBeenCalled()
+    expect(progress.start).not.toHaveBeenCalled()
     hook.unmount()
     expect(traversal(navigation).defaultPrevented).toBe(false)
   })
@@ -75,6 +91,7 @@ describe('import navigation confirmation', () => {
     expect(hook.result.current.discardOpen).toBe(false)
     expect(history).not.toHaveBeenCalled()
     expect(router.push).not.toHaveBeenCalled()
+    expect(progress.start).toHaveBeenCalledTimes(1)
   })
 
   it('blocks busy navigation and rechecks the current busy state before discarding', () => {
@@ -101,6 +118,7 @@ describe('import navigation confirmation', () => {
     act(() => hook.result.current.confirmDiscard())
     act(() => hook.result.current.confirmDiscard())
     expect(router.push).toHaveBeenCalledExactlyOnceWith('/products?search=beer')
+    expect(progress.start).toHaveBeenCalledTimes(1)
   })
 
   it('keeps native close/reload protection while an app confirmation is open or canceled', () => {

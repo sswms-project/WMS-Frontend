@@ -20,16 +20,16 @@ export function BulkImportHeader({
   readonly children: ReactNode
 }) {
   return (
-    <header className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="flex items-start gap-3">
+    <header className="flex min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-3">
         <Button asChild variant="outline" size="icon">
           <Link href={backHref} aria-label={backLabel}>
             <ArrowLeft aria-hidden="true" />
           </Link>
         </Button>
-        <div>
+        <div className="min-w-0">
           <p className="text-primary text-xs font-medium">{eyebrow}</p>
-          <h1 className="text-xl font-semibold">{title}</h1>
+          <h1 className="text-xl font-semibold wrap-anywhere">{title}</h1>
           {description ? <p className="text-muted-foreground mt-1 text-sm">{description}</p> : null}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Route } from 'next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -67,6 +67,11 @@ function renderPage(
     onImport?: ImportHandler
     inspection?: SpreadsheetImportInspection
     columns?: readonly BulkImportColumn<TestRow>[]
+    onDownloadTemplate?: () => Promise<void>
+    onInspect?: (
+      file: File,
+      delimiter: string
+    ) => Promise<{ isSucceeded: true; inspection: SpreadsheetImportInspection }>
   } = {}
 ) {
   const onImport = vi.fn<ImportHandler>(
@@ -89,9 +94,11 @@ function renderPage(
       isPreviewing={false}
       isImporting={false}
       isDownloadingTemplate={false}
-      onDownloadTemplate={() => undefined}
-      onInspect={() =>
-        Promise.resolve({ isSucceeded: true, inspection: overrides.inspection ?? inspection })
+      onDownloadTemplate={overrides.onDownloadTemplate ?? (() => undefined)}
+      onInspect={
+        overrides.onInspect ??
+        (() =>
+          Promise.resolve({ isSucceeded: true, inspection: overrides.inspection ?? inspection }))
       }
       onPreview={() => Promise.resolve({ isSucceeded: true, rows: overrides.rows ?? previewRows })}
       onImport={onImport}
@@ -113,6 +120,38 @@ async function confirmImport(buttonName: RegExp) {
 }
 
 describe('BulkImportPage', () => {
+  it('rereads CSV with the newly selected delimiter at the mapping step', async () => {
+    const onInspect = vi.fn(async () => ({
+      isSucceeded: true as const,
+      inspection: { ...inspection, isCsv: true },
+    }))
+    renderPage({ onInspect })
+    const file = new File(['Tên;Email'], 'data.csv', { type: 'text/csv' })
+    await userEvent.upload(screen.getByLabelText('Tệp khách hàng'), file)
+    await userEvent.selectOptions(await screen.findByLabelText('Dấu phân cách CSV'), ';')
+    await waitFor(() => expect(onInspect).toHaveBeenLastCalledWith(file, ';'))
+    expect(onInspect).toHaveBeenCalledTimes(2)
+  })
+
+  it('blocks repeated templates and conflicting upload before pending props update', async () => {
+    let finish!: () => void
+    const onDownloadTemplate = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve
+        })
+    )
+    const onInspect = vi.fn(async () => ({ isSucceeded: true as const, inspection }))
+    renderPage({ onDownloadTemplate, onInspect })
+    const button = screen.getByRole('button', { name: 'Mẫu XLSX' })
+    fireEvent.click(button)
+    fireEvent.click(button)
+    await userEvent.upload(screen.getByLabelText('Tệp khách hàng'), new File(['x'], 'data.xlsx'))
+    expect(onDownloadTemplate).toHaveBeenCalledTimes(1)
+    expect(onInspect).not.toHaveBeenCalled()
+    await act(async () => finish())
+  })
+
   const supplementaryColumns: readonly BulkImportColumn<TestRow>[] = [
     ...columns,
     {

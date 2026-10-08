@@ -22,7 +22,7 @@ import {
   productImportOptionsSchema,
   type ProductImportFormValues,
 } from '../schemas/product-import.schema'
-import type { ProductImportOptions } from '../types/product-import.types'
+import type { ProductImportOptions, ProductImportPreview } from '../types/product-import.types'
 import {
   defaultProductImportOptions,
   isValidProductImportRow,
@@ -52,6 +52,8 @@ export default function ProductImportSessionPage() {
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [forbidden, setForbidden] = useState(false)
   const commitLock = useRef(false)
+  const operationLock = useRef(false)
+  const [retainedPreview, setRetainedPreview] = useState<ProductImportPreview>()
   const sessionId = `${instanceId}:${generation}`
   const inspect = useProductImportInspect(sessionId, file, delimiter)
   const preview = useProductImportPreview(sessionId, revision, file, options)
@@ -67,16 +69,31 @@ export default function ProductImportSessionPage() {
     },
   })
   useEffect(() => {
-    if (inspect.data) form.reset({ ...defaultProductImportOptions(inspect.data), schemaVersion: 1 })
+    if (inspect.data) {
+      form.reset({ ...defaultProductImportOptions(inspect.data), schemaVersion: 1 })
+    }
   }, [inspect.data, form])
   const busy = inspect.isFetching || preview.isFetching || commit.isPending || template.isPending
-  const data = preview.data
+  useEffect(() => {
+    if (!busy) operationLock.current = false
+  }, [busy, generation])
+  const activity = commit.isPending
+    ? 'importing'
+    : template.isPending
+      ? 'template'
+      : inspect.isFetching
+        ? 'reading'
+        : preview.isFetching
+          ? 'checking'
+          : 'idle'
+  const data = preview.data ?? retainedPreview
+  const visibleStep = step === 'file' && inspect.data ? 'mapping' : step
   const selected =
     selection ??
     (data && !data.fileErrors.length
       ? data.rows.filter(isValidProductImportRow).map((row) => row.rowNumber)
       : [])
-  const rowsToImport = data ? selectedProductImportRows(data, selected) : []
+  const rowsToImport = preview.data ? selectedProductImportRows(preview.data, selected) : []
   const conversionCount = rowsToImport.reduce((count, row) => count + row.unitConversions.length, 0)
   const denied =
     forbidden ||
@@ -85,7 +102,8 @@ export default function ProductImportSessionPage() {
     )
   const navigation = useProductImportNavigation(Boolean(file) && step !== 'result', busy)
 
-  function invalidatePreview() {
+  function invalidatePreview(preserve = false) {
+    setRetainedPreview(preserve ? data : undefined)
     setView({ search: '', status: 'all', page: 1, pageSize: 20 })
     setRevision((value) => value + 1)
     setOptions(null)
@@ -106,59 +124,70 @@ export default function ProductImportSessionPage() {
     })
   }
   function chooseFile(nextFile: File) {
-    if (busy) return
+    if (busy || operationLock.current) return
     const checked = productImportFileSchema.safeParse(nextFile)
     if (!checked.success) {
       setFileError(checked.error.issues[0]?.message ?? 'Tệp không hợp lệ.')
       return
     }
+    operationLock.current = true
     invalidatePreview()
     setGeneration((value) => value + 1)
     setFile(nextFile)
     setFileError(null)
-    setStep('mapping')
+    setStep('file')
   }
   async function checkData() {
-    if (busy || !inspect.data) return
-    await form.handleSubmit(
-      (values) => {
-        invalidatePreview()
-        setOptions(values)
-        setStep('review')
-      },
-      (errors) => {
-        const kind = errors.main ? 'main' : 'conversions'
-        const values = form.getValues(kind)
-        const fields =
-          kind === 'main' ? inspect.data!.schema.mainFields : inspect.data!.schema.conversionFields
-        const field = fields.find((field) => {
-          const column = values?.columnMapping.find((item) => item.field === field.field)
-          return (
-            (field.isRequired && !column) ||
-            (column &&
-              values!.columnMapping.filter((item) => item.columnIndex === column.columnIndex)
-                .length > 1)
-          )
-        })
-        const id = errors[kind]?.sheetId
-          ? `import-${kind}-sheet`
-          : errors[kind]?.headerRowNumber
-            ? `import-${kind}-header`
-            : field
-              ? `import-${kind}-${field.field}`
-              : `import-${kind}-header`
-        requestAnimationFrame(() => document.getElementById(id)?.focus())
-      }
-    )()
+    if (busy || operationLock.current || !inspect.data) return
+    operationLock.current = true
+    try {
+      await form.handleSubmit(
+        (values) => {
+          invalidatePreview(step === 'review')
+          setOptions(values)
+          setStep('review')
+        },
+        (errors) => {
+          const kind = errors.main ? 'main' : 'conversions'
+          const values = form.getValues(kind)
+          const fields =
+            kind === 'main'
+              ? inspect.data!.schema.mainFields
+              : inspect.data!.schema.conversionFields
+          const field = fields.find((field) => {
+            const column = values?.columnMapping.find((item) => item.field === field.field)
+            return (
+              (field.isRequired && !column) ||
+              (column &&
+                values!.columnMapping.filter((item) => item.columnIndex === column.columnIndex)
+                  .length > 1)
+            )
+          })
+          const id = errors[kind]?.sheetId
+            ? `import-${kind}-sheet`
+            : errors[kind]?.headerRowNumber
+              ? `import-${kind}-header`
+              : field
+                ? `import-${kind}-${field.field}`
+                : `import-${kind}-header`
+          requestAnimationFrame(() => document.getElementById(id)?.focus())
+        }
+      )()
+    } finally {
+      operationLock.current = false
+    }
   }
   async function downloadTemplate(variant: 'basic' | 'full') {
-    if (busy || denied) return
+    if (busy || denied || operationLock.current) return
+    operationLock.current = true
     try {
       const blob = await template.mutateAsync(variant)
       downloadBulkImportFile(blob, `kovia-mau-nhap-hang-hoa-${variant}.xlsx`)
     } catch (error) {
       if (isApiErrorResponse(error) && error.statusCode === 403) setForbidden(true)
       toast.error(getApiErrorMessage(error, 'Không thể tải mẫu.'))
+    } finally {
+      operationLock.current = false
     }
   }
   async function confirmImport() {
@@ -205,9 +234,10 @@ export default function ProductImportSessionPage() {
         <ProductImportView
           view={view}
           onViewChange={setView}
-          step={step}
+          step={visibleStep}
           file={file}
           busy={busy}
+          activity={activity}
           commit={commit}
           inspect={inspect}
           preview={preview}
