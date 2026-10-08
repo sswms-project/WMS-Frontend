@@ -11,6 +11,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import { useAuthStore } from '@/stores/auth.store'
 import { notificationCreatedEventSchema } from '../schemas/platform-services.schema'
 import { createNotificationHubConnection } from '../services/notification-realtime.service'
+import { getNotificationQueryKeys } from '../utils/platform-services-format'
 
 interface NotificationRealtimeProviderProps {
   readonly children: ReactNode
@@ -60,6 +61,13 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
         })
       }
       void invalidateNotifications()
+      // Trang đang mở (vd. chi tiết phiếu kiểm kê) tự tải lại thay vì bắt người dùng F5.
+      for (const queryKey of getNotificationQueryKeys({
+        type: result.data.type,
+        referenceType: result.data.referenceType ?? null,
+        referenceId: result.data.referenceId ?? null,
+      }))
+        void queryClient.invalidateQueries({ queryKey })
     })
 
     connection.onreconnected(() => {

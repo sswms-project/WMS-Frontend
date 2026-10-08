@@ -2,6 +2,7 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
+  InventoryStock,
   InventoryStockListResponse,
   InventoryReservationListResponse,
   InventoryAbcItem,
@@ -76,6 +77,20 @@ export const inventoryService = {
     axiosClient
       .get<ApiResponse<InventoryStockListResponse>>(API_ENDPOINTS.inventory.list, { params })
       .then((response) => response.data),
+  // Duyệt hết các trang để chọn toàn bộ kết quả lọc, vì BE giới hạn 100 dòng mỗi trang.
+  getAllInventory: async (params: Omit<InventoryListQuery, 'pageNumber' | 'pageSize'>) => {
+    const pageSize = 100
+    const rows: InventoryStock[] = []
+    for (let pageNumber = 1; ; pageNumber += 1) {
+      const response = await axiosClient.get<ApiResponse<InventoryStockListResponse>>(
+        API_ENDPOINTS.inventory.list,
+        { params: { ...params, pageNumber, pageSize } }
+      )
+      const { items, totalCount } = response.data.data
+      rows.push(...items)
+      if (items.length < pageSize || rows.length >= totalCount) return rows
+    }
+  },
   getWarehouseOptions: () =>
     axiosClient
       .get<ApiResponse<InventoryWarehouseOption[]>>(API_ENDPOINTS.inventory.warehouseOptions)

@@ -7,6 +7,7 @@ export interface InventoryListQuery {
   slotId?: string
   productId?: string
   searchTerm?: string
+  categoryId?: string
 }
 
 export type QualityStatus = 'Good' | 'Damaged' | 'Quarantine'
@@ -40,6 +41,10 @@ export interface InventoryStock {
   version: string | null
   updatedAt: string | null
   canManageWarehouse: boolean
+  rackId?: string | null
+  rackCode?: string | null
+  zoneCode?: string | null
+  isSystemDefaultSlot?: boolean
 }
 
 export interface InventoryStockListResponse {
