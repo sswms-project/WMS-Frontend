@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo, useReducer, useState } from 'react'
+import { useMemo, useReducer, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import {
   transferPickEscalateSchema,
@@ -18,6 +18,7 @@ import type {
   TransferPickSheetLine,
 } from '../types/transfer.types'
 import { useScanPreferences } from '../utils/scan-preferences'
+import { newCommandId } from '../utils/transfer-command-id'
 import {
   INITIAL_PICK_SCAN_STATE,
   getDefaultPickQuantity,
@@ -68,6 +69,8 @@ export function useTransferPickActions(
   const [returnLine, setReturnLine] = useState<TransferPickSheetLine | null>(null)
   const [returnScanError, setReturnScanError] = useState<string | null>(null)
   const [isDispatchOpen, setIsDispatchOpen] = useState(false)
+  // Một mã cho mỗi lần mở hộp thoại: bấm lại khi mạng chậm gửi cùng mã nên BE không ghi hai lần.
+  const commandIds = useRef({ pick: '', switch: '', escalate: '', return: '' })
 
   const switchForm = useForm<TransferPickSwitchFormValues>({
     resolver: zodResolver(transferPickSwitchSchema),
@@ -122,6 +125,7 @@ export function useTransferPickActions(
       ),
       reasonCode: preset ? 'InsufficientAtLocation' : EMPTY_SWITCH.reasonCode,
     })
+    commandIds.current.switch = newCommandId()
     setSwitchLine(line)
   }
 
@@ -138,6 +142,7 @@ export function useTransferPickActions(
         dispatchScan({ type: 'reset' })
         setQuantityOverride(null)
         setQuantityError(null)
+        commandIds.current.pick = newCommandId()
         setEntryLine(line)
       },
       onOpenChange: (open: boolean) => !open && setEntryLine(null),
@@ -202,6 +207,7 @@ export function useTransferPickActions(
               transferId,
               shipmentId,
               request: {
+                commandId: commandIds.current.pick,
                 lineId: entryLine.lineId,
                 inventoryStockId: suggestion.inventoryStockId,
                 quantity,
@@ -236,6 +242,7 @@ export function useTransferPickActions(
               shipmentId,
               lineId: switchLine.lineId,
               request: {
+                commandId: commandIds.current.switch,
                 fromInventoryStockId: from.inventoryStockId,
                 toInventoryStockId: values.toInventoryStockId,
                 quantity: values.quantity,
@@ -255,6 +262,7 @@ export function useTransferPickActions(
       isPending: escalateMutation.isPending,
       open: (line: TransferPickSheetLine) => {
         escalateForm.reset(EMPTY_ESCALATE)
+        commandIds.current.escalate = newCommandId()
         setEscalateLine(line)
       },
       onOpenChange: (open: boolean) => !open && setEscalateLine(null),
@@ -266,7 +274,11 @@ export function useTransferPickActions(
               transferId,
               shipmentId,
               lineId: escalateLine.lineId,
-              request: { reasonCode: values.reasonCode, note: values.note },
+              request: {
+                commandId: commandIds.current.escalate,
+                reasonCode: values.reasonCode,
+                note: values.note,
+              },
             }),
           'Đã báo quản lý. Bạn có thể tiếp tục các dòng khác.',
           'Không thể báo quản lý.'
@@ -291,6 +303,7 @@ export function useTransferPickActions(
           scannedSlotCode: '',
         })
         setReturnScanError(null)
+        commandIds.current.return = newCommandId()
         setReturnLine(line)
       },
       onOpenChange: (open: boolean) => !open && setReturnLine(null),
@@ -305,6 +318,7 @@ export function useTransferPickActions(
               transferId,
               shipmentId,
               request: {
+                commandId: commandIds.current.return,
                 pickDetailId: values.pickDetailId,
                 quantity: values.quantity,
                 scannedSlotCode: values.scannedSlotCode,

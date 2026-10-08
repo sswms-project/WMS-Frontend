@@ -17,10 +17,14 @@ export const productImportCatalogSchema = z
           name: z.string().trim(),
           parentCode: z.string().max(50, 'Mã nhóm cha tối đa 50 ký tự.'),
           symbol: z.string().max(30, 'Ký hiệu tối đa 30 ký tự.'),
-          quantityPrecision: z.number().int('Nhập số nguyên.').min(0).max(6),
+          quantityPrecision: z
+            .number({ error: 'Nhập số chữ số thập phân từ 0 đến 6.' })
+            .int('Nhập số nguyên.')
+            .min(0, 'Số chữ số thập phân phải từ 0 đến 6.')
+            .max(6, 'Số chữ số thập phân phải từ 0 đến 6.'),
         })
       )
-      .max(2500),
+      .max(3000, 'Tối đa 3.000 tham chiếu danh mục trong một tệp.'),
   })
   .superRefine((values, context) => {
     values.entries.forEach((entry, index) => {

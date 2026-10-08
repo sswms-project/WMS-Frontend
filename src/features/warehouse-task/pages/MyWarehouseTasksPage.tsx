@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -23,6 +24,7 @@ import {
   useInventoryQuery,
   useInventoryWarehouseOptionsQuery,
 } from '@/features/inventory/hooks/use-inventory'
+import { StockIssuePickingQueue } from '@/features/stock-issue/components/StockIssuePickingQueue'
 import { useStaffListQuery } from '@/features/staff/hooks/use-staff'
 import { STAFF_DIRECTORY_KINDS } from '@/features/staff/types/staff.types'
 import { useTransferRealtime } from '@/features/transfer/hooks/use-transfer-realtime'
@@ -101,7 +103,9 @@ export default function MyWarehouseTasksPage({
   readonly initialDeadline?: WarehouseTaskDeadlineStatus
 } = {}) {
   const [page, setPage] = useState(1)
-  const [createOpen, setCreateOpen] = useState(false)
+  // Mở sẵn từ form điều chuyển kho (chọn "Điều chuyển nội bộ vị trí trong kho").
+  const searchParams = useSearchParams()
+  const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === 'relocation')
   const [sourceSearch, setSourceSearch] = useState('')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
   const [warehouseFilter, setWarehouseFilter] = useState(initialWarehouseId)
@@ -454,6 +458,9 @@ export default function MyWarehouseTasksPage({
           </Button>
         </div>
       ) : null}
+      <StockIssuePickingQueue
+        enabled={!managesWarehouseTasks && permissions.includes(P.STOCK_ISSUE_REQUESTS_PICK)}
+      />
       <WarehouseTaskDirectory
         title={managesWarehouseTasks ? 'Công việc kho' : 'Công việc của tôi'}
         description={
@@ -484,6 +491,7 @@ export default function MyWarehouseTasksPage({
             >
               <NativeSelectOption value="">Mọi loại việc</NativeSelectOption>
               <NativeSelectOption value="Receiving">Nhận hàng</NativeSelectOption>
+              <NativeSelectOption value="Picking">Lấy hàng xuất kho</NativeSelectOption>
               <NativeSelectOption value="PutAway">Cất hàng</NativeSelectOption>
               <NativeSelectOption value="CycleCount">Kiểm kê</NativeSelectOption>
               <NativeSelectOption value="Relocation">Điều chuyển vị trí</NativeSelectOption>
@@ -536,7 +544,7 @@ export default function MyWarehouseTasksPage({
         onEditSchedule={canAssignRelocation ? openSchedule : undefined}
       />
       <CreateRelocationTaskDialog
-        open={createOpen}
+        open={createOpen && canCreateRelocation}
         form={createForm}
         fields={createLines.fields}
         warehouseOptions={warehouseOptionsQuery.data ?? []}

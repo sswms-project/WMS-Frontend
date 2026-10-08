@@ -10,6 +10,7 @@ import {
   UserRoundX,
 } from 'lucide-react'
 import type { Route } from 'next'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import {
@@ -72,6 +73,7 @@ const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
   Relocation: 'Điều chuyển vị trí',
   TransferPick: 'Lấy hàng điều chuyển',
   TransferReceive: 'Nhận hàng điều chuyển',
+  Picking: 'Lấy hàng xuất kho',
 }
 
 export function WarehouseTaskDirectory({
@@ -114,6 +116,15 @@ export function WarehouseTaskDirectory({
       item.assignedTo !== currentUserId
     )
       return null
+    if (item.taskType === 'Picking') {
+      return (
+        <Button asChild size="sm" variant="outline">
+          <Link href={getTaskRoute(item)}>
+            {item.executionStatus === 'InProgress' ? 'Tiếp tục lấy hàng' : 'Lấy hàng'}
+          </Link>
+        </Button>
+      )
+    }
     const isInProgress = item.executionStatus === 'InProgress'
     return (
       <>
@@ -208,7 +219,7 @@ export function WarehouseTaskDirectory({
         ) : (
           <>
             <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-              <Table className="min-w-[1080px]">
+              <Table className="min-w-[1000px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="sticky top-0 z-10">Công việc</TableHead>
@@ -412,6 +423,7 @@ function getTaskRoute(task: MyWarehouseTask): Route {
       ? APP_ROUTES.transferPickTask(task.transferId, task.transferShipmentId)
       : APP_ROUTES.transferReceiveTask(task.transferId, task.transferShipmentId)
   }
+  if (task.taskType === 'Picking') return `${APP_ROUTES.stockIssueRequests}?id=${task.id}` as Route
   // Mở màn nhận hàng đã lọc sẵn theo mã yêu cầu nhập kho được giao.
   return `${APP_ROUTES.inbound}?search=${encodeURIComponent(task.referenceCode)}` as Route
 }

@@ -126,6 +126,8 @@ export const P = {
   STOCK_ISSUE_REQUESTS_DISPATCH: 'stock-issue-requests:dispatch',
   STOCK_ISSUE_REQUESTS_AUTHORIZE_DISPATCH: 'stock-issue-requests:authorize-dispatch',
   STOCK_ISSUE_REQUESTS_RETURN: 'stock-issue-requests:return',
+  STOCK_ISSUE_REQUESTS_CANCEL: 'stock-issue-requests:cancel',
+  STOCK_ISSUE_REQUESTS_ASSIGN_PICKER: 'stock-issue-requests:assign-picker',
 
   // Stock Recipients
   STOCK_RECIPIENTS_VIEW: 'stock-recipients:view',

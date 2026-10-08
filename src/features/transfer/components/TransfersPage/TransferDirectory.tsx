@@ -3,7 +3,7 @@
 import { ListFilter, Plus, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -13,29 +13,16 @@ import { OperationalListPanel } from '@/components/operations/OperationalListPan
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { APP_ROUTES } from '@/routes/app-routes'
-import type { TransferStatus, TransferSummary } from '../../types/transfer.types'
-import { transferTabIds } from '../../utils/transfer-tabs'
+import type { TransferStage, TransferStatus, TransferSummary } from '../../types/transfer.types'
+import { transferStatusOptions } from '../../utils/transfer-stage'
 import { TransferDesktopTable } from './TransferDesktopTable'
 import { TransferFilterSheet } from './TransferFilterSheet'
 import { TransferMobileList } from './TransferMobileList'
 import { TransferRowActions } from './TransferRowActions'
-
-const ALL_STATUSES_TAB = 'All'
-
-const TRANSFER_STATUS_TABS: ReadonlyArray<{
-  value: TransferStatus | typeof ALL_STATUSES_TAB
-  label: string
-}> = [
-  { value: 'Draft', label: 'Nháp' },
-  { value: 'InProgress', label: 'Đang thực hiện' },
-  { value: 'AwaitingResolution', label: 'Chờ xử lý chênh lệch' },
-  { value: 'Completed', label: 'Hoàn tất' },
-  { value: 'Cancelled', label: 'Đã hủy' },
-  { value: ALL_STATUSES_TAB, label: 'Tất cả' },
-]
+import { TRANSFER_STAGE_LABELS, TransferTabs } from './TransferTabs'
 
 interface WarehouseOption {
   readonly id: string
@@ -43,6 +30,8 @@ interface WarehouseOption {
 }
 
 interface TransferDirectoryProps {
+  readonly stage: TransferStage
+  readonly openDiscrepancyCount: number
   readonly items: readonly TransferSummary[]
   readonly totalCount: number
   readonly page: number
@@ -73,6 +62,8 @@ interface TransferDirectoryProps {
 }
 
 export function TransferDirectory({
+  stage,
+  openDiscrepancyCount,
   items,
   totalCount,
   page,
@@ -102,7 +93,7 @@ export function TransferDirectory({
   onPreview,
 }: TransferDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const tabIds = transferTabIds(useId(), status || ALL_STATUSES_TAB)
+  const statusOptions = transferStatusOptions(stage)
   const activeFilterCount =
     (sourceWarehouseId ? 1 : 0) +
     (destinationWarehouseId ? 1 : 0) +
@@ -122,28 +113,9 @@ export function TransferDirectory({
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3">
       <header className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="sr-only">Điều chuyển kho</h1>
-        <Tabs
-          value={status || ALL_STATUSES_TAB}
-          onValueChange={(value) => {
-            const tab = TRANSFER_STATUS_TABS.find((candidate) => candidate.value === value)
-            if (tab) onStatusChange(tab.value === ALL_STATUSES_TAB ? '' : tab.value)
-          }}
-          className="min-w-0 flex-1 overflow-x-auto"
-        >
-          <TabsList variant="workspace" aria-label="Lọc phiếu theo trạng thái">
-            {TRANSFER_STATUS_TABS.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                id={tabIds.tabId(tab.value)}
-                aria-controls={tabIds.panelId}
-                className="flex-none px-3 py-1.5"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <div className="min-w-0 flex-1">
+          <TransferTabs stage={stage} openDiscrepancyCount={openDiscrepancyCount} />
+        </div>
         {canCreate ? (
           <Button asChild size="sm" className="shrink-0">
             <Link href={APP_ROUTES.transferCreate}>
@@ -154,11 +126,9 @@ export function TransferDirectory({
         ) : null}
       </header>
 
-      <OperationalListPanel {...tabIds.panelProps}>
+      <OperationalListPanel>
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-sm font-semibold">
-            {TRANSFER_STATUS_TABS.find((tab) => tab.value === (status || ALL_STATUSES_TAB))?.label}
-          </h2>
+          <h2 className="text-sm font-semibold">{TRANSFER_STAGE_LABELS[stage]}</h2>
           <div className="flex w-full gap-2 sm:w-auto">
             <InputGroup className="min-w-0 flex-1 sm:w-72">
               <InputGroupAddon>
@@ -171,6 +141,20 @@ export function TransferDirectory({
                 onChange={(event) => onSearchChange(event.target.value)}
               />
             </InputGroup>
+            {statusOptions.length > 0 ? (
+              <NativeSelect
+                aria-label="Lọc theo trạng thái"
+                className="w-44 shrink-0"
+                value={status}
+                onChange={(event) => onStatusChange(event.target.value as TransferStatus | '')}
+              >
+                {statusOptions.map((option) => (
+                  <NativeSelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            ) : null}
             <Button type="button" variant="outline" onClick={() => setIsFilterOpen(true)}>
               <ListFilter aria-hidden="true" />
               Bộ lọc{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}

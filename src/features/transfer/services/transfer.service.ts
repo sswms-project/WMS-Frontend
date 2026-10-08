@@ -27,6 +27,7 @@ import type {
   TransferPickAlternative,
   TransferPickSheet,
   TransferReceiveSheet,
+  TransferRequesterOption,
   TransferSourceWarehouseQuery,
   UpdateTransferRequest,
 } from '../types/transfer.types'
@@ -60,6 +61,14 @@ export const transferService = {
   getTransfer: (transferId: string) =>
     axiosClient
       .get<ApiResponse<TransferDetail>>(API_ENDPOINTS.transfers.detail(transferId))
+      .then(unwrap),
+
+  getNextCode: () =>
+    axiosClient.get<ApiResponse<string>>(API_ENDPOINTS.transfers.nextCode).then(unwrap),
+
+  getRequesterOptions: () =>
+    axiosClient
+      .get<ApiResponse<TransferRequesterOption[]>>(API_ENDPOINTS.transfers.requesterOptions)
       .then(unwrap),
 
   getSourceWarehouses: (params: TransferSourceWarehouseQuery) =>

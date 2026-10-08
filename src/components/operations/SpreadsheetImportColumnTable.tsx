@@ -98,7 +98,13 @@ export function SpreadsheetImportColumnTable({
           Đang hiển thị tất cả trường để sửa lỗi ghép cột. Bộ lọc sẽ dùng lại khi cấu hình hợp lệ.
         </p>
       ) : null}
-      <Table aria-label={`Ghép cột ${label}`}>
+      <Table aria-label={`Ghép cột ${label}`} className="min-w-208 table-fixed">
+        <colgroup>
+          <col className="w-[28%]" />
+          <col className="w-[30%]" />
+          <col className="w-[28%]" />
+          <col className="w-[14%]" />
+        </colgroup>
         <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
           <TableRow>
             <TableHead>Thông tin Kovia</TableHead>
@@ -136,9 +142,9 @@ export function SpreadsheetImportColumnTable({
               const id = `import-${kind}-${encodeURIComponent(field.field)}`
               return (
                 <TableRow key={field.field}>
-                  <TableCell className="w-64 max-w-64 min-w-48 wrap-anywhere whitespace-normal">
-                    <FieldLabel htmlFor={id}>
-                      {field.displayName}
+                  <TableCell className="align-top wrap-anywhere whitespace-normal">
+                    <FieldLabel htmlFor={id} className="items-start gap-1 font-semibold">
+                      <span>{field.displayName}</span>
                       {field.isRequired ? (
                         <>
                           {' '}
@@ -146,12 +152,12 @@ export function SpreadsheetImportColumnTable({
                         </>
                       ) : null}
                     </FieldLabel>
-                    <p id={`${id}-help`} className="text-muted-foreground mt-1 text-xs">
+                    <p id={`${id}-help`} className="text-muted-foreground mt-1 text-xs/relaxed">
                       {field.description}
                       {field.defaultValue ? ` Mặc định: ${field.defaultValue}.` : ''}
                     </p>
                   </TableCell>
-                  <TableCell className="max-w-72 min-w-56">
+                  <TableCell>
                     <NativeSelect
                       className="w-full"
                       id={id}
@@ -171,13 +177,16 @@ export function SpreadsheetImportColumnTable({
                       ))}
                     </NativeSelect>
                   </TableCell>
-                  <TableCell className="w-64 max-w-64 min-w-40 wrap-anywhere whitespace-normal">
+                  <TableCell className="align-top wrap-anywhere whitespace-normal">
                     {values.length ? (
                       <div className="flex flex-col gap-1">
                         {values.map((sample) => (
-                          <p key={sample.rowNumber}>
-                            <span className="text-muted-foreground text-xs">
-                              Dòng {sample.rowNumber}:{' '}
+                          <p
+                            key={sample.rowNumber}
+                            className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-2 text-xs/relaxed"
+                          >
+                            <span className="text-muted-foreground tabular-nums">
+                              Dòng {sample.rowNumber}:
                             </span>
                             <span className="whitespace-pre-wrap">{sample.value}</span>
                           </p>
@@ -188,7 +197,10 @@ export function SpreadsheetImportColumnTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={ambiguous ? 'destructive' : column ? 'default' : 'outline'}>
+                    <Badge
+                      className="max-w-full whitespace-normal"
+                      variant={ambiguous ? 'destructive' : column ? 'default' : 'outline'}
+                    >
                       {ambiguous ? (
                         <TriangleAlert aria-hidden="true" />
                       ) : column ? (

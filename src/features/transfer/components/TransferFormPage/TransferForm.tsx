@@ -1,21 +1,18 @@
 import { Plus } from 'lucide-react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import { Textarea } from '@/components/ui/textarea'
 import type { LookupOption } from '@/features/inbound-request/types/inbound-request.types'
 import type { TransferRequestFormValues } from '../../schemas/transfer-request.schema'
 import type { TransferAvailability } from '../../types/transfer.types'
+import {
+  TransferGeneralSection,
+  type TransferFormMode,
+  type WarehouseSelectOption,
+} from './TransferGeneralSection'
 import { TransferLineRow, type TransferLineLockInfo } from './TransferLineRow'
+import type { BusinessCodeFieldProps } from '@/components/forms/BusinessCodeField'
 
-export interface WarehouseSelectOption {
-  readonly id: string
-  readonly name: string
-}
-
-export type TransferFormMode = 'create' | 'draft' | 'edit'
+export type { TransferFormMode, WarehouseSelectOption }
 
 interface TransferFormProps {
   readonly form: UseFormReturn<TransferRequestFormValues>
@@ -30,6 +27,11 @@ interface TransferFormProps {
   readonly lockByItemId: Readonly<Record<string, TransferLineLockInfo>>
   readonly isProductSearchLoading: boolean
   readonly isSaving: boolean
+  readonly requesterNames: readonly string[]
+  readonly codeSuggestionStatus?: BusinessCodeFieldProps['suggestionStatus']
+  readonly canCreateRelocation: boolean
+  readonly onCodeChange: () => void
+  readonly onSelectInternalRelocation: () => void
   readonly onDestinationChange: (value: string) => void
   readonly onSourceChange: (value: string) => void
   readonly onProductSearchChange: (scope: string, value: string) => void
@@ -53,6 +55,11 @@ export function TransferForm({
   lockByItemId,
   isProductSearchLoading,
   isSaving,
+  requesterNames,
+  codeSuggestionStatus,
+  canCreateRelocation,
+  onCodeChange,
+  onSelectInternalRelocation,
   onDestinationChange,
   onSourceChange,
   onProductSearchChange,
@@ -63,8 +70,6 @@ export function TransferForm({
   onSubmit,
 }: TransferFormProps) {
   const errors = form.formState.errors
-  const destinationWarehouseId = form.watch('destinationWarehouseId')
-  const sourceWarehouseId = form.watch('sourceWarehouseId')
   const lines = form.watch('lines')
   const isEditingSubmitted = mode === 'edit'
 
@@ -77,85 +82,20 @@ export function TransferForm({
         onSubmit()
       }}
     >
-      <section className="bg-card border p-4" aria-labelledby="transfer-form-general">
-        <h2 id="transfer-form-general" className="mb-3 text-sm font-semibold">
-          Thông tin chung
-        </h2>
-        <FieldGroup className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Field data-invalid={Boolean(errors.destinationWarehouseId)}>
-            <FieldLabel htmlFor="transfer-destination">Kho nhập</FieldLabel>
-            <NativeSelect
-              id="transfer-destination"
-              className="w-full"
-              disabled={warehousesLocked}
-              aria-invalid={Boolean(errors.destinationWarehouseId)}
-              value={destinationWarehouseId}
-              onChange={(event) => onDestinationChange(event.target.value)}
-            >
-              <NativeSelectOption value="">Chọn kho nhập</NativeSelectOption>
-              {destinationOptions.map((warehouse) => (
-                <NativeSelectOption key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <FieldError>{errors.destinationWarehouseId?.message}</FieldError>
-          </Field>
-          <Field data-invalid={Boolean(errors.sourceWarehouseId)}>
-            <FieldLabel htmlFor="transfer-source">Kho xuất</FieldLabel>
-            <NativeSelect
-              id="transfer-source"
-              className="w-full"
-              disabled={warehousesLocked || !destinationWarehouseId}
-              aria-invalid={Boolean(errors.sourceWarehouseId)}
-              value={sourceWarehouseId}
-              onChange={(event) => onSourceChange(event.target.value)}
-            >
-              <NativeSelectOption value="">
-                {destinationWarehouseId ? 'Chọn kho xuất' : 'Chọn kho nhập trước'}
-              </NativeSelectOption>
-              {sourceOptions.map((warehouse) => (
-                <NativeSelectOption key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <FieldError>{errors.sourceWarehouseId?.message}</FieldError>
-          </Field>
-          <Field data-invalid={Boolean(errors.requiredBy)}>
-            <FieldLabel htmlFor="transfer-required-by">Hạn cần hàng</FieldLabel>
-            <Input id="transfer-required-by" type="date" {...form.register('requiredBy')} />
-            <FieldError>{errors.requiredBy?.message}</FieldError>
-          </Field>
-          <Field data-invalid={Boolean(errors.reason)}>
-            <FieldLabel htmlFor="transfer-reason">Lý do điều chuyển</FieldLabel>
-            <Input
-              id="transfer-reason"
-              maxLength={500}
-              placeholder="Ví dụ: bổ sung hàng cho kho bán lẻ"
-              aria-invalid={Boolean(errors.reason)}
-              {...form.register('reason')}
-            />
-            <FieldError>{errors.reason?.message}</FieldError>
-          </Field>
-          <Field className="md:col-span-2 xl:col-span-4" data-invalid={Boolean(errors.note)}>
-            <FieldLabel htmlFor="transfer-note">Ghi chú</FieldLabel>
-            <Textarea
-              id="transfer-note"
-              rows={2}
-              maxLength={1000}
-              aria-invalid={Boolean(errors.note)}
-              {...form.register('note')}
-            />
-            <FieldError>{errors.note?.message}</FieldError>
-          </Field>
-        </FieldGroup>
-        {warehousesLocked ? (
-          <p className="text-muted-foreground mt-3 text-xs">
-            Chỉ đổi được kho khi phiếu chưa có đợt xuất nào.
-          </p>
-        ) : null}
-      </section>
+      <TransferGeneralSection
+        form={form}
+        mode={mode}
+        destinationOptions={destinationOptions}
+        sourceOptions={sourceOptions}
+        warehousesLocked={warehousesLocked}
+        requesterNames={requesterNames}
+        codeSuggestionStatus={codeSuggestionStatus}
+        canCreateRelocation={canCreateRelocation}
+        onCodeChange={onCodeChange}
+        onDestinationChange={onDestinationChange}
+        onSourceChange={onSourceChange}
+        onSelectInternalRelocation={onSelectInternalRelocation}
+      />
 
       <section className="bg-card border" aria-labelledby="transfer-form-lines">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">

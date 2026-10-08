@@ -3,6 +3,7 @@ import {
   Bell,
   Building2,
   ChartNoAxesCombined,
+  ClipboardCheck,
   ClipboardList,
   CreditCard,
   FileChartColumn,
@@ -38,6 +39,8 @@ export type NavItem = {
   readonly requiredPermission?: string
   readonly match?: 'exact' | 'prefix'
   readonly activePrefixes?: readonly string[]
+  // Đường dẫn con có mục menu riêng, không được làm sáng mục cha khớp theo tiền tố.
+  readonly excludedPrefixes?: readonly string[]
   readonly status?: 'planned'
 }
 
@@ -126,8 +129,12 @@ const tenantOperationsSection: NavSection = {
     requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW, [
       APP_ROUTES.inboundRequests,
     ]),
-    requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
+    {
+      ...requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
+      excludedPrefixes: [APP_ROUTES.cycleCounts],
+    },
     requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
+    requiredNavItem(APP_ROUTES.cycleCounts, 'Kiểm kê', ClipboardCheck, P.CYCLE_COUNTS_VIEW),
     requiredNavItem(
       APP_ROUTES.stockIssueRequests,
       'Xuất kho & Trả hàng',
@@ -301,8 +308,12 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.inbound, 'Nhập kho', PackageCheck, P.GOODS_RECEIPTS_VIEW, [
           APP_ROUTES.inboundRequests,
         ]),
-        requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
+        {
+          ...requiredNavItem(APP_ROUTES.inventory, 'Tồn kho', PackageSearch, P.INVENTORY_VIEW),
+          excludedPrefixes: [APP_ROUTES.cycleCounts],
+        },
         requiredNavItem(APP_ROUTES.transfers, 'Điều chuyển kho', ArrowLeftRight, P.TRANSFERS_VIEW),
+        requiredNavItem(APP_ROUTES.cycleCounts, 'Kiểm kê', ClipboardCheck, P.CYCLE_COUNTS_VIEW),
         requiredNavItem(
           APP_ROUTES.stockIssueRequests,
           'Xuất kho & Trả hàng',
@@ -420,6 +431,7 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
   if (pathname === item.href) return true
   if (item.match === 'exact') return false
   if (item.href === APP_ROUTES.reports && pathname === APP_ROUTES.reportForecast) return false
+  if (item.excludedPrefixes?.some((prefix) => pathname.startsWith(prefix))) return false
 
   if (item.activePrefixes?.some((prefix) => pathname.startsWith(prefix))) {
     return true

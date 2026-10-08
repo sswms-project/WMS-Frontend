@@ -18,6 +18,13 @@ export const transferLineSchema = z.object({
 
 export const transferRequestSchema = z
   .object({
+    /** Để trống thì BE tự cấp mã kế tiếp; có nhập thì phải duy nhất trong doanh nghiệp. */
+    transferCode: z.string().trim().max(100, 'Mã phiếu không được vượt quá 100 ký tự.'),
+    requesterName: z.string().trim().max(200, 'Người yêu cầu không được vượt quá 200 ký tự.'),
+    requestingDepartment: z
+      .string()
+      .trim()
+      .max(200, 'Bộ phận yêu cầu không được vượt quá 200 ký tự.'),
     sourceWarehouseId: dotNetGuidSchema('Vui lòng chọn kho xuất.'),
     destinationWarehouseId: dotNetGuidSchema('Vui lòng chọn kho nhập.'),
     reason: z.string().trim().max(500, 'Lý do không được vượt quá 500 ký tự.'),

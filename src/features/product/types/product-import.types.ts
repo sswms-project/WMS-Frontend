@@ -75,6 +75,7 @@ export interface ProductImportReference {
   id: string
   code: string
   name: string
+  path?: string | null
 }
 export interface ProductImportConversionRow {
   rowNumber: number
