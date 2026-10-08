@@ -16,7 +16,9 @@ export const catalogImportService = {
     data.append('file', file)
     data.append('csvDelimiter', csvDelimiter)
     return axiosClient
-      .post<ApiResponse<SpreadsheetImportInspection>>(`/${kind}/import/inspect`, data)
+      .post<ApiResponse<SpreadsheetImportInspection>>(`/${kind}/import/inspect`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       .then((response) => response.data.data)
   },
   preview: (
@@ -30,7 +32,9 @@ export const catalogImportService = {
     data.append('options', JSON.stringify(options))
     data.append('codeOverrides', JSON.stringify(codeOverrides))
     return axiosClient
-      .post<ApiResponse<{ rows: CatalogImportRow[] }>>(`/${kind}/import/preview`, data)
+      .post<ApiResponse<{ rows: CatalogImportRow[] }>>(`/${kind}/import/preview`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       .then((response) => response.data.data)
   },
   commit: (kind: CatalogImportKind, items: readonly CatalogImportItem[]) =>

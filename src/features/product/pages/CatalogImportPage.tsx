@@ -16,7 +16,10 @@ import type { CatalogImportKind, CatalogImportRow } from '../types/catalog-impor
 export default function CatalogImportPage({ kind }: { readonly kind: CatalogImportKind }) {
   const me = useMeQuery()
   const operations = useCatalogImport(kind)
-  const edits = useRef(new Map<number, string>())
+  const scope = `${kind}:${me.data?.tenantId}:${me.data?.id}`
+  const [editedCodes, setEditedCodes] = useState({ scope, values: new Map<number, string>() })
+  const edits = editedCodes.scope === scope ? editedCodes.values : new Map<number, string>()
+  const previousMapping = useRef<string | null>(null)
   const [validationRevision, setValidationRevision] = useState(0)
   const categories = kind === 'categories'
   const label = categories ? 'nhóm vật tư hàng hóa' : 'đơn vị tính'
@@ -29,13 +32,21 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
         <Input
           key={`${row.rowNumber}:${row.code}`}
           aria-label={`Mã dòng ${row.rowNumber}`}
-          defaultValue={edits.current.get(row.rowNumber) ?? row.code}
+          defaultValue={edits.get(row.rowNumber) ?? row.code}
+          aria-invalid={Boolean(row.fieldErrors.code?.length)}
           maxLength={50}
           spellCheck={false}
           autoComplete="off"
           disabled={operations.commit.isPending || operations.preview.isPending}
           onChange={(event) => {
-            edits.current.set(row.rowNumber, event.target.value)
+            const code = event.target.value
+            setEditedCodes((current) => ({
+              scope,
+              values: new Map(current.scope === scope ? current.values : []).set(
+                row.rowNumber,
+                code
+              ),
+            }))
             setValidationRevision((value) => value + 1)
           }}
         />
@@ -102,7 +113,8 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
       isImporting={operations.commit.isPending}
       isDownloadingTemplate={operations.template.isPending}
       onInspect={async (file, delimiter) => {
-        edits.current.clear()
+        setEditedCodes({ scope, values: new Map() })
+        previousMapping.current = null
         try {
           return {
             isSucceeded: true,
@@ -116,6 +128,10 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
         }
       }}
       onPreview={async (file, options) => {
+        const mapping = `${scope}:${JSON.stringify(options)}`
+        const sameMapping = previousMapping.current === mapping
+        if (!sameMapping) setEditedCodes({ scope, values: new Map() })
+        previousMapping.current = mapping
         try {
           return {
             isSucceeded: true,
@@ -123,7 +139,9 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
               await operations.preview.mutateAsync({
                 file,
                 options,
-                codeOverrides: [...edits.current].map(([rowNumber, code]) => ({ rowNumber, code })),
+                codeOverrides: sameMapping
+                  ? [...edits].map(([rowNumber, code]) => ({ rowNumber, code }))
+                  : [],
               })
             ).rows,
           }

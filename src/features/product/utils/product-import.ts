@@ -10,6 +10,27 @@ import type {
   ProductImportSheetOptions,
 } from '../types/product-import.types'
 
+export function productImportSheetLabel(sheetName: string): string {
+  const normalized = sheetName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
+    .replace(/[\s_-]/g, '')
+    .toLowerCase()
+  switch (normalized) {
+    case 'hanghoa':
+      return 'Hàng hóa'
+    case 'vattuhanghoa':
+      return 'Vật tư hàng hóa'
+    case 'quydoi':
+      return 'Quy đổi'
+    case 'donviquydoi':
+      return 'Đơn vị quy đổi'
+    default:
+      return sheetName
+  }
+}
+
 export function suggestedImportSheet(
   sheet: ProductImportSheet,
   kind: 'main' | 'conversions'

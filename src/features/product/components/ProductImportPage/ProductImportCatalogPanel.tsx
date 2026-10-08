@@ -1,4 +1,6 @@
-import type { UseFormReturn } from 'react-hook-form'
+import { Controller, type UseFormReturn } from 'react-hook-form'
+import { XIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -7,6 +9,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
   Sheet,
   SheetContent,
+  SheetClose,
   SheetDescription,
   SheetFooter,
   SheetHeader,
@@ -40,6 +43,7 @@ export function ProductImportCatalogPanel({
       }}
     >
       <SheetContent
+        showCloseButton={false}
         className="data-[side=right]:w-full data-[side=right]:sm:max-w-2xl"
         aria-busy={pending}
       >
@@ -51,7 +55,7 @@ export function ProductImportCatalogPanel({
         </SheetHeader>
         <form
           id="product-import-catalogs"
-          className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-4"
+          className="flex min-h-0 flex-1 flex-col overflow-auto overscroll-contain px-4 pb-4"
           onSubmit={(event) => {
             event.preventDefault()
             onSubmit()
@@ -68,7 +72,11 @@ export function ProductImportCatalogPanel({
                     entry.categories === categories ? (
                       <fieldset
                         key={`${entry.categories}:${entry.value}`}
-                        className="flex min-w-0 flex-col gap-3 border p-3"
+                        className={cn(
+                          'flex min-w-0 flex-col gap-3 border p-3',
+                          values.entries.length > 50 &&
+                            '[contain-intrinsic-size:auto_350px] [content-visibility:auto]'
+                        )}
                         disabled={pending}
                       >
                         <legend className="max-w-full px-1 font-semibold wrap-anywhere">
@@ -85,6 +93,8 @@ export function ProductImportCatalogPanel({
                           <FieldLabel htmlFor={`catalog-mode-${index}`}>Cách xử lý</FieldLabel>
                           <NativeSelect
                             id={`catalog-mode-${index}`}
+                            aria-invalid={Boolean(form.formState.errors.entries?.[index]?.mode)}
+                            aria-describedby={`catalog-mode-error-${index}`}
                             {...form.register(`entries.${index}.mode`)}
                           >
                             <NativeSelectOption value="skip">
@@ -99,17 +109,22 @@ export function ProductImportCatalogPanel({
                               </NativeSelectOption>
                             ) : null}
                           </NativeSelect>
-                          <FieldError>
+                          <FieldError id={`catalog-mode-error-${index}`}>
                             {form.formState.errors.entries?.[index]?.mode?.message}
                           </FieldError>
                         </Field>
                         {entry.mode === 'existing' ? (
-                          <Field>
+                          <Field
+                            data-invalid={Boolean(
+                              form.formState.errors.entries?.[index]?.existingId
+                            )}
+                          >
                             <FieldLabel htmlFor={`catalog-existing-${index}`}>
                               Danh mục đang hoạt động
                             </FieldLabel>
                             <NativeSelect
                               id={`catalog-existing-${index}`}
+                              aria-describedby={`catalog-existing-error-${index}`}
                               {...form.register(`entries.${index}.existingId`)}
                               aria-invalid={Boolean(
                                 form.formState.errors.entries?.[index]?.existingId
@@ -121,11 +136,11 @@ export function ProductImportCatalogPanel({
                                 : preview.availableUnits
                               )?.map((item) => (
                                 <NativeSelectOption key={item.id} value={item.id}>
-                                  {item.code} — {item.name}
+                                  {item.code} — {item.path || item.name}
                                 </NativeSelectOption>
                               ))}
                             </NativeSelect>
-                            <FieldError>
+                            <FieldError id={`catalog-existing-error-${index}`}>
                               {form.formState.errors.entries?.[index]?.existingId?.message}
                             </FieldError>
                           </Field>
@@ -143,10 +158,13 @@ export function ProductImportCatalogPanel({
                               </FieldLabel>
                               <Input
                                 id={`catalog-code-${index}`}
+                                aria-describedby={`catalog-code-error-${index}`}
+                                autoComplete="off"
+                                spellCheck={false}
                                 {...form.register(`entries.${index}.code`)}
                                 aria-invalid={Boolean(form.formState.errors.entries?.[index]?.code)}
                               />
-                              <FieldError>
+                              <FieldError id={`catalog-code-error-${index}`}>
                                 {form.formState.errors.entries?.[index]?.code?.message}
                               </FieldError>
                             </Field>
@@ -161,10 +179,11 @@ export function ProductImportCatalogPanel({
                               </FieldLabel>
                               <Input
                                 id={`catalog-name-${index}`}
+                                aria-describedby={`catalog-name-error-${index}`}
                                 {...form.register(`entries.${index}.name`)}
                                 aria-invalid={Boolean(form.formState.errors.entries?.[index]?.name)}
                               />
-                              <FieldError>
+                              <FieldError id={`catalog-name-error-${index}`}>
                                 {form.formState.errors.entries?.[index]?.name?.message}
                               </FieldError>
                             </Field>
@@ -180,39 +199,57 @@ export function ProductImportCatalogPanel({
                                   <NativeSelectOption value="">Nhóm cấp gốc</NativeSelectOption>
                                   {preview.availableCategories?.map((item) => (
                                     <NativeSelectOption key={item.id} value={item.code}>
-                                      {item.code} — {item.name}
+                                      {item.code} — {item.path || item.name}
                                     </NativeSelectOption>
                                   ))}
                                 </NativeSelect>
                               </Field>
                             ) : (
                               <>
-                                <Field>
+                                <Field
+                                  data-invalid={Boolean(
+                                    form.formState.errors.entries?.[index]?.symbol
+                                  )}
+                                >
                                   <FieldLabel htmlFor={`catalog-symbol-${index}`}>
                                     Ký hiệu (tùy chọn)
                                   </FieldLabel>
                                   <Input
                                     id={`catalog-symbol-${index}`}
+                                    aria-describedby={`catalog-symbol-error-${index}`}
+                                    aria-invalid={Boolean(
+                                      form.formState.errors.entries?.[index]?.symbol
+                                    )}
                                     {...form.register(`entries.${index}.symbol`)}
                                   />
-                                  <FieldError>
+                                  <FieldError id={`catalog-symbol-error-${index}`}>
                                     {form.formState.errors.entries?.[index]?.symbol?.message}
                                   </FieldError>
                                 </Field>
-                                <Field>
+                                <Field
+                                  data-invalid={Boolean(
+                                    form.formState.errors.entries?.[index]?.quantityPrecision
+                                  )}
+                                >
                                   <FieldLabel htmlFor={`catalog-precision-${index}`}>
                                     Số chữ số thập phân
                                   </FieldLabel>
                                   <Input
                                     id={`catalog-precision-${index}`}
+                                    aria-describedby={`catalog-precision-error-${index}`}
                                     type="number"
                                     min={0}
                                     max={6}
+                                    step={1}
+                                    inputMode="numeric"
+                                    aria-invalid={Boolean(
+                                      form.formState.errors.entries?.[index]?.quantityPrecision
+                                    )}
                                     {...form.register(`entries.${index}.quantityPrecision`, {
                                       valueAsNumber: true,
                                     })}
                                   />
-                                  <FieldError>
+                                  <FieldError id={`catalog-precision-error-${index}`}>
                                     {
                                       form.formState.errors.entries?.[index]?.quantityPrecision
                                         ?.message
@@ -232,24 +269,46 @@ export function ProductImportCatalogPanel({
           </FieldGroup>
         </form>
         <SheetFooter className="shrink-0 border-t">
-          <Field orientation="horizontal">
-            <Checkbox
-              id="catalog-confirm"
-              checked={values.confirmed}
-              disabled={pending}
-              onCheckedChange={(value) =>
-                form.setValue('confirmed', value === true, { shouldValidate: true })
-              }
+          <Field orientation="horizontal" data-invalid={Boolean(form.formState.errors.confirmed)}>
+            <Controller
+              control={form.control}
+              name="confirmed"
+              render={({ field, fieldState }) => (
+                <Checkbox
+                  id="catalog-confirm"
+                  ref={field.ref}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  checked={field.value}
+                  disabled={pending}
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby={fieldState.invalid ? 'catalog-confirm-error' : undefined}
+                  onCheckedChange={(value) => field.onChange(value === true)}
+                />
+              )}
             />
             <FieldLabel htmlFor="catalog-confirm">
               Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.
             </FieldLabel>
           </Field>
-          <FieldError>{form.formState.errors.confirmed?.message}</FieldError>
+          <FieldError id="catalog-confirm-error">
+            {form.formState.errors.confirmed?.message}
+          </FieldError>
           <Button type="submit" form="product-import-catalogs" disabled={pending}>
             Áp dụng và kiểm tra lại
           </Button>
         </SheetFooter>
+        <SheetClose asChild>
+          <Button
+            variant="ghost"
+            className="absolute top-3 right-3"
+            size="icon-sm"
+            disabled={pending}
+          >
+            <XIcon aria-hidden="true" />
+            <span className="sr-only">Đóng danh mục cần xử lý</span>
+          </Button>
+        </SheetClose>
       </SheetContent>
     </Sheet>
   )
