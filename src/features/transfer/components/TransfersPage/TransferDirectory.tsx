@@ -241,10 +241,15 @@ export function TransferDirectory({
                   variant="outline"
                   size="icon"
                   aria-label="Tải lại danh sách"
+                  aria-busy={isFetching}
                   onClick={onRetry}
                 >
                   <RefreshCw
-                    className={isFetching ? 'animate-spin' : undefined}
+                    className={
+                      isFetching
+                        ? 'animate-spin motion-reduce:animate-none motion-reduce:opacity-50'
+                        : undefined
+                    }
                     aria-hidden="true"
                   />
                 </Button>
