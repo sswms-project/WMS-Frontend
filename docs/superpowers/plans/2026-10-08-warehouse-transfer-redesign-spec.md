@@ -686,6 +686,10 @@ Lỗi tìm thấy và đã sửa:
 | Trang admin vai trò không tải được                  | DB có quyền do bản code khác thêm, bản build này ném lỗi khi dựng danh sách | Danh sách quyền/vai trò bỏ qua quyền chưa định nghĩa (BE `ba5d2e3`) |
 | Thông báo lệch phiên bản lặp ý, viết thường chữ đầu | FE nối thêm gợi ý tải lại lên thông báo của BE                              | Viết hoa và chỉ thêm gợi ý khi chưa có                              |
 
+### 21.4b. Luồng quét bằng máy quét mã vạch
+
+Máy quét dạng bàn phím gõ mã rồi Enter vào ô đang focus. Trước đây sau khi quét vị trí, con trỏ vẫn ở ô vị trí nên mã hàng quét kế tiếp bị nhận như mã vị trí và bị từ chối. Đã sửa: con trỏ tự đi theo bước (vị trí → mã hàng → số lượng, Enter ở số lượng để xác nhận); Tab cũng kết thúc một lần quét; quét nhầm loại mã báo rõ "Đây là mã hàng / mã vị trí". Đã chạy lại trên trình duyệt chỉ bằng phím. Chưa làm: âm báo/rung khi quét, ẩn bàn phím ảo trên điện thoại khi dùng máy quét Bluetooth, chế độ quét từng đơn vị, quét bằng camera.
+
 ### 21.5. Hạn chế còn lại
 
 - Hai lỗi truy cập axe (`button-name` của nút trigger combobox, `aria-valid-attr-value` của tab) đã sửa: nút mở danh sách có nhãn mặc định "Mở danh sách"; hai thanh tab của chuyển kho nối với `role=tabpanel` theo mẫu WAI-ARIA. Axe không còn lỗi trên danh sách, form và chi tiết. Các nơi khác dùng `Tabs` của Radix vẫn giữ hành vi cũ.
