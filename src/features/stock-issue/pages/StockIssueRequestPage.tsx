@@ -63,7 +63,10 @@ function toRecordStockPickingLines(
   }))
 }
 
-export default function StockIssueRequestPage() {
+export default function StockIssueRequestPage({
+  initialRequestId,
+}: { readonly initialRequestId?: string } = {}) {
+  const [linkedRequestId, setLinkedRequestId] = useState(initialRequestId)
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<StockIssueRequestStatus | ''>('')
   const [warehouseId, setWarehouseId] = useState('')
@@ -98,7 +101,7 @@ export default function StockIssueRequestPage() {
     ...(dateTo ? { dateTo } : {}),
   })
   const stockRecipientOptionsQuery = useStockRecipientOptionsQuery({ pageNumber: 1, pageSize: 200 })
-  const orderDetailQuery = useStockIssueRequestQuery(inspectedOrder?.id ?? null)
+  const orderDetailQuery = useStockIssueRequestQuery(inspectedOrder?.id ?? linkedRequestId ?? null)
   const reservationQuery = useInventoryReservationsQuery(
     {
       pageNumber: 1,
@@ -360,7 +363,10 @@ export default function StockIssueRequestPage() {
             })
         }}
         onOpenChange={(open) => {
-          if (!open) setInspectedOrder(null)
+          if (!open) {
+            setInspectedOrder(null)
+            setLinkedRequestId(undefined)
+          }
         }}
       />
       <RecordStockPickingDialog
