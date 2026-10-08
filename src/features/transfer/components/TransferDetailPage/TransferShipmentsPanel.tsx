@@ -17,7 +17,7 @@ import {
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { TransferShipment } from '../../types/transfer.types'
 import type { ShipmentCapabilities } from '../../utils/transfer-capabilities'
-import { SHIPMENT_LINE_STATUS_LABELS } from '../../utils/transfer-format'
+import { SHIPMENT_LINE_STATUS_LABELS, TASK_EXECUTION_LABELS } from '../../utils/transfer-format'
 import { ShipmentStatusBadge } from '../TransfersPage'
 
 export type TransferTaskKind = 'pick' | 'receive'
@@ -41,7 +41,8 @@ function taskSummary(
   return (
     <p className="text-xs">
       <span className="text-muted-foreground">{label}: </span>
-      <span className="font-mono">{code}</span> · {status ?? '—'} ·{' '}
+      <span className="font-mono">{code}</span> ·{' '}
+      {status ? (TASK_EXECUTION_LABELS[status] ?? status) : '—'} ·{' '}
       {assigneeId ? 'Đã giao' : 'Chưa giao nhân viên'}
     </p>
   )
@@ -111,7 +112,7 @@ export function TransferShipmentsPanel({
                         {formatQuantity(line.plannedQuantity)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatQuantity(line.pickedQuantity)}
+                        {formatQuantity(line.pickedQuantity + line.dispatchedQuantity)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatQuantity(line.dispatchedQuantity)}

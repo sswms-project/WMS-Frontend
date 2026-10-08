@@ -31,6 +31,7 @@ import {
 } from '../../types/transfer.types'
 import { PICK_REASONS_SUGGESTING_COUNT, PICK_REASON_LABELS } from '../../utils/transfer-format'
 import { ScanInput } from './ScanInput'
+import { formatTransferLocation } from '../../utils/transfer-location'
 
 interface LineScoped {
   readonly line: TransferPickSheetLine | null
@@ -118,7 +119,7 @@ export function PickSwitchDialog({
                     key={alternative.inventoryStockId}
                     value={alternative.inventoryStockId}
                   >
-                    {alternative.slotCode}
+                    {formatTransferLocation(alternative)}
                     {alternative.lotNumber ? ` · lô ${alternative.lotNumber}` : ''}
                     {alternative.expiryDate
                       ? ` · HSD ${formatOperationalDate(alternative.expiryDate)}`
@@ -299,7 +300,7 @@ export function ReturnPickDialog({
               >
                 {picks.map((pick) => (
                   <NativeSelectOption key={pick.id} value={pick.id}>
-                    {pick.slotCode}
+                    {formatTransferLocation(pick)}
                     {pick.lotNumber ? ` · lô ${pick.lotNumber}` : ''} · đang giữ{' '}
                     {formatQuantity(
                       pick.pickedQuantity - pick.returnedQuantity - pick.dispatchedQuantity

@@ -60,6 +60,15 @@ export const SHIPMENT_STATUS_LABELS: Record<TransferShipmentStatus, string> = {
   Cancelled: 'Đã hủy',
 }
 
+/** Trạng thái thực hiện công việc kho (do BE trả về dạng mã tiếng Anh). */
+export const TASK_EXECUTION_LABELS: Record<string, string> = {
+  Queued: 'Chờ bắt đầu',
+  InProgress: 'Đang làm',
+  Paused: 'Tạm dừng',
+  Completed: 'Hoàn tất',
+  Cancelled: 'Đã hủy',
+}
+
 export const SHIPMENT_LINE_STATUS_LABELS: Record<TransferShipmentLineStatus, string> = {
   Pending: 'Chờ lấy',
   Picking: 'Đang lấy',

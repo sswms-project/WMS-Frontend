@@ -11,6 +11,7 @@ import {
   SHIPMENT_LINE_STATUS_LABELS,
   labelOf,
 } from '../../utils/transfer-format'
+import { formatTransferLocation } from '../../utils/transfer-location'
 
 interface PickLineCardProps {
   readonly line: TransferPickSheetLine
@@ -34,6 +35,9 @@ export function PickLineCard({
   const pendingExceptions = line.exceptions.filter(
     (exception) => exception.status === 'PendingManager'
   )
+  // Phần đã xuất không còn nằm trong "đã lấy chờ xuất" nhưng vẫn là hàng nhân viên đã lấy.
+  const totalPicked =
+    line.pickedQuantity + line.picks.reduce((sum, pick) => sum + pick.dispatchedQuantity, 0)
   const outstandingPicks = line.picks.filter(
     (pick) => pick.pickedQuantity - pick.returnedQuantity - pick.dispatchedQuantity > 0
   )
@@ -53,7 +57,7 @@ export function PickLineCard({
             {SHIPMENT_LINE_STATUS_LABELS[line.status]}
           </Badge>
           <p className="text-sm tabular-nums">
-            Đã lấy <strong>{formatQuantity(line.pickedQuantity)}</strong> /{' '}
+            Đã lấy <strong>{formatQuantity(totalPicked)}</strong> /{' '}
             {formatQuantity(line.plannedQuantity)} {line.baseUnitName}
           </p>
         </div>
@@ -69,7 +73,7 @@ export function PickLineCard({
                 className="flex flex-wrap items-center justify-between gap-2 text-sm"
               >
                 <span className="font-mono font-medium" translate="no">
-                  {suggestion.slotCode}
+                  {formatTransferLocation(suggestion)}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {suggestion.lotNumber ? `Lô ${suggestion.lotNumber}` : 'Không theo lô'}
@@ -116,7 +120,7 @@ export function PickLineCard({
           {line.picks.map((pick) => (
             <li key={pick.id} className="flex flex-wrap justify-between gap-2">
               <span className="font-mono" translate="no">
-                {pick.slotCode}
+                {formatTransferLocation(pick)}
                 {pick.lotNumber ? ` · lô ${pick.lotNumber}` : ''}
               </span>
               <span className="tabular-nums">

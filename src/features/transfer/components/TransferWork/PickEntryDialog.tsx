@@ -13,6 +13,7 @@ import { formatQuantity } from '@/features/inbound-request/utils/inbound-request
 import type { TransferPickAlternative, TransferPickSheetLine } from '../../types/transfer.types'
 import type { PickScanState } from '../../utils/transfer-scan'
 import { ScanInput } from './ScanInput'
+import { formatTransferLocation } from '../../utils/transfer-location'
 
 interface PickEntryDialogProps {
   readonly line: TransferPickSheetLine | null
@@ -67,7 +68,7 @@ export function PickEntryDialog({
               id="pick-scan-slot"
               label="1. Quét mã vị trí"
               autoFocus
-              confirmedValue={scan.suggestion?.slotCode}
+              confirmedValue={scan.suggestion ? formatTransferLocation(scan.suggestion) : undefined}
               error={scan.step === 'slot' ? scan.error : null}
               disabled={isPending}
               onScan={onScanSlot}
@@ -75,8 +76,8 @@ export function PickEntryDialog({
             {offered ? (
               <div className="bg-muted flex flex-wrap items-center justify-between gap-2 border p-3 text-sm">
                 <span>
-                  Vị trí <strong className="font-mono">{offered.slotCode}</strong> có đúng hàng (còn{' '}
-                  {formatQuantity(offered.availableQuantity)}). Lấy ở vị trí này thay?
+                  <strong className="font-mono">{formatTransferLocation(offered)}</strong> có đúng
+                  hàng (còn {formatQuantity(offered.availableQuantity)}). Lấy ở vị trí này thay?
                 </span>
                 <Button
                   type="button"

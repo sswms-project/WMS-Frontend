@@ -25,6 +25,7 @@ import {
   type TransferPickSheetLine,
 } from '../../types/transfer.types'
 import { ESCALATION_ACTION_LABELS, PICK_REASON_LABELS, labelOf } from '../../utils/transfer-format'
+import { formatTransferLocation } from '../../utils/transfer-location'
 
 export interface PendingEscalation {
   readonly line: TransferPickSheetLine
@@ -131,7 +132,7 @@ export function ResolveEscalationDialog({
                             key={alternative.inventoryStockId}
                             value={alternative.inventoryStockId}
                           >
-                            {alternative.slotCode}
+                            {formatTransferLocation(alternative)}
                             {alternative.lotNumber ? ` · lô ${alternative.lotNumber}` : ''}
                             {alternative.expiryDate
                               ? ` · HSD ${formatOperationalDate(alternative.expiryDate)}`
