@@ -4,6 +4,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inventoryService } from '../services/inventory.service'
 import type {
+  InventoryStock,
   InventoryStockListResponse,
   InventoryReservationListResponse,
   InventoryAbcItem,
@@ -69,6 +70,17 @@ export function useInventoryQuery(params: InventoryListQuery, enabled = true) {
     queryFn: () => inventoryService.getInventory(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
     enabled,
+  })
+}
+
+export function useFetchAllInventoryMutation() {
+  return useMutation<
+    InventoryStock[],
+    ApiErrorResponse,
+    Parameters<typeof inventoryService.getAllInventory>[0]
+  >({
+    mutationFn: inventoryService.getAllInventory,
+    onError: (error) => logger.error(error),
   })
 }
 

@@ -172,9 +172,12 @@ export const API_ENDPOINTS = {
     allowedActions: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/allowed-actions`,
     recordItem: (cycleCountId: string, itemId: string) =>
       `/cycle-counts/${cycleCountId}/items/${itemId}`,
+    start: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/start`,
     submit: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/submit`,
     recount: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/recount`,
     finalize: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/finalize`,
+    cancel: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/cancel`,
+    export: (cycleCountId: string) => `/cycle-counts/${cycleCountId}/export`,
   },
   stockAdjustments: {
     list: '/stock-adjustments',
@@ -183,6 +186,12 @@ export const API_ENDPOINTS = {
     allowedActions: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/allowed-actions`,
     approve: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/approve`,
     reject: (adjustmentId: string) => `/stock-adjustments/${adjustmentId}/reject`,
+    vouchers: '/stock-adjustments/vouchers',
+    voucherDetail: (voucherId: string) => `/stock-adjustments/vouchers/${voucherId}`,
+    voucherAllowedActions: (voucherId: string) =>
+      `/stock-adjustments/vouchers/${voucherId}/allowed-actions`,
+    voucherApprove: (voucherId: string) => `/stock-adjustments/vouchers/${voucherId}/approve`,
+    voucherReject: (voucherId: string) => `/stock-adjustments/vouchers/${voucherId}/reject`,
   },
   suppliers: {
     list: '/suppliers',

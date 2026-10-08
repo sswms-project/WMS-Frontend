@@ -41,6 +41,7 @@ import type {
 import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
+  StockAdjustmentVoucherListQuery,
 } from '@/features/cycle-count/types/cycle-count.types'
 import type {
   AuditLogQuery,
@@ -167,6 +168,11 @@ export const queryKeys = {
     list: (params: StockAdjustmentListQuery) => ['stock-adjustments', 'list', params] as const,
     detail: (id: string) => ['stock-adjustments', 'detail', id] as const,
     allowedActions: (id: string) => ['stock-adjustments', 'detail', id, 'allowed-actions'] as const,
+    voucherList: (params: StockAdjustmentVoucherListQuery) =>
+      ['stock-adjustments', 'voucher', 'list', params] as const,
+    voucherDetail: (id: string) => ['stock-adjustments', 'voucher', id] as const,
+    voucherAllowedActions: (id: string) =>
+      ['stock-adjustments', 'voucher', id, 'allowed-actions'] as const,
   },
   products: {
     all: ['products'] as const,

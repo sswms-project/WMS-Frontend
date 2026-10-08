@@ -144,7 +144,7 @@ export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
             kích hoạt tài khoản vận hành.
           </p>
           <div className="border-border bg-muted text-muted-foreground mt-5 rounded-md border p-3 text-xs leading-5">
-            Link xác minh được backend cấp sau khi đăng ký và có thời hạn 15 phút.
+            Link xác minh được hệ thống cấp sau khi đăng ký và có thời hạn 15 phút.
           </div>
         </Card>
       </section>
