@@ -25,6 +25,7 @@ import {
 } from '@/features/inventory/hooks/use-inventory'
 import { useStaffListQuery } from '@/features/staff/hooks/use-staff'
 import { STAFF_DIRECTORY_KINDS } from '@/features/staff/types/staff.types'
+import { useTransferRealtime } from '@/features/transfer/hooks/use-transfer-realtime'
 import { useWarehouseLocationsQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
@@ -111,6 +112,13 @@ export default function MyWarehouseTasksPage() {
   const [reasonError, setReasonError] = useState('')
   const meQuery = useMeQuery()
   const permissions = meQuery.data?.permissions ?? []
+  const assignedWarehouses = meQuery.data?.assignedWarehouses
+  const assignedWarehouseIds = useMemo(
+    () => (assignedWarehouses ?? []).map((warehouse) => warehouse.id),
+    [assignedWarehouses]
+  )
+  // Việc lấy/nhận hàng điều chuyển thay đổi theo thời gian thực nên danh sách tự làm mới.
+  useTransferRealtime({ warehouseIds: assignedWarehouseIds })
   const canManageOwnTasks = permissions.includes(P.WAREHOUSE_TASKS_MANAGE_OWN)
   const managesWarehouseTasks = permissions.includes(P.WAREHOUSE_TASKS_VIEW_ALL)
   const canCreateRelocation = permissions.includes(P.WAREHOUSE_TASKS_CREATE)
@@ -451,7 +459,9 @@ export default function MyWarehouseTasksPage() {
               <NativeSelectOption value="Receiving">Nhận hàng</NativeSelectOption>
               <NativeSelectOption value="PutAway">Cất hàng</NativeSelectOption>
               <NativeSelectOption value="CycleCount">Kiểm kê</NativeSelectOption>
-              <NativeSelectOption value="Relocation">Điều chuyển</NativeSelectOption>
+              <NativeSelectOption value="Relocation">Điều chuyển vị trí</NativeSelectOption>
+              <NativeSelectOption value="TransferPick">Lấy hàng điều chuyển</NativeSelectOption>
+              <NativeSelectOption value="TransferReceive">Nhận hàng điều chuyển</NativeSelectOption>
             </NativeSelect>
             <NativeSelect
               aria-label="Lọc theo trạng thái"

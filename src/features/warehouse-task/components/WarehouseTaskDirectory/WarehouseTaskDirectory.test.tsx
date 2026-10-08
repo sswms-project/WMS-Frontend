@@ -33,6 +33,8 @@ const task: MyWarehouseTask = {
   assignedToName: 'Nhân viên kho',
   assignedAt: '2026-10-07T00:00:00Z',
   updatedAt: '2026-10-07T00:00:00Z',
+  transferId: null,
+  transferShipmentId: null,
 }
 
 function props(): ComponentProps<typeof WarehouseTaskDirectory> {

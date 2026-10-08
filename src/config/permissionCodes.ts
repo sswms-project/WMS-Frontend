@@ -143,9 +143,11 @@ export const P = {
   // Transfers
   TRANSFERS_VIEW: 'transfers:view',
   TRANSFERS_CREATE: 'transfers:create',
-  TRANSFERS_APPROVE: 'transfers:approve',
   TRANSFERS_DISPATCH: 'transfers:dispatch',
   TRANSFERS_RECEIVE: 'transfers:receive',
+  TRANSFERS_PICK: 'transfers:pick',
+  TRANSFERS_CANCEL: 'transfers:cancel',
+  TRANSFERS_RESOLVE: 'transfers:resolve',
 
   // Warehouses
   WAREHOUSES_VIEW: 'warehouses:view',

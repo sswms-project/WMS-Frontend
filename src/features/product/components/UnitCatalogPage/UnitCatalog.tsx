@@ -1,5 +1,8 @@
 'use client'
 
+import Link from 'next/link'
+import { APP_ROUTES } from '@/routes/app-routes'
+
 import { useState } from 'react'
 import { Pencil, Plus, Power, RotateCcw, Scale } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
@@ -100,6 +103,9 @@ export function UnitCatalog({
         </div>
         {canManage ? (
           <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href={APP_ROUTES.unitImport}>Nhập từ tệp</Link>
+            </Button>
             <Button onClick={onCreate}>
               <Plus data-icon="inline-start" aria-hidden="true" />
               Thêm đơn vị tính

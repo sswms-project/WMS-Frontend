@@ -26,8 +26,8 @@ import type {
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
+  TransferAvailabilityQuery,
   TransferListQuery,
-  TransferSourceInventoryQuery,
   TransferSourceWarehouseQuery,
 } from '@/features/transfer/types/transfer.types'
 import type {
@@ -219,8 +219,14 @@ export const queryKeys = {
     detail: (id: string) => ['transfers', 'detail', id] as const,
     sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
       ['transfers', 'source-warehouses', params] as const,
-    sourceInventory: (params: TransferSourceInventoryQuery) =>
-      ['transfers', 'source-inventory', params] as const,
+    availability: (params: TransferAvailabilityQuery) =>
+      ['transfers', 'availability', params] as const,
+    pickSheet: (transferId: string, shipmentId: string) =>
+      ['transfers', 'pick-sheet', transferId, shipmentId] as const,
+    pickAlternatives: (transferId: string, shipmentId: string, lineId: string) =>
+      ['transfers', 'pick-alternatives', transferId, shipmentId, lineId] as const,
+    receiveSheet: (transferId: string, shipmentId: string) =>
+      ['transfers', 'receive-sheet', transferId, shipmentId] as const,
   },
   stockIssueRequests: {
     all: ['stock-issue-requests'] as const,
