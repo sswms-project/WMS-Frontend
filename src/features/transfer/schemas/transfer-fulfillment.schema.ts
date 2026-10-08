@@ -157,7 +157,8 @@ export const transferDiscrepancySchema = z
   })
   .superRefine((values, context) => {
     if (values.action === 'LateReceipt') {
-      if (!dotNetGuidSchema('').safeParse(values.destinationSlotId).success) {
+      // Mã vị trí được tra ra ID khi gửi; lúc này chỉ cần người dùng đã quét hoặc nhập mã.
+      if (!values.scannedSlotCode) {
         context.addIssue({
           code: 'custom',
           path: ['scannedSlotCode'],

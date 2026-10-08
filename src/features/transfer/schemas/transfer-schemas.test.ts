@@ -260,7 +260,6 @@ describe('transferDiscrepancySchema', () => {
     expect(
       transferDiscrepancySchema.safeParse({
         ...late,
-        destinationSlotId: 'a0000000-0000-4000-8000-000000000001',
         scannedSlotCode: 'B-01',
       }).success
     ).toBe(true)
