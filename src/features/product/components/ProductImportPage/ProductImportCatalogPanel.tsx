@@ -35,6 +35,8 @@ export function ProductImportCatalogPanel({
   onSubmit,
 }: Props) {
   const values = form.watch()
+  const hasNewCatalogs = values.entries.some((entry) => entry.mode === 'create')
+  const needsConfirmation = hasNewCatalogs && !values.confirmed
   return (
     <Sheet
       open={open}
@@ -58,6 +60,7 @@ export function ProductImportCatalogPanel({
           className="flex min-h-0 flex-1 flex-col overflow-auto overscroll-contain px-4 pb-4"
           onSubmit={(event) => {
             event.preventDefault()
+            if (pending || needsConfirmation) return
             onSubmit()
           }}
         >
@@ -269,32 +272,56 @@ export function ProductImportCatalogPanel({
           </FieldGroup>
         </form>
         <SheetFooter className="shrink-0 border-t">
-          <Field orientation="horizontal" data-invalid={Boolean(form.formState.errors.confirmed)}>
-            <Controller
-              control={form.control}
-              name="confirmed"
-              render={({ field, fieldState }) => (
-                <Checkbox
-                  id="catalog-confirm"
-                  ref={field.ref}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  checked={field.value}
-                  disabled={pending}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={fieldState.invalid ? 'catalog-confirm-error' : undefined}
-                  onCheckedChange={(value) => field.onChange(value === true)}
+          {hasNewCatalogs ? (
+            <>
+              <Field
+                orientation="horizontal"
+                data-invalid={Boolean(form.formState.errors.confirmed)}
+              >
+                <Controller
+                  control={form.control}
+                  name="confirmed"
+                  render={({ field, fieldState }) => (
+                    <Checkbox
+                      id="catalog-confirm"
+                      ref={field.ref}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      checked={field.value}
+                      disabled={pending}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid
+                          ? 'catalog-confirm-error'
+                          : needsConfirmation
+                            ? 'catalog-confirm-hint'
+                            : undefined
+                      }
+                      onCheckedChange={(value) => field.onChange(value === true)}
+                    />
+                  )}
                 />
-              )}
-            />
-            <FieldLabel htmlFor="catalog-confirm">
-              Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.
-            </FieldLabel>
-          </Field>
-          <FieldError id="catalog-confirm-error">
-            {form.formState.errors.confirmed?.message}
-          </FieldError>
-          <Button type="submit" form="product-import-catalogs" disabled={pending}>
+                <FieldLabel htmlFor="catalog-confirm">
+                  Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.
+                </FieldLabel>
+              </Field>
+              <FieldError id="catalog-confirm-error">
+                {form.formState.errors.confirmed?.message}
+              </FieldError>
+            </>
+          ) : null}
+          {needsConfirmation ? (
+            <p id="catalog-confirm-hint" role="status" className="text-muted-foreground text-xs">
+              Tick xác nhận để áp dụng phương án tạo mới. Danh mục chỉ được tạo khi xác nhận nhập
+              hàng hóa.
+            </p>
+          ) : null}
+          <Button
+            type="submit"
+            form="product-import-catalogs"
+            disabled={pending || needsConfirmation}
+            aria-describedby={needsConfirmation ? 'catalog-confirm-hint' : undefined}
+          >
             Áp dụng và kiểm tra lại
           </Button>
         </SheetFooter>

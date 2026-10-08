@@ -33,6 +33,7 @@ describe('shared catalog import presentation', () => {
           .querySelector('[aria-current="step"]')
       ).toHaveTextContent('3. Kiểm tra')
       expect(view.container.firstChild).toHaveAttribute('aria-busy', 'true')
+      expect(view.container.firstChild).toHaveAttribute('data-slot', 'bulk-import-workspace')
     }
   )
 
@@ -50,6 +51,10 @@ describe('shared catalog import presentation', () => {
       </>
     )
     expect(screen.getByText('8')).toBeInTheDocument()
+    const summary = screen.getByRole('region', { name: 'Tổng quan bản xem trước' })
+    const cards = summary.querySelectorAll('[data-slot="card"]')
+    expect(cards).toHaveLength(3)
+    cards.forEach((card) => expect(card).toHaveClass('border', 'border-border', 'ring-0'))
     const button = screen.getByRole('button', { name: 'Mở rộng thông tin bổ sung · 2 lỗi' })
     expect(button).toHaveAttribute('aria-controls', 'preview-table')
     expect(button).toHaveAttribute('aria-expanded', 'false')

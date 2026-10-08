@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AxiosHeaders } from 'axios'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { P } from '@/config/permissionCodes'
@@ -70,7 +70,7 @@ async function openReview(kind: CatalogImportKind = 'units') {
     new File(['Tên\nLon'], 'catalog.csv', { type: 'text/csv' })
   )
   await userEvent.click(await screen.findByRole('button', { name: 'Kiểm tra dữ liệu' }))
-  await screen.findByLabelText('Mã dòng 2')
+  await screen.findByText('Bản xem trước')
 }
 beforeEach(() => {
   auth.data.permissions = [P.UNITS_MANAGE, P.CATEGORIES_MANAGE]
@@ -124,7 +124,7 @@ describe('catalog import', () => {
       expect(screen.getByRole('button', { name: /Nhập 1 đơn vị tính/ })).toBeDisabled()
     )
     expect(screen.queryByRole('button', { name: 'Kiểm tra lại dữ liệu' })).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Mã dòng 2')).toHaveValue('DVT-LON')
+    expect(screen.getByText('DVT-LON')).toBeInTheDocument()
   })
 
   it.each(['units', 'categories'] as const)(
@@ -134,50 +134,62 @@ describe('catalog import', () => {
       await openReview(kind)
       expect(screen.getByText('Bản xem trước')).toBeInTheDocument()
       expect(screen.getByText('Tổng số:')).toBeInTheDocument()
-      expect(screen.getByLabelText('Mã dòng 2')).toHaveValue('DVT-LON')
+      const previewRow = screen.getByRole('row', { name: /DVT-LON/ })
+      expect(within(previewRow).getByText('DVT-LON')).toBeInTheDocument()
+      expect(within(previewRow).queryByRole('textbox')).not.toBeInTheDocument()
       expect(catalogImportService.preview).toHaveBeenCalledWith(
         kind,
         expect.any(File),
         expect.any(Object),
-        []
+        undefined
       )
       expect(catalogImportService.commit).not.toHaveBeenCalled()
     }
   )
-  it('requires recheck after code edits and submits only the validated code', async () => {
+  it.each(['units', 'categories'] as const)(
+    'keeps invalid %s codes fully visible and read-only',
+    async (kind) => {
+      const longCode = 'N'.repeat(51)
+      const message = 'Mã danh mục bắt buộc, tối đa 50 ký tự.'
+      vi.mocked(catalogImportService.preview).mockResolvedValueOnce({
+        rows: [{ ...row, code: longCode, errors: [message], fieldErrors: { code: [message] } }],
+      })
+      renderPage(kind)
+      await openReview(kind)
+      const previewRow = screen.getByRole('row', { name: new RegExp(longCode) })
+      expect(within(previewRow).getByText(longCode)).toBeInTheDocument()
+      expect(within(previewRow).getAllByText(message).length).toBeGreaterThan(0)
+      expect(within(previewRow).queryByRole('textbox')).not.toBeInTheDocument()
+      expect(within(previewRow).getByRole('checkbox')).toBeDisabled()
+    }
+  )
+  it.each(['units', 'categories'] as const)(
+    'imports the validated read-only %s code unchanged',
+    async (kind) => {
+      renderPage(kind)
+      await openReview(kind)
+      await userEvent.click(screen.getByRole('button', { name: 'Quay lại ghép cột' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' }))
+      await waitFor(() => expect(catalogImportService.preview).toHaveBeenCalledTimes(2))
+      expect(vi.mocked(catalogImportService.preview).mock.calls[1]?.[3]).toBeUndefined()
+      await userEvent.click(screen.getByRole('button', { name: /Nhập 1/ }))
+      await userEvent.click(await screen.findByRole('button', { name: 'Xác nhận nhập' }))
+      await waitFor(() =>
+        expect(catalogImportService.commit).toHaveBeenCalledWith(kind, [
+          expect.objectContaining({ code: row.code }),
+        ])
+      )
+    }
+  )
+  it('revalidates from the source file after changing the mapping', async () => {
     renderPage()
     await openReview()
-    const input = screen.getByLabelText('Mã dòng 2')
-    await userEvent.clear(input)
-    await userEvent.type(input, 'DVT-LON-MOI')
-    expect(screen.getByRole('button', { name: /Nhập 1 đơn vị tính/ })).toBeDisabled()
-    vi.mocked(catalogImportService.preview).mockResolvedValueOnce({
-      rows: [{ ...row, code: 'DVT-LON-MOI' }],
-    })
-    await userEvent.click(screen.getByRole('button', { name: 'Kiểm tra lại dữ liệu' }))
-    await waitFor(() => expect(catalogImportService.preview).toHaveBeenCalledTimes(2))
-    expect(vi.mocked(catalogImportService.preview).mock.calls[1]?.[3]).toEqual([
-      { rowNumber: 2, code: 'DVT-LON-MOI' },
-    ])
-    await userEvent.click(await screen.findByRole('button', { name: /Nhập 1 đơn vị tính/ }))
-    await userEvent.click(await screen.findByRole('button', { name: 'Xác nhận nhập' }))
-    await waitFor(() =>
-      expect(catalogImportService.commit).toHaveBeenCalledWith('units', [
-        expect.objectContaining({ code: 'DVT-LON-MOI' }),
-      ])
-    )
-  })
-  it('does not carry edited codes into a different mapping configuration', async () => {
-    renderPage()
-    await openReview()
-    await userEvent.clear(screen.getByLabelText('Mã dòng 2'))
-    await userEvent.type(screen.getByLabelText('Mã dòng 2'), 'DVT-EDITED')
     await userEvent.click(screen.getByRole('button', { name: 'Quay lại ghép cột' }))
     await userEvent.selectOptions(screen.getByLabelText('Dấu phân cách CSV'), ';')
     await waitFor(() => expect(catalogImportService.inspect).toHaveBeenCalledTimes(2))
     await userEvent.click(await screen.findByRole('button', { name: 'Kiểm tra dữ liệu' }))
     await waitFor(() => expect(catalogImportService.preview).toHaveBeenCalledTimes(2))
-    expect(vi.mocked(catalogImportService.preview).mock.calls[1]?.[3]).toEqual([])
+    expect(vi.mocked(catalogImportService.preview).mock.calls[1]?.[3]).toBeUndefined()
   })
   it('denies users without manage permission before calling import APIs', () => {
     auth.data.permissions = []

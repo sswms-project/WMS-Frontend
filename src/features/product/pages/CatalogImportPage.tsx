@@ -1,11 +1,9 @@
 'use client'
 
-import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { BulkImportPage, type BulkImportColumn } from '@/components/operations/BulkImportPage'
 import { BulkImportPendingBody } from '@/components/operations/BulkImportWorkspace'
 import { downloadBulkImportFile } from '@/components/operations/bulk-import'
-import { Input } from '@/components/ui/input'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
@@ -16,41 +14,14 @@ import type { CatalogImportKind, CatalogImportRow } from '../types/catalog-impor
 export default function CatalogImportPage({ kind }: { readonly kind: CatalogImportKind }) {
   const me = useMeQuery()
   const operations = useCatalogImport(kind)
-  const scope = `${kind}:${me.data?.tenantId}:${me.data?.id}`
-  const [editedCodes, setEditedCodes] = useState({ scope, values: new Map<number, string>() })
-  const edits = editedCodes.scope === scope ? editedCodes.values : new Map<number, string>()
-  const previousMapping = useRef<string | null>(null)
-  const [validationRevision, setValidationRevision] = useState(0)
   const categories = kind === 'categories'
   const label = categories ? 'nhóm vật tư hàng hóa' : 'đơn vị tính'
   const columns: BulkImportColumn<CatalogImportRow>[] = [
     {
       key: 'code',
       header: categories ? 'Mã nhóm' : 'Mã ĐVT',
-      cellClassName: 'min-w-48',
-      render: (row) => (
-        <Input
-          key={`${row.rowNumber}:${row.code}`}
-          aria-label={`Mã dòng ${row.rowNumber}`}
-          defaultValue={edits.get(row.rowNumber) ?? row.code}
-          aria-invalid={Boolean(row.fieldErrors.code?.length)}
-          maxLength={50}
-          spellCheck={false}
-          autoComplete="off"
-          disabled={operations.commit.isPending || operations.preview.isPending}
-          onChange={(event) => {
-            const code = event.target.value
-            setEditedCodes((current) => ({
-              scope,
-              values: new Map(current.scope === scope ? current.values : []).set(
-                row.rowNumber,
-                code
-              ),
-            }))
-            setValidationRevision((value) => value + 1)
-          }}
-        />
-      ),
+      cellClassName: 'min-w-48 max-w-72 font-mono wrap-anywhere whitespace-normal',
+      render: (row) => row.code || '—',
     },
     {
       key: 'name',
@@ -96,7 +67,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
     return <p role="status">Bạn không có quyền nhập {label}.</p>
   return (
     <BulkImportPage<CatalogImportRow>
-      validationRevision={validationRevision}
       key={`${kind}:${me.data.tenantId}:${me.data.id}`}
       eyebrow="Danh mục"
       title={`Nhập ${label}`}
@@ -113,8 +83,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
       isImporting={operations.commit.isPending}
       isDownloadingTemplate={operations.template.isPending}
       onInspect={async (file, delimiter) => {
-        setEditedCodes({ scope, values: new Map() })
-        previousMapping.current = null
         try {
           return {
             isSucceeded: true,
@@ -128,10 +96,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
         }
       }}
       onPreview={async (file, options) => {
-        const mapping = `${scope}:${JSON.stringify(options)}`
-        const sameMapping = previousMapping.current === mapping
-        if (!sameMapping) setEditedCodes({ scope, values: new Map() })
-        previousMapping.current = mapping
         try {
           return {
             isSucceeded: true,
@@ -139,9 +103,6 @@ export default function CatalogImportPage({ kind }: { readonly kind: CatalogImpo
               await operations.preview.mutateAsync({
                 file,
                 options,
-                codeOverrides: sameMapping
-                  ? [...edits].map(([rowNumber, code]) => ({ rowNumber, code }))
-                  : [],
               })
             ).rows,
           }

@@ -99,7 +99,7 @@ export function ProductImportReview({
       <BulkImportSummary total={preview.rows.length} valid={valid.length} />
       <OperationalListPanel
         aria-label="Bản xem trước vật tư hàng hóa"
-        className="max-sm:min-h-128 max-sm:shrink-0"
+        className="flex-none shrink-0 [&>[data-slot=table-container]]:flex-none [&>[data-slot=table-container]]:overflow-x-auto [&>[data-slot=table-container]]:overflow-y-hidden"
       >
         <BulkImportReviewHeader
           fileName={fileName}
@@ -146,7 +146,8 @@ export function ProductImportReview({
             <span className="hidden sm:inline">Chọn toàn bộ sản phẩm hợp lệ của tệp</span>
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
+            size="sm"
             disabled={pending || !selected.length}
             onClick={() => onSelectionChange([])}
           >
@@ -241,7 +242,8 @@ export function ProductImportReview({
                               (count, child) => count + child.errors.length,
                               0
                             )}{' '}
-                          lỗi · {row.warnings.length} cảnh báo. Không thể chọn dòng có lỗi.
+                          lỗi · {row.warnings.length} cảnh báo.
+                          {!isValidProductImportRow(row) ? ' Không thể chọn dòng có lỗi.' : null}
                         </summary>
                         <div className="max-h-48 overflow-auto">
                           {[

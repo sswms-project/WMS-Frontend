@@ -1,5 +1,12 @@
 # AI Review Handoff
 
+## 2026-10-08 — Read-only unit/category import preview
+
+- State: `READY_FOR_CODEX_REVIEW`; implementation/self-verification, not independent approval. No commit/push.
+- Both catalog imports shared an editable code Input. Replaced it with wrapped, full-value monospaced text and removed the page's code-edit state, validation revision and override submission. Backend-generated codes remain visible; corrections belong in the source file followed by a new preview. Backend/API compatibility and other import workflows are unchanged.
+- GitNexus pre-impact LOW for CatalogImportPage; actual consumers verified as units/import and categories/import. Existing shared table/field-error rendering retained. Ponytail, React, shadcn and Web Interface Guidelines informed the minimal shared fix, long-value wrapping and semantic read-only cells.
+- Targeted Vitest: **31 tests / 3 files passed**, covering both catalog kinds, full invalid-code display, inline errors, invalid-row selection blocking, unchanged validated commit codes, mapping revalidation and uncertain-write protection. TypeScript and targeted ESLint passed. No browser or production-build rerun for this text-only change; no Backend startup, database write, seed or migration. Existing unrelated edits preserved.
+
 ## 2026-10-08 — Catalog setup/import Gate C verification
 
 - State: `READY_FOR_CODEX_REVIEW` — implementation/self-verification complete; not independent approval. No commit/push. Details and historical evidence: `docs/features/2026-10-08-catalog-setup-import.md`.
