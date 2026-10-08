@@ -19,9 +19,13 @@ export function describeTransferError(error: unknown, fallback: string): Transfe
     return { kind: 'rejected', message: getApiErrorMessage(error, fallback) }
   }
   if (error.statusCode === 409) {
+    const message = error.message.trim()
+    const sentence = message.charAt(0).toLocaleUpperCase('vi') + message.slice(1)
     return {
       kind: 'conflict',
-      message: `${error.message} Hãy tải lại dữ liệu mới nhất rồi thao tác lại.`,
+      message: /tải lại/i.test(sentence)
+        ? sentence
+        : `${sentence} Hãy tải lại dữ liệu mới nhất rồi thao tác lại.`,
     }
   }
   if (NETWORK_FAILURE_PATTERN.test(error.message)) {

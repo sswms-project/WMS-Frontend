@@ -12,6 +12,17 @@ describe('describeTransferError', () => {
     expect(result.message).toContain('tải lại')
   })
 
+  it('capitalises the message and does not repeat the reload hint', () => {
+    const result = describeTransferError(
+      {
+        statusCode: 409,
+        message: 'phiếu điều chuyển đã thay đổi. Vui lòng tải lại và thử lại.',
+      },
+      'Không thể lưu.'
+    )
+    expect(result.message).toBe('Phiếu điều chuyển đã thay đổi. Vui lòng tải lại và thử lại.')
+  })
+
   it('does not report success or failure when the connection dropped', () => {
     expect(describeTransferError({ statusCode: 500, message: 'Network Error' }, 'x').kind).toBe(
       'unknown-result'
