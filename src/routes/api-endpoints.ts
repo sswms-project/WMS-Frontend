@@ -339,11 +339,47 @@ export const API_ENDPOINTS = {
     create: '/transfers',
     sourceWarehouses: '/transfers/source-warehouses',
     sourceInventory: '/transfers/source-inventory',
+    availability: '/transfers/availability',
+    drafts: '/transfers/drafts',
+    draft: (transferId: string) => `/transfers/drafts/${transferId}`,
+    submitDraft: (transferId: string) => `/transfers/drafts/${transferId}/submit`,
     detail: (transferId: string) => `/transfers/${transferId}`,
-    approve: (transferId: string) => `/transfers/${transferId}/approve`,
-    reject: (transferId: string) => `/transfers/${transferId}/reject`,
-    dispatch: (transferId: string) => `/transfers/${transferId}/dispatch`,
-    receive: (transferId: string) => `/transfers/${transferId}/receive`,
+    update: (transferId: string) => `/transfers/${transferId}`,
+    cancel: (transferId: string) => `/transfers/${transferId}/cancel`,
+    stopRemaining: (transferId: string) => `/transfers/${transferId}/stop-remaining`,
+    feedback: (transferId: string) => `/transfers/${transferId}/feedback`,
+    replyFeedback: (transferId: string, feedbackId: string) =>
+      `/transfers/${transferId}/feedback/${feedbackId}/reply`,
+    shipments: (transferId: string) => `/transfers/${transferId}/shipments`,
+    cancelShipment: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/cancel`,
+    pickSheet: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/pick-sheet`,
+    pickAlternatives: (transferId: string, shipmentId: string, lineId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/alternatives`,
+    picks: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/picks`,
+    switchPick: (transferId: string, shipmentId: string, lineId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/switch`,
+    escalatePick: (transferId: string, shipmentId: string, lineId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/escalate`,
+    resolveEscalation: (
+      transferId: string,
+      shipmentId: string,
+      lineId: string,
+      exceptionId: string
+    ) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/escalations/${exceptionId}/resolve`,
+    returnPick: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/returns`,
+    dispatchShipment: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/dispatch`,
+    receiveSheet: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/receive-sheet`,
+    receipt: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/receipt`,
+    resolveDiscrepancy: (transferId: string, discrepancyId: string) =>
+      `/transfers/${transferId}/discrepancies/${discrepancyId}/resolve`,
   },
   stockIssueRequests: {
     list: '/stock-issue-requests',

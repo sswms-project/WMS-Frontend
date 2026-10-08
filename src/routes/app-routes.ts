@@ -71,6 +71,12 @@ export const APP_ROUTES = {
     `/inventory/stock-adjustments/${adjustmentId}` as Route,
   transfers: '/transfers',
   transferCreate: '/transfers/new',
+  transferDetail: (transferId: string): Route => `/transfers/${transferId}` as Route,
+  transferEdit: (transferId: string): Route => `/transfers/${transferId}/edit` as Route,
+  transferPickTask: (transferId: string, shipmentId: string): Route =>
+    `/tasks/transfers/${transferId}/shipments/${shipmentId}/pick` as Route,
+  transferReceiveTask: (transferId: string, shipmentId: string): Route =>
+    `/tasks/transfers/${transferId}/shipments/${shipmentId}/receive` as Route,
   stockIssueRequests: '/stock-issue-requests',
   stockIssueRequestCreate: '/stock-issue-requests/new',
   goodsReturnRequests: '/goods-return-requests',

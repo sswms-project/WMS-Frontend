@@ -4,6 +4,8 @@ export const WAREHOUSE_TASK_TYPES = [
   'CycleCount',
   'DamagedStock',
   'Relocation',
+  'TransferPick',
+  'TransferReceive',
 ] as const
 
 export type WarehouseTaskType = (typeof WAREHOUSE_TASK_TYPES)[number]
@@ -41,6 +43,9 @@ export interface MyWarehouseTask {
   assignedToName: string | null
   assignedAt: string | null
   updatedAt: string
+  /** Chỉ có với công việc lấy/nhận hàng điều chuyển kho. */
+  transferId: string | null
+  transferShipmentId: string | null
 }
 
 export type WarehouseTaskAction = 'Start' | 'Pause' | 'Return'

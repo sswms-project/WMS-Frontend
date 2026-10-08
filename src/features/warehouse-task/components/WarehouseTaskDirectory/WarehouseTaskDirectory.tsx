@@ -69,6 +69,8 @@ const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
   CycleCount: 'Kiểm kê',
   DamagedStock: 'Hàng hỏng',
   Relocation: 'Điều chuyển vị trí',
+  TransferPick: 'Lấy hàng điều chuyển',
+  TransferReceive: 'Nhận hàng điều chuyển',
 }
 
 export function WarehouseTaskDirectory({
@@ -384,6 +386,13 @@ function getTaskRoute(task: MyWarehouseTask): Route {
   if (task.taskType === 'PutAway') return APP_ROUTES.inboundPutawayDetail(task.id) as Route
   if (task.taskType === 'CycleCount') return APP_ROUTES.cycleCountDetail(task.id)
   if (task.taskType === 'DamagedStock') return APP_ROUTES.stockAdjustmentDetail(task.id)
+  if (task.taskType === 'TransferPick' || task.taskType === 'TransferReceive') {
+    if (!task.transferId) return APP_ROUTES.transfers as Route
+    if (!task.transferShipmentId) return APP_ROUTES.transferDetail(task.transferId)
+    return task.taskType === 'TransferPick'
+      ? APP_ROUTES.transferPickTask(task.transferId, task.transferShipmentId)
+      : APP_ROUTES.transferReceiveTask(task.transferId, task.transferShipmentId)
+  }
   // Mở màn nhận hàng đã lọc sẵn theo mã yêu cầu nhập kho được giao.
   return `${APP_ROUTES.inbound}?search=${encodeURIComponent(task.referenceCode)}` as Route
 }

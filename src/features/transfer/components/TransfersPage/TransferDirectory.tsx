@@ -1,18 +1,6 @@
 'use client'
 
-import {
-  ArrowLeftRight,
-  Check,
-  Eye,
-  ListFilter,
-  MoreHorizontal,
-  PackageCheck,
-  Plus,
-  RefreshCw,
-  Search,
-  Truck,
-  X,
-} from 'lucide-react'
+import { Eye, ListFilter, MoreHorizontal, PencilLine, Plus, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
@@ -21,8 +9,8 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
-import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
+import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -31,8 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
@@ -51,19 +39,35 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { P } from '@/config/permissionCodes'
+import {
+  formatOperationalDate,
+  formatOperationalDateTime,
+  formatQuantity,
+} from '@/features/inbound-request/utils/inbound-request-format'
+import { goodsPreviewInteractions } from '@/features/inbound/utils/goods-preview-interactions'
 import { APP_ROUTES } from '@/routes/app-routes'
 import type { TransferStatus, TransferSummary } from '../../types/transfer.types'
 import {
-  canApproveTransfer,
-  canDispatchTransfer,
-  canReceiveTransfer,
-  formatTransferDate,
-  formatTransferQuantity,
-  TRANSFER_STATUS_LABELS,
-} from '../../utils/transfer-format'
-import { TransferStatusBadge } from './TransferStatusBadge'
+  TransferFlagBadges,
+  TransferProgressText,
+  TransferStatusBadge,
+} from './TransferStatusBadge'
+
+const ALL_STATUSES_TAB = 'All'
+
+export const TRANSFER_STATUS_TABS: ReadonlyArray<{
+  value: TransferStatus | typeof ALL_STATUSES_TAB
+  label: string
+}> = [
+  { value: 'Draft', label: 'Nháp' },
+  { value: 'InProgress', label: 'Đang thực hiện' },
+  { value: 'AwaitingResolution', label: 'Chờ xử lý chênh lệch' },
+  { value: 'Completed', label: 'Hoàn tất' },
+  { value: 'Cancelled', label: 'Đã hủy' },
+  { value: ALL_STATUSES_TAB, label: 'Tất cả' },
+]
 
 interface WarehouseOption {
   readonly id: string
@@ -82,7 +86,8 @@ interface TransferDirectoryProps {
   readonly dateFrom: string
   readonly dateTo: string
   readonly warehouseOptions: readonly WarehouseOption[]
-  readonly permissions: readonly string[]
+  readonly previewId?: string
+  readonly canCreate: boolean
   readonly currentUserId: string | null
   readonly isLoading: boolean
   readonly isFetching: boolean
@@ -96,11 +101,7 @@ interface TransferDirectoryProps {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
-  readonly onInspect: (transfer: TransferSummary) => void
-  readonly onApprove: (transfer: TransferSummary) => void
-  readonly onReject: (transfer: TransferSummary) => void
-  readonly onDispatch: (transfer: TransferSummary) => void
-  readonly onReceive: (transfer: TransferSummary) => void
+  readonly onPreview: (transfer: TransferSummary) => void
 }
 
 export function TransferDirectory({
@@ -115,7 +116,8 @@ export function TransferDirectory({
   dateFrom,
   dateTo,
   warehouseOptions,
-  permissions,
+  previewId,
+  canCreate,
   currentUserId,
   isLoading,
   isFetching,
@@ -129,102 +131,85 @@ export function TransferDirectory({
   onPageChange,
   onPageSizeChange,
   onRetry,
-  onInspect,
-  onApprove,
-  onReject,
-  onDispatch,
-  onReceive,
+  onPreview,
 }: TransferDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const activeFilterCount =
-    (status ? 1 : 0) +
     (sourceWarehouseId ? 1 : 0) +
     (destinationWarehouseId ? 1 : 0) +
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0)
 
-  const canApprove = permissions.includes(P.TRANSFERS_APPROVE)
-  const canDispatch = permissions.includes(P.TRANSFERS_DISPATCH)
-  const canReceive = permissions.includes(P.TRANSFERS_RECEIVE)
-
-  const renderRowActions = (transfer: TransferSummary) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Thao tác với phiếu ${transfer.transferCode}`}
-        >
-          <MoreHorizontal aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => onInspect(transfer)}>
-          <Eye className="size-4" aria-hidden="true" />
-          Xem chi tiết
-        </DropdownMenuItem>
-        {canApprove &&
-        transfer.createdBy !== currentUserId &&
-        canApproveTransfer(transfer.status) ? (
-          <DropdownMenuItem onSelect={() => onApprove(transfer)}>
-            <Check className="size-4" aria-hidden="true" />
-            Duyệt phiếu
+  const renderRowActions = (transfer: TransferSummary): ReactNode => {
+    const canOpenDraft =
+      canCreate && transfer.status === 'Draft' && transfer.createdBy === currentUserId
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Thao tác với phiếu ${transfer.transferCode}`}
+          >
+            <MoreHorizontal aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={APP_ROUTES.transferDetail(transfer.id)}>
+              <Eye className="size-4" aria-hidden="true" />
+              Xem chi tiết
+            </Link>
           </DropdownMenuItem>
-        ) : null}
-        {canApprove &&
-        transfer.createdBy !== currentUserId &&
-        canApproveTransfer(transfer.status) ? (
-          <DropdownMenuItem variant="destructive" onSelect={() => onReject(transfer)}>
-            <X className="size-4" aria-hidden="true" />
-            Từ chối phiếu
-          </DropdownMenuItem>
-        ) : null}
-        {canDispatch && canDispatchTransfer(transfer.status) ? (
-          <DropdownMenuItem onSelect={() => onDispatch(transfer)}>
-            <Truck className="size-4" aria-hidden="true" />
-            Xuất hàng đi
-          </DropdownMenuItem>
-        ) : null}
-        {canReceive && canReceiveTransfer(transfer.status) ? (
-          <DropdownMenuItem onSelect={() => onReceive(transfer)}>
-            <PackageCheck className="size-4" aria-hidden="true" />
-            Xác nhận nhận hàng
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+          {canOpenDraft ? (
+            <DropdownMenuItem asChild>
+              <Link href={APP_ROUTES.transferEdit(transfer.id)}>
+                <PencilLine className="size-4" aria-hidden="true" />
+                Soạn tiếp nháp
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
-      <header className="flex shrink-0 flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center">
-            <ArrowLeftRight aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-primary text-xs font-medium">Điều chuyển</p>
-            <h1 className="mt-0.5 text-xl font-semibold">Phiếu điều chuyển kho</h1>
-          </div>
-        </div>
-        {permissions.includes(P.TRANSFERS_CREATE) ? (
-          <Button asChild className="w-full sm:w-auto">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3">
+      <header className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="sr-only">Điều chuyển kho</h1>
+        <Tabs
+          value={status || ALL_STATUSES_TAB}
+          onValueChange={(value) => {
+            const tab = TRANSFER_STATUS_TABS.find((candidate) => candidate.value === value)
+            if (tab) onStatusChange(tab.value === ALL_STATUSES_TAB ? '' : tab.value)
+          }}
+          className="min-w-0 flex-1 overflow-x-auto"
+        >
+          <TabsList variant="workspace" aria-label="Lọc phiếu theo trạng thái">
+            {TRANSFER_STATUS_TABS.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className="flex-none px-3 py-1.5">
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        {canCreate ? (
+          <Button asChild size="sm" className="shrink-0">
             <Link href={APP_ROUTES.transferCreate}>
               <Plus aria-hidden="true" />
-              Tạo phiếu điều chuyển
+              Tạo yêu cầu điều chuyển
             </Link>
           </Button>
         ) : null}
       </header>
 
-      <OperationalListPanel aria-labelledby="transfer-directory-title">
+      <OperationalListPanel aria-label="Danh sách phiếu điều chuyển">
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 id="transfer-directory-title" className="text-sm font-semibold">
-              Danh sách phiếu
-            </h2>
-          </div>
+          <h2 className="text-sm font-semibold">
+            {TRANSFER_STATUS_TABS.find((tab) => tab.value === (status || ALL_STATUSES_TAB))?.label}
+          </h2>
           <div className="flex w-full gap-2 sm:w-auto">
             <InputGroup className="min-w-0 flex-1 sm:w-72">
               <InputGroupAddon>
@@ -232,7 +217,7 @@ export function TransferDirectory({
               </InputGroupAddon>
               <InputGroupInput
                 aria-label="Tìm phiếu điều chuyển"
-                placeholder="Tìm mã phiếu, kho xuất, kho nhận…"
+                placeholder="Tìm mã phiếu, kho xuất, kho nhập…"
                 value={searchText}
                 onChange={(event) => onSearchChange(event.target.value)}
               />
@@ -268,12 +253,22 @@ export function TransferDirectory({
         ) : items.length === 0 ? (
           <OperationalEmptyState
             title="Chưa có phiếu điều chuyển phù hợp"
-            description="Thử đổi từ khóa, bộ lọc hoặc tạo phiếu điều chuyển đầu tiên."
+            description="Thử đổi tab, từ khóa, bộ lọc hoặc tạo yêu cầu điều chuyển mới."
           />
         ) : (
           <>
-            <TransferMobileList items={items} renderRowActions={renderRowActions} />
-            <TransferDesktopTable items={items} renderRowActions={renderRowActions} />
+            <TransferMobileList
+              items={items}
+              previewId={previewId}
+              onPreview={onPreview}
+              renderRowActions={renderRowActions}
+            />
+            <TransferDesktopTable
+              items={items}
+              previewId={previewId}
+              onPreview={onPreview}
+              renderRowActions={renderRowActions}
+            />
             <OperationalPagination
               page={page}
               pageSize={pageSize}
@@ -290,25 +285,9 @@ export function TransferDirectory({
         <SheetContent className="w-full sm:max-w-sm">
           <SheetHeader>
             <SheetTitle>Bộ lọc phiếu điều chuyển</SheetTitle>
-            <SheetDescription>Thu hẹp danh sách theo trạng thái và kho.</SheetDescription>
+            <SheetDescription>Thu hẹp danh sách theo kho và ngày tạo.</SheetDescription>
           </SheetHeader>
           <FieldGroup className="flex-1 p-4">
-            <Field>
-              <FieldLabel htmlFor="transfer-filter-status">Trạng thái</FieldLabel>
-              <NativeSelect
-                id="transfer-filter-status"
-                className="w-full"
-                value={status}
-                onChange={(event) => onStatusChange(event.target.value as TransferStatus | '')}
-              >
-                <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
-                {Object.entries(TRANSFER_STATUS_LABELS).map(([value, label]) => (
-                  <NativeSelectOption key={value} value={value}>
-                    {label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </Field>
             <Field>
               <FieldLabel htmlFor="transfer-filter-source">Kho xuất</FieldLabel>
               <NativeSelect
@@ -326,7 +305,7 @@ export function TransferDirectory({
               </NativeSelect>
             </Field>
             <Field>
-              <FieldLabel htmlFor="transfer-filter-destination">Kho nhận</FieldLabel>
+              <FieldLabel htmlFor="transfer-filter-destination">Kho nhập</FieldLabel>
               <NativeSelect
                 id="transfer-filter-destination"
                 className="w-full"
@@ -372,7 +351,6 @@ export function TransferDirectory({
               type="button"
               variant="outline"
               onClick={() => {
-                onStatusChange('')
                 onSourceWarehouseChange('')
                 onDestinationWarehouseChange('')
                 onDateFromChange('')
@@ -388,93 +366,126 @@ export function TransferDirectory({
   )
 }
 
-function totalTransferQuantity(transfer: TransferSummary) {
-  return transfer.items.reduce((total, item) => total + item.quantity, 0)
+interface TransferListPartProps {
+  readonly items: readonly TransferSummary[]
+  readonly previewId?: string
+  readonly onPreview: (transfer: TransferSummary) => void
+  readonly renderRowActions: (transfer: TransferSummary) => ReactNode
 }
 
 function TransferMobileList({
   items,
+  previewId,
+  onPreview,
   renderRowActions,
-}: {
-  readonly items: readonly TransferSummary[]
-  readonly renderRowActions: (transfer: TransferSummary) => ReactNode
-}) {
+}: TransferListPartProps) {
   return (
-    <ItemGroup className="gap-0 md:hidden">
-      {items.map((item) => (
-        <Item key={item.id} className="border-b last:border-b-0">
-          <ItemContent className="min-w-0">
-            <ItemTitle className="flex flex-wrap items-center gap-2">
-              <span className="max-w-full min-w-0 truncate font-mono font-semibold" translate="no">
-                {item.transferCode}
-              </span>
-              <TransferStatusBadge status={item.status} />
-            </ItemTitle>
-            <ItemDescription>
-              {item.sourceWarehouseName} → {item.destinationWarehouseName}
-            </ItemDescription>
-            <ItemDescription>
-              {item.items.length} dòng · {formatTransferQuantity(totalTransferQuantity(item))} đơn
-              vị · {formatTransferDate(item.createdAt)}
-            </ItemDescription>
-          </ItemContent>
-          {renderRowActions(item)}
-        </Item>
-      ))}
-    </ItemGroup>
+    <div data-slot="operational-list-body" className="md:hidden">
+      <ItemGroup className="gap-0">
+        {items.map((item) => (
+          <Item
+            key={item.id}
+            {...goodsPreviewInteractions(
+              () => onPreview(item),
+              previewId === item.id,
+              'border-b last:border-b-0'
+            )}
+          >
+            <ItemContent className="min-w-0">
+              <ItemTitle className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={APP_ROUTES.transferDetail(item.id)}
+                  className="max-w-full min-w-0 truncate font-mono font-semibold underline-offset-4 hover:underline"
+                  translate="no"
+                >
+                  {item.transferCode}
+                </Link>
+                <TransferStatusBadge status={item.status} />
+              </ItemTitle>
+              <ItemDescription>
+                {item.sourceWarehouseName} → {item.destinationWarehouseName}
+              </ItemDescription>
+              <ItemDescription>
+                {item.lineCount} dòng · {formatQuantity(item.requestedQuantity)} đơn vị ·{' '}
+                {formatOperationalDateTime(item.createdAt)}
+              </ItemDescription>
+              <TransferFlagBadges
+                hasOpenFeedback={item.hasOpenFeedback}
+                hasPendingPickEscalation={item.hasPendingPickEscalation}
+              />
+            </ItemContent>
+            {renderRowActions(item)}
+          </Item>
+        ))}
+      </ItemGroup>
+    </div>
   )
 }
 
 function TransferDesktopTable({
   items,
+  previewId,
+  onPreview,
   renderRowActions,
-}: {
-  readonly items: readonly TransferSummary[]
-  readonly renderRowActions: (transfer: TransferSummary) => ReactNode
-}) {
+}: TransferListPartProps) {
   return (
-    <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-      <Table className="min-w-[1040px] table-fixed">
+    <div data-slot="operational-list-body" className="hidden md:block">
+      <Table className="min-w-[1280px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky top-0 z-10 w-56">Mã phiếu</TableHead>
-            <TableHead className="sticky top-0 z-10 w-52">Kho xuất</TableHead>
-            <TableHead className="sticky top-0 z-10 w-52">Kho nhận</TableHead>
-            <TableHead className="sticky top-0 z-10 w-36">Trạng thái</TableHead>
-            <TableHead className="sticky top-0 z-10 w-24 text-right">Số dòng</TableHead>
-            <TableHead className="sticky top-0 z-10 w-32 text-right">Tổng SL</TableHead>
-            <TableHead className="sticky top-0 z-10 w-44">Ngày tạo</TableHead>
-            <TableHead className="sticky top-0 z-10 w-12">
+            <TableHead className="w-44">Mã phiếu</TableHead>
+            <TableHead className="w-44">Ngày tạo</TableHead>
+            <TableHead className="w-72">Kho xuất → Kho nhập</TableHead>
+            <TableHead className="w-36">Hạn cần hàng</TableHead>
+            <TableHead className="w-40">Trạng thái</TableHead>
+            <TableHead className="w-36">Tình trạng thực hiện</TableHead>
+            <TableHead className="w-64">Cần chú ý</TableHead>
+            <TableHead className="w-40">Người tạo</TableHead>
+            <TableHead className="w-12">
               <span className="sr-only">Thao tác</span>
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="min-w-0">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="block truncate font-mono font-semibold" translate="no">
-                      {item.transferCode}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="font-mono" translate="no">
-                    {item.transferCode}
-                  </TooltipContent>
-                </Tooltip>
+            <TableRow
+              key={item.id}
+              {...goodsPreviewInteractions(() => onPreview(item), previewId === item.id)}
+            >
+              <TableCell className="font-mono font-semibold" translate="no">
+                <Link
+                  href={APP_ROUTES.transferDetail(item.id)}
+                  className="underline-offset-4 hover:underline"
+                >
+                  {item.transferCode}
+                </Link>
               </TableCell>
-              <TableCell className="truncate">{item.sourceWarehouseName}</TableCell>
-              <TableCell className="truncate">{item.destinationWarehouseName}</TableCell>
+              <TableCell>{formatOperationalDateTime(item.createdAt)}</TableCell>
+              <TableCell className="whitespace-normal">
+                {item.sourceWarehouseName} → {item.destinationWarehouseName}
+              </TableCell>
+              <TableCell>
+                {item.requiredBy ? formatOperationalDate(item.requiredBy) : '—'}
+              </TableCell>
               <TableCell>
                 <TransferStatusBadge status={item.status} />
               </TableCell>
-              <TableCell className="text-right tabular-nums">{item.items.length}</TableCell>
-              <TableCell className="text-right tabular-nums">
-                {formatTransferQuantity(totalTransferQuantity(item))}
+              <TableCell>
+                <TransferProgressText
+                  dispatch={item.dispatchProgress}
+                  receive={item.receiveProgress}
+                />
               </TableCell>
-              <TableCell className="truncate">{formatTransferDate(item.createdAt)}</TableCell>
-              <TableCell className="text-right">{renderRowActions(item)}</TableCell>
+              <TableCell>
+                <TransferFlagBadges
+                  hasOpenFeedback={item.hasOpenFeedback}
+                  hasPendingPickEscalation={item.hasPendingPickEscalation}
+                />
+              </TableCell>
+              <TableCell className="truncate">{item.createdByName ?? '—'}</TableCell>
+              <TableCell className="text-right" data-preview-ignore>
+                {renderRowActions(item)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
