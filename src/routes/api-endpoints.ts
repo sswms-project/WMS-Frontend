@@ -381,16 +381,29 @@ export const API_ENDPOINTS = {
       `/transfers/${transferId}/discrepancies/${discrepancyId}/resolve`,
   },
   stockIssueRequests: {
+    importPreview: '/stock-issue-requests/import/preview',
+    importTemplate: '/stock-issue-requests/import-template',
     list: '/stock-issue-requests',
     create: '/stock-issue-requests',
     detail: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}`,
     releaseForPicking: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/release-for-picking`,
+    cancel: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/cancel`,
+    attachments: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/attachments`,
+    attachment: (stockIssueRequestId: string, attachmentId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/attachments/${attachmentId}`,
+    assignPicker: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/assign-picker`,
+    auditLogs: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/audit-logs`,
     picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
     dispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
     authorizeDispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/authorize-dispatch`,
+    reportPickIssue: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/report-pick-issue`,
     removePickDetail: (stockIssueRequestId: string, pickDetailId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/pick-details/${pickDetailId}`,
     goodsReturnRequests: (stockIssueRequestId: string) =>
