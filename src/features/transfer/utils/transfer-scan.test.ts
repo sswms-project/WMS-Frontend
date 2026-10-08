@@ -9,6 +9,7 @@ import {
   codesMatch,
   getDefaultPickQuantity,
   isNonFefoChoice,
+  nextEachUnitQuantity,
   normalizeScanCode,
   pickScanReducer,
   validatePickQuantity,
@@ -196,5 +197,15 @@ describe('scanning a system default slot', () => {
     })
     expect(next.step).toBe('slot')
     expect(next.suggestion).toBeNull()
+  })
+})
+
+describe('scanning one unit at a time', () => {
+  it('counts from zero on the first product scan and stops at the maximum', () => {
+    expect(nextEachUnitQuantity('product', 5, 3)).toBe(1)
+    expect(nextEachUnitQuantity('ready', 1, 3)).toBe(2)
+    expect(nextEachUnitQuantity('ready', 2, 3)).toBe(3)
+    expect(nextEachUnitQuantity('ready', 3, 3)).toBeNull()
+    expect(nextEachUnitQuantity('ready', 0, 0)).toBeNull()
   })
 })

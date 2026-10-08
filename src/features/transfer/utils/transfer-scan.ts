@@ -102,6 +102,19 @@ export function pickScanReducer(state: PickScanState, action: PickScanAction): P
   }
 }
 
+/**
+ * Quét từng đơn vị: mỗi lần quét đúng mã hàng cộng 1 vào số lượng đã quét; trả null khi đã đủ số tối đa của vị trí.
+ * Lần quét đầu (chưa ở bước sẵn sàng) tính từ 0.
+ */
+export function nextEachUnitQuantity(
+  step: PickScanStep,
+  quantity: number,
+  maximum: number
+): number | null {
+  const current = step === 'ready' ? quantity : 0
+  return current >= maximum ? null : current + 1
+}
+
 export function getDefaultPickQuantity(
   suggestion: Pick<TransferPickSuggestion, 'suggestedQuantity'>,
   line: Pick<TransferPickSheetLine, 'remainingQuantity'>

@@ -52,8 +52,8 @@ export function useTransferReceiveForm(
     [sheet?.lines]
   )
 
-  async function scanSlot(index: number, code: string) {
-    if (!sheet) return
+  async function scanSlot(index: number, code: string): Promise<boolean> {
+    if (!sheet) return false
     try {
       const slot = await findSlotMutation.mutateAsync({
         warehouseId: sheet.destinationWarehouseId,
@@ -65,31 +65,34 @@ export function useTransferReceiveForm(
         form.setError(`entries.${index}.scannedSlotCode`, {
           message: `Mã ${code} không khớp vị trí đang hoạt động nào của kho nhập.`,
         })
-        return
+        return false
       }
       form.clearErrors(`entries.${index}.scannedSlotCode`)
       form.setValue(`entries.${index}.destinationSlotId`, slot.id, { shouldDirty: true })
       form.setValue(`entries.${index}.scannedSlotCode`, code, { shouldDirty: true })
+      return true
     } catch {
       form.setError(`entries.${index}.scannedSlotCode`, {
         message: 'Không tra được vị trí. Hãy kiểm tra kết nối rồi quét lại.',
       })
+      return false
     }
   }
 
-  function scanProduct(index: number, code: string) {
+  function scanProduct(index: number, code: string): boolean {
     const entry = form.getValues(`entries.${index}`)
     const line = lineById.get(entry.lineId)
-    if (!line) return
+    if (!line) return false
     if (!codesMatch(code, line.sku, line.productBarcode)) {
       form.setValue(`entries.${index}.scannedProductCode`, '')
       form.setError(`entries.${index}.scannedProductCode`, {
         message: `Mã hàng ${code} không khớp với ${line.sku}.`,
       })
-      return
+      return false
     }
     form.clearErrors(`entries.${index}.scannedProductCode`)
     form.setValue(`entries.${index}.scannedProductCode`, code, { shouldDirty: true })
+    return true
   }
 
   function splitEntry(index: number) {

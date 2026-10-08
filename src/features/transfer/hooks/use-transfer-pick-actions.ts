@@ -17,10 +17,12 @@ import type {
   TransferPickSheet,
   TransferPickSheetLine,
 } from '../types/transfer.types'
+import { useScanPreferences } from '../utils/scan-preferences'
 import {
   INITIAL_PICK_SCAN_STATE,
   getDefaultPickQuantity,
   isNonFefoChoice,
+  nextEachUnitQuantity,
   pickScanReducer,
   validatePickQuantity,
 } from '../utils/transfer-scan'
@@ -54,6 +56,8 @@ export function useTransferPickActions(
   sheet: TransferPickSheet | undefined
 ) {
   const run = useTransferActionRunner()
+  const [scanPreferences] = useScanPreferences()
+  const eachUnit = scanPreferences.eachUnit
 
   const [entryLine, setEntryLine] = useState<TransferPickSheetLine | null>(null)
   const [scan, dispatchScan] = useReducer(pickScanReducer, INITIAL_PICK_SCAN_STATE)
@@ -137,20 +141,42 @@ export function useTransferPickActions(
         setEntryLine(line)
       },
       onOpenChange: (open: boolean) => !open && setEntryLine(null),
+      eachUnit,
       scanSlot: (code: string) => {
-        if (!entryLine) return
-        setQuantityOverride(null)
+        if (!entryLine) return false
+        // Quét từng đơn vị: số lượng bắt đầu từ 0 và tăng 1 sau mỗi lần quét mã hàng.
+        setQuantityOverride(eachUnit ? 0 : null)
         setQuantityError(null)
-        dispatchScan({
-          type: 'scan-slot',
+        const action = {
+          type: 'scan-slot' as const,
           code,
           suggestions: entryLine.suggestions,
           alternatives,
           line: entryLine,
-        })
+        }
+        const next = pickScanReducer(scan, action)
+        dispatchScan(action)
+        return !next.error
       },
       scanProduct: (code: string) => {
-        if (entryLine) dispatchScan({ type: 'scan-product', code, line: entryLine })
+        if (!entryLine) return false
+        const action = { type: 'scan-product' as const, code, line: entryLine }
+        const next = pickScanReducer(scan, action)
+        if (next.error) {
+          dispatchScan(action)
+          return false
+        }
+        if (eachUnit) {
+          const nextQuantity = nextEachUnitQuantity(scan.step, quantity, maximumQuantity)
+          if (nextQuantity === null) {
+            setQuantityError(`Đã đủ ${maximumQuantity} ${entryLine.baseUnitName} tại vị trí này.`)
+            return false
+          }
+          setQuantityOverride(nextQuantity)
+          setQuantityError(null)
+        }
+        dispatchScan(action)
+        return true
       },
       changeQuantity: (value: number) => {
         setQuantityOverride(value)
