@@ -5,10 +5,13 @@ import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { stockIssueService } from '../services/stock-issue.service'
 import type { AuditLogListResponse } from '@/features/platform-services/types/platform-services.types'
 import type {
+  AssignStockIssuePickerRequest,
   CancelStockIssueRequestRequest,
   StockIssueAuditLogQuery,
   CreateStockIssueRequestRequest,
+  StockIssueImportPreview,
   RecordStockPickingRequest,
+  ReportStockIssuePickIssueRequest,
   StockIssueRequestListQuery,
   StockIssueRequestListResponse,
   StockIssueRequestSummary,
@@ -25,6 +28,11 @@ import type {
   StockRecipientListResponse,
 } from '@/features/stock-recipient/types/stock-recipient.types'
 import { stockRecipientService } from '@/features/stock-recipient/services/stock-recipient.service'
+
+interface ConfirmStockDispatchVariables {
+  stockIssueRequestId: string
+  scannedBarcodes: string[]
+}
 
 interface RecordStockPickingVariables {
   stockIssueRequestId: string
@@ -72,6 +80,13 @@ export function useStockIssueRequestQuery(stockIssueRequestId: string | null) {
   })
 }
 
+export function useStockIssueImportPreviewMutation() {
+  return useMutation<ApiResponse<StockIssueImportPreview>, ApiErrorResponse, File>({
+    mutationFn: stockIssueService.previewImport,
+    onError: (error) => logger.error(error),
+  })
+}
+
 export function useCreateStockIssueRequestMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<string>, ApiErrorResponse, CreateStockIssueRequestRequest>({
@@ -107,6 +122,34 @@ export function useReleaseStockIssueRequestMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
       ]),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useAssignStockIssuePickerMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, AssignStockIssuePickerRequest>({
+    mutationFn: stockIssueService.assignPicker,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useUploadStockIssueAttachmentMutation(stockIssueRequestId: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, File>({
+    mutationFn: (file) => stockIssueService.uploadAttachment(stockIssueRequestId, file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useDeleteStockIssueAttachmentMutation(stockIssueRequestId: string) {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, ApiErrorResponse, string>({
+    mutationFn: (attachmentId) =>
+      stockIssueService.deleteAttachment(stockIssueRequestId, attachmentId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
     onError: (error) => logger.error(error),
   })
 }
@@ -154,8 +197,9 @@ export function useRemovePickDetailMutation() {
 
 export function useConfirmStockDispatchMutation() {
   const queryClient = useQueryClient()
-  return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
-    mutationFn: stockIssueService.confirmDispatch,
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ConfirmStockDispatchVariables>({
+    mutationFn: ({ stockIssueRequestId, scannedBarcodes }) =>
+      stockIssueService.confirmDispatch(stockIssueRequestId, { scannedBarcodes }),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
@@ -257,5 +301,14 @@ export function useStockRecipientOptionsQuery(params: StockRecipientListQuery, e
       stockRecipientService.getStockRecipients(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
     enabled,
+  })
+}
+
+export function useReportStockIssuePickIssueMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReportStockIssuePickIssueRequest>({
+    mutationFn: stockIssueService.reportPickIssue,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stockIssueRequests.all }),
+    onError: (error) => logger.error(error),
   })
 }

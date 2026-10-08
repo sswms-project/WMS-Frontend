@@ -69,6 +69,7 @@ const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
   CycleCount: 'Kiểm kê',
   DamagedStock: 'Hàng hỏng',
   Relocation: 'Điều chuyển vị trí',
+  Picking: 'Lấy hàng xuất kho',
 }
 
 export function WarehouseTaskDirectory({
@@ -101,6 +102,15 @@ export function WarehouseTaskDirectory({
       item.assignedTo !== currentUserId
     )
       return null
+    if (item.taskType === 'Picking') {
+      return (
+        <Button asChild size="sm" variant="outline">
+          <Link href={getTaskRoute(item)}>
+            {item.executionStatus === 'InProgress' ? 'Tiếp tục lấy hàng' : 'Lấy hàng'}
+          </Link>
+        </Button>
+      )
+    }
     const isInProgress = item.executionStatus === 'InProgress'
     return (
       <>
@@ -144,12 +154,13 @@ export function WarehouseTaskDirectory({
         </div>
       </div>
       {showStats ? (
-        <div className="grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-5">
-          <TaskMetric
-            icon={statsMode === 'managed' ? UserRoundX : ClipboardList}
-            label={statsMode === 'managed' ? 'Chưa giao' : 'Chờ bắt đầu'}
-            value={statsMode === 'managed' ? stats.unassignedCount : stats.queuedCount}
-          />
+        <div
+          className={`grid shrink-0 grid-cols-2 gap-2 ${statsMode === 'managed' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}
+        >
+          {statsMode === 'managed' ? (
+            <TaskMetric icon={UserRoundX} label="Chưa giao" value={stats.unassignedCount} />
+          ) : null}
+          <TaskMetric icon={ClipboardList} label="Chờ bắt đầu" value={stats.queuedCount} />
           <TaskMetric icon={Activity} label="Đang làm" value={stats.inProgressCount} />
           <TaskMetric icon={PauseCircle} label="Tạm dừng" value={stats.pausedCount} />
           <TaskMetric
@@ -174,7 +185,7 @@ export function WarehouseTaskDirectory({
         ) : (
           <>
             <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-              <Table className="min-w-[1080px]">
+              <Table className="min-w-[1000px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="sticky top-0 z-10">Công việc</TableHead>
@@ -185,7 +196,9 @@ export function WarehouseTaskDirectory({
                     <TableHead className="sticky top-0 z-10">Tiến độ</TableHead>
                     <TableHead className="sticky top-0 z-10">Hạn hoàn thành</TableHead>
                     <TableHead className="sticky top-0 z-10">Cập nhật</TableHead>
-                    <TableHead className="sticky top-0 z-10 text-right">Mở</TableHead>
+                    <TableHead className="bg-card sticky top-0 right-0 z-20 text-right">
+                      Thao tác
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -243,36 +256,41 @@ export function WarehouseTaskDirectory({
                           timeStyle: 'short',
                         }).format(new Date(item.updatedAt))}
                       </TableCell>
-                      <TableCell className="space-x-1 text-right">
-                        {renderActions(item)}
-                        {onEditSchedule ? (
-                          <Button
-                            type="button"
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => onEditSchedule(item)}
-                            aria-label={`Điều chỉnh hạn ${item.referenceCode}`}
-                          >
-                            <CalendarClock aria-hidden="true" />
-                          </Button>
-                        ) : null}
-                        {item.taskType === 'Relocation' && onOpenRelocation ? (
-                          <Button
-                            type="button"
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => onOpenRelocation(item)}
-                            aria-label={`Mở ${item.referenceCode}`}
-                          >
-                            <ArrowRight aria-hidden="true" />
-                          </Button>
-                        ) : item.taskType !== 'Relocation' ? (
-                          <Button asChild size="icon-sm" variant="ghost">
-                            <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
+                      <TableCell className="bg-card sticky right-0 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          {renderActions(item)}
+                          {onEditSchedule ? (
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => onEditSchedule(item)}
+                              aria-label={`Điều chỉnh hạn ${item.referenceCode}`}
+                            >
+                              <CalendarClock aria-hidden="true" />
+                            </Button>
+                          ) : null}
+                          {item.taskType === 'Relocation' && onOpenRelocation ? (
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => onOpenRelocation(item)}
+                              aria-label={`Mở ${item.referenceCode}`}
+                            >
                               <ArrowRight aria-hidden="true" />
-                            </Link>
-                          </Button>
-                        ) : null}
+                            </Button>
+                          ) : item.taskType !== 'Relocation' ? (
+                            <Button asChild size="icon-sm" variant="ghost">
+                              <Link
+                                href={getTaskRoute(item)}
+                                aria-label={`Mở ${item.referenceCode}`}
+                              >
+                                <ArrowRight aria-hidden="true" />
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -384,6 +402,7 @@ function getTaskRoute(task: MyWarehouseTask): Route {
   if (task.taskType === 'PutAway') return APP_ROUTES.inboundPutawayDetail(task.id) as Route
   if (task.taskType === 'CycleCount') return APP_ROUTES.cycleCountDetail(task.id)
   if (task.taskType === 'DamagedStock') return APP_ROUTES.stockAdjustmentDetail(task.id)
+  if (task.taskType === 'Picking') return `${APP_ROUTES.stockIssueRequests}?id=${task.id}` as Route
   // Mở màn nhận hàng đã lọc sẵn theo mã yêu cầu nhập kho được giao.
   return `${APP_ROUTES.inbound}?search=${encodeURIComponent(task.referenceCode)}` as Route
 }

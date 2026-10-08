@@ -17,12 +17,18 @@ const FLOW_STEPS: readonly StockIssueRequestStatus[] = [
 
 interface StockIssueStatusStepperProps {
   readonly status: StockIssueRequestStatus
+  readonly hasAssignedPicker?: boolean
 }
 
-export function StockIssueStatusStepper({ status }: StockIssueStatusStepperProps) {
+export function StockIssueStatusStepper({
+  status,
+  hasAssignedPicker = false,
+}: StockIssueStatusStepperProps) {
   const reduceMotion = useReducedMotion()
   const isCancelled = status === 'Cancelled'
-  const currentIndex = isCancelled ? -1 : FLOW_STEPS.indexOf(status)
+  const effectiveStatus: StockIssueRequestStatus =
+    status === 'Pending' && hasAssignedPicker ? 'ReleasedForPicking' : status
+  const currentIndex = isCancelled ? -1 : FLOW_STEPS.indexOf(effectiveStatus)
 
   return (
     <ol aria-label="Tiến trình xuất kho" className="space-y-0">

@@ -6,9 +6,9 @@ import type {
 
 export const STOCK_ISSUE_REQUEST_STATUS_LABELS: Record<StockIssueRequestStatus, string> = {
   Pending: 'Chờ xử lý',
-  ReleasedForPicking: 'Đã duyệt, chờ lấy hàng',
+  ReleasedForPicking: 'Đã giao việc, chờ lấy hàng',
   Picking: 'Đang lấy hàng',
-  Picked: 'Chờ lệnh xuất',
+  Picked: 'Sẵn sàng xuất (chờ lệnh)',
   AuthorizedForDispatch: 'Đã cho phép xuất',
   Dispatched: 'Đã xuất kho',
   Cancelled: 'Đã hủy',
