@@ -3,7 +3,7 @@
 import { Eye, ListFilter, MoreHorizontal, PencilLine, Plus, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -54,6 +54,7 @@ import {
   TransferProgressText,
   TransferStatusBadge,
 } from './TransferStatusBadge'
+import { transferTabIds } from '../../utils/transfer-tabs'
 
 const ALL_STATUSES_TAB = 'All'
 
@@ -134,6 +135,7 @@ export function TransferDirectory({
   onPreview,
 }: TransferDirectoryProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const tabIds = transferTabIds(useId(), status || ALL_STATUSES_TAB)
   const activeFilterCount =
     (sourceWarehouseId ? 1 : 0) +
     (destinationWarehouseId ? 1 : 0) +
@@ -189,7 +191,13 @@ export function TransferDirectory({
         >
           <TabsList variant="workspace" aria-label="Lọc phiếu theo trạng thái">
             {TRANSFER_STATUS_TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="flex-none px-3 py-1.5">
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                id={tabIds.tabId(tab.value)}
+                aria-controls={tabIds.panelId}
+                className="flex-none px-3 py-1.5"
+              >
                 {tab.label}
               </TabsTrigger>
             ))}
@@ -205,7 +213,7 @@ export function TransferDirectory({
         ) : null}
       </header>
 
-      <OperationalListPanel aria-label="Danh sách phiếu điều chuyển">
+      <OperationalListPanel {...tabIds.panelProps}>
         <div className="flex shrink-0 flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-semibold">
             {TRANSFER_STATUS_TABS.find((tab) => tab.value === (status || ALL_STATUSES_TAB))?.label}

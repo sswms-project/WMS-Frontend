@@ -3,7 +3,7 @@
 import { ArrowLeft, MessageSquareWarning, PencilLine, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { LifecycleTimeline } from '@/components/operations/LifecycleTimeline'
 import { OperationalListPanel } from '@/components/operations/OperationalListPanel'
 import {
@@ -43,6 +43,7 @@ import {
 } from '../utils/transfer-capabilities'
 import { visibleTransferItems } from '../utils/transfer-form'
 import { transferGoodsRows } from '../utils/transfer-goods-rows'
+import { transferTabIds } from '../utils/transfer-tabs'
 import { buildTransferHistory } from '../utils/transfer-history'
 
 type DetailTab = 'goods' | 'shipments' | 'discrepancies' | 'feedback' | 'history'
@@ -50,6 +51,7 @@ type DetailTab = 'goods' | 'shipments' | 'discrepancies' | 'feedback' | 'history
 export default function TransferDetailPage({ transferId }: { readonly transferId: string }) {
   const router = useRouter()
   const [tab, setTab] = useState<DetailTab>('goods')
+  const tabIds = transferTabIds(useId(), tab)
   const { viewer } = useTransferViewer()
   const detailQuery = useTransferQuery(transferId)
   const transfer = detailQuery.data
@@ -190,13 +192,15 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
                 <TabsTrigger
                   key={candidate.value}
                   value={candidate.value}
+                  id={tabIds.tabId(candidate.value)}
+                  aria-controls={tabIds.panelId}
                   className="flex-none px-3 py-1.5"
                 >
                   {candidate.label}
                 </TabsTrigger>
               ))}
             </TabsList>
-            <OperationalListPanel aria-label="Nội dung phiếu điều chuyển">
+            <OperationalListPanel {...tabIds.panelProps}>
               {tab === 'goods' ? (
                 <TransferGoodsTable key={transfer.id} selected rows={rows} />
               ) : (
