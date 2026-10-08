@@ -18,7 +18,9 @@ interface ReceiptPutAwayTableProps {
 }
 
 function formatPutAwayLocation(detail: PutAwayDetail) {
-  return detail.isSystemDefaultSlot ? `Kệ ${detail.rackCode}` : detail.slotCode
+  return detail.isSystemDefaultSlot && detail.rackCode
+    ? `Kệ ${detail.rackCode} (không chia ô)`
+    : detail.slotCode
 }
 
 export function ReceiptPutAwayTable({ items }: ReceiptPutAwayTableProps) {

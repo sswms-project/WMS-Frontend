@@ -242,7 +242,7 @@ describe('application navigation visibility', () => {
       },
       {
         label: 'Hoạt Động Kho',
-        items: ['Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Xuất kho & Trả hàng'],
+        items: ['Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Kiểm kê', 'Xuất kho & Trả hàng'],
       },
       {
         label: 'Báo cáo',
@@ -404,5 +404,23 @@ describe('application navigation visibility', () => {
         (item) => item.href === APP_ROUTES.settings.accessControl
       )
     ).toBe(false)
+  })
+})
+
+describe('inventory and cycle count navigation', () => {
+  const items = getVisibleNavItems(USER_ROLES.WarehouseManager, [
+    P.INVENTORY_VIEW,
+    P.CYCLE_COUNTS_VIEW,
+  ])
+  const activeLabels = (pathname: string) =>
+    items.filter((item) => isNavItemActive(pathname, item)).map((item) => item.label)
+
+  it('highlights only the cycle count entry on cycle count pages', () => {
+    expect(activeLabels(APP_ROUTES.cycleCounts)).toEqual(['Kiểm kê'])
+    expect(activeLabels(`${APP_ROUTES.cycleCounts}/cycle-count-1`)).toEqual(['Kiểm kê'])
+  })
+
+  it('keeps highlighting the inventory entry on its other pages', () => {
+    expect(activeLabels(APP_ROUTES.inventoryMovements)).toEqual(['Tồn kho'])
   })
 })

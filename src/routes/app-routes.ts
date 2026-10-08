@@ -71,6 +71,8 @@ export const APP_ROUTES = {
   stockAdjustments: '/inventory/stock-adjustments',
   stockAdjustmentDetail: (adjustmentId: string): Route =>
     `/inventory/stock-adjustments/${adjustmentId}` as Route,
+  stockAdjustmentVoucherDetail: (voucherId: string): Route =>
+    `/inventory/stock-adjustments/vouchers/${voucherId}` as Route,
   transfers: '/transfers',
   transferCreate: '/transfers/new',
   transferDetail: (transferId: string): Route => `/transfers/${transferId}` as Route,
