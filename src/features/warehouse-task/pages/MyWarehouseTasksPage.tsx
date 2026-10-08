@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -94,7 +95,9 @@ function toDateTimeLocal(value: string | null) {
 
 export default function MyWarehouseTasksPage() {
   const [page, setPage] = useState(1)
-  const [createOpen, setCreateOpen] = useState(false)
+  // Mở sẵn từ form điều chuyển kho (chọn "Điều chuyển nội bộ vị trí trong kho").
+  const searchParams = useSearchParams()
+  const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === 'relocation')
   const [sourceSearch, setSourceSearch] = useState('')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [scheduleTask, setScheduleTask] = useState<MyWarehouseTask | null>(null)
@@ -514,7 +517,7 @@ export default function MyWarehouseTasksPage() {
         onEditSchedule={canAssignRelocation ? openSchedule : undefined}
       />
       <CreateRelocationTaskDialog
-        open={createOpen}
+        open={createOpen && canCreateRelocation}
         form={createForm}
         fields={createLines.fields}
         warehouseOptions={warehouseOptionsQuery.data ?? []}
