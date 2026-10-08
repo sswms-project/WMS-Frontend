@@ -96,6 +96,7 @@ export interface BulkImportColumn<TRow extends BulkImportRow> {
 type StatusFilter = 'All' | 'Valid' | 'Invalid'
 
 interface BulkImportPageProps<TRow extends BulkImportRow> {
+  readonly validationRevision?: number
   readonly eyebrow: string
   readonly title: string
   readonly description?: string
@@ -121,6 +122,7 @@ interface BulkImportPageProps<TRow extends BulkImportRow> {
 }
 
 export function BulkImportPage<TRow extends BulkImportRow>({
+  validationRevision = 0,
   eyebrow,
   title,
   description,
@@ -179,6 +181,11 @@ export function BulkImportPage<TRow extends BulkImportRow>({
   const ignored = inspection && options ? spreadsheetIgnoredData(inspection, options) : null
   const hasIgnored = Boolean(ignored && (ignored.sheets.length || ignored.columns.length))
   const navigation = useImportNavigation(Boolean(file && !resultItems), busy)
+  const previousValidationRevision = useRef(validationRevision)
+  useEffect(() => {
+    if (previousValidationRevision.current !== validationRevision) setNeedsRecheck(true)
+    previousValidationRevision.current = validationRevision
+  }, [validationRevision])
   useEffect(() => {
     if (previousStep.current !== step) stepHeading.current?.focus()
     previousStep.current = step
@@ -473,6 +480,14 @@ export function BulkImportPage<TRow extends BulkImportRow>({
       ) : (
         <>
           <BulkImportSummary total={rows.length} valid={validRowNumbers.length} />
+          {needsRecheck && !importError ? (
+            <Alert className="flex shrink-0 flex-wrap items-center justify-between gap-2">
+              <AlertDescription>Mã đã thay đổi. Kiểm tra lại trước khi nhập.</AlertDescription>
+              <Button variant="outline" disabled={busy} onClick={() => void handlePreview()}>
+                Kiểm tra lại dữ liệu
+              </Button>
+            </Alert>
+          ) : null}
 
           {importError ? (
             <Alert variant="destructive">

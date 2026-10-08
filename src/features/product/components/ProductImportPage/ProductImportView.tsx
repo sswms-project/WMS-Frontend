@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { ProductImportMapping } from './ProductImportMapping'
+import { ProductImportSetupGuide } from './ProductImportSetupGuide'
 import { ProductImportReview } from './ProductImportReview'
 import type { ProductImportReviewFilters } from './ProductImportReview'
 import {
@@ -51,6 +52,8 @@ const importSteps = [
 ] as const
 
 interface ProductImportViewProps {
+  readonly setup?: { canImportUnits: boolean; canImportCategories: boolean; missing: boolean }
+  readonly onManageCatalogs?: () => void
   readonly view: ProductImportReviewFilters
   readonly onViewChange: (view: ProductImportReviewFilters) => void
   readonly step: 'file' | 'mapping' | 'review' | 'result'
@@ -86,6 +89,8 @@ interface ProductImportViewProps {
 }
 
 export function ProductImportView({
+  setup,
+  onManageCatalogs,
   view,
   onViewChange,
   step,
@@ -170,6 +175,7 @@ export function ProductImportView({
       </h2>
       {step === 'file' ? (
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
+          <ProductImportSetupGuide disabled={busy} setup={setup} />
           <BulkImportDelimiter
             id="import-csv-change"
             value={delimiter}
@@ -246,6 +252,20 @@ export function ProductImportView({
           >
             Kiểm tra lại
           </Button>
+        </Alert>
+      ) : null}
+      {step === 'review' && data?.missingReferences?.length ? (
+        <Alert className="shrink-0">
+          <AlertTitle>
+            Danh mục cần xử lý · {data.missingReferences.filter((item) => item.categories).length}{' '}
+            nhóm · {data.missingReferences.filter((item) => !item.categories).length} đơn vị
+          </AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span>Kiểm tra danh mục mới hoặc ghép với danh mục có sẵn.</span>
+            <Button variant="outline" disabled={busy} onClick={onManageCatalogs}>
+              Xem và xử lý
+            </Button>
+          </AlertDescription>
         </Alert>
       ) : null}
       {step === 'review' && data ? (
@@ -340,6 +360,34 @@ export function ProductImportView({
           <AlertDialogHeader>
             <AlertDialogTitle>
               Nhập {rowsToImport.length} sản phẩm và {conversionCount} đơn vị quy đổi?
+              {data?.newCatalogs?.length ? (
+                <>
+                  {' '}
+                  Tạo{' '}
+                  {
+                    data.newCatalogs.filter(
+                      (draft) =>
+                        draft.categories &&
+                        rowsToImport.some((row) => row.category?.id === draft.id)
+                    ).length
+                  }{' '}
+                  nhóm,{' '}
+                  {
+                    data.newCatalogs.filter(
+                      (draft) =>
+                        !draft.categories &&
+                        rowsToImport.some(
+                          (row) =>
+                            row.unit?.id === draft.id ||
+                            row.unitConversions.some(
+                              (conversion) => conversion.unit?.id === draft.id
+                            )
+                        )
+                    ).length
+                  }{' '}
+                  đơn vị tính.
+                </>
+              ) : null}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {(data?.rows.length ?? 0) - rowsToImport.length} sản phẩm không hợp lệ hoặc không được

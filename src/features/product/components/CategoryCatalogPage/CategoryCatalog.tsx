@@ -1,5 +1,8 @@
 'use client'
 
+import Link from 'next/link'
+import { APP_ROUTES } from '@/routes/app-routes'
+
 import { useMemo, useState } from 'react'
 import {
   ChevronRight,
@@ -200,6 +203,9 @@ export function CategoryCatalog({
         </div>
         {canCreate ? (
           <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href={APP_ROUTES.categoryImport}>Nhập từ tệp</Link>
+            </Button>
             <Button onClick={() => onCreate(null)}>
               <Plus data-icon="inline-start" aria-hidden="true" />
               Thêm nhóm

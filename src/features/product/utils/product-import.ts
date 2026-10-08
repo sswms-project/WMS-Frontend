@@ -77,7 +77,16 @@ export function productImportPayload(
 ): ImportProductsRequest {
   const rows = selectedProductImportRows(preview, selected)
   if (!rows.length) throw new Error('Chọn ít nhất một sản phẩm hợp lệ.')
+  const used = new Set(
+    rows.flatMap((row) => [
+      row.unit?.id,
+      row.category?.id,
+      ...row.unitConversions.map((conversion) => conversion.unit?.id),
+    ])
+  )
+  const newCatalogs = (preview.newCatalogs ?? []).filter((draft) => used.has(draft.id))
   return {
+    ...(newCatalogs.length ? { newCatalogs, confirmCreateCatalogs: true } : {}),
     items: rows.map((row) => ({
       rowNumber: row.rowNumber,
       sku: row.sku,

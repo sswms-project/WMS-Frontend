@@ -250,6 +250,8 @@ export interface ImportProductItemRequest {
 }
 
 export interface ImportProductsRequest {
+  newCatalogs?: import('./product-import.types').ProductImportCatalogDraft[]
+  confirmCreateCatalogs?: boolean
   items: ImportProductItemRequest[]
 }
 

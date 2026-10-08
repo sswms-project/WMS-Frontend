@@ -228,6 +228,11 @@ export function ProductImportReview({
                     <Badge variant={isValidProductImportRow(row) ? 'default' : 'destructive'}>
                       {isValidProductImportRow(row) ? 'Hợp lệ' : 'Không hợp lệ'}
                     </Badge>
+                    {row.warnings.some((issue) => issue.code === 'catalogWillCreate') ? (
+                      <Badge variant="outline" className="mt-1 block w-fit">
+                        Sẽ tạo danh mục
+                      </Badge>
+                    ) : null}
                     {!isValidProductImportRow(row) || row.warnings.length ? (
                       <details id={`import-row-${row.rowNumber}-errors`} className="mt-1 text-xs">
                         <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">

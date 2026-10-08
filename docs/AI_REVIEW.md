@@ -1,5 +1,14 @@
 # AI Review Handoff
 
+## 2026-10-08 — Catalog setup/import checkpoint (NOT READY)
+
+- State: `IN_PROGRESS`; paused at 5% remaining 5-hour usage per user instruction. No commit/push. Details and remaining QA: `docs/features/2026-10-08-catalog-setup-import.md`.
+- Added units/categories import pages and permission-gated list actions; reused BulkImportPage and operational table/footer. Optional validationRevision supports editing catalog codes followed by mandatory recheck; supplier/customer callers retain default behavior.
+- Added product setup guide and explicit missing-reference Sheet, confirmation, read-only re-preview, per-row catalog badge, selected-row-only catalog payload and query invalidation. No new library or deployed DB write.
+- Confirmed prior targeted suite: 78 tests / 3 files passed. Full FE suite: **605 passed, 2 timeout failures / 607**, 105 files passed and 1 failed. Both failures in BulkImportPage.test.tsx (hidden-field errors, selecting page vs file), timeout 5000 ms; both previously passed targeted. Build ran concurrently; resource contention is possible but unproven. Rerun separately and investigate before claiming pass. Targeted ESLint emitted no findings.
+- Production build **passed, exit 0**, including TypeScript and 68 static pages; output `tmp/catalog-production` via KOVIA_ISOLATED_BUILD=true. Removed generated QA tsconfig includes after completion. Edge opened but feature mock QA not yet performed; do not claim responsive/focus/reduced-motion verification complete.
+- Follow-up must cover relational rollback including new catalogs, concurrency, inactive-code precedence, edited parent codes, complete file/permission/network matrices and actual Edge QA. Not ready for merge/production.
+
 ## 2026-10-08 — Unified catalog import presentation and loading UX
 
 - State: `READY_FOR_CODEX_REVIEW`; authorized implementation and self-verification, not independent approval. No commit/push. Preserved existing PageTransition changes and concurrent transfer work in both repositories.

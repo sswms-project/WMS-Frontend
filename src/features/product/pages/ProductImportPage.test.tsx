@@ -821,4 +821,90 @@ describe('product import workflow', () => {
     expect(signalA.aborted).toBe(true)
     expect(hook.result.current.data?.sheets[0]?.sheetName).toBe('Hàng hóa')
   })
+  it('prepares missing catalogs only through a confirmed read-only preview', async () => {
+    const id = '84ec110f-ff70-489e-a407-ce1493899522'
+    const missing = {
+      categories: false,
+      value: 'Lon',
+      id,
+      suggestedCode: 'DVT-LON',
+      productRows: [2],
+      canCreate: true,
+    }
+    vi.mocked(productImportService.preview).mockResolvedValue({
+      ...structuredClone(previewData),
+      missingReferences: [missing],
+      availableUnits: [],
+      availableCategories: [],
+    })
+    renderPage()
+    await openReview()
+    await userEvent.click(screen.getByRole('button', { name: 'Xem và xử lý' }))
+    expect(screen.getByRole('dialog', { name: 'Danh mục cần xử lý' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' }))
+    expect(
+      await screen.findByText('Xác nhận trước khi áp dụng phương án tạo mới.')
+    ).toBeInTheDocument()
+    expect(productImportService.preview).toHaveBeenCalledTimes(1)
+    await userEvent.click(
+      screen.getByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' }))
+    await waitFor(() => expect(productImportService.preview).toHaveBeenCalledTimes(2))
+    const options = vi.mocked(productImportService.preview).mock.calls[1]![1]
+    expect(options.confirmCreateCatalogs).toBe(true)
+    expect(options.newCatalogs?.[0]?.item).toMatchObject({
+      code: 'DVT-LON',
+      name: 'Lon',
+      quantityPrecision: 0,
+    })
+    expect(productService.importProducts).not.toHaveBeenCalled()
+  })
+  it('sends only new catalogs required by the selected product rows', () => {
+    const preview = structuredClone(previewData)
+    preview.newCatalogs = [
+      {
+        id: 'base-unit',
+        categories: false,
+        item: {
+          rowNumber: 2,
+          code: 'DVT-LON',
+          name: 'Lon',
+          quantityPrecision: 0,
+          parentCode: null,
+          symbol: null,
+          description: null,
+        },
+      },
+      {
+        id: 'unused',
+        categories: false,
+        item: {
+          rowNumber: 3,
+          code: 'DVT-KHAC',
+          name: 'Khác',
+          quantityPrecision: 0,
+          parentCode: null,
+          symbol: null,
+          description: null,
+        },
+      },
+      {
+        id: 'box-unit',
+        categories: false,
+        item: {
+          rowNumber: 2,
+          code: 'DVT-THUNG',
+          name: 'Thùng',
+          quantityPrecision: 0,
+          parentCode: null,
+          symbol: null,
+          description: null,
+        },
+      },
+    ]
+    const payload = productImportPayload(preview, [2])
+    expect(payload.newCatalogs?.map((item) => item.id)).toEqual(['base-unit', 'box-unit'])
+    expect(payload.confirmCreateCatalogs).toBe(true)
+  })
 })

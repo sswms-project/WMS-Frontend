@@ -12,6 +12,9 @@ export interface ProductImportOptions {
   conversions: ProductImportSheetOptions | null
   csvDelimiter: 'auto' | ',' | ';' | '\t'
   schemaVersion: number
+  referenceChoices?: ProductImportReferenceChoice[]
+  newCatalogs?: ProductImportCatalogDraft[]
+  confirmCreateCatalogs?: boolean
 }
 export interface ProductImportField {
   field: string
@@ -110,4 +113,27 @@ export interface ProductImportPreview {
   rows: ProductImportPreviewRow[]
   fileErrors: ProductImportIssue[]
   warnings: ProductImportIssue[]
+  missingReferences?: ProductImportMissingReference[]
+  newCatalogs?: ProductImportCatalogDraft[]
+  availableUnits?: ProductImportReference[]
+  availableCategories?: ProductImportReference[]
+}
+
+export interface ProductImportCatalogDraft {
+  id: string
+  categories: boolean
+  item: import('./catalog-import.types').CatalogImportItem
+}
+export interface ProductImportReferenceChoice {
+  categories: boolean
+  value: string
+  id: string
+}
+export interface ProductImportMissingReference {
+  categories: boolean
+  value: string
+  id: string
+  suggestedCode: string
+  productRows: number[]
+  canCreate: boolean
 }
