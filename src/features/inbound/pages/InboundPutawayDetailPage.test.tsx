@@ -59,9 +59,6 @@ vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn() } }))
 vi.mock('@/features/auth/hooks/use-auth', () => ({
   useMeQuery: () => ({ data: { permissions: [] } }),
 }))
-vi.mock('@/features/inventory/hooks/use-inventory', () => ({
-  useUploadInventoryEvidenceMutation: () => ({ mutateAsync: fixtures.upload, isPending: false }),
-}))
 vi.mock('@/features/warehouse/hooks/use-warehouse', () => ({
   useWarehouseLayoutQuery: () => ({ data: [], refetch: vi.fn() }),
 }))
@@ -95,6 +92,7 @@ vi.mock('../hooks/use-warehouse-task-assignment-access', () => ({
 vi.mock('../hooks/use-inbound', () => ({
   useGoodsReceiptQuery: () => ({ data: fixtures.receipt, refetch: fixtures.refetch }),
   useInboundAllowedActionsQuery: () => ({ data: { allowedActions: fixtures.allowedActions } }),
+  useUploadPutawayEvidenceMutation: () => ({ mutateAsync: fixtures.upload, isPending: false }),
   useSavePutawayPlanMutation: () => ({ mutateAsync: fixtures.savePlan, isPending: false }),
   usePutawayHeldSlotsQuery: () => ({ data: fixtures.heldSlots }),
   usePutawayMutation: () => ({ mutateAsync: fixtures.mutate, isPending: false }),

@@ -247,7 +247,10 @@ export function PutawayAllocationRow({
             </p>
           ) : null}
           {scan === 'required' && !line.confirmedSlotCode ? (
-            <Badge variant="outline" className="border-warning text-warning w-fit">
+            <Badge
+              variant="outline"
+              className="border-warning text-warning animate-in fade-in-0 zoom-in-95 animation-duration-200 w-fit motion-reduce:animate-none"
+            >
               Chưa quét mã
             </Badge>
           ) : null}

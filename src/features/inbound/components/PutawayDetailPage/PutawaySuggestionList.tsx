@@ -66,7 +66,7 @@ export function PutawaySuggestionList({
               {alternates.length} vị trí thay thế
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent>
+          <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden motion-reduce:animate-none">
             <ul className="mt-1 divide-y border">{alternates.map(row)}</ul>
           </CollapsibleContent>
         </Collapsible>
@@ -117,7 +117,7 @@ function SuggestionRow({
         ))}
       </div>
       {used ? (
-        <span className="text-primary flex shrink-0 items-center gap-1 py-1.5 font-medium">
+        <span className="text-primary animate-in fade-in-0 zoom-in-95 animation-duration-200 flex shrink-0 items-center gap-1 py-1.5 font-medium motion-reduce:animate-none">
           <Check aria-hidden="true" className="size-3.5" />
           Đã dùng
         </span>

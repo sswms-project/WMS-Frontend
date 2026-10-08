@@ -1,6 +1,7 @@
 import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
+import type { InventoryEvidence } from '@/features/inventory/types/inventory.types'
 import type {
   AssignableWarehouseStaff,
   AssignWarehouseTaskRequest,
@@ -120,6 +121,17 @@ export const inboundService = {
         ApiResponse<PutAwaySuggestionsResponse>
       >(API_ENDPOINTS.goodsReceipts.putawayPlanSuggestions(receiptId), undefined, { timeout: 60_000 })
       .then((response) => response.data),
+  uploadPutawayEvidence: (warehouseId: string, file: File) => {
+    const formData = new FormData()
+    formData.append('warehouseId', warehouseId)
+    formData.append('file', file)
+    return axiosClient
+      .post<ApiResponse<InventoryEvidence>>(API_ENDPOINTS.goodsReceipts.putawayEvidence, formData, {
+        // Mặc định của axiosClient là JSON; bỏ đi để trình duyệt tự đặt multipart kèm boundary.
+        headers: { 'Content-Type': null },
+      })
+      .then((response) => response.data)
+  },
   getPutawayHeldSlots: (receiptId: string) =>
     axiosClient
       .get<ApiResponse<PutAwayHeldSlot[]>>(API_ENDPOINTS.goodsReceipts.putawayHeldSlots(receiptId))

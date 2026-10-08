@@ -52,7 +52,7 @@ export function PutawaySlotCodeConfirm({
   if (confirmedCode)
     return (
       <p
-        className="text-primary flex basis-full flex-wrap items-center gap-1.5 text-xs"
+        className="text-primary animate-in fade-in-0 zoom-in-95 animation-duration-200 flex basis-full flex-wrap items-center gap-1.5 text-xs motion-reduce:animate-none"
         role="status"
       >
         <CircleCheck aria-hidden="true" className="size-3.5" />
@@ -89,7 +89,7 @@ export function PutawaySlotCodeConfirm({
     )
 
   return (
-    <div className="flex basis-full flex-col gap-1">
+    <div className="animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 flex basis-full flex-col gap-1 motion-reduce:animate-none">
       <div className="flex items-center gap-2">
         <Input
           id={id}

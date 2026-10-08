@@ -18,6 +18,7 @@ import { useState } from 'react'
 import { useWatch, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { FieldError } from '@/components/ui/field'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
@@ -455,17 +456,30 @@ export function PutawayForm({
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* `key` theo trạng thái để nhãn nảy nhẹ mỗi khi đổi từ thiếu sang đủ hay vượt. */}
                     {excess > 0 ? (
-                      <Badge variant="destructive">
+                      <Badge
+                        key="over"
+                        variant="destructive"
+                        className="animate-in fade-in-0 zoom-in-95 animation-duration-200 motion-reduce:animate-none"
+                      >
                         Vượt {formatPutawayQuantity(item, excess)}
                       </Badge>
                     ) : isFullyAllocated(item) ? (
-                      <Badge variant="secondary">
+                      <Badge
+                        key="full"
+                        variant="secondary"
+                        className="animate-in fade-in-0 zoom-in-95 animation-duration-200 motion-reduce:animate-none"
+                      >
                         <Check aria-hidden="true" />
                         Đã đủ
                       </Badge>
                     ) : missing > 0 ? (
-                      <Badge variant="outline" className="border-warning text-warning">
+                      <Badge
+                        key="missing"
+                        variant="outline"
+                        className="border-warning text-warning animate-in fade-in-0 zoom-in-95 animation-duration-200 motion-reduce:animate-none"
+                      >
                         Còn thiếu {formatPutawayQuantity(item, missing)}
                       </Badge>
                     ) : null}
@@ -482,7 +496,7 @@ export function PutawayForm({
                   </div>
                 </div>
                 {collapsed ? (
-                  <p className="text-muted-foreground px-4 py-2 font-mono text-xs break-words">
+                  <p className="text-muted-foreground animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 px-4 py-2 font-mono text-xs break-words motion-reduce:animate-none">
                     {itemEntries
                       .filter((entry) => entry.line.slotId)
                       .map(
@@ -495,30 +509,35 @@ export function PutawayForm({
                       )
                       .join(' · ') || 'Chưa chọn vị trí'}
                   </p>
-                ) : itemEntries.length === 0 ? (
-                  <p className="text-muted-foreground px-4 py-3 text-xs">
-                    Chưa có vị trí nào cho sản phẩm này. Bấm “Chia sang vị trí khác” để thêm.
-                  </p>
-                ) : (
-                  <>
-                    <div
-                      aria-hidden="true"
-                      className={cn(
-                        'text-muted-foreground hidden border-b px-4 py-1.5 text-xs font-medium',
-                        PUTAWAY_ROW_GRID
-                      )}
-                    >
-                      <span>Vị trí</span>
-                      <span>Số lượng</span>
-                      <span>Đơn vị</span>
-                      <span>Quy đổi</span>
-                      <span className="w-[6.5rem]" />
-                    </div>
-                    <div className="divide-y">
-                      {itemEntries.map((entry) => renderRow(entry, false))}
-                    </div>
-                  </>
-                )}
+                ) : null}
+                <Collapsible open={!collapsed}>
+                  <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden motion-reduce:animate-none">
+                    {itemEntries.length === 0 ? (
+                      <p className="text-muted-foreground px-4 py-3 text-xs">
+                        Chưa có vị trí nào cho sản phẩm này. Bấm “Chia sang vị trí khác” để thêm.
+                      </p>
+                    ) : (
+                      <>
+                        <div
+                          aria-hidden="true"
+                          className={cn(
+                            'text-muted-foreground hidden border-b px-4 py-1.5 text-xs font-medium',
+                            PUTAWAY_ROW_GRID
+                          )}
+                        >
+                          <span>Vị trí</span>
+                          <span>Số lượng</span>
+                          <span>Đơn vị</span>
+                          <span>Quy đổi</span>
+                          <span className="w-[6.5rem]" />
+                        </div>
+                        <div className="divide-y">
+                          {itemEntries.map((entry) => renderRow(entry, false))}
+                        </div>
+                      </>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
               </article>
             )
           })}
@@ -529,7 +548,10 @@ export function PutawayForm({
           ) : null}
         </div>
         {allocation.canSubmit && scanMissing > 0 ? (
-          <p className="text-warning border-t px-4 py-3 text-xs" role="status">
+          <p
+            className="text-warning animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 border-t px-4 py-3 text-xs motion-reduce:animate-none"
+            role="status"
+          >
             Còn {scanMissing} vị trí được giao chưa quét mã. Quét đủ mã để xác nhận cất hàng.
           </p>
         ) : null}

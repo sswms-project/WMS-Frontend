@@ -51,7 +51,7 @@ export function PutawaySuggestionPanel({
   if (allApplied && !reviewing)
     return (
       <section
-        className="bg-muted/40 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 text-xs"
+        className="bg-muted/40 animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 text-xs motion-reduce:animate-none"
         aria-label="Gợi ý vị trí cất hàng"
       >
         <p className="text-primary flex items-center gap-1.5 font-medium" role="status">

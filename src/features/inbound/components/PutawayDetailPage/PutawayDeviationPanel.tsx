@@ -150,7 +150,14 @@ export function PutawayDeviationPanel({
               {evidence.items.length}/{PUTAWAY_EVIDENCE_MAX_COUNT} ảnh
             </span>
           </div>
-          {evidence.error ? <FieldError role="alert">{evidence.error}</FieldError> : null}
+          {evidence.error ? (
+            <FieldError
+              role="alert"
+              className="animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 motion-reduce:animate-none"
+            >
+              {evidence.error}
+            </FieldError>
+          ) : null}
           {evidence.items.length > 0 ? (
             <ul className="mt-2 flex flex-col gap-1">
               {evidence.items.map((item) => (

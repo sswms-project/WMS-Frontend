@@ -8,7 +8,6 @@ import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { useUploadInventoryEvidenceMutation } from '@/features/inventory/hooks/use-inventory'
 import {
   OperationalErrorState,
   OperationalLoadingState,
@@ -37,6 +36,7 @@ import {
   usePutawayMutation,
   useReconcilePutawayCancellationMutation,
   useSavePutawayPlanMutation,
+  useUploadPutawayEvidenceMutation,
 } from '../hooks/use-inbound'
 import {
   cancelPutawayTaskSchema,
@@ -106,7 +106,7 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
     Boolean(receiptQuery.data?.warehouseId)
   )
   const mutation = usePutawayMutation()
-  const uploadEvidenceMutation = useUploadInventoryEvidenceMutation()
+  const uploadEvidenceMutation = useUploadPutawayEvidenceMutation()
   const cancelMutation = useCancelPutawayTaskMutation()
   const reconcileMutation = useReconcilePutawayCancellationMutation()
   const form = useForm<PutawayFormValues>({

@@ -4,6 +4,7 @@ import { CircleCheck, ScanLine } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { matchScannedSlotCode, type ScannableLine } from '../../utils/putaway-plan'
 
 export interface PutawayScanState {
@@ -30,11 +31,13 @@ interface PutawayScanBarProps {
 export function PutawayScanBar({ state, lines, slots, disabled, onConfirm }: PutawayScanBarProps) {
   const [code, setCode] = useState('')
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null)
+  const [scanCount, setScanCount] = useState(0)
   const missing = state.requiredCount - state.confirmedCount
 
   function scan() {
     const result = matchScannedSlotCode(code, slots, lines)
     setCode('')
+    setScanCount((count) => count + 1)
     if (result.status === 'error') {
       setFeedback({ ok: false, message: result.message })
       return
@@ -77,7 +80,7 @@ export function PutawayScanBar({ state, lines, slots, disabled, onConfirm }: Put
         </div>
         <p className="text-sm tabular-nums" role="status">
           {missing <= 0 ? (
-            <span className="text-primary flex items-center gap-1.5 font-medium">
+            <span className="text-primary animate-in fade-in-0 zoom-in-95 animation-duration-200 flex items-center gap-1.5 font-medium motion-reduce:animate-none">
               <CircleCheck aria-hidden="true" className="size-4" />
               Đã quét đủ {state.requiredCount}/{state.requiredCount} vị trí được giao
             </span>
@@ -95,7 +98,12 @@ export function PutawayScanBar({ state, lines, slots, disabled, onConfirm }: Put
       </div>
       {feedback ? (
         <p
-          className={feedback.ok ? 'text-primary text-xs' : 'text-destructive text-xs'}
+          // Mỗi lần quét là một thông báo mới: `key` đổi để hiệu ứng chạy lại.
+          key={scanCount}
+          className={cn(
+            'animate-in fade-in-0 slide-in-from-top-1 animation-duration-200 text-xs motion-reduce:animate-none',
+            feedback.ok ? 'text-primary' : 'text-destructive animate-[shake_0.4s_ease-in-out]'
+          )}
           role={feedback.ok ? 'status' : 'alert'}
         >
           {feedback.message}

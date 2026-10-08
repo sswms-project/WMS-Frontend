@@ -4,6 +4,7 @@ import { formatApiError, isApiErrorResponse } from '@/lib/api-error'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { inboundService } from '../services/inbound.service'
+import type { InventoryEvidence } from '@/features/inventory/types/inventory.types'
 import type {
   AssignableWarehouseStaff,
   AssignWarehouseTaskRequest,
@@ -129,6 +130,18 @@ export function usePutawayHeldSlotsQuery(receiptId: string, enabled = true) {
     queryKey: queryKeys.goodsReceipts.putawayHeldSlots(receiptId),
     queryFn: () => inboundService.getPutawayHeldSlots(receiptId).then((response) => response.data),
     enabled: enabled && Boolean(receiptId) && receiptId !== NULL_GUID,
+  })
+}
+
+/** Ảnh minh họa khi cất khác khuyến nghị; dùng quyền cất hàng, không cần quyền xem tồn kho. */
+export function useUploadPutawayEvidenceMutation() {
+  return useMutation<
+    ApiResponse<InventoryEvidence>,
+    ApiErrorResponse,
+    { warehouseId: string; file: File }
+  >({
+    mutationFn: ({ warehouseId, file }) => inboundService.uploadPutawayEvidence(warehouseId, file),
+    onError: (error) => logger.warn(formatApiError(error)),
   })
 }
 
