@@ -6,15 +6,18 @@ import {
   BulkImportPage,
   type BulkImportColumn,
   type BulkImportCommitOutcome,
+  type BulkImportInspectOutcome,
   type BulkImportPreviewOutcome,
 } from '@/components/operations/BulkImportPage'
+import type { SpreadsheetImportOptions } from '@/components/operations/spreadsheet-import.types'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
   useImportStockRecipientsMutation,
   usePreviewStockRecipientImportMutation,
+  useInspectStockRecipientImportMutation,
   useStockRecipientImportTemplateMutation,
 } from '../hooks/use-stock-recipients'
 import type { StockRecipientImportPreviewRow } from '../types/stock-recipient.types'
@@ -64,21 +67,39 @@ function getRowSearchText(row: StockRecipientImportPreviewRow) {
 }
 
 export default function StockRecipientImportPage() {
-  const permissions = useMeQuery().data?.permissions ?? []
+  const me = useMeQuery()
+  const permissions = me.data?.permissions ?? []
   const importMutation = useImportStockRecipientsMutation()
   const previewMutation = usePreviewStockRecipientImportMutation()
+  const inspectMutation = useInspectStockRecipientImportMutation()
   const templateMutation = useStockRecipientImportTemplateMutation()
 
   async function handlePreview(
-    file: File
+    file: File,
+    options: SpreadsheetImportOptions
   ): Promise<BulkImportPreviewOutcome<StockRecipientImportPreviewRow>> {
     try {
-      const response = await previewMutation.mutateAsync(file)
+      const response = await previewMutation.mutateAsync({ file, options })
       return { isSucceeded: true, rows: response.data.rows }
     } catch (error) {
       return {
         isSucceeded: false,
         message: getApiErrorMessage(error, 'Không thể đọc tệp nhập. Vui lòng thử lại.'),
+      }
+    }
+  }
+
+  async function handleInspect(
+    file: File,
+    csvDelimiter: string
+  ): Promise<BulkImportInspectOutcome> {
+    try {
+      const response = await inspectMutation.mutateAsync({ file, csvDelimiter })
+      return { isSucceeded: true, inspection: response.data }
+    } catch (error) {
+      return {
+        isSucceeded: false,
+        message: getApiErrorMessage(error, 'Không thể đọc cấu trúc tệp. Vui lòng thử lại.'),
       }
     }
   }
@@ -101,7 +122,11 @@ export default function StockRecipientImportPage() {
     } catch (error) {
       const message = getApiErrorMessage(error, 'Không thể nhập khách hàng. Vui lòng thử lại.')
       toast.error(message)
-      return { isSucceeded: false, message }
+      return {
+        isSucceeded: false,
+        message,
+        requiresReconciliation: !isApiErrorResponse(error) || error.statusCode >= 500,
+      }
     }
   }
 
@@ -115,6 +140,7 @@ export default function StockRecipientImportPage() {
 
   return (
     <BulkImportPage
+      key={`${me.data?.tenantId}:${me.data?.id}`}
       eyebrow="Danh mục"
       title="Nhập danh sách khách hàng"
       description={`Kiểm tra dữ liệu trước khi nhập tối đa ${STOCK_RECIPIENT_IMPORT_MAX_ROWS} khách hàng. Để trống Mã KH để hệ thống tự cấp mã.`}
@@ -127,11 +153,12 @@ export default function StockRecipientImportPage() {
       columns={previewColumns}
       getRowLabel={getRowLabel}
       getRowSearchText={getRowSearchText}
-      isPreviewing={previewMutation.isPending}
+      isPreviewing={previewMutation.isPending || inspectMutation.isPending}
       isImporting={importMutation.isPending}
       isDownloadingTemplate={templateMutation.isPending}
       onDownloadTemplate={() => void handleDownloadTemplate()}
       onPreview={handlePreview}
+      onInspect={handleInspect}
       onImport={handleImport}
     />
   )
