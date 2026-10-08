@@ -705,3 +705,33 @@ Bốn bổ sung (tùy chọn lưu trên từng thiết bị, thanh công tắc �
 - Log BE có lỗi có sẵn `CycleCountStatus 'Cancelled'` không thuộc điều chuyển.
 - **Phân quyền trên `db71143`:** nhiều bản build với danh mục quyền khác nhau dùng chung một DB. Bước đồng bộ quyền khi khởi động của bản không có `transfers:pick/resolve/cancel` xóa chúng cùng các lượt gán; đã xảy ra nhiều lần trong ngày. Cần thống nhất một nhánh hoặc đặt `Database__ApplyMigrationsOnStartup=false`; script seed nằm ở `SSWMS-Backend/docs/features/2026-10-08-transfer-permissions-seed.sql`.
 - Dữ liệu QA nằm trong `db71143`: các phiếu `TRF-20261008…` (hoàn tất, đã hủy, và một phiếu còn mở để thử lệch phiên bản); tồn Bia Tiger tại Đà Nẵng giảm và kho test tăng tương ứng.
+
+## 22. Rà soát mã luồng điều chuyển (2026-10-08)
+
+Rà soát BE + FE theo spec, `.rules` và `AGENTS.md` hai repo, GitNexus (impact: mọi symbol sửa đều LOW) và tiêu chí Ponytail (chỉ xét thừa/chết). Chỉ xét file thuộc điều chuyển; bỏ qua luồng import Excel đang sửa trên nhánh.
+
+### 22.1. Lỗi đã sửa
+
+| Mức  | Lỗi                                                                                                                                                                                          | Sửa                                                                                                                                 |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Cao  | Hủy phiếu đang thực hiện và Dừng phần còn lại chỉ kiểm quyền `transfers:cancel` + kho, không kiểm "chủ hoặc người tạo" như spec mục 3 (FE đã ẩn nút nhưng BE cho Manager khác gọi trực tiếp) | `TransferRules.EnsureOwnerOrCreator` dùng chung cho Hủy, Dừng, Sửa, Trả lời phản hồi; test mới                                      |
+| Cao  | Lưu nháp lần hai trên cùng màn hình (hoặc "Tạo yêu cầu" lại sau khi bị chặn vì thiếu tồn) bị 400 "Thiếu phiên bản" vì FE không gửi phiên bản sau lần lưu đầu mà BE bắt buộc                  | BE chỉ kiểm phiên bản nháp khi có gửi (như Gửi nháp/Hủy); đã chạy lại trên trình duyệt: lưu nháp 3 lần rồi gửi thành công; test mới |
+| Vừa  | Báo quản lý hai lần trên cùng dòng tạo hai báo cáo chờ                                                                                                                                       | Từ chối khi dòng đang chờ quản lý; test mới                                                                                         |
+| Thấp | Thông báo lỗi tiếng Anh ở truy vấn danh sách/chi tiết/kho nguồn của điều chuyển                                                                                                              | Đổi sang tiếng Việt                                                                                                                 |
+
+### 22.2. Dọn mã và cấu trúc
+
+- Xóa endpoint `GET /api/transfers/source-inventory` (không còn nơi gọi, thay bằng `availability`) cùng hằng số FE; xóa `isLinePendingManager` không dùng; bỏ điều kiện thừa trong phiếu lấy hàng.
+- `.rules`: tách `PickExceptionDialogs`, `TransferFeedbackDialogs`, `TransferDirectory` thành mỗi dialog/thành phần một file; thêm barrel `TransferWork/index.ts`; chuyển logic lưu nháp/gửi/sửa của `TransferFormPage` (428 → 335 dòng) sang `use-transfer-form-actions.ts`.
+
+### 22.3. Ghi nhận, chưa đổi
+
+- Nhiều chỗ so tên vai trò `TenantOwner` để cho phép "chủ sửa/hủy mọi phiếu" (cùng mẫu với luồng Nhập kho). `AGENTS.md` khuyên dựa trên quyền hiệu lực; cần quyết định riêng về quyền kiểu "quản lý mọi phiếu" nếu muốn bỏ.
+- Đổi vị trí lấy hàng ghi lý do `NonFefoLot` đè lý do nhân viên chọn khi lô không theo FEFO (lý do gốc vẫn có trong audit log).
+- Phản hồi chỉ thông báo người tạo phiếu; nếu Manager tạo phiếu thì Owner không được báo.
+- Theo dõi "thao tác ghi của chính mình" ở `useTransferRealtime` đếm mọi mutation của ứng dụng, không riêng điều chuyển.
+- Quyền `transfers:pick/resolve/cancel` trên `db71143` lại bị mất khi kiểm tra (xem 21.5); các hộp thoại lấy hàng/báo quản lý/trả hàng sau khi tách file chưa kiểm lại trên trình duyệt, chỉ qua typecheck và test.
+
+### 22.4. Kiểm thử
+
+BE 1022 đạt, 1 bỏ qua; FE 643 đạt, typecheck và lint sạch. Trình duyệt: danh sách (mobile + desktop, bộ lọc, menu thao tác), form nháp lưu nhiều lần, gửi yêu cầu.
