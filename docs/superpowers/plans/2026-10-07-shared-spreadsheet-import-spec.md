@@ -1,7 +1,7 @@
 # Kovia — Import Excel/CSV dùng chung, triển khai VTHH trước
 
 Ngày: **2026-10-07**  
-Trạng thái: **Gate A/B/C đã hoàn tất và commit. Gate D NCC/khách hàng đã hoàn tất triển khai và kiểm tra trong phạm vi ghi nhận ngày 08/10/2026; chưa commit. Chi tiết và giới hạn tại mục 13.8.**
+Trạng thái: **Gate A/B/C đã hoàn tất và commit. Gate D NCC/khách hàng đã commit BE `395e91d`, FE `71d9099`; self-review còn 3 finding Medium cần xử lý. Chi tiết kiểm chứng và giới hạn tại mục 13.8–13.9.**
 
 Phạm vi: **Backend → Frontend logic → UI/UX**, sau đó mới mở rộng sang NCC/đơn vị nhận hàng.  
 Nhánh làm việc: BE `feat/huytv`, FE `screen/huytv`. Không tự tạo nhánh khác.
@@ -642,3 +642,13 @@ Kiểm chứng 07/10/2026: toàn bộ FE **84 files / 441 tests passed**, typech
 - **GitNexus:** pre-impact các parser/query/controller/BulkImportPage/product mapping/navigation/service/hook LOW, đối chiếu current source/callers thủ công do FTS thiếu và refresh BE không hoàn tất (đã dừng tiến trình refresh của tác vụ). Detect cuối FE MEDIUM 13 tracked files / 3 indexed flows; BE MEDIUM 42 tracked files / 4 flows nhưng gồm thay đổi Transfer không thuộc Gate D. Index chưa chứa file mới và có range cũ gán nhầm neighboring symbols; manual diff xác nhận các update/detail hooks và Transfer không được Gate D sửa.
 - Không truy cập/ghi `db71143`, không migration/seed/repair/cleanup/deletion, không dọn ổ C. Chỉ ghi fixture InMemory sau target verification. Quota còn trên 5%; không phải dừng vì usage.
 - **Kiểm tra FE cuối:** `pnpm test --pool=threads --maxWorkers=1` đạt **90 files / 474 tests**, 0 failed; `pnpm typecheck`, `pnpm lint`, `pnpm build` mặc định đều exit 0 sau các chỉnh sửa cuối. Next.js 16.2.7/Turbopack hoàn tất compile/TypeScript/66 trang tĩnh/final optimization, có các route `/products/import`, `/suppliers/import`, `/stock-recipients/import` riêng. Gate D đóng theo phạm vi và giới hạn trên; chưa commit/push/PR. Ponytail giữ handler nghiệp vụ riêng và chỉ chia sẻ cơ chế đọc/ghép cột/UI có hai nơi dùng thật; shadcn/React/composition/accessibility skills hướng dẫn reuse primitive, state cô lập, label/help liên kết và QA reflow.
+
+### 13.9. Commit và self-review Gate D — 08/10/2026
+
+- Đã commit riêng BE `395e91d` (17 files) và FE `71d9099` (22 files); không push/PR. Giữ `feat/huytv`, `screen/huytv`; không đưa thay đổi Transfer của task khác vào commit.
+- Review theo spec, .rules, AGENTS và direct dependencies. Đây là self-review, không phải independent approval. Không phát hiện Blocker/High trong phạm vi đã đọc; còn **3 Medium / OPEN**:
+  1. **D-BE-01:** parser mapped NCC/khách hàng dùng `CancellationToken.None`, không truyền cancellation từ preview request tới reader. Cần giữ tương thích caller cũ và thêm test hủy đọc.
+  2. **D-BE-02:** khi header không tự nhận diện duy nhất, inspect chỉ trả năm dòng đầu; chọn header tùy chỉnh ở dòng 8 làm phần dữ liệu mẫu trống. Cần mẫu có giới hạn theo header đã chọn, không trả toàn workbook; kiểm tra wrapper VTHH dùng chung bảng.
+  3. **D-FE-01:** nhãn "Chọn tất cả dòng hợp lệ" không nói chỉ trang hiện tại; thiếu action toàn file rõ phạm vi theo mục 6.2. Repro 100 dòng: bỏ chọn checkbox đầu trang 1 vẫn còn 50 dòng trang 2 được chọn. Đây là điểm chưa hoàn thiện kế thừa ở common UI, không phải thuật toán selection mới bị đổi sai.
+- Chạy lại 24 test FE tập trung; 50 regression BE party + 43 shared reader/decimal đều đạt. Hai test chỉ nằm ngoài repo trên D tái hiện lỗi mẫu và phạm vi checkbox; chúng xác nhận hành vi lỗi đang tồn tại, không có nghĩa đã fix. Test copy BE build 0 errors; warnings chỉ nằm ở fixture guards/analyzer QA. Hướng dẫn target fixture đã in/kiểm chứng InMemory / in-process / UUID trước write.
+- Chưa sửa source theo findings trong lượt review. Chưa chứng nhận full Application suite/build của working tree có Transfer đang sửa; chưa có live party HTTP/SQL/JWT/concurrency acceptance. Không truy cập `db71143`, không migration/seed/cleanup/xóa dữ liệu. Quota còn trên 5% tại kiểm tra.
