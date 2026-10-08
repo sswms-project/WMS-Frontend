@@ -11,7 +11,6 @@ import { toast } from 'sonner'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { useLocalStorage } from '@/hooks/use-local-storage'
 import {
   formatApiError,
   getApiErrorCode,

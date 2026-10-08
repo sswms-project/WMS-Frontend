@@ -275,6 +275,8 @@ export default function InboundPutawayDetailPage({ receiptId }: { readonly recei
       warehouseName: receipt.warehouseName,
       currentAssigneeId: receipt.putAwayAssignedTo,
       currentAssigneeName: receipt.putAwayAssignedToName,
+      currentPriority: receipt.putAwayTaskPriority,
+      currentDueAt: receipt.putAwayTaskDueAt,
     })
   }
 
