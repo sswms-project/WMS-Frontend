@@ -689,7 +689,7 @@ Lỗi tìm thấy và đã sửa:
 ### 21.5. Hạn chế còn lại
 
 - Hai lỗi truy cập axe (`button-name` của nút trigger combobox, `aria-valid-attr-value` của tab) đã sửa: nút mở danh sách có nhãn mặc định "Mở danh sách"; hai thanh tab của chuyển kho nối với `role=tabpanel` theo mẫu WAI-ARIA. Axe không còn lỗi trên danh sách, form và chi tiết. Các nơi khác dùng `Tabs` của Radix vẫn giữ hành vi cũ.
-- `prefers-reduced-motion` chưa kiểm bằng công cụ.
+- `prefers-reduced-motion`: đã đo bằng trình duyệt khi bật chế độ giảm chuyển động trên danh sách, chi tiết và hộp thoại; chỉ có biểu tượng làm mới của danh sách còn quay, đã sửa (đứng yên, mờ đi, `aria-busy`). Các trang khác không còn animation.
 - Nhận hàng bằng mã kệ chưa hỗ trợ (kho nhận dùng tra cứu vị trí thật của kho đích).
 - Log BE có lỗi có sẵn `CycleCountStatus 'Cancelled'` không thuộc điều chuyển.
 - **Phân quyền trên `db71143`:** nhiều bản build với danh mục quyền khác nhau dùng chung một DB. Bước đồng bộ quyền khi khởi động của bản không có `transfers:pick/resolve/cancel` xóa chúng cùng các lượt gán; đã xảy ra nhiều lần trong ngày. Cần thống nhất một nhánh hoặc đặt `Database__ApplyMigrationsOnStartup=false`; script seed nằm ở `SSWMS-Backend/docs/features/2026-10-08-transfer-permissions-seed.sql`.
