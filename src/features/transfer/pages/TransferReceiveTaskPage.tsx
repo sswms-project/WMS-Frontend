@@ -12,9 +12,11 @@ import {
   formatOperationalDate,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { ReceiveEntryCard } from '../components/TransferWork/ReceiveEntryCard'
-import { ScanPreferencesBar } from '../components/TransferWork/ScanPreferencesBar'
-import { TransferWorkHeader } from '../components/TransferWork/TransferWorkHeader'
+import {
+  ReceiveEntryCard,
+  ScanPreferencesBar,
+  TransferWorkHeader,
+} from '../components/TransferWork'
 import { TransferChangedBanner, TransferConfirmDialog } from '../components/TransferShared'
 import { useTransferReceiveSheetQuery } from '../hooks/use-transfer-fulfillment'
 import { useTransferReceiveForm } from '../hooks/use-transfer-receive-form'

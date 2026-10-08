@@ -5,7 +5,6 @@ import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
-import { toast } from 'sonner'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import {
   OperationalEmptyState,
@@ -29,29 +28,23 @@ import {
   type TransferLineLockInfo,
 } from '../components/TransferFormPage'
 import { TransferChangedBanner, TransferConfirmDialog } from '../components/TransferShared'
+import { useTransferFormActions } from '../hooks/use-transfer-form-actions'
 import { useTransferRealtime } from '../hooks/use-transfer-realtime'
 import { useTransferViewer } from '../hooks/use-transfer-viewer'
 import {
-  useSaveTransferDraftMutation,
-  useSubmitTransferDraftMutation,
   useTransferAvailabilityQuery,
   useTransferQuery,
   useTransferSourceWarehousesQuery,
-  useUpdateTransferMutation,
 } from '../hooks/use-transfers'
 import {
   transferRequestSchemaWithLocks,
   type TransferLineLock,
   type TransferRequestFormValues,
 } from '../schemas/transfer-request.schema'
-import { describeTransferError } from '../utils/transfer-errors'
 import {
   EMPTY_TRANSFER_LINE,
   dispatchedInEnteredUnit,
   emptyTransferForm,
-  toSaveDraftRequest,
-  toUpdateTransferRequest,
-  transferToFormValues,
   visibleTransferItems,
 } from '../utils/transfer-form'
 
@@ -67,14 +60,9 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   const { viewer, isReady } = useTransferViewer()
   const detailQuery = useTransferQuery(transferId ?? null)
   const detail = detailQuery.data
-  const hydratedId = useRef<string | null>(null)
-  const draftIdRef = useRef<string | null>(null)
-  const savedDraftOnceRef = useRef(false)
   const locksRef = useRef<ReadonlyMap<string, TransferLineLock>>(new Map())
   const [productSearch, setProductSearch] = useState<ProductSearchState | null>(null)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [hasConflict, setHasConflict] = useState(false)
   const debouncedProductSearch = useDebouncedValue(productSearch?.value.trim() ?? '', 300)
 
   const mode: TransferFormMode = !transferId
@@ -128,11 +116,14 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
     )
   )
 
-  const saveDraftMutation = useSaveTransferDraftMutation()
-  const submitDraftMutation = useSubmitTransferDraftMutation()
-  const updateMutation = useUpdateTransferMutation()
-  const isSaving =
-    saveDraftMutation.isPending || submitDraftMutation.isPending || updateMutation.isPending
+  const actions = useTransferFormActions({
+    mode,
+    transferId,
+    detail,
+    form,
+    refetchDetail: detailQuery.refetch,
+    dismissRealtime: realtime.dismiss,
+  })
 
   const { lockInfoByItemId, lineLocks } = useMemo(() => {
     const info: Record<string, TransferLineLockInfo> = {}
@@ -199,13 +190,6 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   }, [detail, sourceWarehousesQuery.data?.items])
 
   useEffect(() => {
-    if (!detail || hydratedId.current === detail.id) return
-    hydratedId.current = detail.id
-    draftIdRef.current = detail.status === 'Draft' ? detail.id : null
-    form.reset(transferToFormValues(detail))
-  }, [detail, form])
-
-  useEffect(() => {
     if (!form.formState.isDirty) return
     const warn = (event: BeforeUnloadEvent) => event.preventDefault()
     window.addEventListener('beforeunload', warn)
@@ -225,82 +209,8 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
     form.setValue('sourceWarehouseId', '', { shouldDirty: true })
   }
 
-  function reportError(error: unknown, fallback: string) {
-    const description = describeTransferError(error, fallback)
-    toast.error(description.message)
-    if (description.kind === 'conflict') setHasConflict(true)
-  }
-
-  async function reload() {
-    const refreshed = await detailQuery.refetch()
-    if (refreshed.data) form.reset(transferToFormValues(refreshed.data))
-    realtime.dismiss()
-    setHasConflict(false)
-  }
-
-  async function saveDraft(values: TransferRequestFormValues): Promise<string | null> {
-    const expectedVersion =
-      mode === 'draft' && !savedDraftOnceRef.current ? (detail?.version ?? null) : null
-    const response = await saveDraftMutation.mutateAsync({
-      transferId: draftIdRef.current,
-      request: toSaveDraftRequest(values, expectedVersion),
-    })
-    draftIdRef.current = response.data
-    savedDraftOnceRef.current = true
-    return response.data
-  }
-
-  async function handleSaveDraft(values: TransferRequestFormValues) {
-    try {
-      const id = await saveDraft(values)
-      form.reset(values)
-      toast.success('Đã lưu nháp. Nháp chưa giữ chỗ tồn kho.')
-      if (id && !transferId) router.replace(APP_ROUTES.transferEdit(id))
-    } catch (error) {
-      reportError(error, 'Không thể lưu nháp.')
-    }
-  }
-
-  async function handleSubmitRequest(values: TransferRequestFormValues) {
-    let draftId: string | null = null
-    try {
-      draftId = await saveDraft(values)
-      if (!draftId) return
-      await submitDraftMutation.mutateAsync({
-        transferId: draftId,
-        request: { expectedVersion: null },
-      })
-      form.reset(values)
-      setIsConfirmOpen(false)
-      toast.success('Đã tạo yêu cầu điều chuyển và giữ chỗ tồn kho.')
-      router.push(APP_ROUTES.transferDetail(draftId))
-    } catch (error) {
-      setIsConfirmOpen(false)
-      const description = describeTransferError(error, 'Không thể tạo yêu cầu điều chuyển.')
-      toast.error(
-        draftId ? `Đã lưu nháp nhưng chưa gửi được: ${description.message}` : description.message
-      )
-      if (description.kind === 'conflict') setHasConflict(true)
-    }
-  }
-
-  async function handleUpdate(values: TransferRequestFormValues) {
-    if (!transferId || !detail?.version) return
-    try {
-      await updateMutation.mutateAsync({
-        transferId,
-        request: toUpdateTransferRequest(values, detail, detail.version),
-      })
-      form.reset(values)
-      toast.success('Đã cập nhật yêu cầu điều chuyển.')
-      router.push(APP_ROUTES.transferDetail(transferId))
-    } catch (error) {
-      reportError(error, 'Không thể cập nhật yêu cầu điều chuyển.')
-    }
-  }
-
   const submit = form.handleSubmit((values) =>
-    mode === 'edit' ? handleUpdate(values) : setIsConfirmOpen(true)
+    mode === 'edit' ? actions.update(values) : actions.setIsConfirmOpen(true)
   )
 
   const canCreate = viewer.permissions.includes(P.TRANSFERS_CREATE)
@@ -342,13 +252,10 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
         </div>
       </header>
 
-      {realtime.hasPendingChange || hasConflict ? (
+      {realtime.hasPendingChange || actions.hasConflict ? (
         <TransferChangedBanner
-          onReload={() => void reload()}
-          onDismiss={() => {
-            realtime.dismiss()
-            setHasConflict(false)
-          }}
+          onReload={() => void actions.reload()}
+          onDismiss={actions.dismissChange}
         />
       ) : null}
 
@@ -382,7 +289,7 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           availabilityByProductId={availabilityByProductId}
           lockByItemId={lockInfoByItemId}
           isProductSearchLoading={productsQuery.isFetching}
-          isSaving={isSaving}
+          isSaving={actions.isSaving}
           onDestinationChange={changeDestination}
           onSourceChange={(value) =>
             form.setValue('sourceWarehouseId', value, { shouldDirty: true, shouldValidate: true })
@@ -394,14 +301,14 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           }
           onAddLine={() => fieldArray.append({ ...EMPTY_TRANSFER_LINE })}
           onRemoveLine={fieldArray.remove}
-          onSaveDraft={() => void form.handleSubmit(handleSaveDraft)()}
+          onSaveDraft={() => void form.handleSubmit(actions.saveDraft)()}
           onCancel={leave}
           onSubmit={() => void submit()}
         />
       )}
 
       <TransferConfirmDialog
-        open={isConfirmOpen}
+        open={actions.isConfirmOpen}
         title="Tạo yêu cầu điều chuyển?"
         description={
           <p>
@@ -412,9 +319,9 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
         }
         confirmLabel="Tạo yêu cầu"
         pendingLabel="Đang tạo…"
-        isPending={isSaving}
-        onOpenChange={setIsConfirmOpen}
-        onConfirm={() => void form.handleSubmit(handleSubmitRequest)()}
+        isPending={actions.isSaving}
+        onOpenChange={actions.setIsConfirmOpen}
+        onConfirm={() => void form.handleSubmit(actions.submitRequest)()}
       />
       <UnsavedChangesDialog
         open={showLeaveDialog}

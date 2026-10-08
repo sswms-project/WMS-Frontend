@@ -4,7 +4,6 @@ import type {
   TransferDiscrepancy,
   TransferFeedback,
   TransferShipment,
-  TransferShipmentLine,
 } from '../types/transfer.types'
 
 export interface TransferViewer {
@@ -128,8 +127,4 @@ export function getShipmentCapabilities(
       isPicking &&
       shipment.lines.some((line) => line.status === 'PendingManager'),
   }
-}
-
-export function isLinePendingManager(line: Pick<TransferShipmentLine, 'status'>) {
-  return line.status === 'PendingManager'
 }

@@ -9,14 +9,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { P } from '@/config/permissionCodes'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
-import { PickEntryDialog } from '../components/TransferWork/PickEntryDialog'
 import {
+  PickEntryDialog,
   PickEscalateDialog,
+  PickLineCard,
   PickSwitchDialog,
   ReturnPickDialog,
-} from '../components/TransferWork/PickExceptionDialogs'
-import { PickLineCard } from '../components/TransferWork/PickLineCard'
-import { TransferWorkHeader } from '../components/TransferWork/TransferWorkHeader'
+  TransferWorkHeader,
+} from '../components/TransferWork'
 import { TransferChangedBanner, TransferConfirmDialog } from '../components/TransferShared'
 import { useTransferPickSheetQuery } from '../hooks/use-transfer-fulfillment'
 import { useTransferPickActions } from '../hooks/use-transfer-pick-actions'
