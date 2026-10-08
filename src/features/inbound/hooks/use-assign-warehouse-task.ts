@@ -22,6 +22,13 @@ const TASK_LABELS = {
   PutAway: 'cất hàng',
 } as const
 
+function toDateTimeLocal(value: string | null) {
+  if (!value) return ''
+  const date = new Date(value)
+  const offset = date.getTimezoneOffset() * 60_000
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
 /**
  * Điều phối việc giao/giao lại nhiệm vụ kho: sở hữu form, truy vấn danh sách nhân viên có thể
  * giao và các mutation liên quan. Dialog chỉ nhận `form` và dữ liệu qua props (không tự gọi
@@ -31,7 +38,7 @@ export function useAssignWarehouseTask() {
   const [target, setTarget] = useState<AssignWarehouseTaskTarget | null>(null)
   const form = useForm<AssignWarehouseTaskFormValues>({
     resolver: zodResolver(assignWarehouseTaskSchema),
-    defaultValues: { staffId: '', reason: '' },
+    defaultValues: { staffId: '', priority: 'Normal', dueAt: '', reason: '' },
   })
   const staffQuery = useAssignableStaffQuery(target?.warehouseId ?? null)
   const assignReceivingMutation = useAssignReceivingTaskMutation()
@@ -43,7 +50,12 @@ export function useAssignWarehouseTask() {
     unassignReceivingMutation.isPending
 
   function open(nextTarget: AssignWarehouseTaskTarget) {
-    form.reset({ staffId: '', reason: '' })
+    form.reset({
+      staffId: '',
+      priority: nextTarget.currentPriority,
+      dueAt: toDateTimeLocal(nextTarget.currentDueAt),
+      reason: '',
+    })
     setTarget(nextTarget)
   }
 
@@ -71,6 +83,8 @@ export function useAssignWarehouseTask() {
       staffId: values.staffId,
       expectedStaffId: target.currentAssigneeId,
       reason: values.reason.trim() || null,
+      priority: values.priority,
+      dueAt: values.dueAt ? new Date(values.dueAt).toISOString() : null,
     }
     const taskLabel = TASK_LABELS[target.kind]
 

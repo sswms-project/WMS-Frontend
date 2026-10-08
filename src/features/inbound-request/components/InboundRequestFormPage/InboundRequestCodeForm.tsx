@@ -1,7 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form'
+import { BusinessCodeField } from '@/components/forms/BusinessCodeField'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import type { InboundRequestCodeFormValues } from '../../schemas/inbound-request.schema'
 
@@ -34,16 +34,17 @@ export function InboundRequestCodeForm({
         trước đó.
       </FieldDescription>
       <FieldGroup>
-        <Field data-invalid={Boolean(errors.inboundRequestCode)}>
-          <FieldLabel htmlFor="request-code">Mã yêu cầu *</FieldLabel>
-          <Input
-            id="request-code"
-            maxLength={100}
-            aria-invalid={Boolean(errors.inboundRequestCode)}
-            {...register('inboundRequestCode')}
-          />
-          <FieldError>{errors.inboundRequestCode?.message}</FieldError>
-        </Field>
+        <BusinessCodeField
+          label="Mã yêu cầu *"
+          error={errors.inboundRequestCode}
+          inputProps={{
+            ...register('inboundRequestCode'),
+            id: 'request-code',
+            required: true,
+            maxLength: 100,
+            disabled: isPending,
+          }}
+        />
         <Field data-invalid={Boolean(errors.reason)}>
           <FieldLabel htmlFor="code-reason">Lý do đổi mã *</FieldLabel>
           <Textarea

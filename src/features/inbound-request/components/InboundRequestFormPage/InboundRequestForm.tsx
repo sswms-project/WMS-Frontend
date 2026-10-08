@@ -1,6 +1,10 @@
 'use client'
 
 import { ArrowLeft, Plus, RotateCw } from 'lucide-react'
+import {
+  BusinessCodeField,
+  type BusinessCodeFieldProps,
+} from '@/components/forms/BusinessCodeField'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import {
@@ -67,6 +71,9 @@ interface InboundRequestFormProps {
   readonly onRemoveLine: (index: number) => void
   readonly onCancel: () => void
   readonly onEditCode?: () => void
+  readonly codeSuggestionStatus?: BusinessCodeFieldProps['suggestionStatus']
+  readonly onCodeChange?: () => void
+  readonly codeDescription?: string
   readonly onSaveDraft: () => void
   readonly onSaveAndSubmit: () => void
   readonly onWarehouseSearchChange: (value: string) => void
@@ -103,6 +110,9 @@ export function InboundRequestForm({
   onRemoveLine,
   onCancel,
   onEditCode,
+  codeSuggestionStatus,
+  onCodeChange,
+  codeDescription,
   onSaveDraft,
   onSaveAndSubmit,
   onWarehouseSearchChange,
@@ -168,19 +178,20 @@ export function InboundRequestForm({
           <CardContent>
             <FieldSet>
               <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Field data-invalid={Boolean(errors.inboundRequestCode)}>
-                  <FieldLabel htmlFor="inboundRequestCode">Mã yêu cầu *</FieldLabel>
-                  <Input
-                    id="inboundRequestCode"
-                    maxLength={100}
-                    aria-invalid={Boolean(errors.inboundRequestCode)}
-                    {...register('inboundRequestCode')}
-                  />
-                  <FieldDescription>
-                    Mã được gợi ý, có thể chỉnh sửa. Mã phải duy nhất trong doanh nghiệp.
-                  </FieldDescription>
-                  <FieldError>{errors.inboundRequestCode?.message}</FieldError>
-                </Field>
+                <BusinessCodeField
+                  label="Mã yêu cầu *"
+                  description={codeDescription}
+                  error={errors.inboundRequestCode}
+                  suggestionStatus={codeSuggestionStatus}
+                  inputProps={{
+                    ...register('inboundRequestCode', { onChange: onCodeChange }),
+                    id: 'inboundRequestCode',
+                    required: true,
+                    maxLength: 100,
+                    placeholder: 'VD: IR000001…',
+                    disabled: isPending,
+                  }}
+                />
                 <Field data-invalid={Boolean(errors.warehouseId)}>
                   <FieldLabel htmlFor="warehouseId">Kho nhận hàng</FieldLabel>
                   <LookupCombobox

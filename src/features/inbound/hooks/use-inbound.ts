@@ -187,12 +187,21 @@ function useInvalidateInbound() {
   }
 }
 
+export function useNextGoodsReceiptCodeQuery(enabled: boolean, sessionKey?: string) {
+  return useQuery({
+    queryKey: [...queryKeys.goodsReceipts.nextCode, sessionKey ?? null],
+    queryFn: () => inboundService.getNextReceiptCode().then((response) => response.data),
+    enabled,
+    staleTime: 0,
+  })
+}
+
 export function useCreateGoodsReceiptMutation() {
   const invalidate = useInvalidateInbound()
   return useMutation<ApiResponse<string>, ApiErrorResponse, SaveGoodsReceiptRequest>({
     mutationFn: inboundService.createReceipt,
     onSuccess: () => invalidate(),
-    onError: (error) => logger.error(error),
+    onError: (error) => logger.warn(formatApiError(error)),
   })
 }
 
@@ -229,7 +238,7 @@ export function useUpdateGoodsReceiptMutation() {
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateReceiptVariables>({
     mutationFn: ({ receiptId, request }) => inboundService.updateReceipt(receiptId, request),
     onSuccess: (_, variables) => invalidate(variables.receiptId),
-    onError: (error) => logger.error(error),
+    onError: (error) => logger.warn(formatApiError(error)),
   })
 }
 

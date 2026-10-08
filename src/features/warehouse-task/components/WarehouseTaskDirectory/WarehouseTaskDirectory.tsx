@@ -1,6 +1,16 @@
-import { ArrowRight, ClipboardList, RefreshCw } from 'lucide-react'
+'use client'
+
+import {
+  Activity,
+  AlarmClock,
+  CalendarClock,
+  ClipboardList,
+  PauseCircle,
+  RefreshCw,
+  UserRoundX,
+} from 'lucide-react'
 import type { Route } from 'next'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import {
   OperationalEmptyState,
@@ -10,6 +20,7 @@ import {
 import { OperationalPagination } from '@/components/operations/OperationalPagination'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import {
   Table,
   TableBody,
@@ -19,13 +30,17 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { APP_ROUTES } from '@/routes/app-routes'
-import type { MyWarehouseTask } from '../../types/warehouse-task.types'
+import type { MyWarehouseTask, WarehouseTaskStats } from '../../types/warehouse-task.types'
+import { TaskDeadlineBadge } from './TaskDeadlineBadge'
 
 interface WarehouseTaskDirectoryProps {
   readonly title: string
   readonly description: string
   readonly items: readonly MyWarehouseTask[]
   readonly totalCount: number
+  readonly stats: WarehouseTaskStats
+  readonly statsMode: 'managed' | 'mine'
+  readonly showStats?: boolean
   readonly page: number
   readonly pageSize: number
   readonly isLoading: boolean
@@ -38,6 +53,7 @@ interface WarehouseTaskDirectoryProps {
   readonly onRetry: () => void
   readonly onAction?: (task: MyWarehouseTask, action: 'Start' | 'Pause' | 'Return') => void
   readonly onOpenRelocation?: (task: MyWarehouseTask) => void
+  readonly onEditSchedule?: (task: MyWarehouseTask) => void
 }
 
 const executionLabel: Record<MyWarehouseTask['executionStatus'], string> = {
@@ -61,6 +77,9 @@ export function WarehouseTaskDirectory({
   description,
   items,
   totalCount,
+  stats,
+  statsMode,
+  showStats = true,
   page,
   pageSize,
   isLoading,
@@ -73,7 +92,18 @@ export function WarehouseTaskDirectory({
   onRetry,
   onAction,
   onOpenRelocation,
+  onEditSchedule,
 }: WarehouseTaskDirectoryProps) {
+  const router = useRouter()
+
+  function openTask(item: MyWarehouseTask) {
+    if (item.taskType === 'Relocation') {
+      onOpenRelocation?.(item)
+      return
+    }
+    router.push(getTaskRoute(item))
+  }
+
   function renderActions(item: MyWarehouseTask) {
     if (
       !canManage ||
@@ -86,17 +116,38 @@ export function WarehouseTaskDirectory({
     return (
       <>
         {!isInProgress && (
-          <Button size="sm" variant="outline" onClick={() => onAction(item, 'Start')}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction(item, 'Start')
+            }}
+          >
             {item.executionStatus === 'Paused' ? 'Tiếp tục' : 'Bắt đầu'}
           </Button>
         )}
-        {isInProgress && item.priority !== 'Urgent' && (
-          <Button size="sm" variant="outline" onClick={() => onAction(item, 'Pause')}>
+        {isInProgress && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction(item, 'Pause')
+            }}
+          >
             Tạm dừng
           </Button>
         )}
         {!isInProgress && (
-          <Button size="sm" variant="ghost" onClick={() => onAction(item, 'Return')}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction(item, 'Return')
+            }}
+          >
             Trả lại
           </Button>
         )}
@@ -106,12 +157,12 @@ export function WarehouseTaskDirectory({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <div className="flex shrink-0 items-start justify-between gap-3">
+      <div className="flex shrink-0 flex-col items-start justify-between gap-3 sm:flex-row">
         <div>
           <h1 className="text-xl font-semibold">{title}</h1>
           <p className="text-muted-foreground text-sm">{description}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
           {headerAction}
           <Button
             type="button"
@@ -124,6 +175,24 @@ export function WarehouseTaskDirectory({
           </Button>
         </div>
       </div>
+      {showStats ? (
+        <div className="bg-card flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border px-3 py-2">
+          <TaskMetric
+            icon={statsMode === 'managed' ? UserRoundX : ClipboardList}
+            label={statsMode === 'managed' ? 'Chưa giao' : 'Chờ bắt đầu'}
+            value={statsMode === 'managed' ? stats.unassignedCount : stats.queuedCount}
+          />
+          <TaskMetric icon={Activity} label="Đang làm" value={stats.inProgressCount} />
+          <TaskMetric icon={PauseCircle} label="Tạm dừng" value={stats.pausedCount} />
+          <TaskMetric
+            icon={AlarmClock}
+            label="Sắp đến hạn"
+            value={stats.dueSoonCount}
+            tone="warning"
+          />
+          <TaskMetric icon={AlarmClock} label="Quá hạn" value={stats.overdueCount} tone="danger" />
+        </div>
+      ) : null}
       <section className="bg-card flex min-h-0 flex-1 flex-col border">
         {isLoading ? (
           <OperationalLoadingState />
@@ -137,7 +206,7 @@ export function WarehouseTaskDirectory({
         ) : (
           <>
             <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-              <Table className="min-w-[760px]">
+              <Table className="min-w-[1080px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="sticky top-0 z-10">Công việc</TableHead>
@@ -145,14 +214,31 @@ export function WarehouseTaskDirectory({
                     <TableHead className="sticky top-0 z-10">Kho</TableHead>
                     <TableHead className="sticky top-0 z-10">Người phụ trách</TableHead>
                     <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
+                    <TableHead className="sticky top-0 z-10">Tiến độ</TableHead>
+                    <TableHead className="sticky top-0 z-10">Hạn hoàn thành</TableHead>
                     <TableHead className="sticky top-0 z-10">Cập nhật</TableHead>
-                    <TableHead className="sticky top-0 z-10 text-right">Mở</TableHead>
+                    <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
-                    <TableRow key={`${item.taskType}-${item.id}`}>
-                      <TableCell>{taskTypeLabel[item.taskType]}</TableCell>
+                    <TableRow
+                      key={`${item.taskType}-${item.id}`}
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Mở công việc ${item.referenceCode}`}
+                      className="hover:bg-muted/60 cursor-pointer transition-colors motion-reduce:transition-none"
+                      onClick={() => openTask(item)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') openTask(item)
+                      }}
+                    >
+                      <TableCell>
+                        <p>{taskTypeLabel[item.taskType]}</p>
+                        <p className="text-muted-foreground mt-1 max-w-52 truncate text-xs">
+                          {item.workSummary}
+                        </p>
+                      </TableCell>
                       <TableCell className="font-mono font-medium">{item.referenceCode}</TableCell>
                       <TableCell>{item.warehouseName}</TableCell>
                       <TableCell>{item.assignedToName ?? 'Chưa giao'}</TableCell>
@@ -174,6 +260,23 @@ export function WarehouseTaskDirectory({
                         )}
                       </TableCell>
                       <TableCell>
+                        <div className="flex min-w-32 flex-col gap-1.5">
+                          <div className="flex items-center justify-between text-xs tabular-nums">
+                            <span>
+                              {item.completedItemCount}/{item.itemCount} dòng
+                            </span>
+                            <span className="font-medium">{item.progressPercentage}%</span>
+                          </div>
+                          <Progress
+                            value={item.progressPercentage}
+                            className="h-1.5 transition-all motion-reduce:transition-none"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <TaskDeadlineBadge task={item} />
+                      </TableCell>
+                      <TableCell>
                         {new Intl.DateTimeFormat('vi-VN', {
                           dateStyle: 'short',
                           timeStyle: 'short',
@@ -181,21 +284,18 @@ export function WarehouseTaskDirectory({
                       </TableCell>
                       <TableCell className="space-x-1 text-right">
                         {renderActions(item)}
-                        {item.taskType === 'Relocation' && onOpenRelocation ? (
+                        {onEditSchedule ? (
                           <Button
                             type="button"
                             size="icon-sm"
                             variant="ghost"
-                            onClick={() => onOpenRelocation(item)}
-                            aria-label={`Mở ${item.referenceCode}`}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              onEditSchedule(item)
+                            }}
+                            aria-label={`Điều chỉnh hạn ${item.referenceCode}`}
                           >
-                            <ArrowRight aria-hidden="true" />
-                          </Button>
-                        ) : item.taskType !== 'Relocation' ? (
-                          <Button asChild size="icon-sm" variant="ghost">
-                            <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
-                              <ArrowRight aria-hidden="true" />
-                            </Link>
+                            <CalendarClock aria-hidden="true" />
                           </Button>
                         ) : null}
                       </TableCell>
@@ -206,7 +306,17 @@ export function WarehouseTaskDirectory({
             </div>
             <div className="divide-y md:hidden">
               {items.map((item) => (
-                <div key={`${item.taskType}-${item.id}`} className="flex items-center gap-3 p-3">
+                <div
+                  key={`${item.taskType}-${item.id}`}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Mở công việc ${item.referenceCode}`}
+                  className="hover:bg-muted/60 flex cursor-pointer items-center gap-3 p-3 transition-colors motion-reduce:transition-none"
+                  onClick={() => openTask(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') openTask(item)
+                  }}
+                >
                   <ClipboardList className="text-primary size-5" aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{taskTypeLabel[item.taskType]}</p>
@@ -216,24 +326,27 @@ export function WarehouseTaskDirectory({
                     <Badge variant="secondary" className="mt-1">
                       {executionLabel[item.executionStatus] ?? item.executionStatus}
                     </Badge>
+                    <p className="text-muted-foreground mt-1 truncate text-xs">
+                      {item.workSummary}
+                    </p>
+                    <div className="mt-2">
+                      <TaskDeadlineBadge task={item} />
+                    </div>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     {renderActions(item)}
-                    {item.taskType === 'Relocation' && onOpenRelocation ? (
+                    {onEditSchedule ? (
                       <Button
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        onClick={() => onOpenRelocation(item)}
-                        aria-label={`Mở ${item.referenceCode}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onEditSchedule(item)
+                        }}
+                        aria-label={`Điều chỉnh hạn ${item.referenceCode}`}
                       >
-                        <ArrowRight aria-hidden="true" />
-                      </Button>
-                    ) : item.taskType !== 'Relocation' ? (
-                      <Button asChild size="icon-sm" variant="ghost">
-                        <Link href={getTaskRoute(item)} aria-label={`Mở ${item.referenceCode}`}>
-                          <ArrowRight aria-hidden="true" />
-                        </Link>
+                        <CalendarClock aria-hidden="true" />
                       </Button>
                     ) : null}
                   </div>
@@ -250,6 +363,38 @@ export function WarehouseTaskDirectory({
           </>
         )}
       </section>
+    </div>
+  )
+}
+
+function TaskMetric({
+  icon: Icon,
+  label,
+  value,
+  tone = 'default',
+}: {
+  readonly icon: typeof Activity
+  readonly label: string
+  readonly value: number
+  readonly tone?: 'default' | 'warning' | 'danger'
+}) {
+  return (
+    <div className="motion-safe:animate-in motion-safe:fade-in-0 animation-duration-200 flex items-center gap-2">
+      <span
+        className={
+          tone === 'danger'
+            ? 'text-destructive'
+            : tone === 'warning'
+              ? 'text-primary'
+              : 'text-muted-foreground'
+        }
+      >
+        <Icon className="size-4" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        <span className="text-muted-foreground text-xs">{label}</span>{' '}
+        <span className="text-sm font-semibold tabular-nums">{value.toLocaleString('vi-VN')}</span>
+      </span>
     </div>
   )
 }

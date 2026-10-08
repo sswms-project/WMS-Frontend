@@ -36,6 +36,8 @@ const receipt: GoodsReceiptDetail = {
   putAwayAssignedTo: 'staff',
   putAwayAssignedToName: 'QA',
   putAwayAssignedAt: null,
+  putAwayTaskPriority: 'Normal',
+  putAwayTaskDueAt: null,
   putAwayTaskExecutionStatus: 'Queued',
   putAwayTaskCancelledAt: null,
   putAwayTaskCancellationReason: null,

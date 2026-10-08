@@ -40,11 +40,12 @@ export function useStockRecipientsQuery(params: StockRecipientListQuery) {
   })
 }
 
-export function useNextStockRecipientCodeQuery(enabled: boolean) {
+export function useNextStockRecipientCodeQuery(enabled: boolean, sessionKey?: string) {
   return useQuery<ApiResponse<string>, ApiErrorResponse>({
-    queryKey: queryKeys.stockRecipients.nextCode,
+    queryKey: [...queryKeys.stockRecipients.nextCode, sessionKey ?? null],
     queryFn: stockRecipientService.getNextCode,
     enabled,
+    staleTime: 0,
   })
 }
 

@@ -72,6 +72,8 @@ export const API_ENDPOINTS = {
     history: '/warehouse-tasks/history',
     detail: (taskId: string) => `/warehouse-tasks/${taskId}`,
     assignment: (taskId: string) => `/warehouse-tasks/${taskId}/assignment`,
+    schedule: (taskType: string, taskId: string) =>
+      `/warehouse-tasks/${taskType}/${taskId}/schedule`,
     recommendations: (taskId: string, lineId: string) =>
       `/warehouse-tasks/${taskId}/lines/${lineId}/recommendations`,
   },
@@ -220,6 +222,7 @@ export const API_ENDPOINTS = {
       `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },
   goodsReceipts: {
+    nextCode: '/goods-receipts/next-code',
     list: '/goods-receipts',
     create: '/goods-receipts',
     detail: (receiptId: string) => `/goods-receipts/${receiptId}`,

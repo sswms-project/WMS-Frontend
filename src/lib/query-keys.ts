@@ -197,6 +197,7 @@ export const queryKeys = {
   },
   goodsReceipts: {
     all: ['goods-receipts'] as const,
+    nextCode: ['goods-receipts', 'next-code'] as const,
     lists: ['goods-receipts', 'list'] as const,
     list: (params: InboundListQuery) => ['goods-receipts', 'list', params] as const,
     detail: (id: string) => ['goods-receipts', 'detail', id] as const,

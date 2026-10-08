@@ -24,6 +24,7 @@ export type GoodsReceiptAction =
   | 'PlanPutAway'
 
 export type WarehouseTaskExecutionStatus = 'Queued' | 'InProgress' | 'Paused' | 'Completed'
+export type WarehouseTaskPriority = 'Normal' | 'Urgent'
 
 export interface InboundListQuery {
   pageNumber: number
@@ -100,6 +101,8 @@ export interface ReceivingTask {
   assignedToName: string | null
   assignedAt: string | null
   executionStatus: WarehouseTaskExecutionStatus
+  priority: WarehouseTaskPriority
+  dueAt: string | null
   lines: ReceivingTaskLine[]
 }
 
@@ -129,6 +132,8 @@ export interface GoodsReceiptSummary {
   putAwayAssignedToName: string | null
   putAwayAssignedAt: string | null
   putAwayExecutionStatus: WarehouseTaskExecutionStatus
+  putAwayTaskPriority: WarehouseTaskPriority
+  putAwayTaskDueAt: string | null
 }
 
 export interface GoodsReceiptItem {
@@ -287,6 +292,7 @@ export interface ReceiptLineRequest {
 
 export interface SaveGoodsReceiptRequest {
   inboundRequestId: string
+  receiptCode?: string
   lines: ReceiptLineRequest[]
 }
 
@@ -395,6 +401,8 @@ export interface AssignWarehouseTaskRequest {
   staffId: string
   expectedStaffId: string | null
   reason: string | null
+  priority: WarehouseTaskPriority
+  dueAt: string | null
 }
 
 export interface InboundAllowedActionsResponse {
