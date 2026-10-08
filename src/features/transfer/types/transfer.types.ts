@@ -411,6 +411,8 @@ export interface TransferPickSuggestion {
   expiryDate: string | null
   suggestedQuantity: number
   reservedQuantity: number
+  rackCode: string | null
+  isSystemDefaultSlot: boolean
 }
 
 export interface TransferPickAlternative {
@@ -422,6 +424,8 @@ export interface TransferPickAlternative {
   lotNumber: string | null
   expiryDate: string | null
   availableQuantity: number
+  rackCode: string | null
+  isSystemDefaultSlot: boolean
 }
 
 export interface TransferPickDetail {
@@ -434,6 +438,8 @@ export interface TransferPickDetail {
   returnedQuantity: number
   dispatchedQuantity: number
   pickedAt: string
+  rackCode: string | null
+  isSystemDefaultSlot: boolean
 }
 
 export interface TransferPickException {
@@ -498,6 +504,8 @@ export interface TransferReceiveSheetLine {
   baseUnitName: string
   suggestedSlotId: string | null
   suggestedSlotCode: string | null
+  suggestedRackCode: string | null
+  suggestedIsSystemDefaultSlot: boolean
   lots: TransferReceiveSheetLot[]
 }
 

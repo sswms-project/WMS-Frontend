@@ -66,7 +66,11 @@ export function NotificationRealtimeProvider({ children }: NotificationRealtimeP
 
     const publishConnection = () =>
       setHub((current) => ({ connection, session: current.session + 1 }))
-    const withdrawConnection = () => setHub((current) => ({ ...current, connection: null }))
+    // onclose của kết nối cũ có thể đến sau khi kết nối mới đã được công bố: chỉ gỡ đúng kết nối này.
+    const withdrawConnection = () =>
+      setHub((current) =>
+        current.connection === connection ? { ...current, connection: null } : current
+      )
 
     connection.onreconnecting(withdrawConnection)
     connection.onreconnected(() => {

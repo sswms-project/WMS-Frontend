@@ -113,6 +113,8 @@ const sheet: TransferReceiveSheet = {
       baseUnitName: 'Hộp',
       suggestedSlotId: null,
       suggestedSlotCode: null,
+      suggestedRackCode: null,
+      suggestedIsSystemDefaultSlot: false,
       lots: [
         {
           lotId: 'lot-1',

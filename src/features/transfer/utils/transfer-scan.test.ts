@@ -24,6 +24,8 @@ const suggestion: TransferPickSuggestion = {
   expiryDate: null,
   suggestedQuantity: 6,
   reservedQuantity: 10,
+  rackCode: 'A',
+  isSystemDefaultSlot: false,
 }
 
 const alternative: TransferPickAlternative = {
@@ -35,6 +37,17 @@ const alternative: TransferPickAlternative = {
   lotNumber: null,
   expiryDate: null,
   availableQuantity: 8,
+  rackCode: 'B',
+  isSystemDefaultSlot: false,
+}
+
+const defaultSlotSuggestion: TransferPickSuggestion = {
+  ...suggestion,
+  inventoryStockId: 'stock-d',
+  slotCode: '__SYSTEM_DEFAULT__',
+  slotBarcode: null,
+  rackCode: 'A07',
+  isSystemDefaultSlot: true,
 }
 
 const line = {
@@ -159,5 +172,29 @@ describe('isNonFefoChoice', () => {
 
   it('never flags when every candidate has no expiry', () => {
     expect(isNonFefoChoice(noExpiry, [noExpiry])).toBe(false)
+  })
+})
+
+describe('scanning a system default slot', () => {
+  it('accepts the rack code and keeps the same suggestion', () => {
+    const next = pickScanReducer(INITIAL_PICK_SCAN_STATE, {
+      type: 'scan-slot',
+      code: ' a07 ',
+      suggestions: [defaultSlotSuggestion],
+      alternatives: [],
+    })
+    expect(next.step).toBe('product')
+    expect(next.suggestion).toBe(defaultSlotSuggestion)
+  })
+
+  it('does not accept the rack code of a regular slot', () => {
+    const next = pickScanReducer(INITIAL_PICK_SCAN_STATE, {
+      type: 'scan-slot',
+      code: 'A',
+      suggestions: [suggestion],
+      alternatives: [],
+    })
+    expect(next.step).toBe('slot')
+    expect(next.suggestion).toBeNull()
   })
 })

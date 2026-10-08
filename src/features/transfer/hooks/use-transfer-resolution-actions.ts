@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAssignableStaffQuery } from '@/features/inbound/hooks/use-inbound'
@@ -23,6 +24,7 @@ import {
   useTransferPickSheetQuery,
   useTransferReceiveSheetQuery,
 } from './use-transfer-fulfillment'
+import { invalidateTransferQueries } from './use-transfers'
 
 type AssignKind = 'pick' | 'receive'
 
@@ -53,6 +55,7 @@ const EMPTY_DISCREPANCY: TransferDiscrepancyFormValues = {
  */
 export function useTransferResolutionActions(transfer: TransferDetail | undefined) {
   const run = useTransferActionRunner()
+  const queryClient = useQueryClient()
   const transferId = transfer?.id ?? null
 
   const [assignState, setAssignState] = useState<AssignState | null>(null)
@@ -163,7 +166,11 @@ export function useTransferResolutionActions(transfer: TransferDetail | undefine
           currentAssignee ? 'Đã giao lại công việc.' : 'Đã giao công việc.',
           'Không thể giao công việc.'
         )
-        if (done) setAssignState(null)
+        if (done) {
+          setAssignState(null)
+          // Việc giao đi qua API công việc kho nên phải tự làm mới chi tiết phiếu để hiện người nhận mới.
+          void invalidateTransferQueries(queryClient)
+        }
       },
     },
     escalation: {

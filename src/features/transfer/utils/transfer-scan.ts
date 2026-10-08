@@ -1,3 +1,4 @@
+import { formatTransferLocation, transferLocationScanCodes } from './transfer-location'
 import type {
   TransferPickAlternative,
   TransferPickSheetLine,
@@ -57,19 +58,19 @@ export function pickScanReducer(state: PickScanState, action: PickScanAction): P
       const code = action.code.trim()
       if (!code) return { ...INITIAL_PICK_SCAN_STATE, error: 'Hãy quét hoặc nhập mã vị trí.' }
       const suggestion = action.suggestions.find((candidate) =>
-        codesMatch(code, candidate.slotCode, candidate.slotBarcode)
+        codesMatch(code, ...transferLocationScanCodes(candidate))
       )
       if (suggestion) {
         return { ...INITIAL_PICK_SCAN_STATE, step: 'product', slotCode: code, suggestion }
       }
       const alternative = action.alternatives.find((candidate) =>
-        codesMatch(code, candidate.slotCode, candidate.slotBarcode)
+        codesMatch(code, ...transferLocationScanCodes(candidate))
       )
       return {
         ...INITIAL_PICK_SCAN_STATE,
         slotCode: code,
         error: alternative
-          ? `Vị trí ${alternative.slotCode} không phải vị trí được gợi ý cho dòng này.`
+          ? `${formatTransferLocation(alternative)} không phải vị trí được gợi ý cho dòng này.`
           : `Mã vị trí ${code} không khớp với vị trí cần lấy của dòng này.`,
         offeredAlternative: alternative ?? null,
       }
