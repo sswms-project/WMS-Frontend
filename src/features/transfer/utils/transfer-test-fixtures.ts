@@ -65,6 +65,8 @@ export function buildTransfer(overrides: Partial<TransferDetail> = {}): Transfer
   return {
     id: '60000000-0000-4000-8000-000000000001',
     transferCode: 'DC-0001',
+    requesterName: null,
+    requestingDepartment: null,
     sourceWarehouseId: '70000000-0000-4000-8000-000000000001',
     sourceWarehouseName: 'Kho A',
     destinationWarehouseId: '70000000-0000-4000-8000-000000000002',

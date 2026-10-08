@@ -72,6 +72,9 @@ export const TRANSFER_DISCREPANCY_ACTIONS = [
 ] as const
 export type TransferDiscrepancyAction = (typeof TRANSFER_DISCREPANCY_ACTIONS)[number]
 
+export const TRANSFER_STAGES = ['request', 'transfer', 'discrepancy'] as const
+export type TransferStage = (typeof TRANSFER_STAGES)[number]
+
 export interface TransferListQuery {
   pageNumber: number
   pageSize: number
@@ -81,6 +84,8 @@ export interface TransferListQuery {
   destinationWarehouseId?: string
   dateFrom?: string
   dateTo?: string
+  /** Tab: request = mọi yêu cầu đã tạo, transfer = đã có đợt rời kho, discrepancy = còn chênh lệch chưa xử lý. */
+  stage?: TransferStage
 }
 
 export interface TransferSourceWarehouseQuery {
@@ -120,6 +125,7 @@ export interface TransferSummary {
   hasOpenFeedback: boolean
   hasPendingPickEscalation: boolean
   version: string | null
+  hasOpenDiscrepancy: boolean
 }
 
 export interface TransferListResponse {
@@ -127,6 +133,14 @@ export interface TransferListResponse {
   totalCount: number
   pageNumber: number
   pageSize: number
+  /** Số phiếu còn chênh lệch chưa xử lý (hiện trên tab chờ xử lý chênh lệch). */
+  openDiscrepancyCount: number
+}
+
+export interface TransferRequesterOption {
+  userId: string
+  fullName: string
+  roleName: string
 }
 
 export interface TransferItem {
@@ -228,6 +242,8 @@ export interface TransferFeedback {
 export interface TransferDetail {
   id: string
   transferCode: string
+  requesterName: string | null
+  requestingDepartment: string | null
   sourceWarehouseId: string
   sourceWarehouseName: string
   destinationWarehouseId: string
@@ -289,6 +305,9 @@ export interface TransferLineInput {
 
 export interface SaveTransferDraftRequest {
   expectedVersion: string | null
+  transferCode: string | null
+  requesterName: string | null
+  requestingDepartment: string | null
   sourceWarehouseId: string
   destinationWarehouseId: string
   reason: string | null
@@ -299,6 +318,8 @@ export interface SaveTransferDraftRequest {
 
 export interface UpdateTransferRequest {
   expectedVersion: string
+  requesterName: string
+  requestingDepartment: string
   sourceWarehouseId: string | null
   destinationWarehouseId: string | null
   reason: string | null
@@ -336,6 +357,8 @@ export interface CancelTransferShipmentRequest {
 }
 
 export interface RecordTransferPickRequest {
+  /** Mã thao tác: gửi lại cùng mã thì BE không ghi lần hai. */
+  commandId: string
   lineId: string
   inventoryStockId: string
   quantity: number | null
@@ -344,6 +367,8 @@ export interface RecordTransferPickRequest {
 }
 
 export interface SwitchTransferPickRequest {
+  /** Mã thao tác: gửi lại cùng mã thì BE không ghi lần hai. */
+  commandId: string
   fromInventoryStockId: string
   toInventoryStockId: string
   quantity: number
@@ -352,6 +377,8 @@ export interface SwitchTransferPickRequest {
 }
 
 export interface EscalateTransferPickRequest {
+  /** Mã thao tác: gửi lại cùng mã thì BE không ghi lần hai. */
+  commandId: string
   reasonCode: TransferPickReason
   note: string
 }
@@ -365,6 +392,8 @@ export interface ResolveTransferEscalationRequest {
 }
 
 export interface ReturnTransferPickRequest {
+  /** Mã thao tác: gửi lại cùng mã thì BE không ghi lần hai. */
+  commandId: string
   pickDetailId: string
   quantity: number | null
   scannedSlotCode: string

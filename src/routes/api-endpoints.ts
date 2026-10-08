@@ -338,6 +338,8 @@ export const API_ENDPOINTS = {
     list: '/transfers',
     create: '/transfers',
     sourceWarehouses: '/transfers/source-warehouses',
+    nextCode: '/transfers/next-code',
+    requesterOptions: '/transfers/requester-options',
     availability: '/transfers/availability',
     drafts: '/transfers/drafts',
     draft: (transferId: string) => `/transfers/drafts/${transferId}`,
