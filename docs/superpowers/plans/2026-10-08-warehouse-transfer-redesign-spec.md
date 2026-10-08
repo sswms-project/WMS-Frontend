@@ -688,7 +688,14 @@ Lỗi tìm thấy và đã sửa:
 
 ### 21.4b. Luồng quét bằng máy quét mã vạch
 
-Máy quét dạng bàn phím gõ mã rồi Enter vào ô đang focus. Trước đây sau khi quét vị trí, con trỏ vẫn ở ô vị trí nên mã hàng quét kế tiếp bị nhận như mã vị trí và bị từ chối. Đã sửa: con trỏ tự đi theo bước (vị trí → mã hàng → số lượng, Enter ở số lượng để xác nhận); Tab cũng kết thúc một lần quét; quét nhầm loại mã báo rõ "Đây là mã hàng / mã vị trí". Đã chạy lại trên trình duyệt chỉ bằng phím. Chưa làm: âm báo/rung khi quét, ẩn bàn phím ảo trên điện thoại khi dùng máy quét Bluetooth, chế độ quét từng đơn vị, quét bằng camera.
+Máy quét dạng bàn phím gõ mã rồi Enter vào ô đang focus. Trước đây sau khi quét vị trí, con trỏ vẫn ở ô vị trí nên mã hàng quét kế tiếp bị nhận như mã vị trí và bị từ chối. Đã sửa: con trỏ tự đi theo bước (vị trí → mã hàng → số lượng, Enter ở số lượng để xác nhận); Tab cũng kết thúc một lần quét; quét nhầm loại mã báo rõ "Đây là mã hàng / mã vị trí". Đã chạy lại trên trình duyệt chỉ bằng phím.
+
+Bốn bổ sung (tùy chọn lưu trên từng thiết bị, thanh công tắc ở màn lấy hàng và nhận hàng):
+
+- **Dùng máy quét (ẩn bàn phím ảo):** ô quét đặt `inputMode="none"` để bàn phím ảo không che màn hình khi dùng máy quét Bluetooth; tắt thì vẫn gõ tay được. Mặc định tắt.
+- **Âm báo và rung:** tiếng bíp ngắn khi quét đúng, hai tiếng trầm và rung khi quét sai; mặc định bật. Không bao giờ gây lỗi nếu thiết bị chặn âm thanh hoặc không rung được (iOS không hỗ trợ rung).
+- **Quét từng đơn vị:** mỗi lần quét đúng mã hàng cộng 1 vào số lượng (tối đa số có ở vị trí), Enter khi ô trống để xác nhận; mặc định tắt (số lượng gợi ý vẫn được tự điền).
+- **Quét bằng camera:** nút camera ở mỗi ô quét, dùng `@zxing/browser` tải khi mở camera lần đầu; cần HTTPS hoặc localhost và quyền camera, có thông báo rõ khi bị từ chối, không có camera hoặc trang không an toàn. Chưa thử với camera thật (môi trường kiểm thử không có camera); đã kiểm bằng test giả lập.
 
 ### 21.5. Hạn chế còn lại
 
