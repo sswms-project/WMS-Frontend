@@ -21,9 +21,10 @@ import type {
   StockMovementListResponse,
   CreateForecastRunRequest,
   ForecastRun,
+  ForecastRunSummary,
+  RejectForecastSuggestionRequest,
   AcceptReplenishmentSuggestionRequest,
   AcceptRebalancingSuggestionRequest,
-  ForecastSuggestionType,
   DamageCaseQuery,
   DamageCaseListResponse,
   DecideDamageCaseDispositionRequest,
@@ -322,9 +323,19 @@ export function useCreateForecastRunMutation() {
 }
 
 export function useExecuteForecastRunMutation() {
+  const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, string>({
     mutationFn: inventoryService.executeForecastRun,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all }),
     onError: (error) => logger.error(error),
+  })
+}
+
+export function useForecastRunsQuery(warehouseId: string) {
+  return useQuery<ForecastRunSummary[], ApiErrorResponse>({
+    queryKey: queryKeys.inventory.forecastRuns(warehouseId),
+    queryFn: () => inventoryService.getForecastRuns(warehouseId).then((response) => response.data),
+    enabled: Boolean(warehouseId),
   })
 }
 
@@ -371,10 +382,9 @@ export function useRejectForecastSuggestionMutation(runId: string) {
   return useMutation<
     ApiResponse<unknown>,
     ApiErrorResponse,
-    { id: string; suggestionType: ForecastSuggestionType }
+    { id: string } & RejectForecastSuggestionRequest
   >({
-    mutationFn: ({ id, suggestionType }) =>
-      inventoryService.rejectForecastSuggestion(id, suggestionType),
+    mutationFn: ({ id, ...request }) => inventoryService.rejectForecastSuggestion(id, request),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.forecastRun(runId) }),
     onError: (error) => logger.error(error),

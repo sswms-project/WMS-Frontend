@@ -599,6 +599,58 @@ export interface ReplenishmentSuggestion {
   inboundRequestId: string | null
   acceptedByUserId: string | null
   acceptedAt: string | null
+  explanation: ReplenishmentExplanation | null
+  adjustmentReason: string | null
+  version: string | null
+  inboundRequestVersion: string | null
+  supplierId: string | null
+  inboundRequestStatus: string | null
+  expectedSnapshot: string | null
+  reviewNotice: string | null
+  draftQuantity: number | null
+  currentRequiredQuantity: number | null
+}
+
+export interface ReplenishmentExplanation {
+  basis: 'Forecast' | 'PolicyFallback'
+  unitName: string
+  quantityPrecision: number
+  availableQuantity: number
+  incomingQuantity: number
+  awaitingPutawayQuantity: number
+  plannedQuantity: number
+  targetQuantity: number
+  forecastDemand: number
+  coverageDays: number
+  leadTimeDays: number | null
+  snapshotAt: string
+  warning: string | null
+}
+
+export interface DemandForecastDiagnostics {
+  productId: string
+  sku: string
+  productName: string
+  unitName: string
+  basis: 'Forecast' | 'PolicyFallback' | 'Unavailable'
+  method: string
+  historyFrom: string
+  historyTo: string
+  observationDays: number
+  stockoutDays: number
+  warning: string | null
+  holdoutMae: number | null
+  baselineMae: number | null
+  holdoutWape: number | null
+  history: StockHistoryPoint[]
+}
+
+export interface ForecastRunSummary {
+  id: string
+  status: ForecastRunStatus
+  createdAt: string
+  forecastStartDate: string
+  forecastEndDate: string
 }
 
 export interface RebalancingSuggestion {
@@ -634,11 +686,25 @@ export interface ForecastRun {
   results: ForecastRunResult[]
   replenishmentSuggestions: ReplenishmentSuggestion[]
   rebalancingSuggestions: RebalancingSuggestion[]
+  details: {
+    products: DemandForecastDiagnostics[]
+    draftCreationNotice: string | null
+  } | null
 }
 
 export interface AcceptReplenishmentSuggestionRequest {
   supplierId: string
   adjustedQuantity: number | null
+  adjustmentReason?: string | null
+  expectedVersion?: string | null
+  expectedInboundRequestVersion?: string | null
+  expectedSnapshot?: string | null
+}
+
+export interface RejectForecastSuggestionRequest {
+  suggestionType: ForecastSuggestionType
+  expectedVersion?: string | null
+  expectedInboundRequestVersion?: string | null
 }
 
 export interface AcceptRebalancingSuggestionRequest {

@@ -590,3 +590,22 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Staff relocation UI displays only the Manager-proposed destination or system rank-1 suggestion. Destination selection and override-reason controls remain available to actors with relocation assignment authority.
 - Verification: focused Vitest **37 passed across 3 files**; standalone Next type generation and TypeScript check passed; focused ESLint passed. GitNexus final detection is Medium across two indexed page flows; new component tests and some component changes outside indexed symbols were reviewed directly.
 - The paired Backend permission migration was applied to the configured shared database and verified as applied. No dependency/configuration change or application startup. Changes were delivered on `fix/staff-task-experience`.
+
+## 2026-10-08 — Forecasting and replenishment auto-drafts
+
+- Role: Codex implementation and final self-review, not independent approval. State: `READY_FOR_CODEX_REVIEW`. Branch: `feat/forecast-replenishment-drafts`; preserve earlier dashboard/reporting changes. No commit/push or database migration in this task.
+- UC-121/UC-122 implemented across FE/BE. External posted Issue demand uses declared local Linear Regression, UTC+7 day boundaries, history sufficiency and holdout/mean-baseline errors; policy fallback is separate. Existing provider endpoint remains available. No fabricated confidence, incoming receipt, reservation, supplier order or payment.
+- Eligible stock, reservations, outstanding dated incoming, goods awaiting put-away and planned drafts are counted once. Confirmed transfer losses are excluded. Min/max fallback, unit rounding and remaining forecast dates are explicit. New runs preserve linked drafts and count plans; SQL transaction-owned application locks serialize planning, with a filtered unique link and rowversion checks.
+- Automatic drafts require effective forecast and inbound-create permissions. Review validates active supplier/SKU references, quantities/reason, versions and refreshed planning snapshot; acceptance retains the draft ID, rejection cancels untouched drafts or blocks edited drafts. Inbound edits invalidate review and submit requires acceptance. Owner explicit self-approval downstream remains unchanged.
+- Verification: API build 0 warnings/errors; 17 focused ForecastRunTests passed on EF InMemory; FE pinned-pnpm typecheck and scoped lint passed. Migration SQL generated without applying; EF model matches snapshot. InMemory does not establish SQL concurrency/translation or live UI correctness. Full suites, production builds and browser/live-backend journey were not run.
+- Dossier: D:/LEARN/capstone/Kovia/outputs/workflow/modules/forecast-replenishment/. Both required UCs are implemented, not fully live/acceptance-verified; source rows and module boundary reread unchanged. New migration remains unapplied; local hosts stopped. GitNexus index is stale/new symbols unavailable; direct source/contract checks used, not a safe-impact claim.
+
+### Follow-up: live warehouse GUID validation
+
+- Actual Manager dropdown GUID was rejected by RFC UUID validation before API submission. Forecast warehouse and replenishment supplier now reuse the existing non-empty .NET GUID schema; access/supplier checks remain server enforced. No business test records created.
+- Six focused regressions passed (before fix: three failures), scoped lint and final typecheck exit 0. Earlier typechecks failed on corrupt generated Next dev validator; diagnostic preserved and that single generated file regenerated. Frontend restarted on port3000/API7070. Self-verification only; no successful live forecast/review journey or commit/push.
+
+### Follow-up: forecasting under Reporting & Analytics
+
+- User-approved FE-only navigation move: canonical reports/forecast, legacy redirect, active permission-filtered reports menu, direct planning card, report breadcrumb and dashboard shortcut; inventory forecast tab removed. Existing API, engine and run/review/view rights unchanged.
+- Self-verification: 39 targeted navigation/catalog tests passed, final TypeScript and scoped ESLint exit0. Obsolete directory reference fixed after initial typecheck failure. No full suite/build, live logged-in acceptance, BE/DB changes, commit or push. Dossier: outputs/workflow/modules/forecast-replenishment/fe-report-navigation-evidence.json.
