@@ -662,10 +662,23 @@ QA bằng trình duyệt thật với BE local (`Database__ApplyMigrationsOnStar
 | Trạng thái task hiện "Queued/Completed"                            | Hiển thị mã BE                                                                                            | Dịch sang tiếng Việt                                                                                             |
 | "Đã lấy 0/1" sau khi xuất đợt                                      | BE trừ phần đã xuất khỏi số lượng chờ xuất                                                                | FE cộng phần đã xuất khi hiển thị                                                                                |
 
-### 21.3. Hạn chế còn lại
+### 21.3. QA đợt hai (nhánh còn lại)
 
-- Chưa QA: sửa phiếu, hủy/dừng, chia hai đợt, đổi vị trí/lô, báo quản lý, trả hàng về vị trí; chưa kiểm tương phản màu và `prefers-reduced-motion` bằng công cụ.
+Đã chạy trên giao diện thật và đạt: sửa phiếu (giảm 10 → 8), chia hai đợt (3 + 4) và hủy một đợt, đổi vị trí khi lấy (gợi ý hiển thị phần đã đổi trước), báo quản lý rồi Manager "Giảm số lượng của đợt", trả hàng về vị trí, xuất đợt, nhận chia hai vị trí, dừng phần còn lại (phiếu tự hoàn tất, giữ chỗ về 0), hủy phiếu chưa lấy.
+
+Lỗi tìm thấy và đã sửa thêm:
+
+| Lỗi                                                    | Nguyên nhân                                                                                                                                    | Sửa                                                                                |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| "Dừng phần còn lại" và hủy phiếu báo lỗi cơ sở dữ liệu | Nhả giữ chỗ toàn phần đưa `ReservedQuantity` về 0, vi phạm `CK_InventoryReservations_Quantity_Positive` (EF InMemory không kiểm ràng buộc này) | Giữ số lượng và đổi trạng thái sang `Released`; test hủy phiếu khẳng định bất biến |
+| Gợi ý lấy hàng không hiển thị phần vừa đổi vị trí      | Gợi ý điền đủ số cần lấy từ giữ chỗ đầu tiên theo FEFO                                                                                         | Vị trí vừa nhận phần đổi được gợi ý trước, giới hạn theo phần đổi chưa lấy         |
+| Đợt đã xuất vẫn hiện "Lấy tại (theo FEFO)"             | Gợi ý tính lại từ giữ chỗ còn lại                                                                                                              | Chỉ hiển thị gợi ý khi đợt còn thao tác được                                       |
+
+### 21.4. Hạn chế còn lại
+
+- Chưa QA: "Nhận bổ sung" hàng thiếu bằng quét mã vị trí (đã tới bước hộp thoại), lệch phiên bản khi hai người sửa cùng lúc, mất kết nối rồi nối lại; chưa kiểm tương phản màu và `prefers-reduced-motion` bằng công cụ.
 - Nhận hàng bằng mã kệ chưa hỗ trợ (kho nhận dùng tra cứu vị trí thật của kho đích).
 - Nút trong combobox dùng chung (`LookupCombobox`) thiếu nhãn truy cập, ảnh hưởng cả trang Nhập kho.
 - Log BE có lỗi có sẵn `CycleCountStatus 'Cancelled'` không thuộc điều chuyển.
-- Tồn Bia Tiger tại Đà Nẵng giảm 7 Thùng và Kho test tăng theo do QA; phiếu QA nằm trong `db71143`.
+- **Phân quyền trên `db71143`:** nhiều bản build với danh mục quyền khác nhau dùng chung một DB. Bước đồng bộ quyền khi khởi động của bản không có `transfers:pick/resolve/cancel` xóa chúng cùng các lượt gán; đã xảy ra nhiều lần trong ngày. Cần thống nhất một nhánh hoặc đặt `Database__ApplyMigrationsOnStartup=false`.
+- Dữ liệu QA nằm trong `db71143`: các phiếu `TRF-20261008…` (hoàn tất, đã hủy và một phiếu chờ xử lý chênh lệch); tồn Bia Tiger tại Đà Nẵng giảm và kho test tăng tương ứng.
