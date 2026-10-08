@@ -18,6 +18,17 @@ import type {
 } from '../types/inbound-request.types'
 
 export const inboundRequestService = {
+  getNextCode: () =>
+    axiosClient
+      .get<ApiResponse<string>>(API_ENDPOINTS.inboundRequests.nextCode)
+      .then((response) => response.data),
+  updateCode: (
+    id: string,
+    request: { inboundRequestCode: string; reason: string; expectedVersion: string }
+  ) =>
+    axiosClient
+      .put<ApiResponse<unknown>>(API_ENDPOINTS.inboundRequests.updateCode(id), request)
+      .then((response) => response.data),
   getInboundRequests: (params: InboundRequestListQuery) =>
     axiosClient
       .get<ApiResponse<InboundRequestListResponse>>(API_ENDPOINTS.inboundRequests.list, {

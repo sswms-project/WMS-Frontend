@@ -1,9 +1,8 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle, Plus } from 'lucide-react'
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import type { UseFormReturn } from 'react-hook-form'
+import type { BusinessCodeFieldProps } from '@/components/forms/BusinessCodeField'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,28 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { saveSupplierSchema, type SaveSupplierFormValues } from '../../schemas/supplier.schema'
+import type { SaveSupplierFormValues } from '../../schemas/supplier.schema'
 import { SupplierFormFields } from './SupplierFormFields'
-
-const defaultValues: SaveSupplierFormValues = {
-  supplierCode: '',
-  supplierName: '',
-  taxCode: '',
-  phone: '',
-  email: '',
-  address: '',
-  contactSalutation: '',
-  contactName: '',
-  contactEmail: '',
-  contactMobile: '',
-  contactChannel: '',
-  contactChannelName: '',
-}
 
 interface SupplierCreateDialogProps {
   readonly open: boolean
   readonly isPending: boolean
-  readonly suggestedCode?: string
+  readonly form: UseFormReturn<SaveSupplierFormValues>
+  readonly codeSuggestionStatus: BusinessCodeFieldProps['suggestionStatus']
+  readonly onCodeChange: () => void
   readonly onOpenChange: (open: boolean) => void
   readonly onSubmit: (values: SaveSupplierFormValues) => Promise<boolean>
 }
@@ -42,31 +28,15 @@ interface SupplierCreateDialogProps {
 export function SupplierCreateDialog({
   open,
   isPending,
-  suggestedCode,
+  form,
+  codeSuggestionStatus,
+  onCodeChange,
   onOpenChange,
   onSubmit,
 }: SupplierCreateDialogProps) {
-  const form = useForm<SaveSupplierFormValues>({
-    resolver: zodResolver(saveSupplierSchema),
-    defaultValues,
-  })
-
-  useEffect(() => {
-    if (!open || !suggestedCode || form.getFieldState('supplierCode').isDirty) return
-    if (!form.getValues('supplierCode')) {
-      form.setValue('supplierCode', suggestedCode, { shouldDirty: false })
-    }
-  }, [form, open, suggestedCode])
-
   function handleOpenChange(nextOpen: boolean) {
     if (isPending) return
-    if (!nextOpen) form.reset(defaultValues)
     onOpenChange(nextOpen)
-  }
-
-  async function handleSubmit(values: SaveSupplierFormValues) {
-    const isSucceeded = await onSubmit(values)
-    if (isSucceeded) form.reset(defaultValues)
   }
 
   return (
@@ -78,8 +48,15 @@ export function SupplierCreateDialog({
             Nhập thông tin nhà cung cấp phục vụ hoạt động nhập kho.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <SupplierFormFields idPrefix="create" form={form} />
+        <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
+          <SupplierFormFields
+            idPrefix="create"
+            form={form}
+            codeSuggestionStatus={codeSuggestionStatus}
+            onCodeChange={onCodeChange}
+            codeDescription="Mã được gợi ý, có thể chỉnh sửa."
+            isPending={isPending}
+          />
           <DialogFooter className="mt-5">
             <Button
               type="button"

@@ -136,6 +136,16 @@ const tenantMemberSystemSection: NavSection = {
   items: [
     requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
     requiredNavItem(APP_ROUTES.auditLogs, 'Nhật ký hoạt động', ScrollText, P.AUDIT_LOGS_VIEW),
+    { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
+  ],
+}
+
+const staffSystemSection: NavSection = {
+  ...tenantMemberSystemSection,
+  items: [
+    requiredNavItem(APP_ROUTES.notifications, 'Thông báo', Bell, P.NOTIFICATIONS_VIEW),
+    requiredNavItem(APP_ROUTES.auditLogs, 'Hoạt động của tôi', ScrollText, P.AUDIT_LOGS_VIEW),
+    { href: APP_ROUTES.settings.security, label: 'Cài đặt', icon: Settings },
   ],
 }
 
@@ -204,6 +214,21 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.tenant,
         ]),
+        {
+          ...requiredNavItem(
+            APP_ROUTES.myTasks,
+            'Công việc kho',
+            ClipboardList,
+            P.WAREHOUSE_TASKS_VIEW_ALL
+          ),
+          match: 'exact',
+        },
+        requiredNavItem(
+          APP_ROUTES.myTaskHistory,
+          'Lịch sử công việc kho',
+          ScrollText,
+          P.WAREHOUSE_TASKS_VIEW_ALL
+        ),
       ],
     },
     {
@@ -336,12 +361,15 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.manager,
         ]),
-        requiredNavItem(
-          APP_ROUTES.myTasks,
-          'Công việc kho',
-          ClipboardList,
-          P.WAREHOUSE_TASKS_VIEW_OWN
-        ),
+        {
+          ...requiredNavItem(
+            APP_ROUTES.myTasks,
+            'Công việc kho',
+            ClipboardList,
+            P.WAREHOUSE_TASKS_VIEW_OWN
+          ),
+          match: 'exact',
+        },
         requiredNavItem(
           APP_ROUTES.myTaskHistory,
           'Lịch sử công việc kho',
@@ -364,15 +392,18 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         requiredNavItem(APP_ROUTES.dashboard, 'Dashboard', LayoutDashboard, P.DASHBOARD_VIEW, [
           APP_ROUTES.dashboardByRole.staff,
         ]),
-        requiredNavItem(
-          APP_ROUTES.myTasks,
-          'Công việc của tôi',
-          ClipboardList,
-          P.WAREHOUSE_TASKS_VIEW_OWN
-        ),
+        {
+          ...requiredNavItem(
+            APP_ROUTES.myTasks,
+            'Công việc của tôi',
+            ClipboardList,
+            P.WAREHOUSE_TASKS_VIEW_OWN
+          ),
+          match: 'exact',
+        },
         requiredNavItem(
           APP_ROUTES.myTaskHistory,
-          'Lịch sử công việc',
+          'Công việc đã xử lý',
           ScrollText,
           P.WAREHOUSE_TASKS_VIEW_OWN
         ),
@@ -383,7 +414,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     tenantSubjectsSection,
     tenantWarehouseSection,
     tenantOperationsSection,
-    tenantMemberSystemSection,
+    staffSystemSection,
   ],
 }
 

@@ -92,6 +92,19 @@ export function CycleCountInfoPanel({
           />
           <FieldError errors={errors.dueDate ? [errors.dueDate] : undefined} />
         </div>
+        <Field data-invalid={Boolean(errors.priority)}>
+          <FieldLabel htmlFor="priority">Mức ưu tiên</FieldLabel>
+          <NativeSelect id="priority" {...form.register('priority')}>
+            <NativeSelectOption value="Normal">Bình thường</NativeSelectOption>
+            <NativeSelectOption value="Urgent">Khẩn</NativeSelectOption>
+          </NativeSelect>
+          <FieldError errors={errors.priority ? [errors.priority] : undefined} />
+        </Field>
+        <Field data-invalid={Boolean(errors.dueAt)}>
+          <FieldLabel htmlFor="dueAt">Hạn hoàn thành công việc</FieldLabel>
+          <Input id="dueAt" type="datetime-local" {...form.register('dueAt')} />
+          <FieldError errors={errors.dueAt ? [errors.dueAt] : undefined} />
+        </Field>
         <Field data-invalid={Boolean(errors.assignedTo)}>
           <FieldLabel htmlFor="assignedTo">
             Nhân viên phụ trách <span className="text-destructive">*</span>

@@ -23,11 +23,12 @@ export function useSuppliersQuery(params: SupplierListQuery) {
   })
 }
 
-export function useNextSupplierCodeQuery(enabled: boolean) {
+export function useNextSupplierCodeQuery(enabled: boolean, sessionKey?: string) {
   return useQuery<ApiResponse<string>, ApiErrorResponse>({
-    queryKey: queryKeys.suppliers.nextCode,
+    queryKey: [...queryKeys.suppliers.nextCode, sessionKey ?? null],
     queryFn: supplierService.getNextSupplierCode,
     enabled,
+    staleTime: 0,
   })
 }
 
@@ -67,6 +68,7 @@ export function useImportSuppliersMutation() {
 
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, ImportSuppliersRequest>({
     mutationFn: supplierService.importSuppliers,
+    retry: false,
     onSuccess: () => invalidateSuppliers(),
     onError: (error) => logger.error(error),
   })
@@ -79,9 +81,21 @@ export function useSupplierImportTemplateMutation() {
   })
 }
 
+export function useInspectSupplierImportMutation() {
+  return useMutation({
+    mutationFn: supplierService.inspectImport,
+    retry: false,
+  })
+}
+
 export function usePreviewSupplierImportMutation() {
-  return useMutation<ApiResponse<SupplierImportPreview>, ApiErrorResponse, File>({
+  return useMutation<
+    ApiResponse<SupplierImportPreview>,
+    ApiErrorResponse,
+    Parameters<typeof supplierService.previewImport>[0]
+  >({
     mutationFn: supplierService.previewImport,
+    retry: false,
     onError: (error) => logger.error(error),
   })
 }

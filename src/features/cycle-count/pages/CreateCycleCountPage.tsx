@@ -42,6 +42,8 @@ export default function CreateCycleCountPage() {
       warehouseId: '',
       zoneId: '',
       scheduledDate: '',
+      priority: 'Normal',
+      dueAt: '',
       assignedTo: '',
       items: [],
       isBlindCount: true,
@@ -139,6 +141,8 @@ export default function CreateCycleCountPage() {
         isBlindCount: values.isBlindCount,
         purpose: values.purpose.trim() || null,
         dueDate: values.dueDate ? new Date(`${values.dueDate}T23:59:59`).toISOString() : null,
+        priority: values.priority,
+        dueAt: values.dueAt ? new Date(values.dueAt).toISOString() : null,
       })
       toast.success('Đã tạo phiếu kiểm kê.')
       if (mode === 'saveAndAdd') {

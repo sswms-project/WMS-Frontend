@@ -40,6 +40,8 @@ export interface CycleCountSummary {
   zoneId: string | null
   status: CycleCountStatus
   scheduledDate: string
+  priority: 'Normal' | 'Urgent'
+  dueAt: string | null
   isBlindCount: boolean
   assignedTo: string | null
   assignedToName: string
@@ -114,6 +116,8 @@ export interface CycleCountDetail {
   zoneName: string | null
   status: CycleCountStatus
   scheduledDate: string
+  priority: 'Normal' | 'Urgent'
+  dueAt: string | null
   isBlindCount: boolean
   recountRound: number
   assignedTo: string | null
@@ -146,6 +150,8 @@ export interface CreateCycleCountRequest {
   zoneId: string | null
   scheduledDate: string
   assignedTo: string
+  priority: 'Normal' | 'Urgent'
+  dueAt: string | null
   items: Array<{
     productId: string
     slotId: string

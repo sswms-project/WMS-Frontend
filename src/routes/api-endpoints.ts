@@ -72,6 +72,8 @@ export const API_ENDPOINTS = {
     history: '/warehouse-tasks/history',
     detail: (taskId: string) => `/warehouse-tasks/${taskId}`,
     assignment: (taskId: string) => `/warehouse-tasks/${taskId}/assignment`,
+    schedule: (taskType: string, taskId: string) =>
+      `/warehouse-tasks/${taskType}/${taskId}/schedule`,
     recommendations: (taskId: string, lineId: string) =>
       `/warehouse-tasks/${taskId}/lines/${lineId}/recommendations`,
   },
@@ -197,6 +199,7 @@ export const API_ENDPOINTS = {
     nextCode: '/suppliers/next-code',
     import: '/suppliers/import',
     importPreview: '/suppliers/import/preview',
+    importInspect: '/suppliers/import/inspect',
     importTemplate: '/suppliers/import-template',
     detail: (supplierId: string) => `/suppliers/${supplierId}`,
     update: (supplierId: string) => `/suppliers/${supplierId}`,
@@ -204,6 +207,8 @@ export const API_ENDPOINTS = {
     reactivate: (supplierId: string) => `/suppliers/${supplierId}/reactivate`,
   },
   inboundRequests: {
+    nextCode: '/inbound-requests/next-code',
+    updateCode: (id: string) => `/inbound-requests/${id}/code`,
     list: '/inbound-requests',
     create: '/inbound-requests',
     detail: (inboundRequestId: string) => `/inbound-requests/${inboundRequestId}`,
@@ -227,6 +232,7 @@ export const API_ENDPOINTS = {
       `/inbound-requests/${inboundRequestId}/allowed-actions`,
   },
   goodsReceipts: {
+    nextCode: '/goods-receipts/next-code',
     list: '/goods-receipts',
     create: '/goods-receipts',
     detail: (receiptId: string) => `/goods-receipts/${receiptId}`,
@@ -328,6 +334,9 @@ export const API_ENDPOINTS = {
     suppliers: (id: string) => `/products/${id}/suppliers`,
     supplier: (productId: string, linkId: string) => `/products/${productId}/suppliers/${linkId}`,
     import: '/products/import',
+    importTemplate: '/products/import/template',
+    importInspect: '/products/import/inspect',
+    importPreview: '/products/import/preview',
   },
   payments: {
     history: '/payments',
@@ -338,24 +347,72 @@ export const API_ENDPOINTS = {
     list: '/transfers',
     create: '/transfers',
     sourceWarehouses: '/transfers/source-warehouses',
-    sourceInventory: '/transfers/source-inventory',
+    availability: '/transfers/availability',
+    drafts: '/transfers/drafts',
+    draft: (transferId: string) => `/transfers/drafts/${transferId}`,
+    submitDraft: (transferId: string) => `/transfers/drafts/${transferId}/submit`,
     detail: (transferId: string) => `/transfers/${transferId}`,
-    approve: (transferId: string) => `/transfers/${transferId}/approve`,
-    reject: (transferId: string) => `/transfers/${transferId}/reject`,
-    dispatch: (transferId: string) => `/transfers/${transferId}/dispatch`,
-    receive: (transferId: string) => `/transfers/${transferId}/receive`,
+    update: (transferId: string) => `/transfers/${transferId}`,
+    cancel: (transferId: string) => `/transfers/${transferId}/cancel`,
+    stopRemaining: (transferId: string) => `/transfers/${transferId}/stop-remaining`,
+    feedback: (transferId: string) => `/transfers/${transferId}/feedback`,
+    replyFeedback: (transferId: string, feedbackId: string) =>
+      `/transfers/${transferId}/feedback/${feedbackId}/reply`,
+    shipments: (transferId: string) => `/transfers/${transferId}/shipments`,
+    cancelShipment: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/cancel`,
+    pickSheet: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/pick-sheet`,
+    pickAlternatives: (transferId: string, shipmentId: string, lineId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/alternatives`,
+    picks: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/picks`,
+    switchPick: (transferId: string, shipmentId: string, lineId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/switch`,
+    escalatePick: (transferId: string, shipmentId: string, lineId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/escalate`,
+    resolveEscalation: (
+      transferId: string,
+      shipmentId: string,
+      lineId: string,
+      exceptionId: string
+    ) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/escalations/${exceptionId}/resolve`,
+    returnPick: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/returns`,
+    dispatchShipment: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/dispatch`,
+    receiveSheet: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/receive-sheet`,
+    receipt: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/receipt`,
+    resolveDiscrepancy: (transferId: string, discrepancyId: string) =>
+      `/transfers/${transferId}/discrepancies/${discrepancyId}/resolve`,
   },
   stockIssueRequests: {
+    importPreview: '/stock-issue-requests/import/preview',
+    importTemplate: '/stock-issue-requests/import-template',
     list: '/stock-issue-requests',
     create: '/stock-issue-requests',
     detail: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}`,
     releaseForPicking: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/release-for-picking`,
+    cancel: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/cancel`,
+    attachments: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/attachments`,
+    attachment: (stockIssueRequestId: string, attachmentId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/attachments/${attachmentId}`,
+    assignPicker: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/assign-picker`,
+    auditLogs: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/audit-logs`,
     picks: (stockIssueRequestId: string) => `/stock-issue-requests/${stockIssueRequestId}/picks`,
     dispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/dispatch`,
     authorizeDispatch: (stockIssueRequestId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/authorize-dispatch`,
+    reportPickIssue: (stockIssueRequestId: string) =>
+      `/stock-issue-requests/${stockIssueRequestId}/report-pick-issue`,
     removePickDetail: (stockIssueRequestId: string, pickDetailId: string) =>
       `/stock-issue-requests/${stockIssueRequestId}/pick-details/${pickDetailId}`,
     goodsReturnRequests: (stockIssueRequestId: string) =>
@@ -377,6 +434,7 @@ export const API_ENDPOINTS = {
     nextCode: '/stock-recipients/next-code',
     import: '/stock-recipients/import',
     importPreview: '/stock-recipients/import/preview',
+    importInspect: '/stock-recipients/import/inspect',
     importTemplate: '/stock-recipients/import-template',
     detail: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,
     update: (stockRecipientId: string) => `/stock-recipients/${stockRecipientId}`,

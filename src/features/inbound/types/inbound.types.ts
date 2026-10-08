@@ -22,6 +22,7 @@ export type GoodsReceiptAction =
   | 'AssignPutAway'
 
 export type WarehouseTaskExecutionStatus = 'Queued' | 'InProgress' | 'Paused' | 'Completed'
+export type WarehouseTaskPriority = 'Normal' | 'Urgent'
 
 export interface InboundListQuery {
   pageNumber: number
@@ -58,6 +59,13 @@ export interface PutawayTaskQuery {
 }
 
 export interface ReceivingTaskLine {
+  baseUnitId?: string
+  baseUnitName?: string
+  enteredUnitId?: string
+  enteredUnitName?: string
+  conversionFactorSnapshot?: number
+  baseUnitQuantityPrecision?: number
+  enteredUnitQuantityPrecision?: number
   inboundRequestItemId: string
   productId: string
   productSKU: string
@@ -70,6 +78,9 @@ export interface ReceivingTaskLine {
 }
 
 export interface ReceivingTask {
+  warehouseCode?: string | null
+  supplierCode?: string | null
+  sourceName?: string | null
   inboundRequestId: string
   inboundRequestCode: string
   warehouseId: string
@@ -88,6 +99,8 @@ export interface ReceivingTask {
   assignedToName: string | null
   assignedAt: string | null
   executionStatus: WarehouseTaskExecutionStatus
+  priority: WarehouseTaskPriority
+  dueAt: string | null
   lines: ReceivingTaskLine[]
 }
 
@@ -117,6 +130,8 @@ export interface GoodsReceiptSummary {
   putAwayAssignedToName: string | null
   putAwayAssignedAt: string | null
   putAwayExecutionStatus: WarehouseTaskExecutionStatus
+  putAwayTaskPriority: WarehouseTaskPriority
+  putAwayTaskDueAt: string | null
 }
 
 export interface GoodsReceiptItem {
@@ -179,6 +194,9 @@ export interface GoodsReceiptDetail extends Omit<
   | 'putAwayQuantity'
   | 'putAwayExecutionStatus'
 > {
+  supplierCode?: string | null
+  supplierName?: string | null
+  sourceName?: string | null
   receivingAssignedTo: string | null
   receivingAssignedToName: string | null
   warehouseCode: string
@@ -202,6 +220,7 @@ export interface GoodsReceiptDetail extends Omit<
 }
 
 export interface ReceiptLineRequest {
+  enteredUnitId?: string
   inboundRequestItemId: string
   receivedQty: number
   damagedQty: number
@@ -213,6 +232,7 @@ export interface ReceiptLineRequest {
 
 export interface SaveGoodsReceiptRequest {
   inboundRequestId: string
+  receiptCode?: string
   lines: ReceiptLineRequest[]
 }
 
@@ -266,6 +286,8 @@ export interface AssignWarehouseTaskRequest {
   staffId: string
   expectedStaffId: string | null
   reason: string | null
+  priority: WarehouseTaskPriority
+  dueAt: string | null
 }
 
 export interface InboundAllowedActionsResponse {
@@ -366,6 +388,7 @@ export interface InboundDocumentReviewLine {
 export interface InboundDocumentReview {
   extraction: SupplierDocumentExtraction
   inboundRequestId: string | null
+  inboundRequestVersion?: string | null
   inboundRequestCode: string | null
   supplierId: string | null
   supplierName: string | null

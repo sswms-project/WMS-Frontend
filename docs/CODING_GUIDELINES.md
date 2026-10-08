@@ -224,6 +224,36 @@ Do not create an abstraction when:
 - It forces unrelated features to share the same implementation.
 - It makes future changes harder to reason about.
 
+## Reusable business-code inputs
+
+Use `BusinessCodeField` (`src/components/forms`) for business-code labels, inputs, helper text and linked errors. Pass RHF `register(...)` through `inputProps` so ref, blur and change handling remain intact. Keep feature-specific schemas, normalization, length limits, API queries and duplicate-code handling in their existing features.
+
+Use `useCodeSuggestion` (`src/hooks`) only in the create-form orchestrator. Pass the existing feature query's data, `isFetching` and `isError`; apply a suggestion through `form.setValue` without marking the field dirty. On user changes, call `markEdited`, including when the user clears the input. Do not use RHF `isDirty` as the interaction guard.
+
+```tsx
+const instanceId = useId()
+const [session, setSession] = useState(0)
+const sessionKey = `${instanceId}:${session}`
+const query = useNextSupplierCodeQuery(isCreateOpen, sessionKey)
+const suggestion = useCodeSuggestion({
+  active: isCreateOpen,
+  sessionKey,
+  suggestedCode: query.data?.data,
+  isFetching: query.isFetching,
+  isError: query.isError,
+  getCurrentCode: () => form.getValues('supplierCode'),
+  applyCode: (code) =>
+    form.setValue('supplierCode', code, {
+      shouldValidate: form.formState.isSubmitted,
+    }),
+})
+// Field inputProps: { ...form.register('supplierCode', { onChange: suggestion.markEdited }), ... }
+```
+
+Every reopen, save-and-add or change of receiving document starts a new session: reset the form, call `suggestion.resetSession()` and increment `session` in the same event. Include `sessionKey` in the feature query key; never reuse the old result or await a refetch before resetting the next draft. This isolates late responses from the previous form. Edit forms keep their saved code and do not autofill. The shared hook does not fetch, reserve or generate codes; the Backend remains responsible for tenant-scoped uniqueness at save time.
+
+Create helper: `Mã được gợi ý, có thể chỉnh sửa.` Loading uses a placeholder without disabling manual entry; suggestion errors permit manual entry. Do not add a shared regex or uppercase-on-keystroke behavior.
+
 ## Review Checklist
 
 Before finishing a feature, verify:

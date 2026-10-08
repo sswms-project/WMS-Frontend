@@ -126,6 +126,8 @@ export const P = {
   STOCK_ISSUE_REQUESTS_DISPATCH: 'stock-issue-requests:dispatch',
   STOCK_ISSUE_REQUESTS_AUTHORIZE_DISPATCH: 'stock-issue-requests:authorize-dispatch',
   STOCK_ISSUE_REQUESTS_RETURN: 'stock-issue-requests:return',
+  STOCK_ISSUE_REQUESTS_CANCEL: 'stock-issue-requests:cancel',
+  STOCK_ISSUE_REQUESTS_ASSIGN_PICKER: 'stock-issue-requests:assign-picker',
 
   // Stock Recipients
   STOCK_RECIPIENTS_VIEW: 'stock-recipients:view',
@@ -143,9 +145,11 @@ export const P = {
   // Transfers
   TRANSFERS_VIEW: 'transfers:view',
   TRANSFERS_CREATE: 'transfers:create',
-  TRANSFERS_APPROVE: 'transfers:approve',
   TRANSFERS_DISPATCH: 'transfers:dispatch',
   TRANSFERS_RECEIVE: 'transfers:receive',
+  TRANSFERS_PICK: 'transfers:pick',
+  TRANSFERS_CANCEL: 'transfers:cancel',
+  TRANSFERS_RESOLVE: 'transfers:resolve',
 
   // Warehouses
   WAREHOUSES_VIEW: 'warehouses:view',

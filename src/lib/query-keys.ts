@@ -26,8 +26,8 @@ import type {
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
+  TransferAvailabilityQuery,
   TransferListQuery,
-  TransferSourceInventoryQuery,
   TransferSourceWarehouseQuery,
 } from '@/features/transfer/types/transfer.types'
 import type {
@@ -192,6 +192,7 @@ export const queryKeys = {
     nextCode: ['suppliers', 'next-code'] as const,
   },
   inboundRequests: {
+    nextCode: ['inbound-requests', 'next-code'] as const,
     all: ['inbound-requests'] as const,
     lists: ['inbound-requests', 'list'] as const,
     list: (params: InboundRequestListQuery) => ['inbound-requests', 'list', params] as const,
@@ -201,6 +202,7 @@ export const queryKeys = {
   },
   goodsReceipts: {
     all: ['goods-receipts'] as const,
+    nextCode: ['goods-receipts', 'next-code'] as const,
     lists: ['goods-receipts', 'list'] as const,
     list: (params: InboundListQuery) => ['goods-receipts', 'list', params] as const,
     detail: (id: string) => ['goods-receipts', 'detail', id] as const,
@@ -223,14 +225,22 @@ export const queryKeys = {
     detail: (id: string) => ['transfers', 'detail', id] as const,
     sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
       ['transfers', 'source-warehouses', params] as const,
-    sourceInventory: (params: TransferSourceInventoryQuery) =>
-      ['transfers', 'source-inventory', params] as const,
+    availability: (params: TransferAvailabilityQuery) =>
+      ['transfers', 'availability', params] as const,
+    pickSheet: (transferId: string, shipmentId: string) =>
+      ['transfers', 'pick-sheet', transferId, shipmentId] as const,
+    pickAlternatives: (transferId: string, shipmentId: string, lineId: string) =>
+      ['transfers', 'pick-alternatives', transferId, shipmentId, lineId] as const,
+    receiveSheet: (transferId: string, shipmentId: string) =>
+      ['transfers', 'receive-sheet', transferId, shipmentId] as const,
   },
   stockIssueRequests: {
     all: ['stock-issue-requests'] as const,
     lists: ['stock-issue-requests', 'list'] as const,
     list: (params: StockIssueRequestListQuery) => ['stock-issue-requests', 'list', params] as const,
     detail: (id: string) => ['stock-issue-requests', 'detail', id] as const,
+    auditLogs: (id: string, params: { pageNumber: number; pageSize: number }) =>
+      ['stock-issue-requests', 'detail', id, 'audit-logs', params] as const,
   },
   goodsReturnRequests: {
     all: ['goods-return-requests'] as const,

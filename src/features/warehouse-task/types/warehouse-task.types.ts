@@ -4,9 +4,20 @@ export const WAREHOUSE_TASK_TYPES = [
   'CycleCount',
   'DamagedStock',
   'Relocation',
+  'TransferPick',
+  'TransferReceive',
+  'Picking',
 ] as const
 
 export type WarehouseTaskType = (typeof WAREHOUSE_TASK_TYPES)[number]
+export type WarehouseTaskDeadlineStatus =
+  | 'NoDeadline'
+  | 'OnTrack'
+  | 'DueSoon'
+  | 'Overdue'
+  | 'CompletedOnTime'
+  | 'CompletedLate'
+  | 'Cancelled'
 
 export interface MyWarehouseTask {
   id: string
@@ -18,11 +29,24 @@ export interface MyWarehouseTask {
   status: string
   executionStatus: 'Queued' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
   priority: 'Normal' | 'Urgent'
+  dueAt: string | null
+  deadlineStatus: WarehouseTaskDeadlineStatus
+  startedAt: string | null
+  completedAt: string | null
+  itemCount: number
+  completedItemCount: number
+  totalQuantity: number
+  completedQuantity: number
+  progressPercentage: number
+  workSummary: string
   pauseReason: string | null
   assignedTo: string | null
   assignedToName: string | null
-  assignedAt: string
+  assignedAt: string | null
   updatedAt: string
+  /** Chỉ có với công việc lấy/nhận hàng điều chuyển kho. */
+  transferId: string | null
+  transferShipmentId: string | null
 }
 
 export type WarehouseTaskAction = 'Start' | 'Pause' | 'Return'
@@ -33,15 +57,28 @@ export interface MyWarehouseTaskQuery {
   taskType?: WarehouseTaskType
   warehouseId?: string
   status?: string
+  executionStatus?: MyWarehouseTask['executionStatus']
+  deadlineStatus?: WarehouseTaskDeadlineStatus
+  assignedTo?: string
 }
 
 export type WarehouseTaskScope = 'mine' | 'managed'
 
 export interface MyWarehouseTaskListResponse {
   items: MyWarehouseTask[]
+  stats: WarehouseTaskStats
   totalCount: number
   pageNumber: number
   pageSize: number
+}
+
+export interface WarehouseTaskStats {
+  unassignedCount: number
+  queuedCount: number
+  inProgressCount: number
+  pausedCount: number
+  dueSoonCount: number
+  overdueCount: number
 }
 
 export interface WarehouseTaskLine {
@@ -123,6 +160,14 @@ export interface AssignWarehouseTaskRequest {
   staffId: string
   expectedStaffId: string | null
   expectedVersion: string
+  reason: string | null
+}
+
+export interface UpdateWarehouseTaskScheduleRequest {
+  priority: MyWarehouseTask['priority']
+  dueAt: string | null
+  expectedPriority: MyWarehouseTask['priority']
+  expectedDueAt: string | null
   reason: string | null
 }
 

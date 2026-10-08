@@ -62,6 +62,8 @@ export default function InboundPutawayPage() {
       warehouseName: receipt.warehouseName,
       currentAssigneeId: receipt.putAwayAssignedTo,
       currentAssigneeName: receipt.putAwayAssignedToName,
+      currentPriority: receipt.putAwayTaskPriority,
+      currentDueAt: receipt.putAwayTaskDueAt,
     })
   }
 

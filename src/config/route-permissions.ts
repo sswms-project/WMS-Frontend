@@ -1,5 +1,12 @@
 import { APP_ROUTES } from '@/routes/app-routes'
 import { USER_ROLES, type UserRole } from './roles'
+import { P } from './permissionCodes'
+
+export const ROUTE_CAPABILITIES = {
+  [APP_ROUTES.productImport]: P.PRODUCTS_IMPORT,
+  [APP_ROUTES.unitImport]: P.UNITS_MANAGE,
+  [APP_ROUTES.categoryImport]: P.CATEGORIES_MANAGE,
+} as const
 
 interface RoutePermission {
   pathPrefix: string
@@ -29,7 +36,7 @@ const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
   },
   {
     pathPrefix: APP_ROUTES.myTasks,
-    allowedRoles: [USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
+    allowedRoles: [USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff],
   },
   {
     pathPrefix: APP_ROUTES.suppliers,

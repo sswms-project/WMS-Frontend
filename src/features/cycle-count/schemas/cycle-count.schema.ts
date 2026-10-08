@@ -16,6 +16,8 @@ export const createCycleCountSchema = z
     warehouseId: dotNetGuidSchema('Vui lòng chọn kho.'),
     zoneId: z.string(),
     scheduledDate: z.string().min(1, 'Vui lòng chọn thời gian kiểm kê.'),
+    priority: z.enum(['Normal', 'Urgent']),
+    dueAt: z.string(),
     assignedTo: dotNetGuidSchema('Vui lòng chọn nhân viên phụ trách.'),
     items: z
       .array(cycleCountItemSchema)
@@ -34,6 +36,20 @@ export const createCycleCountSchema = z
         code: 'custom',
         path: ['dueDate'],
         message: 'Kiểm kê đến ngày không được trước ngày kiểm kê dự kiến.',
+      })
+    }
+    if (values.priority === 'Urgent' && !values.dueAt) {
+      context.addIssue({
+        code: 'custom',
+        path: ['dueAt'],
+        message: 'Công việc khẩn phải có hạn hoàn thành.',
+      })
+    }
+    if (values.dueAt && new Date(values.dueAt).getTime() <= Date.now()) {
+      context.addIssue({
+        code: 'custom',
+        path: ['dueAt'],
+        message: 'Hạn hoàn thành phải ở tương lai.',
       })
     }
     const keys = new Set<string>()

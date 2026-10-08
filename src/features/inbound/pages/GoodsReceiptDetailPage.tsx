@@ -8,7 +8,12 @@ import {
   OperationalErrorState,
   OperationalLoadingState,
 } from '@/components/operations/OperationalState'
-import { formatApiError, getApiErrorMessage, isApiErrorResponse } from '@/lib/api-error'
+import {
+  formatApiError,
+  getApiErrorCode,
+  getApiErrorMessage,
+  isApiErrorResponse,
+} from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { ReceiptDetail } from '../components/ReceiptDetailPage'
 import { ReceiveGoodsDialog } from '../components/ReceivingPage'
@@ -36,7 +41,7 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
   const assignment = useAssignWarehouseTask()
   const form = useForm<GoodsReceiptFormValues>({
     resolver: zodResolver(goodsReceiptSchema),
-    defaultValues: { inboundRequestId: '', lines: [] },
+    defaultValues: { inboundRequestId: '', receiptCode: '', lines: [] },
   })
 
   function showMutationError(error: unknown, fallback: string) {
@@ -54,12 +59,14 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     if (!receipt) return
     form.reset({
       inboundRequestId: receipt.inboundRequestId,
+      receiptCode: receipt.receiptCode,
       lines: receipt.items.flatMap((item) =>
         item.inboundRequestItemId
           ? [
               {
                 inboundRequestItemId: item.inboundRequestItemId,
                 receivedQty: item.receivedQuantity,
+                enteredUnitId: item.baseUnitId,
                 damagedQty: item.damagedQuantity,
                 exceptionReason: item.exceptionReason ?? '',
                 isLotTracked: Boolean(item.lotId),
@@ -79,9 +86,11 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       await updateMutation.mutateAsync({
         receiptId,
         request: {
+          receiptCode: values.receiptCode,
           lines: values.lines.map((line) => ({
             inboundRequestItemId: line.inboundRequestItemId,
             receivedQty: line.receivedQty,
+            enteredUnitId: line.enteredUnitId,
             damagedQty: line.damagedQty,
             exceptionReason: line.exceptionReason.trim() || null,
             lotNumber: line.isLotTracked ? line.lotNumber.trim() || null : null,
@@ -106,6 +115,13 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       setIsEditing(false)
     } catch (error) {
       logMutationFailure(error)
+      if (getApiErrorCode(error) === 'GOODS_RECEIPT_CODE_CONFLICT') {
+        form.setError(
+          'receiptCode',
+          { type: 'server', message: getApiErrorMessage(error) },
+          { shouldFocus: true }
+        )
+      }
       showMutationError(
         error,
         'Không thể cập nhật phiếu nhận hàng. Vui lòng kiểm tra dữ liệu và thử lại.'
@@ -124,6 +140,8 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
       warehouseName: receipt.warehouseName,
       currentAssigneeId: receipt.putAwayAssignedTo,
       currentAssigneeName: receipt.putAwayAssignedToName,
+      currentPriority: receipt.putAwayTaskPriority,
+      currentDueAt: receipt.putAwayTaskDueAt,
     })
   }
 
@@ -175,7 +193,10 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     warehouseId: receipt.warehouseId,
     warehouseName: receipt.warehouseName,
     supplierId: '',
-    supplierName: '',
+    supplierName: receipt.supplierName ?? '',
+    supplierCode: receipt.supplierCode,
+    sourceName: receipt.sourceName,
+    warehouseCode: receipt.warehouseCode,
     expectedDate: null,
     createdAt: receipt.createdAt,
     orderedQuantity: receipt.items.reduce((sum, item) => sum + item.orderedQuantity, 0),
@@ -188,6 +209,8 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
     assignedToName: receipt.receivingAssignedToName,
     assignedAt: null,
     executionStatus: 'Queued',
+    priority: 'Normal',
+    dueAt: null,
     lines: receipt.items.flatMap((item) =>
       item.inboundRequestItemId
         ? [
@@ -201,6 +224,17 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
               orderedQuantity: item.orderedQuantity,
               receivedQuantity: 0,
               remainingQuantity: item.orderedQuantity,
+              baseUnitId: item.baseUnitId,
+              baseUnitName: item.baseUnitName,
+              enteredUnitId: item.enteredUnitId ?? item.baseUnitId,
+              enteredUnitName: item.enteredUnitName ?? item.baseUnitName,
+              conversionFactorSnapshot: item.conversionFactorSnapshot,
+              baseUnitQuantityPrecision:
+                item.allowedUnits.find((unit) => unit.unitId === item.baseUnitId)
+                  ?.quantityPrecision ?? 2,
+              enteredUnitQuantityPrecision:
+                item.allowedUnits.find((unit) => unit.unitId === item.enteredUnitId)
+                  ?.quantityPrecision ?? 2,
             },
           ]
         : []
@@ -243,7 +277,12 @@ export default function GoodsReceiptDetailPage({ receiptId }: { readonly receipt
         form={form}
         isPending={isPending}
         title={`Chỉnh sửa ${receipt.receiptCode}`}
-        description="Điều chỉnh số lượng thực nhận và tình trạng hàng trước khi gửi duyệt lại."
+        description={
+          receipt.status === 'InspectionCorrectionRequired'
+            ? 'Chỉ điều chỉnh tình trạng kiểm hàng; số lượng thực nhận và đơn vị được giữ nguyên.'
+            : 'Điều chỉnh số lượng thực nhận và tình trạng hàng trước khi gửi duyệt lại.'
+        }
+        canEditReceivedQuantity={receipt.status !== 'InspectionCorrectionRequired'}
         saveDraftLabel="Lưu thay đổi"
         mode="edit"
         onOpenChange={(open) => {

@@ -25,6 +25,7 @@ interface LookupComboboxProps {
   readonly ariaLabel: string
   readonly isLoading: boolean
   readonly isInvalid: boolean
+  readonly disabled?: boolean
   readonly onChange: (value: string, option?: LookupOption) => void
   readonly onSearchChange: (value: string) => void
 }
@@ -39,6 +40,7 @@ export function LookupCombobox({
   ariaLabel,
   isLoading,
   isInvalid,
+  disabled = false,
   onChange,
   onSearchChange,
 }: LookupComboboxProps) {
@@ -90,7 +92,8 @@ export function LookupCombobox({
         placeholder={placeholder}
         aria-label={ariaLabel}
         aria-invalid={isInvalid}
-        showClear={Boolean(value)}
+        disabled={disabled}
+        showClear={Boolean(value) && !disabled}
       />
       <ComboboxContent sideOffset={4} align="start">
         <ComboboxList>

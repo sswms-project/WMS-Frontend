@@ -51,6 +51,8 @@ export function CycleCountInfoSection({
     ['Ngày lập', withPerson(detail.createdAt, detail.createdByName)],
     ['Lịch kiểm kê', formatCycleCountDate(detail.scheduledDate)],
     ['Kiểm kê đến ngày', detail.dueDate ? formatCycleCountDay(detail.dueDate) : '—'],
+    ['Mức ưu tiên', detail.priority === 'Urgent' ? 'Khẩn' : 'Bình thường'],
+    ['Hạn hoàn thành', detail.dueAt ? formatCycleCountDate(detail.dueAt) : 'Chưa đặt hạn'],
   ]
   const trackingRows: readonly InfoRow[] = [
     ['Vòng đếm', String(detail.recountRound + 1)],
