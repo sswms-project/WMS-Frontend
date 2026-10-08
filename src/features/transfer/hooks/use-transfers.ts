@@ -19,6 +19,9 @@ import type {
   UpdateTransferRequest,
 } from '../types/transfer.types'
 
+/** Khóa chung của mọi lệnh ghi điều chuyển để nhận biết tín hiệu realtime dội lại từ chính trình duyệt này. */
+export const TRANSFER_MUTATION_KEY = ['transfers', 'write'] as const
+
 /** Mọi thao tác trên phiếu có thể đổi tồn kho, giữ chỗ và công việc được giao. */
 export function invalidateTransferQueries(queryClient: QueryClient) {
   return Promise.all([
@@ -100,6 +103,7 @@ interface ReplyFeedbackVariables {
 export function useSaveTransferDraftMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<string>, ApiErrorResponse, SaveDraftVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) =>
       transferId
         ? transferService.updateDraft(transferId, request)
@@ -112,6 +116,7 @@ export function useSaveTransferDraftMutation() {
 export function useSubmitTransferDraftMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, SubmitDraftVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.submitDraft(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logger.error(error),
@@ -121,6 +126,7 @@ export function useSubmitTransferDraftMutation() {
 export function useUpdateTransferMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, UpdateTransferVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.updateTransfer(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logger.error(error),
@@ -130,6 +136,7 @@ export function useUpdateTransferMutation() {
 export function useCancelTransferMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, CancelTransferVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.cancelTransfer(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logger.error(error),
@@ -139,6 +146,7 @@ export function useCancelTransferMutation() {
 export function useStopTransferRemainingMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, CancelTransferVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.stopRemaining(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logger.error(error),
@@ -148,6 +156,7 @@ export function useStopTransferRemainingMutation() {
 export function useAddTransferFeedbackMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<string>, ApiErrorResponse, AddFeedbackVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.addFeedback(transferId, request),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all }),
     onError: (error) => logger.error(error),
@@ -157,6 +166,7 @@ export function useAddTransferFeedbackMutation() {
 export function useReplyTransferFeedbackMutation() {
   const queryClient = useQueryClient()
   return useMutation<ApiResponse<unknown>, ApiErrorResponse, ReplyFeedbackVariables>({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, feedbackId, request }) =>
       transferService.replyFeedback(transferId, feedbackId, request),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all }),

@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NotificationHubContext } from '@/features/platform-services/providers/notification-hub-context'
 import { queryKeys } from '@/lib/query-keys'
 import { useTransferRealtime } from './use-transfer-realtime'
+import { TRANSFER_MUTATION_KEY } from './use-transfers'
 
 type Handler = (payload: unknown) => void
 
@@ -108,6 +109,38 @@ describe('useTransferRealtime', () => {
 
     act(() => hook.result.current.dismiss())
     expect(hook.result.current.hasPendingChange).toBe(false)
+  })
+
+  it('treats the echo of its own transfer write as not a change by someone else', async () => {
+    const fake = createFakeConnection()
+    const { client, wrapper } = setup(fake.connection)
+    const hook = renderHook(() => useTransferRealtime({ transferId: 't1', autoRefresh: false }), {
+      wrapper,
+    })
+    await act(() =>
+      client
+        .getMutationCache()
+        .build(client, { mutationKey: TRANSFER_MUTATION_KEY, mutationFn: async () => 'ok' })
+        .execute(undefined)
+    )
+    act(() => fake.emit(event))
+    expect(hook.result.current.hasPendingChange).toBe(false)
+  })
+
+  it('does not hide a change from someone else because an unrelated mutation just ran', async () => {
+    const fake = createFakeConnection()
+    const { client, wrapper } = setup(fake.connection)
+    const hook = renderHook(() => useTransferRealtime({ transferId: 't1', autoRefresh: false }), {
+      wrapper,
+    })
+    await act(() =>
+      client
+        .getMutationCache()
+        .build(client, { mutationKey: ['notifications', 'read'], mutationFn: async () => 'ok' })
+        .execute(undefined)
+    )
+    act(() => fake.emit(event))
+    expect(hook.result.current.hasPendingChange).toBe(true)
   })
 
   it('clears the pending flag after an explicit reload', async () => {

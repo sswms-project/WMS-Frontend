@@ -452,6 +452,8 @@ export interface TransferPickException {
   resolution: string | null
   createdAt: string
   resolvedAt: string | null
+  /** Lô được chọn hết hạn muộn hơn lô khác còn hàng; lý do nhân viên chọn nằm ở reasonCode. */
+  isNonFefo: boolean
 }
 
 export interface TransferPickSheetLine {

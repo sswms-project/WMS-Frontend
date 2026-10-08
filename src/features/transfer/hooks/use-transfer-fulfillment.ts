@@ -19,7 +19,7 @@ import type {
   TransferReceiveSheet,
 } from '../types/transfer.types'
 import type { ReceivableSlot } from '../utils/transfer-receive'
-import { invalidateTransferQueries } from './use-transfers'
+import { TRANSFER_MUTATION_KEY, invalidateTransferQueries } from './use-transfers'
 
 interface ShipmentScope {
   transferId: string
@@ -75,6 +75,7 @@ export function useFindReceivableSlotMutation() {
     ApiErrorResponse,
     { warehouseId: string; scannedCode: string }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ warehouseId, scannedCode }) =>
       transferService.findReceivableSlot(warehouseId, scannedCode),
     onError: (error) => logger.error(error),
@@ -88,6 +89,7 @@ export function useCreateTransferShipmentMutation() {
     ApiErrorResponse,
     { transferId: string; request: CreateTransferShipmentRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.createShipment(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logger.error(error),
@@ -101,6 +103,7 @@ export function useCancelTransferShipmentMutation() {
     ApiErrorResponse,
     ShipmentScope & { request: CancelTransferShipmentRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.cancelShipment(transferId, shipmentId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -115,6 +118,7 @@ export function useRecordTransferPickMutation() {
     ApiErrorResponse,
     ShipmentScope & { request: RecordTransferPickRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.recordPick(transferId, shipmentId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -129,6 +133,7 @@ export function useSwitchTransferPickMutation() {
     ApiErrorResponse,
     ShipmentScope & { lineId: string; request: SwitchTransferPickRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, lineId, request }) =>
       transferService.switchPick(transferId, shipmentId, lineId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -143,6 +148,7 @@ export function useEscalateTransferPickMutation() {
     ApiErrorResponse,
     ShipmentScope & { lineId: string; request: EscalateTransferPickRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, lineId, request }) =>
       transferService.escalatePick(transferId, shipmentId, lineId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -161,6 +167,7 @@ export function useResolveTransferEscalationMutation() {
       request: ResolveTransferEscalationRequest
     }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, lineId, exceptionId, request }) =>
       transferService.resolveEscalation(transferId, shipmentId, lineId, exceptionId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -175,6 +182,7 @@ export function useReturnTransferPickMutation() {
     ApiErrorResponse,
     ShipmentScope & { request: ReturnTransferPickRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.returnPick(transferId, shipmentId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -189,6 +197,7 @@ export function useDispatchTransferShipmentMutation() {
     ApiErrorResponse,
     ShipmentScope & { request: DispatchTransferShipmentRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.dispatchShipment(transferId, shipmentId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -203,6 +212,7 @@ export function useReceiveTransferShipmentMutation() {
     ApiErrorResponse,
     ShipmentScope & { request: ReceiveTransferShipmentRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.receiveShipment(transferId, shipmentId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
@@ -217,6 +227,7 @@ export function useResolveTransferDiscrepancyMutation() {
     ApiErrorResponse,
     { transferId: string; discrepancyId: string; request: ResolveTransferDiscrepancyRequest }
   >({
+    mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, discrepancyId, request }) =>
       transferService.resolveDiscrepancy(transferId, discrepancyId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),

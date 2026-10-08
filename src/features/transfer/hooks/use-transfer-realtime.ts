@@ -9,7 +9,7 @@ import {
   transferChangedEventSchema,
   type TransferChangedEvent,
 } from '../schemas/transfer-realtime.schema'
-import { invalidateTransferQueries } from './use-transfers'
+import { TRANSFER_MUTATION_KEY, invalidateTransferQueries } from './use-transfers'
 
 interface UseTransferRealtimeOptions {
   /** Phiếu đang xem: tham gia nhóm theo phiếu. */
@@ -70,6 +70,7 @@ export function useTransferRealtime({
       queryClient.getMutationCache().subscribe((event) => {
         const write = ownWriteRef.current
         if (event.type !== 'updated') return
+        if (event.mutation.options.mutationKey?.[0] !== TRANSFER_MUTATION_KEY[0]) return
         const { action } = event
         if (action.type === 'pending') write.inFlight += 1
         else if (action.type === 'success' || action.type === 'error') {
