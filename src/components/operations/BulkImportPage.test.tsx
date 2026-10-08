@@ -45,6 +45,8 @@ import {
 
 interface TestRow extends BulkImportRow {
   readonly name: string
+  readonly contactName?: string
+  readonly contactMobile?: string
 }
 
 const columns: readonly BulkImportColumn<TestRow>[] = [
@@ -64,6 +66,7 @@ function renderPage(
     rows?: TestRow[]
     onImport?: ImportHandler
     inspection?: SpreadsheetImportInspection
+    columns?: readonly BulkImportColumn<TestRow>[]
   } = {}
 ) {
   const onImport = vi.fn<ImportHandler>(
@@ -80,7 +83,7 @@ function renderPage(
       backLabel="Quay lại"
       listLabel="Xem danh sách khách hàng"
       resultFileName="ket-qua.csv"
-      columns={columns}
+      columns={overrides.columns ?? columns}
       getRowLabel={(row) => row.name}
       getRowSearchText={(row) => row.name}
       isPreviewing={false}
@@ -110,6 +113,131 @@ async function confirmImport(buttonName: RegExp) {
 }
 
 describe('BulkImportPage', () => {
+  const supplementaryColumns: readonly BulkImportColumn<TestRow>[] = [
+    ...columns,
+    {
+      key: 'contactName',
+      header: 'Người liên hệ',
+      isSupplementary: true,
+      render: (row) => row.contactName ?? '—',
+    },
+    {
+      key: 'contactMobile',
+      header: 'Điện thoại người liên hệ',
+      isSupplementary: true,
+      render: (row) => row.contactMobile ?? '—',
+    },
+  ]
+
+  it('toggles the entire supplementary column group without changing selections or import data', async () => {
+    const row: TestRow = {
+      rowNumber: 2,
+      name: 'Khách có liên hệ',
+      contactName: 'Nguyễn An',
+      contactMobile: '0901234567',
+      errors: [],
+    }
+    const { onImport } = renderPage({ columns: supplementaryColumns, rows: [row] })
+    await chooseFile()
+    const toggle = screen.getByRole('button', { name: 'Mở rộng thông tin bổ sung' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('table')).toHaveAttribute('id', toggle.getAttribute('aria-controls'))
+    expect(screen.queryByRole('columnheader', { name: 'Người liên hệ' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Nguyễn An')).not.toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Tên' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Kết quả' })).toBeVisible()
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle).toHaveAccessibleName('Thu gọn thông tin bổ sung')
+    expect(screen.getByRole('columnheader', { name: 'Người liên hệ' })).toBeVisible()
+    expect(screen.getByText('Nguyễn An')).toBeVisible()
+    expect(screen.getByText('0901234567')).toBeVisible()
+    await userEvent.click(toggle)
+    expect(screen.queryByText('Nguyễn An')).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeChecked()
+    await confirmImport(/Nhập 1 khách hàng/)
+    await waitFor(() => expect(onImport).toHaveBeenCalledWith([row]))
+  })
+
+  it('keeps hidden field errors visible in the result and counts errors outside the current page and filter', async () => {
+    const validRows = Array.from({ length: 50 }, (_, index) => ({
+      rowNumber: index + 2,
+      name: `Khách hợp lệ ${index}`,
+      errors: [],
+    }))
+    renderPage({
+      columns: supplementaryColumns,
+      rows: [
+        ...validRows,
+        {
+          rowNumber: 52,
+          name: 'Khách liên hệ sai',
+          contactName: 'An',
+          contactMobile: 'sai',
+          errors: ['Liên hệ không hợp lệ.'],
+          fieldErrors: {
+            contactName: ['Liên hệ không hợp lệ.'],
+            contactMobile: ['Liên hệ không hợp lệ.'],
+          },
+        },
+      ],
+    })
+    await chooseFile()
+    const toggle = screen.getByRole('button', { name: 'Mở rộng thông tin bổ sung · 1 lỗi' })
+    expect(screen.queryByText('Khách liên hệ sai')).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Lọc trạng thái'), 'Invalid')
+    expect(screen.getByText('Khách liên hệ sai')).toBeVisible()
+    expect(screen.getByText('Liên hệ không hợp lệ.')).toBeVisible()
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 52' })).toBeDisabled()
+    await userEvent.click(toggle)
+    const contactCell = screen.getByText('sai').closest('td')
+    expect(contactCell).toHaveTextContent('Liên hệ không hợp lệ.')
+    await userEvent.selectOptions(screen.getByLabelText('Lọc trạng thái'), 'Valid')
+    expect(toggle).toHaveTextContent('1 lỗi')
+  })
+
+  it('updates the empty table colspan for grouped columns and resets disclosure for a new session', async () => {
+    renderPage({ columns: supplementaryColumns })
+    await chooseFile()
+    await userEvent.type(screen.getByLabelText('Tìm trong bản xem trước'), 'Không tồn tại')
+    const emptyCell = screen.getByText('Không có dòng nào phù hợp bộ lọc.')
+    expect(emptyCell).toHaveAttribute('colspan', '4')
+    await userEvent.click(screen.getByRole('button', { name: 'Mở rộng thông tin bổ sung' }))
+    expect(emptyCell).toHaveAttribute('colspan', '6')
+    await userEvent.click(screen.getByRole('button', { name: 'Hủy phiên nhập' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Bỏ thay đổi' }))
+    await chooseFile()
+    expect(screen.getByRole('button', { name: 'Mở rộng thông tin bổ sung' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    )
+  })
+
+  it('does not show a disclosure control when no column belongs to the supplementary group', async () => {
+    renderPage()
+    await chooseFile()
+    expect(screen.queryByRole('button', { name: /thông tin bổ sung/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Tên' })).toBeVisible()
+  })
+
+  it('shows field errors in the corresponding data cell and keeps old preview responses compatible', async () => {
+    renderPage({
+      rows: [
+        {
+          rowNumber: 2,
+          name: 'Dữ liệu lỗi',
+          errors: ['Tên không hợp lệ.'],
+          fieldErrors: { name: ['Tên không hợp lệ.'] },
+        },
+      ],
+    })
+    await chooseFile()
+    const cell = screen.getByText('Dữ liệu lỗi').closest('td')
+    expect(cell).not.toBeNull()
+    expect(cell).toHaveTextContent('Tên không hợp lệ.')
+    expect(await screen.findByRole('checkbox', { name: 'Chọn dòng 2' })).toBeDisabled()
+    expect(screen.getByRole('combobox', { name: 'Số dòng mỗi trang' })).toBeVisible()
+  })
   it('shows samples below the manually selected late header', async () => {
     renderPage({
       inspection: {
@@ -131,6 +259,8 @@ describe('BulkImportPage', () => {
     expect((await screen.findAllByText('Customer after header'))[0]).toBeVisible()
     expect(screen.getByLabelText('Dòng tiêu đề')).toHaveValue('8')
     expect(screen.queryByText('Instructions')).not.toBeInTheDocument()
+    expect(screen.getByText('Ví dụ trong tệp')).toBeVisible()
+    expect(screen.queryByText('Xem đầy đủ')).not.toBeInTheDocument()
   })
   it('distinguishes selecting a visible page from selecting the whole file', async () => {
     renderPage({
@@ -275,13 +405,18 @@ describe('BulkImportPage', () => {
   })
 
   it('lets the user discard the preview and start over', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const confirm = vi.spyOn(window, 'confirm')
     renderPage()
     await chooseFile()
 
     await userEvent.click(await screen.findByRole('button', { name: 'Hủy phiên nhập' }))
-
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Bỏ các thay đổi chưa lưu?')
+    await userEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }))
+    expect(screen.getByText('Khách hợp lệ A')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Hủy phiên nhập' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Bỏ thay đổi' }))
     expect(await screen.findByText('Chọn tệp khách hàng')).toBeInTheDocument()
+    expect(confirm).not.toHaveBeenCalled()
   })
 
   it('blocks another import when the previous save outcome is unknown', async () => {

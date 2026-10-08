@@ -29,22 +29,41 @@ const previewColumns: readonly BulkImportColumn<SupplierImportPreviewRow>[] = [
     key: 'supplierCode',
     header: 'Mã NCC',
     headClassName: 'w-32',
-    cellClassName: 'font-mono',
+    cellClassName: 'max-w-48 min-w-32 font-mono wrap-anywhere whitespace-normal',
     render: (row) => row.supplierCode ?? 'Tự cấp',
   },
   {
     key: 'supplierName',
     header: 'Tên nhà cung cấp',
-    cellClassName: 'max-w-64 truncate',
+    cellClassName: 'max-w-64 min-w-48 wrap-anywhere whitespace-normal',
     render: (row) => row.supplierName,
   },
   {
     key: 'phone',
     header: 'Điện thoại',
     headClassName: 'w-32',
-    cellClassName: 'tabular-nums',
+    cellClassName: 'max-w-40 min-w-32 wrap-anywhere whitespace-normal tabular-nums',
     render: (row) => row.phone ?? '—',
   },
+  ...(
+    [
+      ['email', 'Email NCC'],
+      ['taxCode', 'Mã số thuế'],
+      ['address', 'Địa chỉ'],
+      ['contactSalutation', 'Xưng hô'],
+      ['contactName', 'Người liên hệ'],
+      ['contactEmail', 'Email người liên hệ'],
+      ['contactMobile', 'Điện thoại người liên hệ'],
+      ['contactChannel', 'Kênh liên hệ'],
+      ['contactChannelName', 'Tên kênh liên hệ'],
+    ] as const
+  ).map(([key, header]) => ({
+    key,
+    header,
+    isSupplementary: key !== 'email',
+    cellClassName: 'max-w-64 min-w-40 wrap-anywhere whitespace-normal',
+    render: (row: SupplierImportPreviewRow) => row[key] || '—',
+  })),
 ]
 
 function getRowLabel(row: SupplierImportPreviewRow) {
@@ -52,7 +71,23 @@ function getRowLabel(row: SupplierImportPreviewRow) {
 }
 
 function getRowSearchText(row: SupplierImportPreviewRow) {
-  return [row.supplierCode, row.supplierName, row.phone, row.contactName].filter(Boolean).join(' ')
+  return [
+    row.supplierCode,
+    row.supplierName,
+    row.taxCode,
+    row.phone,
+    row.email,
+    row.address,
+    row.contactSalutation,
+    row.contactName,
+    row.contactEmail,
+    row.contactMobile,
+    row.contactChannel,
+    row.contactChannelName,
+    ...row.errors,
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 export default function SupplierImportPage() {

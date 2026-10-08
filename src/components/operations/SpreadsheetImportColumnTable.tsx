@@ -3,6 +3,8 @@ import { CheckCircle2, CircleDashed, TriangleAlert } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { OperationalListPanel } from './OperationalListPanel'
+import { OperationalPagination } from './OperationalPagination'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
   Table,
@@ -40,6 +42,8 @@ export function SpreadsheetImportColumnTable({
 }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const normalized = search.trim().toLocaleLowerCase('vi')
   const mapped = new Set(options.columnMapping.map((item) => item.columnIndex))
   const ignored = columns.filter((column) => !mapped.has(column.columnIndex))
@@ -54,9 +58,11 @@ export function SpreadsheetImportColumnTable({
           .includes(normalized))
     )
   })
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(visible.length / pageSize)))
+  const pageFields = visible.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   return (
-    <>
-      <div className="flex flex-wrap items-end gap-2">
+    <OperationalListPanel aria-label={`Ghép cột ${label}`}>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b p-3">
         <Field className="min-w-0 flex-1 sm:max-w-80">
           <FieldLabel htmlFor={`import-${kind}-search`} className="sr-only">
             Tìm trường {label}
@@ -66,14 +72,21 @@ export function SpreadsheetImportColumnTable({
             placeholder="Tìm trường hoặc tên cột…"
             value={error ? '' : search}
             disabled={Boolean(error)}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
           />
         </Field>
         <NativeSelect
+          className="min-w-36 shrink-0"
           aria-label={`Lọc cột ${label}`}
           value={error ? 'all' : filter}
           disabled={Boolean(error)}
-          onChange={(event) => setFilter(event.target.value)}
+          onChange={(event) => {
+            setFilter(event.target.value)
+            setPage(1)
+          }}
         >
           <NativeSelectOption value="all">Tất cả</NativeSelectOption>
           <NativeSelectOption value="mapped">Đã ghép</NativeSelectOption>
@@ -81,16 +94,16 @@ export function SpreadsheetImportColumnTable({
         </NativeSelect>
       </div>
       {error ? (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground shrink-0 px-3 py-2 text-xs">
           Đang hiển thị tất cả trường để sửa lỗi ghép cột. Bộ lọc sẽ dùng lại khi cấu hình hợp lệ.
         </p>
       ) : null}
       <Table aria-label={`Ghép cột ${label}`}>
-        <TableHeader>
+        <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
           <TableRow>
             <TableHead>Thông tin Kovia</TableHead>
             <TableHead>Cột trong tệp</TableHead>
-            <TableHead>Dữ liệu mẫu</TableHead>
+            <TableHead>Ví dụ trong tệp</TableHead>
             <TableHead>Trạng thái</TableHead>
           </TableRow>
         </TableHeader>
@@ -102,7 +115,7 @@ export function SpreadsheetImportColumnTable({
               </TableCell>
             </TableRow>
           ) : (
-            visible.map((field) => {
+            pageFields.map((field) => {
               const index = options.columnMapping.find(
                 (item) => item.field === field.field
               )?.columnIndex
@@ -115,7 +128,10 @@ export function SpreadsheetImportColumnTable({
                 ? samples
                     .filter((sample) => sample.rowNumber > options.headerRowNumber)
                     .slice(0, 2)
-                    .map((sample) => sample.values[column.columnIndex] ?? '—')
+                    .map((sample) => ({
+                      rowNumber: sample.rowNumber,
+                      value: sample.values[column.columnIndex] || '—',
+                    }))
                 : []
               const id = `import-${kind}-${encodeURIComponent(field.field)}`
               return (
@@ -123,7 +139,12 @@ export function SpreadsheetImportColumnTable({
                   <TableCell className="w-64 max-w-64 min-w-48 wrap-anywhere whitespace-normal">
                     <FieldLabel htmlFor={id}>
                       {field.displayName}
-                      {field.isRequired ? ' *' : ''}
+                      {field.isRequired ? (
+                        <>
+                          {' '}
+                          <span className="text-destructive font-extrabold">*</span>
+                        </>
+                      ) : null}
                     </FieldLabel>
                     <p id={`${id}-help`} className="text-muted-foreground mt-1 text-xs">
                       {field.description}
@@ -152,13 +173,16 @@ export function SpreadsheetImportColumnTable({
                   </TableCell>
                   <TableCell className="w-64 max-w-64 min-w-40 wrap-anywhere whitespace-normal">
                     {values.length ? (
-                      <details>
-                        <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
-                          <span className="line-clamp-2">{values.join(' · ')}</span>
-                          <span className="text-muted-foreground text-xs">Xem đầy đủ</span>
-                        </summary>
-                        <p className="mt-2 whitespace-pre-wrap">{values.join('\n')}</p>
-                      </details>
+                      <div className="flex flex-col gap-1">
+                        {values.map((sample) => (
+                          <p key={sample.rowNumber}>
+                            <span className="text-muted-foreground text-xs">
+                              Dòng {sample.rowNumber}:{' '}
+                            </span>
+                            <span className="whitespace-pre-wrap">{sample.value}</span>
+                          </p>
+                        ))}
+                      </div>
                     ) : (
                       '—'
                     )}
@@ -181,8 +205,18 @@ export function SpreadsheetImportColumnTable({
           )}
         </TableBody>
       </Table>
+      <OperationalPagination
+        page={currentPage}
+        pageSize={pageSize}
+        totalCount={visible.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size)
+          setPage(1)
+        }}
+      />
       {ignored.length ? (
-        <details className="text-muted-foreground text-xs">
+        <details className="text-muted-foreground max-h-24 shrink-0 overflow-auto border-t px-3 py-2 text-xs">
           <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
             {ignored.length} cột sẽ bỏ qua
           </summary>
@@ -195,6 +229,6 @@ export function SpreadsheetImportColumnTable({
           </ul>
         </details>
       ) : null}
-    </>
+    </OperationalListPanel>
   )
 }

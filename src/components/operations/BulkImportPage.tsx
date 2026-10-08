@@ -1,14 +1,15 @@
 'use client'
 
-import { Download, LoaderCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, LoaderCircle } from 'lucide-react'
 import type { Route } from 'next'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { BulkImportMapping } from './BulkImportMapping'
 import { OperationalListPanel } from './OperationalListPanel'
 import { OperationalPagination } from './OperationalPagination'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { useImportNavigation } from './use-import-navigation'
+import { UnsavedChangesDialog } from './UnsavedChangesDialog'
 import {
   initialSpreadsheetMapping,
   spreadsheetIgnoredData,
@@ -32,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -58,6 +59,7 @@ import { BulkImportFilePicker } from './BulkImportFilePicker'
 export interface BulkImportRow {
   readonly rowNumber: number
   readonly errors: readonly string[]
+  readonly fieldErrors?: Readonly<Record<string, readonly string[]>>
 }
 
 export type BulkImportPreviewOutcome<TRow extends BulkImportRow> =
@@ -79,6 +81,7 @@ export type BulkImportInspectOutcome =
 export interface BulkImportColumn<TRow extends BulkImportRow> {
   readonly key: string
   readonly header: string
+  readonly isSupplementary?: boolean
   readonly headClassName?: string
   readonly cellClassName?: string
   readonly render: (row: TRow) => ReactNode
@@ -89,7 +92,7 @@ type StatusFilter = 'All' | 'Valid' | 'Invalid'
 interface BulkImportPageProps<TRow extends BulkImportRow> {
   readonly eyebrow: string
   readonly title: string
-  readonly description: string
+  readonly description?: string
   readonly entityLabel: string
   readonly maxRows: number
   readonly backHref: Route
@@ -149,14 +152,17 @@ export function BulkImportPage<TRow extends BulkImportRow>({
   const [selectedRows, setSelectedRows] = useState<readonly number[]>([])
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
+  const [supplementaryExpanded, setSupplementaryExpanded] = useState(false)
+  const previewTableId = useId()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(BULK_IMPORT_ROWS_PER_PAGE)
   const [resultItems, setResultItems] = useState<readonly BulkImportResultItem[] | null>(null)
   const step = resultItems ? 3 : rows ? 2 : inspection ? 1 : 0
   const stepHeading = useRef<HTMLHeadingElement>(null)
   const previousStep = useRef(step)
   const ignored = inspection && options ? spreadsheetIgnoredData(inspection, options) : null
   const hasIgnored = Boolean(ignored && (ignored.sheets.length || ignored.columns.length))
-  useImportNavigation(Boolean(file && !resultItems), busy)
+  const navigation = useImportNavigation(Boolean(file && !resultItems), busy)
   useEffect(() => {
     if (previousStep.current !== step) stepHeading.current?.focus()
     previousStep.current = step
@@ -167,6 +173,16 @@ export function BulkImportPage<TRow extends BulkImportRow>({
     [rows]
   )
   const invalidCount = (rows?.length ?? 0) - validRowNumbers.length
+  const supplementaryColumns = columns.filter((column) => column.isSupplementary)
+  const visibleColumns = columns.filter(
+    (column) => supplementaryExpanded || !column.isSupplementary
+  )
+  const supplementaryErrorCount = (rows ?? []).reduce(
+    (total, row) =>
+      total +
+      new Set(supplementaryColumns.flatMap((column) => row.fieldErrors?.[column.key] ?? [])).size,
+    0
+  )
   const filteredRows = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase()
     return (
@@ -179,10 +195,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
     )
   }, [rows, searchText, statusFilter, getRowSearchText])
 
-  const visibleRows = filteredRows.slice(
-    (page - 1) * BULK_IMPORT_ROWS_PER_PAGE,
-    page * BULK_IMPORT_ROWS_PER_PAGE
-  )
+  const visibleRows = filteredRows.slice((page - 1) * pageSize, page * pageSize)
   const visibleValidRowNumbers = visibleRows
     .filter((row) => row.errors.length === 0)
     .map((row) => row.rowNumber)
@@ -204,6 +217,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
     setSelectedRows([])
     setSearchText('')
     setStatusFilter('All')
+    setSupplementaryExpanded(false)
     setPage(1)
     setResultItems(null)
   }
@@ -471,9 +485,9 @@ export function BulkImportPage<TRow extends BulkImportRow>({
             </Alert>
           ) : null}
           {hasIgnored && ignored ? (
-            <Alert className="shrink-0 break-words">
-              <AlertTitle>Dữ liệu không nhập</AlertTitle>
-              <AlertDescription>
+            <Alert className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 break-words">
+              <AlertTitle className="shrink-0">Dữ liệu không nhập</AlertTitle>
+              <AlertDescription className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2 [&_p:not(:last-child)]:mb-0">
                 {ignored.sheets.length ? <p>Trang tính: {ignored.sheets.join(', ')}.</p> : null}
                 {ignored.columns.length ? (
                   <p>
@@ -484,7 +498,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                     .
                   </p>
                 ) : null}
-                <Field orientation="horizontal">
+                <Field orientation="horizontal" className="w-auto">
                   <Checkbox
                     id="bulk-import-ignored"
                     checked={acceptedIgnored}
@@ -500,63 +514,89 @@ export function BulkImportPage<TRow extends BulkImportRow>({
           ) : null}
 
           <OperationalListPanel
+            className="min-h-128 shrink-0 lg:min-h-96"
             aria-label="Bản xem trước nhập dữ liệu"
-            className="min-h-96 shrink-0"
           >
-            <CardHeader className="shrink-0 border-b p-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <CardTitle className="text-base">Bản xem trước</CardTitle>
-                  <p className="text-muted-foreground mt-1 text-xs" aria-live="polite">
-                    {fileName} · đã chọn {selectedRows.length}/{validRowNumbers.length} dòng hợp lệ
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    variant="outline"
-                    disabled={
-                      busy ||
-                      validRowNumbers.length === 0 ||
-                      selectedRows.length === validRowNumbers.length
-                    }
-                    onClick={() => setSelectedRows([...validRowNumbers])}
-                  >
-                    Chọn toàn bộ {validRowNumbers.length} dòng hợp lệ của tệp
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    disabled={busy || selectedRows.length === 0}
-                    onClick={() => setSelectedRows([])}
-                  >
-                    Bỏ chọn toàn bộ tệp
-                  </Button>
-                  <Input
-                    aria-label="Tìm trong bản xem trước"
-                    value={searchText}
-                    placeholder="Tìm theo mã, tên, liên hệ"
-                    onChange={(event) => {
-                      setSearchText(event.target.value)
-                      setPage(1)
-                    }}
-                  />
-                  <NativeSelect
-                    aria-label="Lọc trạng thái"
-                    value={statusFilter}
-                    onChange={(event) => {
-                      setStatusFilter(event.target.value as StatusFilter)
-                      setPage(1)
-                    }}
-                  >
-                    <NativeSelectOption value="All">Tất cả</NativeSelectOption>
-                    <NativeSelectOption value="Valid">Hợp lệ</NativeSelectOption>
-                    <NativeSelectOption value="Invalid">Không hợp lệ</NativeSelectOption>
-                  </NativeSelect>
-                </div>
+            <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b p-3">
+              <div className="min-w-0 flex-1 basis-48">
+                <h2 className="text-base font-semibold">Bản xem trước</h2>
+                <p className="text-muted-foreground mt-1 text-xs break-words" aria-live="polite">
+                  {fileName} · đã chọn {selectedRows.length}/{validRowNumbers.length} dòng hợp lệ
+                </p>
               </div>
-            </CardHeader>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                {supplementaryColumns.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-expanded={supplementaryExpanded}
+                    aria-controls={previewTableId}
+                    onClick={() => setSupplementaryExpanded((expanded) => !expanded)}
+                  >
+                    {supplementaryExpanded ? (
+                      <ChevronLeft aria-hidden="true" data-icon="inline-start" />
+                    ) : (
+                      <ChevronRight aria-hidden="true" data-icon="inline-start" />
+                    )}
+                    {supplementaryExpanded ? 'Thu gọn' : 'Mở rộng'} thông tin bổ sung
+                    {supplementaryErrorCount > 0 ? (
+                      <>
+                        {' '}
+                        <span className="text-destructive font-semibold">
+                          · {supplementaryErrorCount} lỗi
+                        </span>
+                      </>
+                    ) : null}
+                  </Button>
+                ) : null}
+                <Button
+                  variant="outline"
+                  disabled={
+                    busy ||
+                    validRowNumbers.length === 0 ||
+                    selectedRows.length === validRowNumbers.length
+                  }
+                  onClick={() => setSelectedRows([...validRowNumbers])}
+                  aria-label={`Chọn toàn bộ ${validRowNumbers.length} dòng hợp lệ của tệp`}
+                >
+                  Chọn cả tệp ({validRowNumbers.length} hợp lệ)
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={busy || selectedRows.length === 0}
+                  onClick={() => setSelectedRows([])}
+                  aria-label="Bỏ chọn toàn bộ tệp"
+                >
+                  Bỏ chọn cả tệp
+                </Button>
+                <Input
+                  className="min-w-0 flex-1 basis-40 sm:w-48 sm:max-w-64"
+                  aria-label="Tìm trong bản xem trước"
+                  value={searchText}
+                  placeholder="Tìm theo mã, tên, liên hệ"
+                  onChange={(event) => {
+                    setSearchText(event.target.value)
+                    setPage(1)
+                  }}
+                />
+                <NativeSelect
+                  className="min-w-36 shrink-0"
+                  aria-label="Lọc trạng thái"
+                  value={statusFilter}
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value as StatusFilter)
+                    setPage(1)
+                  }}
+                >
+                  <NativeSelectOption value="All">Tất cả</NativeSelectOption>
+                  <NativeSelectOption value="Valid">Hợp lệ</NativeSelectOption>
+                  <NativeSelectOption value="Invalid">Không hợp lệ</NativeSelectOption>
+                </NativeSelect>
+              </div>
+            </header>
 
-            <Table>
-              <TableHeader>
+            <Table id={previewTableId}>
+              <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
@@ -573,7 +613,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                     />
                   </TableHead>
                   <TableHead className="w-16">Dòng</TableHead>
-                  {columns.map((column) => (
+                  {visibleColumns.map((column) => (
                     <TableHead key={column.key} className={column.headClassName}>
                       {column.header}
                     </TableHead>
@@ -585,7 +625,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                 {visibleRows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length + 3}
+                      colSpan={visibleColumns.length + 3}
                       className="text-muted-foreground h-24 text-center"
                     >
                       Không có dòng nào phù hợp bộ lọc.
@@ -610,11 +650,28 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                           />
                         </TableCell>
                         <TableCell className="tabular-nums">{row.rowNumber}</TableCell>
-                        {columns.map((column) => (
-                          <TableCell key={column.key} className={column.cellClassName}>
-                            {column.render(row)}
-                          </TableCell>
-                        ))}
+                        {visibleColumns.map((column) => {
+                          const errors = row.fieldErrors?.[column.key] ?? []
+                          return (
+                            <TableCell
+                              key={column.key}
+                              className={cn(
+                                column.cellClassName,
+                                errors.length > 0 && 'bg-destructive/5'
+                              )}
+                            >
+                              {column.render(row)}
+                              {errors.map((message) => (
+                                <p
+                                  key={message}
+                                  className="text-destructive mt-1 max-w-64 text-xs wrap-anywhere whitespace-normal"
+                                >
+                                  {message}
+                                </p>
+                              ))}
+                            </TableCell>
+                          )
+                        })}
                         <TableCell
                           className="max-w-96 min-w-56 break-words whitespace-normal"
                           id={`party-import-errors-${row.rowNumber}`}
@@ -636,9 +693,13 @@ export function BulkImportPage<TRow extends BulkImportRow>({
             </Table>
             <OperationalPagination
               page={page}
-              pageSize={BULK_IMPORT_ROWS_PER_PAGE}
+              pageSize={pageSize}
               totalCount={filteredRows.length}
               onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size)
+                setPage(1)
+              }}
               isPending={busy}
             />
           </OperationalListPanel>
@@ -647,9 +708,7 @@ export function BulkImportPage<TRow extends BulkImportRow>({
             <Button
               variant="outline"
               disabled={busy}
-              onClick={() => {
-                if (window.confirm('Hủy phiên nhập hiện tại?')) resetSession()
-              }}
+              onClick={() => navigation.requestDiscard(resetSession)}
             >
               Hủy phiên nhập
             </Button>
@@ -707,6 +766,13 @@ export function BulkImportPage<TRow extends BulkImportRow>({
           </div>
         </>
       )}
+      <UnsavedChangesDialog
+        open={navigation.discardOpen}
+        onOpenChange={(open) => {
+          if (!open) navigation.cancelDiscard()
+        }}
+        onDiscard={navigation.confirmDiscard}
+      />
     </div>
   )
 }
@@ -719,14 +785,12 @@ function ImportResultTable({
   readonly entityLabel: string
 }) {
   const [page, setPage] = useState(1)
-  const visibleItems = items.slice(
-    (page - 1) * BULK_IMPORT_ROWS_PER_PAGE,
-    page * BULK_IMPORT_ROWS_PER_PAGE
-  )
+  const [pageSize, setPageSize] = useState(BULK_IMPORT_ROWS_PER_PAGE)
+  const visibleItems = items.slice((page - 1) * pageSize, page * pageSize)
   return (
-    <OperationalListPanel aria-label="Kết quả nhập dữ liệu" className="min-h-64 shrink-0">
+    <OperationalListPanel className="min-h-96 shrink-0" aria-label="Kết quả nhập dữ liệu">
       <Table>
-        <TableHeader>
+        <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
           <TableRow>
             <TableHead className="w-16">Dòng</TableHead>
             <TableHead>{entityLabel}</TableHead>
@@ -752,9 +816,13 @@ function ImportResultTable({
       </Table>
       <OperationalPagination
         page={page}
-        pageSize={BULK_IMPORT_ROWS_PER_PAGE}
+        pageSize={pageSize}
         totalCount={items.length}
         onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size)
+          setPage(1)
+        }}
       />
     </OperationalListPanel>
   )
@@ -770,17 +838,15 @@ function SummaryCard({
   readonly tone?: 'success' | 'danger'
 }) {
   return (
-    <Card>
-      <CardContent className="p-3">
+    <Card size="sm" className="py-0">
+      <CardContent className="flex min-h-14 items-center justify-between gap-2 p-3">
         <p className="text-muted-foreground text-xs">{label}</p>
         <p
-          className={
-            tone === 'danger'
-              ? 'text-destructive mt-1 text-2xl font-semibold'
-              : tone === 'success'
-                ? 'text-primary mt-1 text-2xl font-semibold'
-                : 'mt-1 text-2xl font-semibold'
-          }
+          className={cn(
+            'text-xl font-semibold tabular-nums',
+            tone === 'danger' && 'text-destructive',
+            tone === 'success' && 'text-primary'
+          )}
         >
           {value}
         </p>

@@ -152,13 +152,16 @@ export function ProductImportReview({
               <TableHead>Tên hàng</TableHead>
               <TableHead>ĐVT chính</TableHead>
               <TableHead>Nhóm hàng</TableHead>
+              <TableHead>Mô tả</TableHead>
+              <TableHead>Theo dõi lô</TableHead>
+              <TableHead>Số ngày sử dụng</TableHead>
               <TableHead>Quy đổi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!visible.length ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={11} className="h-24 text-center">
                   Không có hàng phù hợp.
                 </TableCell>
               </TableRow>
@@ -222,20 +225,7 @@ export function ProductImportReview({
                     {row.sku}
                   </TableCell>
                   <TableCell className="max-w-80 min-w-48 wrap-anywhere whitespace-normal">
-                    <p className="line-clamp-2" title={row.productName}>
-                      {row.productName}
-                    </p>
-                    <details className="text-muted-foreground mt-1 text-xs">
-                      <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">
-                        Thông tin bổ sung
-                      </summary>
-                      <p>Tên hàng: {row.productName}</p>
-                      <p>
-                        Theo dõi lô: {row.isLotTracked ? 'Có' : 'Không'} · Hạn sử dụng:{' '}
-                        {row.shelfLifeDays === null ? 'Không đặt' : `${row.shelfLifeDays} ngày`}
-                      </p>
-                      {row.description ? <p>{row.description}</p> : null}
-                    </details>
+                    {row.productName}
                   </TableCell>
                   <TableCell className="max-w-48 wrap-anywhere whitespace-normal">
                     {row.unit ? `${row.unit.code} — ${row.unit.name}` : row.unitValue}
@@ -245,6 +235,11 @@ export function ProductImportReview({
                       ? `${row.category.code} — ${row.category.name}`
                       : row.categoryValue}
                   </TableCell>
+                  <TableCell className="max-w-64 min-w-40 wrap-anywhere whitespace-normal">
+                    {row.description || '—'}
+                  </TableCell>
+                  <TableCell>{row.isLotTracked ? 'Có' : 'Không'}</TableCell>
+                  <TableCell>{row.shelfLifeDays ?? '—'}</TableCell>
                   <TableCell className="max-w-80 min-w-56 wrap-anywhere whitespace-normal">
                     {row.unitConversions.length ? (
                       <details>

@@ -619,6 +619,13 @@ describe('product import workflow', () => {
       await save()
     }
     expect(await screen.findByText(/Quyền nhập tệp đã bị thu hồi/)).toBeInTheDocument()
+    const link = document.createElement('a')
+    link.href = '/products'
+    document.body.append(link)
+    fireEvent.click(link)
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Bỏ các thay đổi chưa lưu?')
+    await userEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }))
+    link.remove()
   })
   it('locks duplicate submit and file changes while pending', async () => {
     let resolve!: (value: Awaited<ReturnType<typeof productService.importProducts>>) => void
@@ -645,7 +652,9 @@ describe('product import workflow', () => {
     window.dispatchEvent(event)
     expect(event.defaultPrevented).toBe(true)
     fireEvent.click(screen.getByRole('link', { name: 'Về danh sách vật tư hàng hóa' }))
-    expect(window.confirm).toHaveBeenCalled()
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Bỏ các thay đổi chưa lưu?')
+    expect(window.confirm).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }))
     expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeInTheDocument()
     expect(storage).not.toHaveBeenCalled()
   })

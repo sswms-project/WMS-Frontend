@@ -1,20 +1,56 @@
-import { useEffect, useEffectEvent } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
+import { toast } from 'sonner'
 
 export function useImportNavigation(dirty: boolean, busy: boolean) {
   const router = useRouter()
-  const canLeave = useEffectEvent(
-    () => !busy && window.confirm('Tệp chưa nhập sẽ không được lưu. Bạn muốn rời trang?')
-  )
+  const [discardOpen, setDiscardOpen] = useState(false)
+  const pendingAction = useRef<(() => void) | null>(null)
+  function requestDiscard(action: () => void) {
+    if (busy || pendingAction.current) return
+    if (!dirty) {
+      action()
+      return
+    }
+    pendingAction.current = action
+    setDiscardOpen(true)
+  }
+  function cancelDiscard() {
+    pendingAction.current = null
+    setDiscardOpen(false)
+  }
+  function confirmDiscard() {
+    if (busy) {
+      toast.info('Vui lòng đợi thao tác nhập tệp hoàn tất.')
+      cancelDiscard()
+      return
+    }
+    const action = pendingAction.current
+    cancelDiscard()
+    action?.()
+  }
+  const requestNavigation = useEffectEvent(requestDiscard)
   useEffect(() => {
     if (!dirty) return
     const originalUrl = window.location.href
     const originalState: unknown = window.history.state
     const navigation = window.navigation
     let nativeTraversal = false
+    let approvedKey: string | null = null
+    let approvedUnload = false
+    const leave = (destination: string) => {
+      const url = new URL(destination)
+      if (url.origin === window.location.origin) {
+        router.push(`${url.pathname}${url.search}${url.hash}` as Route)
+      } else {
+        approvedUnload = true
+        window.location.assign(destination)
+      }
+    }
     const traverse = (event: NavigateEvent) => {
       if (
+        !navigation ||
         event.defaultPrevented ||
         event.navigationType !== 'traverse' ||
         !event.cancelable ||
@@ -22,11 +58,26 @@ export function useImportNavigation(dirty: boolean, busy: boolean) {
         event.destination.url === originalUrl
       )
         return
-      // Ask before the URL changes so cancellation preserves the Forward stack.
-      nativeTraversal = canLeave()
-      if (!nativeTraversal) event.preventDefault()
+      if (approvedKey === event.destination.key) {
+        approvedKey = null
+        nativeTraversal = true
+        return
+      }
+      // Cancel before the URL changes; replay the same history entry only after consent.
+      event.preventDefault()
+      const key = event.destination.key
+      requestNavigation(() => {
+        approvedKey = key
+        void navigation.traverseTo(key).finished?.catch(() => {
+          approvedKey = null
+          nativeTraversal = false
+          toast.error('Không thể rời trang. Vui lòng thử lại.')
+        })
+      })
     }
     const unload = (event: BeforeUnloadEvent) => {
+      // Closing/reloading the tab still needs the browser's native data-loss guard.
+      if (approvedUnload) return
       event.preventDefault()
       event.returnValue = ''
     }
@@ -44,15 +95,23 @@ export function useImportNavigation(dirty: boolean, busy: boolean) {
       const anchor = event.target.closest('a[href]')
       if (
         !(anchor instanceof HTMLAnchorElement) ||
-        anchor.target === '_blank' ||
+        (anchor.target && anchor.target !== '_self') ||
         anchor.download ||
         anchor.href === window.location.href
       )
         return
-      if (!canLeave()) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
+      const destination = new URL(anchor.href)
+      // Telephone/email links do not leave the import workspace.
+      if (!['http:', 'https:'].includes(destination.protocol)) return
+      if (
+        destination.origin === window.location.origin &&
+        destination.pathname === window.location.pathname &&
+        destination.search === window.location.search
+      )
+        return
+      event.preventDefault()
+      event.stopPropagation()
+      requestNavigation(() => leave(destination.href))
     }
     const back = (event: PopStateEvent) => {
       if (nativeTraversal) {
@@ -62,13 +121,9 @@ export function useImportNavigation(dirty: boolean, busy: boolean) {
       const destination = window.location.href
       if (destination === originalUrl) return
       event.stopImmediatePropagation()
-      const allowed = canLeave()
       // Restore this workspace before Next handles popstate. Leave only after consent.
       window.history.pushState(originalState, '', originalUrl)
-      if (allowed) {
-        const url = new URL(destination)
-        router.push(`${url.pathname}${url.search}${url.hash}` as Route)
-      }
+      requestNavigation(() => leave(destination))
     }
     window.addEventListener('beforeunload', unload)
     navigation?.addEventListener('navigate', traverse)
@@ -81,4 +136,5 @@ export function useImportNavigation(dirty: boolean, busy: boolean) {
       document.removeEventListener('click', click, true)
     }
   }, [dirty, router])
+  return { discardOpen, requestDiscard, cancelDiscard, confirmDiscard }
 }

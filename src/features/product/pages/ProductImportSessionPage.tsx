@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { downloadBulkImportFile } from '@/components/operations/bulk-import'
+import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import { getApiErrorMessage, isApiErrorResponse, formatApiError } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 import { ProductImportView } from '../components/ProductImportPage'
@@ -82,7 +83,7 @@ export default function ProductImportSessionPage() {
     [inspect.error, preview.error].some(
       (error) => isApiErrorResponse(error) && error.statusCode === 403
     )
-  useProductImportNavigation(Boolean(file) && step !== 'result', busy)
+  const navigation = useProductImportNavigation(Boolean(file) && step !== 'result', busy)
 
   function invalidatePreview() {
     setView({ search: '', status: 'all', page: 1, pageSize: 20 })
@@ -95,18 +96,14 @@ export default function ProductImportSessionPage() {
   }
   function reset() {
     if (busy || commitLock.current) return
-    if (
-      file &&
-      step !== 'result' &&
-      !window.confirm('Hủy phiên nhập tệp hiện tại? Dữ liệu chưa nhập sẽ không được lưu.')
-    )
-      return
-    invalidatePreview()
-    setGeneration((value) => value + 1)
-    setFile(null)
-    setDelimiter('auto')
-    setFileError(null)
-    setStep('file')
+    navigation.requestDiscard(() => {
+      invalidatePreview()
+      setGeneration((value) => value + 1)
+      setFile(null)
+      setDelimiter('auto')
+      setFileError(null)
+      setStep('file')
+    })
   }
   function chooseFile(nextFile: File) {
     if (busy) return
@@ -200,46 +197,56 @@ export default function ProductImportSessionPage() {
       'kovia-bao-cao-nhap-hang-hoa.csv'
     )
   }
-  if (denied)
-    return <p role="alert">Quyền nhập tệp đã bị thu hồi. Không thể tiếp tục phiên nhập.</p>
-
   return (
-    <ProductImportView
-      view={view}
-      onViewChange={setView}
-      step={step}
-      file={file}
-      busy={busy}
-      commit={commit}
-      inspect={inspect}
-      preview={preview}
-      data={data}
-      form={form}
-      fileError={fileError}
-      commitError={commitError}
-      delimiter={delimiter}
-      selected={selected}
-      importedRows={importedRows}
-      rowsToImport={rowsToImport}
-      conversionCount={conversionCount}
-      confirmationOpen={confirmationOpen}
-      revision={revision}
-      downloadTemplate={downloadTemplate}
-      chooseFile={chooseFile}
-      reset={reset}
-      checkData={checkData}
-      confirmImport={confirmImport}
-      exportReport={exportReport}
-      invalidatePreview={invalidatePreview}
-      setDelimiter={setDelimiter}
-      setStep={setStep}
-      setSelection={setSelection}
-      setConfirmationOpen={setConfirmationOpen}
-      onRetryInspection={() => {
-        logger.warn(formatApiError(inspect.error ?? preview.error))
-        if (inspect.isError) void inspect.refetch()
-        else void checkData()
-      }}
-    />
+    <>
+      {denied ? (
+        <p role="alert">Quyền nhập tệp đã bị thu hồi. Không thể tiếp tục phiên nhập.</p>
+      ) : (
+        <ProductImportView
+          view={view}
+          onViewChange={setView}
+          step={step}
+          file={file}
+          busy={busy}
+          commit={commit}
+          inspect={inspect}
+          preview={preview}
+          data={data}
+          form={form}
+          fileError={fileError}
+          commitError={commitError}
+          delimiter={delimiter}
+          selected={selected}
+          importedRows={importedRows}
+          rowsToImport={rowsToImport}
+          conversionCount={conversionCount}
+          confirmationOpen={confirmationOpen}
+          revision={revision}
+          downloadTemplate={downloadTemplate}
+          chooseFile={chooseFile}
+          reset={reset}
+          checkData={checkData}
+          confirmImport={confirmImport}
+          exportReport={exportReport}
+          invalidatePreview={invalidatePreview}
+          setDelimiter={setDelimiter}
+          setStep={setStep}
+          setSelection={setSelection}
+          setConfirmationOpen={setConfirmationOpen}
+          onRetryInspection={() => {
+            logger.warn(formatApiError(inspect.error ?? preview.error))
+            if (inspect.isError) void inspect.refetch()
+            else void checkData()
+          }}
+        />
+      )}
+      <UnsavedChangesDialog
+        open={navigation.discardOpen}
+        onOpenChange={(open) => {
+          if (!open) navigation.cancelDiscard()
+        }}
+        onDiscard={navigation.confirmDiscard}
+      />
+    </>
   )
 }

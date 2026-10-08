@@ -225,7 +225,7 @@ function MappingSection({
   return (
     <section
       aria-label={kind === 'main' ? 'Cột hàng hóa' : 'Cột quy đổi'}
-      className="flex min-w-0 flex-col gap-3"
+      className="flex min-h-96 min-w-0 shrink-0 flex-col gap-3"
     >
       <h3 className="font-semibold">{kind === 'main' ? 'Hàng hóa' : 'Đơn vị quy đổi'}</h3>
       <Field>
@@ -266,36 +266,38 @@ function MappingSection({
         <summary className="text-muted-foreground cursor-pointer text-xs focus-visible:outline-2 focus-visible:outline-offset-2">
           Xem tối đa 5 dòng mẫu — {sheet.sheetName}
         </summary>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Dòng nguồn</TableHead>
-              {labeledColumns.map((column) => (
-                <TableHead key={column.columnIndex}>
-                  {column.letter}: {column.header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {samples
-              .filter((row) => row.rowNumber > options.headerRowNumber)
-              .slice(0, 5)
-              .map((row) => (
-                <TableRow key={row.rowNumber}>
-                  <TableCell>{row.rowNumber}</TableCell>
-                  {columns.map((column) => (
-                    <TableCell
-                      key={column.columnIndex}
-                      className="max-w-64 break-words whitespace-normal"
-                    >
-                      {row.values[column.columnIndex] ?? '—'}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+        <OperationalListPanel aria-label={`Dòng mẫu ${sheet.sheetName}`}>
+          <Table>
+            <TableHeader className="[&_th]:bg-card [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+              <TableRow>
+                <TableHead>Dòng nguồn</TableHead>
+                {labeledColumns.map((column) => (
+                  <TableHead key={column.columnIndex}>
+                    {column.letter}: {column.header}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {samples
+                .filter((row) => row.rowNumber > options.headerRowNumber)
+                .slice(0, 5)
+                .map((row) => (
+                  <TableRow key={row.rowNumber}>
+                    <TableCell>{row.rowNumber}</TableCell>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.columnIndex}
+                        className="max-w-64 break-words whitespace-normal"
+                      >
+                        {row.values[column.columnIndex] ?? '—'}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </OperationalListPanel>
       </details>
     </section>
   )

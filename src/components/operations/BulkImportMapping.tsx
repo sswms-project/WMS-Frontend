@@ -33,13 +33,13 @@ export function BulkImportMapping({
   const mappingError = spreadsheetMappingError(inspection, options)
   return (
     <section
-      className="bg-card flex min-h-0 flex-1 flex-col gap-3 overflow-auto border p-4"
+      className="flex min-h-160 min-w-0 flex-1 shrink-0 flex-col gap-3 lg:min-h-128"
       aria-label="Ghép cột nhập dữ liệu"
       aria-busy={busy}
     >
-      <h2 className="font-semibold">Ghép cột</h2>
-      <fieldset disabled={busy} className="flex min-w-0 flex-col gap-3">
-        <FieldGroup className="grid gap-3 sm:grid-cols-2">
+      <h2 className="shrink-0 font-semibold">Ghép cột</h2>
+      <fieldset disabled={busy} className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <FieldGroup className="grid shrink-0 gap-3 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="party-import-sheet">Trang tính</FieldLabel>
             <NativeSelect
@@ -108,17 +108,17 @@ export function BulkImportMapping({
         ) : null}
       </fieldset>
       {mappingError ? (
-        <p id="import-party-error" className="text-muted-foreground text-sm" role="status">
+        <p id="import-party-error" className="text-muted-foreground shrink-0 text-sm" role="status">
           {mappingError}
         </p>
       ) : null}
       {error ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="shrink-0">
           <AlertTitle>Không thể kiểm tra dữ liệu</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex flex-wrap justify-end gap-2">
+      <div className="flex shrink-0 flex-wrap justify-end gap-2">
         <Button variant="outline" disabled={busy} onClick={onBack}>
           Chọn tệp khác
         </Button>

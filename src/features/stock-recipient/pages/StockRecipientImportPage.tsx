@@ -32,13 +32,13 @@ const previewColumns: readonly BulkImportColumn<StockRecipientImportPreviewRow>[
     key: 'recipientCode',
     header: 'Mã KH',
     headClassName: 'w-32',
-    cellClassName: 'font-mono',
+    cellClassName: 'max-w-48 min-w-32 font-mono wrap-anywhere whitespace-normal',
     render: (row) => row.recipientCode ?? 'Tự cấp',
   },
   {
     key: 'recipientName',
     header: 'Tên khách hàng',
-    cellClassName: 'max-w-64 truncate',
+    cellClassName: 'max-w-64 min-w-48 wrap-anywhere whitespace-normal',
     render: (row) => row.recipientName,
   },
   {
@@ -51,9 +51,28 @@ const previewColumns: readonly BulkImportColumn<StockRecipientImportPreviewRow>[
     key: 'phone',
     header: 'Điện thoại',
     headClassName: 'w-32',
-    cellClassName: 'tabular-nums',
+    cellClassName: 'max-w-40 min-w-32 wrap-anywhere whitespace-normal tabular-nums',
     render: (row) => row.phone ?? '—',
   },
+  ...(
+    [
+      ['email', 'Email'],
+      ['taxCode', 'Mã số thuế'],
+      ['address', 'Địa chỉ'],
+      ['shippingAddress', 'Địa chỉ giao hàng'],
+      ['contactSalutation', 'Xưng hô'],
+      ['contactName', 'Người liên hệ'],
+      ['contactMobile', 'Điện thoại người liên hệ'],
+      ['contactChannel', 'Kênh liên hệ'],
+      ['contactChannelName', 'Tên kênh liên hệ'],
+    ] as const
+  ).map(([key, header]) => ({
+    key,
+    header,
+    isSupplementary: key !== 'email',
+    cellClassName: 'max-w-64 min-w-40 wrap-anywhere whitespace-normal',
+    render: (row: StockRecipientImportPreviewRow) => row[key] || '—',
+  })),
 ]
 
 function getRowLabel(row: StockRecipientImportPreviewRow) {
@@ -61,7 +80,22 @@ function getRowLabel(row: StockRecipientImportPreviewRow) {
 }
 
 function getRowSearchText(row: StockRecipientImportPreviewRow) {
-  return [row.recipientCode, row.recipientName, row.phone, row.contactName]
+  return [
+    row.recipientCode,
+    row.recipientName,
+    row.recipientType,
+    row.taxCode,
+    row.phone,
+    row.email,
+    row.address,
+    row.shippingAddress,
+    row.contactSalutation,
+    row.contactName,
+    row.contactMobile,
+    row.contactChannel,
+    row.contactChannelName,
+    ...row.errors,
+  ]
     .filter(Boolean)
     .join(' ')
 }
@@ -143,7 +177,6 @@ export default function StockRecipientImportPage() {
       key={`${me.data?.tenantId}:${me.data?.id}`}
       eyebrow="Danh mục"
       title="Nhập danh sách khách hàng"
-      description={`Kiểm tra dữ liệu trước khi nhập tối đa ${STOCK_RECIPIENT_IMPORT_MAX_ROWS} khách hàng. Để trống Mã KH để hệ thống tự cấp mã.`}
       entityLabel="khách hàng"
       maxRows={STOCK_RECIPIENT_IMPORT_MAX_ROWS}
       backHref={APP_ROUTES.stockRecipients as Route}
