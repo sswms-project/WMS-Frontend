@@ -574,7 +574,47 @@ body {
   --y: translateX(-115%) !important;
 }
 
+/* Nhãn mã vạch in từ lớp riêng gắn vào body; trên màn hình luôn ẩn. */
+[data-barcode-print-root] {
+  display: none;
+}
+
 @media print {
+  body:has([data-barcode-print-root]) > :not([data-barcode-print-root]) {
+    display: none !important;
+  }
+
+  [data-barcode-print-root] {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6mm;
+    background: #fff;
+    padding: 16mm;
+    color: #000;
+    text-align: center;
+  }
+
+  [data-barcode-print-root] svg {
+    width: 100%;
+    max-width: 150mm;
+    height: auto;
+  }
+
+  [data-barcode-print-title] {
+    font-size: 14pt;
+    font-weight: 600;
+  }
+
+  [data-barcode-print-code] {
+    font-family: monospace;
+    font-size: 16pt;
+    font-weight: 700;
+  }
+
   body:has([data-barcode-print-page]) * {
     visibility: hidden;
   }
