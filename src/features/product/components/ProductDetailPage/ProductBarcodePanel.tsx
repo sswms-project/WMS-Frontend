@@ -3,6 +3,7 @@
 import JsBarcode from 'jsbarcode'
 import { Download, LoaderCircle, Printer, QrCode, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { BarcodePrintLayer } from '@/components/barcode/BarcodePrintLayer'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { logger } from '@/lib/logger'
@@ -24,6 +25,7 @@ export function ProductBarcodePanel({
 }: ProductBarcodePanelProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [renderError, setRenderError] = useState<string | null>(null)
+  const [printMarkup, setPrintMarkup] = useState<string | null>(null)
 
   useEffect(() => {
     if (!barcodeValue || !svgRef.current) return
@@ -57,6 +59,23 @@ export function ProductBarcodePanel({
       isActive = false
     }
   }, [barcodeValue])
+
+  // Dựng lớp in rồi mới gọi hộp thoại in; xong thì gỡ lớp để không còn ẩn trang khi xem bình thường.
+  useEffect(() => {
+    if (!printMarkup) return
+    const clear = () => setPrintMarkup(null)
+    window.addEventListener('afterprint', clear, { once: true })
+    const frame = requestAnimationFrame(() => window.print())
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('afterprint', clear)
+    }
+  }, [printMarkup])
+
+  function printLabel() {
+    if (!svgRef.current) return
+    setPrintMarkup(new XMLSerializer().serializeToString(svgRef.current))
+  }
 
   function downloadSvg() {
     if (!svgRef.current) return
@@ -97,7 +116,7 @@ export function ProductBarcodePanel({
   }
 
   return (
-    <section data-barcode-print-page className="flex flex-col gap-5 p-4 sm:p-6">
+    <section className="flex flex-col gap-5 p-4 sm:p-6">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">Mã vạch sản phẩm</h3>
@@ -105,7 +124,7 @@ export function ProductBarcodePanel({
             {sku}
           </p>
         </div>
-        <div data-barcode-print-actions className="flex w-full gap-2 sm:w-auto">
+        <div className="flex w-full gap-2 sm:w-auto">
           <Button
             type="button"
             variant="outline"
@@ -123,7 +142,7 @@ export function ProductBarcodePanel({
             size="sm"
             className="flex-1 sm:flex-none"
             disabled={Boolean(renderError)}
-            onClick={() => window.print()}
+            onClick={printLabel}
           >
             <Printer className="size-4" aria-hidden="true" />
             In nhãn
@@ -151,8 +170,13 @@ export function ProductBarcodePanel({
         </Alert>
       ) : null}
 
-      <div className="flex min-h-64 items-center justify-center overflow-x-auto bg-white p-4">
-        <svg ref={svgRef} role="img" aria-label={`Mã vạch sản phẩm ${sku}`} />
+      <div className="flex min-h-64 items-center justify-center bg-white p-4">
+        <svg
+          ref={svgRef}
+          role="img"
+          className="h-auto w-full max-w-md"
+          aria-label={`Mã vạch sản phẩm ${sku}`}
+        />
       </div>
 
       <dl className="grid gap-1 text-xs">
@@ -161,6 +185,7 @@ export function ProductBarcodePanel({
           {barcodeValue}
         </dd>
       </dl>
+      {printMarkup ? <BarcodePrintLayer svgMarkup={printMarkup} title={sku} /> : null}
     </section>
   )
 }

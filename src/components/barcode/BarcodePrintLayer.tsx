@@ -6,7 +6,8 @@ interface BarcodePrintLayerProps {
   /** SVG do JsBarcode tạo ra (không chứa dữ liệu người dùng nhập), chèn nguyên văn vào nhãn in. */
   readonly svgMarkup: string
   readonly title: string
-  readonly code: string
+  /** Bỏ trống khi chính mã vạch đã in kèm giá trị. */
+  readonly code?: string
 }
 
 /**
@@ -20,9 +21,11 @@ export function BarcodePrintLayer({ svgMarkup, title, code }: BarcodePrintLayerP
     <div data-barcode-print-root aria-hidden="true">
       <p data-barcode-print-title>{title}</p>
       <div data-barcode-print-bars dangerouslySetInnerHTML={{ __html: svgMarkup }} />
-      <p data-barcode-print-code translate="no">
-        {code}
-      </p>
+      {code ? (
+        <p data-barcode-print-code translate="no">
+          {code}
+        </p>
+      ) : null}
     </div>,
     document.body
   )
