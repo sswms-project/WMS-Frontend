@@ -29,6 +29,27 @@ export function useCycleCountsQuery(params: CycleCountListQuery) {
   })
 }
 
+// Nạp sẵn chi tiết + allowed-actions khi rê chuột lên dòng để mở trang gần như tức thì (DB ở xa).
+export function usePrefetchCycleCount() {
+  const queryClient = useQueryClient()
+  return (cycleCountId: string) => {
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.cycleCounts.detail(cycleCountId),
+      queryFn: () =>
+        cycleCountService.getCycleCount(cycleCountId).then((response) => response.data),
+      staleTime: 30_000,
+    })
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.cycleCounts.allowedActions(cycleCountId),
+      queryFn: () =>
+        cycleCountService
+          .getCycleCountAllowedActions(cycleCountId)
+          .then((response) => response.data),
+      staleTime: 30_000,
+    })
+  }
+}
+
 export function useCycleCountQuery(cycleCountId: string) {
   return useQuery<CycleCountDetail, ApiErrorResponse>({
     queryKey: queryKeys.cycleCounts.detail(cycleCountId),
