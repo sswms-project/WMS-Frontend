@@ -19,6 +19,7 @@ export const EMPTY_TRANSFER_LINE: TransferLineFormValues = {
   productId: '',
   unitId: '',
   destinationSlotId: '',
+  sourceSlotId: '',
   quantity: 1,
 }
 
@@ -59,6 +60,7 @@ export function transferToFormValues(detail: TransferDetail): TransferRequestFor
             productId: item.productId,
             unitId: item.unitId ?? item.baseUnitId ?? '',
             destinationSlotId: item.destinationSlotId ?? '',
+            sourceSlotId: item.sourceSlotId ?? '',
             quantity: item.requestedQuantity > 0 ? item.requestedQuantity : item.quantity,
           }))
         : [{ ...EMPTY_TRANSFER_LINE }],
@@ -82,6 +84,7 @@ export function toTransferLineInputs(
     unitId: line.unitId || null,
     quantity: line.quantity,
     destinationSlotId: line.destinationSlotId || null,
+    sourceSlotId: line.sourceSlotId || null,
   }))
 }
 

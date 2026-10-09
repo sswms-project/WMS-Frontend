@@ -8,7 +8,8 @@ import { LookupCombobox } from '@/features/inbound-request/components/InboundReq
 import type { LookupOption } from '@/features/inbound-request/types/inbound-request.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { TransferRequestFormValues } from '../../schemas/transfer-request.schema'
-import { LINE_GRID_COLUMNS, LINE_GRID_COLUMNS_WITH_DESTINATION } from './line-grid'
+import { lineGridColumns } from './line-grid'
+import { TransferSourceSlotField } from './TransferSourceSlotField'
 import type { TransferLineUnits } from '../../types/transfer.types'
 import {
   exceedsAvailability as isOverAvailability,
@@ -39,6 +40,12 @@ interface TransferLineRowProps {
   readonly showAvailabilityWarning: boolean
   readonly onProductSearchChange: (scope: string, value: string) => void
   readonly onRemove: (index: number) => void
+  /** Chỉ chủ và người kho xuất thấy "Vị trí đi"; người kho nhập không biết nơi lấy. */
+  readonly showSourceSlot: boolean
+  readonly sourceWarehouseId: string
+  readonly selectedSourceSlot?: LookupOption
+  /** Dòng đã giữ chỗ thì vị trí đi chỉ đổi được bằng "Điều chỉnh phân bổ". */
+  readonly isSourceSlotLocked: boolean
   /** Chỉ chủ và người kho nhập thấy cột này; người kho xuất không biết nơi cất. */
   readonly showDestinationSlot: boolean
   readonly destinationSlotOptions: readonly LookupOption[]
@@ -66,6 +73,10 @@ export function TransferLineRow({
   showAvailabilityWarning,
   onProductSearchChange,
   onRemove,
+  showSourceSlot,
+  sourceWarehouseId,
+  selectedSourceSlot,
+  isSourceSlotLocked,
   showDestinationSlot,
   destinationSlotOptions,
   selectedDestinationSlot,
@@ -94,7 +105,7 @@ export function TransferLineRow({
 
   return (
     <div
-      className={`grid gap-3 p-3 sm:p-4 ${showDestinationSlot ? LINE_GRID_COLUMNS_WITH_DESTINATION : LINE_GRID_COLUMNS} lg:items-start lg:gap-3 lg:px-3 lg:py-2`}
+      className={`grid gap-3 p-3 sm:p-4 ${lineGridColumns(showSourceSlot, showDestinationSlot)} lg:items-start lg:gap-3 lg:px-3 lg:py-2`}
     >
       <div className="flex items-center justify-between lg:justify-center lg:pt-2">
         <span className="text-muted-foreground text-xs">{index + 1}</span>
@@ -134,6 +145,7 @@ export function TransferLineRow({
               shouldValidate: true,
             })
             form.setValue(`lines.${index}.unitId`, '', { shouldDirty: true })
+            form.setValue(`lines.${index}.sourceSlotId`, '', { shouldDirty: true })
           }}
         />
         <FieldError>{errors?.productId?.message}</FieldError>
@@ -224,6 +236,15 @@ export function TransferLineRow({
           </span>
         ) : null}
       </div>
+      {showSourceSlot ? (
+        <TransferSourceSlotField
+          index={index}
+          form={form}
+          sourceWarehouseId={sourceWarehouseId}
+          knownOption={selectedSourceSlot}
+          locked={isSourceSlotLocked}
+        />
+      ) : null}
       {showDestinationSlot ? (
         <Field data-invalid={Boolean(errors?.destinationSlotId)}>
           <FieldLabel className="text-xs lg:sr-only" htmlFor={`transfer-destination-slot-${index}`}>

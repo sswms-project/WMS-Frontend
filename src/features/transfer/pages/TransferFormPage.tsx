@@ -138,6 +138,20 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   const productConversions = useInboundRequestUnitConversions(productIds)
   const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
 
+  // Vị trí đi chỉ dành cho chủ và người kho xuất; người kho nhập không biết nơi lấy hàng.
+  const showSourceSlot = hasWarehouses && canSeeWarehouse(viewer, sourceWarehouseId)
+  const knownSourceSlots = useMemo(() => {
+    const known: Record<string, LookupOption> = {}
+    for (const item of detail?.items ?? []) {
+      if (item.sourceSlotId) {
+        known[item.sourceSlotId] = {
+          value: item.sourceSlotId,
+          label: item.sourceSlotPath ?? item.sourceSlotCode ?? item.sourceSlotId,
+        }
+      }
+    }
+    return known
+  }, [detail?.items])
   // Vị trí đến chỉ dành cho chủ và người kho nhập; người kho xuất không thấy cột này.
   const showDestinationSlot =
     Boolean(destinationWarehouseId) && canSeeWarehouse(viewer, destinationWarehouseId)
@@ -314,12 +328,11 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   function changeDestination(value: string) {
     form.setValue('destinationWarehouseId', value, { shouldDirty: true, shouldValidate: true })
     form.setValue('sourceWarehouseId', '', { shouldDirty: true })
-    // Vị trí đến thuộc kho nhập cũ nên không còn hợp lệ khi đổi kho nhập.
-    form
-      .getValues('lines')
-      .forEach((_, index) =>
-        form.setValue(`lines.${index}.destinationSlotId`, '', { shouldDirty: true })
-      )
+    // Vị trí đến thuộc kho nhập cũ, vị trí đi thuộc kho xuất cũ nên không còn hợp lệ khi đổi kho.
+    form.getValues('lines').forEach((_, index) => {
+      form.setValue(`lines.${index}.destinationSlotId`, '', { shouldDirty: true })
+      form.setValue(`lines.${index}.sourceSlotId`, '', { shouldDirty: true })
+    })
   }
 
   const submit = form.handleSubmit((values) =>
@@ -403,6 +416,9 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           isUnitLoading={isUnitLoading}
           isUnitError={isUnitError}
           hasWarehouses={hasWarehouses}
+          showSourceSlot={showSourceSlot}
+          sourceWarehouseId={sourceWarehouseId}
+          knownSourceSlots={knownSourceSlots}
           showDestinationSlot={showDestinationSlot}
           destinationSlotOptions={destinationSlotOptions}
           knownDestinationSlots={knownDestinationSlots}
@@ -426,9 +442,14 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           onCodeChange={codeSuggestion.markEdited}
           onSelectInternalRelocation={() => router.push(APP_ROUTES.createRelocationTask)}
           onDestinationChange={changeDestination}
-          onSourceChange={(value) =>
+          onSourceChange={(value) => {
             form.setValue('sourceWarehouseId', value, { shouldDirty: true, shouldValidate: true })
-          }
+            form
+              .getValues('lines')
+              .forEach((_, index) =>
+                form.setValue(`lines.${index}.sourceSlotId`, '', { shouldDirty: true })
+              )
+          }}
           onProductSearchChange={(scope, value) =>
             setProductSearch((current) =>
               current?.scope === scope && current.value === value ? current : { scope, value }

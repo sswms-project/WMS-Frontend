@@ -10,7 +10,7 @@ import {
   type WarehouseSelectOption,
 } from './TransferGeneralSection'
 import { exceedsAvailability } from '../../utils/transfer-line-units'
-import { LINE_GRID_COLUMNS, LINE_GRID_COLUMNS_WITH_DESTINATION } from './line-grid'
+import { lineGridColumns } from './line-grid'
 import { TransferLineRow, type TransferLineLockInfo } from './TransferLineRow'
 import type { BusinessCodeFieldProps } from '@/components/forms/BusinessCodeField'
 
@@ -30,6 +30,9 @@ interface TransferFormProps {
   readonly isUnitError: boolean
   /** Đã chọn đủ kho xuất và kho nhập, nên mới có số tồn để hiển thị. */
   readonly hasWarehouses: boolean
+  readonly showSourceSlot: boolean
+  readonly sourceWarehouseId: string
+  readonly knownSourceSlots: Readonly<Record<string, LookupOption>>
   readonly showDestinationSlot: boolean
   readonly destinationSlotOptions: readonly LookupOption[]
   readonly knownDestinationSlots: Readonly<Record<string, LookupOption>>
@@ -67,6 +70,9 @@ export function TransferForm({
   isUnitLoading,
   isUnitError,
   hasWarehouses,
+  showSourceSlot,
+  sourceWarehouseId,
+  knownSourceSlots,
   showDestinationSlot,
   destinationSlotOptions,
   knownDestinationSlots,
@@ -140,7 +146,7 @@ export function TransferForm({
           </Button>
         </div>
         <div
-          className={`text-muted-foreground bg-muted hidden gap-3 border-b px-3 py-2 text-xs font-medium lg:grid ${showDestinationSlot ? LINE_GRID_COLUMNS_WITH_DESTINATION : LINE_GRID_COLUMNS}`}
+          className={`text-muted-foreground bg-muted hidden gap-3 border-b px-3 py-2 text-xs font-medium lg:grid ${lineGridColumns(showSourceSlot, showDestinationSlot)}`}
         >
           <span>#</span>
           <span>Sản phẩm</span>
@@ -148,6 +154,7 @@ export function TransferForm({
           <span>Số lượng</span>
           <span>SL theo ĐVT chính</span>
           <span>Tồn khả dụng kho xuất</span>
+          {showSourceSlot ? <span>Vị trí đi</span> : null}
           {showDestinationSlot ? <span>Vị trí đến</span> : null}
           <span />
         </div>
@@ -172,6 +179,10 @@ export function TransferForm({
                 isUnitLoading={isUnitLoading}
                 isUnitError={isUnitError}
                 hasWarehouses={hasWarehouses}
+                showSourceSlot={showSourceSlot}
+                sourceWarehouseId={sourceWarehouseId}
+                selectedSourceSlot={knownSourceSlots[line?.sourceSlotId ?? '']}
+                isSourceSlotLocked={isEditingSubmitted && Boolean(itemId)}
                 showDestinationSlot={showDestinationSlot}
                 destinationSlotOptions={destinationSlotOptions}
                 selectedDestinationSlot={knownDestinationSlots[line?.destinationSlotId ?? '']}

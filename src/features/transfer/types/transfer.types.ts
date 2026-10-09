@@ -192,6 +192,8 @@ export interface TransferItem {
   allocations?: TransferAllocation[] | null
   /** "Khu K01 / Kệ A07 / S-01"; BE bỏ trống với người chỉ thuộc kho xuất. */
   destinationSlotPath?: string | null
+  /** Vị trí lấy hàng ưu tiên do chủ/quản lý kho xuất chọn; BE bỏ trống với người chỉ thuộc kho nhập. */
+  sourceSlotPath?: string | null
 }
 
 /** Hàng của một dòng phiếu đang được giữ chỗ ở đâu (vị trí lấy do hệ thống phân bổ). */
@@ -201,6 +203,20 @@ export interface TransferAllocation {
   lotNumber: string | null
   expiryDate: string | null
   quantity: number
+}
+
+/** Vị trí của kho xuất đang có tồn khả dụng của một sản phẩm. */
+export interface TransferSourceLocation {
+  slotId: string
+  code: string
+  path: string
+  availableQuantity: number
+  earliestExpiry: string | null
+}
+
+export interface TransferSourceLocationsQuery {
+  sourceWarehouseId: string
+  productId: string
 }
 
 export interface TransferReceivableSlotOption {
@@ -363,6 +379,8 @@ export interface TransferLineInput {
   quantity: number
   /** Vị trí cất hàng gợi ý ở kho nhập (tùy chọn). */
   destinationSlotId?: string | null
+  /** Vị trí lấy hàng ưu tiên ở kho xuất (tùy chọn); chỉ chủ và quản lý kho xuất đặt được. */
+  sourceSlotId?: string | null
 }
 
 export interface SaveTransferDraftRequest {

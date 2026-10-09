@@ -61,7 +61,14 @@ describe('transfer form conversion', () => {
     values.sourceWarehouseId = 'a'
     values.destinationWarehouseId = 'b'
     values.lines = [
-      { itemId: null, productId: 'p', unitId: '', destinationSlotId: '', quantity: 3 },
+      {
+        itemId: null,
+        productId: 'p',
+        unitId: '',
+        destinationSlotId: '',
+        sourceSlotId: '',
+        quantity: 3,
+      },
     ]
     expect(toSaveDraftRequest(values, 'v1')).toEqual({
       expectedVersion: 'v1',
@@ -73,7 +80,31 @@ describe('transfer form conversion', () => {
       reason: null,
       requiredBy: null,
       note: null,
-      items: [{ itemId: null, productId: 'p', unitId: null, quantity: 3, destinationSlotId: null }],
+      items: [
+        {
+          itemId: null,
+          productId: 'p',
+          unitId: null,
+          quantity: 3,
+          destinationSlotId: null,
+          sourceSlotId: null,
+        },
+      ],
+    })
+  })
+
+  it('carries the chosen pick and put-away slots through the form and back', () => {
+    const detail = buildTransfer({
+      items: [buildTransferItem({ sourceSlotId: 'slot-out', destinationSlotId: 'slot-in' })],
+    })
+    const values = transferToFormValues(detail)
+    expect(values.lines[0]).toMatchObject({
+      sourceSlotId: 'slot-out',
+      destinationSlotId: 'slot-in',
+    })
+    expect(toSaveDraftRequest(values, null).items[0]).toMatchObject({
+      sourceSlotId: 'slot-out',
+      destinationSlotId: 'slot-in',
     })
   })
 

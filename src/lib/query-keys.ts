@@ -28,6 +28,7 @@ import type { ProductListQuery, ProductLotQuery } from '@/features/product/types
 import type {
   TransferAvailabilityQuery,
   TransferReceivableSlotsQuery,
+  TransferSourceLocationsQuery,
   TransferSourceProductsQuery,
   TransferListQuery,
   TransferSourceWarehouseQuery,
@@ -231,6 +232,8 @@ export const queryKeys = {
       ['transfers', 'source-warehouses', params] as const,
     receivableSlots: (params: TransferReceivableSlotsQuery) =>
       ['transfers', 'receivable-slots', params] as const,
+    sourceLocations: (params: TransferSourceLocationsQuery) =>
+      ['transfers', 'source-locations', params] as const,
     sourceProducts: (params: TransferSourceProductsQuery) =>
       ['transfers', 'source-products', params] as const,
     availability: (params: TransferAvailabilityQuery) =>

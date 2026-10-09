@@ -14,6 +14,8 @@ import type {
   TransferAvailabilityQuery,
   TransferReceivableSlotOption,
   TransferReceivableSlotsQuery,
+  TransferSourceLocation,
+  TransferSourceLocationsQuery,
   TransferSourceProduct,
   TransferSourceProductsQuery,
   TransferDetail,
@@ -94,6 +96,17 @@ export function useTransferReceivableSlotsQuery(
     queryFn: () => transferService.getReceivableSlots(query).then((response) => response.data),
     enabled,
     placeholderData: (previousData) => previousData,
+  })
+}
+
+export function useTransferSourceLocationsQuery(
+  query: TransferSourceLocationsQuery,
+  enabled = true
+) {
+  return useQuery<TransferSourceLocation[], ApiErrorResponse>({
+    queryKey: queryKeys.transfers.sourceLocations(query),
+    queryFn: () => transferService.getSourceLocations(query).then((response) => response.data),
+    enabled,
   })
 }
 

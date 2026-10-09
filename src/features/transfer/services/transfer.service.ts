@@ -26,6 +26,8 @@ import type {
   TransferAvailabilityQuery,
   TransferReceivableSlotOption,
   TransferReceivableSlotsQuery,
+  TransferSourceLocation,
+  TransferSourceLocationsQuery,
   TransferSourceProduct,
   TransferSourceProductsQuery,
   TransferDetail,
@@ -82,6 +84,13 @@ export const transferService = {
   getReceivableSlots: (params: TransferReceivableSlotsQuery) =>
     axiosClient
       .get<ApiResponse<TransferReceivableSlotOption[]>>(API_ENDPOINTS.transfers.receivableSlots, {
+        params,
+      })
+      .then(unwrap),
+
+  getSourceLocations: (params: TransferSourceLocationsQuery) =>
+    axiosClient
+      .get<ApiResponse<TransferSourceLocation[]>>(API_ENDPOINTS.transfers.sourceLocations, {
         params,
       })
       .then(unwrap),

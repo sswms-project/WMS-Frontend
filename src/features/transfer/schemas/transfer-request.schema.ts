@@ -15,6 +15,8 @@ export const transferLineSchema = z.object({
   unitId: optionalGuid('Đơn vị tính không hợp lệ.'),
   /** Vị trí đến gợi ý ở kho nhập; chuỗi rỗng là chưa chọn. */
   destinationSlotId: optionalGuid('Vị trí đến không hợp lệ.'),
+  /** Vị trí lấy hàng ưu tiên ở kho xuất; chuỗi rỗng là để hệ thống tự phân bổ. */
+  sourceSlotId: optionalGuid('Vị trí đi không hợp lệ.'),
   quantity: z.number('Số lượng phải là số.').positive('Số lượng phải lớn hơn 0.'),
 })
 
