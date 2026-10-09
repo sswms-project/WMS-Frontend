@@ -38,11 +38,11 @@ export function WarehouseLocationBarcodeView({
         displayValue: false,
         font: 'JetBrains Mono, monospace',
         fontSize: 16,
-        // Giá trị mã giờ ngắn (mã vị trí) nên giữ vạch 2px cho dễ quét; cao hơn mặc định.
-        width: 2,
-        height: 120,
-        // Code 128 cần vùng trống tối thiểu 10 vạch (20px) hai đầu thì camera mới đọc được.
-        margin: 24,
+        // Mã vị trí ngắn (vd. A01) nên dùng vạch dày 4px để nhãn đủ rộng, dễ quét. Lề = 10 vạch
+        // (Code 128 cần vùng trống tối thiểu 10 vạch ở hai đầu).
+        width: 4,
+        height: 110,
+        margin: 40,
         background: '#ffffff',
         lineColor: '#111111',
       })
