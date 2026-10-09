@@ -38,8 +38,10 @@ export function WarehouseLocationBarcodeView({
         displayValue: false,
         font: 'JetBrains Mono, monospace',
         fontSize: 16,
-        height: 88,
-        margin: 18,
+        // Vạch mảnh hơn mặc định (2) để mã dài vẫn gọn; vẫn quét tốt khi in đủ rộng.
+        width: 1.5,
+        height: 80,
+        margin: 12,
         background: '#ffffff',
         lineColor: '#111111',
       })
@@ -146,7 +148,7 @@ export function WarehouseLocationBarcodeView({
           <svg
             ref={svgRef}
             role="img"
-            className="h-auto max-w-full"
+            className="h-auto w-full max-w-md"
             aria-label={`Mã vạch ${barcode.locationCode}`}
           />
           <p translate="no" className="font-mono text-sm font-semibold">
