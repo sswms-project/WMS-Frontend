@@ -31,6 +31,8 @@ interface ScanInputProps {
   /** Chuyển con trỏ vào ô khi giá trị này chuyển sang true: máy quét gõ thẳng vào ô đang focus nên bước kế tiếp phải được focus sẵn. */
   readonly focusWhen?: boolean
   readonly pending?: boolean
+  /** Ẩn nút camera riêng của ô khi màn hình có khung camera dùng chung. */
+  readonly hideCamera?: boolean
   /** Bấm Enter khi ô trống (máy quét không gửi gì): dùng để xác nhận khi quét từng đơn vị. */
   readonly onEmptyEnter?: () => void
   readonly onScan: (code: string) => ScanResult
@@ -49,6 +51,7 @@ export function ScanInput({
   autoFocus = false,
   focusWhen = false,
   pending = false,
+  hideCamera = false,
   onEmptyEnter,
   onScan,
 }: ScanInputProps) {
@@ -120,7 +123,7 @@ export function ScanInput({
             submit()
           }}
         />
-        {canUseCamera ? (
+        {canUseCamera && !hideCamera ? (
           <Button
             type="button"
             variant="outline"
