@@ -121,7 +121,9 @@ export function getTransferCapabilities(
     canEditDraft: canCreate && isOwnDraft,
     canEdit: canCreate && mayChange && isInProgress,
     canGiveFeedback:
-      isOpen && (has(viewer, P.TRANSFERS_DISPATCH) || has(viewer, P.TRANSFERS_RECEIVE)),
+      isOpen &&
+      ((has(viewer, P.TRANSFERS_DISPATCH) && manages(viewer, transfer.sourceWarehouseId)) ||
+        (has(viewer, P.TRANSFERS_RECEIVE) && manages(viewer, transfer.destinationWarehouseId))),
     canReplyFeedback: canCreate && isOpen && hasOpenFeedback(transfer.feedbacks),
     canCreateShipment:
       has(viewer, P.TRANSFERS_DISPATCH) &&
@@ -129,7 +131,9 @@ export function getTransferCapabilities(
       isInProgress &&
       unbatchedQuantity(transfer) > 0,
     canResolveDiscrepancy:
-      has(viewer, P.TRANSFERS_RESOLVE) && openDiscrepancies(transfer.discrepancies).length > 0,
+      has(viewer, P.TRANSFERS_RESOLVE) &&
+      manages(viewer, transfer.destinationWarehouseId) &&
+      openDiscrepancies(transfer.discrepancies).length > 0,
     closingAction,
   }
 }
@@ -143,8 +147,12 @@ export function getShipmentCapabilities(
   const isReady = shipment.status === 'ReadyToDispatch'
   const isReceivable = shipment.status === 'InTransit' || shipment.status === 'Receiving'
   return {
-    canCancel: has(viewer, P.TRANSFERS_DISPATCH) && isPicking,
-    canOpenPick: has(viewer, P.TRANSFERS_PICK) && isPicking,
+    canCancel:
+      has(viewer, P.TRANSFERS_DISPATCH) &&
+      isPicking &&
+      manages(viewer, warehouses?.sourceWarehouseId),
+    canOpenPick:
+      has(viewer, P.TRANSFERS_PICK) && isPicking && manages(viewer, warehouses?.sourceWarehouseId),
     canConfirmDeparture:
       has(viewer, P.TRANSFERS_DISPATCH) &&
       isReady &&
@@ -153,7 +161,11 @@ export function getShipmentCapabilities(
       has(viewer, P.TRANSFERS_DISPATCH) &&
       isReady &&
       manages(viewer, warehouses?.sourceWarehouseId),
-    canOpenReceive: has(viewer, P.TRANSFERS_RECEIVE) && isReceivable,
+    // Nhận hàng là việc của kho nhập: người của kho xuất không mở được dù có quyền nhận.
+    canOpenReceive:
+      has(viewer, P.TRANSFERS_RECEIVE) &&
+      isReceivable &&
+      manages(viewer, warehouses?.destinationWarehouseId),
     canAssignPick:
       has(viewer, P.WAREHOUSE_TASKS_ASSIGN) &&
       isPicking &&
@@ -165,6 +177,7 @@ export function getShipmentCapabilities(
     canResolveEscalation:
       has(viewer, P.TRANSFERS_DISPATCH) &&
       isPicking &&
+      manages(viewer, warehouses?.sourceWarehouseId) &&
       shipment.lines.some((line) => line.status === 'PendingManager'),
   }
 }

@@ -229,4 +229,29 @@ describe('getShipmentCapabilities', () => {
       getShipmentCapabilities(viewer([P.TRANSFERS_DISPATCH]), buildShipment()).canConfirmDeparture
     ).toBe(false)
   })
+
+  it('keeps pick and receive actions inside the right warehouse', () => {
+    const warehouses = {
+      sourceWarehouseId: 'source',
+      destinationWarehouseId: 'destination',
+    }
+    const everything = [P.TRANSFERS_PICK, P.TRANSFERS_RECEIVE, P.TRANSFERS_DISPATCH]
+    const sourceManager = viewer(everything, { warehouseIds: ['source'] })
+    const destinationManager = viewer(everything, { warehouseIds: ['destination'] })
+    const picking = buildShipment()
+    const inTransit = buildShipment({ status: 'InTransit' })
+
+    expect(getShipmentCapabilities(sourceManager, picking, warehouses)).toMatchObject({
+      canOpenPick: true,
+      canCancel: true,
+    })
+    expect(getShipmentCapabilities(sourceManager, inTransit, warehouses).canOpenReceive).toBe(false)
+    expect(getShipmentCapabilities(destinationManager, inTransit, warehouses).canOpenReceive).toBe(
+      true
+    )
+    expect(getShipmentCapabilities(destinationManager, picking, warehouses)).toMatchObject({
+      canOpenPick: false,
+      canCancel: false,
+    })
+  })
 })
