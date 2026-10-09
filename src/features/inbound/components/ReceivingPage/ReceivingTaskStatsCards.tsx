@@ -1,6 +1,9 @@
 import { Activity, ClipboardList, PauseCircle, UserRoundX } from 'lucide-react'
 import type { ReceivingTaskStats } from '../../types/inbound.types'
-import { InboundCountTile, type InboundTileTone } from '../InboundWorkspace/InboundCountTile'
+import {
+  OperationalCountTile,
+  type OperationalTileTone,
+} from '@/components/operations/OperationalCountTile'
 
 const CARDS = [
   { label: 'Đơn chờ nhận', key: 'totalOpenCount', icon: ClipboardList, tone: 'default' },
@@ -11,7 +14,7 @@ const CARDS = [
   label: string
   key: keyof ReceivingTaskStats
   icon: typeof ClipboardList
-  tone: InboundTileTone
+  tone: OperationalTileTone
 }[]
 
 interface ReceivingTaskStatsCardsProps {
@@ -32,7 +35,7 @@ export function ReceivingTaskStatsCards({
       aria-busy={isLoading}
     >
       {CARDS.map(({ label, key, icon, tone }, index) => (
-        <InboundCountTile
+        <OperationalCountTile
           key={key}
           index={index}
           icon={icon}

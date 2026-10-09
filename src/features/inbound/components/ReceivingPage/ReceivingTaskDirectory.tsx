@@ -39,7 +39,10 @@ import { dateToIsoDateString, formatDisplayDate, isoDateStringToDate } from '@/l
 import { cn } from '@/lib/utils'
 import type { ReceivingTask } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
-import { CellStack, QuantityProgress } from '../InboundWorkspace'
+import {
+  OperationalCellStack,
+  OperationalQuantityProgress,
+} from '@/components/operations/OperationalCells'
 import { rowActivationProps } from '../../utils/row-activation-props'
 import {
   formatOperationalDate,
@@ -346,12 +349,12 @@ export function ReceivingTaskDirectory({
             <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 z-10">Mã yêu cầu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Nhà cung cấp · Kho nhận</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-44">Đã nhận / Yêu cầu</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-40">Thời gian</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-48">Người nhận việc</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
+                  <TableHead className="">Mã yêu cầu</TableHead>
+                  <TableHead className="">Nhà cung cấp · Kho nhận</TableHead>
+                  <TableHead className="w-44">Đã nhận / Yêu cầu</TableHead>
+                  <TableHead className="w-40">Thời gian</TableHead>
+                  <TableHead className="w-48">Người nhận việc</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -386,13 +389,13 @@ export function ReceivingTaskDirectory({
                       )}
                     </TableCell>
                     <TableCell className="min-w-0">
-                      <CellStack
+                      <OperationalCellStack
                         primary={item.supplierName}
                         secondary={`${item.warehouseName} · ${item.lines.length} mặt hàng`}
                       />
                     </TableCell>
                     <TableCell>
-                      <QuantityProgress
+                      <OperationalQuantityProgress
                         done={item.receivedQuantity}
                         total={item.orderedQuantity}
                         doneText={formatQuantity(item.receivedQuantity)}
@@ -400,7 +403,7 @@ export function ReceivingTaskDirectory({
                       />
                     </TableCell>
                     <TableCell>
-                      <CellStack
+                      <OperationalCellStack
                         primary={formatOperationalDateTime(item.createdAt)}
                         secondary={`Dự kiến ${formatOperationalDate(item.expectedDate)}`}
                       />

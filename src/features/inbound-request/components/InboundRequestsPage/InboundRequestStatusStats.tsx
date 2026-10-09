@@ -6,8 +6,10 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import {
+  OperationalCountTile,
+  type OperationalTileTone,
+} from '@/components/operations/OperationalCountTile'
 import {
   INBOUND_REQUEST_STATUS,
   type InboundRequestStatus,
@@ -18,7 +20,7 @@ const STATUS_GROUPS: {
   readonly label: string
   readonly description: string
   readonly icon: LucideIcon
-  readonly tone: 'default' | 'active' | 'warning' | 'danger'
+  readonly tone: OperationalTileTone
   readonly statuses: readonly InboundRequestStatus[]
 }[] = [
   {
@@ -87,46 +89,18 @@ export function InboundRequestStatusStats({
           (sum, status) => sum + (countByStatus.get(status) ?? 0),
           0
         )
-        // Màu nhấn chỉ bật khi nhóm có đơn, để số 0 không gây báo động giả.
-        const lit = !isLoading && !isError && total > 0
-        const Icon = group.icon
         return (
-          <div
+          <OperationalCountTile
             key={group.label}
-            style={{ animationDelay: `${index * 50}ms` }}
-            className="bg-card motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 fill-mode-backwards animation-duration-300 flex items-center gap-3 px-4 py-3"
-          >
-            <span
-              className={cn(
-                'flex size-9 shrink-0 items-center justify-center',
-                lit && group.tone === 'danger'
-                  ? 'bg-destructive/10 text-destructive'
-                  : lit && group.tone === 'warning'
-                    ? 'bg-warning-container text-on-warning-container'
-                    : lit && group.tone === 'active'
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground'
-              )}
-            >
-              <Icon className="size-4" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">{group.label}</p>
-              <p
-                className="text-muted-foreground line-clamp-1 text-[11px]"
-                title={group.description}
-              >
-                {group.description}
-              </p>
-            </div>
-            {isLoading ? (
-              <Skeleton className="h-7 w-10 shrink-0" aria-hidden="true" />
-            ) : (
-              <p className="shrink-0 text-2xl font-semibold tabular-nums">
-                {isError ? '—' : total.toLocaleString('vi-VN')}
-              </p>
-            )}
-          </div>
+            icon={group.icon}
+            label={group.label}
+            description={group.description}
+            value={total}
+            tone={group.tone}
+            index={index}
+            isLoading={isLoading}
+            isError={isError}
+          />
         )
       })}
     </section>

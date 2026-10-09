@@ -10,7 +10,8 @@ import {
   toOperationalDateTimeEnd,
   toOperationalDateTimeStart,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { InboundCountTile, InboundPageHeader } from '../components/InboundWorkspace'
+import { OperationalCountTile } from '@/components/operations/OperationalCountTile'
+import { InboundPageHeader } from '../components/InboundWorkspace'
 import {
   PutawayDeviationReportSheet,
   PutawayDirectory,
@@ -77,7 +78,7 @@ export default function InboundPutawayPage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="bg-border w-full shrink-0 border sm:max-w-xs">
-          <InboundCountTile
+          <OperationalCountTile
             icon={PackageCheck}
             tone="active"
             label="Phiếu chờ cất"

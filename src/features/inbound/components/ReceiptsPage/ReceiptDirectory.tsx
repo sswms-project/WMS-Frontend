@@ -35,7 +35,11 @@ import {
   formatOperationalDateTime,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { CellStack, InboundStatusBadge, QuantityProgress } from '../InboundWorkspace'
+import { InboundStatusBadge } from '../InboundWorkspace'
+import {
+  OperationalCellStack,
+  OperationalQuantityProgress,
+} from '@/components/operations/OperationalCells'
 import { rowActivationProps } from '../../utils/row-activation-props'
 import { TaskAssigneeCell } from '../TaskAssignment'
 
@@ -261,13 +265,13 @@ export function ReceiptDirectory({
             <Table className="min-w-[1000px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Yêu cầu · Kho</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-36">Trạng thái</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-48">Đã cất / Đã nhận</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-48">Người cất hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-40">Tạo bởi</TableHead>
-                  <TableHead className="sticky top-0 z-10">
+                  <TableHead className="">Mã phiếu</TableHead>
+                  <TableHead className="">Yêu cầu · Kho</TableHead>
+                  <TableHead className="w-36">Trạng thái</TableHead>
+                  <TableHead className="w-48">Đã cất / Đã nhận</TableHead>
+                  <TableHead className="w-48">Người cất hàng</TableHead>
+                  <TableHead className="w-40">Tạo bởi</TableHead>
+                  <TableHead className="">
                     <span className="sr-only">Thao tác</span>
                   </TableHead>
                 </TableRow>
@@ -290,7 +294,7 @@ export function ReceiptDirectory({
                       </p>
                     </TableCell>
                     <TableCell className="min-w-0">
-                      <CellStack
+                      <OperationalCellStack
                         primary={<span className="font-mono">{item.inboundRequestCode}</span>}
                         secondary={item.warehouseName}
                       />
@@ -299,7 +303,7 @@ export function ReceiptDirectory({
                       <InboundStatusBadge status={item.status} />
                     </TableCell>
                     <TableCell>
-                      <QuantityProgress
+                      <OperationalQuantityProgress
                         done={item.putAwayQuantity}
                         total={Math.max(0, item.receivedQuantity - item.damagedQuantity)}
                         doneText={formatQuantity(item.putAwayQuantity)}
@@ -321,7 +325,7 @@ export function ReceiptDirectory({
                       />
                     </TableCell>
                     <TableCell className="min-w-0">
-                      <CellStack
+                      <OperationalCellStack
                         primary={item.createdByName}
                         secondary={formatOperationalDateTime(item.createdAt)}
                       />

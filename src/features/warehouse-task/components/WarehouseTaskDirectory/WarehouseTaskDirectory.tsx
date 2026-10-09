@@ -101,7 +101,7 @@ const taskTypeIcon: Record<MyWarehouseTask['taskType'], LucideIcon> = {
   Picking: PackageSearch,
 }
 
-const HEAD = 'bg-card sticky top-0 z-10'
+const HEAD = 'bg-card'
 // Mỗi dòng hiện trễ hơn dòng trước một nhịp; dừng tăng sau 12 dòng để trang dài không phải chờ.
 const rowDelay = (index: number) => ({ animationDelay: `${Math.min(index, 12) * 35}ms` })
 const ROW_ENTER =
