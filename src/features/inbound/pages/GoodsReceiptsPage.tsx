@@ -22,7 +22,8 @@ import {
   toOperationalDateTimeEnd,
   toOperationalDateTimeStart,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { InboundCountTile, InboundPageHeader } from '../components/InboundWorkspace'
+import { OperationalCountTile } from '@/components/operations/OperationalCountTile'
+import { InboundPageHeader } from '../components/InboundWorkspace'
 import { ReceiptDirectory } from '../components/ReceiptsPage'
 import {
   useApproveGoodsReceiptMutation,
@@ -95,7 +96,7 @@ export default function GoodsReceiptsPage() {
           canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
         />
         <div className="bg-border w-full shrink-0 border sm:max-w-xs">
-          <InboundCountTile
+          <OperationalCountTile
             icon={ClipboardList}
             tone="default"
             label="Phiếu phù hợp"

@@ -470,13 +470,14 @@ body {
   background: var(--muted);
 }
 
+/* Chỉ cuộn ngang; gạch chân tab lệch 1px ở một số mức zoom không được bật thanh cuộn dọc. */
 [data-slot='operational-workspace-navigation'] {
   display: flex;
   min-width: 0;
   max-width: 100%;
   flex-shrink: 0;
   gap: 4px;
-  overflow-x: auto;
+  overflow: auto hidden;
   border-bottom: 1px solid var(--border);
 }
 

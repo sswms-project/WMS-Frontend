@@ -2,12 +2,13 @@ import type { LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
-export type InboundTileTone = 'default' | 'active' | 'warning' | 'danger'
+export type OperationalTileTone = 'default' | 'active' | 'warning' | 'danger'
 
-/** Ô số liệu dùng chung ở đầu các trang nhập kho; màu nhấn chỉ bật khi số lớn hơn 0. */
-export function InboundCountTile({
+/** Ô số liệu dùng chung ở đầu các trang danh sách nghiệp vụ; màu nhấn chỉ bật khi số lớn hơn 0. */
+export function OperationalCountTile({
   icon: Icon,
   label,
+  description,
   value,
   isLoading,
   isError,
@@ -16,10 +17,11 @@ export function InboundCountTile({
 }: {
   readonly icon: LucideIcon
   readonly label: string
+  readonly description?: string
   readonly value: number
   readonly isLoading: boolean
   readonly isError: boolean
-  readonly tone?: InboundTileTone
+  readonly tone?: OperationalTileTone
   readonly index?: number
 }) {
   const lit = !isLoading && !isError && value > 0
@@ -42,7 +44,14 @@ export function InboundCountTile({
       >
         <Icon className="size-4" aria-hidden="true" />
       </span>
-      <p className="min-w-0 flex-1 text-sm font-medium">{label}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{label}</p>
+        {description ? (
+          <p className="text-muted-foreground line-clamp-1 text-[11px]" title={description}>
+            {description}
+          </p>
+        ) : null}
+      </div>
       {isLoading ? (
         <Skeleton className="h-7 w-10 shrink-0" aria-hidden="true" />
       ) : (

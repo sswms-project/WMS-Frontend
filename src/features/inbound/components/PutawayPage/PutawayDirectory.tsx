@@ -45,7 +45,10 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptSummary } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
-import { CellStack, QuantityProgress } from '../InboundWorkspace'
+import {
+  OperationalCellStack,
+  OperationalQuantityProgress,
+} from '@/components/operations/OperationalCells'
 import { rowActivationProps } from '../../utils/row-activation-props'
 
 export type PutawayAssignmentFilter = 'all' | 'unassigned'
@@ -320,12 +323,12 @@ export function PutawayDirectory({
             <Table className="min-w-[920px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Yêu cầu · Kho</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-48">Đã cất / Cần cất</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-40">Ngày tạo</TableHead>
-                  <TableHead className="sticky top-0 z-10 w-48">Người cất hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
+                  <TableHead className="">Mã phiếu</TableHead>
+                  <TableHead className="">Yêu cầu · Kho</TableHead>
+                  <TableHead className="w-48">Đã cất / Cần cất</TableHead>
+                  <TableHead className="w-40">Ngày tạo</TableHead>
+                  <TableHead className="w-48">Người cất hàng</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -346,13 +349,13 @@ export function PutawayDirectory({
                       </p>
                     </TableCell>
                     <TableCell className="min-w-0">
-                      <CellStack
+                      <OperationalCellStack
                         primary={<span className="font-mono">{item.inboundRequestCode}</span>}
                         secondary={item.warehouseName}
                       />
                     </TableCell>
                     <TableCell>
-                      <QuantityProgress
+                      <OperationalQuantityProgress
                         done={item.putAwayQuantity}
                         total={Math.max(0, item.receivedQuantity - item.damagedQuantity)}
                         doneText={formatQuantity(item.putAwayQuantity)}
