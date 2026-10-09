@@ -48,7 +48,8 @@ export function ProductBarcodePanel({
         // Giữ độ dày vạch mặc định (2px); chỉ cao hơn cho dễ quét.
         width: 2,
         height: 120,
-        margin: 10,
+        // Code 128 cần vùng trống tối thiểu 10 vạch (20px) hai đầu thì camera mới đọc được.
+        margin: 24,
         background: '#ffffff',
         lineColor: '#111111',
       })

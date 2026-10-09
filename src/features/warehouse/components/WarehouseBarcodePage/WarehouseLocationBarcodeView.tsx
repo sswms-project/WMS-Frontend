@@ -41,7 +41,8 @@ export function WarehouseLocationBarcodeView({
         // Giá trị mã giờ ngắn (mã vị trí) nên giữ vạch 2px cho dễ quét; cao hơn mặc định.
         width: 2,
         height: 120,
-        margin: 10,
+        // Code 128 cần vùng trống tối thiểu 10 vạch (20px) hai đầu thì camera mới đọc được.
+        margin: 24,
         background: '#ffffff',
         lineColor: '#111111',
       })
