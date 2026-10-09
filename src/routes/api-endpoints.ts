@@ -1,4 +1,14 @@
 export const API_ENDPOINTS = {
+  dashboard: {
+    overview: '/dashboard/overview',
+    warehouses: '/dashboard/warehouses',
+  },
+  reports: {
+    catalog: '/reports/catalog',
+    options: '/reports/filter-options',
+    view: (type: string) => `/reports/${encodeURIComponent(type)}`,
+    export: (type: string) => `/reports/${encodeURIComponent(type)}/export`,
+  },
   // Public endpoints
   auth: {
     login: '/auth/login',

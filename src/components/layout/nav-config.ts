@@ -69,6 +69,23 @@ const tenantStaffSection: NavSection = {
   ],
 }
 
+const tenantReportsSection: NavSection = {
+  id: 'reports',
+  label: 'Báo cáo & phân tích',
+  icon: ChartNoAxesCombined,
+  collapsible: true,
+  separatorBefore: true,
+  items: [
+    requiredNavItem(APP_ROUTES.reports, 'Báo cáo kho', FileChartColumn, P.REPORTS_VIEW),
+    requiredNavItem(
+      APP_ROUTES.reportForecast,
+      'Dự báo & bổ sung hàng',
+      TrendingUp,
+      P.INVENTORY_VIEW
+    ),
+  ],
+}
+
 const tenantSubjectsSection: NavSection = {
   id: 'subjects',
   label: 'Đối tượng',
@@ -306,18 +323,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
         ),
       ],
     },
-    {
-      id: 'reports',
-      label: 'Báo cáo',
-      icon: ChartNoAxesCombined,
-      collapsible: true,
-      separatorBefore: true,
-      items: [
-        plannedNavItem('Dashboard kho', ChartNoAxesCombined),
-        plannedNavItem('Báo cáo vận hành', FileChartColumn),
-        plannedNavItem('Dự báo & Bổ sung hàng', TrendingUp),
-      ],
-    },
+    tenantReportsSection,
     {
       id: 'services',
       label: 'Dịch vụ',
@@ -383,6 +389,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     tenantCatalogSection,
     tenantWarehouseSection,
     tenantOperationsSection,
+    tenantReportsSection,
     tenantMemberSystemSection,
   ],
   [USER_ROLES.WarehouseStaff]: [
@@ -414,6 +421,7 @@ export const NAV_CONFIG: Record<UserRole, readonly NavSection[]> = {
     tenantSubjectsSection,
     tenantWarehouseSection,
     tenantOperationsSection,
+    tenantReportsSection,
     staffSystemSection,
   ],
 }
@@ -422,6 +430,7 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
   if (!item.href || item.status === 'planned') return false
   if (pathname === item.href) return true
   if (item.match === 'exact') return false
+  if (item.href === APP_ROUTES.reports && pathname === APP_ROUTES.reportForecast) return false
   if (item.excludedPrefixes?.some((prefix) => pathname.startsWith(prefix))) return false
 
   if (item.activePrefixes?.some((prefix) => pathname.startsWith(prefix))) {
@@ -472,8 +481,4 @@ function requiredNavItem(
   activePrefixes?: readonly string[]
 ): NavItem {
   return { href, label, icon, requiredPermission, activePrefixes }
-}
-
-function plannedNavItem(label: string, icon: LucideIcon): NavItem {
-  return { label, icon, status: 'planned' }
 }
