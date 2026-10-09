@@ -1,6 +1,13 @@
 'use client'
 
-import { ArrowLeft, MessageSquareWarning, PencilLine, Plus, UserPlus } from 'lucide-react'
+import {
+  ArrowLeft,
+  MapPinned,
+  MessageSquareWarning,
+  PencilLine,
+  Plus,
+  UserPlus,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useId, useMemo, useState } from 'react'
@@ -18,6 +25,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import { TransferGoodsTable } from '../components/TransferGoods'
 import {
   AddFeedbackDialog,
+  AdjustAllocationDialog,
   AssignTransferTaskDialog,
   CreateShipmentDialog,
   ReplyFeedbackDialog,
@@ -31,6 +39,7 @@ import {
 } from '../components/TransferDetailPage'
 import { TransferConfirmDialog, TransferReasonDialog } from '../components/TransferShared'
 import { TransferStatusBadge } from '../components/TransfersPage'
+import { useTransferAllocationActions } from '../hooks/use-transfer-allocation-actions'
 import { useTransferRealtime } from '../hooks/use-transfer-realtime'
 import { useTransferRequestActions } from '../hooks/use-transfer-request-actions'
 import { useTransferResolutionActions } from '../hooks/use-transfer-resolution-actions'
@@ -62,6 +71,7 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
 
   const requestActions = useTransferRequestActions(transfer)
   const resolutionActions = useTransferResolutionActions(transfer)
+  const allocationActions = useTransferAllocationActions(transfer)
 
   const capabilities = getTransferCapabilities(viewer, transfer)
   const shipments = useMemo(() => transfer?.shipments ?? [], [transfer?.shipments])
@@ -85,6 +95,7 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
   const headerAssignStep = nextSteps.find((step) => step.action.type === 'assign')
   function runNextStep(action: TransferNextStepAction) {
     if (action.type === 'createShipment') requestActions.shipment.open()
+    else if (action.type === 'adjustAllocation') allocationActions.open()
     else if (action.type === 'assign') resolutionActions.assign.open(action.shipment, action.kind)
     else if (action.type === 'confirmDeparture') resolutionActions.departure.open(action.shipment)
     else if (action.type === 'resolveDiscrepancy') setTab('discrepancies')
@@ -155,6 +166,12 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
               >
                 <MessageSquareWarning aria-hidden="true" />
                 Phản hồi
+              </Button>
+            ) : null}
+            {capabilities.canAdjustAllocation ? (
+              <Button type="button" size="sm" variant="outline" onClick={allocationActions.open}>
+                <MapPinned aria-hidden="true" />
+                Điều chỉnh phân bổ
               </Button>
             ) : null}
             {headerAssignStep?.action.type === 'assign' ? (
@@ -317,6 +334,18 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
         isPending={resolutionActions.reopen.isPending}
         onOpenChange={resolutionActions.reopen.onOpenChange}
         onSubmit={(values) => void resolutionActions.reopen.submit(values)}
+      />
+      <AdjustAllocationDialog
+        open={allocationActions.isOpen}
+        items={allocationActions.items}
+        itemId={allocationActions.itemId}
+        options={allocationActions.options}
+        isLoading={allocationActions.isLoading}
+        isError={allocationActions.isError}
+        isPending={allocationActions.isPending}
+        onSelectItem={allocationActions.select}
+        onOpenChange={allocationActions.onOpenChange}
+        onSubmit={allocationActions.submit}
       />
       <AddFeedbackDialog
         open={requestActions.feedback.isOpen}

@@ -4,6 +4,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse } from '@/types/api'
 import { transferService } from '../services/transfer.service'
 import type {
+  AdjustTransferAllocationRequest,
   CancelTransferShipmentRequest,
   CreateTransferShipmentRequest,
   CompleteTransferPickingRequest,
@@ -16,6 +17,7 @@ import type {
   ResolveTransferEscalationRequest,
   ReturnTransferPickRequest,
   SwitchTransferPickRequest,
+  TransferAllocationOption,
   TransferPickAlternative,
   TransferPickSheet,
   TransferReceiveSheet,
@@ -202,6 +204,34 @@ export function useCompleteTransferPickingMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.completePicking(transferId, shipmentId, request),
+    onSuccess: () => invalidateTransferQueries(queryClient),
+    onError: (error) => logTransferError(error),
+  })
+}
+
+export function useTransferAllocationOptionsQuery(
+  transferId: string | null,
+  itemId: string | null
+) {
+  return useQuery<TransferAllocationOption[], ApiErrorResponse>({
+    queryKey: queryKeys.transfers.allocationOptions(transferId ?? '', itemId ?? ''),
+    queryFn: () =>
+      transferService
+        .getAllocationOptions(transferId ?? '', itemId ?? '')
+        .then((response) => response.data),
+    enabled: Boolean(transferId && itemId),
+  })
+}
+
+export function useAdjustTransferAllocationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    { transferId: string; request: AdjustTransferAllocationRequest }
+  >({
+    mutationKey: TRANSFER_MUTATION_KEY,
+    mutationFn: ({ transferId, request }) => transferService.adjustAllocation(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logTransferError(error),
   })

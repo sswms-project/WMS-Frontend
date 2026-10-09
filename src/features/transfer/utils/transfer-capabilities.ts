@@ -30,6 +30,8 @@ export interface TransferCapabilities {
   readonly canReplyFeedback: boolean
   readonly canCreateShipment: boolean
   readonly canResolveDiscrepancy: boolean
+  /** Chủ và quản lý kho xuất đổi nơi lấy hàng của các dòng đang giữ chỗ. */
+  readonly canAdjustAllocation: boolean
   /** UI chỉ hiện một nút: Hủy phiếu khi chưa xuất đợt nào, Dừng phần còn lại khi đã xuất. */
   readonly closingAction: TransferClosingAction
 }
@@ -56,6 +58,7 @@ const NONE: TransferCapabilities = {
   canReplyFeedback: false,
   canCreateShipment: false,
   canResolveDiscrepancy: false,
+  canAdjustAllocation: false,
   closingAction: null,
 }
 
@@ -139,6 +142,11 @@ export function getTransferCapabilities(
       has(viewer, P.TRANSFERS_RESOLVE) &&
       manages(viewer, transfer.destinationWarehouseId) &&
       openDiscrepancies(transfer.discrepancies).length > 0,
+    canAdjustAllocation:
+      has(viewer, P.TRANSFERS_DISPATCH) &&
+      manages(viewer, transfer.sourceWarehouseId) &&
+      isInProgress &&
+      transfer.items.some((item) => (item.allocations ?? []).length > 0),
     closingAction,
   }
 }

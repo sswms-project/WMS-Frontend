@@ -3,6 +3,8 @@ import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse, QueryResult } from '@/types/api'
 import type { WarehouseResponse } from '@/types/warehouse'
 import type {
+  AdjustTransferAllocationRequest,
+  TransferAllocationOption,
   AddTransferFeedbackRequest,
   CancelTransferRequest,
   CancelTransferShipmentRequest,
@@ -167,6 +169,18 @@ export const transferService = {
   recordPick: (transferId: string, shipmentId: string, request: RecordTransferPickRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.transfers.picks(transferId, shipmentId), request)
+      .then(unwrap),
+
+  getAllocationOptions: (transferId: string, itemId: string) =>
+    axiosClient
+      .get<
+        ApiResponse<TransferAllocationOption[]>
+      >(API_ENDPOINTS.transfers.allocationOptions(transferId, itemId))
+      .then(unwrap),
+
+  adjustAllocation: (transferId: string, request: AdjustTransferAllocationRequest) =>
+    axiosClient
+      .post<ApiResponse<unknown>>(API_ENDPOINTS.transfers.adjustAllocation(transferId), request)
       .then(unwrap),
 
   switchPick: (

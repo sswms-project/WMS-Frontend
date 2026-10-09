@@ -8,6 +8,7 @@ import {
 
 export type TransferNextStepAction =
   | { readonly type: 'createShipment' }
+  | { readonly type: 'adjustAllocation' }
   | {
       readonly type: 'assign'
       readonly kind: 'pick' | 'receive'
@@ -43,6 +44,16 @@ export function getTransferNextSteps(
     const hasShipment = (transfer.shipments ?? []).some(
       (shipment) => shipment.status !== 'Cancelled'
     )
+    if (!hasShipment && capabilities.canAdjustAllocation) {
+      steps.push({
+        id: 'check-allocation',
+        title: 'Kiểm tra nơi lấy hàng trước khi tạo đợt',
+        description:
+          'Hệ thống đã tự phân bổ vị trí và lô theo FEFO. Bạn có thể đổi sang nơi khác nếu cần; không bắt buộc.',
+        actionLabel: 'Điều chỉnh phân bổ',
+        action: { type: 'adjustAllocation' },
+      })
+    }
     steps.push({
       id: 'create-shipment',
       title: hasShipment ? 'Còn hàng chưa chia vào đợt xuất' : 'Chưa có đợt xuất',

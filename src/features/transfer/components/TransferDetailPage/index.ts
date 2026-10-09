@@ -1,3 +1,4 @@
+export { AdjustAllocationDialog } from './AdjustAllocationDialog'
 export { AssignTransferTaskDialog } from './AssignTransferTaskDialog'
 export type { AssignTransferTaskTarget } from './AssignTransferTaskDialog'
 export { CreateShipmentDialog } from './CreateShipmentDialog'

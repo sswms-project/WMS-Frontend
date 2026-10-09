@@ -239,6 +239,8 @@ export const queryKeys = {
       ['transfers', 'pick-sheet', transferId, shipmentId] as const,
     pickAlternatives: (transferId: string, shipmentId: string, lineId: string) =>
       ['transfers', 'pick-alternatives', transferId, shipmentId, lineId] as const,
+    allocationOptions: (transferId: string, itemId: string) =>
+      ['transfers', 'allocation-options', transferId, itemId] as const,
     receiveSheet: (transferId: string, shipmentId: string) =>
       ['transfers', 'receive-sheet', transferId, shipmentId] as const,
   },

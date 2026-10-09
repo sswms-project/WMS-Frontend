@@ -465,6 +465,34 @@ export interface CompleteTransferPickingRequest {
   expectedVersion: string
 }
 
+/** Một vị trí/lô ở kho xuất mà dòng phiếu đang giữ chỗ hoặc có thể chuyển sang. */
+export interface TransferAllocationOption {
+  inventoryStockId: string
+  location: string
+  lotNumber: string | null
+  expiryDate: string | null
+  /** Tồn khả dụng cho người khác (chưa tính phần dòng này đang giữ). */
+  availableQuantity: number
+  /** Dòng này đang giữ chỗ bao nhiêu ở đây. */
+  reservedForItem: number
+  /** Phần giữ chỗ chưa bị lấy ra, chuyển đi được. */
+  movableQuantity: number
+}
+
+export interface TransferAllocationMove {
+  itemId: string
+  fromInventoryStockId: string
+  toInventoryStockId: string
+  quantity: number
+}
+
+export interface AdjustTransferAllocationRequest {
+  expectedVersion: string
+  moves: TransferAllocationMove[]
+  reason: string | null
+  commandId: string
+}
+
 export interface ReopenTransferPickingRequest {
   expectedVersion: string
   reason: string

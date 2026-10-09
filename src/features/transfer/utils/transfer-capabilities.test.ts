@@ -255,3 +255,46 @@ describe('getShipmentCapabilities', () => {
     })
   })
 })
+
+describe('canAdjustAllocation', () => {
+  const SOURCE = '70000000-0000-4000-8000-000000000001'
+  const DESTINATION = '70000000-0000-4000-8000-000000000002'
+  const allocation = {
+    inventoryStockId: 's1',
+    location: 'Khu K01 / Kệ A / A-01',
+    lotNumber: null,
+    expiryDate: null,
+    quantity: 5,
+  }
+  const allocated = buildTransfer({
+    sourceWarehouseId: SOURCE,
+    destinationWarehouseId: DESTINATION,
+    items: [buildTransferItem({ allocations: [allocation] })],
+  })
+
+  it('is for the owner and the source warehouse manager only', () => {
+    const sourceManager = viewer([P.TRANSFERS_DISPATCH], { warehouseIds: [SOURCE] })
+    const destinationManager = viewer([P.TRANSFERS_DISPATCH], { warehouseIds: [DESTINATION] })
+    const owner = viewer([P.TRANSFERS_DISPATCH], { isTenantOwner: true })
+    expect(getTransferCapabilities(sourceManager, allocated).canAdjustAllocation).toBe(true)
+    expect(getTransferCapabilities(owner, allocated).canAdjustAllocation).toBe(true)
+    expect(getTransferCapabilities(destinationManager, allocated).canAdjustAllocation).toBe(false)
+    expect(getTransferCapabilities(viewer([P.TRANSFERS_PICK]), allocated).canAdjustAllocation).toBe(
+      false
+    )
+  })
+
+  it('needs an in-progress transfer that still shows its allocation', () => {
+    const sourceManager = viewer([P.TRANSFERS_DISPATCH], { warehouseIds: [SOURCE] })
+    expect(
+      getTransferCapabilities(sourceManager, { ...allocated, status: 'Completed' })
+        .canAdjustAllocation
+    ).toBe(false)
+    expect(
+      getTransferCapabilities(
+        sourceManager,
+        buildTransfer({ sourceWarehouseId: SOURCE, items: [buildTransferItem()] })
+      ).canAdjustAllocation
+    ).toBe(false)
+  })
+})

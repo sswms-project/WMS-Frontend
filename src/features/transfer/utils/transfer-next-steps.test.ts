@@ -110,3 +110,35 @@ describe('getTransferNextSteps', () => {
     expect(stepsFor(destinationManager, transfer)).toEqual([])
   })
 })
+
+describe('allocation hint', () => {
+  const allocated = buildTransfer({
+    sourceWarehouseId: SOURCE,
+    destinationWarehouseId: DESTINATION,
+    items: [
+      buildTransferItem({
+        quantity: 10,
+        batchedQuantity: 0,
+        unbatchedQuantity: 10,
+        allocations: [
+          {
+            inventoryStockId: 's1',
+            location: 'Khu K01',
+            lotNumber: null,
+            expiryDate: null,
+            quantity: 10,
+          },
+        ],
+      }),
+    ],
+  })
+
+  it('suggests checking the allocation before the first shipment is created', () => {
+    expect(stepsFor(sourceManager, allocated)).toEqual(['check-allocation', 'create-shipment'])
+  })
+
+  it('stops suggesting it once a shipment exists', () => {
+    const withShipment = { ...allocated, shipments: [buildShipment({ status: 'Picking' })] }
+    expect(stepsFor(sourceManager, withShipment)).not.toContain('check-allocation')
+  })
+})

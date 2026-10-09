@@ -358,6 +358,9 @@ export const API_ENDPOINTS = {
     submitDraft: (transferId: string) => `/transfers/drafts/${transferId}/submit`,
     detail: (transferId: string) => `/transfers/${transferId}`,
     update: (transferId: string) => `/transfers/${transferId}`,
+    allocationOptions: (transferId: string, itemId: string) =>
+      `/transfers/${transferId}/items/${itemId}/allocation-options`,
+    adjustAllocation: (transferId: string) => `/transfers/${transferId}/allocation`,
     cancel: (transferId: string) => `/transfers/${transferId}/cancel`,
     stopRemaining: (transferId: string) => `/transfers/${transferId}/stop-remaining`,
     feedback: (transferId: string) => `/transfers/${transferId}/feedback`,
