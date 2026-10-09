@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { logger } from '@/lib/logger'
+import { logTransferError } from '../utils/transfer-errors'
 import { queryKeys } from '@/lib/query-keys'
 import type { ApiErrorResponse, ApiResponse, QueryResult } from '@/types/api'
 import type { WarehouseResponse } from '@/types/warehouse'
@@ -141,7 +141,7 @@ export function useSaveTransferDraftMutation() {
         ? transferService.updateDraft(transferId, request)
         : transferService.createDraft(request),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all }),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
 
@@ -151,7 +151,7 @@ export function useSubmitTransferDraftMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.submitDraft(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
 
@@ -161,7 +161,7 @@ export function useUpdateTransferMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.updateTransfer(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
 
@@ -171,7 +171,7 @@ export function useCancelTransferMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.cancelTransfer(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
 
@@ -181,7 +181,7 @@ export function useStopTransferRemainingMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.stopRemaining(transferId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
 
@@ -191,7 +191,7 @@ export function useAddTransferFeedbackMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, request }) => transferService.addFeedback(transferId, request),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all }),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
 
@@ -202,6 +202,6 @@ export function useReplyTransferFeedbackMutation() {
     mutationFn: ({ transferId, feedbackId, request }) =>
       transferService.replyFeedback(transferId, feedbackId, request),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all }),
-    onError: (error) => logger.error(error),
+    onError: (error) => logTransferError(error),
   })
 }
