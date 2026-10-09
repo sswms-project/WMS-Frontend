@@ -44,9 +44,11 @@ export function ProductBarcodePanel({
         format: 'CODE128',
         displayValue: true,
         font: 'JetBrains Mono, monospace',
-        fontSize: 14,
-        height: 88,
-        margin: 18,
+        fontSize: 16,
+        // Vạch 1,5px (mã sản phẩm ngắn nên không giảm tới 1px) và cao hơn cho dễ quét.
+        width: 1.5,
+        height: 120,
+        margin: 10,
         background: '#ffffff',
         lineColor: '#111111',
       })
@@ -174,7 +176,7 @@ export function ProductBarcodePanel({
         <svg
           ref={svgRef}
           role="img"
-          className="h-auto w-full max-w-md"
+          className="h-auto max-w-full [&_rect]:[shape-rendering:crispEdges]"
           aria-label={`Mã vạch sản phẩm ${sku}`}
         />
       </div>

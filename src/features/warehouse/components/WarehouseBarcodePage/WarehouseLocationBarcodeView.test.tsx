@@ -18,7 +18,7 @@ describe('WarehouseLocationBarcodeView', () => {
   it('lets a long barcode shrink to its container instead of scrolling sideways', () => {
     render(<WarehouseLocationBarcodeView warehouseId="w1" barcode={barcode} />)
     const svg = screen.getByRole('img', { name: 'Mã vạch A01' })
-    expect(svg).toHaveClass('max-w-md', 'h-auto')
+    expect(svg).toHaveClass('max-w-full', 'h-auto')
     expect(svg.getAttribute('viewBox')).toBeTruthy()
   })
 
