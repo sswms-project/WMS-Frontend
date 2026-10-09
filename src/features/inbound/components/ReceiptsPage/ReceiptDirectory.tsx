@@ -1,4 +1,6 @@
 import { CalendarRange, Check, Eye, RefreshCw, Search, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ClickableTableRow } from '@/components/operations/ClickableTableRow'
 import type { Route } from 'next'
 import Link from 'next/link'
 import type { DateRange } from 'react-day-picker'
@@ -33,13 +35,11 @@ import {
   formatOperationalDateTime,
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { InboundStatusBadge } from '../InboundWorkspace'
-import { goodsPreviewInteractions } from '../../utils/goods-preview-interactions'
+import { CellStack, InboundStatusBadge, QuantityProgress } from '../InboundWorkspace'
+import { rowActivationProps } from '../../utils/row-activation-props'
 import { TaskAssigneeCell } from '../TaskAssignment'
 
 interface ReceiptDirectoryProps {
-  readonly previewId?: string
-  readonly onPreview?: (item: GoodsReceiptSummary) => void
   readonly items: readonly GoodsReceiptSummary[]
   readonly totalCount: number
   readonly page: number
@@ -64,8 +64,6 @@ interface ReceiptDirectoryProps {
 }
 
 export function ReceiptDirectory({
-  previewId,
-  onPreview,
   items,
   totalCount,
   page,
@@ -88,6 +86,7 @@ export function ReceiptDirectory({
   onRetry,
   onApprove,
 }: ReceiptDirectoryProps) {
+  const router = useRouter()
   return (
     <OperationalListPanel aria-label="Danh sách phiếu nhận hàng">
       <div className="flex shrink-0 flex-col gap-3 border-b p-3 lg:flex-row lg:items-center lg:justify-between">
@@ -208,9 +207,8 @@ export function ReceiptDirectory({
             {items.map((item) => (
               <Item
                 key={item.id}
-                {...goodsPreviewInteractions(
-                  onPreview ? () => onPreview(item) : undefined,
-                  previewId === item.id,
+                {...rowActivationProps(
+                  () => router.push(APP_ROUTES.goodsReceiptDetail(item.id) as Route),
                   'border-b last:border-b-0'
                 )}
               >
@@ -260,19 +258,15 @@ export function ReceiptDirectory({
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[1200px]">
+            <Table className="min-w-[1000px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
-                  <TableHead className="sticky top-0 z-10">Kho</TableHead>
-                  <TableHead className="sticky top-0 z-10">Trạng thái</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Mặt hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Nhận / Hỏng</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Đã cất / Còn cất</TableHead>
-                  <TableHead className="sticky top-0 z-10">Người cất hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10">Người tạo</TableHead>
-                  <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
+                  <TableHead className="sticky top-0 z-10">Yêu cầu · Kho</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-36">Trạng thái</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-48">Đã cất / Đã nhận</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-48">Người cất hàng</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-40">Tạo bởi</TableHead>
                   <TableHead className="sticky top-0 z-10">
                     <span className="sr-only">Thao tác</span>
                   </TableHead>
@@ -280,12 +274,9 @@ export function ReceiptDirectory({
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow
+                  <ClickableTableRow
                     key={item.id}
-                    {...goodsPreviewInteractions(
-                      onPreview ? () => onPreview(item) : undefined,
-                      previewId === item.id
-                    )}
+                    href={APP_ROUTES.goodsReceiptDetail(item.id) as Route}
                   >
                     <TableCell>
                       <Link
@@ -294,36 +285,46 @@ export function ReceiptDirectory({
                       >
                         {item.receiptCode}
                       </Link>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        {item.lineCount} mặt hàng
+                      </p>
                     </TableCell>
-                    <TableCell className="font-mono">{item.inboundRequestCode}</TableCell>
-                    <TableCell>{item.warehouseName}</TableCell>
+                    <TableCell className="min-w-0">
+                      <CellStack
+                        primary={<span className="font-mono">{item.inboundRequestCode}</span>}
+                        secondary={item.warehouseName}
+                      />
+                    </TableCell>
                     <TableCell>
                       <InboundStatusBadge status={item.status} />
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{item.lineCount}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQuantity(item.receivedQuantity)} /{' '}
-                      {formatQuantity(item.damagedQuantity)}
+                    <TableCell>
+                      <QuantityProgress
+                        done={item.putAwayQuantity}
+                        total={Math.max(0, item.receivedQuantity - item.damagedQuantity)}
+                        doneText={formatQuantity(item.putAwayQuantity)}
+                        totalText={formatQuantity(
+                          Math.max(0, item.receivedQuantity - item.damagedQuantity)
+                        )}
+                        suffix={
+                          item.damagedQuantity > 0
+                            ? `· hỏng ${formatQuantity(item.damagedQuantity)}`
+                            : undefined
+                        }
+                      />
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQuantity(item.putAwayQuantity)} /{' '}
-                      {formatQuantity(
-                        Math.max(
-                          0,
-                          item.receivedQuantity - item.damagedQuantity - item.putAwayQuantity
-                        )
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-40">
+                    <TableCell className="max-w-48">
                       <TaskAssigneeCell
                         assigneeName={item.putAwayAssignedToName}
                         assignedAt={item.putAwayAssignedAt}
                         executionStatus={item.putAwayExecutionStatus}
                       />
                     </TableCell>
-                    <TableCell>{item.createdByName}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatOperationalDateTime(item.createdAt)}
+                    <TableCell className="min-w-0">
+                      <CellStack
+                        primary={item.createdByName}
+                        secondary={formatOperationalDateTime(item.createdAt)}
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
@@ -354,7 +355,7 @@ export function ReceiptDirectory({
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>
