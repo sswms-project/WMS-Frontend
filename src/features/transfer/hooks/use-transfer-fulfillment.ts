@@ -6,7 +6,9 @@ import { transferService } from '../services/transfer.service'
 import type {
   CancelTransferShipmentRequest,
   CreateTransferShipmentRequest,
+  CompleteTransferPickingRequest,
   DispatchTransferShipmentRequest,
+  ReopenTransferPickingRequest,
   EscalateTransferPickRequest,
   ReceiveTransferShipmentRequest,
   RecordTransferPickRequest,
@@ -185,6 +187,36 @@ export function useReturnTransferPickMutation() {
     mutationKey: TRANSFER_MUTATION_KEY,
     mutationFn: ({ transferId, shipmentId, request }) =>
       transferService.returnPick(transferId, shipmentId, request),
+    onSuccess: () => invalidateTransferQueries(queryClient),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useCompleteTransferPickingMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    ShipmentScope & { request: CompleteTransferPickingRequest }
+  >({
+    mutationKey: TRANSFER_MUTATION_KEY,
+    mutationFn: ({ transferId, shipmentId, request }) =>
+      transferService.completePicking(transferId, shipmentId, request),
+    onSuccess: () => invalidateTransferQueries(queryClient),
+    onError: (error) => logger.error(error),
+  })
+}
+
+export function useReopenTransferPickingMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ApiResponse<unknown>,
+    ApiErrorResponse,
+    ShipmentScope & { request: ReopenTransferPickingRequest }
+  >({
+    mutationKey: TRANSFER_MUTATION_KEY,
+    mutationFn: ({ transferId, shipmentId, request }) =>
+      transferService.reopenPicking(transferId, shipmentId, request),
     onSuccess: () => invalidateTransferQueries(queryClient),
     onError: (error) => logger.error(error),
   })

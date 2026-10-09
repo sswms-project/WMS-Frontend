@@ -11,6 +11,14 @@ export interface TransferViewer {
   readonly currentUserId: string | null
   /** Chủ doanh nghiệp được sửa/hủy mọi phiếu; người khác chỉ phiếu do mình tạo (BE kiểm lại). */
   readonly isTenantOwner: boolean
+  /** Kho người xem được gán; bỏ trống nghĩa là không giới hạn theo kho (BE vẫn kiểm lại). */
+  readonly warehouseIds?: readonly string[]
+}
+
+/** Kho của phiếu: kho xuất giao việc lấy hàng, kho nhập giao việc nhận hàng. */
+export interface TransferWarehouses {
+  readonly sourceWarehouseId: string
+  readonly destinationWarehouseId: string
 }
 
 export type TransferClosingAction = 'cancel' | 'stop' | null
@@ -29,8 +37,15 @@ export interface TransferCapabilities {
 export interface ShipmentCapabilities {
   readonly canCancel: boolean
   readonly canOpenPick: boolean
+  /** Quản lý kho xuất xác nhận xe đã rời kho (trừ tồn). */
+  readonly canConfirmDeparture: boolean
+  /** Quản lý mở lại lấy hàng khi đợt đang chờ xuất. */
+  readonly canReopenPicking: boolean
   readonly canOpenReceive: boolean
-  readonly canAssignTask: boolean
+  /** Quản lý kho xuất giao việc lấy hàng. */
+  readonly canAssignPick: boolean
+  /** Quản lý kho nhập giao việc nhận hàng. */
+  readonly canAssignReceive: boolean
   readonly canResolveEscalation: boolean
 }
 
@@ -46,6 +61,11 @@ const NONE: TransferCapabilities = {
 
 function has(viewer: TransferViewer, permission: string) {
   return viewer.permissions.includes(permission)
+}
+
+function manages(viewer: TransferViewer, warehouseId: string | undefined) {
+  if (viewer.isTenantOwner || !viewer.warehouseIds || !warehouseId) return true
+  return viewer.warehouseIds.includes(warehouseId)
 }
 
 export function hasDispatchedAny(transfer: Pick<TransferDetail, 'items'>) {
@@ -104,7 +124,10 @@ export function getTransferCapabilities(
       isOpen && (has(viewer, P.TRANSFERS_DISPATCH) || has(viewer, P.TRANSFERS_RECEIVE)),
     canReplyFeedback: canCreate && isOpen && hasOpenFeedback(transfer.feedbacks),
     canCreateShipment:
-      has(viewer, P.TRANSFERS_DISPATCH) && isInProgress && unbatchedQuantity(transfer) > 0,
+      has(viewer, P.TRANSFERS_DISPATCH) &&
+      manages(viewer, transfer.sourceWarehouseId) &&
+      isInProgress &&
+      unbatchedQuantity(transfer) > 0,
     canResolveDiscrepancy:
       has(viewer, P.TRANSFERS_RESOLVE) && openDiscrepancies(transfer.discrepancies).length > 0,
     closingAction,
@@ -113,15 +136,32 @@ export function getTransferCapabilities(
 
 export function getShipmentCapabilities(
   viewer: TransferViewer,
-  shipment: Pick<TransferShipment, 'status' | 'lines'>
+  shipment: Pick<TransferShipment, 'status' | 'lines'>,
+  warehouses?: TransferWarehouses
 ): ShipmentCapabilities {
   const isPicking = shipment.status === 'Picking'
+  const isReady = shipment.status === 'ReadyToDispatch'
   const isReceivable = shipment.status === 'InTransit' || shipment.status === 'Receiving'
   return {
     canCancel: has(viewer, P.TRANSFERS_DISPATCH) && isPicking,
     canOpenPick: has(viewer, P.TRANSFERS_PICK) && isPicking,
+    canConfirmDeparture:
+      has(viewer, P.TRANSFERS_DISPATCH) &&
+      isReady &&
+      manages(viewer, warehouses?.sourceWarehouseId),
+    canReopenPicking:
+      has(viewer, P.TRANSFERS_DISPATCH) &&
+      isReady &&
+      manages(viewer, warehouses?.sourceWarehouseId),
     canOpenReceive: has(viewer, P.TRANSFERS_RECEIVE) && isReceivable,
-    canAssignTask: has(viewer, P.WAREHOUSE_TASKS_ASSIGN) && (isPicking || isReceivable),
+    canAssignPick:
+      has(viewer, P.WAREHOUSE_TASKS_ASSIGN) &&
+      isPicking &&
+      manages(viewer, warehouses?.sourceWarehouseId),
+    canAssignReceive:
+      has(viewer, P.WAREHOUSE_TASKS_ASSIGN) &&
+      isReceivable &&
+      manages(viewer, warehouses?.destinationWarehouseId),
     canResolveEscalation:
       has(viewer, P.TRANSFERS_DISPATCH) &&
       isPicking &&

@@ -27,6 +27,8 @@ interface TransferShipmentsPanelProps {
   readonly shipments: readonly TransferShipment[]
   readonly capabilities: Readonly<Record<string, ShipmentCapabilities>>
   readonly onCancelShipment: (shipment: TransferShipment) => void
+  readonly onConfirmDeparture: (shipment: TransferShipment) => void
+  readonly onReopenPicking: (shipment: TransferShipment) => void
   readonly onAssignTask: (shipment: TransferShipment, kind: TransferTaskKind) => void
   readonly onResolveEscalation: (shipment: TransferShipment) => void
 }
@@ -53,6 +55,8 @@ export function TransferShipmentsPanel({
   shipments,
   capabilities,
   onCancelShipment,
+  onConfirmDeparture,
+  onReopenPicking,
   onAssignTask,
   onResolveEscalation,
 }: TransferShipmentsPanelProps) {
@@ -154,7 +158,7 @@ export function TransferShipmentsPanel({
                     Xử lý báo cáo lấy hàng
                   </Button>
                 ) : null}
-                {allowed?.canAssignTask && shipment.status === 'Picking' && shipment.pickTaskId ? (
+                {allowed?.canAssignPick && shipment.pickTaskId ? (
                   <Button
                     type="button"
                     size="sm"
@@ -165,9 +169,7 @@ export function TransferShipmentsPanel({
                     {shipment.pickAssigneeId ? 'Giao lại việc lấy' : 'Giao việc lấy hàng'}
                   </Button>
                 ) : null}
-                {allowed?.canAssignTask &&
-                (shipment.status === 'InTransit' || shipment.status === 'Receiving') &&
-                shipment.receiveTaskId ? (
+                {allowed?.canAssignReceive && shipment.receiveTaskId ? (
                   <Button
                     type="button"
                     size="sm"
@@ -192,6 +194,22 @@ export function TransferShipmentsPanel({
                       <PackageCheck aria-hidden="true" />
                       Nhận hàng
                     </Link>
+                  </Button>
+                ) : null}
+                {allowed?.canConfirmDeparture ? (
+                  <Button type="button" size="sm" onClick={() => onConfirmDeparture(shipment)}>
+                    <PackageCheck aria-hidden="true" />
+                    Xác nhận đã xuất kho
+                  </Button>
+                ) : null}
+                {allowed?.canReopenPicking ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onReopenPicking(shipment)}
+                  >
+                    Mở lại lấy hàng
                   </Button>
                 ) : null}
                 {allowed?.canCancel ? (

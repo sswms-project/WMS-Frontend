@@ -23,6 +23,7 @@ export type TransferReceiveProgress = 'NotReceived' | 'PartiallyReceived' | 'Rec
 
 export type TransferShipmentStatus =
   | 'Picking'
+  | 'ReadyToDispatch'
   | 'InTransit'
   | 'Receiving'
   | 'Received'
@@ -100,6 +101,22 @@ export interface TransferAvailabilityQuery {
   sourceWarehouseId: string
   destinationWarehouseId: string
   productIds: string[]
+}
+
+export interface TransferSourceProductsQuery {
+  sourceWarehouseId: string
+  destinationWarehouseId: string
+  searchTerm?: string
+  pageSize?: number
+}
+
+/** Sản phẩm còn tồn khả dụng ở kho xuất (theo ĐVT chính). */
+export interface TransferSourceProduct {
+  productId: string
+  sku: string
+  productName: string
+  baseUnitName: string
+  availableQuantity: number
 }
 
 export interface TransferSummary {
@@ -296,6 +313,24 @@ export interface TransferAvailability {
   units: TransferAvailabilityUnit[]
 }
 
+/** Một đơn vị chọn được trên dòng hàng; tồn chỉ có khi đã chọn kho xuất. */
+export interface TransferLineUnitOption {
+  unitId: string
+  unitName: string
+  /** Số đơn vị chính trong 1 đơn vị này (đơn vị chính luôn là 1). */
+  conversionFactor: number
+  quantityPrecision: number
+  isBase: boolean
+  availableQuantity?: number
+}
+
+export interface TransferLineUnits {
+  productId: string
+  baseUnitId: string
+  baseUnitName: string
+  units: TransferLineUnitOption[]
+}
+
 export interface TransferLineInput {
   itemId: string | null
   productId: string
@@ -397,6 +432,15 @@ export interface ReturnTransferPickRequest {
   pickDetailId: string
   quantity: number | null
   scannedSlotCode: string
+}
+
+export interface CompleteTransferPickingRequest {
+  expectedVersion: string
+}
+
+export interface ReopenTransferPickingRequest {
+  expectedVersion: string
+  reason: string
 }
 
 export interface DispatchTransferShipmentRequest {

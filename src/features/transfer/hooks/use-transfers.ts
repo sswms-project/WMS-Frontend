@@ -12,6 +12,8 @@ import type {
   SubmitTransferRequest,
   TransferAvailability,
   TransferAvailabilityQuery,
+  TransferSourceProduct,
+  TransferSourceProductsQuery,
   TransferDetail,
   TransferListQuery,
   TransferListResponse,
@@ -78,6 +80,15 @@ export function useTransferSourceWarehousesQuery(
     queryFn: () => transferService.getSourceWarehouses(params).then((response) => response.data),
     placeholderData: (previousData) => previousData,
     enabled,
+  })
+}
+
+export function useTransferSourceProductsQuery(query: TransferSourceProductsQuery, enabled = true) {
+  return useQuery<TransferSourceProduct[], ApiErrorResponse>({
+    queryKey: queryKeys.transfers.sourceProducts(query),
+    queryFn: () => transferService.getSourceProducts(query).then((response) => response.data),
+    enabled,
+    placeholderData: (previousData) => previousData,
   })
 }
 

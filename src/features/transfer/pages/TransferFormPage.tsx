@@ -13,12 +13,16 @@ import {
 } from '@/components/operations/OperationalState'
 import { Button } from '@/components/ui/button'
 import { P } from '@/config/permissionCodes'
-import { useProductOptionsQuery } from '@/features/inbound-request/hooks/use-inbound-requests'
+import {
+  useInboundRequestProductDetails,
+  useInboundRequestUnitConversions,
+} from '@/features/inbound-request/hooks/use-inbound-requests'
 import {
   RECORD_STATUS,
   type LookupOption,
 } from '@/features/inbound-request/types/inbound-request.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
+import { useUnitsQuery } from '@/features/product/hooks/use-products'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
@@ -37,6 +41,7 @@ import {
   useTransferAvailabilityQuery,
   useTransferQuery,
   useTransferRequesterOptionsQuery,
+  useTransferSourceProductsQuery,
   useTransferSourceWarehousesQuery,
 } from '../hooks/use-transfers'
 import {
@@ -50,6 +55,8 @@ import {
   emptyTransferForm,
   visibleTransferItems,
 } from '../utils/transfer-form'
+import { buildTransferLineUnits } from '../utils/transfer-line-units'
+import type { TransferLineUnits } from '../types/transfer.types'
 
 const LOOKUP_PAGE_SIZE = 20
 
@@ -102,22 +109,32 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
     },
     Boolean(destinationWarehouseId)
   )
-  const productsQuery = useProductOptionsQuery({
-    pageNumber: 1,
-    pageSize: LOOKUP_PAGE_SIZE,
-    status: RECORD_STATUS.Active,
-    ...(debouncedProductSearch ? { searchTerm: debouncedProductSearch } : {}),
-  })
+  const hasWarehouses = Boolean(
+    sourceWarehouseId && destinationWarehouseId && sourceWarehouseId !== destinationWarehouseId
+  )
+  // Chỉ gợi ý sản phẩm còn tồn khả dụng ở kho xuất, để không chọn nhầm hàng kho đó không có.
+  const productsQuery = useTransferSourceProductsQuery(
+    {
+      sourceWarehouseId,
+      destinationWarehouseId,
+      pageSize: LOOKUP_PAGE_SIZE,
+      ...(debouncedProductSearch ? { searchTerm: debouncedProductSearch } : {}),
+    },
+    hasWarehouses
+  )
   const productIds = useMemo(
     () => [...new Set(lines.map((line) => line.productId).filter(Boolean))].sort(),
     [lines]
   )
   const availabilityQuery = useTransferAvailabilityQuery(
     { sourceWarehouseId, destinationWarehouseId, productIds },
-    Boolean(
-      sourceWarehouseId && destinationWarehouseId && sourceWarehouseId !== destinationWarehouseId
-    )
+    hasWarehouses
   )
+
+  // Đơn vị lấy từ danh mục sản phẩm để hiện ngay khi chọn sản phẩm, không chờ chọn kho.
+  const productDetails = useInboundRequestProductDetails(productIds)
+  const productConversions = useInboundRequestUnitConversions(productIds)
+  const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
 
   const codeSessionKey = useId()
   const nextCodeQuery = useNextTransferCodeQuery(mode === 'create', codeSessionKey)
@@ -166,6 +183,25 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
       Object.fromEntries((availabilityQuery.data ?? []).map((entry) => [entry.productId, entry])),
     [availabilityQuery.data]
   )
+  const unitsByProductId: Record<string, TransferLineUnits> = {}
+  productIds.forEach((id, index) => {
+    const product = productDetails[index]?.data
+    if (!product) return
+    unitsByProductId[id] = buildTransferLineUnits(
+      product,
+      productConversions[index]?.data ?? [],
+      unitsQuery.data ?? [],
+      availabilityByProductId[id]
+    )
+  })
+  const isUnitLoading =
+    unitsQuery.isPending ||
+    productDetails.some((query) => query.isPending) ||
+    productConversions.some((query) => query.isPending)
+  const isUnitError =
+    unitsQuery.isError ||
+    productDetails.some((query) => query.isError) ||
+    productConversions.some((query) => query.isError)
   const knownProductOptions = useMemo(() => {
     const options: Record<string, LookupOption> = {}
     for (const item of detail?.items ?? []) {
@@ -184,11 +220,11 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   }, [availabilityQuery.data, detail?.items])
   const productOptions = useMemo<LookupOption[]>(
     () =>
-      (productsQuery.data?.items ?? []).map((product) => ({
-        value: product.id,
-        label: `${product.sku} - ${product.productName}`,
+      (productsQuery.data ?? []).map((product) => ({
+        value: product.productId,
+        label: `${product.sku} - ${product.productName} (tồn ${formatQuantity(product.availableQuantity)} ${product.baseUnitName})`,
       })),
-    [productsQuery.data?.items]
+    [productsQuery.data]
   )
 
   const destinationOptions = useMemo(
@@ -253,9 +289,9 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
     (detail?.isLegacyWorkflow || (detail?.status !== 'Draft' && detail?.status !== 'InProgress'))
 
   const totalBaseQuantity = lines.reduce((sum, line) => {
-    const unit = availabilityByProductId[line.productId]?.units.find(
-      (candidate) =>
-        candidate.unitId === (line.unitId || availabilityByProductId[line.productId]?.baseUnitId)
+    const info = unitsByProductId[line.productId]
+    const unit = info?.units.find(
+      (candidate) => candidate.unitId === (line.unitId || info.baseUnitId)
     )
     return unit && Number.isFinite(line.quantity)
       ? sum + line.quantity * unit.conversionFactor
@@ -313,7 +349,10 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           warehousesLocked={warehousesLocked}
           productOptions={productOptions}
           knownProductOptions={knownProductOptions}
-          availabilityByProductId={availabilityByProductId}
+          unitsByProductId={unitsByProductId}
+          isUnitLoading={isUnitLoading}
+          isUnitError={isUnitError}
+          hasWarehouses={hasWarehouses}
           lockByItemId={lockInfoByItemId}
           isProductSearchLoading={productsQuery.isFetching}
           isSaving={actions.isSaving}

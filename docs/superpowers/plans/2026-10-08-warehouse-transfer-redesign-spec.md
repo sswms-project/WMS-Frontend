@@ -735,3 +735,23 @@ Rà soát BE + FE theo spec, `.rules` và `AGENTS.md` hai repo, GitNexus (impact
 ### 22.4. Kiểm thử
 
 BE 1022 đạt, 1 bỏ qua; FE 643 đạt, typecheck và lint sạch. Trình duyệt: danh sách (mobile + desktop, bộ lọc, menu thao tác), form nháp lưu nhiều lần, gửi yêu cầu.
+
+## 23. Chỉnh sửa theo phản hồi dùng thử (2026-10-09)
+
+**Luồng xuất đợt thành hai bước (phương án A, không đổi vị trí tồn)**
+
+- Thêm trạng thái đợt `ReadyToDispatch` ("Chờ xuất kho"). Trạng thái lưu dạng chuỗi nên không cần migration.
+- Nhân viên (`transfers:pick`) bấm **Hoàn tất lấy hàng**: kiểm đủ/không dư/không chờ quản lý, đợt sang `ReadyToDispatch`, công việc lấy hàng hoàn tất, báo Manager kho xuất. Chưa trừ tồn.
+- Manager kho xuất (`transfers:dispatch`) bấm **Xác nhận đã xuất kho** khi xe rời: trừ tồn, đợt sang `InTransit`, tạo công việc nhận hàng. Trước đây nhân viên tự xuất đợt.
+- Manager có thể **Mở lại lấy hàng** (`POST .../reopen-picking`, bắt buộc lý do) để đưa đợt về `Picking`.
+- Hủy phiếu và dừng phần còn lại bị chặn khi còn đợt `ReadyToDispatch`, kèm hướng dẫn xử lý.
+
+**Gán việc theo kho**: Manager kho xuất giao việc lấy hàng và tạo đợt; Manager kho nhập giao việc nhận hàng (FE kiểm theo kho được gán, BE vẫn kiểm `Manage` theo kho của công việc).
+
+**Giao diện chi tiết phiếu**: dải "Việc tiếp theo" theo vai trò và kho; nút giao việc ở góc phải trên; bố cục thông tin có cột Tiến độ riêng; nhãn "Lý do điều chuyển" và "Ghi chú cho kho"; cột danh sách "Mã yêu cầu".
+
+**Màn lấy/nhận hàng**: báo rõ khi tài khoản thiếu quyền `transfers:pick`/`transfers:receive` thay vì ẩn nút; "Bắt đầu" ở Công việc của tôi mở thẳng màn lấy/nhận hàng.
+
+**Form tạo yêu cầu**: ĐVT lấy từ sản phẩm (đơn vị chính + quy đổi) nên hiện ngay, nhãn "Thùng (1 Thùng = 24 Chai)"; chỉ gợi ý sản phẩm còn tồn khả dụng ở kho xuất (`GET /api/transfers/source-products`); nút "Tạo yêu cầu" và "Tạo đợt xuất" xám khi vượt tồn hoặc chưa chọn dòng.
+
+**Hiệu năng**: gửi yêu cầu tải tồn khả dụng và giữ chỗ hiện có một lần cho cả phiếu thay vì lặp theo từng dòng. Chưa đo thời gian thực trên DB từ xa.

@@ -213,4 +213,20 @@ describe('getShipmentCapabilities', () => {
       false
     )
   })
+
+  it('lets only a dispatching manager confirm departure or reopen a shipment waiting to leave', () => {
+    const waiting = buildShipment({ status: 'ReadyToDispatch' })
+    const manager = getShipmentCapabilities(viewer([P.TRANSFERS_DISPATCH]), waiting)
+    expect(manager).toMatchObject({
+      canConfirmDeparture: true,
+      canReopenPicking: true,
+      canOpenPick: false,
+      canCancel: false,
+    })
+    const picker = getShipmentCapabilities(viewer([P.TRANSFERS_PICK]), waiting)
+    expect(picker).toMatchObject({ canConfirmDeparture: false, canOpenPick: false })
+    expect(
+      getShipmentCapabilities(viewer([P.TRANSFERS_DISPATCH]), buildShipment()).canConfirmDeparture
+    ).toBe(false)
+  })
 })

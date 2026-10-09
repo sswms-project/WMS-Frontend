@@ -8,7 +8,9 @@ import type {
   CancelTransferRequest,
   CancelTransferShipmentRequest,
   CreateTransferShipmentRequest,
+  CompleteTransferPickingRequest,
   DispatchTransferShipmentRequest,
+  ReopenTransferPickingRequest,
   EscalateTransferPickRequest,
   ReceiveTransferShipmentRequest,
   RecordTransferPickRequest,
@@ -21,6 +23,8 @@ import type {
   SwitchTransferPickRequest,
   TransferAvailability,
   TransferAvailabilityQuery,
+  TransferSourceProduct,
+  TransferSourceProductsQuery,
   TransferDetail,
   TransferListQuery,
   TransferListResponse,
@@ -76,6 +80,11 @@ export const transferService = {
       .get<ApiResponse<QueryResult<WarehouseResponse>>>(API_ENDPOINTS.transfers.sourceWarehouses, {
         params,
       })
+      .then(unwrap),
+
+  getSourceProducts: (params: TransferSourceProductsQuery) =>
+    axiosClient
+      .get<ApiResponse<TransferSourceProduct[]>>(API_ENDPOINTS.transfers.sourceProducts, { params })
       .then(unwrap),
 
   getAvailability: (query: TransferAvailabilityQuery) =>
@@ -200,6 +209,24 @@ export const transferService = {
       .post<
         ApiResponse<unknown>
       >(API_ENDPOINTS.transfers.returnPick(transferId, shipmentId), request)
+      .then(unwrap),
+
+  completePicking: (
+    transferId: string,
+    shipmentId: string,
+    request: CompleteTransferPickingRequest
+  ) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.transfers.completePicking(transferId, shipmentId), request)
+      .then(unwrap),
+
+  reopenPicking: (transferId: string, shipmentId: string, request: ReopenTransferPickingRequest) =>
+    axiosClient
+      .post<
+        ApiResponse<unknown>
+      >(API_ENDPOINTS.transfers.reopenPicking(transferId, shipmentId), request)
       .then(unwrap),
 
   dispatchShipment: (

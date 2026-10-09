@@ -27,6 +27,7 @@ import type {
 import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
   TransferAvailabilityQuery,
+  TransferSourceProductsQuery,
   TransferListQuery,
   TransferSourceWarehouseQuery,
 } from '@/features/transfer/types/transfer.types'
@@ -227,6 +228,8 @@ export const queryKeys = {
     requesterOptions: ['transfers', 'requester-options'] as const,
     sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
       ['transfers', 'source-warehouses', params] as const,
+    sourceProducts: (params: TransferSourceProductsQuery) =>
+      ['transfers', 'source-products', params] as const,
     availability: (params: TransferAvailabilityQuery) =>
       ['transfers', 'availability', params] as const,
     pickSheet: (transferId: string, shipmentId: string) =>

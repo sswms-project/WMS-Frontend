@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -36,6 +36,7 @@ import {
   RelocationTaskDialog,
   WarehouseTaskDirectory,
   WarehouseTaskScheduleDialog,
+  getTaskRoute,
 } from '../components/WarehouseTaskDirectory'
 import {
   useAssignWarehouseTaskMutation,
@@ -97,6 +98,7 @@ export default function MyWarehouseTasksPage() {
   const [page, setPage] = useState(1)
   // Mở sẵn từ form điều chuyển kho (chọn "Điều chuyển nội bộ vị trí trong kho").
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === 'relocation')
   const [sourceSearch, setSourceSearch] = useState('')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
@@ -273,7 +275,11 @@ export default function MyWarehouseTasksPage() {
 
   function manage(task: MyWarehouseTask, type: WarehouseTaskAction) {
     if (type === 'Start') {
-      void run(task, type)
+      // Lấy/nhận hàng điều chuyển có màn riêng để quét mã: bắt đầu xong mở luôn màn đó.
+      const isTransferTask = task.taskType === 'TransferPick' || task.taskType === 'TransferReceive'
+      void run(task, type).then((started) => {
+        if (started && isTransferTask) router.push(getTaskRoute(task))
+      })
       return
     }
     setReason('')

@@ -8,7 +8,11 @@ import { LookupCombobox } from '@/features/inbound-request/components/InboundReq
 import type { LookupOption } from '@/features/inbound-request/types/inbound-request.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { TransferRequestFormValues } from '../../schemas/transfer-request.schema'
-import type { TransferAvailability } from '../../types/transfer.types'
+import type { TransferLineUnits } from '../../types/transfer.types'
+import {
+  exceedsAvailability as isOverAvailability,
+  transferUnitLabel,
+} from '../../utils/transfer-line-units'
 
 export interface TransferLineLockInfo {
   /** Phần đã xuất (theo ĐVT đã chọn) không được sửa. */
@@ -21,7 +25,10 @@ interface TransferLineRowProps {
   readonly index: number
   readonly lineCount: number
   readonly form: UseFormReturn<TransferRequestFormValues>
-  readonly availability?: TransferAvailability
+  readonly unitInfo?: TransferLineUnits
+  readonly isUnitLoading: boolean
+  readonly isUnitError: boolean
+  readonly hasWarehouses: boolean
   readonly selectedOption?: LookupOption
   readonly options: readonly LookupOption[]
   readonly isProductSearchLoading: boolean
@@ -38,7 +45,10 @@ export function TransferLineRow({
   index,
   lineCount,
   form,
-  availability,
+  unitInfo,
+  isUnitLoading,
+  isUnitError,
+  hasWarehouses,
   selectedOption,
   options,
   isProductSearchLoading,
@@ -50,17 +60,22 @@ export function TransferLineRow({
 }: TransferLineRowProps) {
   const line = form.watch(`lines.${index}`)
   const errors = form.formState.errors.lines?.[index]
-  const units = availability?.units ?? []
-  const selectedUnitId = line.unitId || availability?.baseUnitId || ''
+  const units = unitInfo?.units ?? []
+  const selectedUnitId = line.unitId || unitInfo?.baseUnitId || ''
   const selectedUnit = units.find((unit) => unit.unitId === selectedUnitId)
   const factor = selectedUnit?.conversionFactor
   const baseQuantity = factor !== undefined ? line.quantity * factor : Number.NaN
   const availableInUnit = selectedUnit?.availableQuantity
   const exceedsAvailability =
-    showAvailabilityWarning &&
-    availableInUnit !== undefined &&
-    Number.isFinite(line.quantity) &&
-    line.quantity > availableInUnit
+    showAvailabilityWarning && isOverAvailability(line.quantity, selectedUnitId, unitInfo)
+
+  const unitPlaceholder = !line.productId
+    ? 'Chọn sản phẩm trước'
+    : isUnitLoading
+      ? 'Đang tải đơn vị…'
+      : isUnitError
+        ? 'Không tải được đơn vị'
+        : 'Sản phẩm chưa có đơn vị'
 
   return (
     <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[28px_minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_32px] lg:items-start lg:gap-3 lg:px-3 lg:py-2">
@@ -87,12 +102,14 @@ export function TransferLineRow({
           value={line.productId}
           options={options}
           selectedOption={selectedOption}
-          placeholder="Chọn hoặc tìm sản phẩm"
-          emptyMessage="Không tìm thấy sản phẩm phù hợp."
+          placeholder={
+            hasWarehouses ? 'Chọn hoặc tìm sản phẩm có tồn' : 'Chọn kho nhập và kho xuất trước'
+          }
+          emptyMessage="Kho xuất không có sản phẩm còn tồn khả dụng phù hợp."
           ariaLabel={`Sản phẩm dòng ${index + 1}`}
           isLoading={isProductSearchLoading}
           isInvalid={Boolean(errors?.productId)}
-          disabled={isIdentityLocked}
+          disabled={isIdentityLocked || !hasWarehouses}
           onSearchChange={(value) => onProductSearchChange(field.id, value)}
           onChange={(value) => {
             form.setValue(`lines.${index}.productId`, value, {
@@ -111,7 +128,7 @@ export function TransferLineRow({
         <NativeSelect
           id={`transfer-unit-${index}`}
           className="w-full"
-          disabled={!availability || isIdentityLocked}
+          disabled={!unitInfo || isIdentityLocked}
           value={selectedUnitId}
           onChange={(event) =>
             form.setValue(`lines.${index}.unitId`, event.target.value, {
@@ -121,15 +138,20 @@ export function TransferLineRow({
           }
         >
           {units.length === 0 ? (
-            <NativeSelectOption value="">Chọn sản phẩm trước</NativeSelectOption>
+            <NativeSelectOption value="">{unitPlaceholder}</NativeSelectOption>
           ) : null}
           {units.map((unit) => (
             <NativeSelectOption key={unit.unitId} value={unit.unitId}>
-              {unit.unitName}
-              {unit.conversionFactor !== 1 ? ` (×${formatQuantity(unit.conversionFactor)})` : ''}
+              {transferUnitLabel(unit, unitInfo?.baseUnitName ?? '', formatQuantity)}
             </NativeSelectOption>
           ))}
         </NativeSelect>
+        {selectedUnit && !selectedUnit.isBase && unitInfo ? (
+          <p className="text-muted-foreground text-xs">
+            1 {selectedUnit.unitName} = {formatQuantity(selectedUnit.conversionFactor)}{' '}
+            {unitInfo.baseUnitName}
+          </p>
+        ) : null}
         <FieldError>{errors?.unitId?.message}</FieldError>
       </Field>
       <Field data-invalid={Boolean(errors?.quantity)}>
@@ -152,8 +174,8 @@ export function TransferLineRow({
           Quy đổi về đơn vị chính
         </span>
         <span className="text-sm font-medium tabular-nums lg:inline-block lg:pt-2">
-          {availability && Number.isFinite(baseQuantity) ? (
-            `${formatQuantity(baseQuantity)} ${availability.baseUnitName}`
+          {unitInfo && Number.isFinite(baseQuantity) ? (
+            `${formatQuantity(baseQuantity)} ${unitInfo.baseUnitName}`
           ) : (
             <span className="text-muted-foreground text-xs">—</span>
           )}
@@ -163,16 +185,20 @@ export function TransferLineRow({
         <span className="text-muted-foreground block text-xs lg:hidden">
           Tồn khả dụng ở kho xuất
         </span>
-        {availability && availableInUnit !== undefined ? (
+        {unitInfo && availableInUnit !== undefined ? (
           <span className="text-sm tabular-nums">
             {formatQuantity(availableInUnit)} {selectedUnit?.unitName}
+          </span>
+        ) : unitInfo && !hasWarehouses ? (
+          <span className="text-muted-foreground text-xs">
+            Chọn kho nhập và kho xuất để xem tồn
           </span>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         )}
         {exceedsAvailability ? (
           <span className="text-warning text-xs">
-            Vượt tồn khả dụng hiện tại; yêu cầu sẽ bị chặn khi gửi.
+            Vượt tồn khả dụng của kho xuất. Giảm số lượng để tạo yêu cầu.
           </span>
         ) : null}
         {lockInfo && lockInfo.dispatched > 0 ? (

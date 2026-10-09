@@ -347,6 +347,7 @@ export const API_ENDPOINTS = {
     list: '/transfers',
     create: '/transfers',
     sourceWarehouses: '/transfers/source-warehouses',
+    sourceProducts: '/transfers/source-products',
     nextCode: '/transfers/next-code',
     requesterOptions: '/transfers/requester-options',
     availability: '/transfers/availability',
@@ -382,6 +383,10 @@ export const API_ENDPOINTS = {
       `/transfers/${transferId}/shipments/${shipmentId}/lines/${lineId}/escalations/${exceptionId}/resolve`,
     returnPick: (transferId: string, shipmentId: string) =>
       `/transfers/${transferId}/shipments/${shipmentId}/returns`,
+    completePicking: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/complete-picking`,
+    reopenPicking: (transferId: string, shipmentId: string) =>
+      `/transfers/${transferId}/shipments/${shipmentId}/reopen-picking`,
     dispatchShipment: (transferId: string, shipmentId: string) =>
       `/transfers/${transferId}/shipments/${shipmentId}/dispatch`,
     receiveSheet: (transferId: string, shipmentId: string) =>

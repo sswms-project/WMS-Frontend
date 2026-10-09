@@ -17,7 +17,11 @@ import {
   ScanPreferencesBar,
   TransferWorkHeader,
 } from '../components/TransferWork'
-import { TransferChangedBanner, TransferConfirmDialog } from '../components/TransferShared'
+import {
+  MissingPermissionNotice,
+  TransferChangedBanner,
+  TransferConfirmDialog,
+} from '../components/TransferShared'
 import { useTransferReceiveSheetQuery } from '../hooks/use-transfer-fulfillment'
 import { useTransferReceiveForm } from '../hooks/use-transfer-receive-form'
 import { useTransferRealtime } from '../hooks/use-transfer-realtime'
@@ -40,7 +44,8 @@ export default function TransferReceiveTaskPage({
 
   const isReceivable =
     sheet?.shipmentStatus === 'InTransit' || sheet?.shipmentStatus === 'Receiving'
-  const canAct = viewer.permissions.includes(P.TRANSFERS_RECEIVE) && isReceivable
+  const hasReceivePermission = viewer.permissions.includes(P.TRANSFERS_RECEIVE)
+  const canAct = hasReceivePermission && isReceivable
   const values = receive.form.watch('entries')
   const totals = values.reduce(
     (sum, entry) => ({
@@ -73,7 +78,7 @@ export default function TransferReceiveTaskPage({
         <TransferChangedBanner onReload={reload} onDismiss={realtime.dismiss} />
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div data-slot="transfer-scroll" className="min-h-0 flex-1 overflow-y-auto">
         {sheetQuery.isLoading ? (
           <OperationalLoadingState rows={3} />
         ) : sheetQuery.isError || !sheet ? (
@@ -95,6 +100,9 @@ export default function TransferReceiveTaskPage({
               void receive.requestConfirm()
             }}
           >
+            {isReceivable && !hasReceivePermission ? (
+              <MissingPermissionNotice action="nhận hàng điều chuyển" />
+            ) : null}
             {!isReceivable ? (
               <p className="text-muted-foreground text-sm" role="status">
                 Đợt này không còn ở trạng thái chờ nhận nên chỉ xem được.
