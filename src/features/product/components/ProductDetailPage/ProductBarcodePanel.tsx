@@ -45,8 +45,8 @@ export function ProductBarcodePanel({
         displayValue: true,
         font: 'JetBrains Mono, monospace',
         fontSize: 16,
-        // Vạch 1,5px (mã sản phẩm ngắn nên không giảm tới 1px) và cao hơn cho dễ quét.
-        width: 1.5,
+        // Giữ độ dày vạch mặc định (2px); chỉ cao hơn cho dễ quét.
+        width: 2,
         height: 120,
         margin: 10,
         background: '#ffffff',
