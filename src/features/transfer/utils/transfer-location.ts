@@ -3,13 +3,19 @@ export interface TransferLocation {
   readonly rackCode?: string | null
   readonly isSystemDefaultSlot?: boolean
   readonly rackId?: string | null
+  readonly zoneCode?: string | null
 }
 
-/** Vị trí mặc định của kệ dùng chung mã nội bộ, nên hiển thị và quét theo mã kệ. */
+/**
+ * Vị trí đầy đủ để nhân viên biết đi đâu: "Khu K01 / Kệ A07", thêm mã ô khi không phải ô mặc định của kệ.
+ * Ô mặc định dùng chung mã nội bộ nên chỉ hiển thị theo kệ.
+ */
 export function formatTransferLocation(location: TransferLocation): string {
-  return location.isSystemDefaultSlot && location.rackCode
-    ? `Kệ ${location.rackCode}`
-    : location.slotCode
+  const parts: string[] = []
+  if (location.zoneCode) parts.push(`Khu ${location.zoneCode}`)
+  if (location.rackCode) parts.push(`Kệ ${location.rackCode}`)
+  if (!location.isSystemDefaultSlot || !location.rackCode) parts.push(location.slotCode)
+  return parts.join(' / ')
 }
 
 /** Giá trị mã vạch trên nhãn in từ trang mã vạch vị trí (khớp BE: KOVIA:LOC:{loại}:{id}). */

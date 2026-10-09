@@ -10,10 +10,25 @@ describe('transfer location helpers', () => {
         isSystemDefaultSlot: true,
       })
     ).toBe('Kệ A07')
-    expect(formatTransferLocation({ slotCode: 'A07-01', rackCode: 'A07' })).toBe('A07-01')
+    expect(formatTransferLocation({ slotCode: 'A07-01', rackCode: 'A07' })).toBe('Kệ A07 / A07-01')
+    expect(formatTransferLocation({ slotCode: 'A07-01' })).toBe('A07-01')
     expect(
       formatTransferLocation({ slotCode: '__SYSTEM_DEFAULT__', isSystemDefaultSlot: true })
     ).toBe('__SYSTEM_DEFAULT__')
+  })
+
+  it('puts the zone first so staff know where to go', () => {
+    expect(
+      formatTransferLocation({
+        slotCode: '__SYSTEM_DEFAULT__',
+        rackCode: 'A07',
+        zoneCode: 'K01',
+        isSystemDefaultSlot: true,
+      })
+    ).toBe('Khu K01 / Kệ A07')
+    expect(formatTransferLocation({ slotCode: 'S-01', rackCode: 'A07', zoneCode: 'K01' })).toBe(
+      'Khu K01 / Kệ A07 / S-01'
+    )
   })
 
   it('accepts the rack code only for the system default slot', () => {
