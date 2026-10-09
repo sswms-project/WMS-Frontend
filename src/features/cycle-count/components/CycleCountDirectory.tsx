@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ClipboardCheck, Eye, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -81,9 +83,11 @@ interface Props {
   readonly onPageChange: (page: number) => void
   readonly onPageSizeChange: (pageSize: number) => void
   readonly onRetry: () => void
+  readonly onPrefetchDetail: (cycleCountId: string) => void
 }
 
 export function CycleCountDirectory(props: Props) {
+  const router = useRouter()
   const allCount = Object.values(props.statusCounts).reduce((sum, count) => sum + count, 0)
 
   return (
@@ -197,7 +201,15 @@ export function CycleCountDirectory(props: Props) {
             description="Tạo phiếu mới hoặc thay đổi bộ lọc để xem dữ liệu."
           />
         ) : (
-          <Table aria-label="Danh sách phiếu kiểm kê" className="min-w-[1300px]">
+          <Table
+            aria-label="Danh sách phiếu kiểm kê"
+            aria-busy={props.isFetching}
+            // Giữ bảng cũ, mờ nhẹ khi đang tải trang/bộ lọc mới thay vì nháy skeleton.
+            className={cn(
+              'min-w-[1300px] transition-opacity duration-200 motion-reduce:transition-none',
+              props.isFetching && 'opacity-60'
+            )}
+          >
             <TableHeader>
               <TableRow>
                 <TableHead className="bg-card sticky top-0 z-10">Số phiếu / Kho</TableHead>
@@ -218,12 +230,24 @@ export function CycleCountDirectory(props: Props) {
               {props.items.map((item) => {
                 const overdueDays = getOverdueDays(item.dueDate, item.status)
                 const adjustmentState = getAdjustmentState(item)
+                const detailHref = APP_ROUTES.cycleCountDetail(item.id)
                 return (
-                  <TableRow key={item.id}>
+                  <TableRow
+                    key={item.id}
+                    className="hover:bg-muted/60 cursor-pointer"
+                    tabIndex={0}
+                    onMouseEnter={() => props.onPrefetchDetail(item.id)}
+                    onFocus={() => props.onPrefetchDetail(item.id)}
+                    onClick={() => router.push(detailHref)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') router.push(detailHref)
+                    }}
+                  >
                     <TableCell>
                       <Link
-                        href={APP_ROUTES.cycleCountDetail(item.id)}
+                        href={detailHref}
                         className="font-mono text-xs font-medium underline-offset-2 hover:underline"
+                        onClick={(event) => event.stopPropagation()}
                       >
                         {item.code}
                       </Link>
@@ -286,7 +310,11 @@ export function CycleCountDirectory(props: Props) {
                     </TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">
-                        <Link aria-label="Xem chi tiết" href={APP_ROUTES.cycleCountDetail(item.id)}>
+                        <Link
+                          aria-label="Xem chi tiết"
+                          href={detailHref}
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           <Eye />
                         </Link>
                       </Button>
