@@ -150,7 +150,13 @@ export function PickEntryDialog({
             </Field>
 
             <DialogFooter>
-              <Button type="button" variant="outline" disabled={isPending} onClick={onRescan}>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11"
+                disabled={isPending}
+                onClick={onRescan}
+              >
                 Quét lại
               </Button>
               <Button
