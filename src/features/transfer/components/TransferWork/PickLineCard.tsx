@@ -11,6 +11,7 @@ import {
   SHIPMENT_LINE_STATUS_LABELS,
   labelOf,
 } from '../../utils/transfer-format'
+import { groupPicks } from '../../utils/transfer-pick-groups'
 import { formatTransferLocation } from '../../utils/transfer-location'
 
 interface PickLineCardProps {
@@ -145,27 +146,31 @@ export function PickLineCard({
 
       {line.picks.length > 0 ? (
         <ul className="divide-y border-b">
-          {line.picks.map((pick) => (
+          {groupPicks(line.picks).map((group) => (
             <li
-              key={pick.id}
+              key={group.key}
               className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-2.5"
             >
               <span className="flex min-w-0 items-center gap-2 text-sm">
                 <MapPin className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
                 <span className="font-mono font-medium" translate="no">
-                  {formatTransferLocation(pick)}
+                  {formatTransferLocation(group.pick)}
                 </span>
-                {pick.lotNumber ? (
-                  <span className="text-muted-foreground text-xs">Lô {pick.lotNumber}</span>
+                {group.pick.lotNumber ? (
+                  <span className="text-muted-foreground text-xs">Lô {group.pick.lotNumber}</span>
                 ) : null}
               </span>
-              <span className="flex flex-wrap items-center gap-1.5">
-                <PickQuantityChip label="Lấy" value={pick.pickedQuantity} tone="primary" />
-                {pick.returnedQuantity > 0 ? (
-                  <PickQuantityChip label="Trả" value={pick.returnedQuantity} tone="warning" />
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {group.returned > 0 ? (
+                  <span className="text-muted-foreground text-xs tabular-nums">
+                    đã lấy {formatQuantity(group.picked)}, trả {formatQuantity(group.returned)}
+                  </span>
                 ) : null}
-                {pick.dispatchedQuantity > 0 ? (
-                  <PickQuantityChip label="Xuất" value={pick.dispatchedQuantity} tone="muted" />
+                {group.held > 0 ? (
+                  <PickQuantityChip label="Đang giữ" value={group.held} tone="primary" />
+                ) : null}
+                {group.dispatched > 0 ? (
+                  <PickQuantityChip label="Đã xuất" value={group.dispatched} tone="muted" />
                 ) : null}
               </span>
             </li>
