@@ -20,6 +20,9 @@ const PRODUCT_B = '30000000-0000-4000-8000-000000000002'
 const ITEM_A = '20000000-0000-4000-8000-000000000001'
 
 const validRequest = {
+  transferCode: '',
+  requesterName: '',
+  requestingDepartment: '',
   sourceWarehouseId: SOURCE,
   destinationWarehouseId: DESTINATION,
   reason: '',
@@ -35,6 +38,18 @@ function issuePaths(result: { success: boolean; error?: { issues: { path: Proper
 describe('transferRequestSchema', () => {
   it('accepts a valid request', () => {
     expect(transferRequestSchema.safeParse(validRequest).success).toBe(true)
+  })
+
+  it('limits the code, requester and department lengths like the backend', () => {
+    const result = transferRequestSchema.safeParse({
+      ...validRequest,
+      transferCode: 'X'.repeat(101),
+      requesterName: 'X'.repeat(201),
+      requestingDepartment: 'X'.repeat(201),
+    })
+    expect(issuePaths(result)).toEqual(
+      expect.arrayContaining(['transferCode', 'requesterName', 'requestingDepartment'])
+    )
   })
 
   it('requires different warehouses', () => {

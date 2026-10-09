@@ -253,10 +253,16 @@ export default function ProductImportSessionPage() {
     catalogForm.reset({
       confirmed: Boolean(options?.confirmCreateCatalogs),
       entries: (data.missingReferences ?? []).map((reference) => {
-        const draft = data.newCatalogs?.find((item) => item.id === reference.id)
+        const choice = options?.referenceChoices?.find(
+          (item) => item.categories === reference.categories && item.value === reference.value
+        )
+        const selectedId = choice?.id ?? reference.id
+        const draft = (options?.newCatalogs ?? data.newCatalogs)?.find(
+          (item) => item.id === selectedId
+        )
         const existing = (
           reference.categories ? data.availableCategories : data.availableUnits
-        )?.find((item) => item.id === reference.id)
+        )?.find((item) => item.id === selectedId)
         return {
           id: existing ? crypto.randomUUID() : reference.id,
           categories: reference.categories,

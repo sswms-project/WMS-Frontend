@@ -78,6 +78,7 @@ export function TransferDesktopTable({
                 <TransferFlagBadges
                   hasOpenFeedback={item.hasOpenFeedback}
                   hasPendingPickEscalation={item.hasPendingPickEscalation}
+                  hasOpenDiscrepancy={item.hasOpenDiscrepancy}
                 />
               </TableCell>
               <TableCell className="truncate">{item.createdByName ?? '—'}</TableCell>

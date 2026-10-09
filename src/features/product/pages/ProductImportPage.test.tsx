@@ -33,6 +33,7 @@ import {
   defaultProductImportOptions,
   importSelectionState,
   productImportPayload,
+  productImportSheetLabel,
   productImportReportCsv,
   selectedProductImportRows,
   toggleImportSelection,
@@ -219,6 +220,19 @@ afterEach(() => {
 })
 
 describe('product import contract and selection', () => {
+  it.each([
+    ['HangHoa', 'Hàng hóa'],
+    ['hang_hoa', 'Hàng hóa'],
+    ['VatTuHangHoa', 'Vật tư hàng hóa'],
+    ['Quydoi', 'Quy đổi'],
+    ['QuyDoi', 'Quy đổi'],
+    ['DonViQuyDoi', 'Đơn vị quy đổi'],
+    ['Đơn vị quy đổi', 'Đơn vị quy đổi'],
+    ['Hàng hóa kho Đà Nẵng', 'Hàng hóa kho Đà Nẵng'],
+    ['Sheet1', 'Sheet1'],
+  ])('displays sheet %s as %s without rewriting custom names', (source, label) => {
+    expect(productImportSheetLabel(source)).toBe(label)
+  })
   it('requires import capability independently of role-prefix guard', () => {
     expect(getAllowedRolesForPath(APP_ROUTES.productImport)).toContain(USER_ROLES.WarehouseStaff)
     expect(ROUTE_CAPABILITIES[APP_ROUTES.productImport]).toBe(P.PRODUCTS_IMPORT)
@@ -359,6 +373,137 @@ describe('product import contract and selection', () => {
 })
 
 describe('product import workflow', () => {
+  it('does not repeat catalog creation warnings already summarized in the confirmation', async () => {
+    const preview = structuredClone(previewData)
+    const warning = {
+      code: 'catalogWillCreate',
+      field: null,
+      message: 'Sẽ tạo danh mục khi xác nhận nhập.',
+      source: null,
+    }
+    preview.rows.forEach((item) => item.warnings.push(warning))
+    preview.newCatalogs = [
+      {
+        id: 'base-unit',
+        categories: false,
+        item: {
+          rowNumber: 2,
+          code: 'DVT-LON',
+          name: 'Lon',
+          quantityPrecision: 0,
+          parentCode: null,
+          symbol: null,
+          description: null,
+        },
+      },
+    ]
+    vi.mocked(productImportService.preview).mockResolvedValue(preview)
+    renderPage()
+    await openReview()
+    await userEvent.click(screen.getByRole('button', { name: 'Nhập 1 sản phẩm' }))
+    const dialog = screen.getByRole('alertdialog')
+    expect(within(dialog).getByRole('heading')).toHaveTextContent('Tạo 0 nhóm, 1 đơn vị tính.')
+    expect(within(dialog).queryByText(warning.message)).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/cảnh báo cần lưu ý trước khi nhập/)).not.toBeInTheDocument()
+  })
+  it('groups selected row warnings with sources and excludes unselected row warnings', async () => {
+    const warning = {
+      code: 'notice',
+      field: 'description',
+      message: 'Kiểm tra mô tả.',
+      source: null,
+    }
+    vi.mocked(productImportService.preview).mockResolvedValue({
+      ...structuredClone(previewData),
+      warnings: [{ ...warning, code: 'file', message: 'Bỏ qua trang thông tin.' }],
+      rows: [
+        { ...structuredClone(row), warnings: [warning] },
+        { ...structuredClone(row), rowNumber: 4, sku: 'BIA-2', warnings: [warning] },
+        {
+          ...structuredClone(invalid),
+          warnings: [{ ...warning, message: 'Cảnh báo dòng không nhập.' }],
+        },
+      ],
+    })
+    renderPage()
+    await openReview()
+    await userEvent.click(screen.getByRole('button', { name: 'Nhập 2 sản phẩm' }))
+    const dialog = within(screen.getByRole('alertdialog'))
+    expect(dialog.getByText('2 cảnh báo cần lưu ý trước khi nhập')).toBeInTheDocument()
+    expect(dialog.getAllByText(warning.message)).toHaveLength(1)
+    expect(dialog.getByText('Dòng nguồn: Hàng hóa:2, Hàng hóa:4')).toBeInTheDocument()
+    expect(dialog.getByText('Bỏ qua trang thông tin.')).toBeInTheDocument()
+    expect(dialog.queryByText('Cảnh báo dòng không nhập.')).not.toBeInTheDocument()
+  })
+  it('uses natural review height and an outlined deselect action', async () => {
+    renderPage()
+    await openReview()
+    const panel = screen.getByRole('region', { name: 'Bản xem trước vật tư hàng hóa' })
+    expect(panel).toHaveClass('flex-none', 'shrink-0')
+    const deselect = screen.getByRole('button', { name: 'Bỏ chọn cả tệp' })
+    expect(deselect).toHaveAttribute('data-variant', 'outline')
+    await userEvent.click(deselect)
+    expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).not.toBeChecked()
+  })
+  it('replaces resolved catalog warnings with selected pending creation counts', async () => {
+    const preview = structuredClone(previewData)
+    preview.missingReferences = [
+      {
+        categories: false,
+        value: 'Lon',
+        id: 'base-unit',
+        suggestedCode: 'DVT-LON',
+        productRows: [2],
+        canCreate: true,
+      },
+    ]
+    preview.newCatalogs = [
+      {
+        id: 'base-unit',
+        categories: false,
+        item: {
+          rowNumber: 2,
+          code: 'DVT-LON',
+          name: 'Lon',
+          quantityPrecision: 0,
+          parentCode: null,
+          symbol: null,
+          description: null,
+        },
+      },
+    ]
+    vi.mocked(productImportService.preview).mockResolvedValue(preview)
+    renderPage()
+    await openReview()
+    expect(screen.queryByText(/Danh mục cần xử lý ·/)).not.toBeInTheDocument()
+    expect(screen.getByText('Danh mục đã được xử lý')).toBeInTheDocument()
+    expect(
+      screen.getByText('Sẽ tạo 0 nhóm và 1 đơn vị khi nhập các dòng đã chọn.')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Chỉnh sửa danh mục' })).toBeEnabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Bỏ chọn cả tệp' }))
+    expect(screen.getByText('Các dòng đã chọn không cần tạo danh mục mới.')).toBeInTheDocument()
+    expect(productService.importProducts).not.toHaveBeenCalled()
+  })
+  it('keeps the catalog warning when a reference has not resolved', async () => {
+    vi.mocked(productImportService.preview).mockResolvedValue({
+      ...structuredClone(previewData),
+      missingReferences: [
+        {
+          categories: false,
+          value: 'Lon',
+          id: 'unresolved',
+          suggestedCode: 'DVT-LON',
+          productRows: [2],
+          canCreate: true,
+        },
+      ],
+    })
+    renderPage()
+    await openReview()
+    expect(screen.getByText('Danh mục cần xử lý · 0 nhóm · 1 đơn vị')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xem và xử lý' })).toBeEnabled()
+  })
   it('announces the current step and focuses its heading after navigation', async () => {
     renderPage()
     await openReview()
@@ -374,6 +519,78 @@ describe('product import workflow', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Nhập 1 sản phẩm' })).toHaveFocus()
     )
+  })
+  it('explains conversion mapping in Vietnamese without changing source names or mappings', async () => {
+    const data = structuredClone(inspectData)
+    data.sheets[0]!.sheetName = 'HangHoa'
+    data.schema.mainFields.push({
+      field: 'isLotTracked',
+      displayName: 'Quản lý theo lô',
+      isRequired: false,
+      aliases: [],
+      description: 'Có/Không, true/false hoặc 1/0.',
+      defaultValue: 'false',
+    })
+    data.schema.conversionFields = data.schema.conversionFields.map((field, index) => ({
+      ...field,
+      displayName: ['Mã hàng', 'Đơn vị quy đổi', 'Hệ số quy đổi'][index]!,
+    }))
+    const conversionMapping = data.schema.conversionFields.map((field, columnIndex) => ({
+      field: field.field,
+      columnIndex,
+    }))
+    data.sheets.push({
+      sheetId: '2',
+      sheetName: 'DonViQuyDoi',
+      dataRowCount: 1,
+      mainHeaderCandidates: [],
+      conversionHeaderCandidates: [
+        {
+          rowNumber: 1,
+          hasAllRequiredFields: true,
+          suggestedMapping: conversionMapping,
+          columns: conversionMapping.map((item, index) => ({
+            columnIndex: index,
+            letter: String.fromCharCode(65 + index),
+            header: item.field,
+          })),
+        },
+      ],
+      sampleRows: [{ rowNumber: 2, values: { '0': 'BIA-1', '1': 'Thùng', '2': '24' } }],
+    })
+    vi.mocked(productImportService.inspect).mockResolvedValueOnce(data)
+    renderPage()
+    await userEvent.upload(
+      screen.getByLabelText('Tệp vật tư hàng hóa'),
+      new File(['x'], 'hang.xlsx')
+    )
+    expect(await screen.findByText('Chưa chọn trang tính quy đổi')).toBeVisible()
+    expect(screen.getByText(/Mặc định: Không/)).toBeVisible()
+    expect(screen.getByText('Mã dạng văn bản, tối đa 100 ký tự; không tự sinh mã.')).toBeVisible()
+    expect(screen.getByLabelText('Dòng tiêu đề — HangHoa')).toHaveValue(1)
+    expect(
+      within(screen.getByLabelText('Trang tính hàng hóa')).getByRole('option', {
+        name: 'Hàng hóa',
+      })
+    ).toHaveValue('1')
+    expect(
+      within(screen.getByLabelText('Trang tính quy đổi (tùy chọn)')).getByRole('option', {
+        name: 'Đơn vị quy đổi',
+      })
+    ).toHaveValue('2')
+    await userEvent.selectOptions(screen.getByLabelText('Trang tính quy đổi (tùy chọn)'), '2')
+    expect(screen.queryByText('Chưa chọn trang tính quy đổi')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ghép cột đơn vị quy đổi' })).toBeVisible()
+    expect(screen.getByText(/1 Thùng = 24 Lon/)).toBeVisible()
+    expect(screen.getByLabelText('Hệ số quy đổi *')).toHaveValue('2')
+    expect(screen.getByText(/1 đơn vị quy đổi = hệ số × đơn vị tính chính/)).toBeVisible()
+    expect(screen.getByLabelText('sku *')).toHaveValue('0')
+    await userEvent.click(screen.getByRole('button', { name: 'Kiểm tra dữ liệu' }))
+    await waitFor(() => expect(productImportService.preview).toHaveBeenCalled())
+    expect(vi.mocked(productImportService.preview).mock.calls[0]![1]).toMatchObject({
+      main: { sheetId: '1', columnMapping: mapping },
+      conversions: { sheetId: '2', columnMapping: conversionMapping },
+    })
   })
   it('filters mapping without changing selected columns and blocks ambiguous mapping', async () => {
     renderPage()
@@ -841,11 +1058,18 @@ describe('product import workflow', () => {
     await openReview()
     await userEvent.click(screen.getByRole('button', { name: 'Xem và xử lý' }))
     expect(screen.getByRole('dialog', { name: 'Danh mục cần xử lý' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' })).toBeDisabled()
     await userEvent.click(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' }))
-    expect(
-      await screen.findByText('Xác nhận trước khi áp dụng phương án tạo mới.')
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Tick xác nhận để áp dụng phương án tạo mới/)).toBeInTheDocument()
     expect(productImportService.preview).toHaveBeenCalledTimes(1)
+    await userEvent.click(
+      screen.getByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
+    )
+    expect(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' })).toBeEnabled()
+    await userEvent.click(
+      screen.getByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
+    )
+    expect(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' })).toBeDisabled()
     await userEvent.click(
       screen.getByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
     )
@@ -906,5 +1130,85 @@ describe('product import workflow', () => {
     const payload = productImportPayload(preview, [2])
     expect(payload.newCatalogs?.map((item) => item.id)).toEqual(['base-unit', 'box-unit'])
     expect(payload.confirmCreateCatalogs).toBe(true)
+  })
+
+  it('preserves catalog edits when recheck fails and the panel is reopened', async () => {
+    vi.mocked(productImportService.preview)
+      .mockResolvedValueOnce({
+        ...structuredClone(previewData),
+        missingReferences: [
+          {
+            categories: false,
+            value: 'Lon',
+            id: '84ec110f-ff70-489e-a407-ce1493899522',
+            suggestedCode: 'DVT-LON',
+            productRows: [2],
+            canCreate: true,
+          },
+        ],
+        availableUnits: [],
+        availableCategories: [],
+      })
+      .mockRejectedValueOnce({
+        statusCode: 409,
+        message: 'Mã đã tồn tại. Kiểm tra lại.',
+        isSuccess: false,
+      })
+    renderPage()
+    await openReview()
+    await userEvent.click(screen.getByRole('button', { name: 'Xem và xử lý' }))
+    const code = screen.getByLabelText(/^Mã/)
+    await userEvent.clear(code)
+    await userEvent.type(code, 'DVT-LON-MOI')
+    await userEvent.click(
+      screen.getByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' }))
+    await waitFor(() => expect(productImportService.preview).toHaveBeenCalledTimes(2))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Danh mục cần xử lý' })).not.toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Xem và xử lý' }))
+    expect(screen.getByLabelText(/^Mã/)).toHaveValue('DVT-LON-MOI')
+    expect(
+      screen.getByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
+    ).toBeChecked()
+    expect(productService.importProducts).not.toHaveBeenCalled()
+  })
+
+  it('shows category paths in existing and parent selectors without changing their IDs', async () => {
+    const id = 'eb8a68bb-8528-43cb-991a-6c046f5ea7ba'
+    vi.mocked(productImportService.preview).mockResolvedValue({
+      ...structuredClone(previewData),
+      missingReferences: [
+        {
+          categories: true,
+          value: 'Khác',
+          id,
+          suggestedCode: 'NHOM-KHAC',
+          productRows: [2],
+          canCreate: true,
+        },
+      ],
+      availableCategories: [
+        { id: 'existing', code: 'CHILD', name: 'Khác', path: 'Đồ uống / Khác' },
+      ],
+    })
+    renderPage()
+    await openReview()
+    await userEvent.click(screen.getByRole('button', { name: 'Xem và xử lý' }))
+    expect(screen.getByRole('option', { name: 'CHILD — Đồ uống / Khác' })).toHaveValue('CHILD')
+    await userEvent.selectOptions(screen.getByLabelText('Cách xử lý'), 'existing')
+    expect(
+      screen.queryByLabelText('Tôi xác nhận tạo các danh mục mới khi nhập hàng hóa.')
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'CHILD — Đồ uống / Khác' })).toHaveValue('existing')
+    await userEvent.selectOptions(screen.getByLabelText('Danh mục đang hoạt động'), 'existing')
+    await userEvent.click(screen.getByRole('button', { name: 'Áp dụng và kiểm tra lại' }))
+    await waitFor(() => expect(productImportService.preview).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(productImportService.preview).mock.calls[1]![1].referenceChoices).toEqual([
+      { categories: true, value: 'Khác', id: 'existing' },
+    ])
+    expect(productService.importProducts).not.toHaveBeenCalled()
   })
 })

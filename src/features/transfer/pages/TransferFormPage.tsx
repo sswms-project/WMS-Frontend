@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { UnsavedChangesDialog } from '@/components/operations/UnsavedChangesDialog'
 import {
@@ -20,6 +20,7 @@ import {
 } from '@/features/inbound-request/types/inbound-request.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
+import { useCodeSuggestion } from '@/hooks/use-code-suggestion'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { APP_ROUTES } from '@/routes/app-routes'
 import {
@@ -32,8 +33,10 @@ import { useTransferFormActions } from '../hooks/use-transfer-form-actions'
 import { useTransferRealtime } from '../hooks/use-transfer-realtime'
 import { useTransferViewer } from '../hooks/use-transfer-viewer'
 import {
+  useNextTransferCodeQuery,
   useTransferAvailabilityQuery,
   useTransferQuery,
+  useTransferRequesterOptionsQuery,
   useTransferSourceWarehousesQuery,
 } from '../hooks/use-transfers'
 import {
@@ -116,6 +119,24 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
     )
   )
 
+  const codeSessionKey = useId()
+  const nextCodeQuery = useNextTransferCodeQuery(mode === 'create', codeSessionKey)
+  const codeSuggestion = useCodeSuggestion({
+    active: mode === 'create',
+    sessionKey: codeSessionKey,
+    suggestedCode: nextCodeQuery.data,
+    isFetching: nextCodeQuery.isFetching,
+    isError: nextCodeQuery.isError,
+    getCurrentCode: () => form.getValues('transferCode'),
+    applyCode: (code) =>
+      form.setValue('transferCode', code, { shouldValidate: form.formState.isSubmitted }),
+  })
+  const requesterOptionsQuery = useTransferRequesterOptionsQuery(mode !== 'edit')
+  const requesterNames = useMemo(
+    () => [...new Set((requesterOptionsQuery.data ?? []).map((option) => option.fullName))],
+    [requesterOptionsQuery.data]
+  )
+
   const actions = useTransferFormActions({
     mode,
     transferId,
@@ -175,6 +196,7 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
       (warehousesQuery.data?.items ?? []).map((warehouse) => ({
         id: warehouse.id,
         name: `${warehouse.warehouseCode} · ${warehouse.warehouseName}`,
+        address: warehouse.address,
       })),
     [warehousesQuery.data?.items]
   )
@@ -182,9 +204,14 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
     const options = (sourceWarehousesQuery.data?.items ?? []).map((warehouse) => ({
       id: warehouse.id,
       name: `${warehouse.warehouseCode} · ${warehouse.warehouseName}`,
+      address: warehouse.address,
     }))
     if (detail && !options.some((option) => option.id === detail.sourceWarehouseId)) {
-      options.unshift({ id: detail.sourceWarehouseId, name: detail.sourceWarehouseName })
+      options.unshift({
+        id: detail.sourceWarehouseId,
+        name: detail.sourceWarehouseName,
+        address: null,
+      })
     }
     return options
   }, [detail, sourceWarehousesQuery.data?.items])
@@ -290,6 +317,19 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           lockByItemId={lockInfoByItemId}
           isProductSearchLoading={productsQuery.isFetching}
           isSaving={actions.isSaving}
+          requesterNames={requesterNames}
+          codeSuggestionStatus={
+            mode === 'create'
+              ? nextCodeQuery.isFetching
+                ? 'loading'
+                : nextCodeQuery.isError
+                  ? 'error'
+                  : 'ready'
+              : undefined
+          }
+          canCreateRelocation={viewer.permissions.includes(P.WAREHOUSE_TASKS_CREATE)}
+          onCodeChange={codeSuggestion.markEdited}
+          onSelectInternalRelocation={() => router.push(APP_ROUTES.createRelocationTask)}
           onDestinationChange={changeDestination}
           onSourceChange={(value) =>
             form.setValue('sourceWarehouseId', value, { shouldDirty: true, shouldValidate: true })

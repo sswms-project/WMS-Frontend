@@ -147,6 +147,7 @@ export const queryKeys = {
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
     forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
     forecastRun: (id: string) => ['inventory', 'forecast-runs', id] as const,
+    forecastRuns: (warehouseId: string) => ['inventory', 'forecast-run-list', warehouseId] as const,
     history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
@@ -223,6 +224,8 @@ export const queryKeys = {
     lists: ['transfers', 'list'] as const,
     list: (params: TransferListQuery) => ['transfers', 'list', params] as const,
     detail: (id: string) => ['transfers', 'detail', id] as const,
+    nextCode: ['transfers', 'next-code'] as const,
+    requesterOptions: ['transfers', 'requester-options'] as const,
     sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
       ['transfers', 'source-warehouses', params] as const,
     availability: (params: TransferAvailabilityQuery) =>

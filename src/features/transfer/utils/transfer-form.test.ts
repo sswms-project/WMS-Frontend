@@ -63,6 +63,9 @@ describe('transfer form conversion', () => {
     values.lines = [{ itemId: null, productId: 'p', unitId: '', quantity: 3 }]
     expect(toSaveDraftRequest(values, 'v1')).toEqual({
       expectedVersion: 'v1',
+      transferCode: null,
+      requesterName: null,
+      requestingDepartment: null,
       sourceWarehouseId: 'a',
       destinationWarehouseId: 'b',
       reason: null,
@@ -70,6 +73,21 @@ describe('transfer form conversion', () => {
       note: null,
       items: [{ itemId: null, productId: 'p', unitId: null, quantity: 3 }],
     })
+  })
+
+  it('sends the typed code, requester and department on a draft and lets update clear them', () => {
+    const values = emptyTransferForm()
+    values.transferCode = 'PDC000001'
+    values.requesterName = 'Tổng Viết Huy'
+    values.requestingDepartment = ''
+    expect(toSaveDraftRequest(values, null)).toMatchObject({
+      transferCode: 'PDC000001',
+      requesterName: 'Tổng Viết Huy',
+      requestingDepartment: null,
+    })
+    expect(
+      toUpdateTransferRequest(values, { sourceWarehouseId: '', destinationWarehouseId: '' }, 'v2')
+    ).toMatchObject({ requesterName: 'Tổng Viết Huy', requestingDepartment: '' })
   })
 
   it('sends warehouses on update only when they changed', () => {

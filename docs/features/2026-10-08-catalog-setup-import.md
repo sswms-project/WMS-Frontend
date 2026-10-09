@@ -1,8 +1,42 @@
 # Import danh mục và setup nhanh VTHH
 
-## Trạng thái tại điểm dừng 2026-10-08
+## Trạng thái tiếp tục 2026-10-08
 
-**IN_PROGRESS — chưa đủ điều kiện production/merge.** Tạm dừng vì usage 5 giờ còn 5%, theo yêu cầu trước đó của người dùng. Không commit/push. Tiếp tục từ cây làm việc hiện tại, không viết lại từ đầu.
+**READY_FOR_CODEX_REVIEW — Đợt C đã hoàn tất triển khai và tự kiểm thử cô lập.** Chưa phải phê duyệt độc lập hoặc chứng nhận triển khai production. Tiếp tục sau checkpoint BE `695d25e`, FE `ab34554`; các sửa bổ sung chưa commit/push. Những mốc bên dưới được giữ làm lịch sử.
+
+### Kết quả chốt Đợt C — 2026-10-08
+
+- Sửa lỗi upload thật của import ĐVT/nhóm: Axios mặc định JSON khiến FormData bị serialize sai. Inspect/preview đặt multipart như VTHH; test chạy qua Axios adapter kiểm tra tệp và mapping còn nguyên, không chỉ mock service.
+- Đồng nhất giới hạn FE/BE 3.000 tham chiếu (500 nhóm + 2.500 ĐVT); kiểm tra 3.000 hợp lệ và 3.001 bị từ chối. Precision 0–6 có lỗi tiếng Việt, checkbox xác nhận dùng Controller để nhận focus, lỗi trường liên kết aria-describedby; mã không spellcheck/autofill. Panel chỉ cuộn thân, có overscroll-contain, nhãn đóng tiếng Việt; danh sách >50 mục dùng content-visibility để giảm layout/paint ngoài vùng nhìn.
+- Chuẩn hóa NFC cả mã đã có khi kiểm tra trùng và tra nhóm cha, thống nhất preview/staging/import riêng/setup nhanh; test cha dùng dấu tổ hợp và mã trùng dạng dựng sẵn đạt. Không đổi quy tắc bỏ dấu hay tự ghép gần đúng.
+- Test mạng chậm/upload lặp/retry đọc tệp, double-click xác nhận và kết quả lưu chưa xác định đạt. Không tự retry ghi, khóa nhập lại khi cần đối soát, giữ dữ liệu preview. Test quyền bị thu hồi, tenant, trạng thái, nhóm cha/con, selection và danh mục theo dòng chọn nằm trong bộ hồi quy.
+- SQLite in-memory: thêm hai test cạnh tranh ĐVT/nhóm, một writer tạo cùng mã sau validation và trước save; unique constraint chặn writer thua và rollback các dòng khác/audit. Test trigger lỗi quy đổi tiếp tục chứng minh rollback cả danh mục/hàng hóa/quy đổi/audit. Đây là interleaving xác định, không chứng nhận mọi lịch chạy/locking/collation SQL Server.
+- BE full cuối: **1.037 passed, 1 skipped / 1.038 total**, exit 0. Test skip là khóa sức chứa SQL Server cần fixture riêng, không phải test mới của import. FE full cuối: **659 passed / 119 files**, exit 0. TypeScript và targeted ESLint đạt. Tổng có các test từ công việc đồng thời; không chứng nhận sửa sau thời điểm chạy.
+- Edge thực → HTTP host QA → reader/handler BE thật: import ĐVT đủ bốn bước; nhóm con đứng trước cha, bỏ chọn cha bị 400 với zero writes, chọn lại cả hai/recheck/lưu thành công; setup nhanh tạo đúng 1 nhóm/1 ĐVT/1 hàng hóa sau xác nhận cuối bằng Tab/Enter. Trước preview và re-preview số bản ghi không đổi; cuối fixture có 2 ĐVT, 3 nhóm, 1 hàng hóa, 6 audit. Host riêng D:/Kovia-QA/CatalogGateC, localhost:5399, InMemory verified, không chạy API startup/config triển khai. Fake auth và middleware QA không thay thế kiểm thử toàn bộ auth middleware production; quyền endpoint được kiểm riêng bằng test/source review.
+- Edge desktop 1440×900, mobile 390×844, CSS zoom 125%/150% và reduced-motion: panel không tràn ngang, footer vẫn trong viewport, không còn animation khi reduce. Kiểm tra focus lỗi xác nhận, Space chọn checkbox, focus trả về và xác nhận cuối bằng bàn phím. Layout-only fixture 80 tham chiếu tên dài cuộn tới cuối, footer còn hiển thị; commit bị chặn. Ảnh `output/playwright/gate-c-*.png`. Không tuyên bố native browser zoom, audible screen-reader hoặc stress-render toàn bộ 3.000 mục đã được chứng nhận.
+- Production FE build cuối dùng output `tmp/catalog-production`, giữ `.next` dev. Review self-check route permission, tenant filters, request compatibility, DI discovery, conflict/save nguyên tử và selected-dependent drafts; không còn finding đã biết trong phạm vi sửa. Chưa có independent approval.
+- Không truy cập/ghi db71143, không migration/seed/repair, không thêm dependency/schema/quyền, không commit/push. Chỉ host/browser QA của lượt này được đóng; giữ server đang có. Console có cảnh báo realtime do chặn hubs và lỗi 400 cố ý; không tuyên bố clean console.
+
+### Lịch sử kết quả trước lượt chốt C
+
+- Giới hạn setup nhanh: tối đa 500 nhóm và 2.500 ĐVT (500 đơn vị chính + 2.000 quy đổi), tổng 3.000 tham chiếu; import riêng vẫn tối đa 500 dòng.
+- Mã inactive không tự fallback sang tên danh mục active khác. Người dùng phải chủ động chọn; ô trống, inactive và mơ hồ không được đề nghị tự tạo mới.
+- Cha trong cùng tệp phải có mã tường minh; phát hiện cây DB thiếu tổ tiên. Đổi mã cha chuẩn hóa Unicode NFC trước khi cập nhật tham chiếu con. Xóa mã đã chỉnh bị từ chối, không âm thầm cấp lại.
+- FE cô lập mã chỉnh theo tài khoản/tenant/mapping; đổi tệp/mapping không mang mã cũ sang. Sửa mã khóa nhập đến khi kiểm tra lại. Panel giữ phương án đã áp dụng khi recheck lỗi và mở lại.
+- Nhóm có sẵn trả đường dẫn tổ tiên theo tenant; dropdown danh mục và nhóm cha hiển thị mã + đường dẫn, giữ ID/code payload. API cũ không có đường dẫn vẫn dùng tên.
+- Bổ sung aria-invalid cho trường lỗi và liên kết lỗi checkbox xác nhận. SQLite in-memory có trigger lỗi quy đổi chứng minh rollback cả ĐVT/nhóm mới, sản phẩm, quy đổi và audit; không ghi DB triển khai.
+- BE full cuối: **1.030 passed, 1 skipped, 1.031 total**, exit 0; riêng CatalogSetupWorkflowTests **22 passed**. Thêm roundtrip mẫu XLSX và CSV của cả hai danh mục, tên/trang tiếng Việt, dòng nguồn 2/4, lỗi name, tệp rỗng/quá 5 MB/XLS và bảng rỗng/501 dòng. Cây có test Transfer từ phiên khác, tổng bao gồm chúng. FE full: **643 passed / 115 files**; targeted **64 passed / 2 files**. TypeScript và targeted ESLint đạt tại thời điểm chạy; phiên Transfer tiếp tục sửa sau đó, không chứng nhận các sửa chưa kiểm của phiên khác.
+- Production FE build cuối đã đạt **68 trang static, exit 0**, gồm TypeScript và các route import mới; output `tmp/catalog-production`, không đè `.next` dev. Include Next tự thêm được gỡ riêng sau build.
+- Edge mock: ĐVT đủ 4 bước, sửa mã → khóa nhập → recheck → xác nhận → kết quả; nhóm đủ 4 bước; VTHH thiếu 1 nhóm/1 ĐVT → panel xác nhận → preview hợp lệ/badge → xác nhận đúng số danh mục → kết quả. POST import được intercept, không chạy handler thật hoặc ghi DB deploy.
+- Ảnh desktop 1440×900 và panel mobile 390×844 tại `output/playwright/catalog-*.png`; mobile cuộn nội dung riêng, footer ngoài vùng cuộn. Bật emulation reduced-motion; chưa chứng nhận đầy đủ animation/screen reader. Focus xác nhận ở nút quay lại, bước kết quả nhận focus. SignalR lỗi dự kiến do chặn hubs; không tuyên bố console sạch. Đã đóng browser QA riêng, giữ server của phiên khác.
+
+### Mục còn lại ở checkpoint trước (đã đối chiếu trong kết quả chốt C)
+
+1. Đã hoàn tất production build cuối; giữ kiểm thử tách khỏi output server dev ở các lượt tiếp theo.
+2. Browser với dữ liệu cha/con và selection xuyên suốt. Ma trận XLSX/CSV/template/dòng lỗi/giới hạn đã được kiểm bằng parser thật và fixture; browser hiện dùng response giả lập, chưa nối cùng fixture BE qua HTTP.
+3. Mạng chậm/double-click/unknown-save của luồng mới, cạnh tranh đồng thời bằng relational fixture; SQLite rollback không phải chứng nhận race SQL Server.
+4. Edge zoom thực 125–150%, keyboard đầy đủ, lỗi/focus panel và nhiều tham chiếu; reduced-motion mới emulation, chưa kiểm trọn ma trận.
+5. Review diff cuối theo spec/quyền/tenant. Đã self-review; giới hạn chứng nhận production được ghi rõ ở kết quả chốt C.
 
 ## Phạm vi đã duyệt
 
@@ -36,7 +70,7 @@ Hai cách setup: (1) import Đơn vị tính và Nhóm VTHH trước, sau đó i
 - Build BE dùng `--artifacts-path D:\Kovia-QA\catalog-setup-build -p:EnableDefaultContentItems=false`, tránh DLL của API đang chạy và content glob API/tmp cũ.
 - FE thêm `KOVIA_ISOLATED_BUILD=true` để build vào `tmp/catalog-production` trên ổ D, không ghi đè `.next` dev. Next tự sửa tsconfig include; đã bỏ các include output QA và format lại về cấu hình có trước sau khi build kết thúc.
 
-## Kiểm thử đã xác nhận
+## Lịch sử kiểm thử trước checkpoint
 
 - BE full Application.Tests: **1008 passed, 1 skipped, 1009 total**. Fixture mới in và xác nhận provider InMemory/server in-process/database tên ngẫu nhiên trước khi ghi.
 - BE filter import/catalog: **110 passed**. Bao gồm gộp Unicode, preview không Add/Save, xác nhận/quyền theo loại, thu hồi quyền import/manage, inactive/tenant, cha sau con/bỏ chọn cha và lưu danh mục+hàng hóa+audit.
@@ -46,7 +80,7 @@ Hai cách setup: (1) import Đơn vị tính và Nhóm VTHH trước, sau đó i
 - Targeted ESLint đã kết thúc không báo lỗi; lệnh cùng phiên TypeScript từng báo thiếu nullable test và lỗi đó đã được sửa.
 - Edge session `catalog-setup` đã mở localhost nhưng **chưa chạy mock/interact/screenshot QA**. Không xác nhận QA desktop/mobile/zoom/reduced motion đã đạt.
 
-## Việc bắt buộc còn lại (Đợt C, và hoàn thiện A/B)
+## Danh sách tại điểm dừng cũ (đối chiếu cập nhật phía trên)
 
 1. Chạy lại full FE test tách khỏi build, điều tra 2 timeout BulkImportPage; TypeScript trong production build đã đạt, nhưng chạy lại lint/TypeScript sau formatting cuối. Đã dọn tsconfig do build tự thêm.
 2. Rà giới hạn 500 danh mục mỗi loại trong setup nhanh so với 500 sản phẩm/2000 quy đổi; hiện rules dùng chung chặn quá 500 mỗi loại, cần thông báo hoặc chốt rõ giới hạn thay vì lỗi chung.

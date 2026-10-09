@@ -7,6 +7,7 @@ import {
   MessageSquareWarning,
   TriangleAlert,
   Truck,
+  PackageX,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type {
@@ -79,13 +80,15 @@ export function TransferProgressText({
 interface TransferFlagBadgesProps {
   readonly hasOpenFeedback: boolean
   readonly hasPendingPickEscalation: boolean
+  readonly hasOpenDiscrepancy?: boolean
 }
 
 export function TransferFlagBadges({
   hasOpenFeedback,
   hasPendingPickEscalation,
+  hasOpenDiscrepancy = false,
 }: TransferFlagBadgesProps) {
-  if (!hasOpenFeedback && !hasPendingPickEscalation) {
+  if (!hasOpenFeedback && !hasPendingPickEscalation && !hasOpenDiscrepancy) {
     return <span className="text-muted-foreground">—</span>
   }
   return (
@@ -100,6 +103,12 @@ export function TransferFlagBadges({
         <Badge variant="outline" className="text-warning">
           <TriangleAlert aria-hidden="true" />
           Dòng chờ quản lý
+        </Badge>
+      ) : null}
+      {hasOpenDiscrepancy ? (
+        <Badge variant="outline" className="text-warning">
+          <PackageX aria-hidden="true" />
+          Chênh lệch chờ xử lý
         </Badge>
       ) : null}
     </span>

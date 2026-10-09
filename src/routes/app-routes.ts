@@ -12,6 +12,8 @@ export const APP_ROUTES = {
     verify2fa: '/auth/verify-2fa',
   },
   dashboard: '/dashboard',
+  reports: '/reports' as Route,
+  reportForecast: '/reports/forecast' as Route,
   myTasks: '/tasks' as Route,
   myTaskHistory: '/tasks/history' as Route,
   subscription: '/subscription',
@@ -63,7 +65,7 @@ export const APP_ROUTES = {
   inventoryOpeningStocks: '/inventory/opening-stocks',
   inventoryAbcClassification: '/inventory/abc-classification',
   inventoryDiscrepancies: '/inventory/discrepancies',
-  inventoryForecast: '/inventory/forecast',
+  inventoryForecast: '/inventory/forecast', // Legacy URL redirects to reports/forecast.
   cycleCounts: '/inventory/cycle-counts',
   cycleCountCreate: '/inventory/cycle-counts/new',
   cycleCountDetail: (cycleCountId: string): Route =>
@@ -74,6 +76,9 @@ export const APP_ROUTES = {
   stockAdjustmentVoucherDetail: (voucherId: string): Route =>
     `/inventory/stock-adjustments/vouchers/${voucherId}` as Route,
   transfers: '/transfers',
+  transfersTab: (stage: string): Route => `/transfers?tab=${stage}` as Route,
+  /** Mở sẵn hộp thoại tạo công việc điều chuyển vị trí (điều chuyển nội bộ trong kho). */
+  createRelocationTask: '/tasks?create=relocation' as Route,
   transferCreate: '/transfers/new',
   transferDetail: (transferId: string): Route => `/transfers/${transferId}` as Route,
   transferEdit: (transferId: string): Route => `/transfers/${transferId}/edit` as Route,
