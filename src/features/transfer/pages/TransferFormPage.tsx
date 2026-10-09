@@ -41,6 +41,7 @@ import {
   useTransferAvailabilityQuery,
   useTransferQuery,
   useTransferRequesterOptionsQuery,
+  useTransferReceivableSlotsQuery,
   useTransferSourceProductsQuery,
   useTransferSourceWarehousesQuery,
 } from '../hooks/use-transfers'
@@ -55,6 +56,7 @@ import {
   emptyTransferForm,
   visibleTransferItems,
 } from '../utils/transfer-form'
+import { canSeeWarehouse } from '../utils/transfer-capabilities'
 import { buildTransferLineUnits } from '../utils/transfer-line-units'
 import type { TransferLineUnits } from '../types/transfer.types'
 
@@ -135,6 +137,48 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   const productDetails = useInboundRequestProductDetails(productIds)
   const productConversions = useInboundRequestUnitConversions(productIds)
   const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
+
+  // Vị trí đến chỉ dành cho chủ và người kho nhập; người kho xuất không thấy cột này.
+  const showDestinationSlot =
+    Boolean(destinationWarehouseId) && canSeeWarehouse(viewer, destinationWarehouseId)
+  const [slotSearch, setSlotSearch] = useState('')
+  const debouncedSlotSearch = useDebouncedValue(slotSearch.trim(), 300)
+  const destinationSlotsQuery = useTransferReceivableSlotsQuery(
+    {
+      warehouseId: destinationWarehouseId,
+      top: LOOKUP_PAGE_SIZE,
+      ...(debouncedSlotSearch ? { search: debouncedSlotSearch } : {}),
+    },
+    showDestinationSlot
+  )
+  const destinationSlotOptions = useMemo<LookupOption[]>(
+    () => (destinationSlotsQuery.data ?? []).map((slot) => ({ value: slot.id, label: slot.path })),
+    [destinationSlotsQuery.data]
+  )
+  const knownDestinationSlots = useMemo(() => {
+    const known: Record<string, LookupOption> = {}
+    for (const item of detail?.items ?? []) {
+      if (item.destinationSlotId) {
+        known[item.destinationSlotId] = {
+          value: item.destinationSlotId,
+          label: item.destinationSlotPath ?? item.destinationSlotCode ?? item.destinationSlotId,
+        }
+      }
+    }
+    return known
+  }, [detail?.items])
+  const lockedDestinationItemIds = useMemo(
+    () =>
+      new Set(
+        (detail?.items ?? [])
+          .filter(
+            (item) =>
+              item.receivedQuantity > 0 || item.damagedQuantity > 0 || item.missingQuantity > 0
+          )
+          .map((item) => item.id)
+      ),
+    [detail?.items]
+  )
 
   const codeSessionKey = useId()
   const nextCodeQuery = useNextTransferCodeQuery(mode === 'create', codeSessionKey)
@@ -270,6 +314,12 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   function changeDestination(value: string) {
     form.setValue('destinationWarehouseId', value, { shouldDirty: true, shouldValidate: true })
     form.setValue('sourceWarehouseId', '', { shouldDirty: true })
+    // Vị trí đến thuộc kho nhập cũ nên không còn hợp lệ khi đổi kho nhập.
+    form
+      .getValues('lines')
+      .forEach((_, index) =>
+        form.setValue(`lines.${index}.destinationSlotId`, '', { shouldDirty: true })
+      )
   }
 
   const submit = form.handleSubmit((values) =>
@@ -353,6 +403,12 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
           isUnitLoading={isUnitLoading}
           isUnitError={isUnitError}
           hasWarehouses={hasWarehouses}
+          showDestinationSlot={showDestinationSlot}
+          destinationSlotOptions={destinationSlotOptions}
+          knownDestinationSlots={knownDestinationSlots}
+          isDestinationSlotLoading={destinationSlotsQuery.isFetching}
+          lockedDestinationItemIds={lockedDestinationItemIds}
+          onDestinationSlotSearchChange={setSlotSearch}
           lockByItemId={lockInfoByItemId}
           isProductSearchLoading={productsQuery.isFetching}
           isSaving={actions.isSaving}

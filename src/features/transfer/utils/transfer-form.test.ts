@@ -60,7 +60,9 @@ describe('transfer form conversion', () => {
     const values = emptyTransferForm()
     values.sourceWarehouseId = 'a'
     values.destinationWarehouseId = 'b'
-    values.lines = [{ itemId: null, productId: 'p', unitId: '', quantity: 3 }]
+    values.lines = [
+      { itemId: null, productId: 'p', unitId: '', destinationSlotId: '', quantity: 3 },
+    ]
     expect(toSaveDraftRequest(values, 'v1')).toEqual({
       expectedVersion: 'v1',
       transferCode: null,
@@ -71,7 +73,7 @@ describe('transfer form conversion', () => {
       reason: null,
       requiredBy: null,
       note: null,
-      items: [{ itemId: null, productId: 'p', unitId: null, quantity: 3 }],
+      items: [{ itemId: null, productId: 'p', unitId: null, quantity: 3, destinationSlotId: null }],
     })
   })
 
@@ -251,5 +253,16 @@ describe('receive helpers', () => {
     expect(
       nextReceiveScanTarget([entry({ destinationSlotId: 'a', scannedProductCode: 'x' })])
     ).toBeNull()
+  })
+
+  it('carries the chosen destination slot through the form and back to the request', () => {
+    const detail = buildTransfer({
+      items: [buildTransferItem({ id: 'i1', destinationSlotId: 'slot-1' })],
+    })
+    const values = transferToFormValues(detail)
+    expect(values.lines[0]?.destinationSlotId).toBe('slot-1')
+    expect(toSaveDraftRequest(values, null).items[0]?.destinationSlotId).toBe('slot-1')
+    values.lines[0]!.destinationSlotId = ''
+    expect(toSaveDraftRequest(values, null).items[0]?.destinationSlotId).toBeNull()
   })
 })

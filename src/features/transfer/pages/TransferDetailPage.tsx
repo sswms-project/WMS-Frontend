@@ -43,6 +43,7 @@ import {
   remainingQuantity,
 } from '../utils/transfer-capabilities'
 import { getTransferNextSteps, type TransferNextStepAction } from '../utils/transfer-next-steps'
+import { canSeeWarehouse } from '../utils/transfer-capabilities'
 import { visibleTransferItems } from '../utils/transfer-form'
 import { transferGoodsRows } from '../utils/transfer-goods-rows'
 import { transferTabIds } from '../utils/transfer-tabs'
@@ -230,7 +231,13 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
             </TabsList>
             <OperationalListPanel {...tabIds.panelProps}>
               {tab === 'goods' ? (
-                <TransferGoodsTable key={transfer.id} selected rows={rows} />
+                <TransferGoodsTable
+                  key={transfer.id}
+                  selected
+                  rows={rows}
+                  showAllocation={canSeeWarehouse(viewer, transfer.sourceWarehouseId)}
+                  showDestinationSlot={canSeeWarehouse(viewer, transfer.destinationWarehouseId)}
+                />
               ) : (
                 <div data-slot="operational-list-body">
                   {tab === 'shipments' ? (

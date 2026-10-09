@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react'
+import { Trash2, X } from 'lucide-react'
 import type { FieldArrayWithId, UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -8,6 +8,7 @@ import { LookupCombobox } from '@/features/inbound-request/components/InboundReq
 import type { LookupOption } from '@/features/inbound-request/types/inbound-request.types'
 import { formatQuantity } from '@/features/inbound-request/utils/inbound-request-format'
 import type { TransferRequestFormValues } from '../../schemas/transfer-request.schema'
+import { LINE_GRID_COLUMNS, LINE_GRID_COLUMNS_WITH_DESTINATION } from './line-grid'
 import type { TransferLineUnits } from '../../types/transfer.types'
 import {
   exceedsAvailability as isOverAvailability,
@@ -38,6 +39,14 @@ interface TransferLineRowProps {
   readonly showAvailabilityWarning: boolean
   readonly onProductSearchChange: (scope: string, value: string) => void
   readonly onRemove: (index: number) => void
+  /** Chỉ chủ và người kho nhập thấy cột này; người kho xuất không biết nơi cất. */
+  readonly showDestinationSlot: boolean
+  readonly destinationSlotOptions: readonly LookupOption[]
+  readonly selectedDestinationSlot?: LookupOption
+  readonly isDestinationSlotLoading: boolean
+  /** Dòng đã bắt đầu nhận hàng thì vị trí đến không đổi nữa. */
+  readonly isDestinationSlotLocked: boolean
+  readonly onDestinationSlotSearchChange: (value: string) => void
 }
 
 export function TransferLineRow({
@@ -57,6 +66,12 @@ export function TransferLineRow({
   showAvailabilityWarning,
   onProductSearchChange,
   onRemove,
+  showDestinationSlot,
+  destinationSlotOptions,
+  selectedDestinationSlot,
+  isDestinationSlotLoading,
+  isDestinationSlotLocked,
+  onDestinationSlotSearchChange,
 }: TransferLineRowProps) {
   const line = form.watch(`lines.${index}`)
   const errors = form.formState.errors.lines?.[index]
@@ -78,7 +93,9 @@ export function TransferLineRow({
         : 'Sản phẩm chưa có đơn vị'
 
   return (
-    <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[28px_minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_32px] lg:items-start lg:gap-3 lg:px-3 lg:py-2">
+    <div
+      className={`grid gap-3 p-3 sm:p-4 ${showDestinationSlot ? LINE_GRID_COLUMNS_WITH_DESTINATION : LINE_GRID_COLUMNS} lg:items-start lg:gap-3 lg:px-3 lg:py-2`}
+    >
       <div className="flex items-center justify-between lg:justify-center lg:pt-2">
         <span className="text-muted-foreground text-xs">{index + 1}</span>
         <Button
@@ -207,6 +224,50 @@ export function TransferLineRow({
           </span>
         ) : null}
       </div>
+      {showDestinationSlot ? (
+        <Field data-invalid={Boolean(errors?.destinationSlotId)}>
+          <FieldLabel className="text-xs lg:sr-only" htmlFor={`transfer-destination-slot-${index}`}>
+            Vị trí đến (không bắt buộc)
+          </FieldLabel>
+          <div className="flex items-center gap-1">
+            <div className="min-w-0 flex-1">
+              <LookupCombobox
+                id={`transfer-destination-slot-${index}`}
+                value={line.destinationSlotId}
+                options={destinationSlotOptions}
+                selectedOption={selectedDestinationSlot}
+                placeholder="Chọn vị trí đến (có thể để trống)"
+                emptyMessage="Kho nhập chưa có vị trí phù hợp."
+                ariaLabel={`Vị trí đến dòng ${index + 1}`}
+                isLoading={isDestinationSlotLoading}
+                isInvalid={Boolean(errors?.destinationSlotId)}
+                disabled={isDestinationSlotLocked}
+                onSearchChange={onDestinationSlotSearchChange}
+                onChange={(value) =>
+                  form.setValue(`lines.${index}.destinationSlotId`, value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
+            {line.destinationSlotId && !isDestinationSlotLocked ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Bỏ vị trí đến dòng ${index + 1}`}
+                onClick={() =>
+                  form.setValue(`lines.${index}.destinationSlotId`, '', { shouldDirty: true })
+                }
+              >
+                <X aria-hidden="true" />
+              </Button>
+            ) : null}
+          </div>
+          <FieldError>{errors?.destinationSlotId?.message}</FieldError>
+        </Field>
+      ) : null}
       <Button
         type="button"
         variant="ghost"

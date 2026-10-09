@@ -31,6 +31,7 @@ import { useTransferViewer } from '../hooks/use-transfer-viewer'
 import { isCameraScanSupported } from '../utils/camera-scan'
 import { playScanFeedback } from '../utils/scan-feedback'
 import { useScanPreferences } from '../utils/scan-preferences'
+import { formatTransferLocation } from '../utils/transfer-location'
 import { nextReceiveScanTarget } from '../utils/transfer-receive'
 
 interface TransferReceiveTaskPageProps {
@@ -185,6 +186,16 @@ export default function TransferReceiveTaskPage({
                   baseUnitName={line.baseUnitName}
                   canRemove={receive.countEntriesOf(index) > 1}
                   slotLabel={receive.slotPathById[entry.destinationSlotId]}
+                  suggestedSlotLabel={
+                    line.suggestedSlotCode
+                      ? formatTransferLocation({
+                          slotCode: line.suggestedSlotCode,
+                          rackCode: line.suggestedRackCode,
+                          zoneCode: line.suggestedZoneCode,
+                          isSystemDefaultSlot: line.suggestedIsSystemDefaultSlot,
+                        })
+                      : undefined
+                  }
                   disabled={!canAct || receive.isReceiving}
                   isFindingSlot={receive.isFindingSlot}
                   onScanSlot={receive.scanSlot}

@@ -13,6 +13,8 @@ export const transferLineSchema = z.object({
   itemId: z.string().nullable(),
   productId: dotNetGuidSchema('Vui lòng chọn sản phẩm.'),
   unitId: optionalGuid('Đơn vị tính không hợp lệ.'),
+  /** Vị trí đến gợi ý ở kho nhập; chuỗi rỗng là chưa chọn. */
+  destinationSlotId: optionalGuid('Vị trí đến không hợp lệ.'),
   quantity: z.number('Số lượng phải là số.').positive('Số lượng phải lớn hơn 0.'),
 })
 

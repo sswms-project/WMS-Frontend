@@ -188,6 +188,31 @@ export interface TransferItem {
   resolvedMissingQuantity: number
   stoppedQuantity: number
   unbatchedQuantity: number
+  /** Chỉ người kho xuất (hoặc chủ) nhận được; BE bỏ trống với người chỉ thuộc kho nhập. */
+  allocations?: TransferAllocation[] | null
+  /** "Khu K01 / Kệ A07 / S-01"; BE bỏ trống với người chỉ thuộc kho xuất. */
+  destinationSlotPath?: string | null
+}
+
+/** Hàng của một dòng phiếu đang được giữ chỗ ở đâu (vị trí lấy do hệ thống phân bổ). */
+export interface TransferAllocation {
+  inventoryStockId: string
+  location: string
+  lotNumber: string | null
+  expiryDate: string | null
+  quantity: number
+}
+
+export interface TransferReceivableSlotOption {
+  id: string
+  code: string
+  path: string
+}
+
+export interface TransferReceivableSlotsQuery {
+  warehouseId: string
+  search?: string
+  top?: number
 }
 
 export interface TransferShipmentLine {
@@ -336,6 +361,8 @@ export interface TransferLineInput {
   productId: string
   unitId: string | null
   quantity: number
+  /** Vị trí cất hàng gợi ý ở kho nhập (tùy chọn). */
+  destinationSlotId?: string | null
 }
 
 export interface SaveTransferDraftRequest {
@@ -587,6 +614,7 @@ export interface TransferReceiveSheetLine {
   suggestedSlotCode: string | null
   suggestedRackCode: string | null
   suggestedIsSystemDefaultSlot: boolean
+  suggestedZoneCode?: string | null
   lots: TransferReceiveSheetLot[]
 }
 

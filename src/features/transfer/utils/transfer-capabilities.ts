@@ -63,6 +63,11 @@ function has(viewer: TransferViewer, permission: string) {
   return viewer.permissions.includes(permission)
 }
 
+/** Người xem thuộc kho này (chủ doanh nghiệp, hoặc kho nằm trong danh sách được phân công). */
+export function canSeeWarehouse(viewer: TransferViewer, warehouseId: string | undefined) {
+  return manages(viewer, warehouseId)
+}
+
 function manages(viewer: TransferViewer, warehouseId: string | undefined) {
   if (viewer.isTenantOwner || !viewer.warehouseIds || !warehouseId) return true
   return viewer.warehouseIds.includes(warehouseId)

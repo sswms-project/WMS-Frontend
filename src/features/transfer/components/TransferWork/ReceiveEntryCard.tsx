@@ -1,4 +1,4 @@
-import { Split, Trash2 } from 'lucide-react'
+import { Split, Trash2, MapPin } from 'lucide-react'
 import { useEffect } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,8 @@ interface ReceiveEntryCardProps {
   readonly canRemove: boolean
   /** "Khu K01 / Kệ A07" của vị trí đã quét; thiếu thì hiện mã người dùng quét. */
   readonly slotLabel?: string
+  /** Vị trí cất gợi ý do người tạo yêu cầu chọn ("Khu K01 / Kệ A07"); chỉ để tham khảo, vẫn phải quét xác nhận. */
+  readonly suggestedSlotLabel?: string
   readonly disabled: boolean
   readonly isFindingSlot: boolean
   readonly onScanSlot: (index: number, code: string) => ScanResult
@@ -45,6 +47,7 @@ export function ReceiveEntryCard({
   baseUnitName,
   canRemove,
   slotLabel,
+  suggestedSlotLabel,
   disabled,
   isFindingSlot,
   onScanSlot,
@@ -80,6 +83,18 @@ export function ReceiveEntryCard({
       <div className="grid gap-4 p-3">
         {!isMissingOnly ? (
           <>
+            {suggestedSlotLabel ? (
+              <p
+                className="bg-muted flex flex-wrap items-center gap-1.5 border px-3 py-2 text-sm"
+                role="note"
+              >
+                <MapPin className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+                <span className="text-muted-foreground">Gợi ý cất tại</span>
+                <strong className="font-mono" translate="no">
+                  {suggestedSlotLabel}
+                </strong>
+              </p>
+            ) : null}
             <ScanInput
               id={`receive-slot-${index}`}
               autoFocus={index === 0}

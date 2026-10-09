@@ -10,6 +10,7 @@ import {
   type WarehouseSelectOption,
 } from './TransferGeneralSection'
 import { exceedsAvailability } from '../../utils/transfer-line-units'
+import { LINE_GRID_COLUMNS, LINE_GRID_COLUMNS_WITH_DESTINATION } from './line-grid'
 import { TransferLineRow, type TransferLineLockInfo } from './TransferLineRow'
 import type { BusinessCodeFieldProps } from '@/components/forms/BusinessCodeField'
 
@@ -29,6 +30,12 @@ interface TransferFormProps {
   readonly isUnitError: boolean
   /** Đã chọn đủ kho xuất và kho nhập, nên mới có số tồn để hiển thị. */
   readonly hasWarehouses: boolean
+  readonly showDestinationSlot: boolean
+  readonly destinationSlotOptions: readonly LookupOption[]
+  readonly knownDestinationSlots: Readonly<Record<string, LookupOption>>
+  readonly isDestinationSlotLoading: boolean
+  readonly lockedDestinationItemIds: ReadonlySet<string>
+  readonly onDestinationSlotSearchChange: (value: string) => void
   readonly lockByItemId: Readonly<Record<string, TransferLineLockInfo>>
   readonly isProductSearchLoading: boolean
   readonly isSaving: boolean
@@ -60,6 +67,12 @@ export function TransferForm({
   isUnitLoading,
   isUnitError,
   hasWarehouses,
+  showDestinationSlot,
+  destinationSlotOptions,
+  knownDestinationSlots,
+  isDestinationSlotLoading,
+  lockedDestinationItemIds,
+  onDestinationSlotSearchChange,
   lockByItemId,
   isProductSearchLoading,
   isSaving,
@@ -126,13 +139,16 @@ export function TransferForm({
             Thêm dòng
           </Button>
         </div>
-        <div className="text-muted-foreground bg-muted hidden gap-3 border-b px-3 py-2 text-xs font-medium lg:grid lg:grid-cols-[28px_minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_32px]">
+        <div
+          className={`text-muted-foreground bg-muted hidden gap-3 border-b px-3 py-2 text-xs font-medium lg:grid ${showDestinationSlot ? LINE_GRID_COLUMNS_WITH_DESTINATION : LINE_GRID_COLUMNS}`}
+        >
           <span>#</span>
           <span>Sản phẩm</span>
           <span>ĐVT</span>
           <span>Số lượng</span>
           <span>SL theo ĐVT chính</span>
           <span>Tồn khả dụng kho xuất</span>
+          {showDestinationSlot ? <span>Vị trí đến</span> : null}
           <span />
         </div>
         {errors.lines?.message || errors.lines?.root?.message ? (
@@ -156,6 +172,12 @@ export function TransferForm({
                 isUnitLoading={isUnitLoading}
                 isUnitError={isUnitError}
                 hasWarehouses={hasWarehouses}
+                showDestinationSlot={showDestinationSlot}
+                destinationSlotOptions={destinationSlotOptions}
+                selectedDestinationSlot={knownDestinationSlots[line?.destinationSlotId ?? '']}
+                isDestinationSlotLoading={isDestinationSlotLoading}
+                isDestinationSlotLocked={Boolean(itemId && lockedDestinationItemIds.has(itemId))}
+                onDestinationSlotSearchChange={onDestinationSlotSearchChange}
                 selectedOption={knownProductOptions[productId]}
                 options={productOptions}
                 isProductSearchLoading={isProductSearchLoading}
