@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { logger } from '@/lib/logger'
 
+const SHORT_BARCODE_LENGTH = 16
+
 interface ProductBarcodePanelProps {
   readonly sku: string
   readonly barcodeValue: string | null
@@ -37,6 +39,7 @@ export function ProductBarcodePanel({
       })
     }
 
+    const barWidth = barcodeValue.length <= SHORT_BARCODE_LENGTH ? 4 : 2
     try {
       // Printed product labels need fixed black bars on a white substrate, same as
       // the warehouse location labels.
@@ -45,11 +48,11 @@ export function ProductBarcodePanel({
         displayValue: true,
         font: 'JetBrains Mono, monospace',
         fontSize: 16,
-        // Giữ độ dày vạch mặc định (2px); chỉ cao hơn cho dễ quét.
-        width: 2,
+        // Mã ngắn (SKU) thì vạch dày 4px cho dễ quét; mã dài vẫn dùng 2px để không vượt khung.
+        // Lề = 10 vạch vì Code 128 cần vùng trống tối thiểu 10 vạch ở hai đầu.
+        width: barWidth,
         height: 120,
-        // Code 128 cần vùng trống tối thiểu 10 vạch (20px) hai đầu thì camera mới đọc được.
-        margin: 24,
+        margin: barWidth * 10,
         background: '#ffffff',
         lineColor: '#111111',
       })
