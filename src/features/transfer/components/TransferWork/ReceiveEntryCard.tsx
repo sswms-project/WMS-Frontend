@@ -52,7 +52,9 @@ export function ReceiveEntryCard({
   const errors = form.formState.errors.entries?.[index]
   const entry = form.watch(`entries.${index}`)
   const hasProblem = entry.damagedQuantity > 0 || entry.missingQuantity > 0
-  const needsSlot = entry.goodQuantity > 0 || entry.damagedQuantity > 0
+  // Khai báo mới (chưa nhập số) vẫn cần ô quét để quét vị trí trước; chỉ ẩn khi khai báo chỉ có hàng thiếu.
+  const isMissingOnly =
+    entry.goodQuantity <= 0 && entry.damagedQuantity <= 0 && entry.missingQuantity > 0
   const isSlotConfirmed = Boolean(entry.destinationSlotId)
   const isProductConfirmed = Boolean(entry.scannedProductCode)
 
@@ -73,7 +75,7 @@ export function ReceiveEntryCard({
         </p>
       </header>
       <div className="grid gap-4 p-3">
-        {needsSlot ? (
+        {!isMissingOnly ? (
           <>
             <ScanInput
               id={`receive-slot-${index}`}

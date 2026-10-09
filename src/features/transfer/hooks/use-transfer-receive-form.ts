@@ -11,6 +11,7 @@ import type { TransferReceiveSheet } from '../types/transfer.types'
 import {
   buildExpectedReceiptQuantities,
   buildInitialReceiptEntries,
+  removeReceiptEntry,
   toReceiveRequest,
 } from '../utils/transfer-receive'
 import { describeTransferError } from '../utils/transfer-errors'
@@ -149,7 +150,8 @@ export function useTransferReceiveForm(
     scanSlot,
     scanProduct,
     splitEntry,
-    removeEntry: entries.remove,
+    removeEntry: (index: number) =>
+      entries.replace(removeReceiptEntry(form.getValues('entries'), index)),
     countEntriesOf,
     reset: () => {
       hydratedVersion.current = null

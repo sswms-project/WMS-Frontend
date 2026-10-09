@@ -11,6 +11,7 @@ import {
 import {
   buildExpectedReceiptQuantities,
   buildInitialReceiptEntries,
+  removeReceiptEntry,
   toReceiveRequest,
 } from './transfer-receive'
 import { buildTransfer, buildTransferItem } from './transfer-test-fixtures'
@@ -179,5 +180,37 @@ describe('receive helpers', () => {
       note: null,
       scannedProductCode: null,
     })
+  })
+
+  it('moves the quantities of a removed receipt entry onto the remaining one of the same line and lot', () => {
+    const entry = (
+      overrides: Partial<{
+        lineId: string
+        lotId: string | null
+        goodQuantity: number
+        damagedQuantity: number
+        missingQuantity: number
+      }>
+    ) => ({
+      lineId: 'l1',
+      lotId: null,
+      goodQuantity: 0,
+      damagedQuantity: 0,
+      missingQuantity: 0,
+      ...overrides,
+    })
+    const entries = [
+      entry({ goodQuantity: 20 }),
+      entry({ goodQuantity: 0 }),
+      entry({ lineId: 'l2' }),
+    ]
+
+    const afterRemovingFirst = removeReceiptEntry(entries, 0)
+    expect(afterRemovingFirst).toHaveLength(2)
+    expect(afterRemovingFirst[0]).toMatchObject({ lineId: 'l1', goodQuantity: 20 })
+
+    const afterRemovingSecond = removeReceiptEntry(entries, 1)
+    expect(afterRemovingSecond[0]).toMatchObject({ goodQuantity: 20 })
+    expect(removeReceiptEntry([entries[2]!], 0)).toHaveLength(0)
   })
 })

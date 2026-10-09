@@ -65,3 +65,36 @@ export function toReceiveRequest(
     })),
   }
 }
+
+interface RemovableReceiptEntry {
+  readonly lineId: string
+  readonly lotId: string | null
+  readonly goodQuantity: number
+  readonly damagedQuantity: number
+  readonly missingQuantity: number
+}
+
+/**
+ * Bỏ một khai báo nhận: số lượng của nó được cộng sang khai báo còn lại của cùng dòng và lô, để tổng vẫn khớp
+ * số đã xuất và không để lại khai báo trống (không còn ô quét) sau khi bỏ.
+ */
+export function removeReceiptEntry<T extends RemovableReceiptEntry>(
+  entries: readonly T[],
+  index: number
+): T[] {
+  const removed = entries[index]
+  if (!removed) return [...entries]
+  const next = entries.filter((_, position) => position !== index)
+  const target = next.findIndex(
+    (entry) => entry.lineId === removed.lineId && entry.lotId === removed.lotId
+  )
+  const absorber = next[target]
+  if (!absorber) return next
+  next[target] = {
+    ...absorber,
+    goodQuantity: absorber.goodQuantity + removed.goodQuantity,
+    damagedQuantity: absorber.damagedQuantity + removed.damagedQuantity,
+    missingQuantity: absorber.missingQuantity + removed.missingQuantity,
+  }
+  return next
+}
