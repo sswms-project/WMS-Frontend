@@ -134,6 +134,7 @@ export function PickSwitchDialog({
               <Button
                 type="button"
                 variant="outline"
+                className="h-11"
                 disabled={isPending}
                 onClick={() => onOpenChange(false)}
               >

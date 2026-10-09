@@ -1,6 +1,13 @@
 'use client'
 
-import { ArrowLeft, MessageSquareWarning, PencilLine, Plus } from 'lucide-react'
+import {
+  ArrowLeft,
+  MapPinned,
+  MessageSquareWarning,
+  PencilLine,
+  Plus,
+  UserPlus,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useId, useMemo, useState } from 'react'
@@ -18,6 +25,7 @@ import { APP_ROUTES } from '@/routes/app-routes'
 import { TransferGoodsTable } from '../components/TransferGoods'
 import {
   AddFeedbackDialog,
+  AdjustAllocationDialog,
   AssignTransferTaskDialog,
   CreateShipmentDialog,
   ReplyFeedbackDialog,
@@ -25,11 +33,13 @@ import {
   ResolveEscalationDialog,
   TransferDiscrepancyPanel,
   TransferFeedbackPanel,
+  TransferNextSteps,
   TransferOverview,
   TransferShipmentsPanel,
 } from '../components/TransferDetailPage'
-import { TransferReasonDialog } from '../components/TransferShared'
+import { TransferConfirmDialog, TransferReasonDialog } from '../components/TransferShared'
 import { TransferStatusBadge } from '../components/TransfersPage'
+import { useTransferAllocationActions } from '../hooks/use-transfer-allocation-actions'
 import { useTransferRealtime } from '../hooks/use-transfer-realtime'
 import { useTransferRequestActions } from '../hooks/use-transfer-request-actions'
 import { useTransferResolutionActions } from '../hooks/use-transfer-resolution-actions'
@@ -41,6 +51,8 @@ import {
   hasOpenFeedback,
   remainingQuantity,
 } from '../utils/transfer-capabilities'
+import { getTransferNextSteps, type TransferNextStepAction } from '../utils/transfer-next-steps'
+import { canSeeWarehouse } from '../utils/transfer-capabilities'
 import { visibleTransferItems } from '../utils/transfer-form'
 import { transferGoodsRows } from '../utils/transfer-goods-rows'
 import { transferTabIds } from '../utils/transfer-tabs'
@@ -59,6 +71,7 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
 
   const requestActions = useTransferRequestActions(transfer)
   const resolutionActions = useTransferResolutionActions(transfer)
+  const allocationActions = useTransferAllocationActions(transfer)
 
   const capabilities = getTransferCapabilities(viewer, transfer)
   const shipments = useMemo(() => transfer?.shipments ?? [], [transfer?.shipments])
@@ -67,10 +80,26 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
   const shipmentCapabilities = useMemo(
     () =>
       Object.fromEntries(
-        shipments.map((shipment) => [shipment.id, getShipmentCapabilities(viewer, shipment)])
+        shipments.map((shipment) => [
+          shipment.id,
+          getShipmentCapabilities(viewer, shipment, transfer),
+        ])
       ),
-    [shipments, viewer]
+    [shipments, viewer, transfer]
   )
+  const nextSteps = useMemo(
+    () =>
+      transfer ? getTransferNextSteps(viewer, transfer, capabilities, shipmentCapabilities) : [],
+    [viewer, transfer, capabilities, shipmentCapabilities]
+  )
+  const headerAssignStep = nextSteps.find((step) => step.action.type === 'assign')
+  function runNextStep(action: TransferNextStepAction) {
+    if (action.type === 'createShipment') requestActions.shipment.open()
+    else if (action.type === 'adjustAllocation') allocationActions.open()
+    else if (action.type === 'assign') resolutionActions.assign.open(action.shipment, action.kind)
+    else if (action.type === 'confirmDeparture') resolutionActions.departure.open(action.shipment)
+    else if (action.type === 'resolveDiscrepancy') setTab('discrepancies')
+  }
   const history = useMemo(() => (transfer ? buildTransferHistory(transfer) : []), [transfer])
   const rows = useMemo(() => transferGoodsRows(transfer), [transfer])
   const closing = requestActions.closing
@@ -84,7 +113,11 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
   ]
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4">
+    <div
+      data-slot="transfer-scroll"
+      data-edge
+      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-y-auto pr-3 sm:pr-4 lg:pr-5"
+    >
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b pb-4">
         <div className="flex min-w-0 items-start gap-3">
           <Button
@@ -135,6 +168,18 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
                 Phản hồi
               </Button>
             ) : null}
+            {capabilities.canAdjustAllocation ? (
+              <Button type="button" size="sm" variant="outline" onClick={allocationActions.open}>
+                <MapPinned aria-hidden="true" />
+                Điều chỉnh phân bổ
+              </Button>
+            ) : null}
+            {headerAssignStep?.action.type === 'assign' ? (
+              <Button type="button" size="sm" onClick={() => runNextStep(headerAssignStep.action)}>
+                <UserPlus aria-hidden="true" />
+                {headerAssignStep.actionLabel}
+              </Button>
+            ) : null}
             {capabilities.canCreateShipment ? (
               <Button type="button" size="sm" onClick={requestActions.shipment.open}>
                 <Plus aria-hidden="true" />
@@ -174,6 +219,7 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
               </AlertDescription>
             </Alert>
           ) : null}
+          <TransferNextSteps transferId={transfer.id} steps={nextSteps} onAction={runNextStep} />
           <TransferOverview transfer={transfer} />
           <Tabs
             value={tab}
@@ -202,7 +248,13 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
             </TabsList>
             <OperationalListPanel {...tabIds.panelProps}>
               {tab === 'goods' ? (
-                <TransferGoodsTable key={transfer.id} selected rows={rows} />
+                <TransferGoodsTable
+                  key={transfer.id}
+                  selected
+                  rows={rows}
+                  showAllocation={canSeeWarehouse(viewer, transfer.sourceWarehouseId)}
+                  showDestinationSlot={canSeeWarehouse(viewer, transfer.destinationWarehouseId)}
+                />
               ) : (
                 <div data-slot="operational-list-body">
                   {tab === 'shipments' ? (
@@ -211,6 +263,8 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
                       shipments={shipments}
                       capabilities={shipmentCapabilities}
                       onCancelShipment={requestActions.cancelShipment.open}
+                      onConfirmDeparture={resolutionActions.departure.open}
+                      onReopenPicking={resolutionActions.reopen.open}
                       onAssignTask={resolutionActions.assign.open}
                       onResolveEscalation={resolutionActions.escalation.open}
                     />
@@ -252,6 +306,46 @@ export default function TransferDetailPage({ transferId }: { readonly transferId
         isPending={closing.isPending}
         onOpenChange={closing.onOpenChange}
         onSubmit={(values) => void closing.submit(values)}
+      />
+      <TransferConfirmDialog
+        open={Boolean(resolutionActions.departure.shipment)}
+        title="Xác nhận xe đã rời kho?"
+        description={
+          <p>
+            Hệ thống sẽ trừ tồn kho xuất theo số hàng đã lấy của đợt{' '}
+            {resolutionActions.departure.shipment?.shipmentNumber} và chuyển đợt sang đang vận
+            chuyển để kho nhập nhận hàng. Thao tác này không hoàn tác được.
+          </p>
+        }
+        confirmLabel="Xác nhận đã xuất kho"
+        pendingLabel="Đang xử lý…"
+        isPending={resolutionActions.departure.isPending}
+        onOpenChange={resolutionActions.departure.onOpenChange}
+        onConfirm={() => void resolutionActions.departure.confirm()}
+      />
+      <TransferReasonDialog
+        open={Boolean(resolutionActions.reopen.shipment)}
+        title="Mở lại lấy hàng?"
+        description="Đợt quay về trạng thái đang lấy hàng để nhân viên lấy lại hoặc trả hàng. Nhập lý do để nhân viên biết cần làm gì."
+        confirmLabel="Mở lại lấy hàng"
+        pendingLabel="Đang xử lý…"
+        destructive={false}
+        form={resolutionActions.reopen.form}
+        isPending={resolutionActions.reopen.isPending}
+        onOpenChange={resolutionActions.reopen.onOpenChange}
+        onSubmit={(values) => void resolutionActions.reopen.submit(values)}
+      />
+      <AdjustAllocationDialog
+        open={allocationActions.isOpen}
+        items={allocationActions.items}
+        itemId={allocationActions.itemId}
+        options={allocationActions.options}
+        isLoading={allocationActions.isLoading}
+        isError={allocationActions.isError}
+        isPending={allocationActions.isPending}
+        onSelectItem={allocationActions.select}
+        onOpenChange={allocationActions.onOpenChange}
+        onSubmit={allocationActions.submit}
       />
       <AddFeedbackDialog
         open={requestActions.feedback.isOpen}

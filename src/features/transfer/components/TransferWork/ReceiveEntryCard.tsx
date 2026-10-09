@@ -1,4 +1,4 @@
-import { Split, Trash2 } from 'lucide-react'
+import { Split, Trash2, MapPin } from 'lucide-react'
 import { useEffect } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,10 @@ interface ReceiveEntryCardProps {
   readonly dispatchedQuantity: number
   readonly baseUnitName: string
   readonly canRemove: boolean
+  /** "Khu K01 / Kệ A07" của vị trí đã quét; thiếu thì hiện mã người dùng quét. */
+  readonly slotLabel?: string
+  /** Vị trí cất gợi ý do người tạo yêu cầu chọn ("Khu K01 / Kệ A07"); chỉ để tham khảo, vẫn phải quét xác nhận. */
+  readonly suggestedSlotLabel?: string
   readonly disabled: boolean
   readonly isFindingSlot: boolean
   readonly onScanSlot: (index: number, code: string) => ScanResult
@@ -42,6 +46,8 @@ export function ReceiveEntryCard({
   dispatchedQuantity,
   baseUnitName,
   canRemove,
+  slotLabel,
+  suggestedSlotLabel,
   disabled,
   isFindingSlot,
   onScanSlot,
@@ -52,7 +58,9 @@ export function ReceiveEntryCard({
   const errors = form.formState.errors.entries?.[index]
   const entry = form.watch(`entries.${index}`)
   const hasProblem = entry.damagedQuantity > 0 || entry.missingQuantity > 0
-  const needsSlot = entry.goodQuantity > 0 || entry.damagedQuantity > 0
+  // Khai báo mới (chưa nhập số) vẫn cần ô quét để quét vị trí trước; chỉ ẩn khi khai báo chỉ có hàng thiếu.
+  const isMissingOnly =
+    entry.goodQuantity <= 0 && entry.damagedQuantity <= 0 && entry.missingQuantity > 0
   const isSlotConfirmed = Boolean(entry.destinationSlotId)
   const isProductConfirmed = Boolean(entry.scannedProductCode)
 
@@ -73,13 +81,28 @@ export function ReceiveEntryCard({
         </p>
       </header>
       <div className="grid gap-4 p-3">
-        {needsSlot ? (
+        {!isMissingOnly ? (
           <>
+            {suggestedSlotLabel ? (
+              <p
+                className="bg-muted flex flex-wrap items-center gap-1.5 border px-3 py-2 text-sm"
+                role="note"
+              >
+                <MapPin className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+                <span className="text-muted-foreground">Gợi ý cất tại</span>
+                <strong className="font-mono" translate="no">
+                  {suggestedSlotLabel}
+                </strong>
+              </p>
+            ) : null}
             <ScanInput
               id={`receive-slot-${index}`}
               autoFocus={index === 0}
               label="Quét mã vị trí cất hàng"
-              confirmedValue={entry.destinationSlotId ? entry.scannedSlotCode : undefined}
+              confirmedValue={
+                entry.destinationSlotId ? (slotLabel ?? entry.scannedSlotCode) : undefined
+              }
+              hideCamera
               error={errors?.scannedSlotCode?.message ?? null}
               disabled={disabled}
               pending={isFindingSlot}
@@ -88,6 +111,7 @@ export function ReceiveEntryCard({
             <ScanInput
               id={`receive-product-${index}`}
               focusWhen={isSlotConfirmed && !isProductConfirmed}
+              hideCamera
               label="Quét mã hàng (không bắt buộc)"
               confirmedValue={entry.scannedProductCode || undefined}
               error={errors?.scannedProductCode?.message ?? null}
