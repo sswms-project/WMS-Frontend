@@ -663,7 +663,16 @@ export function BulkImportPage<TRow extends BulkImportRow>({
                           className="max-w-80 min-w-56"
                           id={`party-import-errors-${row.rowNumber}`}
                         >
-                          <BulkImportRowResult errors={row.errors} />
+                          <BulkImportRowResult
+                            errors={row.errors}
+                            valid={isValid}
+                            pinned={row.errors.filter(
+                              (message) =>
+                                !visibleColumns.some((column) =>
+                                  row.fieldErrors?.[column.key]?.includes(message)
+                                )
+                            )}
+                          />
                         </TableCell>
                         {visibleColumns.map((column) => {
                           const errors = row.fieldErrors?.[column.key] ?? []

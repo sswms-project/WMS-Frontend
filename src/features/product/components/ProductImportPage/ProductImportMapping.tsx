@@ -111,6 +111,7 @@ export function ProductImportMapping({
                   form.formState.errors.main?.sheetId ? 'import-main-sheet-error' : undefined
                 }
                 value={values.main.sheetId}
+                disabled={inspect.isCsv}
                 onChange={(event) => changeSheet('main', event.target.value)}
               >
                 <NativeSelectOption value="">Chọn trang tính</NativeSelectOption>
@@ -165,6 +166,7 @@ export function ProductImportMapping({
           </BulkImportMappingFields>
           <p id="import-main-header-help" className="text-muted-foreground text-xs">
             Chọn dòng chứa tên cột (1–50), rồi đối chiếu ví dụ để ghép thông tin.
+            {inspect.isCsv ? ' Tệp CSV chỉ có bảng hàng hóa, không chứa đơn vị quy đổi.' : ''}
           </p>
           {(['main', 'conversions'] as const).map((kind) => {
             const options = values[kind]

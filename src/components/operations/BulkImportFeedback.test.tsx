@@ -27,6 +27,25 @@ describe('shared import feedback', () => {
     expect(screen.getByText('Kiểm tra lại mã.')).toBeVisible()
   })
 
+  it('always shows errors that no cell can show, and folds the rest', async () => {
+    render(
+      <BulkImportRowResult
+        errors={['Thiếu tên.', 'Quy đổi sai hệ số.', 'Thiếu mã quy đổi.']}
+        pinned={['Quy đổi sai hệ số.', 'Thiếu mã quy đổi.']}
+      />
+    )
+    expect(screen.getByText('Quy đổi sai hệ số.')).toBeVisible()
+    expect(screen.getByText('Thiếu mã quy đổi.')).toBeVisible()
+    expect(screen.getByText('Xem chi tiết (1 thông báo khác)')).toBeVisible()
+    expect(screen.getByText('Thiếu tên.')).not.toBeVisible()
+  })
+
+  it('follows the row verdict when the row is invalid without any listed error', () => {
+    render(<BulkImportRowResult errors={[]} valid={false} />)
+    expect(screen.getByText('Không hợp lệ')).toBeVisible()
+    expect(screen.queryByText('Hợp lệ')).not.toBeInTheDocument()
+  })
+
   it('keeps valid rows selectable when they only have a warning or a planned catalog', () => {
     render(
       <BulkImportRowResult errors={[]} warnings={['Kiểm tra mã.']}>

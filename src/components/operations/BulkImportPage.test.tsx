@@ -177,9 +177,10 @@ describe('BulkImportPage', () => {
       'Kết quả',
       'Tên',
     ])
+    // Không cột nào đang hiển thị nhận hai lỗi này nên cả hai phải hiện đủ, không bị gấp lại.
     expect(screen.getByText('Thiếu email.')).toBeVisible()
-    await userEvent.click(screen.getByText('Xem chi tiết (1 thông báo khác)'))
     expect(screen.getByText('Liên hệ không hợp lệ.')).toBeVisible()
+    expect(screen.queryByText(/Xem chi tiết/)).not.toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Chọn dòng 2' })).toBeDisabled()
   })
   it('rereads CSV with the newly selected delimiter at the mapping step', async () => {

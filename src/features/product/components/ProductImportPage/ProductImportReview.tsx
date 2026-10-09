@@ -229,6 +229,21 @@ export function ProductImportReview({
                   ...row.errors,
                   ...row.unitConversions.flatMap((child) => child.errors),
                 ].map(issueMessage)
+                // Lỗi của cột đang ẩn hoặc của dòng quy đổi không hiện ở ô nào nên phải hiện đủ ở cột Kết quả.
+                const shownFields = new Set([
+                  'sku',
+                  'productname',
+                  'unit',
+                  'category',
+                  'islottracked',
+                  ...(supplementaryExpanded ? ['description', 'shelflifedays'] : []),
+                ])
+                const pinnedErrors = [
+                  ...row.errors.filter(
+                    (issue) => !shownFields.has(issue.field?.toLowerCase() ?? '')
+                  ),
+                  ...row.unitConversions.flatMap((child) => child.errors),
+                ].map(issueMessage)
                 return (
                   <TableRow key={row.rowNumber}>
                     <TableCell>
@@ -259,6 +274,8 @@ export function ProductImportReview({
                     >
                       <BulkImportRowResult
                         errors={errors}
+                        pinned={pinnedErrors}
+                        valid={isValidProductImportRow(row)}
                         warnings={row.warnings
                           .filter((issue) => issue.code !== 'catalogWillCreate')
                           .map(issueMessage)}
