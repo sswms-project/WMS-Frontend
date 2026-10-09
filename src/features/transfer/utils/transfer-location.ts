@@ -38,6 +38,12 @@ export function transferLocationScanCodes(
   ]
   if (location.isSystemDefaultSlot) {
     codes.push(location.rackCode, location.rackId ? locationLabel('RACK', location.rackId) : null)
+    // Nhãn kệ ghép khu: "K01-A07".
+    if (location.zoneCode && location.rackCode)
+      codes.push(`${location.zoneCode}-${location.rackCode}`)
+  } else if (location.zoneCode && location.rackCode) {
+    // Nhãn ô ghép khu và kệ, duy nhất trong kho: "K01-A07-S01".
+    codes.push(`${location.zoneCode}-${location.rackCode}-${location.slotCode}`)
   }
   return codes.filter((code): code is string => Boolean(code))
 }

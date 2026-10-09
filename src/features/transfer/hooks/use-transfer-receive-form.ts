@@ -13,6 +13,7 @@ import {
   buildInitialReceiptEntries,
   toReceiveRequest,
 } from '../utils/transfer-receive'
+import { describeTransferError } from '../utils/transfer-errors'
 import { codesMatch } from '../utils/transfer-scan'
 import { useTransferActionRunner } from './use-transfer-action-runner'
 import {
@@ -71,9 +72,14 @@ export function useTransferReceiveForm(
       form.setValue(`entries.${index}.destinationSlotId`, slot.id, { shouldDirty: true })
       form.setValue(`entries.${index}.scannedSlotCode`, code, { shouldDirty: true })
       return true
-    } catch {
+    } catch (error) {
+      form.setValue(`entries.${index}.destinationSlotId`, '')
+      form.setValue(`entries.${index}.scannedSlotCode`, '')
       form.setError(`entries.${index}.scannedSlotCode`, {
-        message: 'Không tra được vị trí. Hãy kiểm tra kết nối rồi quét lại.',
+        message: describeTransferError(
+          error,
+          'Không tra được vị trí. Hãy kiểm tra kết nối rồi quét lại.'
+        ).message,
       })
       return false
     }

@@ -348,6 +348,7 @@ export const API_ENDPOINTS = {
     create: '/transfers',
     sourceWarehouses: '/transfers/source-warehouses',
     sourceProducts: '/transfers/source-products',
+    receivableSlot: '/transfers/receivable-slot',
     nextCode: '/transfers/next-code',
     requesterOptions: '/transfers/requester-options',
     availability: '/transfers/availability',

@@ -63,4 +63,12 @@ describe('transfer location helpers', () => {
       'KOVIA:LOC:RACK:22222222-2222-4222-8222-222222222222'
     )
   })
+
+  it('accepts the zone-qualified label that is unique within the warehouse', () => {
+    const slot = { slotCode: 'S-01', rackCode: 'A07', zoneCode: 'K01', isSystemDefaultSlot: false }
+    expect(transferLocationScanCodes(slot)).toContain('K01-A07-S01'.replace('S01', 'S-01'))
+    const rack = { ...slot, slotCode: '__SYSTEM_DEFAULT__', isSystemDefaultSlot: true }
+    expect(transferLocationScanCodes(rack)).toContain('K01-A07')
+    expect(transferLocationScanCodes(rack)).not.toContain('K01-A07-S-01')
+  })
 })

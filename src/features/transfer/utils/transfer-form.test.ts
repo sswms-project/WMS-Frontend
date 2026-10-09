@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { LocationSearchResponse } from '@/features/warehouse/types/warehouse.types'
 import type { TransferReceiveSheet } from '../types/transfer.types'
 import {
   dispatchedInEnteredUnit,
@@ -12,7 +11,6 @@ import {
 import {
   buildExpectedReceiptQuantities,
   buildInitialReceiptEntries,
-  findReceivableSlot,
   toReceiveRequest,
 } from './transfer-receive'
 import { buildTransfer, buildTransferItem } from './transfer-test-fixtures'
@@ -181,24 +179,5 @@ describe('receive helpers', () => {
       note: null,
       scannedProductCode: null,
     })
-  })
-
-  it('only resolves active, non-staging slots by code or barcode', () => {
-    const slot = (overrides: Partial<LocationSearchResponse>) =>
-      ({
-        id: 'x',
-        type: 'Slot',
-        code: 'B-01',
-        barcodeValue: 'BAR-B-01',
-        lifecycleStatus: 'Active',
-        isOutboundStaging: false,
-        ...overrides,
-      }) as LocationSearchResponse
-    expect(findReceivableSlot('b-01', [slot({ id: 'a' })])?.id).toBe('a')
-    expect(findReceivableSlot('bar-b-01', [slot({ id: 'a' })])?.id).toBe('a')
-    expect(findReceivableSlot('B-01', [slot({ isOutboundStaging: true })])).toBeNull()
-    expect(findReceivableSlot('B-01', [slot({ lifecycleStatus: 'Inactive' })])).toBeNull()
-    expect(findReceivableSlot('B-01', [slot({ type: 'Rack' })])).toBeNull()
-    expect(findReceivableSlot('', [slot({})])).toBeNull()
   })
 })

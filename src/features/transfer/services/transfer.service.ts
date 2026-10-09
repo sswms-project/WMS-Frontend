@@ -1,4 +1,3 @@
-import { warehouseService } from '@/features/warehouse/services/warehouse.service'
 import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse, QueryResult } from '@/types/api'
@@ -35,27 +34,21 @@ import type {
   TransferSourceWarehouseQuery,
   UpdateTransferRequest,
 } from '../types/transfer.types'
-import { findRackLevelSlot, findReceivableSlot } from '../utils/transfer-receive'
+import type { ReceivableSlot } from '../utils/transfer-receive'
 
 const unwrap = <TData>(response: { data: ApiResponse<TData> }) => response.data
 
 export const transferService = {
-  /** Tra vị trí cất hàng hợp lệ của kho theo mã vừa quét; null nếu không có vị trí khớp. */
-  findReceivableSlot: async (warehouseId: string, scannedCode: string) => {
-    const response = await warehouseService.getLocations(warehouseId, {
-      top: 20,
-      skip: 0,
-      needTotalCount: true,
-      type: 'Slot',
-      lifecycleStatus: 'Active',
-      searchText: scannedCode.trim(),
-    })
-    const slot = findReceivableSlot(scannedCode, response.data.items)
-    if (slot) return slot
-    // Không phải ô con: thử mã kệ của kệ quản lý ở mức kệ.
-    const layout = await warehouseService.getLayout(warehouseId)
-    return findRackLevelSlot(scannedCode, layout.data)
-  },
+  /**
+   * Tra vị trí cất hàng của kho nhận theo mã vừa quét; null nếu không có vị trí khớp. Server đối chiếu nhãn
+   * ghép khu, mã vạch riêng và mã ngắn, và từ chối (409) khi một mã ngắn trùng ở nhiều kệ.
+   */
+  findReceivableSlot: (warehouseId: string, scannedCode: string) =>
+    axiosClient
+      .get<ApiResponse<ReceivableSlot | null>>(API_ENDPOINTS.transfers.receivableSlot, {
+        params: { warehouseId, code: scannedCode.trim() },
+      })
+      .then((response) => response.data.data),
 
   getTransfers: (params: TransferListQuery) =>
     axiosClient

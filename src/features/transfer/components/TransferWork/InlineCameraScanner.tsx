@@ -12,13 +12,15 @@ interface InlineCameraScannerProps {
   readonly active: boolean
   /** Gọi cho mỗi mã đọc được (đã chống đọc trùng khi giữ yên trước một mã). */
   readonly onCode: (code: string) => void
+  /** Quét từng đơn vị: thùng giống nhau nối tiếp nhau nên chỉ chặn đọc trùng trong khoảng ngắn. */
+  readonly repeatGuardMs?: number
 }
 
 /**
  * Khung camera nằm trong hộp thoại và chạy liên tục qua nhiều bước quét, thay cho hộp thoại camera mở lại
  * sau mỗi mã. Nhỏ gọn để không che các ô bên dưới trên điện thoại.
  */
-export function InlineCameraScanner({ active, onCode }: InlineCameraScannerProps) {
+export function InlineCameraScanner({ active, onCode, repeatGuardMs }: InlineCameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const onCodeRef = useRef(onCode)
   const [failure, setFailure] = useState<CameraScanFailure | null>(null)
@@ -38,6 +40,7 @@ export function InlineCameraScanner({ active, onCode }: InlineCameraScannerProps
     })
     void startCameraScan(video, (code) => onCodeRef.current(code), setFailure, {
       continuous: true,
+      repeatGuardMs,
     }).then((started) => {
       if (cancelled) started.stop()
       else handle = started
@@ -46,7 +49,7 @@ export function InlineCameraScanner({ active, onCode }: InlineCameraScannerProps
       cancelled = true
       handle?.stop()
     }
-  }, [active])
+  }, [active, repeatGuardMs])
 
   if (!active) return null
   return failure ? (

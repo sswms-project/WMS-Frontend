@@ -32,6 +32,8 @@ export const CAMERA_FAILURE_MESSAGES: Record<CameraScanFailure, string> = {
 interface CameraScanOptions {
   /** Đọc liên tục thay vì dừng sau mã đầu tiên; cùng một mã chỉ báo lại sau {@link REPEAT_GUARD_MS}. */
   readonly continuous?: boolean
+  /** Khoảng bỏ qua mã trùng khi đọc liên tục; mặc định {@link REPEAT_GUARD_MS}. */
+  readonly repeatGuardMs?: number
 }
 
 /** Giữ camera trước một mã thì ZXing đọc lại nhiều lần mỗi giây; bỏ qua mã trùng trong khoảng này. */
@@ -46,7 +48,7 @@ export async function startCameraScan(
   video: HTMLVideoElement,
   onCode: (code: string) => void,
   onError: (failure: CameraScanFailure) => void,
-  { continuous = false }: CameraScanOptions = {}
+  { continuous = false, repeatGuardMs = REPEAT_GUARD_MS }: CameraScanOptions = {}
 ): Promise<CameraScanHandle> {
   let stopped = false
   let controls: { stop: () => void } | undefined
@@ -72,7 +74,7 @@ export async function startCameraScan(
           return
         }
         const now = Date.now()
-        const isRepeat = code === lastCode && now - lastSeenAt < REPEAT_GUARD_MS
+        const isRepeat = code === lastCode && now - lastSeenAt < repeatGuardMs
         // Còn thấy mã đó trước camera thì gia hạn, chỉ báo lại khi đã rời mã đủ lâu.
         lastCode = code
         lastSeenAt = now
