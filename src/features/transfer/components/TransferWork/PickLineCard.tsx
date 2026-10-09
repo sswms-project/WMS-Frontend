@@ -1,4 +1,4 @@
-import { ArrowLeftRight, CircleCheck, TriangleAlert, Undo2 } from 'lucide-react'
+import { ArrowLeftRight, CircleCheck, MapPin, TriangleAlert, Undo2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +20,34 @@ interface PickLineCardProps {
   readonly onSwitch: (line: TransferPickSheetLine) => void
   readonly onEscalate: (line: TransferPickSheetLine) => void
   readonly onReturn: (line: TransferPickSheetLine) => void
+}
+
+const CHIP_TONES = {
+  primary: 'border-primary/40 bg-primary/10 text-primary',
+  warning: 'border-warning/40 bg-warning/10 text-warning',
+  muted: 'bg-muted text-muted-foreground',
+} as const
+
+/** Số lượng nhãn + số in đậm: "Lấy 6", "Trả 5", "Xuất 3". */
+function PickQuantityChip({
+  label,
+  value,
+  tone,
+}: {
+  readonly label: string
+  readonly value: number
+  readonly tone: keyof typeof CHIP_TONES
+}) {
+  return (
+    <span
+      className={`inline-flex items-baseline gap-1.5 border px-2 py-0.5 text-xs ${CHIP_TONES[tone]}`}
+    >
+      {label}
+      <strong className="text-base leading-none font-bold tabular-nums">
+        {formatQuantity(value)}
+      </strong>
+    </span>
+  )
 }
 
 export function PickLineCard({
@@ -116,19 +144,29 @@ export function PickLineCard({
       ) : null}
 
       {line.picks.length > 0 ? (
-        <ul className="grid gap-1 border-b p-3 text-xs">
+        <ul className="divide-y border-b">
           {line.picks.map((pick) => (
-            <li key={pick.id} className="flex flex-wrap justify-between gap-2">
-              <span className="font-mono" translate="no">
-                {formatTransferLocation(pick)}
-                {pick.lotNumber ? ` · lô ${pick.lotNumber}` : ''}
+            <li
+              key={pick.id}
+              className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-2.5"
+            >
+              <span className="flex min-w-0 items-center gap-2 text-sm">
+                <MapPin className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+                <span className="font-mono font-medium" translate="no">
+                  {formatTransferLocation(pick)}
+                </span>
+                {pick.lotNumber ? (
+                  <span className="text-muted-foreground text-xs">Lô {pick.lotNumber}</span>
+                ) : null}
               </span>
-              <span className="tabular-nums">
-                Lấy {formatQuantity(pick.pickedQuantity)}
-                {pick.returnedQuantity > 0 ? ` · trả ${formatQuantity(pick.returnedQuantity)}` : ''}
-                {pick.dispatchedQuantity > 0
-                  ? ` · xuất ${formatQuantity(pick.dispatchedQuantity)}`
-                  : ''}
+              <span className="flex flex-wrap items-center gap-1.5">
+                <PickQuantityChip label="Lấy" value={pick.pickedQuantity} tone="primary" />
+                {pick.returnedQuantity > 0 ? (
+                  <PickQuantityChip label="Trả" value={pick.returnedQuantity} tone="warning" />
+                ) : null}
+                {pick.dispatchedQuantity > 0 ? (
+                  <PickQuantityChip label="Xuất" value={pick.dispatchedQuantity} tone="muted" />
+                ) : null}
               </span>
             </li>
           ))}
