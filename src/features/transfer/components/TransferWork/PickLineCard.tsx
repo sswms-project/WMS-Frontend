@@ -43,7 +43,7 @@ function PickQuantityChip({
       className={`inline-flex items-baseline gap-1.5 border px-2 py-0.5 text-xs ${CHIP_TONES[tone]}`}
     >
       {label}
-      <strong className="text-base leading-none font-bold tabular-nums">
+      <strong className="text-sm leading-none font-bold tabular-nums">
         {formatQuantity(value)}
       </strong>
     </span>
