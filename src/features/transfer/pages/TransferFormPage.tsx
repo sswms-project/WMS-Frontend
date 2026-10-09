@@ -139,7 +139,10 @@ export default function TransferFormPage({ transferId }: { readonly transferId?:
   const unitsQuery = useUnitsQuery(true, RECORD_STATUS.Active)
 
   // Vị trí đi chỉ dành cho chủ và người kho xuất; người kho nhập không biết nơi lấy hàng.
-  const showSourceSlot = hasWarehouses && canSeeWarehouse(viewer, sourceWarehouseId)
+  const showSourceSlot =
+    hasWarehouses &&
+    viewer.permissions.includes(P.TRANSFERS_DISPATCH) &&
+    canSeeWarehouse(viewer, sourceWarehouseId)
   const knownSourceSlots = useMemo(() => {
     const known: Record<string, LookupOption> = {}
     for (const item of detail?.items ?? []) {

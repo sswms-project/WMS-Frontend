@@ -140,6 +140,8 @@ function AllocationEditor({
   onSubmit,
 }: AllocationEditorProps) {
   const [targets, setTargets] = useState<AllocationTargets>(() => initialTargets(options))
+  // Giữ chuỗi người dùng đang gõ để xóa trắng ô hoặc gõ dở "4." không bị ép về số.
+  const [typed, setTyped] = useState<Readonly<Record<string, string>>>({})
   const [reason, setReason] = useState('')
   const changed = hasChanges(options, targets)
   const error = changed ? validateTargets(options, targets) : null
@@ -147,6 +149,7 @@ function AllocationEditor({
   const canSave = changed && !error && !isPending
 
   function setTarget(stockId: string, raw: string) {
+    setTyped((current) => ({ ...current, [stockId]: raw }))
     setTargets((current) => ({ ...current, [stockId]: raw === '' ? 0 : Number(raw) }))
   }
 
@@ -227,7 +230,10 @@ function AllocationEditor({
                       disabled={
                         isPending || (option.movableQuantity <= 0 && option.availableQuantity <= 0)
                       }
-                      value={targets[option.inventoryStockId] ?? option.reservedForItem}
+                      value={
+                        typed[option.inventoryStockId] ??
+                        String(targets[option.inventoryStockId] ?? option.reservedForItem)
+                      }
                       onChange={(event) => setTarget(option.inventoryStockId, event.target.value)}
                     />
                     {delta !== 0 ? (

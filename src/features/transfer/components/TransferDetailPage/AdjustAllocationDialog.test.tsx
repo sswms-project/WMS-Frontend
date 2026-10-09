@@ -68,6 +68,15 @@ describe('AdjustAllocationDialog', () => {
     )
   })
 
+  it('lets the field be cleared while typing instead of forcing a zero', () => {
+    renderDialog()
+    const input = screen.getByLabelText('Phân bổ mới tại Khu K01 / Kệ A07 / A-01')
+    fireEvent.change(input, { target: { value: '' } })
+    expect(input).toHaveValue(null)
+    fireEvent.change(input, { target: { value: '7' } })
+    expect(input).toHaveValue(7)
+  })
+
   it('blocks a change that does not keep the total', () => {
     const onSubmit = renderDialog()
     fireEvent.change(screen.getByLabelText('Phân bổ mới tại Khu K01 / Kệ A07 / A-01'), {
