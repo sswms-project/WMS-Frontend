@@ -493,15 +493,83 @@ body {
   white-space: nowrap;
 }
 
+[data-slot='operational-workspace-navigation'] > a {
+  position: relative;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease;
+}
+
 [data-slot='operational-workspace-navigation'] > a:hover {
   color: var(--primary);
   background: var(--muted);
 }
 
 [data-slot='operational-workspace-navigation'] > a[aria-current='page'] {
-  border-bottom-color: var(--primary);
   color: var(--primary);
   font-weight: 700;
+}
+
+/* Gạch chân tab hiện tại trượt ra từ giữa thay vì bật tắt. */
+[data-slot='operational-workspace-navigation'] > a::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  height: 2px;
+  background: var(--primary);
+  transform: scaleX(0);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-slot='operational-workspace-navigation'] > a[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+/* Dòng của mọi danh sách nghiệp vụ hiện lần lượt; độ trễ dừng tăng sau 10 dòng. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-slot='operational-list-panel'] tbody > tr {
+    animation: operational-row-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes operational-row-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(2) {
+    animation-delay: 30ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(3) {
+    animation-delay: 60ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(4) {
+    animation-delay: 90ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(5) {
+    animation-delay: 120ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(6) {
+    animation-delay: 150ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(7) {
+    animation-delay: 180ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(8) {
+    animation-delay: 210ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(9) {
+    animation-delay: 240ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(10) {
+    animation-delay: 270ms;
+  }
+  [data-slot='operational-list-panel'] tbody > tr:nth-child(n + 11) {
+    animation-delay: 300ms;
+  }
 }
 
 [data-slot='workspace-scroll-area']:has([data-hide-workspace-scrollbar]) {

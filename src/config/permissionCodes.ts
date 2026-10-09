@@ -29,6 +29,7 @@ export const P = {
   GOODS_RECEIPTS_CREATE: 'goods-receipts:create',
   GOODS_RECEIPTS_SUBMIT: 'goods-receipts:submit',
   GOODS_RECEIPTS_PUTAWAY: 'goods-receipts:putaway',
+  GOODS_RECEIPTS_PLAN_PUTAWAY: 'goods-receipts:plan-putaway',
   GOODS_RECEIPTS_APPROVE: 'goods-receipts:approve',
   GOODS_RECEIPTS_SELF_APPROVE: 'goods-receipts:self-approve',
   GOODS_RECEIPTS_REJECT: 'goods-receipts:reject',

@@ -260,6 +260,13 @@ export const API_ENDPOINTS = {
     reject: (receiptId: string) => `/goods-receipts/${receiptId}/reject`,
     allowedActions: (receiptId: string) => `/goods-receipts/${receiptId}/allowed-actions`,
     putaway: (receiptId: string) => `/goods-receipts/${receiptId}/putaway`,
+    putawayPlan: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-plan`,
+    putawaySuggestions: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-suggestions`,
+    putawayPlanSuggestions: (receiptId: string) =>
+      `/goods-receipts/${receiptId}/putaway-plan/suggestions`,
+    putawayEvidence: '/goods-receipts/putaway-evidence',
+    putawayHeldSlots: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-held-slots`,
+    putawayDeviationReport: '/goods-receipts/putaway-deviations/report',
     cancelPutawayTask: (receiptId: string) => `/goods-receipts/${receiptId}/putaway-task/cancel`,
     reconcilePutawayCancellation: (receiptId: string) =>
       `/goods-receipts/${receiptId}/putaway-task/reconcile-cancellation`,

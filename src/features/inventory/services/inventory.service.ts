@@ -71,7 +71,10 @@ export const inventoryService = {
     formData.append('warehouseId', warehouseId)
     formData.append('file', file)
     return axiosClient
-      .post<ApiResponse<InventoryEvidence>>(API_ENDPOINTS.inventory.evidence, formData)
+      .post<ApiResponse<InventoryEvidence>>(API_ENDPOINTS.inventory.evidence, formData, {
+        // Mặc định của axiosClient là JSON; bỏ đi để trình duyệt tự đặt multipart kèm boundary.
+        headers: { 'Content-Type': null },
+      })
       .then((response) => response.data)
   },
   getInventory: (params: InventoryListQuery) =>
