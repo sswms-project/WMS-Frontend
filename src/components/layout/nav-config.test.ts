@@ -245,8 +245,8 @@ describe('application navigation visibility', () => {
         items: ['Nhập kho', 'Tồn kho', 'Điều chuyển kho', 'Kiểm kê', 'Xuất kho & Trả hàng'],
       },
       {
-        label: 'Báo cáo',
-        items: ['Dashboard kho', 'Báo cáo vận hành', 'Dự báo & Bổ sung hàng'],
+        label: 'Báo cáo & phân tích',
+        items: ['Báo cáo kho', 'Dự báo & bổ sung hàng'],
       },
       { label: 'Dịch vụ', items: ['Gói dịch vụ', 'Lịch sử thanh toán'] },
       { label: 'Hệ thống', items: ['Thông báo', 'Nhật ký hoạt động', 'Cài đặt'] },
@@ -258,11 +258,7 @@ describe('application navigation visibility', () => {
       (item) => item.status === 'planned'
     )
 
-    expect(plannedItems.map((item) => item.label)).toEqual([
-      'Dashboard kho',
-      'Báo cáo vận hành',
-      'Dự báo & Bổ sung hàng',
-    ])
+    expect(plannedItems.map((item) => item.label)).toEqual([])
     expect(plannedItems.every((item) => item.href === undefined)).toBe(true)
     expect(plannedItems.every((item) => !isNavItemActive('/anything', item))).toBe(true)
   })
@@ -366,13 +362,34 @@ describe('application navigation visibility', () => {
     expect(isNavItemActive('/subscription/invoices/payment-1/print', paymentsItem!)).toBe(true)
   })
 
-  it('keeps inventory forecasting in the inventory workspace until replenishment is available', () => {
-    const tenantItems = getNavItems(USER_ROLES.TenantOwner)
-    const replenishmentItem = tenantItems.find((item) => item.label === 'Dự báo & Bổ sung hàng')
+  it.each([USER_ROLES.TenantOwner, USER_ROLES.WarehouseManager, USER_ROLES.WarehouseStaff])(
+    'places forecasting under reports with the existing inventory view permission for %s',
+    (role) => {
+      const reports = getVisibleNavSections(role, new Set([P.INVENTORY_VIEW])).find(
+        (section) => section.id === 'reports'
+      )
+      const forecast = reports?.items.find((item) => item.href === APP_ROUTES.reportForecast)
+      expect(reports?.label).toBe('Báo cáo & phân tích')
+      expect(forecast?.status).toBeUndefined()
+      expect(forecast?.requiredPermission).toBe(P.INVENTORY_VIEW)
+      expect(
+        getVisibleNavItems(role, [P.REPORTS_VIEW]).some(
+          (item) => item.href === APP_ROUTES.reportForecast
+        )
+      ).toBe(false)
+      expect(getNavItems(role).some((item) => item.href === APP_ROUTES.inventoryForecast)).toBe(
+        false
+      )
+    }
+  )
 
-    expect(replenishmentItem?.status).toBe('planned')
-    expect(replenishmentItem?.href).toBeUndefined()
-    expect(tenantItems.some((item) => item.href === APP_ROUTES.inventoryForecast)).toBe(false)
+  it('activates only forecasting when opening the forecast workspace', () => {
+    const items = getNavItems(USER_ROLES.WarehouseManager)
+    const forecast = items.find((item) => item.href === APP_ROUTES.reportForecast)!
+    const reports = items.find((item) => item.href === APP_ROUTES.reports)!
+    expect(isNavItemActive(APP_ROUTES.reportForecast, forecast)).toBe(true)
+    expect(isNavItemActive(APP_ROUTES.reportForecast, reports)).toBe(false)
+    expect(isNavItemActive('/reports/stock-flow', reports)).toBe(true)
   })
 
   it('keeps tenant inventory hidden from the system admin', () => {

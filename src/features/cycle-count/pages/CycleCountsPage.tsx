@@ -6,7 +6,7 @@ import { useMeQuery } from '@/features/auth/hooks/use-auth'
 import { useWarehousesQuery } from '@/features/warehouse/hooks/use-warehouse'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { CycleCountDirectory } from '../components/CycleCountDirectory'
-import { useCycleCountsQuery } from '../hooks/use-cycle-count'
+import { useCycleCountsQuery, usePrefetchCycleCount } from '../hooks/use-cycle-count'
 import {
   CYCLE_COUNT_NEEDS_ADJUSTMENT_FILTER,
   type CycleCountStatus,
@@ -36,6 +36,7 @@ export default function CycleCountsPage() {
     [page, pageSize, warehouseId, status, debouncedSearch]
   )
   const query = useCycleCountsQuery(params)
+  const prefetchCycleCount = usePrefetchCycleCount()
   const me = useMeQuery()
   const warehouses = useWarehousesQuery({ top: 100, skip: 0, needTotalCount: true, isActive: true })
   const options = useMemo(
@@ -80,6 +81,7 @@ export default function CycleCountsPage() {
         setPage(1)
       }}
       onRetry={() => void query.refetch()}
+      onPrefetchDetail={prefetchCycleCount}
     />
   )
 }

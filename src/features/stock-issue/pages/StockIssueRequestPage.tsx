@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -76,7 +76,10 @@ function toRecordStockPickingLines(
   }))
 }
 
-export default function StockIssueRequestPage() {
+export default function StockIssueRequestPage({
+  initialRequestId,
+}: { readonly initialRequestId?: string } = {}) {
+  const [linkedRequestId, setLinkedRequestId] = useState(initialRequestId)
   const [searchText, setSearchText] = useState('')
   const [status, setStatus] = useState<StockIssueRequestStatus | ''>('')
   const [warehouseId, setWarehouseId] = useState('')
@@ -87,9 +90,6 @@ export default function StockIssueRequestPage() {
   const [pageSize, setPageSize] = useState(10)
   const [inspectedOrder, setInspectedOrder] = useState<StockIssueRequestSummary | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  // Notifications deep-link to a ticket via ?id=; the detail sheet opens straight away.
-  const [deepLinkId, setDeepLinkId] = useState<string | null>(() => searchParams.get('id'))
   const [issuingOrder, setIssuingOrder] = useState<StockIssueRequestSummary | null>(null)
   const [returningOrder, setGoodsReturnRequestingOrder] = useState<StockIssueRequestSummary | null>(
     null
@@ -122,7 +122,7 @@ export default function StockIssueRequestPage() {
     ...(assignedToMe ? { assignedToMe } : {}),
   })
   const stockRecipientOptionsQuery = useStockRecipientOptionsQuery({ pageNumber: 1, pageSize: 200 })
-  const orderDetailQuery = useStockIssueRequestQuery(inspectedOrder?.id ?? deepLinkId)
+  const orderDetailQuery = useStockIssueRequestQuery(inspectedOrder?.id ?? linkedRequestId ?? null)
   const reservationQuery = useInventoryReservationsQuery(
     {
       pageNumber: 1,
@@ -479,8 +479,8 @@ export default function StockIssueRequestPage() {
         onOpenChange={(open) => {
           if (open) return
           setInspectedOrder(null)
-          if (deepLinkId) {
-            setDeepLinkId(null)
+          if (linkedRequestId) {
+            setLinkedRequestId(undefined)
             router.replace(APP_ROUTES.stockIssueRequests)
           }
         }}

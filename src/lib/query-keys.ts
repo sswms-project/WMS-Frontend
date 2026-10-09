@@ -8,6 +8,7 @@ import type {
 } from '@/features/warehouse/types/warehouse.types'
 import type {
   InboundListQuery,
+  PutAwayDeviationReportQuery,
   PutawayTaskQuery,
   ReceivingTaskQuery,
 } from '@/features/inbound/types/inbound.types'
@@ -150,6 +151,7 @@ export const queryKeys = {
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
     forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
     forecastRun: (id: string) => ['inventory', 'forecast-runs', id] as const,
+    forecastRuns: (warehouseId: string) => ['inventory', 'forecast-run-list', warehouseId] as const,
     history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
@@ -210,6 +212,10 @@ export const queryKeys = {
     list: (params: InboundListQuery) => ['goods-receipts', 'list', params] as const,
     detail: (id: string) => ['goods-receipts', 'detail', id] as const,
     allowedActions: (id: string) => ['goods-receipts', 'detail', id, 'allowed-actions'] as const,
+    putawayHeldSlots: (id: string) =>
+      ['goods-receipts', 'detail', id, 'putaway-held-slots'] as const,
+    putawayDeviationReport: (params: PutAwayDeviationReportQuery) =>
+      ['goods-receipts', 'putaway-deviation-report', params] as const,
     receivingTasks: (params: ReceivingTaskQuery) =>
       ['goods-receipts', 'receiving-tasks', params] as const,
     putawayTasks: (params: PutawayTaskQuery) =>

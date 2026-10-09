@@ -15,9 +15,10 @@ import type {
   InventoryStockHistoryResponse,
   CreateForecastRunRequest,
   ForecastRun,
+  ForecastRunSummary,
+  RejectForecastSuggestionRequest,
   AcceptReplenishmentSuggestionRequest,
   AcceptRebalancingSuggestionRequest,
-  ForecastSuggestionType,
   ReportDamagedStockRequest,
   RunInventoryAbcRequest,
   ApplyInventoryAbcRequest,
@@ -70,7 +71,10 @@ export const inventoryService = {
     formData.append('warehouseId', warehouseId)
     formData.append('file', file)
     return axiosClient
-      .post<ApiResponse<InventoryEvidence>>(API_ENDPOINTS.inventory.evidence, formData)
+      .post<ApiResponse<InventoryEvidence>>(API_ENDPOINTS.inventory.evidence, formData, {
+        // Mặc định của axiosClient là JSON; bỏ đi để trình duyệt tự đặt multipart kèm boundary.
+        headers: { 'Content-Type': null },
+      })
       .then((response) => response.data)
   },
   getInventory: (params: InventoryListQuery) =>
@@ -243,6 +247,12 @@ export const inventoryService = {
     axiosClient
       .get<ApiResponse<ForecastRun>>(API_ENDPOINTS.inventory.forecastRun(id))
       .then((response) => response.data),
+  getForecastRuns: (warehouseId: string) =>
+    axiosClient
+      .get<
+        ApiResponse<ForecastRunSummary[]>
+      >(API_ENDPOINTS.inventory.forecastRuns, { params: { warehouseId } })
+      .then((response) => response.data),
   evaluateForecastRun: (id: string) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inventory.evaluateForecastRun(id))
@@ -255,10 +265,10 @@ export const inventoryService = {
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.inventory.acceptRebalancingSuggestion(id), request)
       .then((response) => response.data),
-  rejectForecastSuggestion: (id: string, suggestionType: ForecastSuggestionType) =>
+  rejectForecastSuggestion: (id: string, request: RejectForecastSuggestionRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inventory.rejectForecastSuggestion(id), {
-        suggestionType,
+        ...request,
       })
       .then((response) => response.data),
   getStockHistory: (params: InventoryStockHistoryQuery) =>

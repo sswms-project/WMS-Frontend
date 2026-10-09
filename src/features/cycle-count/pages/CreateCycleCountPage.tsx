@@ -43,7 +43,6 @@ export default function CreateCycleCountPage() {
       zoneId: '',
       scheduledDate: '',
       priority: 'Normal',
-      dueAt: '',
       assignedTo: '',
       items: [],
       isBlindCount: true,
@@ -142,7 +141,8 @@ export default function CreateCycleCountPage() {
         purpose: values.purpose.trim() || null,
         dueDate: values.dueDate ? new Date(`${values.dueDate}T23:59:59`).toISOString() : null,
         priority: values.priority,
-        dueAt: values.dueAt ? new Date(values.dueAt).toISOString() : null,
+        // Hạn công việc = cuối ngày "kiểm kê đến ngày".
+        dueAt: values.dueDate ? new Date(`${values.dueDate}T23:59:59`).toISOString() : null,
       })
       toast.success('Đã tạo phiếu kiểm kê.')
       if (mode === 'saveAndAdd') {

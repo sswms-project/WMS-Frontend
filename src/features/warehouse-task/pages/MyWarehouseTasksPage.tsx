@@ -94,20 +94,31 @@ function toDateTimeLocal(value: string | null) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16)
 }
 
-export default function MyWarehouseTasksPage() {
+export default function MyWarehouseTasksPage({
+  initialTaskId,
+  initialWarehouseId,
+  initialDeadline,
+}: {
+  readonly initialTaskId?: string
+  readonly initialWarehouseId?: string
+  readonly initialDeadline?: WarehouseTaskDeadlineStatus
+} = {}) {
   const [page, setPage] = useState(1)
   // Mở sẵn từ form điều chuyển kho (chọn "Điều chuyển nội bộ vị trí trong kho").
   const searchParams = useSearchParams()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === 'relocation')
   const [sourceSearch, setSourceSearch] = useState('')
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
+  const [warehouseFilter, setWarehouseFilter] = useState(initialWarehouseId)
   const [scheduleTask, setScheduleTask] = useState<MyWarehouseTask | null>(null)
   const [taskTypeFilter, setTaskTypeFilter] = useState<WarehouseTaskType | ''>('')
   const [executionStatusFilter, setExecutionStatusFilter] = useState<
     MyWarehouseTask['executionStatus'] | ''
   >('')
-  const [deadlineFilter, setDeadlineFilter] = useState<WarehouseTaskDeadlineStatus | ''>('')
+  const [deadlineFilter, setDeadlineFilter] = useState<WarehouseTaskDeadlineStatus | ''>(
+    initialDeadline ?? ''
+  )
   const [assignmentStaffId, setAssignmentStaffId] = useState('')
   const [assignmentReason, setAssignmentReason] = useState('')
   const [pendingReason, setPendingReason] = useState<{
@@ -134,6 +145,7 @@ export default function MyWarehouseTasksPage() {
     {
       pageNumber: page,
       pageSize: PAGE_SIZE,
+      warehouseId: warehouseFilter,
       taskType: taskTypeFilter || undefined,
       executionStatus: executionStatusFilter || undefined,
       deadlineStatus: deadlineFilter || undefined,
@@ -437,6 +449,21 @@ export default function MyWarehouseTasksPage() {
 
   return (
     <>
+      {warehouseFilter ? (
+        <div className="mb-2 flex items-center justify-between rounded-lg border p-2 text-xs">
+          <span>Đang lọc kho từ tổng quan</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setWarehouseFilter(undefined)
+              setPage(1)
+            }}
+          >
+            Xóa bộ lọc kho
+          </Button>
+        </div>
+      ) : null}
       <StockIssuePickingQueue
         enabled={!managesWarehouseTasks && permissions.includes(P.STOCK_ISSUE_REQUESTS_PICK)}
       />

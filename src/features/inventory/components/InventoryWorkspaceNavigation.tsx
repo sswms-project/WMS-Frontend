@@ -10,7 +10,6 @@ import {
   PackagePlus,
   Scale,
   SlidersHorizontal,
-  TrendingUp,
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { P } from '@/config/permissionCodes'
@@ -22,7 +21,6 @@ type InventoryWorkspaceView =
   | 'movements'
   | 'reservations'
   | 'abc'
-  | 'forecast'
   | 'cycle-counts'
   | 'adjustments'
   | 'damage-cases'
@@ -141,14 +139,6 @@ export function InventoryWorkspaceNavigation({
           >
             <Scale className="size-4" aria-hidden="true" />
             Chênh lệch
-          </Link>
-          <Link
-            href={APP_ROUTES.inventoryForecast}
-            aria-current={currentView === 'forecast' ? 'page' : undefined}
-            className={linkClassName('forecast')}
-          >
-            <TrendingUp className="size-4" aria-hidden="true" />
-            Dự báo
           </Link>
         </>
       ) : null}

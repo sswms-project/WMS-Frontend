@@ -465,6 +465,37 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - FE PR creation is deferred until a complete production build can be verified. Backend PR #200 passed its corresponding checks; deploy the paired Backend before the Frontend. Live browser/API acceptance remains pending.
 - No database operation, migration, seed, application startup, dependency/configuration change or filesystem cleanup was performed. The existing working branches are retained.
 
+## Put-Away Location Plan — 2026-10-05
+
+**Implementer:** Claude
+**State:** `READY_FOR_CODEX_REVIEW`
+
+### Implemented
+
+- Receipt detail: `Cấu hình vị trí cất` sheet (manager), AI suggestion button, planned-slots tab, `Khác kế hoạch` badge with reason and photo downloads in the put-away history.
+- Put-away form: pre-filled from the plan, `Làm theo kế hoạch` reset, reason + photo panel when the allocation differs from the plan. The command id and payload (reason, evidence ids) stay immutable across uncertain retries.
+- New permission code `GOODS_RECEIPTS_PLAN_PUTAWAY`; the action list from Backend (`PlanPutAway`) drives visibility. Deploy the paired Backend first.
+
+### Verification
+
+- Frontend suite `359` passed; typecheck, ESLint and production build clean.
+- Live browser/API acceptance is still pending; automated tests use mocks. GitNexus impact/change detection was not available in this session.
+
+## Clickable List Rows — 2026-10-06
+
+**Implementer:** Claude
+**State:** `READY_FOR_CODEX_REVIEW`
+
+### Implemented
+
+- Shared `ClickableTableRow` (`src/components/operations/`): clicking anywhere on a list row opens its detail page (or runs the row's existing "view" handler for rows that open a sheet). Links, buttons, menus, checkboxes and `[data-row-ignore]` areas keep their own behaviour; text selection and portal events are ignored; Ctrl/Cmd+click opens a new tab. Keyboard users still use the real link/button in each row.
+- Applied to goods receipts, put-away tasks, receiving tasks, inbound requests, suppliers, customers, cycle counts, stock issue requests, goods return requests, transfers, staff and products.
+- **Behaviour change agreed with the user:** clicking a row on the goods receipt, put-away, receiving task and inbound request lists now opens the detail page instead of the quick goods preview panel. The preview wiring (`InboundMasterDetail`, `InboundGoodsPreview`, preview queries) was removed from those four pages; the shared preview components and utils remain unused in `InboundWorkspace` and `inbound-goods-preview.ts` and can be deleted in a follow-up.
+
+### Verification
+
+- Frontend suite `392` passed; typecheck and ESLint clean. Production build and live browser check not run for this change.
+
 ## 2026-10-06 — Editable suggested manual goods receipt codes
 
 - Task: manual-receipt-code; role: Codex, user-authorized implementer and self-review (not independent review). State: `READY_FOR_CODEX_REVIEW`.
@@ -648,6 +679,25 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 - Verification: focused Vitest **37 passed across 3 files**; standalone Next type generation and TypeScript check passed; focused ESLint passed. GitNexus final detection is Medium across two indexed page flows; new component tests and some component changes outside indexed symbols were reviewed directly.
 - The paired Backend permission migration was applied to the configured shared database and verified as applied. No dependency/configuration change or application startup. Changes were delivered on `fix/staff-task-experience`.
 
+## 2026-10-08 — Forecasting and replenishment auto-drafts
+
+- Role: Codex implementation and final self-review, not independent approval. State: `READY_FOR_CODEX_REVIEW`. Branch: `feat/forecast-replenishment-drafts`; preserve earlier dashboard/reporting changes. No commit/push or database migration in this task.
+- UC-121/UC-122 implemented across FE/BE. External posted Issue demand uses declared local Linear Regression, UTC+7 day boundaries, history sufficiency and holdout/mean-baseline errors; policy fallback is separate. Existing provider endpoint remains available. No fabricated confidence, incoming receipt, reservation, supplier order or payment.
+- Eligible stock, reservations, outstanding dated incoming, goods awaiting put-away and planned drafts are counted once. Confirmed transfer losses are excluded. Min/max fallback, unit rounding and remaining forecast dates are explicit. New runs preserve linked drafts and count plans; SQL transaction-owned application locks serialize planning, with a filtered unique link and rowversion checks.
+- Automatic drafts require effective forecast and inbound-create permissions. Review validates active supplier/SKU references, quantities/reason, versions and refreshed planning snapshot; acceptance retains the draft ID, rejection cancels untouched drafts or blocks edited drafts. Inbound edits invalidate review and submit requires acceptance. Owner explicit self-approval downstream remains unchanged.
+- Verification: API build 0 warnings/errors; 17 focused ForecastRunTests passed on EF InMemory; FE pinned-pnpm typecheck and scoped lint passed. Migration SQL generated without applying; EF model matches snapshot. InMemory does not establish SQL concurrency/translation or live UI correctness. Full suites, production builds and browser/live-backend journey were not run.
+- Dossier: D:/LEARN/capstone/Kovia/outputs/workflow/modules/forecast-replenishment/. Both required UCs are implemented, not fully live/acceptance-verified; source rows and module boundary reread unchanged. New migration remains unapplied; local hosts stopped. GitNexus index is stale/new symbols unavailable; direct source/contract checks used, not a safe-impact claim.
+
+### Follow-up: live warehouse GUID validation
+
+- Actual Manager dropdown GUID was rejected by RFC UUID validation before API submission. Forecast warehouse and replenishment supplier now reuse the existing non-empty .NET GUID schema; access/supplier checks remain server enforced. No business test records created.
+- Six focused regressions passed (before fix: three failures), scoped lint and final typecheck exit 0. Earlier typechecks failed on corrupt generated Next dev validator; diagnostic preserved and that single generated file regenerated. Frontend restarted on port3000/API7070. Self-verification only; no successful live forecast/review journey or commit/push.
+
+### Follow-up: forecasting under Reporting & Analytics
+
+- User-approved FE-only navigation move: canonical reports/forecast, legacy redirect, active permission-filtered reports menu, direct planning card, report breadcrumb and dashboard shortcut; inventory forecast tab removed. Existing API, engine and run/review/view rights unchanged.
+- Self-verification: 39 targeted navigation/catalog tests passed, final TypeScript and scoped ESLint exit0. Obsolete directory reference fixed after initial typecheck failure. No full suite/build, live logged-in acceptance, BE/DB changes, commit or push. Dossier: outputs/workflow/modules/forecast-replenishment/fe-report-navigation-evidence.json.
+
 ## 2026-10-08 — Product import mapping readability and conversion UX
 
 - State: `READY_FOR_CODEX_REVIEW`; implementation/self-verification, not independent approval. No commit/push. GitNexus pre-impact LOW for product mapping, its wrapper, and shared spreadsheet column table; the latter also serves supplier/customer imports. Rebuilt the incomplete index; reverted only the analyzer-generated AGENTS.md/CLAUDE.md metadata changes. Concurrent transfer edits and unrelated untracked files preserved.
@@ -661,3 +711,12 @@ The tenant catalog receives only the filtered hierarchy from both role search an
 
 - Root cause: both sheet selectors rendered raw workbook names; the previous presentation fix intentionally retained these names and therefore did not satisfy the requested dropdown labels. Added one pure product-import formatter for known HangHoa/VatTuHangHoa/QuyDoi/DonViQuyDoi aliases, handling case, accents, spaces, underscores and hyphens. Both existing native dropdowns reuse it; raw source names remain in option titles and the section source caption. Unknown/custom names and all sheet IDs, mappings and API data remain unchanged.
 - GitNexus pre-impact LOW: ProductImportMapping has one direct caller, ProductImportView. Existing shadcn native-select, React guidance and Ponytail informed a text-only fix without new controls, state or dependencies. Product import tests **55 passed**; TypeScript and targeted ESLint passed. No browser/full-suite/build rerun in this follow-up, no commit/push, Backend startup or database operation.
+
+## 2026-10-09 — Integrate latest dev before delivery
+
+- User-authorized conflict resolution on `feat/forecast-replenishment-drafts`; implementation/self-verification, not independent approval. FE dev e5b55a4 and BE dev fa68ddb integrated without rewriting feature history. Earlier Report and Forecast commits retained.
+- FE keeps both reporting/forecast navigation and separate cycle-count navigation. Warehouse task page retains dashboard warehouse filtering, manual relocation entry, and the stock-issue picking queue from dev. Stock-issue route resolves report `requestId` and notification `id` into one keyed workspace, with a single selected request state and URL cleanup on close; four focused route regressions added.
+- Both conflicting review ledgers preserve all entries. BE source/model merged automatically; merged snapshot retains forecast columns/index plus dev cycle-count/transfer changes. Metadata-only model check passed. No database migration, seed or startup performed. Previously authorized forecast migration remains historical, not new authorization for pending dev migrations.
+- Checks: FE typecheck and scoped lint exit 0; 57 tests in six focused files passed (route, navigation, route permissions, report catalog, task directory, forecast schema). Initial test invocation failed Windows command quoting before running tests; path-filter rerun passed. BE API build 0 warnings/errors and 31 tests across ForecastRunTests, WarehouseReportingTests, MyWarehouseTaskHistoryTests passed on isolated fixtures; model/snapshot drift check passed. No full suite, production build or authenticated live UI regression.
+- GitNexus impact on nav helper: 3 direct indexed callers, Low; page callers unresolved in stale index, checked route imports directly. Index-only CLI refresh stalled after startup and was interrupted, no guidance/source injection. Staged scans Critical because they include the entire incoming dev diff (FE 151 / BE 230 files), not just manual conflict edits. Direct diff/contract review and focused integration checks supplement incomplete stale graph evidence.
+- Dossier/evidence: D:/LEARN/capstone/Kovia/outputs/workflow/modules/forecast-replenishment/dev-merge-\*. No PR or Jira mutation.
