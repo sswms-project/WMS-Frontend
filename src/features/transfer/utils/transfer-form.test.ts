@@ -11,6 +11,7 @@ import {
 import {
   buildExpectedReceiptQuantities,
   buildInitialReceiptEntries,
+  nextReceiveScanTarget,
   removeReceiptEntry,
   toReceiveRequest,
 } from './transfer-receive'
@@ -212,5 +213,43 @@ describe('receive helpers', () => {
     const afterRemovingSecond = removeReceiptEntry(entries, 1)
     expect(afterRemovingSecond[0]).toMatchObject({ goodQuantity: 20 })
     expect(removeReceiptEntry([entries[2]!], 0)).toHaveLength(0)
+  })
+
+  it('points the shared camera at the next location, then at the next product', () => {
+    const entry = (
+      overrides: Partial<{
+        destinationSlotId: string
+        scannedProductCode: string
+        goodQuantity: number
+        damagedQuantity: number
+        missingQuantity: number
+      }>
+    ) => ({
+      destinationSlotId: '',
+      scannedProductCode: '',
+      goodQuantity: 5,
+      damagedQuantity: 0,
+      missingQuantity: 0,
+      ...overrides,
+    })
+    expect(nextReceiveScanTarget([entry({}), entry({})])).toEqual({ index: 0, step: 'slot' })
+    expect(nextReceiveScanTarget([entry({ destinationSlotId: 'a' }), entry({})])).toEqual({
+      index: 1,
+      step: 'slot',
+    })
+    expect(
+      nextReceiveScanTarget([entry({ destinationSlotId: 'a' }), entry({ destinationSlotId: 'b' })])
+    ).toEqual({ index: 0, step: 'product' })
+    // Khai báo mới còn trống vẫn cần quét vị trí; khai báo chỉ có hàng thiếu thì bỏ qua.
+    expect(
+      nextReceiveScanTarget([
+        entry({ destinationSlotId: 'a', scannedProductCode: 'x' }),
+        entry({ goodQuantity: 0 }),
+      ])
+    ).toEqual({ index: 1, step: 'slot' })
+    expect(nextReceiveScanTarget([entry({ goodQuantity: 0, missingQuantity: 5 })])).toBeNull()
+    expect(
+      nextReceiveScanTarget([entry({ destinationSlotId: 'a', scannedProductCode: 'x' })])
+    ).toBeNull()
   })
 })

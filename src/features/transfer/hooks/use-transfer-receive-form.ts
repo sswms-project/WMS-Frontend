@@ -40,6 +40,8 @@ export function useTransferReceiveForm(
   const entries = useFieldArray({ control: form.control, name: 'entries' })
   const findSlotMutation = useFindReceivableSlotMutation()
   const receiveMutation = useReceiveTransferShipmentMutation()
+  // Đường dẫn "Khu / Kệ / Ô" của vị trí đã quét, để thẻ hiển thị tên đầy đủ thay vì chữ vừa gõ.
+  const [slotPathById, setSlotPathById] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!sheet) return
@@ -70,6 +72,7 @@ export function useTransferReceiveForm(
         return false
       }
       form.clearErrors(`entries.${index}.scannedSlotCode`)
+      setSlotPathById((current) => ({ ...current, [slot.id]: slot.path }))
       form.setValue(`entries.${index}.destinationSlotId`, slot.id, { shouldDirty: true })
       form.setValue(`entries.${index}.scannedSlotCode`, code, { shouldDirty: true })
       return true
@@ -143,6 +146,7 @@ export function useTransferReceiveForm(
     form,
     fields: entries.fields,
     lineById,
+    slotPathById,
     isFindingSlot: findSlotMutation.isPending,
     isReceiving: receiveMutation.isPending,
     isConfirmOpen,

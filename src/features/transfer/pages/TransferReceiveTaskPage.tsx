@@ -1,6 +1,7 @@
 'use client'
 
-import { PackageCheck } from 'lucide-react'
+import { Camera, CameraOff, PackageCheck } from 'lucide-react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import {
   OperationalEmptyState,
   OperationalErrorState,
@@ -13,6 +14,7 @@ import {
   formatQuantity,
 } from '@/features/inbound-request/utils/inbound-request-format'
 import {
+  InlineCameraScanner,
   ReceiveEntryCard,
   ScanPreferencesBar,
   TransferWorkHeader,
@@ -26,11 +28,17 @@ import { useTransferReceiveSheetQuery } from '../hooks/use-transfer-fulfillment'
 import { useTransferReceiveForm } from '../hooks/use-transfer-receive-form'
 import { useTransferRealtime } from '../hooks/use-transfer-realtime'
 import { useTransferViewer } from '../hooks/use-transfer-viewer'
+import { isCameraScanSupported } from '../utils/camera-scan'
+import { playScanFeedback } from '../utils/scan-feedback'
+import { useScanPreferences } from '../utils/scan-preferences'
+import { nextReceiveScanTarget } from '../utils/transfer-receive'
 
 interface TransferReceiveTaskPageProps {
   readonly transferId: string
   readonly shipmentId: string
 }
+
+const subscribeNothing = () => () => undefined
 
 export default function TransferReceiveTaskPage({
   transferId,
@@ -55,6 +63,31 @@ export default function TransferReceiveTaskPage({
     }),
     { good: 0, damaged: 0, missing: 0 }
   )
+
+  // Camera dùng chung cho cả trang: mã đọc được đi vào khai báo đang chờ quét (vị trí trước, mã hàng sau).
+  const [preferences] = useScanPreferences()
+  const canUseCamera = useSyncExternalStore(subscribeNothing, isCameraScanSupported, () => false)
+  const [cameraOn, setCameraOn] = useState(false)
+  const scanTarget = nextReceiveScanTarget(values)
+  const cameraActive = cameraOn && canAct && !receive.isReceiving && scanTarget !== null
+  const latest = useRef({ scanTarget, receive, feedback: preferences.feedback })
+  useEffect(() => {
+    latest.current = { scanTarget, receive, feedback: preferences.feedback }
+  })
+  function handleCameraCode(code: string) {
+    const { scanTarget: target, receive: current, feedback } = latest.current
+    if (!target) return
+    const result =
+      target.step === 'slot'
+        ? current.scanSlot(target.index, code)
+        : current.scanProduct(target.index, code)
+    if (!feedback) return
+    void Promise.resolve(result).then((ok) => {
+      if (typeof ok === 'boolean') playScanFeedback(ok ? 'success' : 'error')
+    })
+  }
+  const targetEntry = scanTarget ? values[scanTarget.index] : undefined
+  const targetLine = targetEntry ? receive.lineById.get(targetEntry.lineId) : undefined
 
   function reload() {
     realtime.dismiss()
@@ -109,6 +142,29 @@ export default function TransferReceiveTaskPage({
               </p>
             ) : null}
             {canAct ? <ScanPreferencesBar /> : null}
+            {canAct && canUseCamera ? (
+              <div className="grid gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  disabled={receive.isReceiving}
+                  aria-pressed={cameraOn}
+                  onClick={() => setCameraOn((current) => !current)}
+                >
+                  {cameraOn ? <CameraOff aria-hidden="true" /> : <Camera aria-hidden="true" />}
+                  {cameraOn ? 'Tắt camera quét' : 'Bật camera quét liên tục'}
+                </Button>
+                <InlineCameraScanner active={cameraActive} onCode={handleCameraCode} />
+                {cameraOn ? (
+                  <p className="text-muted-foreground text-xs" role="status">
+                    {scanTarget && targetLine
+                      ? `Đang chờ quét ${scanTarget.step === 'slot' ? 'vị trí cất' : 'mã hàng'} cho ${targetLine.sku} (khai báo ${scanTarget.index + 1}).`
+                      : 'Đã quét đủ. Camera tạm dừng; kiểm tra số lượng rồi xác nhận nhận hàng.'}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             {receive.fields.map((field, index) => {
               const entry = values[index]
               const line = entry ? receive.lineById.get(entry.lineId) : undefined
@@ -128,6 +184,7 @@ export default function TransferReceiveTaskPage({
                   dispatchedQuantity={lot?.dispatchedQuantity ?? 0}
                   baseUnitName={line.baseUnitName}
                   canRemove={receive.countEntriesOf(index) > 1}
+                  slotLabel={receive.slotPathById[entry.destinationSlotId]}
                   disabled={!canAct || receive.isReceiving}
                   isFindingSlot={receive.isFindingSlot}
                   onScanSlot={receive.scanSlot}

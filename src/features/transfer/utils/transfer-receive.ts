@@ -43,6 +43,8 @@ export function buildExpectedReceiptQuantities(sheet: TransferReceiveSheet): Map
 export interface ReceivableSlot {
   readonly id: string
   readonly code: string
+  /** "Khu K01 / Kệ A07" để người nhận biết mình đang đứng ở đâu. */
+  readonly path: string
 }
 
 export function toReceiveRequest(
@@ -97,4 +99,34 @@ export function removeReceiptEntry<T extends RemovableReceiptEntry>(
     missingQuantity: absorber.missingQuantity + removed.missingQuantity,
   }
   return next
+}
+
+interface ScannableReceiptEntry {
+  readonly destinationSlotId: string
+  readonly scannedProductCode?: string
+  readonly goodQuantity: number
+  readonly damagedQuantity: number
+  readonly missingQuantity: number
+}
+
+export interface ReceiveScanTarget {
+  readonly index: number
+  readonly step: 'slot' | 'product'
+}
+
+/**
+ * Khai báo và bước quét kế tiếp mà camera dùng chung đang chờ: quét xong vị trí của mọi khai báo cần cất hàng
+ * rồi mới tới mã hàng. Khai báo chỉ có hàng thiếu không cần quét nên bị bỏ qua.
+ */
+export function nextReceiveScanTarget(
+  entries: readonly ScannableReceiptEntry[]
+): ReceiveScanTarget | null {
+  const needsScan = (entry: ScannableReceiptEntry) =>
+    entry.goodQuantity > 0 ||
+    entry.damagedQuantity > 0 ||
+    (entry.goodQuantity <= 0 && entry.damagedQuantity <= 0 && entry.missingQuantity <= 0)
+  const slotIndex = entries.findIndex((entry) => needsScan(entry) && !entry.destinationSlotId)
+  if (slotIndex >= 0) return { index: slotIndex, step: 'slot' }
+  const productIndex = entries.findIndex((entry) => needsScan(entry) && !entry.scannedProductCode)
+  return productIndex >= 0 ? { index: productIndex, step: 'product' } : null
 }

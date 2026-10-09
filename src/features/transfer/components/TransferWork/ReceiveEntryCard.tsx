@@ -20,6 +20,8 @@ interface ReceiveEntryCardProps {
   readonly dispatchedQuantity: number
   readonly baseUnitName: string
   readonly canRemove: boolean
+  /** "Khu K01 / Kệ A07" của vị trí đã quét; thiếu thì hiện mã người dùng quét. */
+  readonly slotLabel?: string
   readonly disabled: boolean
   readonly isFindingSlot: boolean
   readonly onScanSlot: (index: number, code: string) => ScanResult
@@ -42,6 +44,7 @@ export function ReceiveEntryCard({
   dispatchedQuantity,
   baseUnitName,
   canRemove,
+  slotLabel,
   disabled,
   isFindingSlot,
   onScanSlot,
@@ -81,7 +84,10 @@ export function ReceiveEntryCard({
               id={`receive-slot-${index}`}
               autoFocus={index === 0}
               label="Quét mã vị trí cất hàng"
-              confirmedValue={entry.destinationSlotId ? entry.scannedSlotCode : undefined}
+              confirmedValue={
+                entry.destinationSlotId ? (slotLabel ?? entry.scannedSlotCode) : undefined
+              }
+              hideCamera
               error={errors?.scannedSlotCode?.message ?? null}
               disabled={disabled}
               pending={isFindingSlot}
@@ -90,6 +96,7 @@ export function ReceiveEntryCard({
             <ScanInput
               id={`receive-product-${index}`}
               focusWhen={isSlotConfirmed && !isProductConfirmed}
+              hideCamera
               label="Quét mã hàng (không bắt buộc)"
               confirmedValue={entry.scannedProductCode || undefined}
               error={errors?.scannedProductCode?.message ?? null}
