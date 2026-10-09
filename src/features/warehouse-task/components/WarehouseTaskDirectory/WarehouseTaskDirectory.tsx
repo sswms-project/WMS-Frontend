@@ -10,10 +10,12 @@ import {
   ClipboardCheck,
   ClipboardList,
   PackageOpen,
+  PackageSearch,
   PackagePlus,
   PackageX,
   PauseCircle,
   Play,
+  Truck,
   RefreshCw,
   Undo2,
   UserRoundX,
@@ -21,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { Route } from 'next'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import {
@@ -82,6 +85,9 @@ const taskTypeLabel: Record<MyWarehouseTask['taskType'], string> = {
   CycleCount: 'Kiểm kê',
   DamagedStock: 'Hàng hỏng',
   Relocation: 'Điều chuyển vị trí',
+  TransferPick: 'Lấy hàng điều chuyển',
+  TransferReceive: 'Nhận hàng điều chuyển',
+  Picking: 'Lấy hàng xuất kho',
 }
 
 const taskTypeIcon: Record<MyWarehouseTask['taskType'], LucideIcon> = {
@@ -90,6 +96,9 @@ const taskTypeIcon: Record<MyWarehouseTask['taskType'], LucideIcon> = {
   CycleCount: ClipboardCheck,
   DamagedStock: PackageX,
   Relocation: ArrowLeftRight,
+  TransferPick: Truck,
+  TransferReceive: PackageOpen,
+  Picking: PackageSearch,
 }
 
 const HEAD = 'bg-card sticky top-0 z-10'
@@ -147,6 +156,15 @@ export function WarehouseTaskDirectory({
       item.assignedTo !== currentUserId
     )
       return null
+    if (item.taskType === 'Picking') {
+      return (
+        <Button asChild size="sm" variant="outline">
+          <Link href={getTaskRoute(item)}>
+            {item.executionStatus === 'InProgress' ? 'Tiếp tục lấy hàng' : 'Lấy hàng'}
+          </Link>
+        </Button>
+      )
+    }
     const isInProgress = item.executionStatus === 'InProgress'
     return (
       <>
@@ -520,6 +538,14 @@ function getTaskRoute(task: MyWarehouseTask): Route {
   if (task.taskType === 'PutAway') return APP_ROUTES.inboundPutawayDetail(task.id) as Route
   if (task.taskType === 'CycleCount') return APP_ROUTES.cycleCountDetail(task.id)
   if (task.taskType === 'DamagedStock') return APP_ROUTES.stockAdjustmentDetail(task.id)
+  if (task.taskType === 'TransferPick' || task.taskType === 'TransferReceive') {
+    if (!task.transferId) return APP_ROUTES.transfers as Route
+    if (!task.transferShipmentId) return APP_ROUTES.transferDetail(task.transferId)
+    return task.taskType === 'TransferPick'
+      ? APP_ROUTES.transferPickTask(task.transferId, task.transferShipmentId)
+      : APP_ROUTES.transferReceiveTask(task.transferId, task.transferShipmentId)
+  }
+  if (task.taskType === 'Picking') return `${APP_ROUTES.stockIssueRequests}?id=${task.id}` as Route
   // Mở màn nhận hàng đã lọc sẵn theo mã yêu cầu nhập kho được giao.
   return `${APP_ROUTES.inbound}?search=${encodeURIComponent(task.referenceCode)}` as Route
 }

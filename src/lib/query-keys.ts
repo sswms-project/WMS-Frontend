@@ -27,8 +27,8 @@ import type {
 } from '@/features/inventory/types/inventory.types'
 import type { ProductListQuery, ProductLotQuery } from '@/features/product/types/product.types'
 import type {
+  TransferAvailabilityQuery,
   TransferListQuery,
-  TransferSourceInventoryQuery,
   TransferSourceWarehouseQuery,
 } from '@/features/transfer/types/transfer.types'
 import type {
@@ -42,6 +42,7 @@ import type {
 import type {
   CycleCountListQuery,
   StockAdjustmentListQuery,
+  StockAdjustmentVoucherListQuery,
 } from '@/features/cycle-count/types/cycle-count.types'
 import type {
   AuditLogQuery,
@@ -147,6 +148,7 @@ export const queryKeys = {
     transactions: (params?: QueryInfo) => ['inventory', 'transactions', params] as const,
     forecast: (params: InventoryForecastQuery) => ['inventory', 'forecast', params] as const,
     forecastRun: (id: string) => ['inventory', 'forecast-runs', id] as const,
+    forecastRuns: (warehouseId: string) => ['inventory', 'forecast-run-list', warehouseId] as const,
     history: (params: InventoryStockHistoryQuery) => ['inventory', 'history', params] as const,
   },
   units: {
@@ -168,6 +170,11 @@ export const queryKeys = {
     list: (params: StockAdjustmentListQuery) => ['stock-adjustments', 'list', params] as const,
     detail: (id: string) => ['stock-adjustments', 'detail', id] as const,
     allowedActions: (id: string) => ['stock-adjustments', 'detail', id, 'allowed-actions'] as const,
+    voucherList: (params: StockAdjustmentVoucherListQuery) =>
+      ['stock-adjustments', 'voucher', 'list', params] as const,
+    voucherDetail: (id: string) => ['stock-adjustments', 'voucher', id] as const,
+    voucherAllowedActions: (id: string) =>
+      ['stock-adjustments', 'voucher', id, 'allowed-actions'] as const,
   },
   products: {
     all: ['products'] as const,
@@ -222,16 +229,26 @@ export const queryKeys = {
     lists: ['transfers', 'list'] as const,
     list: (params: TransferListQuery) => ['transfers', 'list', params] as const,
     detail: (id: string) => ['transfers', 'detail', id] as const,
+    nextCode: ['transfers', 'next-code'] as const,
+    requesterOptions: ['transfers', 'requester-options'] as const,
     sourceWarehouses: (params: TransferSourceWarehouseQuery) =>
       ['transfers', 'source-warehouses', params] as const,
-    sourceInventory: (params: TransferSourceInventoryQuery) =>
-      ['transfers', 'source-inventory', params] as const,
+    availability: (params: TransferAvailabilityQuery) =>
+      ['transfers', 'availability', params] as const,
+    pickSheet: (transferId: string, shipmentId: string) =>
+      ['transfers', 'pick-sheet', transferId, shipmentId] as const,
+    pickAlternatives: (transferId: string, shipmentId: string, lineId: string) =>
+      ['transfers', 'pick-alternatives', transferId, shipmentId, lineId] as const,
+    receiveSheet: (transferId: string, shipmentId: string) =>
+      ['transfers', 'receive-sheet', transferId, shipmentId] as const,
   },
   stockIssueRequests: {
     all: ['stock-issue-requests'] as const,
     lists: ['stock-issue-requests', 'list'] as const,
     list: (params: StockIssueRequestListQuery) => ['stock-issue-requests', 'list', params] as const,
     detail: (id: string) => ['stock-issue-requests', 'detail', id] as const,
+    auditLogs: (id: string, params: { pageNumber: number; pageSize: number }) =>
+      ['stock-issue-requests', 'detail', id, 'audit-logs', params] as const,
   },
   goodsReturnRequests: {
     all: ['goods-return-requests'] as const,

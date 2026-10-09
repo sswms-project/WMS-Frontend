@@ -368,6 +368,42 @@ body {
   height: 6px;
 }
 
+/* Keep import content gutters while placing its scroll rail at the workspace edge. */
+[data-slot='workspace-scroll-area']:has([data-slot='bulk-import-workspace']) {
+  padding-right: 0;
+}
+
+[data-slot='bulk-import-workspace']::-webkit-scrollbar,
+[data-slot='workspace-scroll-area']:has([data-slot='bulk-import-workspace'])::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+[data-slot='bulk-import-workspace']::-webkit-scrollbar-thumb,
+[data-slot='workspace-scroll-area']:has(
+    [data-slot='bulk-import-workspace']
+  )::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--table-scrollbar-thumb);
+}
+
+[data-slot='bulk-import-workspace']::-webkit-scrollbar-track,
+[data-slot='workspace-scroll-area']:has(
+    [data-slot='bulk-import-workspace']
+  )::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-slot='bulk-import-workspace']::-webkit-scrollbar-button,
+[data-slot='bulk-import-workspace'] [data-slot='table-container']::-webkit-scrollbar-button,
+[data-slot='workspace-scroll-area']:has(
+    [data-slot='bulk-import-workspace']
+  )::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 [data-slot='table-container']::-webkit-scrollbar-thumb {
   border-radius: 8px;
   background: var(--table-scrollbar-thumb);
@@ -379,6 +415,12 @@ body {
 
 @supports not selector(::-webkit-scrollbar) {
   [data-slot='table-container'] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--table-scrollbar-thumb) transparent;
+  }
+
+  [data-slot='bulk-import-workspace'],
+  [data-slot='workspace-scroll-area']:has([data-slot='bulk-import-workspace']) {
     scrollbar-width: thin;
     scrollbar-color: var(--table-scrollbar-thumb) transparent;
   }

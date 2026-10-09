@@ -2,6 +2,7 @@ import { axiosClient } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/routes/api-endpoints'
 import type { ApiResponse } from '@/types/api'
 import type {
+  InventoryStock,
   InventoryStockListResponse,
   InventoryReservationListResponse,
   InventoryAbcItem,
@@ -14,9 +15,10 @@ import type {
   InventoryStockHistoryResponse,
   CreateForecastRunRequest,
   ForecastRun,
+  ForecastRunSummary,
+  RejectForecastSuggestionRequest,
   AcceptReplenishmentSuggestionRequest,
   AcceptRebalancingSuggestionRequest,
-  ForecastSuggestionType,
   ReportDamagedStockRequest,
   RunInventoryAbcRequest,
   ApplyInventoryAbcRequest,
@@ -79,6 +81,20 @@ export const inventoryService = {
     axiosClient
       .get<ApiResponse<InventoryStockListResponse>>(API_ENDPOINTS.inventory.list, { params })
       .then((response) => response.data),
+  // Duyệt hết các trang để chọn toàn bộ kết quả lọc, vì BE giới hạn 100 dòng mỗi trang.
+  getAllInventory: async (params: Omit<InventoryListQuery, 'pageNumber' | 'pageSize'>) => {
+    const pageSize = 100
+    const rows: InventoryStock[] = []
+    for (let pageNumber = 1; ; pageNumber += 1) {
+      const response = await axiosClient.get<ApiResponse<InventoryStockListResponse>>(
+        API_ENDPOINTS.inventory.list,
+        { params: { ...params, pageNumber, pageSize } }
+      )
+      const { items, totalCount } = response.data.data
+      rows.push(...items)
+      if (items.length < pageSize || rows.length >= totalCount) return rows
+    }
+  },
   getWarehouseOptions: () =>
     axiosClient
       .get<ApiResponse<InventoryWarehouseOption[]>>(API_ENDPOINTS.inventory.warehouseOptions)
@@ -231,6 +247,12 @@ export const inventoryService = {
     axiosClient
       .get<ApiResponse<ForecastRun>>(API_ENDPOINTS.inventory.forecastRun(id))
       .then((response) => response.data),
+  getForecastRuns: (warehouseId: string) =>
+    axiosClient
+      .get<
+        ApiResponse<ForecastRunSummary[]>
+      >(API_ENDPOINTS.inventory.forecastRuns, { params: { warehouseId } })
+      .then((response) => response.data),
   evaluateForecastRun: (id: string) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inventory.evaluateForecastRun(id))
@@ -243,10 +265,10 @@ export const inventoryService = {
     axiosClient
       .post<ApiResponse<string>>(API_ENDPOINTS.inventory.acceptRebalancingSuggestion(id), request)
       .then((response) => response.data),
-  rejectForecastSuggestion: (id: string, suggestionType: ForecastSuggestionType) =>
+  rejectForecastSuggestion: (id: string, request: RejectForecastSuggestionRequest) =>
     axiosClient
       .post<ApiResponse<unknown>>(API_ENDPOINTS.inventory.rejectForecastSuggestion(id), {
-        suggestionType,
+        ...request,
       })
       .then((response) => response.data),
   getStockHistory: (params: InventoryStockHistoryQuery) =>
