@@ -1,18 +1,16 @@
 'use client'
 
-import { ChartColumn } from 'lucide-react'
+import { ChartColumn, PackageCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { P } from '@/config/permissionCodes'
 import { useMeQuery } from '@/features/auth/hooks/use-auth'
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import {
   toOperationalDateTimeEnd,
   toOperationalDateTimeStart,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { InboundPageHeader } from '../components/InboundWorkspace'
+import { InboundCountTile, InboundPageHeader } from '../components/InboundWorkspace'
 import {
   PutawayDeviationReportSheet,
   PutawayDirectory,
@@ -78,18 +76,16 @@ export default function InboundPutawayPage() {
         canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
-          <CardContent className="flex min-h-16 items-center justify-between gap-2">
-            <p className="text-sm font-medium">Phiếu chờ cất</p>
-            {query.isFetching ? (
-              <Skeleton className="h-7 w-10" aria-hidden="true" />
-            ) : (
-              <p className="text-primary shrink-0 text-2xl font-semibold tabular-nums">
-                {query.isError ? '—' : (query.data?.totalCount ?? 0).toLocaleString('vi-VN')}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="bg-border w-full shrink-0 border sm:max-w-xs">
+          <InboundCountTile
+            icon={PackageCheck}
+            tone="active"
+            label="Phiếu chờ cất"
+            value={query.data?.totalCount ?? 0}
+            isLoading={query.isFetching}
+            isError={query.isError}
+          />
+        </div>
         {canViewReport ? (
           <Button
             type="button"

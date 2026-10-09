@@ -39,6 +39,7 @@ import { dateToIsoDateString, formatDisplayDate, isoDateStringToDate } from '@/l
 import { cn } from '@/lib/utils'
 import type { ReceivingTask } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
+import { CellStack, QuantityProgress } from '../InboundWorkspace'
 import { rowActivationProps } from '../../utils/row-activation-props'
 import {
   formatOperationalDate,
@@ -342,17 +343,14 @@ export function ReceivingTaskDirectory({
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[1240px]">
+            <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky top-0 z-10">Mã yêu cầu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Nhà cung cấp</TableHead>
-                  <TableHead className="sticky top-0 z-10">Kho nhận</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Mặt hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Đã nhận / Yêu cầu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
-                  <TableHead className="sticky top-0 z-10">Ngày dự kiến</TableHead>
-                  <TableHead className="sticky top-0 z-10">Người nhận việc</TableHead>
+                  <TableHead className="sticky top-0 z-10">Nhà cung cấp · Kho nhận</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-44">Đã nhận / Yêu cầu</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-40">Thời gian</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-48">Người nhận việc</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -387,17 +385,26 @@ export function ReceivingTaskDirectory({
                         </p>
                       )}
                     </TableCell>
-                    <TableCell>{item.supplierName}</TableCell>
-                    <TableCell>{item.warehouseName}</TableCell>
-                    <TableCell className="text-right tabular-nums">{item.lines.length}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQuantity(item.receivedQuantity)} /{' '}
-                      {formatQuantity(item.orderedQuantity)}
+                    <TableCell className="min-w-0">
+                      <CellStack
+                        primary={item.supplierName}
+                        secondary={`${item.warehouseName} · ${item.lines.length} mặt hàng`}
+                      />
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatOperationalDateTime(item.createdAt)}
+                    <TableCell>
+                      <QuantityProgress
+                        done={item.receivedQuantity}
+                        total={item.orderedQuantity}
+                        doneText={formatQuantity(item.receivedQuantity)}
+                        totalText={formatQuantity(item.orderedQuantity)}
+                      />
                     </TableCell>
-                    <TableCell>{formatOperationalDate(item.expectedDate)}</TableCell>
+                    <TableCell>
+                      <CellStack
+                        primary={formatOperationalDateTime(item.createdAt)}
+                        secondary={`Dự kiến ${formatOperationalDate(item.expectedDate)}`}
+                      />
+                    </TableCell>
                     <TableCell className="max-w-48">
                       <TaskAssigneeCell
                         assigneeName={item.assignedToName}

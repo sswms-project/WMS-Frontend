@@ -45,6 +45,7 @@ import {
 } from '@/features/inbound-request/utils/inbound-request-format'
 import type { GoodsReceiptSummary } from '../../types/inbound.types'
 import { TaskAssigneeCell } from '../TaskAssignment'
+import { CellStack, QuantityProgress } from '../InboundWorkspace'
 import { rowActivationProps } from '../../utils/row-activation-props'
 
 export type PutawayAssignmentFilter = 'all' | 'unassigned'
@@ -316,16 +317,14 @@ export function PutawayDirectory({
             ))}
           </ItemGroup>
           <div className="hidden min-h-0 flex-1 overflow-auto md:block">
-            <Table className="min-w-[1060px]">
+            <Table className="min-w-[920px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky top-0 z-10">Mã phiếu</TableHead>
-                  <TableHead className="sticky top-0 z-10">Yêu cầu nhập kho</TableHead>
-                  <TableHead className="sticky top-0 z-10">Kho</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Mặt hàng</TableHead>
-                  <TableHead className="sticky top-0 z-10 text-right">Còn cất</TableHead>
-                  <TableHead className="sticky top-0 z-10">Ngày tạo</TableHead>
-                  <TableHead className="sticky top-0 z-10">Người cất hàng</TableHead>
+                  <TableHead className="sticky top-0 z-10">Yêu cầu · Kho</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-48">Đã cất / Cần cất</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-40">Ngày tạo</TableHead>
+                  <TableHead className="sticky top-0 z-10 w-48">Người cất hàng</TableHead>
                   <TableHead className="sticky top-0 z-10 text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -342,12 +341,26 @@ export function PutawayDirectory({
                       >
                         {item.receiptCode}
                       </Link>
+                      <p className="text-muted-foreground mt-0.5 font-sans text-xs font-normal">
+                        {item.lineCount} mặt hàng
+                      </p>
                     </TableCell>
-                    <TableCell className="font-mono">{item.inboundRequestCode}</TableCell>
-                    <TableCell>{item.warehouseName}</TableCell>
-                    <TableCell className="text-right tabular-nums">{item.lineCount}</TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">
-                      {formatQuantity(remainingQuantity(item))}
+                    <TableCell className="min-w-0">
+                      <CellStack
+                        primary={<span className="font-mono">{item.inboundRequestCode}</span>}
+                        secondary={item.warehouseName}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <QuantityProgress
+                        done={item.putAwayQuantity}
+                        total={Math.max(0, item.receivedQuantity - item.damagedQuantity)}
+                        doneText={formatQuantity(item.putAwayQuantity)}
+                        totalText={formatQuantity(
+                          Math.max(0, item.receivedQuantity - item.damagedQuantity)
+                        )}
+                        suffix={`· còn ${formatQuantity(remainingQuantity(item))}`}
+                      />
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {formatOperationalDateTime(item.createdAt)}

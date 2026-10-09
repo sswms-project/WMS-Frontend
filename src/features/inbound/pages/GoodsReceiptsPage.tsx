@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +22,7 @@ import {
   toOperationalDateTimeEnd,
   toOperationalDateTimeStart,
 } from '@/features/inbound-request/utils/inbound-request-format'
-import { InboundPageHeader } from '../components/InboundWorkspace'
+import { InboundCountTile, InboundPageHeader } from '../components/InboundWorkspace'
 import { ReceiptDirectory } from '../components/ReceiptsPage'
 import {
   useApproveGoodsReceiptMutation,
@@ -96,18 +94,16 @@ export default function GoodsReceiptsPage() {
           canViewRequests={meQuery.data?.permissions.includes(P.INBOUND_REQUESTS_VIEW) ?? false}
           canViewReceipts={meQuery.data?.permissions.includes(P.GOODS_RECEIPTS_VIEW) ?? false}
         />
-        <Card size="sm" className="border-l-primary w-full shrink-0 border-l-2 sm:max-w-xs">
-          <CardContent className="flex min-h-16 items-center justify-between gap-2">
-            <p className="text-sm font-medium">Phiếu phù hợp</p>
-            {query.isFetching ? (
-              <Skeleton className="h-7 w-10" aria-hidden="true" />
-            ) : (
-              <p className="text-primary shrink-0 text-2xl font-semibold tabular-nums">
-                {query.isError ? '—' : (query.data?.totalCount ?? 0).toLocaleString('vi-VN')}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="bg-border w-full shrink-0 border sm:max-w-xs">
+          <InboundCountTile
+            icon={ClipboardList}
+            tone="default"
+            label="Phiếu phù hợp"
+            value={query.data?.totalCount ?? 0}
+            isLoading={query.isFetching}
+            isError={query.isError}
+          />
+        </div>
         <ReceiptDirectory
           items={query.data?.items ?? []}
           totalCount={query.data?.totalCount ?? 0}

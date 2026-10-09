@@ -107,7 +107,7 @@ describe('inbound row navigation and bulk checkboxes', () => {
     code.addEventListener('click', (event) => event.preventDefault())
     await userEvent.setup().click(code)
     expect(push).not.toHaveBeenCalled()
-    await userEvent.setup().click(within(row).getByText('Kho kiểm thử'))
+    await userEvent.setup().click(within(row).getByText(/Kho kiểm thử/))
     expect(push).toHaveBeenCalledExactlyOnceWith('/inbound-requests/draft')
   })
   it('keeps checkbox, its cell and action controls independent from row navigation', async () => {
