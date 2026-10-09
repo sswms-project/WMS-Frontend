@@ -59,7 +59,12 @@ export function findReceivableSlot(
       candidate.type === 'Slot' &&
       !candidate.isOutboundStaging &&
       candidate.lifecycleStatus === 'Active' &&
-      codesMatch(scannedCode, candidate.code, candidate.barcodeValue)
+      codesMatch(
+        scannedCode,
+        candidate.code,
+        candidate.barcodeValue,
+        `KOVIA:LOC:SLOT:${candidate.id}`
+      )
   )
   return slot ? { id: slot.id, code: slot.code } : null
 }
@@ -80,7 +85,7 @@ export function findRackLevelSlot(
         rack.status === 'Active' &&
         rack.storageMode === 'RackLevel' &&
         rack.defaultSlotId &&
-        codesMatch(scannedCode, rack.rackCode)
+        codesMatch(scannedCode, rack.rackCode, `KOVIA:LOC:RACK:${rack.id}`)
       ) {
         return { id: rack.defaultSlotId, code: rack.rackCode }
       }

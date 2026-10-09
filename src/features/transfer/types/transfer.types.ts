@@ -486,6 +486,7 @@ export interface TransferPickSuggestion {
   reservedQuantity: number
   rackCode: string | null
   isSystemDefaultSlot: boolean
+  rackId?: string | null
 }
 
 export interface TransferPickAlternative {
@@ -499,6 +500,7 @@ export interface TransferPickAlternative {
   availableQuantity: number
   rackCode: string | null
   isSystemDefaultSlot: boolean
+  rackId?: string | null
 }
 
 export interface TransferPickDetail {
@@ -513,6 +515,7 @@ export interface TransferPickDetail {
   pickedAt: string
   rackCode: string | null
   isSystemDefaultSlot: boolean
+  rackId?: string | null
 }
 
 export interface TransferPickException {

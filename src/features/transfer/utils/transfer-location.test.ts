@@ -29,4 +29,23 @@ describe('transfer location helpers', () => {
       transferLocationScanCodes({ slotCode: 'A07-01', rackCode: 'A07', slotBarcode: 'BC' })
     ).toEqual(['A07-01', 'BC'])
   })
+
+  it('also accepts the value printed on the location barcode label', () => {
+    const slot = {
+      slotCode: 'A-01',
+      slotId: '11111111-1111-4111-8111-111111111111',
+      rackId: '22222222-2222-4222-8222-222222222222',
+      rackCode: 'A01',
+      isSystemDefaultSlot: false,
+    }
+    expect(transferLocationScanCodes(slot)).toContain(
+      'KOVIA:LOC:SLOT:11111111-1111-4111-8111-111111111111'
+    )
+    expect(transferLocationScanCodes(slot)).not.toContain(
+      'KOVIA:LOC:RACK:22222222-2222-4222-8222-222222222222'
+    )
+    expect(transferLocationScanCodes({ ...slot, isSystemDefaultSlot: true })).toContain(
+      'KOVIA:LOC:RACK:22222222-2222-4222-8222-222222222222'
+    )
+  })
 })
