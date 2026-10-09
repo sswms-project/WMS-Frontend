@@ -12,7 +12,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { CellStack, QuantityProgress } from '@/features/inbound/components/InboundWorkspace'
+import {
+  OperationalCellStack,
+  OperationalQuantityProgress,
+} from '@/components/operations/OperationalCells'
 import { APP_ROUTES } from '@/routes/app-routes'
 import { inboundSourceLabels } from '../../schemas/inbound-request.schema'
 import { type InboundRequestSummary } from '../../types/inbound-request.types'
@@ -54,12 +57,12 @@ export function InboundRequestTableSkeleton() {
       <Table className="min-w-[960px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-12 p-0 text-center">
+            <TableHead className="bg-card w-12 p-0 text-center">
               <Skeleton className="size-4" />
             </TableHead>
             {['Mã yêu cầu', 'Nguồn hàng · Kho nhận', 'Trạng thái', 'Tiến độ', 'Thời gian', ''].map(
               (heading) => (
-                <TableHead key={heading} className="bg-card sticky top-0 z-10">
+                <TableHead key={heading} className="bg-card">
                   {heading}
                 </TableHead>
               )
@@ -130,7 +133,7 @@ export function InboundRequestTable({
       <Table className="min-w-[960px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-card sticky top-0 z-10 w-12 p-0 text-center">
+            <TableHead className="bg-card w-12 p-0 text-center">
               <Checkbox
                 className="mx-auto"
                 aria-label="Chọn tất cả yêu cầu nhập kho trên trang"
@@ -149,12 +152,12 @@ export function InboundRequestTable({
                 }
               />
             </TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-52">Mã yêu cầu</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10">Nguồn hàng · Kho nhận</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-36">Trạng thái</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-44">Tiến độ nhận</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-44">Thời gian</TableHead>
-            <TableHead className="bg-card sticky top-0 z-10 w-16">
+            <TableHead className="bg-card w-52">Mã yêu cầu</TableHead>
+            <TableHead className="bg-card">Nguồn hàng · Kho nhận</TableHead>
+            <TableHead className="bg-card w-36">Trạng thái</TableHead>
+            <TableHead className="bg-card w-44">Tiến độ nhận</TableHead>
+            <TableHead className="bg-card w-44">Thời gian</TableHead>
+            <TableHead className="bg-card w-16">
               <span className="sr-only">Thao tác</span>
             </TableHead>
           </TableRow>
@@ -200,7 +203,7 @@ export function InboundRequestTable({
                 </div>
               </TableCell>
               <TableCell className="min-w-0">
-                <CellStack
+                <OperationalCellStack
                   primary={item.supplierName ?? item.sourceName ?? 'Chưa xác định'}
                   secondary={`${inboundSourceLabels[item.sourceType]} → ${
                     item.warehouseName ?? 'Chưa xác định kho'
@@ -211,7 +214,7 @@ export function InboundRequestTable({
                 <InboundRequestStatusBadge status={item.status} />
               </TableCell>
               <TableCell>
-                <QuantityProgress
+                <OperationalQuantityProgress
                   done={item.receivedQuantity}
                   total={item.orderedQuantity}
                   doneText={formatQuantity(item.receivedQuantity)}
@@ -219,7 +222,7 @@ export function InboundRequestTable({
                 />
               </TableCell>
               <TableCell>
-                <CellStack
+                <OperationalCellStack
                   primary={formatOperationalDateTime(item.createdAt)}
                   secondary={`Dự kiến ${formatOperationalDate(item.expectedDate)}`}
                 />

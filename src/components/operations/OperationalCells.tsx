@@ -3,7 +3,7 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 /** Hai dòng trong một ô: nội dung chính và phụ; cắt chữ dài thay vì làm bể cột. */
-export function CellStack({
+export function OperationalCellStack({
   primary,
   secondary,
   className,
@@ -22,8 +22,8 @@ export function CellStack({
   )
 }
 
-/** Số lượng đã/tổng kèm thanh tiến độ; dùng chung để mọi bảng nhập kho đọc giống nhau. */
-export function QuantityProgress({
+/** Số lượng đã/tổng kèm thanh tiến độ; dùng chung để mọi bảng nghiệp vụ đọc giống nhau. */
+export function OperationalQuantityProgress({
   done,
   total,
   doneText,

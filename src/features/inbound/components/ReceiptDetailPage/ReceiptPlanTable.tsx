@@ -18,7 +18,7 @@ export function ReceiptPlanTable({ items }: ReceiptPlanTableProps) {
   return (
     <div className="min-h-0 flex-1 overflow-auto">
       <Table className="min-w-[640px]">
-        <TableHeader className="bg-card sticky top-0 z-10">
+        <TableHeader className="bg-card">
           <TableRow>
             <TableHead>Sản phẩm</TableHead>
             <TableHead>Vị trí cấu hình</TableHead>
